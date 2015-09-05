@@ -1,0 +1,29 @@
+# filesystem
+.crossref-*
+.local-*
+local-*
+# IntelliJ
+.idea
+*.iml
+# Eclipse
+.project
+.classpath
+.settings
+.metadata
+Servers
+# Gradle
+.gradle
+build
+# Maven
+target
+# Gradle
+.gradle
+.groovy
+# some source repos
+.svn
+# File Vault
+.vlt
+.vlt-sync*
+# Mac OS X
+._*
+.DS_*

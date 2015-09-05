@@ -1,0 +1,18 @@
+{
+  "jcr:primaryType": "sling:OrderedFolder",
+  "sling:resourceType": "composum/sling/console/page",
+  "browser": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:mixinTypes": [
+      "sling:Redirect"
+    ],
+    "jcr:title": "Browser",
+    "sling:resourceType": "composum/sling/console/page",
+    "sling:redirect": "/bin/browser.html"
+  },
+  "felix": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Felix",
+    "sling:resourceType": "composum/sling/console/felix"
+  }
+}

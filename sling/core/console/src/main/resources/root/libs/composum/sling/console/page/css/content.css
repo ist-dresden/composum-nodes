@@ -1,0 +1,34 @@
+
+#ui > .content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 60px 10px 10px;
+}
+
+#ui .left h2 {
+    color: #acacac;
+    width: 100%;
+    text-align: right;
+}
+
+#ui .main h1 {
+    margin: 17px 0 18px 0;
+}
+
+#ui section {
+    padding-top: 16px;
+}
+
+#ui .row.aspect {
+    margin-top: 15px;
+}
+
+p name {
+    font-weight: bold;
+    color: #acacac;
+}
+
+p name huge {
+    font-size: 120%;
+}

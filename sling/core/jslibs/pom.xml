@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.sling.core</groupId>
+        <artifactId>composum-sling-core-parent</artifactId>
+        <version>1.1.0-SNAPSHOT</version>
+        <relativePath>../.parent</relativePath>
+    </parent>
+
+    <groupId>com.composum.sling.core</groupId>
+    <artifactId>composum-sling-core-jslibs</artifactId>
+    <version>1.1.0-SNAPSHOT</version>
+    <packaging>bundle</packaging>
+
+    <name>Composum Core JS Libraries</name>
+    <description>the set of necessary javascript components and scripts</description>
+
+    <properties>
+        <bundle.name>com.composum.core.jslibs</bundle.name>
+    </properties>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-Category>${bundle.category}</Bundle-Category>
+                        <Bundle-SymbolicName>${bundle.name}</Bundle-SymbolicName>
+                        <Include-Resource>
+                            {maven-resources}
+                        </Include-Resource>
+                        <Sling-Initial-Content>
+                            root/libs/fonts/awesome/4.3.0;path:=/libs/fonts/awesome/4.3.0;overwrite:=true,
+                            root/libs/jslibs/ace/1.1.8;path:=/libs/jslibs/ace/1.1.8;overwrite:=true;ignoreImportProviders:="json,xml",
+                            root/libs/jslibs/backbone/1.2.0;path:=/libs/jslibs/backbone/1.2.0;overwrite:=true,
+                            root/libs/jslibs/bootstrap/3.3.2;path:=/libs/jslibs/bootstrap/3.3.2;overwrite:=true,
+                            root/libs/jslibs/bootstrap-datetimepicker/4.14.30;path:=/libs/jslibs/bootstrap-datetimepicker/4.14.30;overwrite:=true,
+                            root/libs/jslibs/bootstrap-fileinput/4.1.8;path:=/libs/jslibs/bootstrap-fileinput/4.1.8;overwrite:=true,
+                            root/libs/jslibs/bootstrap-table/1.7.0;path:=/libs/jslibs/bootstrap-table/1.7.0;overwrite:=true,
+                            root/libs/jslibs/jquery/1.11.0;path:=/libs/jslibs/jquery/1.11.0;overwrite:=true,
+                            root/libs/jslibs/jquery/base64;path:=/libs/jslibs/jquery/base64;overwrite:=true,
+                            root/libs/jslibs/jquery/split-pane;path:=/libs/jslibs/jquery/split-pane;overwrite:=true,
+                            root/libs/jslibs/jstree/3.0.9;path:=/libs/jslibs/jstree/3.0.9;overwrite:=true,
+                            root/libs/jslibs/moment/2.10.3;path:=/libs/jslibs/moment/2.10.3;overwrite:=true,
+                            root/libs/jslibs/summernote/0.6.16;path:=/libs/jslibs/summernote/0.6.16;overwrite:=true,
+                            root/libs/jslibs/typeahead/3.1.0;path:=/libs/jslibs/typeahead/3.1.0;overwrite:=true,
+                            root/libs/jslibs/underscore/1.8.3;path:=/libs/jslibs/underscore/1.8.3;overwrite:=true,
+                            root/libs/jslibs/x-editable/1.5.1;path:=/libs/jslibs/x-editable/1.5.1;overwrite:=true
+                        </Sling-Initial-Content>
+                    </instructions>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.citytechinc.maven.plugins</groupId>
+                <artifactId>osgi-bundle-status-maven-plugin</artifactId>
+                <configuration>
+                    <bundleNames>
+                        <bundleName>${bundle.name}</bundleName>
+                    </bundleNames>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>
+

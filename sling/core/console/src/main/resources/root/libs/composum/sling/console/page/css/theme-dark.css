@@ -1,0 +1,56 @@
+body {
+    background-color: #666;
+    color: #eee;
+}
+
+.split-pane.horizontal-split > .split-pane-divider,
+.split-pane.vertical-split > .split-pane-divider {
+    background-color: #666;
+}
+
+.split-pane.horizontal-split > .split-pane-component.right-pane > .close-left a,
+.split-pane.vertical-split > .split-pane-component.bottom-pane > .close-top a,
+.breadcrumbs a {
+    color: #46d;
+}
+.breadcrumbs li:after {
+    color: #ccc;
+}
+
+.text-info,
+a {
+    color: #79f;
+}
+
+.text-muted {
+    color: #ccc;
+}
+
+.node-view-panel.image .node-view-content .detail-content {
+    background-color: #888;
+}
+
+.split-pane.horizontal-split > .split-pane-component.right-pane > .close-left,
+.split-pane.vertical-split > .split-pane-component.bottom-pane > .close-top,
+#browser-query .query-head,
+#browser-view .breadcrumbs,
+#browser-view .node-view-panel .node-tabs,
+.tree-actions {
+    background-color: #aaa;
+}
+
+#browser .split-pane.vertical-split > .split-pane-divider,
+#browser .split-pane.vertical-split,
+#browser-query .query-result  {
+    background-color: #ddd;
+}
+#browser-query .query-result .table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #eee;
+}
+
+.split-pane.horizontal-split > .split-pane-component.right-pane > .close-left:after {
+    border-color: transparent #aaa transparent transparent;
+}
+.split-pane.vertical-split > .split-pane-component.bottom-pane > .close-top:after {
+    border-color: transparent transparent #aaa transparent;
+}

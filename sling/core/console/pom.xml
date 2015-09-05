@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.sling.core</groupId>
+        <artifactId>composum-sling-core-parent</artifactId>
+        <version>1.1.0-SNAPSHOT</version>
+        <relativePath>../.parent</relativePath>
+    </parent>
+
+    <groupId>com.composum.sling.core</groupId>
+    <artifactId>composum-sling-core-console</artifactId>
+    <packaging>bundle</packaging>
+
+    <name>Composum Core Console</name>
+    <description>a set of basig tools: jcr browser, package manager, user manager</description>
+
+    <properties>
+        <bundle.name>com.composum.core.console</bundle.name>
+    </properties>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-scr-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-Category>${bundle.category}</Bundle-Category>
+                        <Bundle-SymbolicName>${bundle.name}</Bundle-SymbolicName>
+                        <Include-Resource>
+                            {maven-resources}
+                        </Include-Resource>
+                        <Sling-Initial-Content>
+                            root/libs/composum/sling/console;path:=/libs/composum/sling/console;overwrite:=true
+                        </Sling-Initial-Content>
+                    </instructions>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.citytechinc.maven.plugins</groupId>
+                <artifactId>osgi-bundle-status-maven-plugin</artifactId>
+                <configuration>
+                    <bundleNames>
+                        <bundleName>${bundle.name}</bundleName>
+                    </bundleNames>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <dependencies>
+
+        <!-- Composum -->
+        <dependency>
+            <groupId>com.composum.sling.core</groupId>
+            <artifactId>composum-sling-core-jslibs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.sling.core</groupId>
+            <artifactId>composum-sling-core-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Sling -->
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.jcr.api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.scripting.jsp</artifactId>
+        </dependency>
+
+        <!-- JCR -->
+        <dependency>
+            <groupId>javax.jcr</groupId>
+            <artifactId>jcr</artifactId>
+        </dependency>
+
+        <!-- JSON -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+
+        <!-- OSGi -->
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.scr.annotations</artifactId>
+        </dependency>
+
+        <!-- Commons -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+        </dependency>
+
+    </dependencies>
+</project>
+

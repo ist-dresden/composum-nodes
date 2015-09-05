@@ -1,0 +1,35 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.sling.parent</groupId>
+        <artifactId>composum-sling-parent</artifactId>
+        <version>2</version>
+        <relativePath>../../.parent</relativePath>
+    </parent>
+
+    <groupId>com.composum.sling.core</groupId>
+    <artifactId>composum-sling-core-parent</artifactId>
+    <packaging>pom</packaging>
+    <version>1.1.0-SNAPSHOT</version>
+
+    <name>Composum Core Parent</name>
+    <description>Maven parent for Composum Sling Core bundles</description>
+
+    <properties>
+        <bundle.category>Composum Core</bundle.category>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.citytechinc.maven.plugins</groupId>
+                <artifactId>osgi-bundle-status-maven-plugin</artifactId>
+                <configuration>
+                    <bundleNames></bundleNames><!-- prevent from errors in reactor build -->
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

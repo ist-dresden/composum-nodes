@@ -1,0 +1,245 @@
+
+.radio-group-widget.form-control {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 6px 2px;
+}
+
+.radio-group-widget > .radio-inline input[type=radio] {
+    margin-top: 2px;
+    font-size: 16px;
+}
+
+/*
+ *
+ */
+
+.text-field-widget {
+}
+
+.number-field-widget input {
+    text-align: right;
+}
+
+.number-field-widget .input-group-addon.spinner {
+    width: 19px;
+    padding: 0 !important;
+}
+
+.number-field-widget .input-group-addon .increment,
+.number-field-widget .input-group-addon .decrement {
+    position: absolute;
+    height: 50%;
+    right: 0;
+    padding: 0 7px;
+    font-size: 10px;
+    line-height: 14px;
+}
+
+.number-field-widget .input-group-addon .increment {
+    top: 0;
+    padding-top: 2px;
+}
+
+.number-field-widget .input-group-addon .decrement {
+    bottom: 0;
+}
+
+/**
+ * Path Widget
+ */
+
+.path-widget button.glyphicon {
+    margin-top: -1px;
+}
+
+/**
+ * Multi Form Widget
+ */
+
+.multi-form-item {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 5px;
+    padding-left: 25px;
+}
+
+.multi-form-item.current {
+}
+
+.multi-form-item .item-select {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    margin: 0;
+    box-shadow: none;
+}
+
+.multi-form-widget .action-bar,
+.property-value-widget .action-bar {
+    padding-top: 2px;
+    padding-left: 25px;
+    border: none;
+}
+
+/**
+ * Tree
+ */
+
+.form-group .tree-panel {
+    position: relative;
+    min-height: 200px;
+    max-height: 350px;
+    overflow: auto;
+    width: 100%;
+    margin: 0 0 0 -5px;
+    padding: 10px;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+    -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+    -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+}
+
+.jstree-contextmenu {
+    z-index: 1;
+}
+
+.jstree-proton-contextmenu li,
+.jstree-proton-contextmenu li a,
+.jstree-proton-contextmenu li a:hover {
+    border: none !important;
+    -moz-border-radius: 0 !important;
+    -webkit-border-radius: 0 !important;
+    border-radius: 0 !important;
+    -moz-box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+}
+
+.jstree-node a {
+    position: relative;
+}
+
+.jstree-node.virtual > a,
+.jstree-node.intermediate > a {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.jstree-node.virtual > a i::after,
+.jstree-node.locked > a i::after {
+    position: absolute;
+    top: 4px;
+    left: -1px;
+}
+
+.jstree-node.locked > a i::after {
+    content: '\f023';
+    opacity: 0.7;
+}
+
+.jstree-node.virtual > a i::after {
+    content: '\f0c1';
+    opacity: 1;
+}
+
+.jstree-node.deep-lock > a i::after {
+    opacity: 1;
+    color: #777; /* mute */
+}
+
+.jstree-node.lock-holder > a i::after {
+    opacity: 1;
+    color: #a94442; /* danger */
+}
+
+/**
+ * Dialogs
+ */
+
+.form-panel label span {
+    font-weight: normal;
+    margin-left: 15px;
+}
+
+.modal-dialog .modal-footer button.delete {
+    float: left;
+}
+
+/*
+ * Breadcrumbs (Arrow via CSS)
+ */
+
+#browser-view .breadcrumbs {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 27px;
+    background-color: #e4e4e4;
+	list-style: none;
+	overflow: hidden;
+	margin: 0;
+	padding: 0 7px;
+	z-index: 7;
+}
+
+#browser-view .breadcrumbs li {
+	float: left;
+}
+
+#browser-view .breadcrumbs li a {
+	text-decoration: none;
+	padding: 4px 0 3px;
+	position: relative;
+	display: block;
+	float: left;
+}
+
+#browser-view .breadcrumbs li:after {
+    content: '/';
+    display: inline-block;
+	padding: 5px 0 2px;
+	margin: 0 3px;
+}
+
+#browser-view .breadcrumbs li:last-child:after {
+    content: none;
+}
+
+/*
+/* background to overlap arrow (after) and arrow (before) */
+/*
+#browser-view .breadcrumbs li a:after,
+#browser-view .breadcrumbs li a:before {
+	content: " ";
+	display: block;
+	width: 0;
+	height: 0;
+	border-top: 16px solid transparent;
+	border-bottom: 16px solid transparent;
+	position: absolute;
+	top: 50%;
+	margin-top: -16px;
+	left: 100%;
+}
+
+#browser-view .breadcrumbs li a:after {
+	border-left: 8px solid #fafafa;
+	z-index: 9;
+}
+
+#browser-view .breadcrumbs li a:before {
+	border-left: 8px solid #aaa;
+	margin-left: 1px;
+	z-index: 8;
+}
+*/
