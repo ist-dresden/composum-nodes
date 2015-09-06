@@ -418,7 +418,7 @@ public class PackageServlet extends AbstractServiceServlet {
             } else {
                 // folders are rendered using the 'list' component in the packages implementation
                 RequestDispatcherOptions options = new RequestDispatcherOptions();
-                options.setForceResourceType("composum/sling/core/package/list");
+                options.setForceResourceType("composum/sling/console/package/list");
                 dispatcher = request.getRequestDispatcher(resource, options);
             }
 

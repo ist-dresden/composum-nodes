@@ -32,3 +32,11 @@ p name {
 p name huge {
     font-size: 120%;
 }
+
+.tab-content > div {
+    border-bottom: 1px solid #ddd;
+}
+
+.tab-content > div > img {
+    margin: 4px 0;
+}

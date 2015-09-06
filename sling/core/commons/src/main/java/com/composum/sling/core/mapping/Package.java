@@ -30,7 +30,7 @@ import java.util.zip.ZipEntry;
  */
 public class Package {
 
-    public static final String RESOURCE_TYPE_PACKAGE = "composum/sling/core/package";
+    public static final String RESOURCE_TYPE_PACKAGE = "composum/sling/console/package";
     public static final String RESOURCE_TYPE_PACKAGE_PATH = RESOURCE_TYPE_PACKAGE + "/path";
 
     public static class PackagePath {

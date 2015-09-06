@@ -27,12 +27,40 @@
       <div class="row">
         <div class="left col-md-3 col-sm-4 col-xs-12">
           <a href="/bin/browser.html"><h2>the Browser</h2></a>
+          <p>
+            <ul class="list-group">
+              <li class="list-group-item">repository tree with configurable filters</li>
+              <li class="list-group-item">node creation / deletion / move / reorder</li>
+              <li class="list-group-item">property manipulation</li>
+              <li class="list-group-item">binary data upload / download</li>
+              <li class="list-group-item">component rendering and asset view</li>
+              <li class="list-group-item">template based queries with history</li>
+              <li class="list-group-item">JSON view, download and upload</li>
+              <li class="list-group-item">ACL view and manipulation</li>
+            </ul>
+          </p>
         </div>
         <div class="main col-md-9 col-sm-8 col-xs-12">
           <section>
             <p>
               With the browser you can deep dive through your respository.
             </p>
+            <ul class="nav nav-tabs">
+              <li class="active"><a data-toggle="pill" href="#browser-props">Repository Browser</a></li>
+              <li><a data-toggle="pill" href="#browser-view">Render / Image View</a></li>
+              <li><a data-toggle="pill" href="#browser-code">Code View and Editing</a></li>
+            </ul>
+            <div class="tab-content">
+              <div id="browser-props" class="tab-pane fade active in">
+                <img class="img-responsive" src="/libs/composum/sling/console/guide/browser/images/browser-props.png" alt="Repository Browser and Query View" />
+              </div>
+              <div id="browser-view" class="tab-pane fade">
+                <img class="img-responsive" src="/libs/composum/sling/console/guide/browser/images/browser-view.png" alt="Repository Browser Render View" />
+              </div>
+              <div id="browser-code" class="tab-pane fade">
+                <img class="img-responsive" src="/libs/composum/sling/console/guide/browser/images/browser-code.png" alt="Repository Browser Code View" />
+              </div>
+            </div>
           </section>
         </div>
       </div>

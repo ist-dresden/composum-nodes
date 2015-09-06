@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 )
 public class BrowserServlet extends SlingSafeMethodsServlet {
 
-    public static final Pattern PATH_PATTERN = Pattern.compile("^(/bin/browser(\\.[^/]+)?\\.(html|json))(/.*)?$");
+    public static final Pattern PATH_PATTERN = Pattern.compile("^(/bin/browser(\\.[^/]+)?\\.html)(/.*)?$");
 
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
