@@ -319,8 +319,7 @@
                 var values = this.$('input[name="value"]');
                 for (var i=0; i < values.length; i++) {
                     var v = this.getWidgetValue ($(values[i]));
-                    if (i < values.length - 1 || (v !== undefined &&
-                           (typeof v !== 'string' || v.trim().length > 0))) {
+                    if (i < values.length - 1 || (v !== undefined)) {
                         value[i] = v;
                     }
                 }
