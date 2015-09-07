@@ -8,12 +8,21 @@ import com.composum.sling.core.servlet.PackageServlet;
 import com.composum.sling.core.servlet.PropertyServlet;
 import com.composum.sling.core.servlet.SecurityServlet;
 import com.composum.sling.core.servlet.SystemServlet;
+import com.composum.sling.core.util.ResourceUtil;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.request.RequestPathInfo;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.osgi.service.component.ComponentContext;
 
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import java.io.IOException;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +31,6 @@ import java.util.Map;
  * The configuration service for all servlets in the core bundle.
  */
 @Component(
-        name = "ComposumCoreConfiguration",
         label = "Composum Core Configuration",
         description = "the configuration service for all servlets in the core bundle",
         immediate = true,
@@ -40,6 +48,15 @@ public class CoreConfigImpl implements CoreConfiguration {
             longValue = QUERY_RESULT_LIMIT_DEFAULT
     )
     private long queryResultLimit;
+
+    public static final String ERRORPAGES_PATH = "errorpages.path";
+    @Property(
+            name = ERRORPAGES_PATH,
+            label = "Errorpages",
+            description = "the path to the errorpages; e.g. 'meta/errorpages' for searching errorpages along the requested path",
+            value = "meta/errorpages"
+    )
+    private String errorpagesPath;
 
     public static final String PAGE_NODE_FILTER_KEY = "node.page.filter";
     @Property(
@@ -169,11 +186,68 @@ public class CoreConfigImpl implements CoreConfiguration {
         return orderableNodesFilter;
     }
 
+    @Override
+    public Resource getErrorpage(SlingHttpServletRequest request, int status) {
+
+        Resource errorpage = null;
+
+        RequestPathInfo pathInfo = request.getRequestPathInfo();
+        if ("html".equalsIgnoreCase(pathInfo.getExtension())) { // handle page requests only
+
+            ResourceResolver resolver = request.getResourceResolver();
+            if (errorpagesPath.startsWith("/")) {
+                errorpage = resolver.getResource(errorpagesPath + "/" + status);
+            } else {
+                String path = request.getRequestPathInfo().getResourcePath();
+                Resource resource = resolver.resolve(request, path);
+                while (resource == null || ResourceUtil.isNonExistingResource(resource)) {
+                    int lastSlash = path.lastIndexOf('/');
+                    if (lastSlash > 0) {
+                        path = path.substring(0, lastSlash);
+                    } else {
+                        path = "/";
+                    }
+                    resource = resolver.resolve(request, path);
+                }
+                if (resource != null) {
+                    while (errorpage == null && resource != null) {
+                        path = resource.getPath();
+                        if ("/".equals(path)) {
+                            path = "";
+                        }
+                        errorpage = resolver.getResource(path + "/" + errorpagesPath + "/" + status);
+                        if (errorpage == null) {
+                            resource = resource.getParent();
+                        }
+                    }
+                }
+            }
+        }
+        return errorpage;
+    }
+
+    @Override
+    public boolean forwardToErrorpage(SlingHttpServletRequest request,
+                                      SlingHttpServletResponse response, int status)
+            throws ServletException, IOException {
+        Resource errorpage = getErrorpage(request, status);
+        if (errorpage != null) {
+            RequestDispatcher dispatcher = request.getRequestDispatcher(errorpage);
+            dispatcher.forward(request, response);
+            return true;
+        }
+        return false;
+    }
+
     protected Dictionary properties;
 
     protected void activate(ComponentContext context) {
         this.properties = context.getProperties();
         queryResultLimit = PropertiesUtil.toLong(QUERY_RESULT_LIMIT_KEY, QUERY_RESULT_LIMIT_DEFAULT);
+        errorpagesPath = (String) properties.get(ERRORPAGES_PATH);
+        if (errorpagesPath.endsWith("/") && errorpagesPath.length() > 1) {
+            errorpagesPath = errorpagesPath.substring(errorpagesPath.length() - 1);
+        }
         pageNodeFilter = ResourceFilterMapping.fromString(
                 (String) properties.get(PAGE_NODE_FILTER_KEY));
         defaultNodeFilter = ResourceFilterMapping.fromString(
