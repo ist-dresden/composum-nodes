@@ -39,6 +39,8 @@ import java.util.Map;
 @Service
 public class CoreConfigImpl implements CoreConfiguration {
 
+    public static final String ERRORPAGE_STATUS = "errorpage.status";
+
     public static final long QUERY_RESULT_LIMIT_DEFAULT = 500L;
     public static final String QUERY_RESULT_LIMIT_KEY = "query.result.limit";
     @Property(
@@ -72,7 +74,7 @@ public class CoreConfigImpl implements CoreConfiguration {
             name = DEFAULT_NODE_FILTER_KEY,
             label = "The default Node Filter",
             description = "the filter configuration to filter out system nodes",
-            value = "and{Name(-'^rep:(repo)?[Pp]olicy$'),Path(-'^/system(/.*)?$,^/services(/.*)?$,^/bin(/.*)?$')}"
+            value = "and{Name(-'^rep:(repo)?[Pp]olicy$'),Path(-'^/bin(/.*)?$,^/services(/.*)?$,^/servlet(/.*)?$,^/(jcr:)?system(/.*)?$')}"
     )
     private ResourceFilter defaultNodeFilter;
 
@@ -232,6 +234,7 @@ public class CoreConfigImpl implements CoreConfiguration {
             throws ServletException, IOException {
         Resource errorpage = getErrorpage(request, status);
         if (errorpage != null) {
+            request.setAttribute(ERRORPAGE_STATUS, status); // hint for the custom page
             RequestDispatcher dispatcher = request.getRequestDispatcher(errorpage);
             dispatcher.forward(request, response);
             return true;
