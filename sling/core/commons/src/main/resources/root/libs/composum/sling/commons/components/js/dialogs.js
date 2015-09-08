@@ -179,7 +179,7 @@
             if (!this.busy) {
                 this.busy = true;
                 var path = this.getValue();
-                if (path.startsWith('/')) {
+                if (path.indexOf('/') === 0) {
                     $.get('/bin/core/node.tree.json' + path, {
                         }, _.bind (function(data) {
                             this.tree.selectNode.apply (this.tree, [data.path]);

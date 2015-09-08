@@ -210,7 +210,7 @@
             // scan 'data-pattern' attribute
             var pattern = this.$textField.attr('data-pattern');
             if (pattern) {
-                if (pattern.startsWith('/')) { // use this to specify flags
+                if (pattern.indexOf('/') === 0) { // use this to specify flags
                     this.$textField.pattern = eval(pattern);
                 } else { // pure strings can not have additional flags...
                     this.$textField.pattern = new RegExp(pattern);
@@ -335,7 +335,7 @@
                 minLength: 1,
                 source: function (query,callback) {
                     // ensure that query is of a valid path pattern
-                    if (query.startsWith('/')) {
+                    if (query.indexOf('/') === 0) {
                         $.get('/bin/core/node.typeahead.json' + query, {
                             }, function(data) {
                                 callback(data);

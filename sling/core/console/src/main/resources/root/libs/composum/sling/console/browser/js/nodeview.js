@@ -78,7 +78,7 @@
             var selectors = this.$selectors.val();
             if (selectors) {
                 var parts = this.urlPattern.exec(url);
-                while (selectors.startsWith('.')) {
+                while (selectors.indexOf('.') === 0) {
                     selectors = selectors.substring(1);
                 }
                 while (selectors.endsWith('.')) {
@@ -89,7 +89,7 @@
             }
             var params = this.$parameters.val();
             if (params) {
-                if (params.startsWith('?')) {
+                if (params.indexOf('?') === 0) {
                     params = params.substring(1);
                 }
                 url = url + '?' + params;
