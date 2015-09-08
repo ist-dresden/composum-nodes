@@ -3,7 +3,6 @@ package com.composum.sling.core.browser;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.StringFilter;
-import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
@@ -22,6 +21,7 @@ public class Browser extends BrowserBean {
     public static final String TYPE_RESOURCE = "nt:resource";
 
     public static final String HTML = "html";
+    public static final String JSP = "jsp";
 
     public static final String PROP_DATA = "jcr:data";
     public static final String PROP_MIME_TYPE = "jcr:mimeType";
@@ -191,7 +191,9 @@ public class Browser extends BrowserBean {
 
     public boolean isRenderable() {
         if (isRenderable == null) {
-            isRenderable = isTyped() || (isText() && HTML.equals(getNameExtension()));
+            String extension = getNameExtension();
+            isRenderable = isTyped() || (isText() &&
+                    (HTML.equals(extension) /*|| JSP.equals(extension)*/));
         }
         return isRenderable;
     }
