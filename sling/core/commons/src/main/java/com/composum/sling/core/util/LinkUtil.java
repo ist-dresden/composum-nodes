@@ -61,8 +61,13 @@ public class LinkUtil {
     public static String getUrl(SlingHttpServletRequest request, String url,
                                 String selectors, String extension) {
 
-        // rebuild URL if not always an external only
-        if (!URL_PATTERN.matcher(url).matches()) {
+        // skip blank urls
+        if (StringUtils.isBlank(url)) {
+            return url;
+        }
+
+        // rebuild URL if not always external only
+        if (!isExternalUrl(url)) {
 
             ResourceResolver resolver = request.getResourceResolver();
             ResourceHandle resource = ResourceHandle.use(resolver.getResource(url));
@@ -106,6 +111,46 @@ public class LinkUtil {
             }
         }
         return url;
+    }
+
+    /**
+     * Makes a URL already built external; the url should be built by the 'getUrl' method.
+     * @param request the request as the externalization context
+     * @param url the url value (the local URL)
+     * @return
+     */
+    public static String getAbsoluteUrl(SlingHttpServletRequest request, String url) {
+        if (!isExternalUrl(url) && url.startsWith("/")) {
+            String scheme = request.getScheme().toLowerCase();
+            url = scheme + "://" + getAuthority(request) + url;
+        }
+        return url;
+    }
+
+    /**
+     * Builds the 'authority' part (host:port) of an absolute URL.
+     * @param request the current request with the 'host' and 'port' values
+     */
+    public static String getAuthority(SlingHttpServletRequest request) {
+        String host = request.getServerName();
+        int port = request.getServerPort();
+        boolean isSecure = request.isSecure();
+        return port > 0 && ((!isSecure && port != 80) || (isSecure && port != 443))
+                ? (host + ":" + port) : host;
+    }
+
+    /**
+     * Returns 'true' if the url is an 'external' url (starts with 'https?://')
+     */
+    public static boolean isExternalUrl(String url) {
+        return URL_PATTERN.matcher(url).matches();
+    }
+
+    /**
+     * Returns the resource referenced by an URL.
+     */
+    public static Resource resolveUrl(SlingHttpServletRequest request, String url) {
+        return request.getResourceResolver().getResource(url);
     }
 
     /**
