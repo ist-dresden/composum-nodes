@@ -1,0 +1,72 @@
+
+@font-face {
+    font-family: 'roboto_condensedregular';
+    src: url('robotocondensed-regular-webfont.eot');
+    src: url('robotocondensed-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('robotocondensed-regular-webfont.woff2') format('woff2'),
+         url('robotocondensed-regular-webfont.woff') format('woff'),
+         url('robotocondensed-regular-webfont.ttf') format('truetype'),
+         url('robotocondensed-regular-webfont.svg#roboto_condensedregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'roboto_condenseditalic';
+    src: url('robotocondensed-italic-webfont.eot');
+    src: url('robotocondensed-italic-webfont.eot?#iefix') format('embedded-opentype'),
+         url('robotocondensed-italic-webfont.woff2') format('woff2'),
+         url('robotocondensed-italic-webfont.woff') format('woff'),
+         url('robotocondensed-italic-webfont.ttf') format('truetype'),
+         url('robotocondensed-italic-webfont.svg#roboto_condenseditalic') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'roboto_condensedbold';
+    src: url('robotocondensed-bold-webfont.eot');
+    src: url('robotocondensed-bold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('robotocondensed-bold-webfont.woff2') format('woff2'),
+         url('robotocondensed-bold-webfont.woff') format('woff'),
+         url('robotocondensed-bold-webfont.ttf') format('truetype'),
+         url('robotocondensed-bold-webfont.svg#roboto_condensedbold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'roboto_condensedbold_italic';
+    src: url('robotocondensed-bolditalic-webfont.eot');
+    src: url('robotocondensed-bolditalic-webfont.eot?#iefix') format('embedded-opentype'),
+         url('robotocondensed-bolditalic-webfont.woff2') format('woff2'),
+         url('robotocondensed-bolditalic-webfont.woff') format('woff'),
+         url('robotocondensed-bolditalic-webfont.ttf') format('truetype'),
+         url('robotocondensed-bolditalic-webfont.svg#roboto_condensedbold_italic') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'roboto_condensedlight';
+    src: url('robotocondensed-light-webfont.eot');
+    src: url('robotocondensed-light-webfont.eot?#iefix') format('embedded-opentype'),
+         url('robotocondensed-light-webfont.woff2') format('woff2'),
+         url('robotocondensed-light-webfont.woff') format('woff'),
+         url('robotocondensed-light-webfont.ttf') format('truetype'),
+         url('robotocondensed-light-webfont.svg#roboto_condensedlight') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'roboto_condensedlight_italic';
+    src: url('robotocondensed-lightitalic-webfont.eot');
+    src: url('robotocondensed-lightitalic-webfont.eot?#iefix') format('embedded-opentype'),
+         url('robotocondensed-lightitalic-webfont.woff2') format('woff2'),
+         url('robotocondensed-lightitalic-webfont.woff') format('woff'),
+         url('robotocondensed-lightitalic-webfont.ttf') format('truetype'),
+         url('robotocondensed-lightitalic-webfont.svg#roboto_condensedlight_italic') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}

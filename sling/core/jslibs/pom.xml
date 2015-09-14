@@ -37,6 +37,8 @@
                         </Include-Resource>
                         <Sling-Initial-Content>
                             root/libs/fonts/awesome/4.3.0;path:=/libs/fonts/awesome/4.3.0;overwrite:=true,
+                            root/libs/fonts/calligraphic/selection;path:=/libs/fonts/calligraphic/selection;overwrite:=true,
+                            root/libs/fonts/roboto/2014;path:=/libs/fonts/roboto/2014;overwrite:=true,
                             root/libs/jslibs/ace/1.1.8;path:=/libs/jslibs/ace/1.1.8;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/backbone/1.2.0;path:=/libs/jslibs/backbone/1.2.0;overwrite:=true,
                             root/libs/jslibs/bootstrap/3.3.2;path:=/libs/jslibs/bootstrap/3.3.2;overwrite:=true,

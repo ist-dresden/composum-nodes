@@ -1,0 +1,13 @@
+
+@font-face {
+    font-family: 'chantelli_antiquaregular';
+    src: url('chantelli_antiqua-webfont.eot');
+    src: url('chantelli_antiqua-webfont.eot?#iefix') format('embedded-opentype'),
+         url('chantelli_antiqua-webfont.woff2') format('woff2'),
+         url('chantelli_antiqua-webfont.woff') format('woff'),
+         url('chantelli_antiqua-webfont.ttf') format('truetype'),
+         url('chantelli_antiqua-webfont.svg#chantelli_antiquaregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
