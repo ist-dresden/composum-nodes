@@ -1,0 +1,12 @@
+
+@font-face {
+    font-family: 'alex_brushregular';
+    src: url('alexbrush-regular-webfont.eot');
+    src: url('alexbrush-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('alexbrush-regular-webfont.woff2') format('woff2'),
+         url('alexbrush-regular-webfont.woff') format('woff'),
+         url('alexbrush-regular-webfont.ttf') format('truetype'),
+         url('alexbrush-regular-webfont.svg#alex_brushregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}

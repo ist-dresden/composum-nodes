@@ -1,0 +1,48 @@
+
+@font-face {
+    font-family: 'teutonic_no1demibold';
+    src: url('teutonic1-webfont.eot');
+    src: url('teutonic1-webfont.eot?#iefix') format('embedded-opentype'),
+         url('teutonic1-webfont.woff2') format('woff2'),
+         url('teutonic1-webfont.woff') format('woff'),
+         url('teutonic1-webfont.ttf') format('truetype'),
+         url('teutonic1-webfont.svg#teutonic_no1demibold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'teutonic_no2demibold';
+    src: url('teutonic2-webfont.eot');
+    src: url('teutonic2-webfont.eot?#iefix') format('embedded-opentype'),
+         url('teutonic2-webfont.woff2') format('woff2'),
+         url('teutonic2-webfont.woff') format('woff'),
+         url('teutonic2-webfont.ttf') format('truetype'),
+         url('teutonic2-webfont.svg#teutonic_no2demibold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'teutonic_no3demibold';
+    src: url('teutonic3-webfont.eot');
+    src: url('teutonic3-webfont.eot?#iefix') format('embedded-opentype'),
+         url('teutonic3-webfont.woff2') format('woff2'),
+         url('teutonic3-webfont.woff') format('woff'),
+         url('teutonic3-webfont.ttf') format('truetype'),
+         url('teutonic3-webfont.svg#teutonic_no3demibold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'teutonic_no4demibold';
+    src: url('teutonic4-webfont.eot');
+    src: url('teutonic4-webfont.eot?#iefix') format('embedded-opentype'),
+         url('teutonic4-webfont.woff2') format('woff2'),
+         url('teutonic4-webfont.woff') format('woff'),
+         url('teutonic4-webfont.ttf') format('truetype'),
+         url('teutonic4-webfont.svg#teutonic_no4demibold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}

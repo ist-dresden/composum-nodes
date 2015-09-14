@@ -1,0 +1,36 @@
+
+@font-face {
+    font-family: 'kingthings_calligraphica_2Rg';
+    src: url('kingthings_calligraphica_2-webfont.eot');
+    src: url('kingthings_calligraphica_2-webfont.eot?#iefix') format('embedded-opentype'),
+         url('kingthings_calligraphica_2-webfont.woff2') format('woff2'),
+         url('kingthings_calligraphica_2-webfont.woff') format('woff'),
+         url('kingthings_calligraphica_2-webfont.ttf') format('truetype'),
+         url('kingthings_calligraphica_2-webfont.svg#kingthings_calligraphica_2Rg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'kingthings_callicalligraphica';
+    src: url('kingthings_calligraphica_italic-webfont.eot');
+    src: url('kingthings_calligraphica_italic-webfont.eot?#iefix') format('embedded-opentype'),
+         url('kingthings_calligraphica_italic-webfont.woff2') format('woff2'),
+         url('kingthings_calligraphica_italic-webfont.woff') format('woff'),
+         url('kingthings_calligraphica_italic-webfont.ttf') format('truetype'),
+         url('kingthings_calligraphica_italic-webfont.svg#kingthings_callicalligraphica') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'kingthings_calligraphica_liLt';
+    src: url('kingthings_calligraphica_light-webfont.eot');
+    src: url('kingthings_calligraphica_light-webfont.eot?#iefix') format('embedded-opentype'),
+         url('kingthings_calligraphica_light-webfont.woff2') format('woff2'),
+         url('kingthings_calligraphica_light-webfont.woff') format('woff'),
+         url('kingthings_calligraphica_light-webfont.ttf') format('truetype'),
+         url('kingthings_calligraphica_light-webfont.svg#kingthings_calligraphica_liLt') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
