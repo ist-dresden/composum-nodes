@@ -7,8 +7,12 @@ import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.stream.JsonWriter;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
+import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
+import org.apache.jackrabbit.api.security.principal.PrincipalManager;
+import org.apache.jackrabbit.commons.jackrabbit.authorization.AccessControlUtils;
+import org.apache.jackrabbit.value.StringValue;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -17,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.security.AccessControlEntry;
 import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
@@ -28,6 +33,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The service servlet to retrieve all general system settings.
@@ -111,19 +119,31 @@ public class SecurityServlet extends AbstractServiceServlet {
     public class PutAccessPolicy implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
+        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                         final ResourceHandle resource)
                 throws ServletException, IOException {
 
             try {
-                ResourceResolver resolver = request.getResourceResolver();
-                Session session = resolver.adaptTo(Session.class);
-                AccessControlManager acManager = session.getAccessControlManager();
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final AccessControlManager acManager = session.getAccessControlManager();
+                final PrincipalManager principalManager = session.getPrincipalManager();
 
-                String path = AbstractServiceServlet.getPath(request);
-                AccessPolicyEntry entry = getJsonObject(request, AccessPolicyEntry.class);
+                final String path = AbstractServiceServlet.getPath(request);
+                final AccessPolicyEntry entry = getJsonObject(request, AccessPolicyEntry.class);
+                final JackrabbitAccessControlList policy = AccessControlUtils.getAccessControlList(acManager, path);
+                final Principal principal = principalManager.getPrincipal(entry.principal);
+                final Privilege[] privileges = AccessControlUtils.privilegesFromNames(acManager, entry.privileges);
 
-            } catch (RepositoryException ex) {
+                final Map<String, Value> restrictions = new HashMap<>();
+                for (final String restriction : entry.restrictions) {
+                    final Value v = new StringValue(restriction.substring(restriction.indexOf('=') + 1));
+                    restrictions.put(restriction.substring(0, restriction.indexOf('=')), v);
+                }
+                policy.addEntry(principal, privileges, entry.allow, restrictions);
+                acManager.setPolicy(path, policy);
+                session.save();
+            } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
             }
@@ -136,21 +156,79 @@ public class SecurityServlet extends AbstractServiceServlet {
     public class RemoveAccessPolicy implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
-                throws ServletException, IOException {
-
+        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws ServletException, IOException {
             try {
-                ResourceResolver resolver = request.getResourceResolver();
-                Session session = resolver.adaptTo(Session.class);
-                AccessControlManager acManager = session.getAccessControlManager();
+                final ResourceResolver resolver = request.getResourceResolver();
+                final Session session = resolver.adaptTo(Session.class);
+                final AccessControlManager acManager = session.getAccessControlManager();
 
-                String path = AbstractServiceServlet.getPath(request);
-                AccessPolicyEntry[] entries = getJsonObject(request, AccessPolicyEntry[].class);
-
-            } catch (RepositoryException ex) {
+                final String path = AbstractServiceServlet.getPath(request);
+                final AccessPolicyEntry[] entries = getJsonObject(request, AccessPolicyEntry[].class);
+                final JackrabbitAccessControlList policy = AccessControlUtils.getAccessControlList(acManager, path);
+                for (final AccessPolicyEntry entrySendFromClient : entries) {
+                    for (final AccessControlEntry entry : policy.getAccessControlEntries()) {
+                        final JackrabbitAccessControlEntry jrEntry = (JackrabbitAccessControlEntry) entry;
+                        final String p1 = jrEntry.getPrincipal().getName();
+                        final String p2 = entrySendFromClient.principal;
+                        final boolean a1 = jrEntry.isAllow();
+                        final boolean a2 = entrySendFromClient.allow;
+                        if (p1.equals(p2) && a1 == a2) {
+                            if (samePrivileges(jrEntry, entrySendFromClient) && sameRestrictions(jrEntry, entrySendFromClient)) {
+                                policy.removeAccessControlEntry(entry);
+                            }
+                        }
+                    }
+                }
+                acManager.setPolicy(path, policy);
+                session.save();
+            } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+
+        private boolean samePrivileges(final JackrabbitAccessControlEntry jrEntry,
+                final AccessPolicyEntry entrySendFromClient) {
+            if (jrEntry.getPrivileges().length != entrySendFromClient.privileges.length) {
+                return false;
+            } else {
+                for (final Privilege privilegeDefined : jrEntry.getPrivileges()) {
+                    boolean privilegeFound = false;
+                    for (final String privilegeFromClient : entrySendFromClient.privileges) {
+                        if (privilegeDefined.getName().equals(privilegeFromClient)) {
+                            privilegeFound = true;
+                            break;
+                        }
+                    }
+                    if (!privilegeFound) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+
+        private boolean sameRestrictions(final JackrabbitAccessControlEntry jrEntry,
+                final AccessPolicyEntry entrySendFromClient) throws RepositoryException {
+            if (jrEntry.getRestrictionNames().length != entrySendFromClient.restrictions.length) {
+                return false;
+            } else {
+                for (final String restrictionName : jrEntry.getRestrictionNames()) {
+                    final String restrictionDefined =
+                            restrictionName + "=" + jrEntry.getRestriction(restrictionName).getString();
+                    boolean restrictionFound = false;
+                    for (final String restrictionFromClient : entrySendFromClient.restrictions) {
+                        if (restrictionFromClient.equals(restrictionDefined)) {
+                            restrictionFound = true;
+                            break;
+                        }
+                    }
+                    if (!restrictionFound) {
+                        return false;
+                    }
+                }
+                return true;
             }
         }
     }
