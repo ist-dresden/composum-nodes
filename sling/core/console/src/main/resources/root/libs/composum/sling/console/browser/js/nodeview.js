@@ -308,12 +308,63 @@
             core.components.Dialog.prototype.initialize.apply(this, [options]);
             this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
             this.rule = core.getWidget(this.el, '.rule .radio-group-widget', core.components.RadioGroupWidget);
+            this.$('button.save').click(_.bind (this.saveACL, this));
         },
 
         reset: function() {
             core.components.Dialog.prototype.reset.apply(this);
             this.rule.setValue('allow');
+        },
+
+        saveACL: function() {
+//            debugger;
+            var path = browser.getCurrentPath();
+
+            function privilegeValues(arrayOfSelects) {
+                var stringValues = [];
+                for (var i=0; i < arrayOfSelects.length; i++) {
+                    stringValues[i] = $(arrayOfSelects[i]).val();
+                }
+                return stringValues;
+            }
+
+            function restrictionValues(arrayOfSelects) {
+                var restrictionStrings = [];
+                for (var i=0; i< arrayOfSelects.length; i++) {
+                    var key = $(arrayOfSelects[i]).val();
+                    var value = $(arrayOfSelects[i]).parent().find('input[name="restrictionValue"]').val();
+                    restrictionStrings[i] = key + '=' + value;
+                }
+                return restrictionStrings;
+            }
+
+            var privilegeStrings = privilegeValues($('select[name="privilege"]'));
+            var restrictionStrings = restrictionValues($('select[name="restrictionKey"]'));
+
+            $.ajax({
+                url: "/bin/core/security.accessPolicy.json" + path,
+                data: JSON.stringify({
+                    principal: $(".form-control[name='principal']")[0].value,
+                    allow: $(".form-control>div.allow input")[0].checked,
+                    privileges: privilegeStrings,
+                    restrictions: restrictionStrings,
+                    path: path
+                }),
+                dataType: 'json',
+                type: 'PUT',
+                success: _.bind (function (result) {
+                    this.hide();
+                }, this),
+                error: _.bind (function (result) {
+                    if (result.status < 200 || result.status > 299) {
+                        core.alert('danger', 'Error', 'Error on adding access policy entries', result);
+                    } else {
+                        this.hide();
+                    }
+                }, this)
+            });
         }
+
     });
 
     browser.openAccessPolicyEntryDialog = function(callback) {
@@ -369,7 +420,11 @@
                         this.reload();
                     }, this),
                     error: _.bind (function (result) {
-                        core.alert ('danger', 'Error', 'Error on removing access policy entries', result);
+                        if (result.status < 200 || result.status > 299) {
+                            core.alert('danger', 'Error', 'Error on removing access policy entries', result);
+                        } else {
+                            this.reload();
+                        }
                     }, this)
                 });
             }
