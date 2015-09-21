@@ -8,9 +8,9 @@
       <div class="editor-toolbar detail-toolbar">
       <div class="btn-group btn-group-sm" role="group">
         <div class="search input-group input-group-sm">
-          <input type="text" class="form-control" placeholder="search in text">
-          <span class="fa fa-chevron-left input-group-addon" title="find previous"></span>
-          <span class="fa fa-chevron-right input-group-addon" title="find next"></span>
+          <input type="text" class="find-text form-control" placeholder="search in text">
+          <span class="find-prev fa fa-chevron-left input-group-addon" title="find previous"></span>
+          <span class="find-next fa fa-chevron-right input-group-addon" title="find next"></span>
         </div>
       </div>
         <div class="btn-group btn-group-sm" role="group">

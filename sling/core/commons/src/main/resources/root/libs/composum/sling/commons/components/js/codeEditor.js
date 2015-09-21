@@ -17,11 +17,25 @@
 
         initialize: function(options) {
             this.$editor = this.$('.code-editor');
+            this.$findText = this.$('.search .find-text');
+            this.$findNext = this.$('.search .find-next');
+            this.$findPrev = this.$('.search .find-prev');
             this.initEditor(_.bind(function(data) {
                 this.ace.setReadOnly(true);
                 this.ace.navigateFileStart();
             }, this));
             this.$('.editor-toolbar .start-editing').click(_.bind(this.openEditDialog, this));
+            this.searchOptions = {
+                wrap: true
+            };
+            this.$findText.keypress(_.bind (function(event) {
+                if (event.which == 13) {
+                    event.preventDefault();
+                    this.findText();
+                }
+            }, this));
+            this.$findNext.click(_.bind(this.findNext, this));
+            this.$findPrev.click(_.bind(this.findPrev, this));
         },
 
         initEditor: function(onSuccess) {
@@ -96,6 +110,23 @@
 
         reset: function() {
             this.ace.setValue('');
+        },
+
+        findText: function(text) {
+            if (!text) {
+                text = this.$findText.val();
+            }
+            if (text) {
+                this.ace.findAll(text, this.searchOptions, true);
+            }
+        },
+
+        findNext: function() {
+            this.ace.findNext (null, false);
+        },
+
+        findPrev: function() {
+            this.ace.findPrevious (null, false);
         }
     });
 
