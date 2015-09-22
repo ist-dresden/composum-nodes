@@ -36,32 +36,6 @@
               <div class="multi-form-content">
                 <div class="multi-form-item">
                   <select name="privilege" class="widget combo-box-widget form-control">
-                    <option value="jcr:read">jcr:read</option>
-                    <option value="jcr:modifyProperties">jcr:modifyProperties</option>
-                    <option value="jcr:addChildNodes">jcr:addChildNodes</option>
-                    <option value="jcr:removeNode">jcr:removeNode</option>
-                    <option value="jcr:removeChildNodes">jcr:removeChildNodes</option>
-                    <option value="jcr:readAccessControl">jcr:readAccessControl</option>
-                    <option value="jcr:modifyAccessControl">jcr:modifyAccessControl</option>
-                    <option value="jcr:lockManagement">jcr:lockManagement</option>
-                    <option value="jcr:versionManagement">jcr:versionManagement</option>
-                    <option value="jcr:nodeTypeManagement">jcr:nodeTypeManagement</option>
-                    <option value="jcr:retentionManagement">jcr:retentionManagement</option>
-                    <option value="jcr:lifecycleManagement">jcr:lifecycleManagement</option>
-                    <option value="jcr:write">jcr:write</option>
-                    <option value="jcr:all">jcr:all</option>
-                    <option value="jcr:workspaceManagement">jcr:workspaceManagement</option>
-                    <option value="jcr:nodeTypeDefinitionManagement">jcr:nodeTypeDefinitionManagement</option>
-                    <option value="jcr:namespaceManagement">jcr:namespaceManagement</option>
-                    <option value="rep:write">rep:write</option>
-                    <option value="rep:privilegeManagement">rep:privilegeManagement</option>
-                    <option value="rep:userManagement">rep:userManagement</option>
-                    <option value="rep:readNodes">rep:readNodes</option>
-                    <option value="rep:readProperties">rep:readProperties</option>
-                    <option value="rep:addProperties">rep:addProperties</option>
-                    <option value="rep:alterProperties">rep:alterProperties</option>
-                    <option value="rep:removeProperties">rep:removeProperties</option>
-                    <option value="rep:indexDefinitionManagement">rep:indexDefinitionManagement</option>
                   </select>
                 </div>
               </div>
@@ -71,9 +45,9 @@
               <div class="multi-form-content">
                 <div class="multi-form-item">
                   <select name="restrictionKey" class="key widget combo-box-widget form-control">
-                    <option value="rep:glob">rep:glob</option>
-                    <option value="rep:ntNames">rep:ntNames</option>
-                    <option value="rep:prefixes">rep:prefixes</option>
+                    <%--<option value="rep:glob">rep:glob</option>--%>
+                    <%--<option value="rep:ntNames">rep:ntNames</option>--%>
+                    <%--<option value="rep:prefixes">rep:prefixes</option>--%>
                   </select>
                   <input name="restrictionValue" class="value widget text-widget form-control" type="text">
                 </div>

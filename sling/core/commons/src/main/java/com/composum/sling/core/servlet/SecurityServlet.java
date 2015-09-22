@@ -2,6 +2,7 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.stream.JsonWriter;
@@ -22,20 +23,13 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
-import javax.jcr.security.AccessControlEntry;
-import javax.jcr.security.AccessControlList;
-import javax.jcr.security.AccessControlManager;
-import javax.jcr.security.AccessControlPolicy;
-import javax.jcr.security.AccessControlPolicyIterator;
-import javax.jcr.security.NamedAccessControlPolicy;
-import javax.jcr.security.Privilege;
+import javax.jcr.security.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The service servlet to retrieve all general system settings.
@@ -61,7 +55,7 @@ public class SecurityServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {accessPolicy, accessPolicies, allPolicies, reorder}
+    public enum Operation {accessPolicy, accessPolicies, allPolicies, reorder, supportedPrivileges, restrictionNames}
 
     protected ServletOperationSet operations = new ServletOperationSet(Extension.json);
 
@@ -88,6 +82,10 @@ public class SecurityServlet extends AbstractServiceServlet {
                 Operation.allPolicies, new GetAllAccessPolicies());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.html,
                 Operation.allPolicies, new GetHtmlAccessRules());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.supportedPrivileges, new SupportedPrivileges());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.restrictionNames, new RestrictionNames());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
@@ -116,6 +114,54 @@ public class SecurityServlet extends AbstractServiceServlet {
     //
     // Access Control
     //
+
+    public class RestrictionNames implements ServletOperation {
+
+        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                final ResourceHandle resource) throws IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final AccessControlManager acManager = session.getAccessControlManager();
+                final String path = AbstractServiceServlet.getPath(request);
+                final JackrabbitAccessControlList policy = AccessControlUtils.getAccessControlList(acManager, path);
+                String[] restrictionNames = policy.getRestrictionNames();
+                Arrays.sort(restrictionNames);
+                final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                response.setStatus(HttpServletResponse.SC_OK);
+                JsonUtil.writeJsonArray(jsonWriter, restrictionNames);
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
+
+    public class SupportedPrivileges implements ServletOperation {
+
+        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                final ResourceHandle resource) throws IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final AccessControlManager acManager = session.getAccessControlManager();
+                final String path = AbstractServiceServlet.getPath(request);
+
+                final Privilege[] supportedPrivileges = acManager.getSupportedPrivileges(path);
+                final List<String> privilegeNames = new ArrayList<>(supportedPrivileges.length);
+                for (final Privilege privilege : supportedPrivileges) {
+                    privilegeNames.add(privilege.getName());
+                }
+                Collections.sort(privilegeNames);
+                final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                response.setStatus(HttpServletResponse.SC_OK);
+                JsonUtil.writeJsonArray(jsonWriter, privilegeNames.iterator());
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
 
     public class ReorderOperation implements ServletOperation {
 

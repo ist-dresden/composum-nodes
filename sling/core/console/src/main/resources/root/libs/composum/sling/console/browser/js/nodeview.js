@@ -312,7 +312,11 @@
             core.components.Dialog.prototype.initialize.apply(this, [options]);
             this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
             this.rule = core.getWidget(this.el, '.rule .radio-group-widget', core.components.RadioGroupWidget);
+            this.$privilege = this.$('select[name="privilege"]');
+            this.$restriction = this.$('select[name="restrictionKey"]');
             this.$('button.save').click(_.bind (this.saveACL, this));
+            this.loadSupportedPrivileges();
+            this.loadRestrictionNames();
         },
 
         reset: function() {
@@ -320,8 +324,23 @@
             this.rule.setValue('allow');
         },
 
+        loadSupportedPrivileges: function() {
+            $.getJSON( "/bin/core/security.supportedPrivileges.json" + browser.getCurrentPath(), _.bind (function(privileges) {
+                for (var i=0; i < privileges.length; i++) {
+                    this.$privilege.append('<option value="' + privileges[i] + '">' + privileges[i] + '</option>');
+                }
+            }, this));
+        },
+
+        loadRestrictionNames: function() {
+            $.getJSON( "/bin/core/security.restrictionNames.json" + browser.getCurrentPath(), _.bind (function(restrictionNames) {
+                for (var i=0; i < restrictionNames.length; i++) {
+                    this.$restriction.append('<option value="' + restrictionNames[i] + '">' + restrictionNames[i] + '</option>');
+                }
+            }, this));
+        },
+
         saveACL: function() {
-//            debugger;
             var path = browser.getCurrentPath();
 
             function privilegeValues(arrayOfSelects) {
