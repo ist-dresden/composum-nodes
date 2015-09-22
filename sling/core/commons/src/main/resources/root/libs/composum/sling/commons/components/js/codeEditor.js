@@ -20,22 +20,31 @@
             this.$findText = this.$('.search .find-text');
             this.$findNext = this.$('.search .find-next');
             this.$findPrev = this.$('.search .find-prev');
+            this.$matchCase = this.$('.match-case');
+            this.$findRegEx = this.$('.find-regex');
+            this.$replText = this.$('.replace .replace-text');
+            this.$replCurrent = this.$('.replace .replace');
+            this.$replAll = this.$('.replace .replace-all');
             this.initEditor(_.bind(function(data) {
                 this.ace.setReadOnly(true);
                 this.ace.navigateFileStart();
             }, this));
             this.$('.editor-toolbar .start-editing').click(_.bind(this.openEditDialog, this));
             this.searchOptions = {
-                wrap: true
+                wrap: true,
+                caseSensitive: false,
+                regExp: false
             };
+            this.$findText.on('input', _.bind (function(event) {
+                this.findText();
+            }, this));
             this.$findText.keypress(_.bind (function(event) {
-                if (event.which == 13) {
-                    event.preventDefault();
-                    this.findText();
-                }
+                this.findText();
             }, this));
             this.$findNext.click(_.bind(this.findNext, this));
             this.$findPrev.click(_.bind(this.findPrev, this));
+            this.$matchCase.change(_.bind(this.toggleCaseSensitive, this));
+            this.$findRegEx.change(_.bind(this.toggleRegExp, this));
         },
 
         initEditor: function(onSuccess) {
@@ -117,16 +126,32 @@
                 text = this.$findText.val();
             }
             if (text) {
-                this.ace.findAll(text, this.searchOptions, true);
+                this.ace.findAll(text, this.searchOptions, false);
             }
         },
 
         findNext: function() {
-            this.ace.findNext (null, false);
+            this.searchOptions.backwards = false;
+            this.ace.findNext (this.searchOptions, false);
         },
 
         findPrev: function() {
-            this.ace.findPrevious (null, false);
+            this.searchOptions.backwards = true;
+            this.ace.findPrevious (this.searchOptions, false);
+        },
+
+        toggleCaseSensitive: function(event) {
+            this.searchOptions.caseSensitive = event
+                ? event.currentTarget.checked
+                : !this.searchOptions.caseSensitive;
+            this.findText();
+        },
+
+        toggleRegExp: function(event) {
+            this.searchOptions.regExp = event
+                ? event.currentTarget.checked
+                : !this.searchOptions.regExp;
+            this.findText();
         }
     });
 

@@ -7,7 +7,7 @@
        aria-hidden="true">
     <div class="text-editor detail-panel">
       <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content widget code-editor-widget">
 
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -15,13 +15,25 @@
             <h4 class="modal-title"></h4>
           </div>
 
-          <div class="modal-body widget code-editor-widget">
+          <div class="modal-body">
             <div class="code-editor" data-path="${browser.contentResource.path}" data-type="${browser.textType}">
             </div>
           </div>
 
           <div class="modal-footer buttons">
             <div class="toolbar">
+              <div class="search input-group input-group-sm text-group">
+                <input type="text" class="find-text form-control" placeholder="search in text">
+                <span class="find-prev fa fa-chevron-left input-group-addon" title="find previous"></span>
+                <span class="find-next fa fa-chevron-right input-group-addon" title="find next"></span>
+              </div>
+              <input type="checkbox" class="match-case form-control" title="regex"><span class="checkbox-label">match case</span>
+              <input type="checkbox" class="find-regex form-control" title="regex"><span class="checkbox-label">regex</span>
+              <div class="replace input-group input-group-sm text-group">
+                <input type="text" class="replace-text form-control" placeholder="replace with...">
+                <span class="replace fa fa-play input-group-addon" title="replace this"></span>
+                <span class="replace-all fa fa-fast-forward input-group-addon" title="replace all"></span>
+              </div>
             </div>
             <button type="button" class="btn btn-default cancel" data-dismiss="modal">Cancel</button>
             <button type="button" class="btn btn-primary save">Save</button>

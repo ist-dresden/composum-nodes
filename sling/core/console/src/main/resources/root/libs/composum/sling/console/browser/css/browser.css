@@ -605,6 +605,35 @@
 
 #text-edit-dialog .modal-dialog .modal-footer .toolbar {
     float: left;
+    max-width: 75%;
+    padding-top: 3px;
+    height: 32px;
+}
+
+#text-edit-dialog .modal-dialog .modal-footer .toolbar .input-group {
+    float: left;
+}
+
+#text-edit-dialog .modal-dialog .modal-footer .toolbar .text-group {
+    width: 32%;
+}
+
+#text-edit-dialog .modal-dialog .modal-footer .toolbar .text-group.replace {
+    margin-left: 6px;
+}
+
+#text-edit-dialog .modal-dialog .modal-footer .toolbar input[type='checkbox'] {
+    float: left;
+    width: auto;
+    margin: 0 2px 0 7px;
+    box-shadow: none;
+    height: 32px;
+}
+
+#text-edit-dialog .modal-dialog .modal-footer .toolbar .checkbox-label {
+    float: left;
+    line-height: 32px;
+    margin: 0 2px;
 }
 
 /* ACE clouds theme */
