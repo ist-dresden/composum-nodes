@@ -10,7 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
 
 /**
- * the set of rules for filtering durcing the resource hierarchy traversal
+ * the set of rules for filtering during the resource hierarchy traversal
  * TODO: make it configurable via OSGi
  */
 public class MappingRules {
@@ -70,7 +70,7 @@ public class MappingRules {
                             "^/system(/.*)$", "^/services(/.*)$", "^/bin(/.*)$"))
             );
 
-    /** the default filter for export and import - system nodes and servlet pathsare disabled */
+    /** the default filter for export and import - system nodes and servlet paths are disabled */
     public static final ResourceFilter MAPPING_NODE_FILTER =
             new ResourceFilter.PathFilter(new StringFilter.BlackList(
                     "^/system", "^/services", "^/bin")
@@ -154,7 +154,7 @@ public class MappingRules {
     public final ChangeRule changeRule;
 
     /**
-     * Generates a resorce traversal filter for generation JSON objects.
+     * Generates a resource traversal filter for generation JSON objects.
      *
      * @param resourceFilter       the filter for the resources in the hierarchy
      * @param exportPropertyFilter the filter for the properties (their names) of a resource

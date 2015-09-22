@@ -92,7 +92,7 @@ public class Package {
 
     /** the set of mapping rules for the package path elements */
     protected transient Map<String, MappingRules> mappingRules = new HashMap<>();
-    ;
+
 
     public Package(String group, String name, String version,
                    PackageOptions options, PackagePath... pathList) {

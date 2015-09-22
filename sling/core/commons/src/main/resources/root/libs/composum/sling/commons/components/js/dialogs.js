@@ -41,7 +41,7 @@
         },
 
         /**
-         * Resets all form values to an inital or undefined value.
+         * Resets all form values to an initial or undefined value.
          */
         reset: function() {
             this.alert();

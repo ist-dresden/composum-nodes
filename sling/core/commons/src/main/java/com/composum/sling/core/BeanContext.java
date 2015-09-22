@@ -45,12 +45,12 @@ public interface BeanContext {
     Resource getResource();
 
     /**
-     * Returns the requestdeclared in the context.
+     * Returns the request declared in the context.
      */
     SlingHttpServletRequest getRequest();
 
     /**
-     * Returns the responsedeclared in the context.
+     * Returns the response declared in the context.
      */
     SlingHttpServletResponse getResponse();
 

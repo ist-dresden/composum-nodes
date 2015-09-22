@@ -46,7 +46,7 @@ public interface ResourceFilter {
      */
     void toString(StringBuilder builder);
 
-    /** the predefined filter instance which accepts each srring value */
+    /** the predefined filter instance which accepts each string value */
     ResourceFilter ALL = new AllFilter();
 
     /** the predefined filter instance for folders */
@@ -472,7 +472,7 @@ public interface ResourceFilter {
         /**
          * Accepts a value if the combination by the selected rule matches to the resource.
          *
-         * @param resource the resorce object value to check
+         * @param resource the resource object value to check
          * @return 'true', if the resource matches
          */
         @Override

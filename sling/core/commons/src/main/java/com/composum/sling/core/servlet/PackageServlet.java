@@ -310,7 +310,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
     /**
      * the 'upload' operation imports the content of a package in the repository; no
-     * packge object is created in the repository
+     * package object is created in the repository
      */
     protected class UploadOperation implements ServletOperation {
 
@@ -369,7 +369,7 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
     /**
-     * The 'tree' operation genertates al list of package nodes for a package tree view.
+     * The 'tree' operation generates al list of package nodes for a package tree view.
      */
     protected class PackageTreeOperation implements ServletOperation {
 
