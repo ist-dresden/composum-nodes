@@ -51,7 +51,7 @@
             this.horizontalSplit.setPosition(this.horizontalSplit.checkPosition(this.profile.horizontal));
             if (event) {
                 event.preventDefault();
-                this.saveProfile();
+                this.stateChanged();
             }
             return false;
         },
@@ -62,7 +62,7 @@
             this.horizontalSplit.setPosition(0);
             if (event) {
                 event.preventDefault();
-                this.saveProfile();
+                this.stateChanged();
             }
             return false;
         },
@@ -73,7 +73,7 @@
             this.verticalSplit.setPosition(this.verticalSplit.checkPosition(this.profile.vertical));
             if (event) {
                 event.preventDefault();
-                this.saveProfile();
+                this.stateChanged();
             }
             return false;
         },
@@ -84,23 +84,28 @@
             this.verticalSplit.setPosition(0);
             if (event) {
                 event.preventDefault();
-                this.saveProfile();
+                this.stateChanged();
             }
             return false;
         },
 
         onResize: function() {
+            var last = _.clone(this.profile);
             if (this.profile.left) {
                 this.profile.horizontal = this.horizontalSplit.getPosition();
             }
             if (this.profile.top) {
                 this.profile.vertical = this.verticalSplit.getPosition();
             }
-            this.saveProfile();
+            if (!_.isEqual(last,this.profile)) {
+                this.stateChanged();
+            }
         },
 
-        saveProfile: function() {
+        stateChanged: function() {
             core.console.getProfile().set(this.id, 'split', this.profile);
+            this.horizontalSplit.stateChanged();
+            this.verticalSplit.stateChanged();
         }
     });
 
@@ -128,6 +133,15 @@
                 }
             }
             return position;
+        },
+
+        stateChanged: function() {
+            this.$first.children().each(function() {
+                $(this).resize();
+            });
+            this.$second.children().each(function() {
+                $(this).resize();
+            });
         }
     });
 

@@ -174,6 +174,10 @@
 
         reload: function() {
             this.$download.attr('href', this.$('.editor-frame .code-editor').attr('data-path'));
+        },
+
+        resize: function() {
+            this.editor.resize();;
         }
     });
 
@@ -464,6 +468,18 @@
                     selector: '> div',
                     tabType: browser.NodeTab
                 }];
+            this.$el.resize(_.bind(this.resize, this));
+        },
+
+        /**
+         * resize trigger handler
+         */
+        resize: function() {
+            if (this.viewWidget) {
+                if (_.isFunction(this.viewWidget.resize)) {
+                    this.viewWidget.resize();
+                }
+            }
         },
 
         /**
