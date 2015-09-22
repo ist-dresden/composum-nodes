@@ -85,7 +85,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     }
 
     /**
-     * Retrieves the resources child resoutrce, creates this child if not existing.
+     * Retrieves the resources child resource, creates this child if not existing.
      *
      * @param resource     the resource to extend
      * @param relPath      the path to the requested child resource

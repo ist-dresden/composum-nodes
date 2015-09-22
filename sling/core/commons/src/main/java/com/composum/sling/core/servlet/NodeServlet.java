@@ -509,7 +509,7 @@ public class NodeServlet extends AbstractServiceServlet {
      * a tree implementation which requests the nodes on demand
      * suffix: the path to the node
      * selectors / parameters:
-     * - 'label': 'name' or 'title' - selects the value to use for the nodex 'text' attribute
+     * - 'label': 'name' or 'title' - selects the value to use for the nodes 'text' attribute
      * URL examples:
      * - http://host/bin/core/node.tree.json/path/to/the/node
      * - http://host/bin/core/node.tree.title.json/path/to/the/node
@@ -545,8 +545,8 @@ public class NodeServlet extends AbstractServiceServlet {
      * operation provides data for reference retrieval (get the node of a reference)
      * suffix: the reference of the node in a 'path notation'
      * selectors / parameters:
-     * - 'label': 'name' or 'title' - selects the value to use for the nodex 'text' attribute
-     * ' 'id': a paremeter with the reference used instead of the id from the suffix
+     * - 'label': 'name' or 'title' - selects the value to use for the nodes 'text' attribute
+     * ' 'id': a parameter with the reference used instead of the id from the suffix
      * URL examples:
      * - http://host/bin/core/node.reference.json/node-id
      * - http://host/bin/core/node.reference.title.json/node-id

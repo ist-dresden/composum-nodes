@@ -220,7 +220,7 @@ public class LinkUtil {
      * The result is always not 'null' and can be added without check; it starts with a '.' if not blank.
      * @param resource the referenced resource
      * @param extension the predefined extension (can be 'null' or blank for determination)
-     * @param detectMimeTypeExtension if 'true' an extension according to the mime type wiil be detected
+     * @param detectMimeTypeExtension if 'true' an extension according to the mime type will be detected
      * @return the string which has to add to the resources path; '' if nothing should add
      */
     public static String getExtension(ResourceHandle resource, String extension, boolean detectMimeTypeExtension) {

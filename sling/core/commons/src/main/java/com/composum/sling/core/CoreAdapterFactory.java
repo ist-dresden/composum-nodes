@@ -48,11 +48,11 @@ public class CoreAdapterFactory implements AdapterFactory {
     }
 
     /**
-     * Verarbeitet <code>resourceHandle.adaptTo(ResourceHandle.class)</code>, indem das Original geliefert wird.
+     * Handles <code>resourceHandle.adaptTo(ResourceHandle.class)</code>.
      *
-     * @param resourceHandle das zu adaptierende Objekt
-     * @param type der Zieltyp
-     * @return das Original
+     * @param resourceHandle Object to adapt
+     * @param type target type
+     * @return original Object
      */
     protected static <AdapterType> AdapterType getAdapter(ResourceHandle resourceHandle, Class<AdapterType> type) {
         if (type == ResourceHandle.class) {
@@ -63,11 +63,11 @@ public class CoreAdapterFactory implements AdapterFactory {
     }
 
     /**
-     * Verarbeitet <code>resource.adaptTo(ResourceHandle.class)</code>, indem das Original gewrappt wird.
+     * Handles <code>resource.adaptTo(ResourceHandle.class)</code>, to wrap a resource with an ResourceHandle.
      *
-     * @param resource das zu adaptierende Objekt
-     * @param type der Zieltyp
-     * @return die gewrappte Resource
+     * @param resource resource to adapt/wrap
+     * @param type target type
+     * @return wrapped resource
      */
     protected static <AdapterType> AdapterType getAdapter(Resource resource, Class<AdapterType> type) {
         if (type == ResourceHandle.class) {

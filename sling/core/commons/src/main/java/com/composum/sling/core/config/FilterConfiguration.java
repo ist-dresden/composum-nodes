@@ -8,7 +8,7 @@ import com.composum.sling.core.filter.ResourceFilter;
 public interface FilterConfiguration {
 
     /**
-     * the name to identify and select a configred filter
+     * the name to identify and select a configured filter
      */
     String getName();
 

@@ -65,7 +65,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
     }
 
     /**
-     * Searchs the value along the repositories hierarchy by the entry point and path determined before.
+     * Searches the value along the repositories hierarchy by the entry point and path determined before.
      *
      * @param name the property name or path
      * @param <T>  the expected type of the value
