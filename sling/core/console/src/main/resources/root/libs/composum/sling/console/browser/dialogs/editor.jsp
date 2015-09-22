@@ -34,6 +34,10 @@
                 <span class="replace fa fa-play input-group-addon" title="replace this"></span>
                 <span class="replace-all fa fa-fast-forward input-group-addon" title="replace all"></span>
               </div>
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="undo fa fa-undo btn btn-default" title="Undo last change"><span class="label">Undo</span></button>
+                <button type="button" class="redo fa fa-repeat btn btn-default" title="Redo last undo"><span class="label">Redo</span></button>
+              </div>
             </div>
             <button type="button" class="btn btn-default cancel" data-dismiss="modal">Cancel</button>
             <button type="button" class="btn btn-primary save">Save</button>

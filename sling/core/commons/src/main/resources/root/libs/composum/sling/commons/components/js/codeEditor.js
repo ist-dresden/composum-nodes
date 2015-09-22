@@ -16,6 +16,7 @@
     components.CodeEditorWidget = Backbone.View.extend({
 
         initialize: function(options) {
+
             this.$editor = this.$('.code-editor');
             this.$findText = this.$('.search .find-text');
             this.$findNext = this.$('.search .find-next');
@@ -25,11 +26,17 @@
             this.$replText = this.$('.replace .replace-text');
             this.$replCurrent = this.$('.replace .replace');
             this.$replAll = this.$('.replace .replace-all');
+            this.$undo = this.$('.undo');
+            this.$redo = this.$('.redo');
+
             this.initEditor(_.bind(function(data) {
                 this.ace.setReadOnly(true);
                 this.ace.navigateFileStart();
             }, this));
+            this.$el.resize(_.bind(this.resize, this));
+
             this.$('.editor-toolbar .start-editing').click(_.bind(this.openEditDialog, this));
+
             this.searchOptions = {
                 wrap: true,
                 caseSensitive: false,
@@ -45,6 +52,11 @@
             this.$findPrev.click(_.bind(this.findPrev, this));
             this.$matchCase.change(_.bind(this.toggleCaseSensitive, this));
             this.$findRegEx.change(_.bind(this.toggleRegExp, this));
+            this.$replCurrent.click(_.bind(this.replace, this));
+            this.$replAll.click(_.bind(this.replaceAll, this));
+
+            this.$undo.click(_.bind(this.undo, this));
+            this.$redo.click(_.bind(this.redo, this));
         },
 
         initEditor: function(onSuccess) {
@@ -121,11 +133,16 @@
             this.ace.setValue('');
         },
 
+        resize: function() {
+            this.ace.resize();
+        },
+
         findText: function(text) {
             if (!text) {
                 text = this.$findText.val();
             }
             if (text) {
+                this.searchOptions.backwards = false;
                 this.ace.findAll(text, this.searchOptions, false);
             }
         },
@@ -152,6 +169,28 @@
                 ? event.currentTarget.checked
                 : !this.searchOptions.regExp;
             this.findText();
+        },
+
+        replace: function() {
+            var text = this.$replText.val();
+            if (text) {
+                this.ace.replace(text, this.searchOptions);
+            }
+        },
+
+        replaceAll: function() {
+            var text = this.$replText.val();
+            if (text) {
+                this.ace.replaceAll(text, this.searchOptions);
+            }
+        },
+
+        undo: function() {
+            this.ace.undo();
+        },
+
+        redo: function() {
+            this.ace.redo();
         }
     });
 
