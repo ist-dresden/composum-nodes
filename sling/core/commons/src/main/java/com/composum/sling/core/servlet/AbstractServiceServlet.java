@@ -14,10 +14,8 @@ import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
+import java.lang.reflect.Type;
 
 /**
  * A basic class for all '/bin/{service}/path/to/resource' servlets.
@@ -130,6 +128,14 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     public static <T> T getJsonObject(SlingHttpServletRequest request, Class<T> type) throws IOException {
         InputStream inputStream = request.getInputStream();
         Reader inputReader = new InputStreamReader(inputStream, MappingRules.CHARSET.name());
+        // parse JSON input into a POJO of the requested type
+        Gson gson = JsonUtil.GSON_BUILDER.create();
+        T object = gson.fromJson(inputReader, type);
+        return object;
+    }
+
+    public static <T> T getJsonObject(String input, Class<T> type) throws IOException {
+        Reader inputReader = new StringReader(input);
         // parse JSON input into a POJO of the requested type
         Gson gson = JsonUtil.GSON_BUILDER.create();
         T object = gson.fromJson(inputReader, type);

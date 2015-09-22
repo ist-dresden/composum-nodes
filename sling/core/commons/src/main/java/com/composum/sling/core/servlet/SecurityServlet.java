@@ -42,7 +42,7 @@ import java.util.Map;
  */
 @SlingServlet(
         paths = "/bin/core/security",
-        methods = {"GET", "PUT", "DELETE"}
+        methods = {"GET", "POST", "PUT", "DELETE"}
 )
 public class SecurityServlet extends AbstractServiceServlet {
 
@@ -61,7 +61,7 @@ public class SecurityServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {accessPolicy, accessPolicies, allPolicies}
+    public enum Operation {accessPolicy, accessPolicies, allPolicies, reorder}
 
     protected ServletOperationSet operations = new ServletOperationSet(Extension.json);
 
@@ -89,6 +89,10 @@ public class SecurityServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.html,
                 Operation.allPolicies, new GetHtmlAccessRules());
 
+        // POST
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
+                Operation.reorder, new ReorderOperation());
+
         // PUT
         operations.setOperation(ServletOperationSet.Method.PUT, Extension.json,
                 Operation.accessPolicy, new PutAccessPolicy());
@@ -112,6 +116,45 @@ public class SecurityServlet extends AbstractServiceServlet {
     //
     // Access Control
     //
+
+    public class ReorderOperation implements ServletOperation {
+
+        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                final ResourceHandle resource) throws IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final AccessControlManager acManager = session.getAccessControlManager();
+
+                final String path = AbstractServiceServlet.getPath(request);
+
+                final String object = request.getParameter("object");
+                final String before = request.getParameter("before");
+                final AccessPolicyEntry entryObject = getJsonObject(object, AccessPolicyEntry.class);
+                final AccessPolicyEntry entryBefore = getJsonObject(before, AccessPolicyEntry.class);
+                final JackrabbitAccessControlList policy = AccessControlUtils.getAccessControlList(acManager, path);
+                JackrabbitAccessControlEntry b = null;
+                JackrabbitAccessControlEntry o = null;
+                for (AccessControlEntry entry : policy.getAccessControlEntries()) {
+                    final JackrabbitAccessControlEntry jrEntry = (JackrabbitAccessControlEntry) entry;
+                    if (sameEntry(jrEntry, entryBefore)) {
+                        b = jrEntry;
+                    }
+                    if (sameEntry(jrEntry, entryObject)) {
+                        o = jrEntry;
+                    }
+                }
+                if (o != null){
+                    policy.orderBefore(o, b);
+                    acManager.setPolicy(path, policy);
+                    session.save();
+                }
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
 
     /**
      * create a new AccessControlEntry
@@ -169,14 +212,8 @@ public class SecurityServlet extends AbstractServiceServlet {
                 for (final AccessPolicyEntry entrySendFromClient : entries) {
                     for (final AccessControlEntry entry : policy.getAccessControlEntries()) {
                         final JackrabbitAccessControlEntry jrEntry = (JackrabbitAccessControlEntry) entry;
-                        final String p1 = jrEntry.getPrincipal().getName();
-                        final String p2 = entrySendFromClient.principal;
-                        final boolean a1 = jrEntry.isAllow();
-                        final boolean a2 = entrySendFromClient.allow;
-                        if (p1.equals(p2) && a1 == a2) {
-                            if (samePrivileges(jrEntry, entrySendFromClient) && sameRestrictions(jrEntry, entrySendFromClient)) {
-                                policy.removeAccessControlEntry(entry);
-                            }
+                        if (sameEntry(jrEntry, entrySendFromClient)) {
+                            policy.removeAccessControlEntry(entry);
                         }
                     }
                 }
@@ -188,49 +225,6 @@ public class SecurityServlet extends AbstractServiceServlet {
             }
         }
 
-        private boolean samePrivileges(final JackrabbitAccessControlEntry jrEntry,
-                final AccessPolicyEntry entrySendFromClient) {
-            if (jrEntry.getPrivileges().length != entrySendFromClient.privileges.length) {
-                return false;
-            } else {
-                for (final Privilege privilegeDefined : jrEntry.getPrivileges()) {
-                    boolean privilegeFound = false;
-                    for (final String privilegeFromClient : entrySendFromClient.privileges) {
-                        if (privilegeDefined.getName().equals(privilegeFromClient)) {
-                            privilegeFound = true;
-                            break;
-                        }
-                    }
-                    if (!privilegeFound) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }
-
-        private boolean sameRestrictions(final JackrabbitAccessControlEntry jrEntry,
-                final AccessPolicyEntry entrySendFromClient) throws RepositoryException {
-            if (jrEntry.getRestrictionNames().length != entrySendFromClient.restrictions.length) {
-                return false;
-            } else {
-                for (final String restrictionName : jrEntry.getRestrictionNames()) {
-                    final String restrictionDefined =
-                            restrictionName + "=" + jrEntry.getRestriction(restrictionName).getString();
-                    boolean restrictionFound = false;
-                    for (final String restrictionFromClient : entrySendFromClient.restrictions) {
-                        if (restrictionFromClient.equals(restrictionDefined)) {
-                            restrictionFound = true;
-                            break;
-                        }
-                    }
-                    if (!restrictionFound) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }
     }
 
     /**
@@ -519,4 +513,63 @@ public class SecurityServlet extends AbstractServiceServlet {
             }
         }
     }
+
+    protected boolean sameEntry(final JackrabbitAccessControlEntry jrEntry,
+            final AccessPolicyEntry entrySendFromClient) throws RepositoryException {
+        final String p1 = jrEntry.getPrincipal().getName();
+        final String p2 = entrySendFromClient.principal;
+        final boolean a1 = jrEntry.isAllow();
+        final boolean a2 = entrySendFromClient.allow;
+        if (p1.equals(p2) && a1 == a2) {
+            if (samePrivileges(jrEntry, entrySendFromClient) && sameRestrictions(jrEntry, entrySendFromClient)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected boolean samePrivileges(final JackrabbitAccessControlEntry jrEntry,
+            final AccessPolicyEntry entrySendFromClient) {
+        if (jrEntry.getPrivileges().length != entrySendFromClient.privileges.length) {
+            return false;
+        } else {
+            for (final Privilege privilegeDefined : jrEntry.getPrivileges()) {
+                boolean privilegeFound = false;
+                for (final String privilegeFromClient : entrySendFromClient.privileges) {
+                    if (privilegeDefined.getName().equals(privilegeFromClient)) {
+                        privilegeFound = true;
+                        break;
+                    }
+                }
+                if (!privilegeFound) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    protected boolean sameRestrictions(final JackrabbitAccessControlEntry jrEntry,
+            final AccessPolicyEntry entrySendFromClient) throws RepositoryException {
+        if (jrEntry.getRestrictionNames().length != entrySendFromClient.restrictions.length) {
+            return false;
+        } else {
+            for (final String restrictionName : jrEntry.getRestrictionNames()) {
+                final String restrictionDefined =
+                        restrictionName + "=" + jrEntry.getRestriction(restrictionName).getString();
+                boolean restrictionFound = false;
+                for (final String restrictionFromClient : entrySendFromClient.restrictions) {
+                    if (restrictionFromClient.equals(restrictionDefined)) {
+                        restrictionFound = true;
+                        break;
+                    }
+                }
+                if (!restrictionFound) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
 }
