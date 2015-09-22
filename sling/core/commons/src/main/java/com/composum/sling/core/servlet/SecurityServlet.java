@@ -218,6 +218,9 @@ public class SecurityServlet extends AbstractServiceServlet {
                     }
                 }
                 acManager.setPolicy(path, policy);
+                if (policy.isEmpty()) {
+                    acManager.removePolicy(path, policy);
+                }
                 session.save();
             } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
