@@ -83,7 +83,7 @@
             this.$('input[name="j_username"]').focus();
         },
 
-        logout: function() {
+        logout: function(event) {
             event.preventDefault();
             core.getHtml('/system/sling/logout.html', undefined, undefined, _.bind (function(data) {
                 this.hide();
@@ -91,7 +91,7 @@
             }, this));
         },
 
-        login: function() {
+        login: function(event) {
             event.preventDefault();
             this.submitForm(undefined, false, _.bind (function() {
                 core.initPermissions();
