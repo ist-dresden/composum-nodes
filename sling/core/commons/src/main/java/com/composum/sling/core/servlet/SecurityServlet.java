@@ -12,6 +12,9 @@ import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.principal.PrincipalManager;
+import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.Query;
+import org.apache.jackrabbit.api.security.user.QueryBuilder;
 import org.apache.jackrabbit.commons.jackrabbit.authorization.AccessControlUtils;
 import org.apache.jackrabbit.value.StringValue;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -55,7 +58,7 @@ public class SecurityServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {accessPolicy, accessPolicies, allPolicies, reorder, supportedPrivileges, restrictionNames}
+    public enum Operation {accessPolicy, accessPolicies, allPolicies, reorder, supportedPrivileges, principals, restrictionNames}
 
     protected ServletOperationSet operations = new ServletOperationSet(Extension.json);
 
@@ -86,6 +89,8 @@ public class SecurityServlet extends AbstractServiceServlet {
                 Operation.supportedPrivileges, new SupportedPrivileges());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.restrictionNames, new RestrictionNames());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.principals, new GetPrincipals());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
@@ -114,6 +119,46 @@ public class SecurityServlet extends AbstractServiceServlet {
     //
     // Access Control
     //
+
+    public class GetPrincipals implements ServletOperation {
+        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                final ResourceHandle resource) throws IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final String path = AbstractServiceServlet.getPath(request);
+                final String name;
+                if (path.startsWith("/")) {
+                    name = path.substring(1);
+                } else {
+                    name = path;
+                }
+                final Query q = new Query() {
+                    @Override public <T> void build(final QueryBuilder<T> builder) {
+                        builder.setCondition(builder.nameMatches(name + "%"));
+                        builder.setSortOrder("@name", QueryBuilder.Direction.ASCENDING);
+                        builder.setSelector(Authorizable.class);
+                    }
+                };
+                final Iterator<Authorizable> principals = session.getUserManager().findAuthorizables(q);
+                final List<String> principalNames = new ArrayList<>();
+                while (principals.hasNext()) {
+                    final Authorizable authorizable = principals.next();
+                    principalNames.add(authorizable.getPrincipal().getName());
+                }
+                if ("everyone".startsWith(name)) {
+                    principalNames.add("everyone");
+                }
+                Collections.sort(principalNames);
+                final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                response.setStatus(HttpServletResponse.SC_OK);
+                JsonUtil.writeJsonArray(jsonWriter, principalNames.iterator());
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
 
     public class RestrictionNames implements ServletOperation {
 

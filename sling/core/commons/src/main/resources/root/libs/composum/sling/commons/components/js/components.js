@@ -190,7 +190,7 @@
         },
 
         reset: function() {
-            this.$el.val(undefined);
+            this.$el.selectedIndex = -1;
         }
     });
 

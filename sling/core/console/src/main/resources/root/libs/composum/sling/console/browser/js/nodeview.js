@@ -312,19 +312,33 @@
             core.components.Dialog.prototype.initialize.apply(this, [options]);
             this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
             this.rule = core.getWidget(this.el, '.rule .radio-group-widget', core.components.RadioGroupWidget);
+            this.$principal = this.$('input[name="principal"]');
             this.$privilege = this.$('select[name="privilege"]');
             this.$restriction = this.$('select[name="restrictionKey"]');
             this.$('button.save').click(_.bind (this.saveACL, this));
-            this.loadSupportedPrivileges();
-            this.loadRestrictionNames();
+            this.$privilegeCombobox = core.getWidget(this.el, this.$privilege, core.components.ComboBoxWidget);
+            this.$restrictionCombobox = core.getWidget(this.el, this.$restriction, core.components.ComboBoxWidget);
+            this.$principal.attr('autocomplete', 'off');
+            this.$principal.typeahead({
+                minLength: 1,
+                source: function (query, callback) {
+                    $.get('/bin/core/security.principals.json/' + query, {
+                    }, function (data) {
+                        callback(data);
+                    });
+                }
+            });
         },
 
         reset: function() {
             core.components.Dialog.prototype.reset.apply(this);
             this.rule.setValue('allow');
+            this.loadSupportedPrivileges();
+            this.loadRestrictionNames();
         },
 
         loadSupportedPrivileges: function() {
+            this.$privilegeCombobox.$el.html('');
             $.getJSON( "/bin/core/security.supportedPrivileges.json" + browser.getCurrentPath(), _.bind (function(privileges) {
                 for (var i=0; i < privileges.length; i++) {
                     this.$privilege.append('<option value="' + privileges[i] + '">' + privileges[i] + '</option>');
@@ -333,11 +347,14 @@
         },
 
         loadRestrictionNames: function() {
+            this.$restrictionCombobox.$el.html('');
+            this.$restriction.append('<option value=""></option>');
             $.getJSON( "/bin/core/security.restrictionNames.json" + browser.getCurrentPath(), _.bind (function(restrictionNames) {
                 for (var i=0; i < restrictionNames.length; i++) {
                     this.$restriction.append('<option value="' + restrictionNames[i] + '">' + restrictionNames[i] + '</option>');
                 }
             }, this));
+            this.$restriction[0].selectedIndex = -1;
         },
 
         saveACL: function() {
@@ -355,8 +372,10 @@
                 var restrictionStrings = [];
                 for (var i=0; i< arrayOfSelects.length; i++) {
                     var key = $(arrayOfSelects[i]).val();
-                    var value = $(arrayOfSelects[i]).parent().find('input[name="restrictionValue"]').val();
-                    restrictionStrings[i] = key + '=' + value;
+                    if (key != '') {
+                        var value = $(arrayOfSelects[i]).parent().find('input[name="restrictionValue"]').val();
+                        restrictionStrings[i] = key + '=' + value;
+                    }
                 }
                 return restrictionStrings;
             }
