@@ -2,6 +2,7 @@
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2"%>
 <sling:defineObjects />
 <sling:call script="dialogs/access-policy-entry.jsp"/>
+<sling:call script="dialogs/node-mixins.jsp"/>
 <sling:call script="dialogs/node-move.jsp"/>
 <sling:call script="dialogs/node-create.jsp"/>
 <sling:call script="dialogs/node-delete.jsp"/>
