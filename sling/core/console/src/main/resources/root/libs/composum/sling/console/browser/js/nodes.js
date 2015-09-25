@@ -17,6 +17,10 @@
         return core.getView('#node-move-dialog', nodes.MoveNodeDialog);
     }
 
+    nodes.getRenameNodeDialog = function() {
+        return core.getView('#node-rename-dialog', nodes.RenameNodeDialog);
+    }
+
     nodes.getNodeMixinsDialog = function() {
         return core.getView('#node-mixins-dialog', nodes.NodeMixinsDialog);
     }
@@ -160,6 +164,55 @@
                         core.alert('danger', 'Error', 'Error on updating mixin entries', result);
                     } else {
                         core.browser.nodeView.reload();
+                        this.hide();
+                    }
+                }, this)
+            });
+
+            return false;
+        }
+    });
+
+    nodes.RenameNodeDialog = core.components.Dialog.extend({
+
+        initialize: function (options) {
+            core.components.Dialog.prototype.initialize.apply(this, [options]);
+            this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+            this.$path = this.$('input[name="path"]');
+            this.$name = this.$('input[name="name"]');
+            this.$newname = core.getWidget(this.el, 'input[name="newname"]', core.components.TextFieldWidget);
+            this.$('button.rename').click(_.bind(this.renameNode, this));
+        },
+
+        reset: function() {
+            core.components.Dialog.prototype.reset.apply(this);
+        },
+
+        setNode: function (node) {
+            this.$path.val(core.getParentPath(node.path));
+            this.$name.val(node.name);
+            this.$newname.setValue(node.name);
+        },
+
+        renameNode: function(event) {
+            event.preventDefault();
+            $.ajax({
+                url: "/bin/core/node.move.json" + this.$path.val() + '/' + this.$name.val(),
+                data: JSON.stringify({
+                    name: this.$newname.getValue(),
+                    path: this.$path.val()
+                }),
+                dataType: 'json',
+                type: 'PUT',
+                success: _.bind (function (result) {
+                    core.browser.tree.refresh();
+                    this.hide();
+                }, this),
+                error: _.bind (function (result) {
+                    if (result.status < 200 || result.status > 299) {
+                        core.alert('danger', 'Error', 'Error on renaming node', result);
+                    } else {
+                        core.browser.tree.refresh();
                         this.hide();
                     }
                 }, this)

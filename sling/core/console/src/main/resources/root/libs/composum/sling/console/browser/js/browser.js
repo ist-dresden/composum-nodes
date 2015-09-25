@@ -94,6 +94,7 @@
             this.tree = browser.tree;
             this.$toggleLock = this.$('a.lock');
             this.$('a.move').on('click', _.bind(this.moveNode, this));
+            this.$('a.rename').on('click', _.bind(this.renameNode, this));
             this.$('a.mixins').on('click', _.bind(this.nodeMixins, this));
             this.$toggleLock.on('click', _.bind(this.toggleLock, this));
             this.$('button.refresh').on('click', _.bind(this.refreshTree, this));
@@ -160,6 +161,13 @@
         moveNode: function(event) {
             event.preventDefault();
             var dialog = core.nodes.getMoveNodeDialog();
+            dialog.show();
+            dialog.setNode(this.tree.current());
+        },
+
+        renameNode: function(event) {
+            event.preventDefault();
+            var dialog = core.nodes.getRenameNodeDialog();
             dialog.show();
             dialog.setNode(this.tree.current());
         },

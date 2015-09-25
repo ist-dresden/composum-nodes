@@ -4,6 +4,7 @@
 <sling:call script="dialogs/access-policy-entry.jsp"/>
 <sling:call script="dialogs/node-mixins.jsp"/>
 <sling:call script="dialogs/node-move.jsp"/>
+<sling:call script="dialogs/node-rename.jsp"/>
 <sling:call script="dialogs/node-create.jsp"/>
 <sling:call script="dialogs/node-delete.jsp"/>
 <sling:call script="dialogs/editor.jsp"/>
