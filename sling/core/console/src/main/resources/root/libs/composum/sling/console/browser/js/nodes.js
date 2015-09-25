@@ -182,6 +182,9 @@
             this.$name = this.$('input[name="name"]');
             this.$newname = core.getWidget(this.el, 'input[name="newname"]', core.components.TextFieldWidget);
             this.$('button.rename').click(_.bind(this.renameNode, this));
+            this.$el.on('shown.bs.modal', function() {
+                $(this).find('input[name="newname"]').focus();
+            });
         },
 
         reset: function() {
