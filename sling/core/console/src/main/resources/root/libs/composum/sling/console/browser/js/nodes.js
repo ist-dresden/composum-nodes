@@ -17,6 +17,10 @@
         return core.getView('#node-move-dialog', nodes.MoveNodeDialog);
     }
 
+    nodes.getNodeMixinsDialog = function() {
+        return core.getView('#node-mixins-dialog', nodes.NodeMixinsDialog);
+    }
+
     nodes.getDeleteNodeDialog = function() {
         return core.getView('#node-delete-dialog', nodes.DeleteNodeDialog);
     }
@@ -89,6 +93,79 @@
         reset: function() {
             core.components.Dialog.prototype.reset.apply(this);
             this.typeChanged();
+        }
+    });
+
+    nodes.NodeMixinsDialog = core.components.Dialog.extend({
+
+        initialize: function(options) {
+            core.components.Dialog.prototype.initialize.apply(this, [options]);
+            this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+            this.$path = this.$('input[name="path"]');
+            this.$multi = core.getWidget(this.el, 'div.multi-form-widget', core.components.MultiFormWidget);
+            this.$('button.submit').click(_.bind(this.saveNode, this));
+        },
+
+        reset: function() {
+            core.components.Dialog.prototype.reset.apply(this);
+        },
+
+        setWidgetValue: function(element, value) {
+            var widget = core.widgetOf(element, this);
+            if (widget && _.isFunction(widget.setValue)) {
+                widget.setValue(value);
+            } else {
+                element.val(value);
+            }
+        },
+
+        setNode: function(node) {
+            this.$path.val(node.path);
+            $.getJSON( "/bin/core/property.get.json" + node.path + "?name=jcr:mixinTypes", _.bind (function(mixins) {
+                this.$multi.reset(mixins.value.length);
+                var values = this.$multi.$('input[name="value"]');
+                for (var i=0; i < mixins.value.length; i++) {
+                    this.setWidgetValue($(values[i]), mixins.value[i]);
+                }
+            }, this));
+        },
+
+        saveNode: function(event) {
+            event.preventDefault();
+            function mixinValues(arrayOfElements) {
+                var stringValues = [];
+                for (var i=0; i < arrayOfElements.length; i++) {
+                    stringValues[i] = $(arrayOfElements[i]).val();
+                }
+                return stringValues;
+            }
+
+            var mixinStrings = mixinValues(this.$('input[name="value"]'));
+
+            $.ajax({
+                url: "/bin/core/property.put.json" + this.$path.val(),
+                data: JSON.stringify({
+                    name: 'jcr:mixinTypes',
+                    multi: true,
+                    value: mixinStrings
+                }),
+                dataType: 'json',
+                type: 'PUT',
+                success: _.bind (function (result) {
+                    core.browser.nodeView.reload();
+                    this.hide();
+                }, this),
+                error: _.bind (function (result) {
+                    if (result.status < 200 || result.status > 299) {
+                        core.alert('danger', 'Error', 'Error on updating mixin entries', result);
+                    } else {
+                        core.browser.nodeView.reload();
+                        this.hide();
+                    }
+                }, this)
+            });
+
+            return false;
         }
     });
 

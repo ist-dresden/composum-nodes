@@ -166,7 +166,9 @@
 
         nodeMixins: function(event) {
             event.preventDefault();
-            core.alert('info', 'Info', 'comming soon');
+            var dialog = core.nodes.getNodeMixinsDialog();
+            dialog.show();
+            dialog.setNode(this.tree.current());
         },
 
         toggleLock: function(event) {
