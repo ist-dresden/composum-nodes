@@ -1,12 +1,9 @@
 package com.composum.sling.core.util;
 
-import com.composum.sling.core.ResourceHandle;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
-import org.apache.sling.api.request.RequestPathInfo;
-import org.apache.sling.api.resource.ResourceResolver;
 
 /**
  * A basic class for all '/bin/{service}/path/to/resource' servlets.
@@ -15,6 +12,7 @@ public class RequestUtil extends org.apache.sling.api.request.RequestUtil {
 
     /**
      * Returns the enum value of the requests extension if appropriate otherwise the default value.
+     *
      * @param request      the request object with the extension info
      * @param defaultValue the default enum value
      * @param <T>          the enum type derived from the default value
@@ -53,6 +51,22 @@ public class RequestUtil extends org.apache.sling.api.request.RequestUtil {
             }
         }
         return defaultValue;
+    }
+
+    /**
+     * Retrieves a key in the selectors and returns 'true' is the key is present.
+     *
+     * @param request the request object with the selector info
+     * @param key     the selector key which is checked
+     */
+    public static boolean checkSelector(SlingHttpServletRequest request, String key) {
+        String[] selectors = request.getRequestPathInfo().getSelectors();
+        for (String selector : selectors) {
+            if (selector.equals(key)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
