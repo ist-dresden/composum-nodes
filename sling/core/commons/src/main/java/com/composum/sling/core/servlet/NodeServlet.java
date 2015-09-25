@@ -73,6 +73,9 @@ public class NodeServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodeServlet.class);
 
+    public static final String FILE_CONTENT_TYPE = "application/binary";
+    public static final String FILE_NAME_EXT = ".json";
+
     /** the possible tree name options */
     public enum LabelType {
         name, title
@@ -1082,6 +1085,17 @@ public class NodeServlet extends AbstractServiceServlet {
                 JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
                 if (indent > 0) {
                     jsonWriter.setIndent(StringUtils.repeat(' ', indent));
+                }
+
+                if (RequestUtil.checkSelector(request, "download")) {
+                    response.setContentType(FILE_CONTENT_TYPE);
+                    String filename = MimeTypeUtil.getFilename(resource, null);
+                    if (!filename.endsWith(FILE_NAME_EXT)) {
+                        filename += FILE_NAME_EXT;
+                    }
+                    if (StringUtils.isNotBlank(filename)) {
+                        response.setHeader("Content-Disposition", "inline; filename=" + filename);
+                    }
                 }
 
                 response.setStatus(HttpServletResponse.SC_OK);

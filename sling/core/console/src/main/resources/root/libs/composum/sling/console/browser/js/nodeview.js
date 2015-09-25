@@ -210,11 +210,11 @@
         },
 
         reload: function() {
-            this.$download.attr('href', this.getUrl(0, 0, 'base64'));
+            this.$download.attr('href', this.getUrl(0, 0, 'base64', true));
             this.$iframe.attr('src', this.getUrl());
         },
 
-        getUrl: function(depth, indent, binary) {
+        getUrl: function(depth, indent, binary, download) {
             if (depth === undefined) {
                 depth = this.depth.getValue();
             }
@@ -225,7 +225,7 @@
                 binary = this.binary.getValue();
             }
             var path = browser.getCurrentPath();
-            var url = '/bin/core/node.' + binary + '.' + depth + '.json' + path;
+            var url = '/bin/core/node.' + (download ? 'download.' : '') + binary + '.' + depth + '.json' + path;
             if (indent > 0) {
                 url += '?indent=' + indent;
             }
