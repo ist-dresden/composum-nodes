@@ -5,13 +5,13 @@
     <parent>
         <groupId>com.composum.sling.core</groupId>
         <artifactId>composum-sling-core-parent</artifactId>
-        <version>1.1.0</version>
+        <version>1.1.1-SNAPSHOT</version>
         <relativePath>../.parent</relativePath>
     </parent>
 
     <groupId>com.composum.sling.core</groupId>
     <artifactId>composum-sling-core-jslibs</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
     <name>Composum Core JS Libraries</name>
