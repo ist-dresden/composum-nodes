@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 /**
  * the set of rules for filtering during the resource hierarchy traversal
  * TODO: make it configurable via OSGi
+ * FIXME: Date formats is not thread safe
  */
 public class MappingRules {
 

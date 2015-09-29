@@ -2,12 +2,7 @@ package com.composum.sling.core;
 
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
-import com.composum.sling.core.servlet.AbstractServiceServlet;
-import com.composum.sling.core.servlet.NodeServlet;
-import com.composum.sling.core.servlet.PackageServlet;
-import com.composum.sling.core.servlet.PropertyServlet;
-import com.composum.sling.core.servlet.SecurityServlet;
-import com.composum.sling.core.servlet.SystemServlet;
+import com.composum.sling.core.servlet.*;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
@@ -150,6 +145,15 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private boolean propertyServletEnabled;
 
+    public static final String VERSION_SERVLET_ENABLED = "version.servlet.enabled";
+    @Property(
+            name = "version.servlet.enabled",
+            label = "Version Servlet",
+            description = "the general on/off switch for the services of the Version Servlet",
+            boolValue = true
+    )
+    private boolean versionServletEnabled;
+
     private Map<Class<? extends AbstractServiceServlet>, Boolean> enabledServlets;
 
     @Override
@@ -272,6 +276,8 @@ public class CoreConfigImpl implements CoreConfiguration {
                 (Boolean) properties.get(NODE_SERVLET_ENABLED));
         enabledServlets.put(PropertyServlet.class, propertyServletEnabled =
                 (Boolean) properties.get(PROPERTY_SERVLET_ENABLED));
+        enabledServlets.put(VersionServlet.class, versionServletEnabled =
+                (Boolean) properties.get(VERSION_SERVLET_ENABLED));
     }
 
     protected void deactivate(ComponentContext context) {
