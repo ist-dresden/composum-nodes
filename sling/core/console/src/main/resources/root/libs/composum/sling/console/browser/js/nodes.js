@@ -356,8 +356,15 @@
             if (value) {
                 var name = nameWidget.getValue();
                 if (!name) {
-                    var match = /^(.*[\\\/])?([^\\\/]+(\\.json)?)$/.exec(value);
-                    nameWidget.setValue ([match[2]]);
+                    var match = /^(.*[\\\/])?([^\\\/]+)(\.json)$/.exec(value);
+                    if (match) {
+                        nameWidget.setValue ([match[2]]);
+                    } else {
+                        match = /^(.*[\\\/])?([^\\\/]+)$/.exec(value);
+                        if (match) {
+                            nameWidget.setValue ([match[2]]);
+                        }
+                    }
                 }
             }
         }

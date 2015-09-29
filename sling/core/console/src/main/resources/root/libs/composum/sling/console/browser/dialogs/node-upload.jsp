@@ -36,10 +36,15 @@
                      placeholder="enter node name" data-rules="mandatory" />
             </div>
             <div class="form-group">
-              <label class="control-label">Node File )JSON)</label>
+              <label class="control-label">Node File (JSON)</label>
               <input name="file" class="widget file-upload-widget form-control" type="file"
                      data-options="hidePreview"/>
             </div>
+            <!--div class="form-group">
+              <label class="control-label">Mapping Policy</label>
+              <select name="rule" class="widget checkbox-widget form-control">
+              </select>
+            </div-->
           </div>
 
           <div class="modal-footer buttons">

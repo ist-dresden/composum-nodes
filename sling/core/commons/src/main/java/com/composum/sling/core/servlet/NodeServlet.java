@@ -1090,6 +1090,9 @@ public class NodeServlet extends AbstractServiceServlet {
                 if (RequestUtil.checkSelector(request, "download")) {
                     response.setContentType(FILE_CONTENT_TYPE);
                     String filename = MimeTypeUtil.getFilename(resource, null);
+                    if (filename.endsWith(".bin")) {
+                        filename = filename.substring(0, filename.length() - 4);
+                    }
                     if (!filename.endsWith(FILE_NAME_EXT)) {
                         filename += FILE_NAME_EXT;
                     }
