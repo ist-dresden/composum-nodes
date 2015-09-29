@@ -1114,6 +1114,16 @@ public class NodeServlet extends AbstractServiceServlet {
     protected class MapPostOperation extends MapPutOperation {
 
         @Override
+        protected String getPath(SlingHttpServletRequest request) throws IOException {
+            String path = AbstractServiceServlet.getPath(request);
+            String name = RequestUtil.getParameter(request, "name", "");
+            if (StringUtils.isNotBlank(name)) {
+                path += "/" + name;
+            }
+            return path;
+        }
+
+        @Override
         protected Reader getReader(SlingHttpServletRequest request) throws IOException {
 
             RequestParameterMap parameters = request.getRequestParameterMap();
@@ -1142,7 +1152,7 @@ public class NodeServlet extends AbstractServiceServlet {
 
             if (reader != null) {
                 try {
-                    String path = AbstractServiceServlet.getPath(request);
+                    String path = getPath(request);
                     LOG.info(path + ": update PUT with JSON data...");
 
                     ResourceResolver resolver = request.getResourceResolver();
@@ -1162,6 +1172,10 @@ public class NodeServlet extends AbstractServiceServlet {
             } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "no data found");
             }
+        }
+
+        protected String getPath(SlingHttpServletRequest request) throws IOException {
+            return AbstractServiceServlet.getPath(request);
         }
 
         protected Reader getReader(SlingHttpServletRequest request) throws IOException {
