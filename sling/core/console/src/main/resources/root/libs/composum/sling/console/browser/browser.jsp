@@ -22,6 +22,7 @@
               <div class="menu btn-group btn-group-sm dropup" role="group">
                 <button type="button" class="glyphicon-menu-hamburger glyphicon btn btn-default dropdown-toggle" data-toggle="dropdown" title="More actions..."><span class="label">More...</span></button>
                 <ul class="dropdown-menu" role="menu">
+                  <li><a href="#" class="checkout" title="Checkout/Checkin the selected node">Checkout</a></li>
                   <li><a href="#" class="lock" title="Lock/Unlock the selected node">Lock</a></li>
                   <li><a href="#" class="mixins" title="View/Change the nodes mixin types">Mixin Types...</a></li>
                   <li><a href="#" class="move" title="Move/Rename/Reorder the selected node">Move / Rename / Reorder</a></li>

@@ -93,10 +93,12 @@
         initialize: function(options) {
             this.tree = browser.tree;
             this.$toggleLock = this.$('a.lock');
+            this.$toggleCheckout = this.$('a.checkout');
             this.$('a.move').on('click', _.bind(this.moveNode, this));
             this.$('a.rename').on('click', _.bind(this.renameNode, this));
             this.$('a.mixins').on('click', _.bind(this.nodeMixins, this));
             this.$toggleLock.on('click', _.bind(this.toggleLock, this));
+            this.$toggleCheckout.on('click', _.bind(this.toggleCheckout, this));
             this.$('button.refresh').on('click', _.bind(this.refreshTree, this));
             this.$('button.create').on('click', _.bind(this.createNode, this));
             this.$('button.delete').on('click', _.bind(this.deleteNode, this));
@@ -127,6 +129,7 @@
             var node = this.tree.current();
             if (node.jcrState) {
                 this.$toggleLock.text (node.jcrState.locked ? 'Unlock' : 'Lock');
+                this.$toggleCheckout.text (node.jcrState.checkedOut ? 'Ckeckin' : 'Checkout');
             }
         },
 
@@ -177,6 +180,26 @@
             var dialog = core.nodes.getNodeMixinsDialog();
             dialog.show();
             dialog.setNode(this.tree.current());
+        },
+
+        toggleCheckout: function(event) {
+            event.preventDefault();
+            var node = this.tree.current();
+            if (node) {
+                //node.jcrState.checkedOut
+                $.ajax({
+                    method: 'PUT',
+                    url: '/bin/core/version.' + (node.jcrState.checkedOut?'checkin':'checkout') + '.json' + node.path,
+                    complete: _.bind (function(result) {
+                        if (result.status == 200) {
+                            this.tree.refresh();
+                            core.browser.nodeView.reload();
+                        } else {
+                            core.alert('danger', 'Error', 'Error on toggle node lock', result);
+                        }
+                    }, this)
+                });
+            }
         },
 
         toggleLock: function(event) {
