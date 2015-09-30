@@ -17,6 +17,7 @@
         initialize: function (options) {
             this.$alert = this.$('.alert');
             components.setUp(this.el);
+            this.$el.on('shown.bs.modal', _.bind(this.onShow, this));
         },
 
         /**
@@ -26,10 +27,17 @@
             return core.widgetOf(element);
         },
 
-        show: function (callback) {
+        show: function (callback, onShow) {
             this.callback = callback;
+            this.onShow = onShow;
             this.reset();
             this.$el.modal('show');
+        },
+
+        onShow: function() {
+            if (_.isFunction(this.onShow)) {
+                this.onShow();
+            }
         },
 
         hide: function () {

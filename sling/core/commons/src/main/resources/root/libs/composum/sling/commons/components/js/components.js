@@ -430,7 +430,7 @@
         retrieveReference: function(path) {
             $.getJSON('/bin/core/node.tree.json' + path, _.bind (function(data) {
                 this.path = path;
-                this.setValue(data.id);
+                this.setValue(data.uuid ? data.uuid : data.id);
             }, this));
         },
 
@@ -470,16 +470,15 @@
             this.$textField.on('change.number', _.bind (this.onChange, this));
         },
 
-        getValue: function() {
-            return Number(components.TextFieldWidget.prototype.getValue.apply(this));
-        },
-
         setValue: function(value, triggerChange) {
-            if (this.minValue !== undefined && value < this.minValue) {
-                value = this.minValue;
-            }
-            if (this.maxValue !== undefined && value > this.maxValue) {
-                value = this.maxValue;
+            if (value) {
+                var val = Number(value);
+                if (this.minValue !== undefined && val < this.minValue) {
+                    value = this.minValue;
+                }
+                if (this.maxValue !== undefined && val > this.maxValue) {
+                    value = this.maxValue;
+                }
             }
             components.TextFieldWidget.prototype.setValue.apply(this, [value, triggerChange]);
         },

@@ -87,7 +87,7 @@ public class MappingRules {
     /** the default rule set for general import an export features */
     public static final MappingRules DEFAULT_MAPPING_RULES =
             new MappingRules(MAPPING_NODE_FILTER, MAPPING_EXPORT_FILTER, MAPPING_IMPORT_FILTER,
-                    new PropertyFormat(PropertyFormat.Scope.value, PropertyFormat.Binary.skip),
+                    new PropertyFormat(PropertyFormat.Scope.value, PropertyFormat.Binary.base64),
                     0, MappingRules.ChangeRule.update);
 
     /**

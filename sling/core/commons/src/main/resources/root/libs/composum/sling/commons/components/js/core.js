@@ -163,6 +163,12 @@
         // JCR & helper functions for the client layer
         //
 
+        getNameFromPath: function(nodePath) {
+            var lastSlash = nodePath.lastIndexOf ('/');
+            var name = lastSlash >= 0 ? nodePath.substring (lastSlash + 1) : nodePath;
+            return name;
+        },
+
         getParentPath: function(nodePath) {
             var lastSlash = nodePath.lastIndexOf ('/');
             var parentPath = nodePath.substring (0, lastSlash > 0 ? lastSlash : 1);

@@ -169,11 +169,19 @@
             var escaped = _.escape(value); // prevent from XSS
             switch (type) {
                 case 'Binary':
-                    return '<a href="' + escaped + '">download...</a>';
+                    if (row.multi) {
+                        return '<a class="editable">' + escaped + '</a>';
+                    } else {
+                        return '<a href="' + escaped + '">download...</a>';
+                    }
                 case 'Date':
-                    var time = moment(value,'YYYY-MM-DD HH:mm:ss Z');
-                    var formatted = time.format('YYYY-MM-DD HH:mm:ss Z');
-                    return '<a class="editable">' + formatted + '</a>';
+                    if (row.multi) {
+                        return '<a class="editable">' + escaped + '</a>';
+                    } else {
+                        var time = moment(value,'YYYY-MM-DD HH:mm:ss Z');
+                        var formatted = time.format('YYYY-MM-DD HH:mm:ss Z');
+                        return '<a class="editable">' + formatted + '</a>';
+                    }
                 default:
                     return '<a class="editable">' + escaped + '</a>';
             }
@@ -202,8 +210,11 @@
                             url: this.editableChange
                         }
                         if (editableType) {
-                            editableOptions = _.extend (editableOptions, editableType);
-                            $column.addClass (editableType.type);
+                            editableType = row.multi ? editableType.multi : editableType.single;
+                            if (editableType) {
+                                editableOptions = _.extend (editableOptions, editableType);
+                                $column.addClass (editableType.type);
+                            }
                         }
                         $editable.editable(editableOptions);
                         $editable.on('shown', _.bind (this.editableShown, this));
@@ -218,16 +229,20 @@
 
         editableTypes: {
             'Boolean': {
-                type: 'checkbox'
+                single: {
+                    type: 'checkbox'
+                }
             },
             'Date': {
-                type: 'combodate',
-                format: 'YYYY-MM-DD HH:mm:ss Z',
-                template: 'YYYY-MM-DD HH:mm:ss',
-                combodate: {
-                    minYear: moment().year() - 15,
-                    maxYear: moment().year() + 5,
-                    secondStep: 5
+                single: {
+                    type: 'combodate',
+                    format: 'YYYY-MM-DD HH:mm:ss Z',
+                    template: 'YYYY-MM-DD HH:mm:ss',
+                    combodate: {
+                        minYear: moment().year() - 15,
+                        maxYear: moment().year() + 5,
+                        secondStep: 5
+                    }
                 }
             }
         },

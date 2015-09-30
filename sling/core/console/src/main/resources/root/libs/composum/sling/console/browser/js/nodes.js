@@ -29,6 +29,10 @@
         return core.getView('#node-delete-dialog', nodes.DeleteNodeDialog);
     }
 
+    nodes.getUploadNodeDialog = function() {
+        return core.getView('#node-upload-dialog', nodes.UploadNodeDialog);
+    }
+
     nodes.CreateNodeDialog = core.components.Dialog.extend({
 
         initialize: function(options) {
@@ -312,6 +316,57 @@
                 this.alert('danger','a valid node path must be specified');
             }
             return false;
+        }
+    });
+
+    nodes.UploadNodeDialog = core.components.Dialog.extend({
+
+        initialize: function(options) {
+            core.components.Dialog.prototype.initialize.apply(this, [options]);
+            this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+            this.$panel = this.$('.form-panel');
+            this.$path = this.$('input[name="path"]');
+            this.$name = this.$('input[name="name"]');
+            this.$file = this.$('input[name="file"]');
+            this.$file.on('change.file', _.bind(this.fileChanged, this));
+            this.$('button.upload').click(_.bind(this.uploadNode, this));
+        },
+
+        initDialog: function(path, name) {
+            this.$path.val(path);
+            this.$name.val(name);
+        },
+
+        uploadNode: function(event) {
+            event.preventDefault();
+            if (this.$form.isValid()) {
+                this.submitForm(function() {
+                    core.browser.tree.refresh();
+                });
+            } else {
+                this.alert ('danger', 'a parent path and file must be specified');
+            }
+            return false;
+        },
+
+        fileChanged: function() {
+            var fileWidget = this.widgetOf(this.$file);
+            var nameWidget = this.widgetOf(this.$name);
+            var value = fileWidget.getValue();
+            if (value) {
+                var name = nameWidget.getValue();
+                if (!name) {
+                    var match = /^(.*[\\\/])?([^\\\/]+)(\.json)$/.exec(value);
+                    if (match) {
+                        nameWidget.setValue ([match[2]]);
+                    } else {
+                        match = /^(.*[\\\/])?([^\\\/]+)$/.exec(value);
+                        if (match) {
+                            nameWidget.setValue ([match[2]]);
+                        }
+                    }
+                }
+            }
         }
     });
 
