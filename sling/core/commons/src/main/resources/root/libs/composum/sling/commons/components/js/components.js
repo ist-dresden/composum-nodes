@@ -489,13 +489,13 @@
 
         increment: function() {
             if (this.stepSize) {
-                this.setValue(this.getValue() + this.stepSize, true);
+                this.setValue(parseInt(this.getValue()) + this.stepSize, true);
             }
         },
 
         decrement: function() {
             if (this.stepSize) {
-                this.setValue(this.getValue() - this.stepSize, true);
+                this.setValue(parseInt(this.getValue()) - this.stepSize, true);
             }
         },
 
