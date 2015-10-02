@@ -66,9 +66,10 @@
         dropNode: function(draggedNode, targetNode) {
             var path = draggedNode.path;
             var dialog = core.nodes.getMoveNodeDialog();
-            dialog.show();
-            dialog.setValues(draggedNode, targetNode);
-            this.selectNode (path);
+            dialog.show(_.bind (function(){
+                dialog.setValues(draggedNode, targetNode);
+                this.selectNode (path);
+            }, this));
         },
 
         dataUrlForPath: function(path) {
@@ -161,22 +162,25 @@
         moveNode: function(event) {
             event.preventDefault();
             var dialog = core.nodes.getMoveNodeDialog();
-            dialog.show();
-            dialog.setNode(this.tree.current());
+            dialog.show(_.bind (function(){
+                dialog.setNode(this.tree.current());
+            }, this));
         },
 
         renameNode: function(event) {
             event.preventDefault();
             var dialog = core.nodes.getRenameNodeDialog();
-            dialog.show();
-            dialog.setNode(this.tree.current());
+            dialog.show(_.bind (function(){
+                dialog.setNode(this.tree.current());
+            }, this));
         },
 
         nodeMixins: function(event) {
             event.preventDefault();
             var dialog = core.nodes.getNodeMixinsDialog();
-            dialog.show();
-            dialog.setNode(this.tree.current());
+            dialog.show(_.bind (function(){
+                dialog.setNode(this.tree.current());
+            }, this));
         },
 
         toggleLock: function(event) {
@@ -199,17 +203,20 @@
 
         createNode: function(event) {
             var dialog = core.nodes.getCreateNodeDialog();
-            dialog.show();
-            var parentNode = this.tree.current();
-            if (parentNode) {
-                dialog.initParentPath(parentNode.path);
-            }
+            dialog.show(_.bind (function(){
+                var parentNode = this.tree.current();
+                if (parentNode) {
+                    dialog.initParentPath(parentNode.path);
+                }
+            }, this));
         },
 
         deleteNode: function(event) {
             var dialog = core.nodes.getDeleteNodeDialog();
-            dialog.show();
-            dialog.setNode(this.tree.current());
+            dialog.show(_.bind (function(){
+                dialog.setNode(this.tree.current());
+            }, this));
+
         },
 
         refreshTree: function(event) {

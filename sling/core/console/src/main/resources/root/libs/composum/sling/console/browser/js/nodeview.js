@@ -235,14 +235,14 @@
 
         upload: function() {
             var dialog = core.nodes.getUploadNodeDialog();
-            dialog.show(undefined, function(){
+            dialog.show(_.bind (function(){
                 var currentPath = browser.getCurrentPath();
                 if (currentPath) {
                     var parentPath = core.getParentPath(currentPath);
                     var nodeName = core.getNameFromPath(currentPath);
                     dialog.initDialog(parentPath, nodeName);
                 }
-            });
+            }, this));
         }
     });
 
@@ -424,7 +424,7 @@
 
     browser.openAccessPolicyEntryDialog = function(callback) {
         var dialog = core.getView('#access-policy-entry-dialog', browser.AccessPolicyEntryDialog);
-        dialog.show(callback);
+        dialog.show(undefined, callback);
     };
 
     browser.PoliciesTab = browser.NodeTab.extend({

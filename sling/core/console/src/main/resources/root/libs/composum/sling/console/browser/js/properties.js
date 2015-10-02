@@ -286,24 +286,26 @@
         openEditDialog: function(row,element) {
             if (! this.state.editable) {
                 var dialog = core.browser.getPropertyDialog();
-                dialog.show(_.bind (this.loadContent, this));
-                if (row) {
-                    dialog.setProperty(
-                        new browser.Property({
-                            path: browser.getCurrentPath(),
-                            name: row.name,
-                            type: row.type,
-                            multi: row.multi,
-                            value: row.value
-                        })
-                    );
-                } else {
-                    dialog.setProperty(
-                        new browser.Property({
-                            path: browser.getCurrentPath()
-                        })
-                    );
-                }
+                dialog.show(_.bind (function(){
+                    if (row) {
+                        dialog.setProperty(
+                            new browser.Property({
+                                path: browser.getCurrentPath(),
+                                name: row.name,
+                                type: row.type,
+                                multi: row.multi,
+                                value: row.value
+                            })
+                        );
+                    } else {
+                        dialog.setProperty(
+                            new browser.Property({
+                                path: browser.getCurrentPath()
+                            })
+                        );
+                    }
+                }, this),
+                _.bind (this.loadContent, this));
             }
         },
 
