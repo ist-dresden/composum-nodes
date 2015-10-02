@@ -155,8 +155,9 @@
         alert: function(type, title, message, result) {
             var dialog = core.getView('#alert-dialog', core.components.Dialog);
             dialog.$('.modal-header h4').text(title || 'Alert');
-            dialog.show();
-            dialog.alert(type, message, result);
+            dialog.show(_.bind (function(){
+                dialog.alert(type, message, result);
+            }, this));
         },
 
         //

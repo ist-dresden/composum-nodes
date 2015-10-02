@@ -368,9 +368,11 @@
             var selectDialog = core.getView('#path-select-dialog', components.SelectPathDialog);
             selectDialog.setFilter(this.filter);
             selectDialog.show(_.bind(function(){
+                    this.getPath(_.bind (selectDialog.setValue, selectDialog));
+                }, this),
+                    _.bind(function(){
                     this.setPath(selectDialog.getValue());
                 }, this));
-            this.getPath(_.bind (selectDialog.setValue, selectDialog));
         },
 
         /**

@@ -17,7 +17,7 @@
         initialize: function (options) {
             this.$alert = this.$('.alert');
             components.setUp(this.el);
-            this.$el.on('shown.bs.modal', _.bind(this.onShow, this));
+            this.$el.on('shown.bs.modal', _.bind(this.onShown, this));
         },
 
         /**
@@ -27,16 +27,16 @@
             return core.widgetOf(element);
         },
 
-        show: function (callback, onShow) {
+        show: function (initView, callback) {
+            this.initView = initView;
             this.callback = callback;
-            this.onShow = onShow;
-            this.reset();
             this.$el.modal('show');
         },
 
-        onShow: function() {
-            if (_.isFunction(this.onShow)) {
-                this.onShow();
+        onShown: function() {
+            this.reset();
+            if (_.isFunction(this.initView)) {
+                this.initView();
             }
         },
 
@@ -149,13 +149,13 @@
                 }
                 this.hide();
             }, this));
-            this.$el.on('shown.bs.modal', _.bind (this.onShown, this));
         },
 
         /**
          * initialization after shown...
          */
         onShown: function() {
+            core.components.Dialog.prototype.onShown.apply(this);
             this.inputChanged(); // simulate a change after shown to initialize the tree
         },
 
