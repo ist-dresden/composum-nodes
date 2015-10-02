@@ -14,9 +14,10 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.security.AccessControlPolicy;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
@@ -24,7 +25,6 @@ import javax.jcr.version.VersionManager;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,8 +64,8 @@ public class VersionServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.versions, new GetVersions());
 
         // PUT
-        operations.setOperation(ServletOperationSet.Method.PUT, Extension.json, Operation.checkout, new CheckoutOperation());
-        operations.setOperation(ServletOperationSet.Method.PUT, Extension.json, Operation.checkin, new CheckinOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.checkout, new CheckoutOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.checkin, new CheckinOperation());
     }
 
     @Override protected ServletOperationSet getOperations() {
@@ -86,37 +86,54 @@ public class VersionServlet extends AbstractServiceServlet {
         @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
                 final ResourceHandle resource) throws IOException, ServletException {
             try {
-                final ResourceResolver resolver = request.getResourceResolver();
-                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
-                final String path = AbstractServiceServlet.getPath(request);
-                final VersionManager versionManager = session.getWorkspace().getVersionManager();
-                final VersionHistory versionHistory = versionManager.getVersionHistory(path);
-                final VersionIterator allVersions = versionHistory.getAllVersions();
-                final List<VersionEntry> entries = new ArrayList<>();
-                while (allVersions.hasNext()) {
-                    final Version version = allVersions.nextVersion();
-                    final Calendar cal = version.getCreated();
-                    final SimpleDateFormat dateFormat = MappingRules.MAP_DATE_FORMAT;
-                    dateFormat.setTimeZone(cal.getTimeZone());
-                    final VersionEntry versionEntry = new VersionEntry(version.getName(),
-                            dateFormat.format(cal.getTime()));
-                    versionEntry.labels.addAll(Arrays.asList(versionHistory.getVersionLabels(version)));
-                    entries.add(versionEntry);
-                }
-                try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
-                    jsonWriter.beginArray();
-                    for (final VersionEntry e : entries) {
-                        jsonWriter.beginObject();
-                        jsonWriter.name("name").value(e.versionName);
-                        jsonWriter.name("date").value(e.date);
-                        jsonWriter.name("labels").beginArray();
-                        for (final String l : e.labels) {
-                            jsonWriter.value(l);
+                final Node node = resource.adaptTo(Node.class);
+                if (node == null) {
+                    ResponseUtil.writeEmptyArray(response);
+                } else {
+                    final NodeType[] mixinNodeTypes = node.getMixinNodeTypes();
+                    boolean isVersionable = false;
+                    for (final NodeType mixinNodeType : mixinNodeTypes) {
+                        if (mixinNodeType.isNodeType(NodeType.MIX_VERSIONABLE) || mixinNodeType.isNodeType( NodeType.MIX_SIMPLE_VERSIONABLE)) {
+                            isVersionable = true;
+                            break;
                         }
-                        jsonWriter.endArray();
-                        jsonWriter.endObject();
                     }
-                    jsonWriter.endArray();
+                    if (!isVersionable) {
+                        ResponseUtil.writeEmptyArray(response);
+                    } else {
+                        final ResourceResolver resolver = request.getResourceResolver();
+                        final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                        final String path = AbstractServiceServlet.getPath(request);
+                        final VersionManager versionManager = session.getWorkspace().getVersionManager();
+                        final VersionHistory versionHistory = versionManager.getVersionHistory(path);
+                        final VersionIterator allVersions = versionHistory.getAllVersions();
+                        final List<VersionEntry> entries = new ArrayList<>();
+                        while (allVersions.hasNext()) {
+                            final Version version = allVersions.nextVersion();
+                            final Calendar cal = version.getCreated();
+                            final SimpleDateFormat dateFormat = MappingRules.MAP_DATE_FORMAT;
+                            dateFormat.setTimeZone(cal.getTimeZone());
+                            final VersionEntry versionEntry = new VersionEntry(version.getName(),
+                                    dateFormat.format(cal.getTime()));
+                            versionEntry.labels.addAll(Arrays.asList(versionHistory.getVersionLabels(version)));
+                            entries.add(versionEntry);
+                        }
+                        try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+                            jsonWriter.beginArray();
+                            for (final VersionEntry e : entries) {
+                                jsonWriter.beginObject();
+                                jsonWriter.name("name").value(e.versionName);
+                                jsonWriter.name("date").value(e.date);
+                                jsonWriter.name("labels").beginArray();
+                                for (final String l : e.labels) {
+                                    jsonWriter.value(l);
+                                }
+                                jsonWriter.endArray();
+                                jsonWriter.endObject();
+                            }
+                            jsonWriter.endArray();
+                        }
+                    }
                 }
             } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
@@ -135,6 +152,7 @@ public class VersionServlet extends AbstractServiceServlet {
                 final String path = AbstractServiceServlet.getPath(request);
                 final VersionManager versionManager = session.getWorkspace().getVersionManager();
                 versionManager.checkout(path);
+                ResponseUtil.writeEmptyArray(response);
             } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
@@ -152,6 +170,7 @@ public class VersionServlet extends AbstractServiceServlet {
                 final String path = AbstractServiceServlet.getPath(request);
                 final VersionManager versionManager = session.getWorkspace().getVersionManager();
                 versionManager.checkin(path);
+                ResponseUtil.writeEmptyArray(response);
             } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());

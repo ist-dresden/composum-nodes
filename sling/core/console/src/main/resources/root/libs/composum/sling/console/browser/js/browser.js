@@ -188,15 +188,14 @@
             if (node) {
                 //node.jcrState.checkedOut
                 $.ajax({
-                    method: 'PUT',
+                    method: 'POST',
                     url: '/bin/core/version.' + (node.jcrState.checkedOut?'checkin':'checkout') + '.json' + node.path,
-                    complete: _.bind (function(result) {
-                        if (result.status == 200) {
-                            this.tree.refresh();
-                            core.browser.nodeView.reload();
-                        } else {
-                            core.alert('danger', 'Error', 'Error on toggle node lock', result);
-                        }
+                    success: _.bind (function(result) {
+                        this.tree.refresh();
+                        core.browser.nodeView.reload();
+                    }, this),
+                    error: _.bind (function(result) {
+                        core.alert('danger', 'Error', 'Error on toggle node lock', result);
                     }, this)
                 });
             }

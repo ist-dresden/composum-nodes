@@ -21,4 +21,5 @@
 <script type="text/javascript" src="/libs/composum/sling/console/browser/js/query.js"></script>
 <script type="text/javascript" src="/libs/composum/sling/console/browser/js/browser.js"></script>
 <script type="text/javascript" src="/libs/composum/sling/console/browser/js/properties.js"></script>
+<script type="text/javascript" src="/libs/composum/sling/console/browser/js/version.js"></script>
 <script type="text/javascript" src="/libs/composum/sling/console/browser/js/nodeview.js"></script>

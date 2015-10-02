@@ -33,6 +33,12 @@ public class ResponseUtil extends org.apache.sling.api.request.RequestUtil {
         return jsonWriter;
     }
 
+    public static void writeEmptyArray(SlingHttpServletResponse response) throws IOException {
+        try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+            jsonWriter.beginArray().endArray();
+        }
+    }
+
     /**
      * Write one JCR property as JSON object back using the writer of the response (used for GET and PUT).
      *

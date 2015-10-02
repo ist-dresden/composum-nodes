@@ -10,7 +10,7 @@
         }
 
 
-        browser.PropertiesTab = browser.NodeTab.extend({
+        browser.VersionsTab = browser.NodeTab.extend({
             initialize: function(options) {
                 this.table = core.getWidget(this.$el, '.table-container', browser.VersionsTable);
             },
@@ -23,9 +23,17 @@
 
         browser.VersionsTable = Backbone.View.extend({
             initialize: function(options) {
+                this.state = {
+                    load: false
+                };
 
                 this.$table = this.$('.version-table');
                 this.$table.bootstrapTable({
+
+                    search: true,
+                    showToggle: false,
+                    striped: true,
+
                     columns: [{
                         class: 'name',
                         field: 'name',
@@ -35,6 +43,11 @@
                         class: 'date',
                         field: 'date',
                         title: 'Date'
+                    },
+                    {
+                        class: 'labels',
+                        field: 'labels',
+                        title: 'Labels'
                     }]
                 });
 
