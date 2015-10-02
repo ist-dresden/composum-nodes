@@ -368,9 +368,11 @@
             var selectDialog = core.getView('#path-select-dialog', components.SelectPathDialog);
             selectDialog.setFilter(this.filter);
             selectDialog.show(_.bind(function(){
+                    this.getPath(_.bind (selectDialog.setValue, selectDialog));
+                }, this),
+                    _.bind(function(){
                     this.setPath(selectDialog.getValue());
                 }, this));
-            this.getPath(_.bind (selectDialog.setValue, selectDialog));
         },
 
         /**
@@ -430,7 +432,7 @@
         retrieveReference: function(path) {
             $.getJSON('/bin/core/node.tree.json' + path, _.bind (function(data) {
                 this.path = path;
-                this.setValue(data.id);
+                this.setValue(data.uuid ? data.uuid : data.id);
             }, this));
         },
 
@@ -470,16 +472,15 @@
             this.$textField.on('change.number', _.bind (this.onChange, this));
         },
 
-        getValue: function() {
-            return Number(components.TextFieldWidget.prototype.getValue.apply(this));
-        },
-
         setValue: function(value, triggerChange) {
-            if (this.minValue !== undefined && value < this.minValue) {
-                value = this.minValue;
-            }
-            if (this.maxValue !== undefined && value > this.maxValue) {
-                value = this.maxValue;
+            if (value) {
+                var val = Number(value);
+                if (this.minValue !== undefined && val < this.minValue) {
+                    value = this.minValue;
+                }
+                if (this.maxValue !== undefined && val > this.maxValue) {
+                    value = this.maxValue;
+                }
             }
             components.TextFieldWidget.prototype.setValue.apply(this, [value, triggerChange]);
         },
@@ -490,13 +491,13 @@
 
         increment: function() {
             if (this.stepSize) {
-                this.setValue(this.getValue() + this.stepSize, true);
+                this.setValue(parseInt(this.getValue()) + this.stepSize, true);
             }
         },
 
         decrement: function() {
             if (this.stepSize) {
-                this.setValue(this.getValue() - this.stepSize, true);
+                this.setValue(parseInt(this.getValue()) - this.stepSize, true);
             }
         },
 

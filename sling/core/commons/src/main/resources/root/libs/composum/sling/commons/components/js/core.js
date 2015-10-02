@@ -155,13 +155,20 @@
         alert: function(type, title, message, result) {
             var dialog = core.getView('#alert-dialog', core.components.Dialog);
             dialog.$('.modal-header h4').text(title || 'Alert');
-            dialog.show();
-            dialog.alert(type, message, result);
+            dialog.show(_.bind (function(){
+                dialog.alert(type, message, result);
+            }, this));
         },
 
         //
         // JCR & helper functions for the client layer
         //
+
+        getNameFromPath: function(nodePath) {
+            var lastSlash = nodePath.lastIndexOf ('/');
+            var name = lastSlash >= 0 ? nodePath.substring (lastSlash + 1) : nodePath;
+            return name;
+        },
 
         getParentPath: function(nodePath) {
             var lastSlash = nodePath.lastIndexOf ('/');

@@ -71,8 +71,7 @@
 
         openEditDialog: function() {
             this.dialog = core.getView('#text-edit-dialog', components.CodeEditorDialog);
-            this.dialog.show();
-            this.dialog.setSource(this);
+            this.dialog.editSource(this);
         },
 
         getPath: function() {
@@ -93,6 +92,7 @@
                     url: "/bin/core/property.bin" + path,
                     contentType: 'text/plain;charset=UTF-8',
                     cache: false,
+                    dataType: 'text',
                     success: _.bind (function (data) {
                         this.ace.setValue(data);
                         this.ace.clearSelection();
@@ -130,7 +130,7 @@
         },
 
         reset: function() {
-            this.ace.setValue('');
+            this.ace.destroy();
         },
 
         resize: function() {
@@ -214,28 +214,37 @@
             }, this));
         },
 
-        setSource: function(source) {
+        /**
+         * defines the text editor dialog source component which holds the text view
+         * and opens the dialog with the same text as visible in the view and with the
+         * same editor state (cursor, selection)
+         */
+        editSource: function(source) {
             this.source = source;
             // initialize the dialog with the templates data
             var path = this.source.getPath();
             this.$('.modal-title').text(path);
             this.editor.$editor.attr('data-path',path);
             this.editor.$editor.attr('data-type',this.source.$editor.attr('data-type'));
+            this.selection = this.source.ace.getSelectionRange();
             this.cursor = this.source.ace.getCursorPosition();
             // display the editor in the modal dialog
-            this.$el.unbind('shown.bs.modal').on('shown.bs.modal', _.bind (function(){
+            this.show(_.bind (function(){
                 // initialize the editor instance and load the data
                 this.editor.initEditor(_.bind (function(data){
                     this.editor.ace.setReadOnly(false);
+                    if (this.selection) {
+                        this.editor.ace.addSelectionMarker(this.selection);
+                    }
                     this.editor.ace.navigateTo(this.cursor.row,this.cursor.column);
                     this.editor.ace.scrollToRow(Math.max(this.cursor.row-2,0));
                     this.editor.ace.focus();
                 }, this));
             }, this));
-            this.show();
         },
 
         reset: function() {
+            components.Dialog.prototype.reset.apply(this);
             this.editor.reset();
         }
     });

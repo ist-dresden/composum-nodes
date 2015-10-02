@@ -297,10 +297,10 @@ public class JsonUtil {
                                 resource = createResource(resolver, path, propertiesSet, factory, rules);
                             }
                             importJson(reader, resolver, path + "/" + name, rules);
-                            childrenSet.add(name);
                         } catch (ConstraintViolationException cvex) {
-                            LOG.error(cvex.toString() + " (" + path + "/" + name + ")");
+                            LOG.error(cvex.getMessage() + " (" + path + "/" + name + ")", cvex);
                         }
+                        childrenSet.add(name);
                         break;
                     case BEGIN_ARRAY:
                         // multi value property (short format)
@@ -374,7 +374,11 @@ public class JsonUtil {
                         String propertyName = property.getName();
                         if (propertiesSet.get(propertyName) == null
                                 && rules.importPropertyFilter.accept(propertyName)) {
-                            node.setProperty(propertyName, (Value) null);
+                            try {
+                                node.setProperty(propertyName, (Value) null);
+                            } catch (ValueFormatException vfex) {
+                                node.setProperty(propertyName, (Value[]) null);
+                            }
                         }
                     }
                 }

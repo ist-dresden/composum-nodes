@@ -10,7 +10,6 @@
         <relativePath>../.parent</relativePath>
     </parent>
 
-    <groupId>com.composum.sling.core</groupId>
     <artifactId>composum-sling-core-console</artifactId>
     <packaging>bundle</packaging>
 

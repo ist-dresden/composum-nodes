@@ -7,6 +7,7 @@
 <sling:call script="dialogs/node-rename.jsp"/>
 <sling:call script="dialogs/node-create.jsp"/>
 <sling:call script="dialogs/node-delete.jsp"/>
+<sling:call script="dialogs/node-upload.jsp"/>
 <sling:call script="dialogs/editor.jsp"/>
 <sling:call script="dialogs/property.jsp"/>
 <sling:call script="/libs/composum/sling/console/page/dialogs.jsp"/>

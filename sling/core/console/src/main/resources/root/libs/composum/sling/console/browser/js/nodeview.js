@@ -198,6 +198,7 @@
             this.indent.$textField.on('change.json', _.bind (this.remember, this));
             this.$('.json-toolbar .reload').click(_.bind (this.reload, this));
             this.$download = this.$('.json-toolbar .download');
+            this.$('.json-toolbar .upload').click(_.bind (this.upload, this));
         },
 
         remember: function() {
@@ -230,6 +231,18 @@
                 url += '?indent=' + indent;
             }
             return url;
+        },
+
+        upload: function() {
+            var dialog = core.nodes.getUploadNodeDialog();
+            dialog.show(_.bind (function(){
+                var currentPath = browser.getCurrentPath();
+                if (currentPath) {
+                    var parentPath = core.getParentPath(currentPath);
+                    var nodeName = core.getNameFromPath(currentPath);
+                    dialog.initDialog(parentPath, nodeName);
+                }
+            }, this));
         }
     });
 
@@ -411,7 +424,7 @@
 
     browser.openAccessPolicyEntryDialog = function(callback) {
         var dialog = core.getView('#access-policy-entry-dialog', browser.AccessPolicyEntryDialog);
-        dialog.show(callback);
+        dialog.show(undefined, callback);
     };
 
     browser.PoliciesTab = browser.NodeTab.extend({

@@ -1090,6 +1090,9 @@ public class NodeServlet extends AbstractServiceServlet {
                 if (RequestUtil.checkSelector(request, "download")) {
                     response.setContentType(FILE_CONTENT_TYPE);
                     String filename = MimeTypeUtil.getFilename(resource, null);
+                    if (filename.endsWith(".bin")) {
+                        filename = filename.substring(0, filename.length() - 4);
+                    }
                     if (!filename.endsWith(FILE_NAME_EXT)) {
                         filename += FILE_NAME_EXT;
                     }
@@ -1112,6 +1115,16 @@ public class NodeServlet extends AbstractServiceServlet {
     // receiving JSON ...
 
     protected class MapPostOperation extends MapPutOperation {
+
+        @Override
+        protected String getPath(SlingHttpServletRequest request) throws IOException {
+            String path = AbstractServiceServlet.getPath(request);
+            String name = RequestUtil.getParameter(request, "name", "");
+            if (StringUtils.isNotBlank(name)) {
+                path += "/" + name;
+            }
+            return path;
+        }
 
         @Override
         protected Reader getReader(SlingHttpServletRequest request) throws IOException {
@@ -1142,7 +1155,7 @@ public class NodeServlet extends AbstractServiceServlet {
 
             if (reader != null) {
                 try {
-                    String path = AbstractServiceServlet.getPath(request);
+                    String path = getPath(request);
                     LOG.info(path + ": update PUT with JSON data...");
 
                     ResourceResolver resolver = request.getResourceResolver();
@@ -1162,6 +1175,10 @@ public class NodeServlet extends AbstractServiceServlet {
             } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "no data found");
             }
+        }
+
+        protected String getPath(SlingHttpServletRequest request) throws IOException {
+            return AbstractServiceServlet.getPath(request);
         }
 
         protected Reader getReader(SlingHttpServletRequest request) throws IOException {

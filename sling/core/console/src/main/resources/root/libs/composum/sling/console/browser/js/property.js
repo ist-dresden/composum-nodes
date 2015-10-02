@@ -15,11 +15,12 @@
 
     browser.openNewPropertyDialog = function(callback) {
         var dialog = browser.getPropertyDialog();
-        dialog.show(callback);
-        dialog.setProperty(new browser.Property({
-                path: browser.getCurrentPath()
-            })
-        );
+        dialog.show(_.bind (function(){
+            dialog.setProperty(new browser.Property({
+                    path: browser.getCurrentPath()
+                })
+            );
+        }, this), callback);
     };
 
     browser.Property = Backbone.Model.extend({
