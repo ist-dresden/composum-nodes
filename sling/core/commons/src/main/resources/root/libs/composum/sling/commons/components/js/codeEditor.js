@@ -93,6 +93,7 @@
                     url: "/bin/core/property.bin" + path,
                     contentType: 'text/plain;charset=UTF-8',
                     cache: false,
+                    dataType: 'text',
                     success: _.bind (function (data) {
                         this.ace.setValue(data);
                         this.ace.clearSelection();
