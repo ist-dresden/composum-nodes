@@ -534,6 +534,10 @@
     width: 100%;
 }
 
+#browser-view .image.detail-panel .detail-content .image-frame.svg img {
+    min-width: 100px;
+}
+
 /**
  * Video view
  */

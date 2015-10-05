@@ -23,12 +23,12 @@
         </div>
       </div>
       <div class="btn-group btn-group-sm" role="group">
-        <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span></span>
+        <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span></button>
         <button type="button" class="open fa fa-globe btn btn-default" title="Open in a separate view"><span class="label">Open</span></button>
       </div>
     </div>
     <div class="detail-content">
-      <div class="image-frame">
+      <div class="image-frame ${browser.imageCSS}">
         <div class="image-background">
           <img src=""/>
         </div>
