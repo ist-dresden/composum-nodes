@@ -175,6 +175,11 @@ public class Browser extends BrowserBean {
         return isImage;
     }
 
+    public String getImageCSS() {
+        final String mimeType = getMimeType();
+        return mimeType.substring(mimeType.indexOf('/') + 1).replaceAll("[+]", " ");
+    }
+
     public boolean isVideo() {
         if (isVideo == null) {
             isVideo = isFile() && getMimeType().startsWith("video/");
