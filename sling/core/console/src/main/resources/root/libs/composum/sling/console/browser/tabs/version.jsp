@@ -6,6 +6,7 @@
     <div class="versions detail-panel full-table-view">
         <div class="table-toolbar">
             <div class="btn-group btn-group-sm" role="group">
+                <button class="restore fa fa-backward btn btn-default" title="Restore a Version"><span class="label">Restore Version</span></button>
                 <button class="delete fa fa-minus btn btn-default" title="Delete a Version"><span class="label">Delete Version</span></button>
                 <button class="add fa fa-tags btn btn-default" title="Add new label"><span class="label">Add Label</span></button>
                 <button class="remove fa fa-tags btn btn-default" title="Remove a label"><span class="label">Remove Label </span></button>

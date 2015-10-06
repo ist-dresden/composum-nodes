@@ -53,7 +53,7 @@ public class VersionServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {checkout, checkin, addlabel, deletelabel, versions, labels, version, activity}
+    public enum Operation {checkout, checkin, addlabel, deletelabel, versions, labels, version, restore, activity}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -74,6 +74,7 @@ public class VersionServlet extends AbstractServiceServlet {
 
         // PUT
         operations.setOperation(ServletOperationSet.Method.PUT, Extension.json, Operation.addlabel, new AddLabel());
+        operations.setOperation(ServletOperationSet.Method.PUT, Extension.json, Operation.restore, new RestoreVersion());
 
         // DELETE
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.deletelabel, new DeleteLabel());
@@ -113,6 +114,28 @@ public class VersionServlet extends AbstractServiceServlet {
 
         public void setPath(String path) {
             this.path = path;
+        }
+    }
+
+    public static class RestoreVersion implements ServletOperation {
+
+        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final String path = AbstractServiceServlet.getPath(request);
+                final VersionManager versionManager = session.getWorkspace().getVersionManager();
+                final Gson gson = new Gson();
+                final Param p = gson.fromJson(
+                        new InputStreamReader(request.getInputStream(), MappingRules.CHARSET.name()),
+                        Param.class);
+                versionManager.restore(path, p.version, false);
+                ResponseUtil.writeEmptyArray(response);
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
         }
     }
 

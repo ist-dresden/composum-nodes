@@ -127,6 +127,8 @@
                 this.$removeButton.click(_.bind (this.removeLabel, this));
                 this.$deleteButton = this.$('.table-toolbar .delete');
                 this.$deleteButton.click(_.bind (this.deleteVersion, this));
+                this.$restoreButton = this.$('.table-toolbar .restore');
+                this.$restoreButton.click(_.bind (this.restoreVersion, this));
             },
 
             reload: function() {
@@ -162,7 +164,29 @@
                         this.reload();
                     }, this),
                     error: _.bind (function (result) {
-                        core.alert('danger', 'Error', 'Error on adding version label', result);
+                        core.alert('danger', 'Error', 'Error on deleting version label', result);
+                    }, this)
+                });
+
+            },
+
+            restoreVersion: function(event) {
+                var rows = this.table.getSelections();
+                var version = rows[0].name;
+                var path = browser.getCurrentPath();
+                $.ajax({
+                    url: "/bin/core/version.restore.json" + path,
+                    data: JSON.stringify({
+                        version: version,
+                        path: path
+                    }),
+                    //dataType: 'json',
+                    type: 'PUT',
+                    success: _.bind (function (result) {
+                        this.reload();
+                    }, this),
+                    error: _.bind (function (result) {
+                        core.alert('danger', 'Error', 'Error on restoring version label', result);
                     }, this)
                 });
 
