@@ -720,3 +720,19 @@
     width: 68%;
     float: right;
 }
+
+div.versions .table-toolbar button.add.fa-tags::after {
+    position: absolute;
+    bottom: -5px;
+    right: 1px;
+    content: '\f067';
+    opacity: 0.7;
+}
+
+div.versions .table-toolbar button.remove.fa-tags::after {
+    position: absolute;
+    bottom: -5px;
+    right: 1px;
+    content: '\f068';
+    opacity: 0.7;
+}

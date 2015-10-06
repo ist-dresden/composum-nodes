@@ -9,6 +9,61 @@
             return core.getView('#version-add-label-dialog', browser.AddLabelDialog);
         };
 
+        browser.getDeleteLabelDialog = function() {
+            return core.getView('#version-delete-label-dialog', browser.DeleteLabelDialog);
+        };
+
+        browser.DeleteLabelDialog = core.components.Dialog.extend({
+            initialize: function (options) {
+                core.components.Dialog.prototype.initialize.apply(this, [options]);
+                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.labelname = core.getWidget(this.el, 'input[name="labelname"]', core.components.TextFieldWidget);
+                this.$('button.delete').click(_.bind(this.deleteLabel, this));
+                this.$el.on('shown.bs.modal', function() {
+                    $(this).find('input[name="labelname"]').focus();
+                });
+                this.labelname.$el.attr('autocomplete', 'off');
+                var path = browser.getCurrentPath();
+                this.labelname.$el.typeahead({
+                    minLength: 1,
+                    source: function (query, callback) {
+                        $.get('/bin/core/version.labels.json'+ path + '?label=' + query, {
+                        }, function (data) {
+                            callback(data);
+                        });
+                    }
+                });
+
+            },
+
+            reset: function() {
+                this.labelname.setValue("");
+            },
+
+            deleteLabel: function(event) {
+                event.preventDefault();
+                var path = browser.getCurrentPath();
+                var label = this.labelname.getValue();
+                $.ajax({
+                    url: "/bin/core/version.deletelabel.json" + path,
+                    data: JSON.stringify({
+                        label: label,
+                        path: path
+                    }),
+                    //dataType: 'json',
+                    type: 'DELETE',
+                    success: _.bind (function (result) {
+                        this.hide();
+                    }, this),
+                    error: _.bind (function (result) {
+                        core.alert('danger', 'Error', 'Error on deleting version label', result);
+                    }, this)
+                });
+
+                return false;
+            }
+        });
+
         browser.AddLabelDialog = core.components.Dialog.extend({
 
             initialize: function (options) {
@@ -70,6 +125,8 @@
                 this.$addButton.click(_.bind (this.addLabel, this));
                 this.$removeButton = this.$('.table-toolbar .remove');
                 this.$removeButton.click(_.bind (this.removeLabel, this));
+                this.$deleteButton = this.$('.table-toolbar .delete');
+                this.$deleteButton.click(_.bind (this.deleteVersion, this));
             },
 
             reload: function() {
@@ -81,15 +138,36 @@
                 var dialog = browser.getAddLabelDialog();
                 var rows = this.table.getSelections();
                 dialog.show(undefined, _.bind (this.reload, this));
-                dialog.setVersion(path, rows[0].name); //TBD
+                dialog.setVersion(path, rows[0].name);
             },
 
             removeLabel: function(event) {
+                var dialog = browser.getDeleteLabelDialog();
+                dialog.show(undefined, _.bind (this.reload, this));
+            },
+
+            deleteVersion: function(event) {
+                var rows = this.table.getSelections();
+                var version = rows[0].name;
                 var path = browser.getCurrentPath();
+                $.ajax({
+                    url: "/bin/core/version.version.json" + path,
+                    data: JSON.stringify({
+                        version: version,
+                        path: path
+                    }),
+                    //dataType: 'json',
+                    type: 'DELETE',
+                    success: _.bind (function (result) {
+                        this.reload();
+                    }, this),
+                    error: _.bind (function (result) {
+                        core.alert('danger', 'Error', 'Error on adding version label', result);
+                    }, this)
+                });
+
             }
-
         });
-
 
         browser.VersionsTable = Backbone.View.extend({
             initialize: function(options) {
@@ -123,10 +201,19 @@
                     {
                         class: 'labels',
                         field: 'labels',
-                        title: 'Labels'
+                        title: 'Labels',
+                        formatter: _.bind (this.formatValue, this)
                     }]
                 });
 
+            },
+
+            formatValue: function(value,row,index) {
+                var labels = "";
+                for (var i in value) {
+                    labels = labels + '<span class="label label-primary">' + value[i] + '</span>\n';
+                }
+                return labels;
             },
 
             getSelections: function() {

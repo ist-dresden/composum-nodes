@@ -13,6 +13,7 @@ import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,7 @@ import java.util.List;
  */
 @SlingServlet(
         paths = "/bin/core/version",
-        methods = {"GET", "PUT"}
+        methods = {"GET", "PUT", "POST"}
 )
 public class VersionServlet extends AbstractServiceServlet {
 
@@ -52,7 +53,7 @@ public class VersionServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {checkout, checkin, addlabel, versions}
+    public enum Operation {checkout, checkin, addlabel, deletelabel, versions, labels, version, activity}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -69,13 +70,19 @@ public class VersionServlet extends AbstractServiceServlet {
 
         // GET
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.versions, new GetVersions());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.labels, new GetLabels());
 
         // PUT
         operations.setOperation(ServletOperationSet.Method.PUT, Extension.json, Operation.addlabel, new AddLabel());
 
+        // DELETE
+        operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.deletelabel, new DeleteLabel());
+        operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.version, new DeleteVersion());
+
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.checkout, new CheckoutOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.checkin, new CheckinOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.activity, new CreateActivity());
     }
 
     @Override protected ServletOperationSet getOperations() {
@@ -109,6 +116,70 @@ public class VersionServlet extends AbstractServiceServlet {
         }
     }
 
+    public static class DeleteVersion implements ServletOperation {
+
+        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final String path = AbstractServiceServlet.getPath(request);
+                final VersionManager versionManager = session.getWorkspace().getVersionManager();
+                VersionHistory versionHistory = versionManager.getVersionHistory(path);
+                final Gson gson = new Gson();
+                final Param p = gson.fromJson(
+                        new InputStreamReader(request.getInputStream(), MappingRules.CHARSET.name()),
+                        Param.class);
+                versionHistory.removeVersion(p.version);
+                ResponseUtil.writeEmptyArray(response);
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
+
+    public static class CreateActivity implements ServletOperation {
+
+        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final String activity = AbstractServiceServlet.getPath(request);
+                final VersionManager versionManager = session.getWorkspace().getVersionManager();
+                versionManager.createActivity(activity.startsWith("/")?activity.substring(1):activity);
+                ResponseUtil.writeEmptyArray(response);
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
+
+    public static class DeleteLabel implements ServletOperation {
+        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                final ResourceHandle resource) throws IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final String path = AbstractServiceServlet.getPath(request);
+                final VersionManager versionManager = session.getWorkspace().getVersionManager();
+                final VersionHistory versionHistory = versionManager.getVersionHistory(path);
+
+                final Gson gson = new Gson();
+                final Param p = gson.fromJson(
+                        new InputStreamReader(request.getInputStream(), MappingRules.CHARSET.name()),
+                        Param.class);
+                versionHistory.removeVersionLabel(p.label);
+                ResponseUtil.writeEmptyArray(response);
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
+
     public static class AddLabel implements ServletOperation {
         @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
                 final ResourceHandle resource) throws IOException, ServletException {
@@ -125,6 +196,51 @@ public class VersionServlet extends AbstractServiceServlet {
                         Param.class);
                 versionHistory.addVersionLabel(p.version, p.label, false);
                 ResponseUtil.writeEmptyArray(response);
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
+
+    public static class GetLabels implements ServletOperation {
+        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                final ResourceHandle resource) throws IOException, ServletException {
+            try {
+                final Node node = resource.adaptTo(Node.class);
+                if (node == null) {
+                    ResponseUtil.writeEmptyArray(response);
+                } else {
+                    final NodeType[] mixinNodeTypes = node.getMixinNodeTypes();
+                    boolean isVersionable = false;
+                    for (final NodeType mixinNodeType : mixinNodeTypes) {
+                        if (mixinNodeType.isNodeType(NodeType.MIX_VERSIONABLE) || mixinNodeType.isNodeType( NodeType.MIX_SIMPLE_VERSIONABLE)) {
+                            isVersionable = true;
+                            break;
+                        }
+                    }
+                    if (!isVersionable) {
+                        ResponseUtil.writeEmptyArray(response);
+                    } else {
+                        final ResourceResolver resolver = request.getResourceResolver();
+                        final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                        final String path = AbstractServiceServlet.getPath(request);
+                        final VersionManager versionManager = session.getWorkspace().getVersionManager();
+                        final VersionHistory versionHistory = versionManager.getVersionHistory(path);
+                        final String[] versionLabels = versionHistory.getVersionLabels();
+                        final RequestParameter labelParam = request.getRequestParameter("label");
+                        final String label = labelParam == null ? "" : labelParam.getString();
+                        try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+                            jsonWriter.beginArray();
+                            for (final String e : versionLabels) {
+                                if (e.startsWith(label)) {
+                                    jsonWriter.value(e);
+                                }
+                            }
+                            jsonWriter.endArray();
+                        }
+                    }
+                }
             } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
