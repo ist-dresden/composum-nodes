@@ -3,7 +3,10 @@ package com.composum.sling.core.servlet;
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
+import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
@@ -17,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
@@ -25,6 +29,9 @@ import javax.jcr.version.VersionManager;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,7 +52,7 @@ public class VersionServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {checkout, checkin, versions}
+    public enum Operation {checkout, checkin, addlabel, versions}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -64,6 +71,9 @@ public class VersionServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.versions, new GetVersions());
 
         // PUT
+        operations.setOperation(ServletOperationSet.Method.PUT, Extension.json, Operation.addlabel, new AddLabel());
+
+        // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.checkout, new CheckoutOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.checkin, new CheckinOperation());
     }
@@ -79,6 +89,46 @@ public class VersionServlet extends AbstractServiceServlet {
         VersionEntry(String versionName, String date) {
             this.versionName = versionName;
             this.date = date;
+        }
+    }
+    static class Param {
+        String version;
+        String label;
+        String path;
+
+        public void setVersion(String version) {
+            this.version = version;
+        }
+
+        public void setLabel(String label) {
+            this.label = label;
+        }
+
+        public void setPath(String path) {
+            this.path = path;
+        }
+    }
+
+    public static class AddLabel implements ServletOperation {
+        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                final ResourceHandle resource) throws IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final String path = AbstractServiceServlet.getPath(request);
+                final VersionManager versionManager = session.getWorkspace().getVersionManager();
+                final VersionHistory versionHistory = versionManager.getVersionHistory(path);
+
+                final Gson gson = new Gson();
+                final Param p = gson.fromJson(
+                        new InputStreamReader(request.getInputStream(), MappingRules.CHARSET.name()),
+                        Param.class);
+                versionHistory.addVersionLabel(p.version, p.label, false);
+                ResponseUtil.writeEmptyArray(response);
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
         }
     }
 
