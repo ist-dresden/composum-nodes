@@ -53,7 +53,7 @@ public class VersionServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {checkout, checkin, addlabel, deletelabel, versions, labels, version, restore, activity}
+    public enum Operation {checkout, checkin, addlabel, deletelabel, versions, labels, version, restore, configuration, activity}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -84,6 +84,7 @@ public class VersionServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.checkout, new CheckoutOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.checkin, new CheckinOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.activity, new CreateActivity());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.configuration, new CreateConfiguration());
     }
 
     @Override protected ServletOperationSet getOperations() {
@@ -154,6 +155,24 @@ public class VersionServlet extends AbstractServiceServlet {
                         new InputStreamReader(request.getInputStream(), MappingRules.CHARSET.name()),
                         Param.class);
                 versionHistory.removeVersion(p.version);
+                ResponseUtil.writeEmptyArray(response);
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
+
+    public static class CreateConfiguration implements ServletOperation {
+
+        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final String path = AbstractServiceServlet.getPath(request);
+                final VersionManager versionManager = session.getWorkspace().getVersionManager();
+                versionManager.createConfiguration(path);
                 ResponseUtil.writeEmptyArray(response);
             } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
@@ -295,6 +314,7 @@ public class VersionServlet extends AbstractServiceServlet {
                         final String path = AbstractServiceServlet.getPath(request);
                         final VersionManager versionManager = session.getWorkspace().getVersionManager();
                         final VersionHistory versionHistory = versionManager.getVersionHistory(path);
+                        final String currentVersion = versionManager.getBaseVersion(path).getName();
                         final VersionIterator allVersions = versionHistory.getAllVersions();
                         final List<VersionEntry> entries = new ArrayList<>();
                         while (allVersions.hasNext()) {
@@ -311,6 +331,7 @@ public class VersionServlet extends AbstractServiceServlet {
                             jsonWriter.beginArray();
                             for (final VersionEntry e : entries) {
                                 jsonWriter.beginObject();
+                                jsonWriter.name("current").value(e.versionName.equals(currentVersion));
                                 jsonWriter.name("name").value(e.versionName);
                                 jsonWriter.name("date").value(e.date);
                                 jsonWriter.name("labels").beginArray();

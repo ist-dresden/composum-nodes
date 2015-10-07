@@ -451,6 +451,10 @@
     color: #aaa;
 }
 
+#browser-view .bootstrap-table table tr.current td {
+    background: #76b6ec
+}
+
 #browser-view .bootstrap-table table tr.protected td .editable {
     color: #888;
 }

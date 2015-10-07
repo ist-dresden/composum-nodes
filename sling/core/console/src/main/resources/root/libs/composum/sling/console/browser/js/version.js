@@ -207,6 +207,11 @@
                     striped: true,
                     singleSelect: true,
                     clickToSelect: true,
+                    rowStyle: _.bind (function(row,index) {
+                        return {
+                            classes: (row.current ? 'editable current' : 'protected')
+                        };
+                    }, this),
 
                     columns: [{
                         class: 'selection',
