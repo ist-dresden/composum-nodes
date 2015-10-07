@@ -226,6 +226,10 @@
     opacity: 0.7;
 }
 
+#browser-query .query-panel .query-result tr.checked-out td.icon span::after {
+    content: '\f040';
+}
+
 #browser-query .query-panel .query-result tr.deep-lock td.icon span::after {
     opacity: 1;
     color: #777; /* mute */
