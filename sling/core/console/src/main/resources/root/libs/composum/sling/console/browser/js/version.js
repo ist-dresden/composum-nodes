@@ -129,6 +129,10 @@
                 this.$deleteButton.click(_.bind (this.deleteVersion, this));
                 this.$restoreButton = this.$('.table-toolbar .restore');
                 this.$restoreButton.click(_.bind (this.restoreVersion, this));
+                this.$checkin = this.$('.table-toolbar .checkin');
+                this.$checkin.click(_.bind (this.checkin, this));
+                this.$checkout = this.$('.table-toolbar .checkout');
+                this.$checkout.click(_.bind (this.checkout, this));
             },
 
             reload: function() {
@@ -146,6 +150,36 @@
             removeLabel: function(event) {
                 var dialog = browser.getDeleteLabelDialog();
                 dialog.show(undefined, _.bind (this.reload, this));
+            },
+
+            checkin: function(event) {
+                var path = browser.getCurrentPath();
+                $.ajax({
+                    method: 'POST',
+                    url: '/bin/core/version.checkin.json' + path,
+                    success: _.bind (function(result) {
+                        core.browser.tree.refresh();
+                        core.browser.nodeView.reload();
+                    }, this),
+                    error: _.bind (function(result) {
+                        core.alert('danger', 'Error', 'Error checking in node', result);
+                    }, this)
+                });
+            },
+
+            checkout: function(event) {
+                var path = browser.getCurrentPath();
+                $.ajax({
+                    method: 'POST',
+                    url: '/bin/core/version.checkout.json' + path,
+                    success: _.bind (function(result) {
+                        core.browser.tree.refresh();
+                        core.browser.nodeView.reload();
+                    }, this),
+                    error: _.bind (function(result) {
+                        core.alert('danger', 'Error', 'Error checking out node', result);
+                    }, this)
+                });
             },
 
             deleteVersion: function(event) {
