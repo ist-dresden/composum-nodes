@@ -272,7 +272,7 @@
             },
 
             formatValue: function(value,row,index) {
-                var labels = "";
+                var labels = "&nbsp;";
                 for (var i in value) {
                     labels = labels + '<span class="label label-primary">' + value[i] + '</span>\n';
                 }
