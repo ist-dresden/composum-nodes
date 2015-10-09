@@ -180,22 +180,33 @@
                 this.$checkin.click(_.bind (this.checkin, this));
                 this.$checkout = this.$('.table-toolbar .checkout');
                 this.$checkout.click(_.bind (this.checkout, this));
-                var node = browser.tree.current();
-                if (node.jcrState.isVersionable) {
-                    this.$checkin.removeClass('disabled');
-                    this.$checkout.removeClass('disabled');
-                    this.$restoreButton.removeClass('disabled');
-                    this.$deleteButton.removeClass('disabled');
-                    this.$removeButton.removeClass('disabled');
-                    this.$addButton.removeClass('disabled');
-                } else {
-                    this.$checkin.addClass('disabled');
-                    this.$checkout.addClass('disabled');
-                    this.$restoreButton.addClass('disabled');
-                    this.$deleteButton.addClass('disabled');
-                    this.$removeButton.addClass('disabled');
-                    this.$addButton.addClass('disabled');
-                }
+                this.$checkpoint = this.$('.table-toolbar .checkpoint');
+                this.$checkpoint.click(_.bind (this.checkpoint, this));
+
+                var path = browser.getCurrentPath();
+                $.getJSON('/bin/core/node.tree.json' + path, _.bind (function(data) {
+                    var node = data;
+                    if (node.jcrState.isVersionable && node.jcrState.checkedOut) {
+                        this.$checkpoint.removeClass('disabled');
+                    } else {
+                        this.$checkpoint.addClass('disabled');
+                    }
+                    if (node.jcrState.isVersionable) {
+                        this.$checkin.removeClass('disabled');
+                        this.$checkout.removeClass('disabled');
+                        this.$restoreButton.removeClass('disabled');
+                        this.$deleteButton.removeClass('disabled');
+                        this.$removeButton.removeClass('disabled');
+                        this.$addButton.removeClass('disabled');
+                    } else {
+                        this.$checkin.addClass('disabled');
+                        this.$checkout.addClass('disabled');
+                        this.$restoreButton.addClass('disabled');
+                        this.$deleteButton.addClass('disabled');
+                        this.$removeButton.addClass('disabled');
+                        this.$addButton.addClass('disabled');
+                    }
+                }, this));
             },
 
             reload: function() {
@@ -213,6 +224,21 @@
             removeLabel: function(event) {
                 var dialog = browser.getDeleteLabelDialog();
                 dialog.show(undefined, _.bind (this.reload, this));
+            },
+
+            checkpoint: function(event) {
+                var path = browser.getCurrentPath();
+                $.ajax({
+                    method: 'POST',
+                    url: '/bin/core/version.checkpoint.json' + path,
+                    success: _.bind (function(result) {
+                        core.browser.tree.refresh();
+                        core.browser.nodeView.reload();
+                    }, this),
+                    error: _.bind (function(result) {
+                        core.alert('danger', 'Error', 'Error creating checkpoint', result);
+                    }, this)
+                });
             },
 
             checkin: function(event) {

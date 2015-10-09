@@ -6,6 +6,9 @@
     <div class="versions detail-panel full-table-view">
         <div class="table-toolbar">
             <div class="btn-group btn-group-sm" role="group">
+                <button class="checkpoint fa fa-circle-o btn btn-default" title="Checkpoint"><span class="label">Create Checkpoint</span></button>
+            </div>
+            <div class="btn-group btn-group-sm" role="group">
                 <button class="checkout fa fa-sign-out btn btn-default" title="Checkout"><span class="label">Checkout Node</span></button>
                 <button class="checkin fa fa-sign-in btn btn-default" title="Checkin"><span class="label">Checkin Node</span></button>
             </div>

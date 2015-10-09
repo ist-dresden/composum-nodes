@@ -53,7 +53,7 @@ public class VersionServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {checkout, checkin, addlabel, deletelabel, versions, labels, version, restore, configuration, activity}
+    public enum Operation {checkout, checkin, addlabel, deletelabel, versions, labels, version, restore, configuration, checkpoint, activity}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -83,6 +83,7 @@ public class VersionServlet extends AbstractServiceServlet {
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.checkout, new CheckoutOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.checkin, new CheckinOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.checkpoint, new CheckpointOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.activity, new CreateActivity());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.configuration, new CreateConfiguration());
     }
@@ -380,6 +381,26 @@ public class VersionServlet extends AbstractServiceServlet {
                 final String path = AbstractServiceServlet.getPath(request);
                 final VersionManager versionManager = session.getWorkspace().getVersionManager();
                 versionManager.checkin(path);
+                ResponseUtil.writeEmptyArray(response);
+            } catch (final RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
+
+    public static class CheckpointOperation implements ServletOperation {
+
+        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                final ResourceHandle resource) throws IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final String path = AbstractServiceServlet.getPath(request);
+                final VersionManager versionManager = session.getWorkspace().getVersionManager();
+                if (versionManager.isCheckedOut(path)) {
+                    versionManager.checkpoint(path);
+                }
                 ResponseUtil.writeEmptyArray(response);
             } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
