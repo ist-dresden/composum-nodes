@@ -456,7 +456,7 @@
             }
             if (node.original.jcrState) {
                 var state = node.original.jcrState;
-                if (state.checkedOut) {
+                if (state.checkedOut && state.isVersionable) {
                     $node.addClass ('checked-out');
                 }
                 if (state.locked) {

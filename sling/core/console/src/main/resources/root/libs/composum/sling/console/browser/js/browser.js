@@ -94,10 +94,12 @@
         initialize: function(options) {
             this.tree = browser.tree;
             this.$toggleLock = this.$('a.lock');
+            this.$toggleCheckout = this.$('a.checkout');
             this.$('a.move').on('click', _.bind(this.moveNode, this));
             this.$('a.rename').on('click', _.bind(this.renameNode, this));
             this.$('a.mixins').on('click', _.bind(this.nodeMixins, this));
             this.$toggleLock.on('click', _.bind(this.toggleLock, this));
+            this.$toggleCheckout.on('click', _.bind(this.toggleCheckout, this));
             this.$('button.refresh').on('click', _.bind(this.refreshTree, this));
             this.$('button.create').on('click', _.bind(this.createNode, this));
             this.$('button.delete').on('click', _.bind(this.deleteNode, this));
@@ -128,6 +130,12 @@
             var node = this.tree.current();
             if (node.jcrState) {
                 this.$toggleLock.text (node.jcrState.locked ? 'Unlock' : 'Lock');
+                this.$toggleCheckout.text (node.jcrState.checkedOut ? 'Checkin' : 'Checkout');
+                if (node.jcrState.isVersionable) {
+                    this.$toggleCheckout.parent().removeClass('disabled');
+                } else {
+                    this.$toggleCheckout.parent().addClass('disabled');
+                }
             }
         },
 
@@ -181,6 +189,25 @@
             dialog.show(_.bind (function(){
                 dialog.setNode(this.tree.current());
             }, this));
+        },
+
+        toggleCheckout: function(event) {
+            event.preventDefault();
+            var node = this.tree.current();
+            if (node) {
+                //node.jcrState.checkedOut
+                $.ajax({
+                    method: 'POST',
+                    url: '/bin/core/version.' + (node.jcrState.checkedOut?'checkin':'checkout') + '.json' + node.path,
+                    success: _.bind (function(result) {
+                        this.tree.refresh();
+                        core.browser.nodeView.reload();
+                    }, this),
+                    error: _.bind (function(result) {
+                        core.alert('danger', 'Error', 'Error on toggle node lock', result);
+                    }, this)
+                });
+            }
         },
 
         toggleLock: function(event) {

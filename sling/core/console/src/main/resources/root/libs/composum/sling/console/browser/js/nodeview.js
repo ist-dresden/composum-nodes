@@ -515,6 +515,9 @@
                     selector: '> .acl',
                     tabType: browser.PoliciesTab
                 }, {
+                    selector: '> .versions',
+                    tabType: browser.VersionsTab
+                }, {
                      // the fallback to the basic implementation as a default rule
                     selector: '> div',
                     tabType: browser.NodeTab

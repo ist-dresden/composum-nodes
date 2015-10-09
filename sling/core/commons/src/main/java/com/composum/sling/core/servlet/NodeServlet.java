@@ -40,6 +40,7 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.lock.Lock;
 import javax.jcr.lock.LockManager;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -1350,6 +1351,7 @@ public class NodeServlet extends AbstractServiceServlet {
                 Workspace workspace = session.getWorkspace();
                 LockManager lockManager = workspace.getLockManager();
                 writer.name("checkedOut").value(node.isCheckedOut());
+                writer.name("isVersionable").value(isVersionable(node));
                 boolean isLocked = node.isLocked();
                 writer.name("locked").value(isLocked);
                 if (isLocked) {
@@ -1370,6 +1372,15 @@ public class NodeServlet extends AbstractServiceServlet {
         writer.endObject();
     }
 
+    private static boolean isVersionable(Node node) throws RepositoryException {
+        final NodeType[] mixinNodeTypes = node.getMixinNodeTypes();
+        for (final NodeType mixinNodeType : mixinNodeTypes) {
+            if (mixinNodeType.isNodeType(NodeType.MIX_VERSIONABLE) || mixinNodeType.isNodeType( NodeType.MIX_SIMPLE_VERSIONABLE)) {
+                return true;
+            }
+        }
+        return false;
+    }
     // receiving JSON ...
 
     /**

@@ -137,13 +137,22 @@
 .jstree-node.virtual > a i::after,
 .jstree-node.locked > a i::after {
     position: absolute;
-    top: 4px;
+    top: 5px;
     left: -1px;
 }
 
 .jstree-node.locked > a i::after {
     content: '\f023';
     opacity: 0.7;
+}
+
+.jstree-node.checked-out > a::before {
+    font: normal normal normal 14px/1 FontAwesome;
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    content: '\f040';
+    opacity: 0.6;
 }
 
 .jstree-node.virtual > a i::after {
