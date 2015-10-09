@@ -13,6 +13,53 @@
             return core.getView('#version-delete-label-dialog', browser.DeleteLabelDialog);
         };
 
+        browser.getDeleteVersionDialog = function() {
+            return core.getView('#version-delete-dialog', browser.DeleteVersionDialog);
+        };
+
+        browser.DeleteVersionDialog = core.components.Dialog.extend({
+            initialize: function (options) {
+                core.components.Dialog.prototype.initialize.apply(this, [options]);
+                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.name = core.getWidget(this.el, 'input[name="name"]', core.components.TextFieldWidget);
+                this.$('button.delete').click(_.bind(this.deleteVersion, this));
+                this.$el.on('shown.bs.modal', function() {
+                    $(this).find('input[name="name"]').focus();
+                });
+                var path = browser.getCurrentPath();
+            },
+
+            reset: function() {
+            },
+
+            setVersion: function (version) {
+                this.name.setValue(version);
+            },
+
+            deleteVersion: function(event) {
+                event.preventDefault();
+                var path = browser.getCurrentPath();
+                var version = this.name.getValue();
+                $.ajax({
+                    url: "/bin/core/version.version.json" + path,
+                    data: JSON.stringify({
+                        version: version,
+                        path: path
+                    }),
+                    //dataType: 'json',
+                    type: 'DELETE',
+                    success: _.bind (function (result) {
+                        this.hide();
+                    }, this),
+                    error: _.bind (function (result) {
+                        core.alert('danger', 'Error', 'Error on deleting version', result);
+                    }, this)
+                });
+
+                return false;
+            }
+        });
+
         browser.DeleteLabelDialog = core.components.Dialog.extend({
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
@@ -133,6 +180,22 @@
                 this.$checkin.click(_.bind (this.checkin, this));
                 this.$checkout = this.$('.table-toolbar .checkout');
                 this.$checkout.click(_.bind (this.checkout, this));
+                var node = browser.tree.current();
+                if (node.jcrState.isVersionable) {
+                    this.$checkin.removeClass('disabled');
+                    this.$checkout.removeClass('disabled');
+                    this.$restoreButton.removeClass('disabled');
+                    this.$deleteButton.removeClass('disabled');
+                    this.$removeButton.removeClass('disabled');
+                    this.$addButton.removeClass('disabled');
+                } else {
+                    this.$checkin.addClass('disabled');
+                    this.$checkout.addClass('disabled');
+                    this.$restoreButton.addClass('disabled');
+                    this.$deleteButton.addClass('disabled');
+                    this.$removeButton.addClass('disabled');
+                    this.$addButton.addClass('disabled');
+                }
             },
 
             reload: function() {
@@ -183,25 +246,10 @@
             },
 
             deleteVersion: function(event) {
+                var dialog = browser.getDeleteVersionDialog();
                 var rows = this.table.getSelections();
-                var version = rows[0].name;
-                var path = browser.getCurrentPath();
-                $.ajax({
-                    url: "/bin/core/version.version.json" + path,
-                    data: JSON.stringify({
-                        version: version,
-                        path: path
-                    }),
-                    //dataType: 'json',
-                    type: 'DELETE',
-                    success: _.bind (function (result) {
-                        this.reload();
-                    }, this),
-                    error: _.bind (function (result) {
-                        core.alert('danger', 'Error', 'Error on deleting version label', result);
-                    }, this)
-                });
-
+                dialog.show(undefined, _.bind (this.reload, this));
+                dialog.setVersion(rows.length == 0 ? "" : rows[0].name);
             },
 
             restoreVersion: function(event) {

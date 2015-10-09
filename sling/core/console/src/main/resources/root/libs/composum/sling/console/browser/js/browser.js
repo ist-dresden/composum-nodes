@@ -130,7 +130,12 @@
             var node = this.tree.current();
             if (node.jcrState) {
                 this.$toggleLock.text (node.jcrState.locked ? 'Unlock' : 'Lock');
-                this.$toggleCheckout.text (node.jcrState.checkedOut ? 'Ckeckin' : 'Checkout');
+                this.$toggleCheckout.text (node.jcrState.checkedOut ? 'Checkin' : 'Checkout');
+                if (node.jcrState.isVersionable) {
+                    this.$toggleCheckout.parent().removeClass('disabled');
+                } else {
+                    this.$toggleCheckout.parent().addClass('disabled');
+                }
             }
         },
 
