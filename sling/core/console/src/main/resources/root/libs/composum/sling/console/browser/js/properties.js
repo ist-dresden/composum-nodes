@@ -174,14 +174,6 @@
                     } else {
                         return '<a href="' + escaped + '">download...</a>';
                     }
-                case 'Date':
-                    if (row.multi) {
-                        return '<a class="editable">' + escaped + '</a>';
-                    } else {
-                        var time = moment(value,'YYYY-MM-DD HH:mm:ss Z');
-                        var formatted = time.format('YYYY-MM-DD HH:mm:ss Z');
-                        return '<a class="editable">' + formatted + '</a>';
-                    }
                 default:
                     return '<a class="editable">' + escaped + '</a>';
             }
@@ -231,18 +223,6 @@
             'Boolean': {
                 single: {
                     type: 'checkbox'
-                }
-            },
-            'Date': {
-                single: {
-                    type: 'combodate',
-                    format: 'YYYY-MM-DD HH:mm:ss Z',
-                    template: 'YYYY-MM-DD HH:mm:ss',
-                    combodate: {
-                        minYear: moment().year() - 15,
-                        maxYear: moment().year() + 5,
-                        secondStep: 5
-                    }
                 }
             }
         },

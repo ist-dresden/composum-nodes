@@ -25,7 +25,7 @@ public class MappingRules {
 
     /** the default Date format for output and parsing */
     public static final SimpleDateFormat MAP_DATE_FORMAT =
-            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /** the default Date format for output and parsing */
     public static final SimpleDateFormat ECMA_DATE_FORMAT =
@@ -35,8 +35,8 @@ public class MappingRules {
     public static final SimpleDateFormat[] DATE_PATTERNS = new SimpleDateFormat[]{
             ECMA_DATE_FORMAT,
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss 'GMT'Z"),
+            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z"),
             MAP_DATE_FORMAT,
-            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"),
             new SimpleDateFormat("yyyy-MM-dd HH:mm"),
             new SimpleDateFormat("yyyy-MM-dd"),
             new SimpleDateFormat("yy-MM-dd"),

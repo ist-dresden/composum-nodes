@@ -522,8 +522,8 @@
         initialize: function(options) {
             components.TextFieldWidget.prototype.initialize.apply(this, [options]);
             this.$el.datetimepicker({
-                locale: 'de',
-                //format: 'YYYY-MM-DD HH:mm:ss',
+                locale: 'en',
+                format: 'YYYY-MM-DD HH:mm:ss',
                 //format: 'DD.MM.YYYY HH:mm:ss',
                 extraFormats: [
                     'YY-MM-DD',

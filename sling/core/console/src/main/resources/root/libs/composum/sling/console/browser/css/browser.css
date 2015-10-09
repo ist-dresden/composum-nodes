@@ -428,9 +428,7 @@
 }
 
 #browser-view .bootstrap-table table td.checkbox .editable-inline,
-#browser-view .bootstrap-table table td.checkbox .editable-inline .editable-input,
-#browser-view .bootstrap-table table td.combodate .editable-inline,
-#browser-view .bootstrap-table table td.combodate .editable-inline .editable-input {
+#browser-view .bootstrap-table table td.checkbox .editable-inline .editable-input {
     width: auto;
 }
 
