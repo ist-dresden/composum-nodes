@@ -230,14 +230,17 @@
             this.cursor = this.source.ace.getCursorPosition();
             // display the editor in the modal dialog
             this.show(_.bind (function(){
-                // initialize the editor instance and load the data
-                this.editor.initEditor(_.bind (function(data){
+                // initialize the editor instance
+                this.editor.initEditor(_.bind (function(){
                     this.editor.ace.setReadOnly(false);
+                    /*
                     if (this.selection) {
                         this.editor.ace.addSelectionMarker(this.selection);
+                        this.editor.ace.updateSelectionMarkers();
                     }
-                    this.editor.ace.navigateTo(this.cursor.row,this.cursor.column);
+                    */
                     this.editor.ace.scrollToRow(Math.max(this.cursor.row-2,0));
+                    this.editor.ace.navigateTo(this.cursor.row,this.cursor.column);
                     this.editor.ace.focus();
                 }, this));
             }, this));
