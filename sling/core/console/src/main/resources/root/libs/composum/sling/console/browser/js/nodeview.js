@@ -181,6 +181,81 @@
         }
     });
 
+    browser.ScriptTab = browser.EditorTab.extend({
+
+        initialize: function(options) {
+            this.verticalSplit = core.getWidget(this.$el,
+                '.split-pane.vertical-split', core.components.VerticalSplitPane);
+            browser.EditorTab.prototype.initialize.apply(this, [options]);
+            this.verticalSplit.setPosition(this.verticalSplit.checkPosition(120));
+            this.$logOutput = this.$('.detail-content .log-output');
+            this.$execute = this.$('.editor-toolbar .run-script');
+            this.$execute.click(_.bind(this.execute, this));
+        },
+
+        execute: function(event) {
+            if (this.scriptIsRunning) {
+                this.poll('stopScript', _.bind(this.scriptStoped, this));
+            } else {
+                this.poll('startScript', _.bind(this.scriptStarted, this));
+            }
+        },
+
+        scriptStarted: function(data) {
+            this.scriptIsRunning = true;
+            this.$logOutput.html('');
+            this.$el.addClass('running');
+            this.logAppend(data);
+            setTimeout(_.bind (this.checkScript, this), 500);
+        },
+
+        checkScript: function() {
+            if (this.scriptIsRunning) {
+                this.poll('checkScript', _.bind(this.onCheck, this), _.bind(this.scriptError, this));
+            }
+        },
+
+        scriptStoped: function(data) {
+            this.logAppend(data);
+            this.$el.removeClass('running');
+            this.scriptIsRunning = false;
+        },
+
+        scriptError: function(data) {
+            this.scriptStoped(data);
+        },
+
+        onCheck: function(data) {
+            this.logAppend(data);
+            if (this.scriptIsRunning) {
+                setTimeout(_.bind (this.checkScript, this), 500);
+            }
+        },
+
+        logAppend: function(data) {
+            this.$logOutput.append(data);
+        },
+
+        poll: function(operation, onSuccess, onError) {
+            var path = browser.getCurrentPath();
+            $.ajax({
+                url: '/bin/core/node.' + operation + '.groovy' + path,
+                success: _.bind (function (result) {
+                    if (_.isFunction(onSuccess)) {
+                        onSuccess(result);
+                    }
+                }, this),
+                error: _.bind (function (result) {
+                    if (_.isFunction(onError)) {
+                        onError(result);
+                    } else {
+                        core.alert('danger', 'Error', 'Error on script execution (' + operation + ')', result);
+                    }
+                }, this)
+            });
+        }
+    });
+
     browser.JsonTab = browser.NodeTab.extend({
 
         initialize: function(options) {
@@ -508,6 +583,9 @@
                 }, {
                     selector: '> .editor',
                     tabType: browser.EditorTab
+                }, {
+                    selector: '> .script',
+                    tabType: browser.ScriptTab
                 }, {
                     selector: '> .json',
                     tabType: browser.JsonTab

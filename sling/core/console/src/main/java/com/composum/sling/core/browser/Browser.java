@@ -292,7 +292,11 @@ public class Browser extends BrowserBean {
                 } else if (isImage()) {
                     viewType = "image";
                 } else if (isText()) {
-                    viewType = "text";
+                    if ("groovy".equalsIgnoreCase(getTextType())) {
+                        viewType = "script";
+                    } else {
+                        viewType = "text";
+                    }
                 } else {
                     viewType = "binary";
                 }
