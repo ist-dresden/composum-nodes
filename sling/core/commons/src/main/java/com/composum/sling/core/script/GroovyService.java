@@ -3,17 +3,16 @@ package com.composum.sling.core.script;
 
 import org.apache.sling.api.resource.Resource;
 
-import javax.jcr.Session;
+import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Reader;
 
 public interface GroovyService {
 
-    boolean startScript(String key, Resource script, PrintWriter out);
+    enum JobState {initialized, starting, running, finished, aborted, error, unkonwn}
 
-    boolean startScript(String key, Session session, Reader reader, PrintWriter out);
+    JobState startScript(String key, Resource script, PrintWriter out) throws IOException;
 
-    boolean checkScript(String key, PrintWriter out);
+    JobState checkScript(String key, PrintWriter out) throws IOException;
 
-    boolean stopScript(String key, PrintWriter out);
+    JobState stopScript(String key, PrintWriter out) throws IOException;
 }

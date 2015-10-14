@@ -195,7 +195,7 @@
 
         execute: function(event) {
             if (this.scriptIsRunning) {
-                this.poll('stopScript', _.bind(this.scriptStoped, this));
+                this.poll('stopScript', _.bind(this.scriptStopped, this));
             } else {
                 this.poll('startScript', _.bind(this.scriptStarted, this));
             }
@@ -205,7 +205,9 @@
             this.scriptIsRunning = true;
             this.$logOutput.html('');
             this.$el.addClass('running');
-            this.logAppend(data);
+            if (data) {
+                this.logAppend(data);
+            }
             setTimeout(_.bind (this.checkScript, this), 500);
         },
 
@@ -215,7 +217,7 @@
             }
         },
 
-        scriptStoped: function(data) {
+        scriptStopped: function(data) {
             this.logAppend(data);
             this.$el.removeClass('running');
             this.scriptIsRunning = false;
@@ -225,30 +227,45 @@
             this.scriptStoped(data);
         },
 
-        onCheck: function(data) {
-            this.logAppend(data);
+        onCheck: function(data, message, xhr) {
+            if (xhr && xhr.status == 205) {
+                this.scriptStopped(data);
+            } else {
+                this.logAppend(data);
+            }
             if (this.scriptIsRunning) {
                 setTimeout(_.bind (this.checkScript, this), 500);
             }
         },
 
         logAppend: function(data) {
+            var $scrollPane = this.$logOutput.parent();
+            var vheight = $scrollPane.height();
+            var height = this.$logOutput[0].scrollHeight;
+            var autoscroll = ($scrollPane.scrollTop() > height - vheight - 30);
             this.$logOutput.append(data);
+            if (autoscroll) {
+                height = this.$logOutput[0].scrollHeight;
+                $scrollPane.scrollTop(height - vheight);
+            }
         },
 
         poll: function(operation, onSuccess, onError) {
             var path = browser.getCurrentPath();
             $.ajax({
                 url: '/bin/core/node.' + operation + '.groovy' + path,
-                success: _.bind (function (result) {
+                success: _.bind (function (result, message, xhr) {
                     if (_.isFunction(onSuccess)) {
-                        onSuccess(result);
+                        onSuccess(result, message, xhr);
                     }
                 }, this),
                 error: _.bind (function (result) {
                     if (_.isFunction(onError)) {
                         onError(result);
                     } else {
+                        if (result.status == 409) {
+                            this.scriptStarted();
+                        }
                         core.alert('danger', 'Error', 'Error on script execution (' + operation + ')', result);
                     }
                 }, this)

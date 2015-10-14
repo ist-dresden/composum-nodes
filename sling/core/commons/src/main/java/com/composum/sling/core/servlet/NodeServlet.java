@@ -1213,8 +1213,14 @@ public class NodeServlet extends AbstractServiceServlet {
         protected void doScript(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                 ResourceHandle resource, String key, PrintWriter writer)
                 throws ServletException, IOException {
-            if (!groovyService.startScript(key, resource, writer)) {
-                response.setStatus(HttpServletResponse.SC_RESET_CONTENT);
+            GroovyService.JobState status = groovyService.startScript(key, resource, writer);
+            switch (status) {
+                case initialized:
+                    response.sendError(HttpServletResponse.SC_CONFLICT, "script already running: " + key);
+                    break;
+                case error:
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "can't start script: " + key);
+                    break;
             }
         }
     }
@@ -1225,8 +1231,15 @@ public class NodeServlet extends AbstractServiceServlet {
         protected void doScript(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                 ResourceHandle resource, String key, PrintWriter writer)
                 throws ServletException, IOException {
-            if (!groovyService.checkScript(key, writer)) {
-                response.setStatus(HttpServletResponse.SC_RESET_CONTENT);
+            GroovyService.JobState status = groovyService.checkScript(key, writer);
+            switch (status) {
+                case finished:
+                case aborted:
+                    response.setStatus(HttpServletResponse.SC_RESET_CONTENT);
+                    break;
+                case error:
+                    response.sendError(HttpServletResponse.SC_GONE, "script stopped with error: " + key);
+                    break;
             }
         }
     }
@@ -1237,8 +1250,15 @@ public class NodeServlet extends AbstractServiceServlet {
         protected void doScript(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                          ResourceHandle resource, String key, PrintWriter writer)
                 throws ServletException, IOException {
-            if (!groovyService.stopScript(key, writer)) {
-                response.setStatus(HttpServletResponse.SC_GONE);
+            GroovyService.JobState status = groovyService.stopScript(key, writer);
+            switch (status) {
+                case starting:
+                case running:
+                    response.sendError(HttpServletResponse.SC_GONE, "can't stop script: " + key);
+                    break;
+                case error:
+                    response.sendError(HttpServletResponse.SC_GONE, "script stopped with error: " + key);
+                    break;
             }
         }
     }

@@ -683,20 +683,33 @@
 #browser-view .node-view-panel .node-view-content .script.running .editor-toolbar .run-script::before {
     content: '\f04d';
     color: #a94442; /* danger */
-    font-size: 60%;
+    font-size: 10px;
     line-height: 20px;
+}
+
+@keyframes script-spinner {
+    to {transform: rotate(360deg);}
+}
+
+@-webkit-keyframes script-spinner {
+    to {-webkit-transform: rotate(360deg);}
 }
 
 #browser-view .node-view-panel .node-view-content .script.running .editor-toolbar .run-script::after {
     position: absolute;
+    animation: script-spinner 4s linear infinite;
+    -webkit-animation: script-spinner 4s linear infinite;
     opacity: 0.5;
     content: '\f185';
-    font-size: 22px;
-    line-height: 28px;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    font-size: 25px;
+    width: 30px;
+    height: 30px;
+    top: 15px;
+    left: 15px;
+    margin-top: -15.8px;
+    margin-left: -15.7px;
+    line-height: 25px;
+    padding: 3px 1px;
 }
 
 #browser-view .node-view-panel .node-view-content .script .split-pane .split-pane-component {
