@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 
 public interface GroovyService {
 
-    enum JobState {initialized, starting, running, finished, aborted, error, unkonwn}
+    enum JobState {initialized, starting, running, finished, aborted, error, unknown}
 
     JobState startScript(String key, Resource script, PrintWriter out) throws IOException;
 

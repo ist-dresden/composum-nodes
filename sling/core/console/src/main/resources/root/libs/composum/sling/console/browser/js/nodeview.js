@@ -223,8 +223,12 @@
             this.scriptIsRunning = false;
         },
 
-        scriptError: function(data) {
-            this.scriptStoped(data);
+        scriptError: function(result) {
+            if (result.status == 409) {
+                this.scriptStarted(result.responseText);
+            } else {
+                this.scriptStopped(result.responseText);
+            }
         },
 
         onCheck: function(data, message, xhr) {
@@ -263,9 +267,6 @@
                     if (_.isFunction(onError)) {
                         onError(result);
                     } else {
-                        if (result.status == 409) {
-                            this.scriptStarted();
-                        }
                         core.alert('danger', 'Error', 'Error on script execution (' + operation + ')', result);
                     }
                 }, this)

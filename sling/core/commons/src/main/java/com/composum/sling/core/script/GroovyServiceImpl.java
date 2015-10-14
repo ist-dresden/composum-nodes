@@ -89,6 +89,7 @@ public class GroovyServiceImpl implements GroovyService {
                         state = JobState.running;
                         try {
                             runner.run(reader, null);
+                            state = JobState.finished;
                         } catch (Exception ex) {
                             LOG.error(ex.getMessage(), ex);
                             state = JobState.error;
@@ -109,7 +110,6 @@ public class GroovyServiceImpl implements GroovyService {
                     out.write("can't load script: " + script.getPath());
                 }
             } finally {
-                state = JobState.finished;
                 thread = null;
             }
         }
@@ -152,7 +152,7 @@ public class GroovyServiceImpl implements GroovyService {
             scriptJob.flush(out);
             return scriptJob.state;
         }
-        return JobState.unkonwn;
+        return JobState.unknown;
     }
 
     public JobState stopScript(String key, PrintWriter out) throws IOException {
@@ -172,7 +172,7 @@ public class GroovyServiceImpl implements GroovyService {
             scriptJob.flush(out);
             return scriptJob.state;
         }
-        return JobState.unkonwn;
+        return JobState.unknown;
     }
 
     protected ScriptJob getJob(String key) {

@@ -1216,10 +1216,10 @@ public class NodeServlet extends AbstractServiceServlet {
             GroovyService.JobState status = groovyService.startScript(key, resource, writer);
             switch (status) {
                 case initialized:
-                    response.sendError(HttpServletResponse.SC_CONFLICT, "script already running: " + key);
+                    response.setStatus(HttpServletResponse.SC_CONFLICT);
                     break;
                 case error:
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "can't start script: " + key);
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     break;
             }
         }
@@ -1238,7 +1238,7 @@ public class NodeServlet extends AbstractServiceServlet {
                     response.setStatus(HttpServletResponse.SC_RESET_CONTENT);
                     break;
                 case error:
-                    response.sendError(HttpServletResponse.SC_GONE, "script stopped with error: " + key);
+                    response.setStatus(HttpServletResponse.SC_GONE);
                     break;
             }
         }
@@ -1254,10 +1254,8 @@ public class NodeServlet extends AbstractServiceServlet {
             switch (status) {
                 case starting:
                 case running:
-                    response.sendError(HttpServletResponse.SC_GONE, "can't stop script: " + key);
-                    break;
                 case error:
-                    response.sendError(HttpServletResponse.SC_GONE, "script stopped with error: " + key);
+                    response.setStatus(HttpServletResponse.SC_GONE);
                     break;
             }
         }
