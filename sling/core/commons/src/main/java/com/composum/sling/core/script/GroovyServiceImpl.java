@@ -1,17 +1,23 @@
 package com.composum.sling.core.script;
 
-import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.CoreConfiguration;
+import com.composum.sling.core.util.PropertyUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.commons.threads.ModifiableThreadPoolConfig;
+import org.apache.sling.commons.threads.ThreadPool;
+import org.apache.sling.commons.threads.ThreadPoolConfig;
+import org.apache.sling.commons.threads.ThreadPoolManager;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.Binary;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.io.IOException;
@@ -39,49 +45,70 @@ public class GroovyServiceImpl implements GroovyService {
 
     private static final Logger LOG = LoggerFactory.getLogger(GroovyServiceImpl.class);
 
+    @Reference
+    protected CoreConfiguration coreConfig;
+
+    @Reference
+    protected ThreadPoolManager threadPoolManager;
+
+    protected ThreadPool threadPool;
+
+    protected String setupScript;
+
     protected Map<String, ScriptJob> runningJobs;
 
     protected class ScriptJob implements Runnable {
 
         public final String key;
-        public final Session session;
-        public final Resource script;
+        public final String scriptPath;
 
+        protected Session session;
         protected JobState state;
         protected StringWriter outBuffer;
         protected PrintWriter out;
         protected GroovyRunner runner;
         protected Thread thread;
 
-        public ScriptJob(String key, Session session, Resource script) {
+        public ScriptJob(String key, Session session, String scriptPath) throws RepositoryException {
             this.key = key;
-            this.session = session;
-            this.script = script;
+            // clone session for independent execution
+            this.session = session.getRepository().login();
+            this.scriptPath = scriptPath;
             outBuffer = new StringWriter();
             out = new PrintWriter(outBuffer);
-            runner = new GroovyRunner(session, out);
             state = JobState.initialized;
         }
 
         public void start() {
             if (thread == null) {
                 thread = new Thread(this);
-                thread.start();
+                threadPool.execute(thread);
             }
         }
 
         public void stop() {
             if (thread != null) {
                 state = JobState.aborted;
+                // TODO (rw,2015-10-15): is there a better way to cancel script execution?
                 thread.stop();
                 thread = null;
+                close();
+            }
+        }
+
+        public void close() {
+            if (session != null) {
+                session.logout();
+                session = null;
             }
         }
 
         public void run() {
             state = JobState.starting;
+            runner = new GroovyRunner(session, out, setupScript);
             try {
-                Binary binary = ResourceUtil.getBinaryData(script);
+                Node node = session.getNode(scriptPath);
+                Binary binary = PropertyUtil.getBinaryData(node);
                 if (binary != null) {
                     try {
                         InputStream in = binary.getStream();
@@ -94,8 +121,6 @@ public class GroovyServiceImpl implements GroovyService {
                             LOG.error(ex.getMessage(), ex);
                             state = JobState.error;
                             out.write("\n");
-                            out.write(ex.getMessage());
-                            out.write("\n");
                             ex.printStackTrace(out);
                         }
                     } catch (UnsupportedEncodingException ueex) {
@@ -107,10 +132,14 @@ public class GroovyServiceImpl implements GroovyService {
                     }
                 } else {
                     state = JobState.error;
-                    out.write("can't load script: " + script.getPath());
+                    out.write("can't load script: " + scriptPath);
                 }
+            } catch (RepositoryException rex) {
+                state = JobState.error;
+                out.write("can't load script: " + scriptPath + " (" + rex.getMessage() + ")");
             } finally {
                 thread = null;
+                close();
             }
         }
 
@@ -124,11 +153,9 @@ public class GroovyServiceImpl implements GroovyService {
         }
     }
 
-    public JobState startScript(String key, Resource script, PrintWriter out)
-            throws IOException {
-        ResourceResolver resolver = script.getResourceResolver();
-        Session session = resolver.adaptTo(Session.class);
-        ScriptJob scriptJob = new ScriptJob(key, session, script);
+    public JobState startScript(String key, Session session, String scriptPath, PrintWriter out)
+            throws IOException, RepositoryException {
+        ScriptJob scriptJob = new ScriptJob(key, session, scriptPath);
         addJob(scriptJob);
         switch (scriptJob.state) {
             case starting:
@@ -166,7 +193,7 @@ public class GroovyServiceImpl implements GroovyService {
                     break;
                 default:
                     scriptJob.stop();
-                    scriptJob.out.write("\nscript execution stopped!");
+                    scriptJob.out.write("\nscript execution aborted!");
                     break;
             }
             scriptJob.flush(out);
@@ -211,7 +238,19 @@ public class GroovyServiceImpl implements GroovyService {
 
     @Activate
     protected void activate(ComponentContext ctx) throws Exception {
+
+        ModifiableThreadPoolConfig threadPoolConfig = new ModifiableThreadPoolConfig();
+        threadPoolConfig.setMaxPoolSize(0);
+        threadPoolConfig.setMaxPoolSize(5);
+        threadPoolConfig.setPriority(ThreadPoolConfig.ThreadPriority.NORM);
+        threadPool = threadPoolManager.create(threadPoolConfig);
+
         runningJobs = new HashMap<>();
+
+        setupScript = (String) coreConfig.getProperties().get(CoreConfiguration.GROOVY_SETUP_SCRIPT);
+        if (StringUtils.isBlank(setupScript)) {
+            setupScript = GroovyRunner.DEFAULT_SETUP_SCRIPT;
+        }
     }
 
     @Deactivate
@@ -221,6 +260,10 @@ public class GroovyServiceImpl implements GroovyService {
                 entry.getValue().stop();
             }
             runningJobs.clear();
+        }
+        if (threadPool != null) {
+            threadPoolManager.release(threadPool);
+            threadPool = null;
         }
     }
 }

@@ -37,6 +37,10 @@ public class GroovyRunner {
 
     private static final Logger LOG = LoggerFactory.getLogger(GroovyRunner.class);
 
+    public static final String DEFAULT_SETUP_SCRIPT = "script/setup.groovy";
+    public static final String JAVA_RESOURCE_BASE = "/com/composum/sling/core/";
+    public static final String ENCODING = "UTF-8";
+
     protected BundleContext bundleContext;
     protected ResourceResolverFactory resourceResolverFactory;
     protected ResourceResolver resourceResolver;
@@ -50,7 +54,7 @@ public class GroovyRunner {
     protected String setupScript;
 
     public GroovyRunner(Session session, PrintWriter out) {
-        this(session, out, "script/setup.groovy");
+        this(session, out, DEFAULT_SETUP_SCRIPT);
     }
 
     public GroovyRunner(Session session, PrintWriter out, String setupScript) {
@@ -162,7 +166,7 @@ public class GroovyRunner {
                     try {
                         InputStream inputStream = binary.getStream();
                         if (inputStream != null) {
-                            reader = new InputStreamReader(inputStream, "UTF-8");
+                            reader = new InputStreamReader(inputStream, ENCODING);
                         }
                     } catch (UnsupportedEncodingException ueex) {
                         LOG.error(ueex.getMessage(), ueex);
@@ -173,10 +177,10 @@ public class GroovyRunner {
             }
         }
         if (reader == null) {
-            InputStream stream = getClass().getResourceAsStream("/com/composum/sling/core/" + path);
+            InputStream stream = getClass().getResourceAsStream(JAVA_RESOURCE_BASE + path);
             if (stream != null) {
                 try {
-                    reader = new InputStreamReader(stream, "UTF-8");
+                    reader = new InputStreamReader(stream, ENCODING);
                 } catch (UnsupportedEncodingException ueex) {
                     LOG.error(ueex.getMessage(), ueex);
                 }

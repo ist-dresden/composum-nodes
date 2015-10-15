@@ -39,6 +39,10 @@
                         <Include-Resource>
                             {maven-resources}
                         </Include-Resource>
+                        <Import-Package>
+                            groovy.lang.*;version="[1.8.2,3)",
+                            *
+                        </Import-Package>
                         <Export-Package>
                             com.composum.sling.core.*,
                             com.composum.sling.cpnl.*,
@@ -84,7 +88,7 @@
             <scope>provided</scope>
         </dependency>
 
-
+        <!-- Apache Sling -->
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.api</artifactId>
@@ -104,6 +108,10 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.classloader</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.commons.threads</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>

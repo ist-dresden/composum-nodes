@@ -704,13 +704,13 @@
     font-size: 25px;
     width: 30px;
     height: 30px;
-    top: 15px;
-    left: 15px;
+    top: 50%;
+    left: 50%;
     margin-top: -15.8px;
-    margin-left: -15.7px;
+    margin-left: -15.3px;
     line-height: 25px;
     padding: 3px 1px;
-}
+}}
 
 #browser-view .node-view-panel .node-view-content .script .split-pane .split-pane-component {
     min-height: 80px;

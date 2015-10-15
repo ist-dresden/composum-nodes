@@ -1,8 +1,8 @@
 package com.composum.sling.core.script;
 
 
-import org.apache.sling.api.resource.Resource;
-
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -10,7 +10,7 @@ public interface GroovyService {
 
     enum JobState {initialized, starting, running, finished, aborted, error, unknown}
 
-    JobState startScript(String key, Resource script, PrintWriter out) throws IOException;
+    JobState startScript(String key, Session session, String scriptPath, PrintWriter out) throws IOException, RepositoryException;
 
     JobState checkScript(String key, PrintWriter out) throws IOException;
 

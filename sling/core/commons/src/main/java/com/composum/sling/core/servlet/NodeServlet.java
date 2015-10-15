@@ -1213,14 +1213,21 @@ public class NodeServlet extends AbstractServiceServlet {
         protected void doScript(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                 ResourceHandle resource, String key, PrintWriter writer)
                 throws ServletException, IOException {
-            GroovyService.JobState status = groovyService.startScript(key, resource, writer);
-            switch (status) {
-                case initialized:
-                    response.setStatus(HttpServletResponse.SC_CONFLICT);
-                    break;
-                case error:
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    break;
+            try {
+                ResourceResolver resolver = request.getResourceResolver();
+                Session session = resolver.adaptTo(Session.class);
+                GroovyService.JobState status = groovyService.startScript(key, session, resource.getPath(), writer);
+                switch (status) {
+                    case initialized:
+                        response.setStatus(HttpServletResponse.SC_CONFLICT);
+                        break;
+                    case error:
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        break;
+                }
+            } catch (RepositoryException rex) {
+                LOG.error(rex.getMessage(), rex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, rex.getMessage());
             }
         }
     }
@@ -1248,7 +1255,7 @@ public class NodeServlet extends AbstractServiceServlet {
 
         @Override
         protected void doScript(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                         ResourceHandle resource, String key, PrintWriter writer)
+                                ResourceHandle resource, String key, PrintWriter writer)
                 throws ServletException, IOException {
             GroovyService.JobState status = groovyService.stopScript(key, writer);
             switch (status) {
