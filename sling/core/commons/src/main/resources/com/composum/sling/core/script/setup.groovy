@@ -43,19 +43,19 @@ script.metaClass.getServices << { String serviceClass, String filter ->
 }
 
 script.metaClass.error << { ... args ->
-    logger.error(args.join(''))
+    log.error(args.join(''))
 }
 
 script.metaClass.warn << { ... args ->
-    logger.warn(args.join(''))
+    log.warn(args.join(''))
 }
 
 script.metaClass.info << { ... args ->
-    logger.info(args.join(''))
+    log.info(args.join(''))
 }
 
 script.metaClass.debug << { ... args ->
-    logger.debug(args.join(''))
+    log.debug(args.join(''))
 }
 
 [:]

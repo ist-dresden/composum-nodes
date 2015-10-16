@@ -12,6 +12,7 @@ import org.apache.sling.commons.threads.ModifiableThreadPoolConfig;
 import org.apache.sling.commons.threads.ThreadPool;
 import org.apache.sling.commons.threads.ThreadPoolConfig;
 import org.apache.sling.commons.threads.ThreadPoolManager;
+import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.SimpleCredentials;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -49,6 +51,9 @@ public class GroovyServiceImpl implements GroovyService {
     protected CoreConfiguration coreConfig;
 
     @Reference
+    protected SlingRepository slingRepository;
+
+    @Reference
     protected ThreadPoolManager threadPoolManager;
 
     protected ThreadPool threadPool;
@@ -71,9 +76,10 @@ public class GroovyServiceImpl implements GroovyService {
 
         public ScriptJob(String key, Session session, String scriptPath) throws RepositoryException {
             this.key = key;
-            // clone session for independent execution
-            this.session = session.getRepository().login();
             this.scriptPath = scriptPath;
+            // clone session for request independent execution; TODO avoid loginAdministrative ?...
+            Session admin = slingRepository.loginAdministrative(session.getWorkspace().getName());
+            this.session = admin.impersonate(new SimpleCredentials(session.getUserID(), new char[0]));
             outBuffer = new StringWriter();
             out = new PrintWriter(outBuffer);
             state = JobState.initialized;
@@ -136,7 +142,7 @@ public class GroovyServiceImpl implements GroovyService {
                 }
             } catch (RepositoryException rex) {
                 state = JobState.error;
-                out.write("can't load script: " + scriptPath + " (" + rex.getMessage() + ")");
+                out.write("can't load script: " + rex);
             } finally {
                 thread = null;
                 close();

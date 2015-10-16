@@ -69,7 +69,7 @@ public class GroovyRunner {
             queryManager = getQueryManager(workspace);
         }
         generalBindings.put("out", out);
-        generalBindings.put("logger", LOG);
+        generalBindings.put("log", LOG);
         generalBindings.put("bundleContext", bundleContext);
         generalBindings.put("resourceResolverFactory", resourceResolverFactory);
         generalBindings.put("resourceResolver", resourceResolver);
@@ -141,7 +141,7 @@ public class GroovyRunner {
                 try {
                     Map<String, Object> variables = new HashMap();
                     variables.put("script", script);
-                    variables.put("logger", LOG);
+                    variables.put("log", LOG);
                     variables.put("out", out);
                     Script setupScript = getScript(reader, variables);
                     extendBinding(setupScript, generalBindings);

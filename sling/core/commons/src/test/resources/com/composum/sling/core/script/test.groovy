@@ -5,7 +5,7 @@ package com.composum.sling.core.script
  */
 
 println "meta: " + getMetaClass()
-println "logger: " + logger
+println "log: " + log
 println "binding: " + binding
 binding.variables.each({ entry ->
     println "  " + entry.key + " = " + entry.value
