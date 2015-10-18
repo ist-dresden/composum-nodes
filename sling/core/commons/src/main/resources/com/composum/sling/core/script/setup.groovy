@@ -6,7 +6,7 @@ package com.composum.sling.core.script
  * - must return the additional/default binding variables for the script
  * executed by the runner with the variables
  * - script: the groovy Script object
- * - logger: the logger used by the groovy runner
+ * - log: the logger used by the groovy runner
  * - out: the print writer from the calling context
  */
 

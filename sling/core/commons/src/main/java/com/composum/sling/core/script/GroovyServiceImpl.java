@@ -2,6 +2,7 @@ package com.composum.sling.core.script;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.util.PropertyUtil;
+import groovy.lang.GroovyShell;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -244,6 +245,9 @@ public class GroovyServiceImpl implements GroovyService {
 
     @Activate
     protected void activate(ComponentContext ctx) throws Exception {
+
+        // try availability of the groovy framework
+        GroovyShell shell = new GroovyShell();
 
         ModifiableThreadPoolConfig threadPoolConfig = new ModifiableThreadPoolConfig();
         threadPoolConfig.setMaxPoolSize(0);
