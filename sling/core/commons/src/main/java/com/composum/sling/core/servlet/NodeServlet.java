@@ -1343,39 +1343,45 @@ public class NodeServlet extends AbstractServiceServlet {
                                          ResourceHandle resource)
             throws IOException {
         writer.name("jcrState").beginObject();
-        Node node = resource.adaptTo(Node.class);
-        if (node != null) {
-            try {
-                String nodePath = node.getPath();
-                Session session = node.getSession();
-                Workspace workspace = session.getWorkspace();
-                LockManager lockManager = workspace.getLockManager();
-                writer.name("checkedOut").value(node.isCheckedOut());
-                writer.name("isVersionable").value(isVersionable(node));
-                boolean isLocked = node.isLocked();
-                writer.name("locked").value(isLocked);
-                if (isLocked) {
-                    writer.name("lock").beginObject();
-                    Lock lock = lockManager.getLock(nodePath);
-                    String holderPath = lock.getNode().getPath();
-                    writer.name("isDeep").value(lock.isDeep());
-                    writer.name("isHolder").value(holderPath.equals(nodePath));
-                    writer.name("node").value(holderPath);
-                    writer.name("owner").value(lock.getLockOwner());
-                    writer.name("sessionScoped").value(lock.isSessionScoped());
-                    writer.endObject();
+        try {
+            Node node = resource.adaptTo(Node.class);
+            if (node != null) {
+                try {
+                    String nodePath = node.getPath();
+                    Session session = node.getSession();
+                    Workspace workspace = session.getWorkspace();
+                    LockManager lockManager = workspace.getLockManager();
+                    JsonUtil.writeValue(writer, "checkedOut", node.isCheckedOut());
+                    JsonUtil.writeValue(writer, "isVersionable", isVersionable(node));
+                    boolean isLocked = node.isLocked();
+                    JsonUtil.writeValue(writer, "locked", isLocked);
+                    if (isLocked) {
+                        writer.name("lock").beginObject();
+                        try {
+                            Lock lock = lockManager.getLock(nodePath);
+                            String holderPath = lock.getNode().getPath();
+                            JsonUtil.writeValue(writer, "isDeep", lock.isDeep());
+                            JsonUtil.writeValue(writer, "isHolder", holderPath.equals(nodePath));
+                            JsonUtil.writeValue(writer, "node", holderPath);
+                            JsonUtil.writeValue(writer, "owner", lock.getLockOwner());
+                            JsonUtil.writeValue(writer, "sessionScoped", lock.isSessionScoped());
+                        } finally {
+                            writer.endObject();
+                        }
+                    }
+                } catch (RepositoryException rex) {
+                    LOG.error(rex.getMessage(), rex);
                 }
-            } catch (RepositoryException rex) {
-                LOG.error(rex.getMessage(), rex);
             }
+        } finally {
+            writer.endObject();
         }
-        writer.endObject();
     }
 
     private static boolean isVersionable(Node node) throws RepositoryException {
         final NodeType[] mixinNodeTypes = node.getMixinNodeTypes();
         for (final NodeType mixinNodeType : mixinNodeTypes) {
-            if (mixinNodeType.isNodeType(NodeType.MIX_VERSIONABLE) || mixinNodeType.isNodeType( NodeType.MIX_SIMPLE_VERSIONABLE)) {
+            if (mixinNodeType.isNodeType(NodeType.MIX_VERSIONABLE) || mixinNodeType.isNodeType(NodeType.MIX_SIMPLE_VERSIONABLE)) {
                 return true;
             }
         }

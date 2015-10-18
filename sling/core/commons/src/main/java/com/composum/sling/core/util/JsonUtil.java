@@ -800,6 +800,28 @@ public class JsonUtil {
         }
     }
 
+    // helper methods to decouple value write from value get (can probably throw an exception)
+
+    public static void writeValue (JsonWriter writer, String name, String value) throws IOException {
+        writer.name(name).value(value);
+    }
+
+    public static void writeValue (JsonWriter writer, String name, boolean value) throws IOException {
+        writer.name(name).value(value);
+    }
+
+    public static void writeValue (JsonWriter writer, String name, double value) throws IOException {
+        writer.name(name).value(value);
+    }
+
+    public static void writeValue (JsonWriter writer, String name, long value) throws IOException {
+        writer.name(name).value(value);
+    }
+
+    public static void writeValue (JsonWriter writer, String name, Number value) throws IOException {
+        writer.name(name).value(value);
+    }
+
     /**
      * Embeds the property type in the string value if the formats scope is 'value'.
      *
