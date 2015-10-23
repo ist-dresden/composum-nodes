@@ -11,6 +11,7 @@
 
     browser.DisplayTab = browser.NodeTab.extend({
 
+        pathPattern: new RegExp('^(https?://[^/]+)?(/.*)$'),
         urlPattern: new RegExp('^(.*/[^/]+)(\\.[^.]+)'),
 
         initialize: function(options) {
@@ -25,16 +26,24 @@
             this.loadContent = options.loadContent;
             /* general initialization */
             this.$mappedButton = this.$('.detail-toolbar .resolver');
+            this.$pathPrefix = this.$('.detail-toolbar .prefix input');
             this.$selectors = this.$('.detail-toolbar .selectors input');
             this.$parameters = this.$('.detail-toolbar .parameters input');
             this.$('.detail-toolbar .reload').click(_.bind (this.reload, this));
             this.$('.detail-toolbar .open').click(_.bind (this.open, this));
+            this.$pathPrefix.val(core.console.getProfile().get(this.displayKey,'pathPrefix'));
+            this.$pathPrefix.on('change.display', _.bind(this.onPrefixChange, this));
             this.$selectors.val(core.console.getProfile().get(this.displayKey,'selectors'));
             this.$selectors.on('change.display', _.bind(this.onSelectorsChange, this));
             this.$parameters.val(core.console.getProfile().get(this.displayKey,'parameters'));
             this.$parameters.on('change.display', _.bind(this.onParametersChange, this));
             this.$mappedButton.on('click.display', _.bind(this.toggleMapped, this));
             this.$mappedButton.addClass(core.console.getProfile().get(this.displayKey, 'mapped', true) ? 'on':'off');
+        },
+
+        onPrefixChange: function(event) {
+            var args = this.$pathPrefix.val();
+            core.console.getProfile().set(this.displayKey,'pathPrefix', args);
         },
 
         onSelectorsChange: function(event) {
@@ -75,6 +84,18 @@
 
         getUrl: function() {
             var url = this.$el.attr(this.isMapped() ? 'data-mapped' : 'data-path');
+            var pathPrefix = this.$pathPrefix.val();
+            if (pathPrefix) {
+                var parts = this.pathPattern.exec(url);
+                if (parts && parts.length > 1) {
+                    if (parts[1]) {
+                        url = parts[1];
+                    } else {
+                        url = "";
+                    }
+                    url += pathPrefix + parts[2];
+                }
+            }
             var selectors = this.$selectors.val();
             if (selectors) {
                 var parts = this.urlPattern.exec(url);

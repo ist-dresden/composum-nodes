@@ -9,6 +9,12 @@
         <span class="resolver fa fa-external-link btn btn-default" title="Resolver Mapping ON/OFF"></span>
       </div>
       <div class="btn-group btn-group-sm" role="group">
+        <div class="prefix input-group input-group-sm">
+          <span class="input-group-addon" title="Path prefix">/_/</span>
+          <input type="text" class="form-control" placeholder="Path prefix">
+        </div>
+      </div>
+      <div class="btn-group btn-group-sm" role="group">
         <div class="selectors input-group input-group-sm">
           <span class="input-group-addon" title="Sling selectors">.x.</span>
           <input type="text" class="form-control" placeholder="Sling selectors">
@@ -16,8 +22,8 @@
       </div>
       <div class="btn-group btn-group-sm" role="group">
         <div class="parameters input-group input-group-sm">
-          <span class="fa fa-question input-group-addon" title="URL parameters"></span>
-          <input type="text" class="form-control" placeholder="URL parameters">
+          <span class="fa fa-question input-group-addon" title="URL parameter"></span>
+          <input type="text" class="form-control" placeholder="URL parameter">
         </div>
       </div>
       <div class="btn-group btn-group-sm" role="group">

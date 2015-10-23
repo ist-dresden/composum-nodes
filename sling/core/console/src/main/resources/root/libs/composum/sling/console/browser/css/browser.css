@@ -348,9 +348,6 @@
     max-width: 170px;
 }
 
-#browser-view .node-view-content .detail-toolbar .input-group.selectors {
-    max-width: 115px;
-}
 
 #browser-view .node-view-content .detail-toolbar .input-group-addon {
     font-size: 14px;
@@ -523,6 +520,12 @@
     left: 0;
     right: 0;
     bottom: 37px;
+}
+
+#browser-view .node-view-content .detail-toolbar .input-group.prefix,
+#browser-view .node-view-content .detail-toolbar .input-group.selectors,
+#browser-view .node-view-content .detail-toolbar .input-group.parameters {
+    max-width: 115px;
 }
 
 /**
