@@ -12,7 +12,7 @@
     browser.DisplayTab = browser.NodeTab.extend({
 
         pathPattern: new RegExp('^(https?://[^/]+)?(/.*)$'),
-        urlPattern: new RegExp('^(.*/[^/]+)(\\.[^.]+)'),
+        urlPattern: new RegExp('^(.*/[^/]+)(\\.[^.]+)$'),
 
         initialize: function(options) {
             /* get abstract members
