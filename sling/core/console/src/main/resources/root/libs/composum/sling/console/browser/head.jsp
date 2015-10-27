@@ -5,6 +5,8 @@
   <!-- browser style -->
   <link rel="stylesheet" href="/libs/composum/sling/console/browser/css/nodes.css" />
   <link rel="stylesheet" href="/libs/composum/sling/console/browser/css/browser.css" />
+  <!-- browser components -->
+  <link rel="stylesheet" href="/libs/composum/sling/console/browser/components/favorites/favorites.css" />
   <!-- browser theme - experimental -->
   <!--
   <link rel="stylesheet" href="/libs/composum/sling/console/page/css/theme-dark.css" />

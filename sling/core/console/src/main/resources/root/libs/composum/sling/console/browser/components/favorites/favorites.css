@@ -1,0 +1,34 @@
+/**
+ * Favorites Overlay style
+ */
+
+#browser #favorites-overlay {
+    background: rgba(255,255,255,0.9);
+    z-index: 5;
+}
+
+#browser #favorites-overlay .favorites-component {
+    position: absolute;
+    top: 9px;
+    left: 5px;
+    right: 0;
+    bottom: 45px;
+}
+
+#browser #favorites-overlay .tree-actions {
+    background: none;
+}
+
+#browser #favorites-overlay .tree-actions .align-left .btn-group,
+#browser #favorites-overlay .tree-actions .align-left .input-group {
+    z-index: 7;
+}
+
+#browser #favorites-overlay .tree-actions .align-left .btn-group,
+#browser #favorites-overlay .tree-actions .align-left .input-group {
+    z-index: 6;
+}
+
+.favorites-component .scrollable {
+    overflow: auto;
+}

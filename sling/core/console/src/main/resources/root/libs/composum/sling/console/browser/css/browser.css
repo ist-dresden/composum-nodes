@@ -37,6 +37,14 @@
 }
 
 /**
+ * Browser Tree
+ */
+
+#browser .tree-actions .filter label {
+    display: none; /* wee need its place for the favorites button */
+}
+
+/**
  * Query Panel
  */
 
@@ -663,7 +671,9 @@
     margin: 0 2px;
 }
 
-/* ACE clouds theme */
+/*
+ * ACE clouds theme
+ */
 
 .code-editor.ace-clouds .ace_gutter {
     background: #f8f8f8;

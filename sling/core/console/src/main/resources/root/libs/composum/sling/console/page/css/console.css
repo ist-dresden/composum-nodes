@@ -52,6 +52,10 @@ fieldset {
     float: left;
 }
 
+.align-right {
+    float: right;
+}
+
 .align-left,
 .btn-toolbar .btn-group,
 .btn-toolbar .input-group {
@@ -59,15 +63,27 @@ fieldset {
 }
 
 .align-right,
-.btn-toolbar .btn-group.align-right,
-.btn-toolbar .input-group.align-right {
-    float: right;
+.btn-toolbar .align-right .btn-group,
+.btn-toolbar .align-right .input-group {
     z-index: 1;
 }
 
-.btn-group.align-right {
+.btn-toolbar .align-left {
+    position: relative;
+    left: 5px;
+}
+
+.btn-toolbar .align-right {
     position: absolute;
     right: 5px;
+}
+
+.btn-toolbar .align-left .btn-group {
+    margin-right: 5px;
+}
+
+.btn-toolbar .align-right .btn-group {
+    margin-left: 5px;
 }
 
 .btn-toolbar .btn-group .btn.fa {
@@ -122,7 +138,7 @@ fieldset {
 #split-view-horizontal-split > .split-pane-component.left-pane {
     width: 350px;
     left: 0;
-    top: 50px;
+    top: 41px;
     bottom: 0;
     height: auto!important;
     display: none;
@@ -344,7 +360,7 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 
 .tree-panel {
     position: absolute;
-    top: 0;
+    top: 9px;
     left: 5px;
     right: 0;
     bottom: 45px;

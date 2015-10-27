@@ -111,6 +111,11 @@
                 this.$filters.find('li>a').click(_.bind(this.setFilter, this));
             }, this));
             this.setFilterLabel(core.console.getProfile().get('browser', 'filter'));
+            this.$('button.favorites').on('click', _.bind(this.toggleFavorites, this));
+        },
+
+        toggleFavorites: function(event) {
+            return browser.favorites.toggleView(event);
         },
 
         setFilter: function(event) {
