@@ -95,9 +95,18 @@ public class GroovyServiceImpl implements GroovyService {
 
         public void stop() {
             if (thread != null) {
-                state = JobState.aborted;
-                // TODO (rw,2015-10-15): is there a better way to cancel script execution?
-                thread.stop();
+                LOG.info ("stop script execution...");
+                thread.interrupt();
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException intex) {
+                    LOG.warn("wait interrupted (" + intex.getMessage() + ")");
+                }
+                if (state == JobState.running) {
+                    state = JobState.aborted;
+                    LOG.warn("can't interrupt thread... stopped!");
+                    thread.stop();
+                }
                 thread = null;
                 close();
             }
@@ -124,6 +133,9 @@ public class GroovyServiceImpl implements GroovyService {
                         try {
                             runner.run(reader, null);
                             state = JobState.finished;
+                        } catch (InterruptedException intex) {
+                            LOG.warn(intex.getMessage());
+                            state = JobState.aborted;
                         } catch (Exception ex) {
                             LOG.error(ex.getMessage(), ex);
                             state = JobState.error;
