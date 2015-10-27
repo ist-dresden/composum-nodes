@@ -14,7 +14,7 @@
         </div>
       </div>
         <div class="btn-group btn-group-sm" role="group">
-          <button type="button" class="start-editing fa fa-pencil btn btn-default"><span class="label">Edit</span></button>
+          <button type="button" class="start-editing fa fa-pencil btn btn-default" title="Edit text"><span class="label">Edit</span></button>
         </div>
         <div class="btn-group btn-group-sm" role="group">
           <a href="" class="download fa fa-download btn btn-default" title="Download text file"><span class="label">Download</span></a>

@@ -672,12 +672,89 @@
 }
 
 /*
+ * Script extensions
+ */
+
+#browser-view .node-view-panel .action-bar .code.script::after {
+    position: absolute;
+    bottom: 1px;
+    right: 4px;
+    opacity: 0.8;
+    font-size: 80%;
+    content: '\f04b';
+}
+
+#browser-view .node-view-panel .node-view-content .script .editor-toolbar .run-script::before {
+    color: #337ab7; /* info */
+    display: block;
+    width: 12px;
+    height: 21px;
+}
+
+#browser-view .node-view-panel .node-view-content .script.running .editor-toolbar .run-script::before {
+    content: '\f04d';
+    color: #a94442; /* danger */
+    font-size: 10px;
+    line-height: 20px;
+}
+
+@keyframes script-spinner {
+    to {transform: rotate(360deg);}
+}
+
+@-webkit-keyframes script-spinner {
+    to {-webkit-transform: rotate(360deg);}
+}
+
+#browser-view .node-view-panel .node-view-content .script.running .editor-toolbar .run-script::after {
+    position: absolute;
+    animation: script-spinner 4s linear infinite;
+    -webkit-animation: script-spinner 4s linear infinite;
+    opacity: 0.5;
+    content: '\f185';
+    font-size: 25px;
+    width: 30px;
+    height: 30px;
+    top: 50%;
+    left: 50%;
+    margin-top: -15.8px;
+    margin-left: -15.3px;
+    line-height: 25px;
+    padding: 3px 1px;
+}}
+
+#browser-view .node-view-panel .node-view-content .script .split-pane .split-pane-component {
+    min-height: 80px;
+}
+
+#browser-view .node-view-panel .node-view-content .script .split-pane .top-pane {
+    margin-bottom: 15px;
+}
+
+#browser-view .node-view-panel .node-view-content .script .split-pane .split-pane-divider {
+    bottom: 120px;
+}
+
+#browser-view .node-view-panel .node-view-content .script .split-pane .bottom-pane {
+    height: 120px;
+}
+
+#browser-view .node-view-panel .node-view-content .script .split-pane .split-pane-divider {
+    background-color: #e4e4e4;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .log-output {
+    font-family: monospace;
+    font-size: 13px;
+    white-space: pre;
+}
+
+/*
  * ACE clouds theme
  */
 
 .code-editor.ace-clouds .ace_gutter {
     background: #f8f8f8;
-    color: #666;
 }
 
 /**
