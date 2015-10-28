@@ -154,6 +154,15 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private boolean versionServletEnabled;
 
+    public static final String USER_MANAGEMENT_SERVLET_ENABLED = "usermanagement.servlet.enabled";
+    @Property(
+            name = "usermanagement.servlet.enabled",
+            label = "User Management Servlet",
+            description = "the general on/off switch for the services of the User Management Servlet",
+            boolValue = true
+    )
+    private boolean userManagementServletEnabled;
+
     private Map<Class<? extends AbstractServiceServlet>, Boolean> enabledServlets;
 
     @Override
@@ -278,6 +287,8 @@ public class CoreConfigImpl implements CoreConfiguration {
                 (Boolean) properties.get(PROPERTY_SERVLET_ENABLED));
         enabledServlets.put(VersionServlet.class, versionServletEnabled =
                 (Boolean) properties.get(VERSION_SERVLET_ENABLED));
+        enabledServlets.put(UserManagementServlet.class, userManagementServletEnabled =
+                (Boolean) properties.get(USER_MANAGEMENT_SERVLET_ENABLED));
     }
 
     protected void deactivate(ComponentContext context) {

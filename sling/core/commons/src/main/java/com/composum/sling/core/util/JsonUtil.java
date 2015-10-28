@@ -870,6 +870,30 @@ public class JsonUtil {
         }
     }
 
+    public interface ElementCallback<T> {
+        String doWithElement(T element) throws Exception;
+    }
+
+    public static <T> void writeJsonArray(JsonWriter writer, Iterator<T> values, ElementCallback<T> elementCallback) throws IOException {
+        if (values != null) {
+            writer.beginArray();
+            while (values.hasNext()) {
+                try {
+                    String extractedValue = elementCallback.doWithElement(values.next());
+                    writer.value(extractedValue);
+                } catch (Exception e) {
+                    throw new IOException(e);
+                }
+            }
+            writer.endArray();
+        }
+    }
+
+    public static <T> void writeJsonArray(JsonWriter writer, String name, Iterator<T> values, ElementCallback<T> elementCallback) throws IOException {
+        writer.name(name);
+        writeJsonArray(writer, values, elementCallback);
+    }
+
     // receiving JSON ...
 
     /**
