@@ -7,12 +7,32 @@
     z-index: 5;
 }
 
-#browser #favorites-overlay .favorites-component {
+#browser #favorites-overlay .favorites-panel {
     position: absolute;
     top: 9px;
     left: 5px;
     right: 0;
     bottom: 45px;
+}
+
+#browser #favorites-overlay .split-pane .split-pane-component {
+    min-height: 80px;
+}
+
+#browser #favorites-overlay .split-pane .top-pane {
+    margin-bottom: 15px;
+}
+
+#browser #favorites-overlay .split-pane .split-pane-divider {
+    bottom: 200px;
+}
+
+#browser #favorites-overlay .split-pane .bottom-pane {
+    height: 200px;
+}
+
+#browser #favorites-overlay .split-pane .split-pane-divider {
+    background-color: #e4e4e4;
 }
 
 #browser #favorites-overlay .tree-actions {

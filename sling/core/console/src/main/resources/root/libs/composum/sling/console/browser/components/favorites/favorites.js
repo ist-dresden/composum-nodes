@@ -8,6 +8,8 @@
     browser.Favorites = Backbone.View.extend({
 
         initialize: function(options) {
+            this.verticalSplit = core.getWidget(this.$el,
+                '.split-pane.vertical-split', core.components.VerticalSplitPane);
             this.$favorites = this.$('.marked-nodes');
             this.$recently = this.$('.recently-used');
             this.$('button.toggle').on('click', _.bind(this.toggleView, this));
@@ -19,6 +21,7 @@
             }
             if (this.$el.hasClass('hidden')) {
                 this.$el.removeClass('hidden');
+                this.verticalSplit.setPosition(200);
             } else {
                 this.$el.addClass('hidden');
             }

@@ -202,29 +202,29 @@ fieldset {
     position: relative;
 }
 
-.split-pane.horizontal-split > .open-left,
-.split-pane.vertical-split > .open-top,
-.split-pane.horizontal-split > .close-left,
-.split-pane.vertical-split > .close-top {
+#split-view-horizontal-split > .open-left,
+#split-view-vertical-split > .open-top,
+#split-view-horizontal-split > .close-left,
+#split-view-vertical-split > .close-top {
     position: absolute;
     z-index: 7;
 }
-.split-pane.horizontal-split > .open-left a,
-.split-pane.vertical-split > .open-top a,
-.split-pane.horizontal-split .close-left a,
-.split-pane.vertical-split .close-top a {
+#split-view-horizontal-split > .open-left a,
+#split-view-vertical-split > .open-top a,
+#split-view-horizontal-split > .split-pane-component.right-pane > .close-left a,
+#split-view-vertical-split > .split-pane-component.bottom-pane > .close-top a {
     display: block;
     position: absolute;
     font-size: 22px;
     z-index: 9;
 }
 
-.split-pane.horizontal-split > .open-left,
-.split-pane.vertical-split > .open-top {
+#split-view-horizontal-split > .open-left,
+#split-view-vertical-split > .open-top {
     background-color: #101010;
 }
-.split-pane.horizontal-split > .open-left:after,
-.split-pane.vertical-split > .open-top:after {
+#split-view-horizontal-split > .open-left:after,
+#split-view-vertical-split > .open-top:after {
     position: absolute;
     content: '';
     width: 0;
@@ -232,8 +232,8 @@ fieldset {
     border-style: solid;
 }
 
-.split-pane.horizontal-split > .split-pane-component.right-pane > .close-left,
-.split-pane.vertical-split > .split-pane-component.bottom-pane > .close-top {
+#split-view-horizontal-split > .split-pane-component.right-pane > .close-left,
+#split-view-vertical-split > .split-pane-component.bottom-pane > .close-top {
     display: none;
     top: initial;
     left: initial;
@@ -241,8 +241,8 @@ fieldset {
     bottom: initial;
     background-color: #e4e4e4;
 }
-.split-pane.horizontal-split > .split-pane-component.right-pane > .close-left:after,
-.split-pane.vertical-split > .split-pane-component.bottom-pane > .close-top:after {
+#split-view-horizontal-split > .split-pane-component.right-pane > .close-left:after,
+#split-view-vertical-split > .split-pane-component.bottom-pane > .close-top:after {
     position: absolute;
     content: '';
     width: 0;
@@ -250,12 +250,12 @@ fieldset {
     border-style: solid;
 }
 
-.split-pane.horizontal-split > .open-left a,
-.split-pane.vertical-split > .open-top a {
+#split-view-horizontal-split > .open-left a,
+#split-view-vertical-split > .open-top a {
     color: #fff;
 }
-.split-pane.horizontal-split > .split-pane-component.right-pane > .close-left a,
-.split-pane.vertical-split > .split-pane-component.bottom-pane > .close-top a {
+#split-view-horizontal-split > .split-pane-component.right-pane > .close-left a,
+#split-view-vertical-split > .split-pane-component.bottom-pane > .close-top a {
     color: #337ab7; /* info */
 }
 
@@ -288,7 +288,7 @@ fieldset {
     border-color: #101010 transparent transparent transparent;
     top: 22px;
 }
-.split-pane.horizontal-split > .split-pane-component.right-pane > .close-left:after {
+#split-view-horizontal-split > .split-pane-component.right-pane > .close-left:after {
     border-width: 0 21px 13px 0;
     border-color: transparent #e4e4e4 transparent transparent;
     top: 22px;
@@ -330,7 +330,7 @@ fieldset {
 body.left-open #split-view-horizontal-split > .open-left {
     display: none;
 }
-body.left-open #split-view-horizontal-split .close-left {
+body.left-open #split-view-horizontal-split > .split-pane-component.right-pane .close-left {
     display: block;
 }
 body.left-open #split-view-horizontal-split > .left-pane,
@@ -343,7 +343,7 @@ body.left-open #split-view-horizontal-split > .right-pane {
 body.top-open #split-view-vertical-split > .open-top {
     display: none;
 }
-body.top-open #split-view-vertical-split .close-top {
+body.top-open #split-view-vertical-split > .split-pane-component.bottom-pane .close-top {
     display: block;
 }
 body.top-open #split-view-vertical-split > .top-pane,

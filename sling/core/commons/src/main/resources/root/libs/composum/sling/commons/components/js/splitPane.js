@@ -20,9 +20,9 @@
                     top: true
                 });
             this.horizontalSplit = core.getWidget(this.$el,
-                '.split-pane.horizontal-split', core.components.HorizontalSplitPane);
+                '#split-view-horizontal-split', core.components.HorizontalSplitPane);
             this.verticalSplit = core.getWidget(this.$el,
-                '.split-pane.vertical-split', core.components.VerticalSplitPane);
+                '#split-view-vertical-split', core.components.VerticalSplitPane);
             if (this.profile.left) {
                 this.horizontalSplit.setPosition(this.horizontalSplit.checkPosition(this.profile.horizontal));
             } else {
@@ -35,10 +35,10 @@
             }
             this.horizontalSplit.$el.on('resize', _.bind (this.onResize, this));
             this.verticalSplit.$el.on('resize', _.bind (this.onResize, this));
-            this.$openLeft = this.$('.split-pane.horizontal-split > .open-left a');
-            this.$closeLeft = this.$('.split-pane.horizontal-split > .split-pane-component.right-pane > .close-left a');
-            this.$openTop = this.$('.split-pane.vertical-split  > .open-top a');
-            this.$closeTop = this.$('.split-pane.vertical-split > .split-pane-component.bottom-pane > .close-top a');
+            this.$openLeft = this.$('#split-view-horizontal-split > .open-left a');
+            this.$closeLeft = this.$('#split-view-horizontal-split > .split-pane-component.right-pane > .close-left a');
+            this.$openTop = this.$('#split-view-vertical-split > .open-top a');
+            this.$closeTop = this.$('#split-view-vertical-split > .split-pane-component.bottom-pane > .close-top a');
             this.$openLeft.click(_.bind(this.openLeft, this));
             this.$closeLeft.click(_.bind(this.closeLeft, this));
             this.$openTop.click(_.bind(this.openTop, this));

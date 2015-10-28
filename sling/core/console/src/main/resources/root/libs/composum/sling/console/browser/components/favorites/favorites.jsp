@@ -7,65 +7,70 @@
 --%><%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%><%--
 --%><sling:defineObjects/>
 <cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
-  <div id="favorites-overlay" class="favorites-overlay hidden">
-    <div class="favorites-component">
-      <div class="marked-nodes panel panel-default">
-        <div class="panel-heading">marked favorites</div>
-        <ul class="list-group scrollable">
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-        </ul>
+  <div id="favorites-overlay" class="hidden">
+    <div id="favorites-panel" class="split-pane vertical-split fixed-bottom">
+      <div class="split-pane-component top-pane">
+        <div class="marked-nodes panel panel-default">
+          <div class="panel-heading">marked favorites</div>
+          <ul class="list-group scrollable">
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+          </ul>
+        </div>
       </div>
-      <div class="recently-used panel panel-default">
-        <div class="panel-heading">recently used</div>
-        <ul class="list-group scrollable">
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-          <a href="#" class="list-group-item template" data-path="">
-            <i class="fa"></i><h4 class="name">Node name</h4>
-            <h5 class="path">/content/test/some/node</h5>
-          </a>
-        </ul>
+      <div class="split-pane-divider"><span class="fa fa-ellipsis-h"></span></div>
+      <div class="split-pane-component bottom-pane">
+        <div class="recently-used panel panel-default">
+          <div class="panel-heading">recently used</div>
+          <ul class="list-group scrollable">
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+            <a href="#" class="list-group-item template" data-path="">
+              <i class="fa"></i><h4 class="name">Node name</h4>
+              <h5 class="path">/content/test/some/node</h5>
+            </a>
+          </ul>
+        </div>
       </div>
     </div>
     <div class="tree-actions action-bar btn-toolbar" role="toolbar">
