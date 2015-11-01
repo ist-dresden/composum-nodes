@@ -151,7 +151,7 @@
 
         refreshNodeState: function() {
             var node = this.tree.current();
-            if (node.jcrState) {
+            if (node && node.jcrState) {
                 this.$toggleLock.text (node.jcrState.locked ? 'Unlock' : 'Lock');
                 this.$toggleCheckout.text (node.jcrState.checkedOut ? 'Checkin' : 'Checkout');
                 if (node.jcrState.isVersionable) {
