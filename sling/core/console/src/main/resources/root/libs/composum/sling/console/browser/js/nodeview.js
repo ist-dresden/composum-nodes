@@ -640,6 +640,7 @@
                     tabType: browser.NodeTab
                 }];
             this.$el.resize(_.bind(this.resize, this));
+            $(document).on('path:selected', _.bind(this.reload, this));
         },
 
         /**
@@ -657,8 +658,8 @@
          * (re)load the content with the view for the current node ('browser.getCurrentPath()')
          */
         reload: function() {
-            var path = browser.getCurrentPath();
-            if (path) {
+            this.path = browser.getCurrentPath();
+            if (this.path) {
                 // AJAX load for the current path with the 'viewUrl' from 'browser.current'
                 this.$el.load(browser.current.viewUrl, _.bind (function() {
                     // iniatialize all view state attributes with the new content
@@ -666,6 +667,7 @@
                     this.$nodeView = this.$('.node-view-panel');
                     this.$nodeTabs = this.$nodeView.find('.node-tabs');
                     this.$nodeContent = this.$nodeView.find('.node-view-content');
+                    this.favoriteToggle = this.$nodeView.find('> .favorite-toggle');
                     // add the click handler to the tab toolbar links
                     this.$nodeTabs.find('a').click(_.bind (this.tabSelected, this));
                     // get the group key of the last view from profile and restore this tab state if possible
@@ -682,9 +684,32 @@
                     // get the tab key from the links anchor and select the tab
                     var tab = $tab.attr('href').substring(1);
                     this.selectTab(tab, group); // remember the group key(!)
+                    this.checkFavorite();
+                    this.favoriteToggle.click(_.bind(this.toggleFavorite, this));
                 }, this));
             } else {
                 this.$el.html(''); // clear the view if nothing selected
+            }
+        },
+
+        checkFavorite: function() {
+            if (browser.favorites.isFavorite(this.path)) {
+                this.favoriteToggle.addClass('active');
+                return true;
+            } else {
+                this.favoriteToggle.removeClass('active');
+                return false;
+            }
+        },
+
+        toggleFavorite: function(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            if (this.path) {
+                $(document).trigger("favorite:toggle", [this.path]);
+                this.checkFavorite();
             }
         },
 

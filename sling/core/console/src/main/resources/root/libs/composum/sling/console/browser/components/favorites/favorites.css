@@ -3,40 +3,50 @@
  */
 
 #browser #favorites-overlay {
-    background: rgba(255,255,255,0.9);
+    background: #fff;
     z-index: 5;
+    overflow: hidden;
 }
 
-#browser #favorites-overlay .favorites-panel {
-    position: absolute;
-    top: 9px;
-    left: 5px;
-    right: 0;
+#browser #favorites-overlay .template {
+    display: none;
+}
+
+#browser #favorites-overlay .split-pane {
     bottom: 45px;
 }
 
 #browser #favorites-overlay .split-pane .split-pane-component {
-    min-height: 80px;
+    background: #fff;
 }
 
 #browser #favorites-overlay .split-pane .top-pane {
-    margin-bottom: 15px;
+    min-height: 101px;
+    top: 54px;
+    margin-bottom: 22px;
 }
 
 #browser #favorites-overlay .split-pane .split-pane-divider {
     bottom: 200px;
+    height: 22px;
+}
+
+#browser #favorites-overlay .split-pane .split-pane-divider h3 {
+    font-size: 1em;
+    padding: 0 0.75em;
+}
+
+#browser #favorites-overlay .split-pane .split-pane-divider span {
+    line-height: 5px;
 }
 
 #browser #favorites-overlay .split-pane .bottom-pane {
+    min-height: 47px;
     height: 200px;
 }
 
 #browser #favorites-overlay .split-pane .split-pane-divider {
     background-color: #e4e4e4;
-}
-
-#browser #favorites-overlay .tree-actions {
-    background: none;
 }
 
 #browser #favorites-overlay .tree-actions .align-left .btn-group,
@@ -49,6 +59,52 @@
     z-index: 6;
 }
 
-.favorites-component .scrollable {
+#browser #favorites-overlay .favorites-panel .scrollable {
     overflow: auto;
+}
+
+#browser #favorites-overlay .favorites-panel .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#browser #favorites-overlay .favorites-panel .list a {
+    list-style: none;
+    position: relative;
+    display: block;
+    margin: 0;
+    padding: 0.25em 0.75em;
+    color: #333;
+    border-bottom: #e4e4e4 solid 1px;
+}
+
+#browser #favorites-overlay .favorites-panel .list a:last-child {
+    border-bottom: none;
+}
+
+#browser #favorites-overlay .favorites-panel .list a i {
+    position: absolute;
+    top: 8px;
+}
+
+#browser #favorites-overlay .favorites-panel .list a i,
+#browser #favorites-overlay .favorites-panel .list a h4 {
+    font-size: 1.1em;
+}
+
+#browser #favorites-overlay .favorites-panel .list a h4 {
+    padding: 0 0 0 22px;
+}
+
+#browser #favorites-overlay .favorites-panel .list a h5 {
+    font-size: 0.9em;
+}
+
+#browser #favorites-overlay .favorites-panel .marked-nodes .list a.active {
+    background-color: rgba(200, 225, 255, 0.4);
+}
+
+#browser #favorites-overlay .favorites-panel .used-recently .list a:first-child {
+    display: none;
 }

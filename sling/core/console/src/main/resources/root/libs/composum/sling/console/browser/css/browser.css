@@ -270,8 +270,20 @@
     bottom: 0;
 }
 
+#browser-view .node-view-panel .favorite-toggle {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 1.25em;
+    z-index: 1;
+}
+
+#browser-view .node-view-panel .favorite-toggle.active:before {
+    content: '\f005';
+}
+
 #browser-view .node-view-panel .node-tabs {
-    padding: 0 7px 5px;
+    padding: 0 31px 5px;
     background-color: #e4e4e4;
 }
 

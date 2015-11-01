@@ -136,7 +136,7 @@
          * selects the node specified by its node path if the node is accepted by the filter
          * opens all nodes up to the target node automatically
          */
-        selectNode: function(path) {
+        selectNode: function(path, callback) {
             this.resetSelection();
             if (path) {
                 var names = $.isArray(path) ? path : path.split('/');
@@ -155,10 +155,16 @@
                                     this.$el.jstree('open_node', $node);
                                 } else {
                                     this.undelegate ('after_open.jstree');
+                                    if (_.isFunction(callback)) {
+                                        callback(path);
+                                    }
                                 }
                             }
                         } else {
                             this.undelegate ('after_open.jstree');
+                            if (_.isFunction(callback)) {
+                                callback(path);
+                            }
                         }
                     } else {
                         var id = this.nodeId(_.first(names,names.length));
@@ -168,6 +174,9 @@
                             this.scrollIntoView($node);
                         }
                         this.undelegate ('after_open.jstree');
+                        if (_.isFunction(callback)) {
+                            callback(path);
+                        }
                     }
                 };
                 this.delegate('after_open.jstree', undefined, _.bind(drilldown, this));
@@ -180,6 +189,9 @@
                             this.$el.jstree('open_node', $node);
                         } else {
                             this.undelegate ('after_open.jstree');
+                            if (_.isFunction(callback)) {
+                                callback(path);
+                            }
                         }
                     }
                 }
@@ -280,9 +292,6 @@
             }
             if (this.initialSelect) {
                 this.selectNode(this.initialSelect);
-                if (_.isFunction (this.onInitialSelect)) {
-                    this.onInitialSelect(this.initialSelect);
-                }
                 this.initialSelect = undefined;
             }
             this.undelegate('loaded.jstree');

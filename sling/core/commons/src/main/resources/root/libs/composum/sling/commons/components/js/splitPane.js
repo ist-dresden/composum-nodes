@@ -182,9 +182,9 @@
         getMaxPosition: function() {
             var width = parseInt(this.$el.width());
             if (this.$el.hasClass('fixed-left')) {
-                return width - parseInt(this.$second.css('min-width') || '0');
+                return Math.max(width - parseInt(this.$second.css('min-width') || '0'), 0);
             } else {
-                return width - parseInt(this.$first.css('min-width') || '0');
+                return Math.max(width - parseInt(this.$first.css('min-width') || '0'), 0);
             }
         }
     });
@@ -226,9 +226,9 @@
         getMaxPosition: function() {
             var height = parseInt(this.$el.height());
             if (this.$el.hasClass('fixed-top')) {
-                return height - parseInt(this.$second.css('min-height') || '0');
+                return Math.max(height - parseInt(this.$second.css('min-height') || '0'), 0);
             } else {
-                return height - parseInt(this.$first.css('min-height') || '0');
+                return Math.max(height - parseInt(this.$first.css('min-height') || '0'), 0);
             }
         }
     });

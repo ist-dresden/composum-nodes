@@ -12,32 +12,52 @@
     browser.current = {};
 
     browser.getCurrentPath = function() {
-        return browser.current.path;
+        return browser.current ? browser.current.path : undefined;
     };
 
     browser.setCurrentPath = function(path) {
         if (! browser.current || browser.current.path != path) {
-            browser.current = {
-                path: path,
-                viewUrl: '/bin/browser.view.html' + window.core.encodePath(path),
-                nodeUrl: '/bin/browser.html' + window.core.encodePath(path)
+            if (path) {
+                core.getJson ('/bin/core/node.tree.json' + path, undefined, undefined,
+                              _.bind (function(result) {
+                    browser.current = {
+                        path: path,
+                        node: result.responseJSON,
+                        viewUrl: '/bin/browser.view.html' + window.core.encodePath(path),
+                        nodeUrl: '/bin/browser.html' + window.core.encodePath(path)
+                    }
+                    core.console.getProfile().set('browser', 'current', path);
+                    if (history.replaceState) {
+                        history.replaceState (browser.current.path, name, browser.current.nodeUrl);
+                    }
+                    $(document).trigger("path:selected", [path]);
+                }, this));
+            } else {
+                browser.current = undefined;
+                $(document).trigger("path:selected", [path]);
             }
-            core.console.getProfile().set('browser', 'current', path);
-            if (history.replaceState) {
-                history.replaceState (browser.current.path, name, browser.current.nodeUrl);
-            }
-            browser.nodeView.reload();
         }
-    };
-
-    browser.selectNode = function(path) {
-        browser.tree.selectNode(path);
     };
 
     browser.Browser = core.components.SplitView.extend({
 
         initialize: function(options) {
             core.components.SplitView.prototype.initialize.apply(this, [options]);
+            $(document).on('path:select', _.bind(this.onPathSelect, this));
+            $(document).on('path:selected', _.bind(this.onPathSelected, this));
+        },
+
+        onPathSelect: function(event, path) {
+            if (!path) {
+                path = event.data.path;
+            }
+            browser.setCurrentPath(path);
+        },
+
+        onPathSelected: function(event, path) {
+            browser.tree.selectNode(path, _.bind(function(path) {
+                browser.treeActions.refreshNodeState();
+            }, this));
         }
     });
 
@@ -78,12 +98,7 @@
         },
 
         onNodeSelected: function(path, node, element) {
-            browser.setCurrentPath(path);
-            browser.treeActions.refreshNodeState();
-        },
-
-        onInitialSelect: function(path) {
-            browser.setCurrentPath (this.initialSelect);
+            $(document).trigger("path:select", [path]);
         }
     });
 
@@ -109,8 +124,8 @@
             $.get('/bin/core/node.filters.html', _.bind(function(data) {
                 this.$filters.html(data);
                 this.$filters.find('li>a').click(_.bind(this.setFilter, this));
+                this.setFilterLabel(core.console.getProfile().get('browser', 'filter'));
             }, this));
-            this.setFilterLabel(core.console.getProfile().get('browser', 'filter'));
             this.$('button.favorites').on('click', _.bind(this.toggleFavorites, this));
         },
 
@@ -128,7 +143,10 @@
         },
 
         setFilterLabel: function(filter) {
-            this.$('.filter label span').html(filter);
+            this.$('.filter label span').text(filter);
+            this.$filters.find('li').removeClass('active');
+            var $active = this.$filters.find('li[data-filter="'+filter+'"]');
+            $active.addClass('active');
         },
 
         refreshNodeState: function() {

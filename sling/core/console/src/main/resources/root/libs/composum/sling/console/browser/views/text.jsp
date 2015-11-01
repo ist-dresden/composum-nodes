@@ -5,6 +5,7 @@
 <sling:defineObjects />
 <cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
   <div class="node-view-panel text">
+    <a class="favorite-toggle fa fa-star-o" href="#" title="Tooggle favorite state"><span class="label">Favorite</span></a>
     <div class="node-tabs action-bar btn-toolbar" role="toolbar">
       <div class="btn-group btn-group-sm" role="group">
         <a class="properties fa fa-list btn btn-default" href="#properties" data-group="properties" title="Node Properties"><span class="label">Properties</span></a>

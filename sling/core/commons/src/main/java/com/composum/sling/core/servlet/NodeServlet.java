@@ -295,7 +295,8 @@ public class NodeServlet extends AbstractServiceServlet {
             response.setStatus(HttpServletResponse.SC_OK);
 
             for (String key : nodeFilters.keySet()) {
-                writer.append("<li><a href=\"#\">").append(key).append("</a></li>");
+                writer.append("<li data-filter=\"").append(key)
+                        .append("\"><a href=\"#\">").append(key).append("</a></li>");
             }
         }
     }

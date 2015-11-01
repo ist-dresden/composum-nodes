@@ -8,68 +8,18 @@
 --%><sling:defineObjects/>
 <cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
   <div id="favorites-overlay" class="hidden">
-    <div id="favorites-panel" class="split-pane vertical-split fixed-bottom">
+    <div class="favorites-panel split-pane vertical-split fixed-bottom">
       <div class="split-pane-component top-pane">
-        <div class="marked-nodes panel panel-default">
-          <div class="panel-heading">marked favorites</div>
-          <ul class="list-group scrollable">
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-          </ul>
+        <div class="marked-nodes">
+          <ol class="list scrollable">
+          </ol>
         </div>
       </div>
-      <div class="split-pane-divider"><span class="fa fa-ellipsis-h"></span></div>
+      <div class="split-pane-divider"><h3>used recently</h3><span class="fa fa-ellipsis-h"></span></div>
       <div class="split-pane-component bottom-pane">
-        <div class="recently-used panel panel-default">
-          <div class="panel-heading">recently used</div>
-          <ul class="list-group scrollable">
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-            <a href="#" class="list-group-item template" data-path="">
-              <i class="fa"></i><h4 class="name">Node name</h4>
-              <h5 class="path">/content/test/some/node</h5>
-            </a>
-          </ul>
+        <div class="used-recently">
+          <ol class="list scrollable">
+          </ol>
         </div>
       </div>
     </div>
@@ -81,6 +31,12 @@
           <button type="button" class="toggle glyphicon-star glyphicon btn btn-default" title="Close favorites list"><span class="label">Close / switch to tree</span></button>
         </div>
       </div>
+    </div>
+    <div class="template">
+      <a href="#" data-path="">
+        <i class="fa"></i><h4 class="name">Node name</h4>
+        <h5 class="path">/content/test/some/node</h5>
+      </a>
     </div>
   </div>
 </cpn:component>
