@@ -16,7 +16,7 @@
           </div>
 
           <div class="modal-body">
-            <div class="code-editor" data-path="${browser.contentResource.path}" data-type="${browser.textType}">
+            <div class="code-editor">
             </div>
           </div>
 
