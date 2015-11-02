@@ -273,9 +273,13 @@
 #browser-view .node-view-panel .favorite-toggle {
     position: absolute;
     top: 8px;
-    left: 8px;
-    font-size: 1.25em;
+    left: 7px;
     z-index: 1;
+    padding: 2px;
+}
+
+#browser-view .node-view-panel .favorite-toggle span {
+    display: none;
 }
 
 #browser-view .node-view-panel .favorite-toggle.active:before {
@@ -283,7 +287,7 @@
 }
 
 #browser-view .node-view-panel .node-tabs {
-    padding: 0 31px 5px;
+    padding: 0 28px 5px;
     background-color: #e4e4e4;
 }
 

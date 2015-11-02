@@ -50,7 +50,7 @@
                   </ul>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
-                  <button type="button" class="favorites glyphicon-star-empty glyphicon btn btn-default" title="Switch to favorites list"><span class="label">Favorites</span></button>
+                  <button type="button" class="favorites fa fa-star-o btn btn-default" title="Switch to favorites list"><span class="label">Favorites</span></button>
                 </div>
               </div>
             </div>

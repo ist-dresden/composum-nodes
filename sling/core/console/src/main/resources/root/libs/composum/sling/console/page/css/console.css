@@ -377,6 +377,27 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     background-color: #e4e4e4;
 }
 
+.tree-actions .btn {
+    width: 34px;
+    height: 30px;
+}
+
+.tree-actions .btn.fa:before,
+.tree-actions .btn.fa i {
+    font-style: normal;
+    font-size: 14px;
+}
+
+.tree-actions .btn.fa-stack i:nth-child(1) {
+    top: 2px;
+    left: -2px;
+}
+
+.tree-actions .btn.fa-stack i:nth-child(2) {
+    top: 7px;
+    left: 5px;
+}
+
 .tree-actions label {
     float: left;
     margin-top: 7px;

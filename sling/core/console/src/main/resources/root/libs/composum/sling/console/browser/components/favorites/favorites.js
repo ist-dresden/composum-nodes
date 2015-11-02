@@ -16,6 +16,8 @@
             this.$recentlyList = this.$recently.find('> ol');
             this.$template = this.$('> .template a');
             this.verticalSplit.$el.on('resize', _.bind (this.onSplitResize, this));
+            this.$('button.clear-favorites').on('click', _.bind(this.clearFavorites, this));
+            this.$('button.clear-recently').on('click', _.bind(this.clearHistory, this));
             this.$('button.toggle').on('click', _.bind(this.toggleView, this));
             $(document).on('favorite:toggle', _.bind(this.onToggleFavorite, this));
             $(document).on('path:selected', _.bind(this.onPathSelected, this));
@@ -146,6 +148,20 @@
                 }
                 $item.find('i').addClass(treeRule.icon)
             }
+        },
+
+        clearFavorites: function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.$favoritesList.html('');
+            this.saveProfile();
+        },
+
+        clearHistory: function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.$recentlyList.html('');
+            this.saveProfile();
         },
 
         onSplitResize: function(event) {

@@ -25,10 +25,14 @@
     </div>
     <div class="tree-actions action-bar btn-toolbar" role="toolbar">
       <div class="align-left">
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" class="clear-favorites fa fa-stack btn btn-default" title="Clear favorites list"><i class="fa-trash-o fa-stack-1x text-muted"></i><i class="fa-star fa-stack-1x text-primary"></i><span class="label">Clear Favorites</span></button>
+          <button type="button" class="clear-recently fa fa-stack btn btn-default" title="Clear history">><i class="fa-trash-o fa-stack-1x text-muted"></i><i class="fa-history fa-stack-1x text-primary"></i><span class="label">Clear History</span></button>
+        </div>
       </div>
       <div class="align-right">
         <div class="btn-group btn-group-sm" role="group">
-          <button type="button" class="toggle glyphicon-star glyphicon btn btn-default" title="Close favorites list"><span class="label">Close / switch to tree</span></button>
+          <button type="button" class="toggle fa fa-star btn btn-default" title="Close favorites list"><span class="label">Close / switch to tree</span></button>
         </div>
       </div>
     </div>
