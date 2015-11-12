@@ -169,8 +169,7 @@
             var $target = $(event.currentTarget);
             var $row = $target.closest('tr');
             var path = $row.attr('data-path');
-            browser.selectNode(path);
-            browser.setCurrentPath(path);
+            $(document).trigger("path:select", [path]);
             return false;
         },
 

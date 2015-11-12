@@ -12,7 +12,7 @@
     <groupId>com.composum.sling.core</groupId>
     <artifactId>composum-sling-core-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.3.0-SNAPSHOT</version>
+    <version>1.4.0-SNAPSHOT</version>
 
     <name>Composum Core Parent</name>
     <description>Maven parent for Composum Sling Core bundles</description>
@@ -35,6 +35,23 @@
 
     <dependencyManagement>
         <dependencies>
+
+            <!-- Apache Sling -->
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.commons.threads</artifactId>
+                <version>3.1.0</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Groovy -->
+            <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy</artifactId>
+                <version>[1.8.2,)</version>
+                <scope>provided</scope>
+            </dependency>
+
             <dependency>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>jackrabbit-jcr-commons</artifactId>
@@ -47,6 +64,7 @@
                 <version>2.6.5</version>
                 <scope>provided</scope>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
 </project>

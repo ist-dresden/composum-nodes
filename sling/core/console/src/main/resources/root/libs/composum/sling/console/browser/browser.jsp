@@ -19,35 +19,43 @@
               </div>
             </div>
             <div class="tree-actions action-bar btn-toolbar" role="toolbar">
-              <div class="menu btn-group btn-group-sm dropup" role="group">
-                <button type="button" class="glyphicon-menu-hamburger glyphicon btn btn-default dropdown-toggle" data-toggle="dropdown" title="More actions..."><span class="label">More...</span></button>
-                <ul class="dropdown-menu" role="menu">
-                  <li><a href="#" class="checkout" title="Checkout/Checkin the selected node">Checkout</a></li>
-                  <li><a href="#" class="lock" title="Lock/Unlock the selected node">Lock</a></li>
-                  <li><a href="#" class="mixins" title="View/Change the nodes mixin types">Mixin Types...</a></li>
-                  <li><a href="#" class="move" title="Move/Rename/Reorder the selected node">Move / Rename / Reorder</a></li>
-                  <li><a href="#" class="rename" title="Rename the selected node">Rename</a></li>
-                </ul>
+              <div class="align-left">
+                <div class="menu btn-group btn-group-sm dropup" role="group">
+                  <button type="button" class="glyphicon-menu-hamburger glyphicon btn btn-default dropdown-toggle" data-toggle="dropdown" title="More actions..."><span class="label">More...</span></button>
+                  <ul class="dropdown-menu" role="menu">
+                    <li><a href="#" class="checkout" title="Checkout/Checkin the selected node">Checkout</a></li>
+                    <li><a href="#" class="lock" title="Lock/Unlock the selected node">Lock</a></li>
+                    <li><a href="#" class="mixins" title="View/Change the nodes mixin types">Mixin Types...</a></li>
+                    <li><a href="#" class="move" title="Move/Rename/Reorder the selected node">Move / Rename / Reorder</a></li>
+                    <li><a href="#" class="rename" title="Rename the selected node">Rename</a></li>
+                  </ul>
+                </div>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" class="create glyphicon-plus glyphicon btn btn-default" title="Create a new node"><span class="label">Create</span></button>
+                  <button type="button" class="delete glyphicon-minus glyphicon btn btn-default" title="Delete selected node"><span class="label">Delete</span></button>
+                </div>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" class="copy fa fa-copy btn btn-default" title="Copy selecto node to clipboard"><span class="label">Copy</span></button>
+                  <button type="button" class="paste fa fa-paste btn btn-default" title="Paste node from clipboard into the selected node"><span class="label">Paste</span></button>
+                </div>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh tree view"><span class="label">Refresh</span></button>
+                </div>
               </div>
-              <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="create glyphicon-plus glyphicon btn btn-default" title="Create a new node"><span class="label">Create</span></button>
-                <button type="button" class="delete glyphicon-minus glyphicon btn btn-default" title="Delete selected node"><span class="label">Delete</span></button>
-              </div>
-              <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="copy fa fa-copy btn btn-default" title="Copy selecto node to clipboard"><span class="label">Copy</span></button>
-                <button type="button" class="paste fa fa-paste btn btn-default" title="Paste node from clipboard into the selected node"><span class="label">Paste</span></button>
-              </div>
-              <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh tree view"><span class="label">Refsh</span></button>
-              </div>
-              <div class="filter btn-group btn-group-sm align-right dropup" role="group">
-                <label class="filter"><span>default</span></label>
-                <button type="button" class="glyphicon-filter glyphicon btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="Filter for the tree"><span class="label">Filter</span></button>
-                <ul class="dropdown-menu" role="menu">
-                </ul>
+              <div class="align-right">
+                <div class="filter btn-group btn-group-sm dropup" role="group">
+                  <label class="filter"><span>default</span></label>
+                  <button type="button" class="glyphicon-filter glyphicon btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="Filter for the tree"><span class="label">Filter</span></button>
+                  <ul class="dropdown-menu" role="menu">
+                  </ul>
+                </div>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" class="favorites fa fa-star-o btn btn-default" title="Switch to favorites list"><span class="label">Favorites</span></button>
+                </div>
               </div>
             </div>
           </div>
+          <sling:include resourceType="composum/sling/console/browser/components/favorites"/>
         </div>
         <div class="split-pane-divider"><span class="fa fa-ellipsis-v"></span></div>
         <div class="split-pane-component right-pane">

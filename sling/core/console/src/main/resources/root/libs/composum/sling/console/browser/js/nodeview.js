@@ -11,7 +11,8 @@
 
     browser.DisplayTab = browser.NodeTab.extend({
 
-        urlPattern: new RegExp('^(.*/[^/]+)(\\.[^.]+)'),
+        pathPattern: new RegExp('^(https?://[^/]+)?(/.*)$'),
+        urlPattern: new RegExp('^(.*/[^/]+)(\\.[^.]+)$'),
 
         initialize: function(options) {
             /* get abstract members
@@ -25,16 +26,24 @@
             this.loadContent = options.loadContent;
             /* general initialization */
             this.$mappedButton = this.$('.detail-toolbar .resolver');
+            this.$pathPrefix = this.$('.detail-toolbar .prefix input');
             this.$selectors = this.$('.detail-toolbar .selectors input');
             this.$parameters = this.$('.detail-toolbar .parameters input');
             this.$('.detail-toolbar .reload').click(_.bind (this.reload, this));
             this.$('.detail-toolbar .open').click(_.bind (this.open, this));
+            this.$pathPrefix.val(core.console.getProfile().get(this.displayKey,'pathPrefix'));
+            this.$pathPrefix.on('change.display', _.bind(this.onPrefixChange, this));
             this.$selectors.val(core.console.getProfile().get(this.displayKey,'selectors'));
             this.$selectors.on('change.display', _.bind(this.onSelectorsChange, this));
             this.$parameters.val(core.console.getProfile().get(this.displayKey,'parameters'));
             this.$parameters.on('change.display', _.bind(this.onParametersChange, this));
             this.$mappedButton.on('click.display', _.bind(this.toggleMapped, this));
             this.$mappedButton.addClass(core.console.getProfile().get(this.displayKey, 'mapped', true) ? 'on':'off');
+        },
+
+        onPrefixChange: function(event) {
+            var args = this.$pathPrefix.val();
+            core.console.getProfile().set(this.displayKey,'pathPrefix', args);
         },
 
         onSelectorsChange: function(event) {
@@ -75,6 +84,18 @@
 
         getUrl: function() {
             var url = this.$el.attr(this.isMapped() ? 'data-mapped' : 'data-path');
+            var pathPrefix = this.$pathPrefix.val();
+            if (pathPrefix) {
+                var parts = this.pathPattern.exec(url);
+                if (parts && parts.length > 1) {
+                    if (parts[1]) {
+                        url = parts[1];
+                    } else {
+                        url = "";
+                    }
+                    url += pathPrefix + parts[2];
+                }
+            }
             var selectors = this.$selectors.val();
             if (selectors) {
                 var parts = this.urlPattern.exec(url);
@@ -178,6 +199,99 @@
 
         resize: function() {
             this.editor.resize();;
+        }
+    });
+
+    browser.ScriptTab = browser.EditorTab.extend({
+
+        initialize: function(options) {
+            this.verticalSplit = core.getWidget(this.$el,
+                '.split-pane.vertical-split', core.components.VerticalSplitPane);
+            browser.EditorTab.prototype.initialize.apply(this, [options]);
+            this.verticalSplit.setPosition(this.verticalSplit.checkPosition(120));
+            this.$logOutput = this.$('.detail-content .log-output');
+            this.$execute = this.$('.editor-toolbar .run-script');
+            this.$execute.click(_.bind(this.execute, this));
+        },
+
+        execute: function(event) {
+            if (this.scriptIsRunning) {
+                this.poll('stopScript', _.bind(this.scriptStopped, this));
+            } else {
+                this.poll('startScript', _.bind(this.scriptStarted, this));
+            }
+        },
+
+        scriptStarted: function(data) {
+            this.scriptIsRunning = true;
+            this.$logOutput.html('');
+            this.$el.addClass('running');
+            if (data) {
+                this.logAppend(data);
+            }
+            setTimeout(_.bind (this.checkScript, this), 500);
+        },
+
+        checkScript: function() {
+            if (this.scriptIsRunning) {
+                this.poll('checkScript', _.bind(this.onCheck, this), _.bind(this.scriptError, this));
+            }
+        },
+
+        scriptStopped: function(data) {
+            this.logAppend(data);
+            this.$el.removeClass('running');
+            this.scriptIsRunning = false;
+        },
+
+        scriptError: function(result) {
+            if (result.status == 409) {
+                this.scriptStarted(result.responseText);
+            } else {
+                this.scriptStopped(result.responseText);
+            }
+        },
+
+        onCheck: function(data, message, xhr) {
+            if (xhr && xhr.status == 205) {
+                this.scriptStopped(data);
+            } else {
+                this.logAppend(data);
+            }
+            if (this.scriptIsRunning) {
+                setTimeout(_.bind (this.checkScript, this), 500);
+            }
+        },
+
+        logAppend: function(data) {
+            var $scrollPane = this.$logOutput.parent();
+            var vheight = $scrollPane.height();
+            var height = this.$logOutput[0].scrollHeight;
+            var autoscroll = ($scrollPane.scrollTop() > height - vheight - 30);
+            this.$logOutput.append(data);
+            if (autoscroll) {
+                height = this.$logOutput[0].scrollHeight;
+                $scrollPane.scrollTop(height - vheight);
+            }
+        },
+
+        poll: function(operation, onSuccess, onError) {
+            var path = browser.getCurrentPath();
+            $.ajax({
+                url: '/bin/core/node.' + operation + '.groovy' + path,
+                success: _.bind (function (result, message, xhr) {
+                    if (_.isFunction(onSuccess)) {
+                        onSuccess(result, message, xhr);
+                    }
+                }, this),
+                error: _.bind (function (result) {
+                    if (_.isFunction(onError)) {
+                        onError(result);
+                    } else {
+                        core.alert('danger', 'Error', 'Error on script execution (' + operation + ')', result);
+                    }
+                }, this)
+            });
         }
     });
 
@@ -509,6 +623,9 @@
                     selector: '> .editor',
                     tabType: browser.EditorTab
                 }, {
+                    selector: '> .script',
+                    tabType: browser.ScriptTab
+                }, {
                     selector: '> .json',
                     tabType: browser.JsonTab
                 }, {
@@ -523,6 +640,7 @@
                     tabType: browser.NodeTab
                 }];
             this.$el.resize(_.bind(this.resize, this));
+            $(document).on('path:selected', _.bind(this.reload, this));
         },
 
         /**
@@ -540,8 +658,8 @@
          * (re)load the content with the view for the current node ('browser.getCurrentPath()')
          */
         reload: function() {
-            var path = browser.getCurrentPath();
-            if (path) {
+            this.path = browser.getCurrentPath();
+            if (this.path) {
                 // AJAX load for the current path with the 'viewUrl' from 'browser.current'
                 this.$el.load(browser.current.viewUrl, _.bind (function() {
                     // iniatialize all view state attributes with the new content
@@ -549,6 +667,7 @@
                     this.$nodeView = this.$('.node-view-panel');
                     this.$nodeTabs = this.$nodeView.find('.node-tabs');
                     this.$nodeContent = this.$nodeView.find('.node-view-content');
+                    this.favoriteToggle = this.$nodeView.find('> .favorite-toggle');
                     // add the click handler to the tab toolbar links
                     this.$nodeTabs.find('a').click(_.bind (this.tabSelected, this));
                     // get the group key of the last view from profile and restore this tab state if possible
@@ -565,9 +684,32 @@
                     // get the tab key from the links anchor and select the tab
                     var tab = $tab.attr('href').substring(1);
                     this.selectTab(tab, group); // remember the group key(!)
+                    this.checkFavorite();
+                    this.favoriteToggle.click(_.bind(this.toggleFavorite, this));
                 }, this));
             } else {
                 this.$el.html(''); // clear the view if nothing selected
+            }
+        },
+
+        checkFavorite: function() {
+            if (browser.favorites.isFavorite(this.path)) {
+                this.favoriteToggle.addClass('active');
+                return true;
+            } else {
+                this.favoriteToggle.removeClass('active');
+                return false;
+            }
+        },
+
+        toggleFavorite: function(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            if (this.path) {
+                $(document).trigger("favorite:toggle", [this.path]);
+                this.checkFavorite();
             }
         },
 

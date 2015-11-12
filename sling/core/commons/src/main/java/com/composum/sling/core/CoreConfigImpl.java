@@ -34,10 +34,6 @@ import java.util.Map;
 @Service
 public class CoreConfigImpl implements CoreConfiguration {
 
-    public static final String ERRORPAGE_STATUS = "errorpage.status";
-
-    public static final long QUERY_RESULT_LIMIT_DEFAULT = 500L;
-    public static final String QUERY_RESULT_LIMIT_KEY = "query.result.limit";
     @Property(
             name = QUERY_RESULT_LIMIT_KEY,
             label = "Query Result Limit",
@@ -46,7 +42,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private long queryResultLimit;
 
-    public static final String ERRORPAGES_PATH = "errorpages.path";
     @Property(
             name = ERRORPAGES_PATH,
             label = "Errorpages",
@@ -55,7 +50,14 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private String errorpagesPath;
 
-    public static final String PAGE_NODE_FILTER_KEY = "node.page.filter";
+    @Property(
+            name = GROOVY_SETUP_SCRIPT,
+            label = "Groovy setup script",
+            description = "the optional path to a custom groovy script to setup a groovy runner script object",
+            value = ""
+    )
+    private String groovySetupScript;
+
     @Property(
             name = PAGE_NODE_FILTER_KEY,
             label = "Content Page Filter",
@@ -64,7 +66,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private ResourceFilter pageNodeFilter;
 
-    public static final String DEFAULT_NODE_FILTER_KEY = "node.default.filter";
     @Property(
             name = DEFAULT_NODE_FILTER_KEY,
             label = "The default Node Filter",
@@ -73,7 +74,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private ResourceFilter defaultNodeFilter;
 
-    public static final String TREE_INTERMEDIATE_FILTER_KEY = "tree.intermediate.filter";
     @Property(
             name = TREE_INTERMEDIATE_FILTER_KEY,
             label = "Tree Intermediate (Folder) Filter",
@@ -82,7 +82,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private ResourceFilter treeIntermediateFilter;
 
-    public static final String REFERENCEABLE_NODES_FILTER_KEY = "node.referenceable.filter";
     @Property(
             name = REFERENCEABLE_NODES_FILTER_KEY,
             label = "Referenceable Nodes Filter",
@@ -91,7 +90,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private ResourceFilter referenceableNodesFilter;
 
-    public static final String ORDERABLE_NODES_FILTER_KEY = "node.orderable.filter";
     @Property(
             name = ORDERABLE_NODES_FILTER_KEY,
             label = "Orderable Nodes Filter",
@@ -100,7 +98,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private ResourceFilter orderableNodesFilter;
 
-    public static final String SYSTEM_SERVLET_ENABLED = "system.servlet.enabled";
     @Property(
             name = SYSTEM_SERVLET_ENABLED,
             label = "System Servlet",
@@ -109,7 +106,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private boolean systemServletEnabled;
 
-    public static final String PACKAGE_SERVLET_ENABLED = "package.servlet.enabled";
     @Property(
             name = PACKAGE_SERVLET_ENABLED,
             label = "Package Servlet",
@@ -118,7 +114,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private boolean packageServletEnabled;
 
-    public static final String SECURITY_SERVLET_ENABLED = "security.servlet.enabled";
     @Property(
             name = SECURITY_SERVLET_ENABLED,
             label = "Security Servlet",
@@ -127,7 +122,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private boolean securityServletEnabled;
 
-    public static final String NODE_SERVLET_ENABLED = "node.servlet.enabled";
     @Property(
             name = "node.servlet.enabled",
             label = "Node Servlet",
@@ -136,7 +130,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private boolean nodeServletEnabled;
 
-    public static final String PROPERTY_SERVLET_ENABLED = "property.servlet.enabled";
     @Property(
             name = "property.servlet.enabled",
             label = "Property Servlet",
@@ -145,7 +138,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private boolean propertyServletEnabled;
 
-    public static final String VERSION_SERVLET_ENABLED = "version.servlet.enabled";
     @Property(
             name = "version.servlet.enabled",
             label = "Version Servlet",
@@ -253,6 +245,10 @@ public class CoreConfigImpl implements CoreConfiguration {
             return true;
         }
         return false;
+    }
+
+    public Dictionary getProperties() {
+        return properties;
     }
 
     protected Dictionary properties;

@@ -20,9 +20,9 @@
                     top: true
                 });
             this.horizontalSplit = core.getWidget(this.$el,
-                '.split-pane.horizontal-split', core.components.HorizontalSplitPane);
+                '#split-view-horizontal-split', core.components.HorizontalSplitPane);
             this.verticalSplit = core.getWidget(this.$el,
-                '.split-pane.vertical-split', core.components.VerticalSplitPane);
+                '#split-view-vertical-split', core.components.VerticalSplitPane);
             if (this.profile.left) {
                 this.horizontalSplit.setPosition(this.horizontalSplit.checkPosition(this.profile.horizontal));
             } else {
@@ -35,10 +35,10 @@
             }
             this.horizontalSplit.$el.on('resize', _.bind (this.onResize, this));
             this.verticalSplit.$el.on('resize', _.bind (this.onResize, this));
-            this.$openLeft = this.$('.split-pane.horizontal-split > .open-left a');
-            this.$closeLeft = this.$('.split-pane.horizontal-split > .split-pane-component.right-pane > .close-left a');
-            this.$openTop = this.$('.split-pane.vertical-split  > .open-top a');
-            this.$closeTop = this.$('.split-pane.vertical-split > .split-pane-component.bottom-pane > .close-top a');
+            this.$openLeft = this.$('#split-view-horizontal-split > .open-left a');
+            this.$closeLeft = this.$('#split-view-horizontal-split > .split-pane-component.right-pane > .close-left a');
+            this.$openTop = this.$('#split-view-vertical-split > .open-top a');
+            this.$closeTop = this.$('#split-view-vertical-split > .split-pane-component.bottom-pane > .close-top a');
             this.$openLeft.click(_.bind(this.openLeft, this));
             this.$closeLeft.click(_.bind(this.closeLeft, this));
             this.$openTop.click(_.bind(this.openTop, this));
@@ -150,25 +150,42 @@
     components.HorizontalSplitPane = components.SplitPane.extend({
 
         getPosition: function() {
-            var position = parseInt(this.$divider.css('left'));
-            return position;
+            if (this.$el.hasClass('fixed-left')) {
+                return parseInt(this.$divider.css('left'));
+            } else {
+                return parseInt(this.$divider.css('right'));
+            }
         },
 
         setPosition: function(position) {
             if (position !== undefined) {
-                this.$first.css('width', position + 'px');
-                this.$divider.css('left', position + 'px');
-                this.$second.css('left', position + 'px');
+                if (this.$el.hasClass('fixed-left')) {
+                    this.$first.css('width', position + 'px');
+                    this.$divider.css('left', position + 'px');
+                    this.$second.css('left', position + 'px');
+                } else {
+                    this.$second.css('width', position + 'px');
+                    this.$divider.css('right', position + 'px');
+                    this.$first.css('right', position + 'px');
+                }
             }
         },
 
         getMinPosition: function() {
-            return parseInt(this.$first.css('min-width') || '0');
+            if (this.$el.hasClass('fixed-left')) {
+                return parseInt(this.$first.css('min-width') || '0');
+            } else {
+                return parseInt(this.$second.css('min-width') || '0');
+            }
         },
 
         getMaxPosition: function() {
             var width = parseInt(this.$el.width());
-            return width - parseInt(this.$second.css('min-width') || '0');
+            if (this.$el.hasClass('fixed-left')) {
+                return Math.max(width - parseInt(this.$second.css('min-width') || '0'), 0);
+            } else {
+                return Math.max(width - parseInt(this.$first.css('min-width') || '0'), 0);
+            }
         }
     });
 
@@ -177,25 +194,42 @@
     components.VerticalSplitPane = components.SplitPane.extend({
 
         getPosition: function() {
-            var position = parseInt(this.$divider.css('top'));
-            return position;
+            if (this.$el.hasClass('fixed-top')) {
+                return parseInt(this.$divider.css('top'));
+            } else {
+                return parseInt(this.$divider.css('bottom'));
+            }
         },
 
         setPosition: function(position) {
             if (position !== undefined) {
-                this.$first.css('height', position + 'px');
-                this.$divider.css('top', position + 'px');
-                this.$second.css('top', position + 'px');
+                if (this.$el.hasClass('fixed-top')) {
+                    this.$first.css('height', position + 'px');
+                    this.$divider.css('top', position + 'px');
+                    this.$second.css('top', position + 'px');
+                } else {
+                    this.$second.css('height', position + 'px');
+                    this.$divider.css('bottom', position + 'px');
+                    this.$first.css('bottom', position + 'px');
+                }
             }
         },
 
         getMinPosition: function() {
-            return parseInt(this.$first.css('min-height') || '0');
+            if (this.$el.hasClass('fixed-top')) {
+                return parseInt(this.$first.css('min-height') || '0');
+            } else {
+                return parseInt(this.$second.css('min-height') || '0');
+            }
         },
 
         getMaxPosition: function() {
             var height = parseInt(this.$el.height());
-            return height - parseInt(this.$second.css('min-height') || '0');
+            if (this.$el.hasClass('fixed-top')) {
+                return Math.max(height - parseInt(this.$second.css('min-height') || '0'), 0);
+            } else {
+                return Math.max(height - parseInt(this.$first.css('min-height') || '0'), 0);
+            }
         }
     });
 
