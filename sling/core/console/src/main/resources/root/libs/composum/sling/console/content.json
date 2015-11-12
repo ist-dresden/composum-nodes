@@ -10,6 +10,11 @@
     "sling:resourceType": "composum/sling/console/page",
     "sling:redirect": "/bin/browser.html"
   },
+  "usermanagement": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Users",
+    "sling:resourceType": "composum/sling/console/usermanagement"
+  },
   "felix": {
     "jcr:primaryType": "nt:unstructured",
     "jcr:title": "Felix",
