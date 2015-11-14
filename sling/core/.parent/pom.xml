@@ -5,16 +5,52 @@
     <groupId>com.composum.sling.core</groupId>
     <artifactId>composum-sling-core-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.3.1-SNAPSHOT</version>
+    <version>1.3.1</version>
 
     <name>Composum Core Parent</name>
     <description>Maven parent for Composum Sling Core bundles</description>
+    <url>https://github.com/ist-dresden/composum</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Ralf Wunsch</name>
+            <email>r.wunsch@ist-software.com</email>
+            <organization>IST GmbH Dresden</organization>
+            <organizationUrl>http://www.ist-software.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Mirko Zeibig</name>
+            <email>m.zeibig@ist-software.com</email>
+            <organization>IST GmbH Dresden</organization>
+            <organizationUrl>http://www.ist-software.com</organizationUrl>
+        </developer>
+    </developers>
 
     <properties>
         <bundle.category>Composum Core</bundle.category>
         <sling.host>localhost</sling.host>
         <sling.port>9090</sling.port>
     </properties>
+
+    <scm>
+        <connection>scm:git:https://github.com/ist-dresden/composum.git</connection>
+        <developerConnection>scm:git:https://github.com/ist-dresden/composum.git</developerConnection>
+        <url>https://github.com/ist-dresden/composum.git</url>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <build>
         <pluginManagement>
@@ -56,6 +92,12 @@
                             </goals>
                         </execution>
                     </executions>
+                    <configuration>
+                        <charset>UTF-8</charset>
+                        <encoding>UTF-8</encoding>
+                        <failOnError>false</failOnError>
+                        <quiet>true</quiet>
+                    </configuration>
                 </plugin>
 
                 <plugin>
@@ -177,7 +219,7 @@
 
         <profile>
             <!-- profile to release the artifacts for the public repository -->
-            <id>release</id>
+            <id>nexus-staging</id>
             <build>
                 <plugins>
 
@@ -200,10 +242,12 @@
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
-                                <phase>verify</phase>
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+                                <configuration>
+                                    <keyname>info@composum.com</keyname>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
