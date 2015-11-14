@@ -33,7 +33,7 @@ public class LinkUtil {
      * Builds a mapped link to a path (resource path) without selectors and a determined extension.
      * @param request the request context for path mapping (the result is always mapped)
      * @param url the URL to use (complete) or the path to an addressed resource (without any extension)
-     * @returnthe mapped url for the referenced resource
+     * @return the mapped url for the referenced resource
      */
     public static String getUrl(SlingHttpServletRequest request, String url) {
         return getUrl(request, url, null, null);
@@ -56,7 +56,7 @@ public class LinkUtil {
      * @param url the URL to use (complete) or the path to an addressed resource (without any extension)
      * @param selectors an optional selector string with all necessary selectors (can be 'null')
      * @param extension an optional extension (can be 'null' for extension determination)
-     * @returnthe mapped url for the referenced resource
+     * @return the mapped url for the referenced resource
      */
     public static String getUrl(SlingHttpServletRequest request, String url,
                                 String selectors, String extension) {

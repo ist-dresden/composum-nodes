@@ -21,7 +21,9 @@
     </properties>
 
     <scm>
+        <connection>scm:git:https://github.com/ist-dresden/composum.git</connection>
         <developerConnection>scm:git:https://github.com/ist-dresden/composum.git</developerConnection>
+        <url>https://github.com/ist-dresden/composum.git</url>
     </scm>
 
     <build>
@@ -121,8 +123,7 @@
     <profiles>
 
         <profile>
-            <!-- Use this profile to install the OSGi bundle automatically, during
-                development -->
+            <!-- Use this profile to install the OSGi bundle automatically, during development -->
             <id>installBundle</id>
             <activation>
                 <activeByDefault>false</activeByDefault>

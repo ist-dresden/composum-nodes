@@ -39,16 +39,19 @@ import java.util.List;
 
 /**
  * The servlet to provide download and upload of content packages and package definitions.
- * <p/>
+ * <p>
  * Examples for testing using 'curl':
- * - download package via POST with a 'package.json' package definition file as form parameter
- * curl -u admin:admin --form package=@package.json http://localhost:4502/bin/core/package.download.zip >test.zip
- * - upload a package definition file 'package.json' into the repository
- * curl -u admin:admin --form package=@package.json http://localhost:4502/bin/core/package.json
- * - download a package via GET using a package definition resource in the repository
- * curl -u admin:admin http://localhost:4502/bin/core/package.zip/test/group/test-1.1.5-SNAPSHOT >test.zip
- * - install a package file 'test.zip' via PUT
- * curl -u admin:admin -X PUT --data-binary "@test.zip" http://localhost:4502/bin/core/package.zip >test.log
+ * </p>
+ * <dl>
+ *     <dt>download package via POST with a 'package.json' package definition file as form parameter</dt>
+ *     <dd><code>curl -u admin:admin --form package=@package.json http://localhost:4502/bin/core/package.download.zip &gt;test.zip</code></dd>
+ *     <dt>upload a package definition file 'package.json' into the repository</dt>
+ *     <dd><code>curl -u admin:admin --form package=@package.json http://localhost:4502/bin/core/package.json</code></dd>
+ *     <dt>download a package via GET using a package definition resource in the repository</dt>
+ *     <dd><code>curl -u admin:admin http://localhost:4502/bin/core/package.zip/test/group/test-1.1.5-SNAPSHOT &gt;test.zip</code></dd>
+ *     <dt>install a package file 'test.zip' via PUT</dt>
+ *     <dd><code>curl -u admin:admin -X PUT --data-binary "@test.zip" http://localhost:4502/bin/core/package.zip &gt;test.log</code></dd>
+ * </dl>
  */
 @SlingServlet(
         paths = "/bin/core/package",
@@ -400,8 +403,9 @@ public class PackageServlet extends AbstractServiceServlet {
     /**
      * The 'view' operation delegates all requests to a component which renders a HTML view
      * of the requested resource using a 'dispatcher.forward()'.
-     *
-     * @example for request forwarding from servlet to a component
+     * <p>
+     * for request forwarding from servlet to a component
+     * </p>
      */
     protected class ViewPackageOperation implements ServletOperation {
 
