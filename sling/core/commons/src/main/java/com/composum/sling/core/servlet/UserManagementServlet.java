@@ -2,14 +2,15 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonWriter;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.*;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {users, user, groups, group}
+    public enum Operation {users, user, groups, tree, group}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -56,6 +57,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.users, new GetUsers());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.user, new GetUser());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.groups, new GetGroups());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.tree, new GetTree());
 
     }
 
@@ -161,6 +163,83 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 strings.add(group.getID());
             }
             return strings.toArray(new String[strings.size()]);
+        }
+    }
+
+    public static class GetTree implements ServletOperation {
+
+        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            String originalRequestPath = AbstractServiceServlet.getPath(request);
+            String requestPath;
+            if (!originalRequestPath.endsWith("/")) {
+                requestPath = originalRequestPath + "/";
+            } else {
+                requestPath = originalRequestPath;
+            }
+            int requestPathLength = requestPath.length();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final UserManager userManager = session.getUserManager();
+            final Query q = new Query() {
+                @Override public <T> void build(final QueryBuilder<T> builder) {
+                    builder.setCondition(builder.nameMatches("%"));
+                    builder.setSortOrder("@name", QueryBuilder.Direction.ASCENDING);
+                    builder.setSelector(Authorizable.class);
+                }
+            };
+            final Iterator<Authorizable> authorizables = userManager.findAuthorizables(q);
+            Set<String> paths = new HashSet<>();
+            Set<Authorizable> auths = new HashSet<>();
+            while (authorizables.hasNext()) {
+                Authorizable authorizable = authorizables.next();
+                String path = authorizable.getPath();
+                if (path.startsWith(requestPath)) {
+                    int firstSlashPositionAfterRequestPath = path.substring(requestPathLength).indexOf('/');
+                    if (firstSlashPositionAfterRequestPath > 0) {
+                        //child nodes are relative paths
+                        String segment = path.substring(requestPathLength, requestPathLength + firstSlashPositionAfterRequestPath);
+                        if (!paths.contains(segment)) {
+                            paths.add(segment);
+                        }
+                    } else {
+                        //child nodes are authorizables
+                        auths.add(authorizable);
+                    }
+                }
+            }
+
+            try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+                jsonWriter.beginObject()
+                        .name("id").value(originalRequestPath)
+                        .name("text").value(originalRequestPath.substring(originalRequestPath.lastIndexOf('/')+1))
+                        .name("name").value(originalRequestPath.substring(originalRequestPath.lastIndexOf('/')+1))
+                        .name("path").value(originalRequestPath)
+                        .name("children")
+                            .beginArray();
+                for (String path : paths) {
+                    jsonWriter.beginObject()
+                        .name("id").value(requestPath + path)
+                        .name("text").value(path)
+                        .name("name").value(path)
+                        .name("path").value(requestPath + path)
+                        .name("state").beginObject().name("loaded").value(false).endObject()
+                    .endObject();
+                }
+                for (Authorizable authorizable : auths) {
+                    jsonWriter.beginObject()
+                            .name("id").value(authorizable.getPath())
+                            .name("text").value(authorizable.getID())
+                            .name("name").value(authorizable.getID())
+                            .name("path").value(authorizable.getPath())
+                            .name("type").value(authorizable.isGroup()?"group":"user")
+                            .name("state").beginObject().name("loaded").value(true).endObject()
+                            .endObject();
+                }
+
+                jsonWriter.endArray().endObject();
+                jsonWriter.flush();
+            }
         }
     }
 
