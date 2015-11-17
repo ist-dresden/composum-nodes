@@ -57,6 +57,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.users, new GetUsers());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.user, new GetUser());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.groups, new GetGroups());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.group, new GetGroup());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.tree, new GetTree());
 
     }
@@ -115,6 +116,17 @@ public class UserManagementServlet extends AbstractServiceServlet {
     }
 
     static class GroupEntry extends AuthorizableEntry {
+        static GroupEntry fromGroup(Group group) throws RepositoryException {
+            GroupEntry groupEntry = new GroupEntry();
+            Iterator<Group> groupIterator = group.memberOf();
+            Iterator<Group> declaredMemberOf = group.declaredMemberOf();
+            groupEntry.id = group.getID();
+            groupEntry.path = group.getPath();
+            groupEntry.principalName = group.getPrincipal().getName();
+            groupEntry.memberOf = getIDs(groupIterator);
+            groupEntry.declaredMemberOf = getIDs(declaredMemberOf);
+            return groupEntry;
+        }
     }
 
     public static abstract class GetAuthorizables<A extends Authorizable, E extends AuthorizableEntry> implements ServletOperation {
@@ -209,14 +221,28 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 }
             }
 
+            Authorizable authorizableByRequestPath = userManager.getAuthorizableByPath(requestPath);
+
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
-                jsonWriter.beginObject()
-                        .name("id").value(originalRequestPath)
-                        .name("text").value(originalRequestPath.substring(originalRequestPath.lastIndexOf('/')+1))
-                        .name("name").value(originalRequestPath.substring(originalRequestPath.lastIndexOf('/')+1))
-                        .name("path").value(originalRequestPath)
-                        .name("children")
+                if (authorizableByRequestPath == null) {
+                    jsonWriter.beginObject()
+                            .name("id").value(originalRequestPath)
+                            .name("text").value(originalRequestPath.substring(originalRequestPath.lastIndexOf('/') + 1))
+                            .name("name").value(originalRequestPath.substring(originalRequestPath.lastIndexOf('/') + 1))
+                            .name("path").value(originalRequestPath)
+                            .name("children")
                             .beginArray();
+                } else {
+                    jsonWriter.beginObject()
+                            .name("id").value(authorizableByRequestPath.getPath())
+                            .name("text").value(authorizableByRequestPath.getID())
+                            .name("name").value(authorizableByRequestPath.getID())
+                            .name("path").value(authorizableByRequestPath.getPath())
+                            .name("type").value(authorizableByRequestPath.isGroup()?"group":"user")
+                            .name("state").beginObject().name("loaded").value(true).endObject()
+                            .name("children")
+                            .beginArray();
+                }
                 for (String path : paths) {
                     jsonWriter.beginObject()
                         .name("id").value(requestPath + path)
@@ -255,6 +281,28 @@ public class UserManagementServlet extends AbstractServiceServlet {
             User user = (User) authorizable;
             UserEntry userEntry = UserEntry.fromUser(user);
             String s = new GsonBuilder().create().toJson(userEntry);
+            PrintWriter writer = response.getWriter();
+            writer.write(s);
+            writer.write('\n');
+            writer.flush();
+            writer.close();
+
+        }
+
+    }
+
+    public static class GetGroup implements ServletOperation {
+
+        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final String path = AbstractServiceServlet.getPath(request);
+            final UserManager userManager = session.getUserManager();
+            final Authorizable authorizable = userManager.getAuthorizable(path.startsWith("/") ? path.substring(1) : path);
+            Group group = (Group) authorizable;
+            GroupEntry groupEntry = GroupEntry.fromGroup(group);
+            String s = new GsonBuilder().create().toJson(groupEntry);
             PrintWriter writer = response.getWriter();
             writer.write(s);
             writer.write('\n');

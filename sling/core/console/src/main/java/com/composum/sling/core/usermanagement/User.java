@@ -1,20 +1,59 @@
 package com.composum.sling.core.usermanagement;
 
 import com.composum.sling.core.AbstractSlingBean;
+import org.apache.jackrabbit.api.JackrabbitSession;
+import org.apache.jackrabbit.api.security.user.*;
+import org.apache.jackrabbit.api.security.user.Group;
+
+import javax.jcr.RepositoryException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by mzeibig on 16.11.15.
  */
 public class User extends AbstractSlingBean {
-    private String userId = "testid";
-    private String userPath = "/test/userPath";
+    private org.apache.jackrabbit.api.security.user.User user;
 
-    public String getUserId() {
-        return userId;
+    public org.apache.jackrabbit.api.security.user.User getUser() throws RepositoryException {
+        if (this.user == null)  {
+            final JackrabbitSession session = (JackrabbitSession) getSession();
+            final UserManager userManager = session.getUserManager();
+            Authorizable authorizableByPath = userManager.getAuthorizableByPath(getRequest().getRequestPathInfo().getSuffix());
+            this.user = (org.apache.jackrabbit.api.security.user.User) authorizableByPath;
+        }
+        return this.user;
     }
 
-    public String getUserPath() {
-        return userPath;
+    public String getUserId() throws RepositoryException {
+        return getUser().getID();
+    }
+
+    public String getUserPath() throws RepositoryException {
+        return getUser().getPath();
+    }
+
+    public boolean isAdmin() throws RepositoryException {
+        return getUser().isAdmin();
+    }
+
+    public boolean isDisabled() throws RepositoryException {
+        return getUser().isDisabled();
+    }
+
+    public String getDisabledReason() throws RepositoryException {
+        return getUser().getDisabledReason();
+    }
+
+    public List<String> getGroups() throws RepositoryException {
+        List<String> groups = new ArrayList<>();
+        Iterator<org.apache.jackrabbit.api.security.user.Group> groupIterator = getUser().memberOf();
+        while (groupIterator.hasNext()) {
+            Group group = groupIterator.next();
+            groups.add(group.getID());
+        }
+        return groups;
     }
 
     public String getSuffix() {

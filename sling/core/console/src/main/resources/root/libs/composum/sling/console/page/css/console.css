@@ -515,3 +515,181 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 #user-status-dialog button.logout {
     float: left;
 }
+
+/*
+ * Detail Toolbar
+ */
+.detail-view .detail-toolbar .btn-group {
+    display: inline-block;
+    margin: 0;
+}
+
+.detail-view .detail-toolbar,
+.detail-view .full-table-view .bootstrap-table .fixed-table-toolbar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 33px;
+    padding: 0 6px 0 0;
+}
+
+.detail-view .detail-toolbar .btn,
+.detail-view .bootstrap-table .fixed-table-toolbar .btn {
+    font-size: 14px;
+    padding: 4px 9px;
+    margin-top: 1px;
+}
+
+.detail-view .detail-toolbar .btn.fa-download {
+    padding: 5px 9px 3px;
+}
+
+.detail-view .detail-toolbar .input-group,
+.detail-view .detail-toolbar .input-group-addon,
+.detail-view .detail-toolbar .input-group .form-control,
+.detail-view .detail-toolbar .select-buttons-widget .btn,
+.detail-view .bootstrap-table .fixed-table-toolbar .search input {
+    height: 27px;
+}
+
+.detail-view .detail-toolbar .input-group-addon.text-muted {
+    color: #777 /* muted */
+}
+
+.detail-view .detail-toolbar .select-buttons-widget .btn {
+    margin-top: 2px;
+    width: 29px;
+    padding: 3px 0px;
+    text-align: center;
+}
+
+.detail-view .bootstrap-table .fixed-table-toolbar .search input {
+    margin-top: 3px;
+
+}
+
+.detail-view .detail-toolbar .input-group,
+.detail-view .bootstrap-table .fixed-table-toolbar .search input {
+    max-width: 170px;
+}
+
+
+.detail-view .detail-toolbar .input-group-addon {
+    font-size: 14px;
+    padding: 3px 6px 1px;
+}
+
+.detail-view .detail-toolbar .input-group.selectors .input-group-addon {
+    padding: 3px 3px 1px;
+}
+
+.detail-view .detail-toolbar .input-group input {
+    padding: 5px;
+}
+
+.detail-view .detail-toolbar .btn span.label,
+.detail-view .bootstrap-table .fixed-table-toolbar .btn span.label {
+    display: none;
+}
+
+
+/**
+ * Tables
+ */
+
+.detail-view .fixed-table-container,
+.detail-view .bootstrap-table table,
+.detail-view .bootstrap-table table tr,
+.detail-view .bootstrap-table table th,
+.detail-view .bootstrap-table table td {
+    border: none;
+}
+
+.detail-view .bootstrap-table table th .th-inner {
+    line-height: default;
+    padding: 0;
+}
+
+.detail-view .bootstrap-table table th,
+.detail-view .bootstrap-table table td {
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 25px;
+    padding: 2px 5px;
+}
+
+.detail-view .bootstrap-table table th.bs-checkbox,
+.detail-view .bootstrap-table table td.bs-checkbox {
+    padding: 8px 5px 8px 6px;
+}
+
+.detail-view .bootstrap-table thead tr {
+    border-bottom: 1px solid #aaa;
+}
+
+.detail-view .bootstrap-table table th {
+    background-color: #fff;
+}
+
+.detail-view .bootstrap-table .fixed-table-toolbar .bars {
+    line-height: 27px;
+}
+
+.detail-view .bootstrap-table .fixed-table-toolbar .bars,
+.detail-view .bootstrap-table .fixed-table-toolbar .search {
+    margin: 0 0 0 5px;
+}
+
+.detail-view .bootstrap-table table td .editable {
+    border-bottom: none;
+}
+
+.detail-view .bootstrap-table table td .editable-inline,
+.detail-view .bootstrap-table table td .editable-inline .form-group,
+.detail-view .bootstrap-table table td .editable-inline .editable-input,
+.detail-view .bootstrap-table table td .editable-inline .editable-input input {
+    width: 100%;
+}
+
+.detail-view .bootstrap-table table td .editable-inline {
+    padding-right: 90px;
+}
+
+.detail-view .bootstrap-table table td.checkbox .editable-inline,
+.detail-view .bootstrap-table table td.checkbox .editable-inline .editable-input {
+    width: auto;
+}
+
+.detail-view .bootstrap-table table td .editable-inline .editable-input input,
+.detail-view .bootstrap-table table td .editable-inline .editable-input select {
+    height: 25px;
+    font-size: 14px;
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 1;
+}
+
+.detail-view .bootstrap-table table td .editable-inline .editable-input .editable-checkbox {
+    min-width: 30px;
+}
+
+.detail-view .bootstrap-table table tr.protected td {
+    color: #aaa;
+}
+
+.detail-view .bootstrap-table table tr.current td {
+    background: #76b6ec
+}
+
+.detail-view .bootstrap-table table tr.protected td .editable {
+    color: #888;
+}
+
+.detail-view .full-table-view .bootstrap-table .fixed-table-container {
+    position: absolute;
+    top: 37px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+

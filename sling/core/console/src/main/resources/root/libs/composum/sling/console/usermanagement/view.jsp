@@ -4,6 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects />
 <cpn:component id="usermanagement" type="com.composum.sling.core.usermanagement.UserManagement" scope="request">
-    <%--<sling:call script="/libs/composum/sling/console/usermanagement/views/${usermanagement.viewType}.jsp" />--%>
-    <sling:include resourceType="composum/sling/console/usermanagement/${usermanagement.viewType}" />
+    <div class="detail-view">
+        <sling:include resourceType="composum/sling/console/usermanagement/${usermanagement.viewType}" />
+    </div>
 </cpn:component>

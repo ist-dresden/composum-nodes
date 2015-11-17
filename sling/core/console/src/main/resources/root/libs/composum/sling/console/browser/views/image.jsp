@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects />
 <cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
-  <div class="node-view-panel image">
+  <div class="node-view-panel detail-view image">
     <a class="favorite-toggle fa fa-star-o" href="#" title="Tooggle favorite state"><span class="label">Favorite</span></a>
     <div class="node-tabs action-bar btn-toolbar" role="toolbar">
       <div class="btn-group btn-group-sm" role="group">

@@ -409,7 +409,20 @@
             <dependency>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>org.apache.felix.framework</artifactId>
-                <version>4.6.0</version>
+                <version>4.0.3</version>
+                <scope>provided</scope>
+            </dependency>
+            <!-- OSGi Core and Compendium API -->
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.core</artifactId>
+                <version>4.3.1</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.compendium</artifactId>
+                <version>4.3.1</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -444,6 +457,19 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>1.6.4</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>taglibs</groupId>
+                <artifactId>standard</artifactId>
+                <version>1.1.2</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>jstl</artifactId>
+                <version>1.2</version>
                 <scope>provided</scope>
             </dependency>
 
