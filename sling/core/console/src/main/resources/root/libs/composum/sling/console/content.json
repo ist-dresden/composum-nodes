@@ -10,6 +10,11 @@
     "sling:resourceType": "composum/sling/console/page",
     "sling:redirect": "/bin/browser.html"
   },
+  "pckgmgr": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Packages",
+    "sling:resourceType": "composum/sling/console/pckgmgr"
+  },
   "felix": {
     "jcr:primaryType": "nt:unstructured",
     "jcr:title": "Felix",

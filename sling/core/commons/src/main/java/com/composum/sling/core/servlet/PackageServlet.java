@@ -2,56 +2,50 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
-import com.composum.sling.core.filter.ResourceFilter;
-import com.composum.sling.core.mapping.MappingRules;
-import com.composum.sling.core.mapping.Package;
-import com.composum.sling.core.mapping.PackageManager;
-import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
-import com.composum.sling.core.util.RequestUtil;
+import com.composum.sling.core.util.JsonUtil;
+import com.composum.sling.core.util.PackageUtil;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
+import org.apache.jackrabbit.vault.packaging.JcrPackage;
+import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
+import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.PackageManager;
+import org.apache.jackrabbit.vault.packaging.PackagingService;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.request.RequestDispatcherOptions;
-import org.apache.sling.api.request.RequestParameter;
-import org.apache.sling.api.request.RequestParameterMap;
-import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.servlets.HttpConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.Binary;
+import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The servlet to provide download and upload of content packages and package definitions.
- * <p>
- * Examples for testing using 'curl':
- * </p>
- * <dl>
- *     <dt>download package via POST with a 'package.json' package definition file as form parameter</dt>
- *     <dd><code>curl -u admin:admin --form package=@package.json http://localhost:4502/bin/core/package.download.zip &gt;test.zip</code></dd>
- *     <dt>upload a package definition file 'package.json' into the repository</dt>
- *     <dd><code>curl -u admin:admin --form package=@package.json http://localhost:4502/bin/core/package.json</code></dd>
- *     <dt>download a package via GET using a package definition resource in the repository</dt>
- *     <dd><code>curl -u admin:admin http://localhost:4502/bin/core/package.zip/test/group/test-1.1.5-SNAPSHOT &gt;test.zip</code></dd>
- *     <dt>install a package file 'test.zip' via PUT</dt>
- *     <dd><code>curl -u admin:admin -X PUT --data-binary "@test.zip" http://localhost:4502/bin/core/package.zip &gt;test.log</code></dd>
- * </dl>
  */
 @SlingServlet(
         paths = "/bin/core/package",
@@ -66,13 +60,14 @@ public class PackageServlet extends AbstractServiceServlet {
 
     public static final String ZIP_CONTENT_TYPE = "application/zip";
 
+    public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+    public static final boolean AUTO_SAVE = true;
+
     // service references
 
     @Reference
     private CoreConfiguration coreConfig;
-
-    @Reference
-    private PackageManager packageManager;
 
     //
     // Servlet operations
@@ -80,9 +75,9 @@ public class PackageServlet extends AbstractServiceServlet {
 
     public enum Extension {html, json, zip, txt}
 
-    public enum Operation {download, upload, setup, delete, tree, view, map}
+    public enum Operation {download, upload, create, build, install, delete, tree, view}
 
-    protected PackagesOperationSet operations = new PackagesOperationSet();
+    protected PackageOperationSet operations = new PackageOperationSet(Extension.json);
 
     protected ServletOperationSet getOperations() {
         return operations;
@@ -101,61 +96,86 @@ public class PackageServlet extends AbstractServiceServlet {
         super.init();
 
         // GET
-        operations.setOperation(ServletOperationSet.Method.GET, Extension.html,
-                Operation.view, new ViewPackageOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
-                Operation.tree, new PackageTreeOperation());
+                Operation.tree, new TreeOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.zip,
                 Operation.download, new DownloadOperation());
 
         // POST
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
-                Operation.setup, new SetupOperation());
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
-                Operation.delete, new DeleteOperation());
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.zip,
-                Operation.upload, new UploadOperation());
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.zip,
-                Operation.download, new DownloadOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
+                Operation.create, new CreateOperation());
 
         // PUT
-        operations.setOperation(ServletOperationSet.Method.PUT, Extension.json,
-                Operation.setup, new PutSetupOperation());
-        operations.setOperation(ServletOperationSet.Method.PUT, Extension.zip,
-                Operation.upload, new PutUploadOperation());
 
         // DELETE
-        operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json,
-                Operation.delete, new DeleteOperation());
     }
 
-    /**
-     * extended resource retrieval in the PackageManagers context
-     */
-    protected class PackagesOperationSet extends ServletOperationSet<Extension, Operation> {
+    public class PackageOperationSet extends ServletOperationSet {
 
-        public PackagesOperationSet() {
-            super(Extension.zip);
+        public PackageOperationSet(Enum defaultExtension) {
+            super(defaultExtension);
         }
 
-        /**
-         * extended resource retrieval in the PackageManagers context
-         */
-        protected ResourceHandle getResource(SlingHttpServletRequest request) {
-
-            ResourceResolver resolver = request.getResourceResolver();
-            RequestPathInfo requestPathInfo = request.getRequestPathInfo();
-            String suffix = requestPathInfo.getSuffix();
-
-            Resource resource = packageManager.getResource(suffix, resolver);
-
-            return resource != null ? ResourceHandle.use(resource) : super.getResource(request);
+        @Override
+        public ResourceHandle getResource(SlingHttpServletRequest request) {
+            Resource resource = null;
+            try {
+                String path = PackageUtil.getPath(request);
+                resource = PackageUtil.getResource(request, path);
+            } catch (RepositoryException rex) {
+                LOG.error(rex.getMessage(), rex);
+            }
+            return ResourceHandle.use(resource);
         }
     }
 
     //
     // operation implementations
     //
+
+    protected class TreeOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+
+            String path = PackageUtil.getPath(request);
+
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            List<JcrPackage> jcrPackages = manager.listPackages();
+
+            TreeNode treeNode = new TreeNode(path);
+            for (JcrPackage jcrPackage : jcrPackages) {
+                if (treeNode.addPackage(jcrPackage)) {
+                    break;
+                }
+            }
+
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            treeNode.sort();
+            treeNode.toJson(writer);
+        }
+    }
+
+    protected class CreateOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+
+            String group = request.getParameter(PARAM_GROUP);
+            String name = request.getParameter(PARAM_NAME);
+            String version = request.getParameter(PARAM_VERSION);
+
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackage jcrPackage = manager.create(group, name, version);
+
+            JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+            toJson(jsonWriter, jcrPackage, null);
+        }
+    }
 
     protected class DownloadOperation implements ServletOperation {
 
@@ -164,269 +184,312 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            ResourceResolver resolver = request.getResourceResolver();
-            if (!resource.isValid()) {
-                resource = ResourceHandle.use(
-                        packageManager.retrievePackage(request.getRequestPathInfo().getSuffix(), resolver));
-            }
+            Node node;
+            if (resource.isValid() && (node = resource.adaptTo(Node.class)) != null) {
 
-            Package requestedPackage = null;
+                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackage jcrPackage = manager.open(node);
 
-            RequestParameterMap parameters = request.getRequestParameterMap();
+                Property data;
+                Binary binary;
+                InputStream stream;
+                if (jcrPackage != null &&
+                        (data = jcrPackage.getData()) != null &&
+                        (binary = data.getBinary()) != null &&
+                        (stream = binary.getStream()) != null) {
 
-            RequestParameter file = parameters.getValue(PARAM_PACKAGE);
-            if (file != null) {
-                InputStream input = file.getInputStream();
-                InputStreamReader reader = new InputStreamReader(input, MappingRules.CHARSET);
-                JsonReader jsonReader = new JsonReader(reader);
-                requestedPackage = Package.GSON.fromJson(jsonReader, Package.class);
-            }
+                    PackageItem item = new PackageItem(jcrPackage);
 
-            response.setContentType(ZIP_CONTENT_TYPE);
-            response.setStatus(HttpServletResponse.SC_OK);
+                    response.setHeader("Content-Disposition", "inline; filename=" + item.getFilename());
+                    response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED,
+                            item.getLastModified().getTimeInMillis());
 
-            if (requestedPackage != null) {
-                packageManager.exportPackage(response.getOutputStream(), requestedPackage, resolver);
-            } else {
-                // if the resource is a package definition than the resource is used to control the package generation
-                packageManager.exportPackage(response.getOutputStream(), resource);
-            }
-        }
-    }
+                    response.setContentType(ZIP_CONTENT_TYPE);
+                    OutputStream output = response.getOutputStream();
+                    IOUtils.copy(stream, output);
 
-    /**
-     * the 'setup' declares a package object and stores it in the repository
-     */
-    protected class SetupOperation implements ServletOperation {
-
-        @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
-                throws RepositoryException, IOException {
-
-            Package pckg = getPackage(request);
-
-            if (pckg != null) {
-                ResourceResolver resolver = request.getResourceResolver();
-
-                packageManager.setupPackage(pckg, resolver);
-
-                Session session = resolver.adaptTo(Session.class);
-                session.save();
-
-                response.setContentLength(0);
-                response.setStatus(HttpServletResponse.SC_OK);
-
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "no valid package definition found");
-            }
-        }
-
-        protected Package getPackage(SlingHttpServletRequest request) throws IOException {
-
-            Package pckg = null;
-            RequestParameterMap parameters = request.getRequestParameterMap();
-            RequestParameter file = parameters.getValue(PARAM_PACKAGE);
-
-            if (file != null) {
-
-                InputStream input = file.getInputStream();
-                InputStreamReader reader = new InputStreamReader(input, MappingRules.CHARSET);
-                JsonReader jsonReader = new JsonReader(reader);
-
-                pckg = Package.GSON.fromJson(jsonReader, Package.class);
-
-            } else {
-
-                String name = RequestUtil.getParameter(parameters, PARAM_NAME, "");
-                String group = RequestUtil.getParameter(parameters, PARAM_GROUP, "");
-                String version = RequestUtil.getParameter(parameters, PARAM_VERSION, "1.0-SNAPSHOT");
-
-                if (StringUtils.isNotBlank(name) && StringUtils.isNotBlank(version)) {
-
-                    RequestParameter[] pathParams = parameters.getValues(PARAM_PATH);
-                    RequestParameter[] filterParams = parameters.getValues(PARAM_FILTER);
-
-                    List<Package.PackagePath> pathList = new ArrayList<>();
-                    for (int i = 0; i < pathParams.length; i++) {
-                        String path = pathParams[i].getString();
-                        if (StringUtils.isNotBlank(path)) {
-                            pathList.add(new Package.PackagePath(path,
-                                    ResourceFilterMapping.fromString(filterParams[i].getString())));
-                        }
-                    }
-
-                    pckg = new Package(group, name, version, new Package.PackageOptions(), pathList);
+                } else {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                            PackageUtil.getPath(request) + " is not a package or has no content");
                 }
-            }
-
-            return pckg;
-        }
-    }
-
-    protected class PutSetupOperation extends SetupOperation {
-
-        @Override
-        protected Package getPackage(SlingHttpServletRequest request) throws IOException {
-
-            Package pckg = null;
-
-            InputStream input = request.getInputStream();
-            InputStreamReader reader = new InputStreamReader(input, MappingRules.CHARSET);
-            JsonReader jsonReader = new JsonReader(reader);
-
-            pckg = Package.GSON.fromJson(jsonReader, Package.class);
-
-            return pckg;
-        }
-    }
-
-    /**
-     * the 'setup' declares a package object and stores it in the repository
-     */
-    protected class DeleteOperation implements ServletOperation {
-
-        @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
-                throws RepositoryException, IOException {
-
-            if (resource.isValid() &&
-                    Package.RESOURCE_TYPE_PACKAGE.equals(resource.getResourceType())) {
-
-                packageManager.deletePackage(resource);
-
-                ResourceResolver resolver = request.getResourceResolver();
-                Session session = resolver.adaptTo(Session.class);
-                session.save();
-
-                response.setContentLength(0);
-                response.setStatus(HttpServletResponse.SC_OK);
 
             } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "no valid package definition found");
+                        PackageUtil.getPath(request) + " can not be found in the repository");
             }
         }
     }
 
-    /**
-     * the 'upload' operation imports the content of a package in the repository; no
-     * package object is created in the repository
-     */
-    protected class UploadOperation implements ServletOperation {
+    //
+    // Tree Mapping of the flat Package list
+    //
+
+    public interface TreeItem {
+
+        String getName();
+
+        void toJson(JsonWriter writer) throws RepositoryException, IOException;
+    }
+
+    public static class FolderItem extends LinkedHashMap<String, Object> implements TreeItem {
+
+        public FolderItem(String path, String name) {
+            put("id", path);
+            put("path", path);
+            put("name", name);
+            put("text", name);
+            put("type", "/".equals(path) ? "root" : "folder");
+            Map<String, Object> treeState = new LinkedHashMap<>();
+            treeState.put("loaded", Boolean.FALSE);
+            put("state", treeState);
+        }
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
-                throws IOException {
+        public String getName() {
+            return (String) get("text");
+        }
 
-            InputStream input = getInputStream(request);
-            if (input != null) {
+        @Override
+        public void toJson(JsonWriter writer) throws IOException {
+            JsonUtil.jsonMap(writer, this);
+        }
 
-                OutputStream log = response.getOutputStream();
+        @Override
+        public boolean equals(Object other) {
+            return getName().equals(((TreeItem) other).getName());
+        }
+    }
 
-                try {
-                    ResourceResolver resolver = request.getResourceResolver();
-                    packageManager.importPackage(input, log, resolver);
+    public static class PackageItem implements TreeItem {
 
-                    Session session = resolver.adaptTo(Session.class);
-                    session.save();
+        private final JcrPackage jcrPackage;
+        private final JcrPackageDefinition definition;
 
-                } catch (RepositoryException ex) {
-                    LOG.error(ex.getMessage(), ex);
-                    if (response.isCommitted()) {
-                        log.write(ex.toString().getBytes(MappingRules.CHARSET));
-                    } else {
-                        response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+        public PackageItem(JcrPackage jcrPackage) throws RepositoryException {
+            this.jcrPackage = jcrPackage;
+            definition = jcrPackage.getDefinition();
+        }
+
+        @Override
+        public String getName() {
+            return definition.get(JcrPackageDefinition.PN_NAME);
+        }
+
+        public JcrPackageDefinition getDefinition() {
+            return definition;
+        }
+
+        @Override
+        public void toJson(JsonWriter writer) throws RepositoryException, IOException {
+            String name = getFilename();
+            String path = "/" + definition.get(JcrPackageDefinition.PN_GROUP) + "/" + name;
+            Map<String, Object> treeState = new LinkedHashMap<>();
+            treeState.put("loaded", Boolean.TRUE);
+            Map<String, Object> additionalAttributes = new LinkedHashMap<>();
+            additionalAttributes.put("id", path);
+            additionalAttributes.put("path", path);
+            additionalAttributes.put("name", name);
+            additionalAttributes.put("text", name);
+            additionalAttributes.put("type", "package");
+            additionalAttributes.put("state", treeState);
+            additionalAttributes.put("file", getFilename());
+            PackageServlet.toJson(writer, jcrPackage, additionalAttributes);
+        }
+
+        public String getFilename() {
+            StringBuilder filename = new StringBuilder(getName());
+            String version = definition.get(JcrPackageDefinition.PN_VERSION);
+            if (version != null) {
+                filename.append('-').append(version);
+            }
+            filename.append(".zip");
+            return filename.toString();
+        }
+
+        public Calendar getLastModified() {
+            Calendar lastModified = definition.getCalendar(JcrPackageDefinition.PN_LASTMODIFIED);
+            if (lastModified != null) {
+                return lastModified;
+            }
+            return definition.getCalendar(JcrPackageDefinition.PN_CREATED);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return getName().equals(((TreeItem) other).getName());
+        }
+    }
+
+    /**
+     * the tree node implementation for the requested path (folder or package)
+     */
+    protected static class TreeNode extends ArrayList<TreeItem> {
+
+        private final String path;
+        private boolean isLeaf = false;
+
+        public TreeNode(String path) {
+            this.path = path;
+        }
+
+        /**
+         * adds a package or the appropriate folder to the nodes children if it is a child of this node
+         *
+         * @param jcrPackage the current package in the iteration
+         * @return true, if this package is the nodes target and a leaf - iteration can be stopped
+         * @throws RepositoryException
+         */
+        public boolean addPackage(JcrPackage jcrPackage) throws RepositoryException {
+            String groupPath = path.endsWith("/") ? path : path + "/";
+            JcrPackageDefinition definition = jcrPackage.getDefinition();
+            String group = "/" + definition.get(JcrPackageDefinition.PN_GROUP) + "/";
+            if (group.startsWith(groupPath)) {
+                TreeItem item;
+                if (group.equals(groupPath)) {
+                    // this node the the packages parent - use the package as node child
+                    item = new PackageItem(jcrPackage);
+                } else {
+                    // this node is a group parent - insert a folder for the subgroup
+                    String name = group.substring(path.length());
+                    if (name.startsWith("/")) {
+                        name = name.substring(1);
                     }
+                    int nextDelimiter = name.indexOf("/");
+                    if (nextDelimiter > 0) {
+                        name = name.substring(0, nextDelimiter);
+                    }
+                    item = new FolderItem(groupPath + name, name);
                 }
+                if (!contains(item)) {
+                    add(item);
+                }
+                return false;
             } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "package file not available");
+                PackageItem item = new PackageItem(jcrPackage);
+                if (path.equals(group + item.getFilename())) {
+                    // this node (teh path) represents the package itself and is a leaf
+                    isLeaf = true;
+                    add(item);
+                    // we can stop the iteration
+                    return true;
+                }
+                return false;
             }
         }
 
-        protected InputStream getInputStream(SlingHttpServletRequest request) throws IOException {
-
-            InputStream input = null;
-
-            RequestParameterMap parameters = request.getRequestParameterMap();
-            RequestParameter file = parameters.getValue(PARAM_PACKAGE);
-
-            if (file != null) {
-                input = file.getInputStream();
-            }
-            return input;
+        public boolean isLeaf() {
+            return isLeaf;
         }
-    }
 
-    protected class PutUploadOperation extends UploadOperation {
+        public void sort() {
+            Collections.sort(this, new Comparator<TreeItem>() {
 
-        @Override
-        protected InputStream getInputStream(SlingHttpServletRequest request) throws IOException {
-            InputStream input = request.getInputStream();
-            return input;
+                @Override
+                public int compare(TreeItem o1, TreeItem o2) {
+                    return o1.getName().compareToIgnoreCase(o2.getName());
+                }
+            });
         }
-    }
 
-    /**
-     * The 'tree' operation generates al list of package nodes for a package tree view.
-     */
-    protected class PackageTreeOperation implements ServletOperation {
-
-        @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
-                throws RepositoryException, IOException {
-
-            if (resource.isValid()) {
-
-                ResourceFilter filter = packageManager.getListFilter();
-                NodeServlet.LabelType labelType =
-                        RequestUtil.getSelector(request, NodeServlet.LabelType.name);
-
-                JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-
-                response.setStatus(HttpServletResponse.SC_OK);
-
-                NodeServlet.writeJsonNode(jsonWriter, filter, resource, labelType, coreConfig, false);
-
+        public void toJson(JsonWriter writer) throws IOException, RepositoryException {
+            if (isLeaf()) {
+                get(0).toJson(writer);
             } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "resource not found '" + request.getRequestPathInfo().getSuffix() + "'");
+                int lastPathSegment = path.lastIndexOf("/");
+                String name = path.substring(lastPathSegment + 1);
+                if (StringUtils.isBlank(name)) {
+                    name = "packages ";
+                }
+                FolderItem myself = new FolderItem(path, name);
+
+                writer.beginObject();
+                JsonUtil.jsonMapEntries(writer, myself);
+                writer.name("children");
+                writer.beginArray();
+                for (TreeItem item : this) {
+                    item.toJson(writer);
+                }
+                writer.endArray();
+                writer.endObject();
             }
         }
     }
 
-    /**
-     * The 'view' operation delegates all requests to a component which renders a HTML view
-     * of the requested resource using a 'dispatcher.forward()'.
-     * <p>
-     * for request forwarding from servlet to a component
-     * </p>
-     */
-    protected class ViewPackageOperation implements ServletOperation {
+    //
+    // JSON mapping helpers
+    //
 
-        @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
-                throws RepositoryException, IOException, ServletException {
+    protected static void toJson(JsonWriter writer, JcrPackage jcrPackage,
+                                 Map<String, Object> additionalAttributes)
+            throws RepositoryException, IOException {
+        writer.beginObject();
+        writer.name("definition");
+        toJson(writer, jcrPackage.getDefinition());
+        JsonUtil.jsonMapEntries(writer, additionalAttributes);
+        writer.endObject();
+    }
 
-            RequestDispatcher dispatcher;
-
-            if (Package.RESOURCE_TYPE_PACKAGE.equals(resource.getResourceType())) {
-                // packages can render itself using the component specified by the resource type
-                dispatcher = request.getRequestDispatcher(resource);
-            } else {
-                // folders are rendered using the 'list' component in the packages implementation
-                RequestDispatcherOptions options = new RequestDispatcherOptions();
-                options.setForceResourceType("composum/sling/console/package/list");
-                dispatcher = request.getRequestDispatcher(resource, options);
-            }
-
-            dispatcher.forward(request, response);
+    protected static void toJson(JsonWriter writer, JcrPackageDefinition definition)
+            throws RepositoryException, IOException {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+        String version = definition.get(JcrPackageDefinition.PN_VERSION);
+        String description = definition.get(JcrPackageDefinition.PN_DESCRIPTION);
+        Calendar created = definition.getCalendar(JcrPackageDefinition.PN_CREATED);
+        Calendar lastModified = definition.getCalendar(JcrPackageDefinition.PN_LASTMODIFIED);
+        writer.beginObject();
+        writer.name(JcrPackageDefinition.PN_GROUP).value(definition.get(JcrPackageDefinition.PN_GROUP));
+        writer.name(JcrPackageDefinition.PN_NAME).value(definition.get(JcrPackageDefinition.PN_NAME));
+        if (version != null) {
+            writer.name(JcrPackageDefinition.PN_VERSION).value(version);
         }
+        if (description != null) {
+            writer.name(JcrPackageDefinition.PN_DESCRIPTION).value(description);
+        }
+        writer.name(JcrPackageDefinition.PN_CREATED).value(dateFormat.format(created.getTime()));
+        if (lastModified != null) {
+            writer.name(JcrPackageDefinition.PN_LASTMODIFIED).value(dateFormat.format(lastModified.getTime()));
+        }
+        writer.endObject();
+    }
+
+    protected static void fromJson(JsonReader reader, JcrPackage jcrPackage)
+            throws RepositoryException, IOException {
+        reader.beginObject();
+        JsonToken token;
+        while (reader.hasNext() && (token = reader.peek()) == JsonToken.NAME) {
+            String name = reader.nextName();
+            switch (name) {
+                case "definition":
+                    fromJson(reader, jcrPackage.getDefinition());
+                    break;
+                default:
+                    reader.skipValue();
+                    break;
+            }
+        }
+        reader.endObject();
+    }
+
+    protected static void fromJson(JsonReader reader, JcrPackageDefinition definition)
+            throws RepositoryException, IOException {
+        reader.beginObject();
+        JsonToken token;
+        while (reader.hasNext() && (token = reader.peek()) == JsonToken.NAME) {
+            String name = reader.nextName();
+            switch (token = reader.peek()) {
+                case STRING:
+                    String strVal = reader.nextString();
+                    definition.set(token.name(), strVal, AUTO_SAVE);
+                    break;
+                case BOOLEAN:
+                    Boolean boolVal = reader.nextBoolean();
+                    definition.set(token.name(), boolVal, AUTO_SAVE);
+                    break;
+                default:
+                    reader.skipValue();
+                    break;
+            }
+        }
+        reader.endObject();
     }
 }
