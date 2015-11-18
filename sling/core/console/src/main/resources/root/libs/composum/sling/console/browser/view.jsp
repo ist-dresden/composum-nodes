@@ -4,6 +4,8 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects />
 <cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
+  <div class="detail-view">
     <sling:call script="/libs/composum/sling/console/browser/breadcrumbs.jsp" />
     <sling:call script="/libs/composum/sling/console/browser/views/${browser.viewType}.jsp" />
+  </div>
 </cpn:component>

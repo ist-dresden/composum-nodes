@@ -296,12 +296,6 @@
         return core.getView('#browser-view .breadcrumbs', browser.Breadcrumbs);
     };
 
-    /**
-     * the base 'class' for all node tabs must be known before one of the special view implementations
-     */
-    browser.NodeTab = Backbone.View.extend({
-    });
-
 })(core.browser);
 
 })(window.core);
