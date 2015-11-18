@@ -13,7 +13,7 @@
         return core.getView('.node-view-panel .properties', browser.PropertiesTab);
     }
 
-    browser.PropertiesTab = browser.NodeTab.extend({
+    browser.PropertiesTab = core.console.DetailTab.extend({
 
         initialize: function(options) {
             this.table = core.getWidget(this.$el, '.table-container', browser.PropertiesTable);
