@@ -1,5 +1,6 @@
 package com.composum.sling.core.util;
 
+import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.exception.PropertyValueFormatException;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.mapping.MappingRules;
@@ -35,15 +36,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Matcher;
 
 /**
@@ -53,7 +46,9 @@ public class JsonUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonUtil.class);
 
-    /** the declared builder for JSON POJO mapping */
+    /**
+     * the declared builder for JSON POJO mapping
+     */
     public static final GsonBuilder GSON_BUILDER = new GsonBuilder();
 
     /**
@@ -65,6 +60,104 @@ public class JsonUtil {
         public Object value; // can be a 'String' or a list of 'String' (multi value)
         public String type = PropertyType.nameFromValue(PropertyType.STRING);
         public boolean multi = false;
+    }
+
+    //
+    // mapping of objects and maps
+    //
+
+    /**
+     * Transforms a JSON object (stream) into a Map object.
+     */
+    public static Map<String, Object> jsonMap(JsonReader reader) throws IOException {
+        Map<String, Object> map = new HashMap<>();
+        reader.beginObject();
+        while (reader.hasNext() && reader.peek() == JsonToken.NAME) {
+            String name = reader.nextName();
+            Object value = jsonValue(reader);
+            if (value != null) {
+                map.put(name, value);
+            }
+        }
+        reader.endObject();
+        return map;
+    }
+
+    /**
+     * Transforms a JSON object (stream) into an object.
+     */
+    public static Object jsonValue(JsonReader reader) throws IOException {
+        switch (reader.peek()) {
+            case STRING:
+                return reader.nextString();
+            case BOOLEAN:
+                return reader.nextBoolean();
+            case NUMBER:
+                return reader.nextLong();
+            case BEGIN_ARRAY:
+                ArrayList<Object> list = new ArrayList<>();
+                reader.beginArray();
+                while (reader.peek() != JsonToken.END_ARRAY) {
+                    list.add(jsonValue(reader));
+                }
+                reader.endArray();
+                return list;
+            case BEGIN_OBJECT:
+                return jsonMap(reader);
+            default:
+                reader.skipValue();
+        }
+        return null;
+    }
+
+    /**
+     * Transforms a Map object into a JSON object (stream).
+     */
+    public static void jsonMap(JsonWriter writer, Map<String, Object> map) throws IOException {
+        if (map != null) {
+            writer.beginObject();
+            jsonMapEntries(writer, map);
+            writer.endObject();
+        }
+    }
+
+    public static void jsonMapEntries(JsonWriter writer, Map<String, Object> map) throws IOException {
+        if (map != null) {
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                writer.name(entry.getKey());
+                jsonValue(writer, entry.getValue());
+            }
+        }
+    }
+
+    /**
+     * Transforms an object into a JSON object (stream).
+     */
+    public static void jsonValue(JsonWriter writer, Object value) throws IOException {
+        if (value instanceof Map) {
+            jsonMap(writer, (Map<String, Object>) value);
+        } else if (value instanceof Collection) {
+            writer.beginArray();
+            Iterator iterator = ((Collection) value).iterator();
+            while (iterator.hasNext()) {
+                jsonValue(writer, iterator.next());
+            }
+            writer.endArray();
+        } else if (value instanceof Object[]) {
+            writer.beginArray();
+            for (Object val : ((Object[]) value)) {
+                jsonValue(writer, val);
+            }
+            writer.endArray();
+        } else if (value instanceof Boolean) {
+            writer.value((Boolean) value);
+        } else if (value instanceof Long) {
+            writer.value((Long) value);
+        } else if (value != null) {
+            writer.value(value.toString());
+        } else {
+            writer.nullValue();
+        }
     }
 
     //
@@ -802,23 +895,23 @@ public class JsonUtil {
 
     // helper methods to decouple value write from value get (can probably throw an exception)
 
-    public static void writeValue (JsonWriter writer, String name, String value) throws IOException {
+    public static void writeValue(JsonWriter writer, String name, String value) throws IOException {
         writer.name(name).value(value);
     }
 
-    public static void writeValue (JsonWriter writer, String name, boolean value) throws IOException {
+    public static void writeValue(JsonWriter writer, String name, boolean value) throws IOException {
         writer.name(name).value(value);
     }
 
-    public static void writeValue (JsonWriter writer, String name, double value) throws IOException {
+    public static void writeValue(JsonWriter writer, String name, double value) throws IOException {
         writer.name(name).value(value);
     }
 
-    public static void writeValue (JsonWriter writer, String name, long value) throws IOException {
+    public static void writeValue(JsonWriter writer, String name, long value) throws IOException {
         writer.name(name).value(value);
     }
 
-    public static void writeValue (JsonWriter writer, String name, Number value) throws IOException {
+    public static void writeValue(JsonWriter writer, String name, Number value) throws IOException {
         writer.name(name).value(value);
     }
 
