@@ -165,7 +165,7 @@
             return core.getView('.node-view-panel .versions', browser.VersionsTab);
         };
 
-        browser.VersionsTab = browser.NodeTab.extend({
+        browser.VersionsTab = core.console.DetailTab.extend({
             initialize: function(options) {
                 this.table = core.getWidget(this.$el, '.table-container', browser.VersionsTable);
                 this.$addButton = this.$('.table-toolbar .add');
