@@ -116,9 +116,20 @@
         },
 
         createPackage: function(event) {
+            var dialog = pckgmgr.getCreatePackageDialog();
+            dialog.show(_.bind (function(){
+                var parentNode = this.tree.current();
+                if (parentNode) {
+                    dialog.initGroup(parentNode.path);
+                }
+            }, this));
         },
 
         deletePackage: function(event) {
+            var dialog = pckgmgr.getDeleteNodeDialog();
+            dialog.show(_.bind (function(){
+                dialog.setPackage(this.tree.current());
+            }, this));
         },
 
         refreshTree: function(event) {

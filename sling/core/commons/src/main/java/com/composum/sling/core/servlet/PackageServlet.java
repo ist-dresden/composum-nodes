@@ -102,12 +102,14 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.download, new DownloadOperation());
 
         // POST
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.create, new CreateOperation());
 
         // PUT
 
         // DELETE
+        operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json,
+                Operation.create, new DeleteOperation());
     }
 
     public class PackageOperationSet extends ServletOperationSet {
@@ -172,8 +174,28 @@ public class PackageServlet extends AbstractServiceServlet {
             JcrPackageManager manager = PackageUtil.createPackageManager(request);
             JcrPackage jcrPackage = manager.create(group, name, version);
 
-            JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-            toJson(jsonWriter, jcrPackage, null);
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            jsonAnswer(writer, "create", "successful", jcrPackage);
+        }
+    }
+
+    protected class DeleteOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
+
+            if (jcrPackage != null) {
+
+                manager.remove(jcrPackage);
+
+                JsonWriter writer = ResponseUtil.getJsonWriter(response);
+                jsonAnswer(writer, "delete", "successful", jcrPackage);
+            }
         }
     }
 
@@ -184,11 +206,10 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            Node node;
-            if (resource.isValid() && (node = resource.adaptTo(Node.class)) != null) {
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
-                JcrPackage jcrPackage = manager.open(node);
+            if (jcrPackage != null) {
 
                 Property data;
                 Binary binary;
@@ -201,8 +222,10 @@ public class PackageServlet extends AbstractServiceServlet {
                     PackageItem item = new PackageItem(jcrPackage);
 
                     response.setHeader("Content-Disposition", "inline; filename=" + item.getFilename());
-                    response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED,
-                            item.getLastModified().getTimeInMillis());
+                    Calendar lastModified = item.getLastModified();
+                    if (lastModified != null) {
+                        response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, lastModified.getTimeInMillis());
+                    }
 
                     response.setContentType(ZIP_CONTENT_TYPE);
                     OutputStream output = response.getOutputStream();
@@ -419,10 +442,22 @@ public class PackageServlet extends AbstractServiceServlet {
     // JSON mapping helpers
     //
 
+    protected static void jsonAnswer(JsonWriter writer,
+                                     String operation, String status, JcrPackage jcrPackage)
+            throws IOException, RepositoryException {
+        writer.beginObject();
+        writer.name("operation").value(operation);
+        writer.name("status").value(status);
+        writer.name("package");
+        toJson(writer, jcrPackage, null);
+        writer.endObject();
+    }
+
     protected static void toJson(JsonWriter writer, JcrPackage jcrPackage,
                                  Map<String, Object> additionalAttributes)
             throws RepositoryException, IOException {
         writer.beginObject();
+        Node node = jcrPackage.getNode();
         writer.name("definition");
         toJson(writer, jcrPackage.getDefinition());
         JsonUtil.jsonMapEntries(writer, additionalAttributes);
@@ -434,7 +469,6 @@ public class PackageServlet extends AbstractServiceServlet {
         SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
         String version = definition.get(JcrPackageDefinition.PN_VERSION);
         String description = definition.get(JcrPackageDefinition.PN_DESCRIPTION);
-        Calendar created = definition.getCalendar(JcrPackageDefinition.PN_CREATED);
         Calendar lastModified = definition.getCalendar(JcrPackageDefinition.PN_LASTMODIFIED);
         writer.beginObject();
         writer.name(JcrPackageDefinition.PN_GROUP).value(definition.get(JcrPackageDefinition.PN_GROUP));
@@ -445,7 +479,6 @@ public class PackageServlet extends AbstractServiceServlet {
         if (description != null) {
             writer.name(JcrPackageDefinition.PN_DESCRIPTION).value(description);
         }
-        writer.name(JcrPackageDefinition.PN_CREATED).value(dateFormat.format(created.getTime()));
         if (lastModified != null) {
             writer.name(JcrPackageDefinition.PN_LASTMODIFIED).value(dateFormat.format(lastModified.getTime()));
         }

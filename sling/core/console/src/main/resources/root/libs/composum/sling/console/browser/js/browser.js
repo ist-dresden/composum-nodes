@@ -266,7 +266,6 @@
             dialog.show(_.bind (function(){
                 dialog.setNode(this.tree.current());
             }, this));
-
         },
 
         refreshTree: function(event) {
