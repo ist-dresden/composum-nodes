@@ -6,7 +6,7 @@
 <div class="query-panel">
   <div class="query-head">
     <div class="query-actions action-bar btn-toolbar" role="toolbar">
-      <form role="search" action="/bin/core/node.query.html" method="GET">
+      <cpn:form role="search" action="/bin/core/node.query.html" method="GET">
         <div class="input-group">
           <span class="select dropdown-toggle fa fa-history input-group-addon btn btn-default" data-toggle="dropdown" title="More actions..."></span>
           <ul class="select dropdown-menu" role="menu">
@@ -15,7 +15,7 @@
           <span class="exec glyphicon-triangle-right glyphicon input-group-addon btn btn-default" title="Execute query..."></span>
           <span class="filter fa fa-filter input-group-addon btn btn-default" title="Tree Filter ON/OFF"></span>
         </div>
-      </form>
+      </cpn:form>
     </div>
     <div class="param-input-line">
       <div class="input-group template">

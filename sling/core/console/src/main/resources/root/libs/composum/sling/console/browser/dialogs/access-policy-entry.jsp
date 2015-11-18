@@ -7,8 +7,8 @@
     <div class="modal-dialog">
       <div class="modal-content form-panel default">
 
-        <form class="widget-form default" enctype="multipart/form-data"
-              action="/bin/core/system.accessPolicy.json${browser.current.pathEncoded}">
+        <cpn:form classes="widget-form default" enctype="multipart/form-data"
+                  action="/bin/core/system.accessPolicy.json${browser.current.pathEncoded}">
 
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -60,7 +60,7 @@
             <button type="button" class="btn btn-primary save">Save</button>
           </div>
 
-        </form>
+        </cpn:form>
       </div>
     </div>
   </div>

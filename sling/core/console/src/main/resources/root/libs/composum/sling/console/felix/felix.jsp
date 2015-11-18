@@ -2,7 +2,7 @@
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects/>
-<html>
+<html data-context-path="${slingRequest.contextPath}">
 <head>
   <sling:call script="/libs/composum/sling/console/page/head.jsp"/>
   <style>
