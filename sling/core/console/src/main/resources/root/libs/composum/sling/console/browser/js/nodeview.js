@@ -684,7 +684,7 @@
          */
         onReload: function() {
             browser.getBreadcrumbs();
-            this.favoriteToggle = this.$detailView.find('> .favorite-toggle');
+            this.favoriteToggle = this.$detailView.find('.favorite-toggle');
             this.checkFavorite();
             this.favoriteToggle.click(_.bind(this.toggleFavorite, this));
         },
