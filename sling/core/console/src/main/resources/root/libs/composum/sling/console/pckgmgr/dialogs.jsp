@@ -3,4 +3,5 @@
 <sling:defineObjects />
 <sling:call script="dialogs/pckg-create.jsp"/>
 <sling:call script="dialogs/pckg-delete.jsp"/>
+<sling:call script="dialogs/pckg-upload.jsp"/>
 <sling:call script="/libs/composum/sling/console/page/dialogs.jsp"/>

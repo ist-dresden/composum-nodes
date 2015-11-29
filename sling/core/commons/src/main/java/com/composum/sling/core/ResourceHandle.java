@@ -27,9 +27,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-/**
- * the wrapper to enhance the Sling Resource class
- */
+/** the wrapper to enhance the Sling Resource class */
 public class ResourceHandle extends ResourceWrapper {
 
     /** the 'adaptTo' like wrapping helper */
@@ -37,6 +35,13 @@ public class ResourceHandle extends ResourceWrapper {
         ResourceHandle handle = resource instanceof ResourceHandle
                 ? ((ResourceHandle) resource) : new ResourceHandle(resource);
         return handle;
+    }
+
+    /** the universal validation test */
+    public static boolean isValid(Resource resource) {
+        return resource instanceof ResourceHandle
+                ? ((ResourceHandle) resource).isValid()
+                : resource != null;
     }
 
     // initialized attributes
@@ -54,18 +59,14 @@ public class ResourceHandle extends ResourceWrapper {
     private transient ResourceHandle contentResource;
     private transient InheritedValues inheritedValues;
 
-    /**
-     * creates a new wrapper instance.
-     */
+    /** creates a new wrapper instance. */
     protected ResourceHandle(Resource resource) {
         super(resource);
         this.resource = resource;
         this.properties = ResourceUtil.getValueMap(this.resource);
     }
 
-    /**
-     * a resource is valid if not 'null' and resolvable
-     */
+    /** a resource is valid if not 'null' and resolvable */
     public boolean isValid() {
         if (valid == null) {
             valid = (this.resource != null);
@@ -139,13 +140,10 @@ public class ResourceHandle extends ResourceWrapper {
 
     // content resource access ('jcr:content' child resource)
 
-    /**
-     * Retrieves the 'content' resource of this resource.
-     * Normally the content resource is the resource ot the 'jcr:content' subnode
-     * if this resource ist not the content resource itself.
+    /** Retrieves the 'content' resource of this resource. Normally the content resource is the resource ot the 'jcr:content' subnode if this resource ist not
+     * the content resource itself.
      *
-     * @return the content resource if present or self
-     */
+     * @return the content resource if present or self */
     public ResourceHandle getContentResource() {
         if (contentResource == null) {
             if (ResourceUtil.CONTENT_NODE.equals(getName())) {
@@ -191,11 +189,9 @@ public class ResourceHandle extends ResourceWrapper {
         return value;
     }
 
-    /**
-     * lazy getter for the node of this resource (if present, not useful for synthetic resources)
+    /** lazy getter for the node of this resource (if present, not useful for synthetic resources)
      *
-     * @return the node object or <code>null</code> if not available
-     */
+     * @return the node object or <code>null</code> if not available */
     public Node getNode() {
         if (node == null) {
             if (resource != null) {
@@ -205,9 +201,7 @@ public class ResourceHandle extends ResourceWrapper {
         return node;
     }
 
-    /**
-     * retrieves the primary type of the resources node
-     */
+    /** retrieves the primary type of the resources node */
     public String getPrimaryType() {
         String result = null;
         Node node = getNode();
@@ -224,9 +218,7 @@ public class ResourceHandle extends ResourceWrapper {
         return result;
     }
 
-    /**
-     * check the node type or the resource type
-     */
+    /** check the node type or the resource type */
     public boolean isOfType(String type) {
         Node node = getNode();
         if (node != null) {
@@ -238,12 +230,9 @@ public class ResourceHandle extends ResourceWrapper {
         return isResourceType(type);
     }
 
-    /**
-     * Lazy getter for the ID of the resources.
-     * The ID is the UUID of the resources node if available otherwise the Base64 encoded path.
+    /** Lazy getter for the ID of the resources. The ID is the UUID of the resources node if available otherwise the Base64 encoded path.
      *
-     * @return a hopefully useful ID (not <code>null</code>)
-     */
+     * @return a hopefully useful ID (not <code>null</code>) */
     public String getId() {
         if (id == null) {
             if (isValid()) {
@@ -256,9 +245,7 @@ public class ResourceHandle extends ResourceWrapper {
         return id;
     }
 
-    /**
-     * Retrieves the inherited 'super.toString()' value as an ID.
-     */
+    /** Retrieves the inherited 'super.toString()' value as an ID. */
     public String getStringId() {
         return super.toString();
     }
@@ -318,9 +305,7 @@ public class ResourceHandle extends ResourceWrapper {
         }
     }
 
-    /**
-     * @return
-     */
+    /** @return */
     public String getParentPath() {
         final String parentPath = ResourceUtil.getParent(getPath());
         return parentPath;
@@ -331,16 +316,12 @@ public class ResourceHandle extends ResourceWrapper {
         return isValid() ? super.toString() : ("<invalid: " + resource + ">");
     }
 
-    /**
-     * @see ResourceUtil#isSyntheticResource(Resource)
-     */
+    /** @see ResourceUtil#isSyntheticResource(Resource) */
     public boolean isSynthetic() {
         return ResourceUtil.isSyntheticResource(this);
     }
 
-    /**
-     * @see org.apache.sling.api.resource.ResourceWrapper#adaptTo(java.lang.Class)
-     */
+    /** @see org.apache.sling.api.resource.ResourceWrapper#adaptTo(java.lang.Class) */
     @Override
     public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
         if (type == ResourceHandle.class) {
@@ -350,9 +331,7 @@ public class ResourceHandle extends ResourceWrapper {
         }
     }
 
-    /**
-     * retrieves all children of a type
-     */
+    /** retrieves all children of a type */
     public List<ResourceHandle> getChildrenByResourceType(final String resourceType) {
         final ArrayList<ResourceHandle> children = new ArrayList<>();
         if (this.isValid()) {
@@ -365,9 +344,7 @@ public class ResourceHandle extends ResourceWrapper {
         return children;
     }
 
-    /**
-     * Returns 'true' is this resource can be displayed itself.
-     */
+    /** Returns 'true' is this resource can be displayed itself. */
     public boolean isRenderable() {
         String resourceType = getResourceType();
         if (StringUtils.isBlank(resourceType)) {
@@ -376,16 +353,12 @@ public class ResourceHandle extends ResourceWrapper {
         return true;
     }
 
-    /**
-     * Returns 'true' is this resource represents a 'file' witch can be displayed (a HTML file).
-     */
+    /** Returns 'true' is this resource represents a 'file' witch can be displayed (a HTML file). */
     public boolean isRenderableFile() {
         return ResourceUtil.isRenderableFile(this);
     }
 
-    /**
-     * Returns 'true' is this resource represents a 'file' (an asset).
-     */
+    /** Returns 'true' is this resource represents a 'file' (an asset). */
     public boolean isFile() {
         return ResourceUtil.isFile(this);
     }

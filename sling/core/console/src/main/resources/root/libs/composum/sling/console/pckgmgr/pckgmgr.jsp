@@ -26,8 +26,12 @@
                   </ul>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
-                  <button type="button" class="create glyphicon-plus glyphicon btn btn-default" title="Create a new node"><span class="label">Create</span></button>
-                  <button type="button" class="delete glyphicon-minus glyphicon btn btn-default" title="Delete selected node"><span class="label">Delete</span></button>
+                  <button type="button" class="create glyphicon-plus glyphicon btn btn-default" title="Create a new package"><span class="label">Create</span></button>
+                  <button type="button" class="delete glyphicon-minus glyphicon btn btn-default" title="Delete selected package"><span class="label">Delete</span></button>
+                </div>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" class="upload fa fa-upload btn btn-default" title="Upload a new package"><span class="label">Upload</span></button>
+                  <button type="button" class="download fa fa-download btn btn-default" title="Download selected package"><span class="label">Download</span></button>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
                   <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh tree view"><span class="label">Refresh</span></button>

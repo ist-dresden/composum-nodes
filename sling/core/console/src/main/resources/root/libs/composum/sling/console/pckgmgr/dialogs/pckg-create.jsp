@@ -19,8 +19,8 @@
             <div class="messages">
               <div class="alert"></div>
             </div>
-
             <input name="_charset_" type="hidden" value="UTF-8" />
+
             <div class="form-group">
               <label class="control-label">Group</label>
               <input name="group" class="widget primary-type-widget form-control" type="text"

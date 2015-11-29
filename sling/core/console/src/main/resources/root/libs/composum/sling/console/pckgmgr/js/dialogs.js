@@ -92,16 +92,12 @@
             core.components.Dialog.prototype.initialize.apply(this, [options]);
             this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
             this.$panel = this.$('.form-panel');
-            this.$group = this.$('input[name="group"]');
-            this.$name = this.$('input[name="name"]');
             this.$file = this.$('input[name="file"]');
             this.$file.on('change.file', _.bind(this.fileChanged, this));
             this.$('button.upload').click(_.bind(this.uploadPackage, this));
         },
 
         initDialog: function(path, name) {
-            this.$path.val(path);
-            this.$name.val(name);
         },
 
         uploadPackage: function(event) {
@@ -111,29 +107,12 @@
                     pckgmgr.tree.refresh();
                 });
             } else {
-                this.alert ('danger', 'a group and file must be specified');
+                this.alert ('danger', 'a file must be specified');
             }
             return false;
         },
 
         fileChanged: function() {
-            var fileWidget = this.widgetOf(this.$file);
-            var nameWidget = this.widgetOf(this.$name);
-            var value = fileWidget.getValue();
-            if (value) {
-                var name = nameWidget.getValue();
-                if (!name) {
-                    var match = /^(.*[\\\/])?([^\\\/]+)(\.json)$/.exec(value);
-                    if (match) {
-                        nameWidget.setValue ([match[2]]);
-                    } else {
-                        match = /^(.*[\\\/])?([^\\\/]+)$/.exec(value);
-                        if (match) {
-                            nameWidget.setValue ([match[2]]);
-                        }
-                    }
-                }
-            }
         }
     });
 

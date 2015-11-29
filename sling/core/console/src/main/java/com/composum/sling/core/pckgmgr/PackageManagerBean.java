@@ -42,6 +42,6 @@ public class PackageManagerBean extends AbstractSlingBean {
 
     public String getTabType() {
         String selector = getRequest().getSelectors(new StringFilter.BlackList("^tab$"));
-        return StringUtils.isNotBlank(selector) ? selector.substring(1) : "default";
+        return StringUtils.isNotBlank(selector) ? selector.substring(1) : "general";
     }
 }
