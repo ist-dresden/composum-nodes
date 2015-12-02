@@ -1,23 +1,11 @@
 package com.composum.sling.core.pckgmgr;
 
 import com.composum.sling.core.AbstractSlingBean;
-import com.composum.sling.core.BeanContext;
-import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.StringFilter;
-import com.composum.sling.core.util.LinkUtil;
-import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.PackageUtil;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.request.RequestPathInfo;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class PackageManagerBean extends AbstractSlingBean {
 

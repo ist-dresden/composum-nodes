@@ -12,7 +12,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
-import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
@@ -294,7 +293,7 @@ public class PackageServlet extends AbstractServiceServlet {
         void toJson(JsonWriter writer) throws RepositoryException, IOException;
     }
 
-    public static class FolderItem extends LinkedHashMap<String, Object>implements TreeItem {
+    public static class FolderItem extends LinkedHashMap<String, Object> implements TreeItem {
 
         public FolderItem(String path, String name) {
             put("id", path);
