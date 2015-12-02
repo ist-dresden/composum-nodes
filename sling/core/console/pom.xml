@@ -97,6 +97,7 @@
         <dependency>
             <groupId>org.apache.jackrabbit.vault</groupId>
             <artifactId>org.apache.jackrabbit.vault</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <!-- JSON -->
