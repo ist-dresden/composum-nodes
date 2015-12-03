@@ -34,7 +34,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -180,45 +179,45 @@ public class JsonUtil {
      */
     public static void exportJson(JsonWriter writer, Resource resource)
             throws RepositoryException, IOException {
-        exportJson(writer, resource, MappingRules.DEFAULT_MAPPING_RULES);
+        exportJson(writer, resource, MappingRules.getDefaultMappingRules());
     }
 
     /**
      * @param writer
      * @param resource
-     * @param rules
+     * @param mapping
      * @throws RepositoryException
      * @throws IOException
      */
-    public static void exportJson(JsonWriter writer, Resource resource, MappingRules rules)
+    public static void exportJson(JsonWriter writer, Resource resource, MappingRules mapping)
             throws RepositoryException, IOException {
-        exportJson(writer, resource, rules, 1);
+        exportJson(writer, resource, mapping, 1);
     }
 
     /**
      * @param writer
      * @param resource
-     * @param rules
+     * @param mapping
      * @param depth
      * @throws RepositoryException
      * @throws IOException
      */
-    public static void exportJson(JsonWriter writer, Resource resource, MappingRules rules, int depth)
+    public static void exportJson(JsonWriter writer, Resource resource, MappingRules mapping, int depth)
             throws RepositoryException, IOException {
 
         if (resource != null) {
 
             writer.beginObject();
 
-            exportProperties(writer, resource, rules);
+            exportProperties(writer, resource, mapping);
 
             // export children after the properties(!) if depth is not reached or not restricted
-            if (rules.maxDepth == 0 || depth < rules.maxDepth) {
+            if (mapping.maxDepth == 0 || depth < mapping.maxDepth) {
                 depth++;
                 for (Resource child : resource.getChildren()) {
-                    if (rules.resourceFilter.accept(child)) {
+                    if (mapping.resourceFilter.accept(child)) {
                         writer.name(child.getName());
-                        exportJson(writer, child, rules, depth);
+                        exportJson(writer, child, mapping, depth);
                     }
                 }
             }
@@ -230,11 +229,11 @@ public class JsonUtil {
     /**
      * @param writer
      * @param resource
-     * @param rules
+     * @param mapping
      * @throws RepositoryException
      * @throws IOException
      */
-    public static void exportProperties(JsonWriter writer, Resource resource, MappingRules rules)
+    public static void exportProperties(JsonWriter writer, Resource resource, MappingRules mapping)
             throws RepositoryException, IOException {
 
         Node node = resource.adaptTo(Node.class);
@@ -257,24 +256,24 @@ public class JsonUtil {
         }
 
         // write properties first to ensure that types are read first on import
-        if (rules.propertyFormat.scope != MappingRules.PropertyFormat.Scope.value) {
+        if (mapping.propertyFormat.scope != MappingRules.PropertyFormat.Scope.value) {
             writer.name(MappingRules.PROPERTIES_NAME);
             writer.beginArray();
         }
         for (Map.Entry<String, Object> entry : propertiesSet.entrySet()) {
             String name = entry.getKey();
-            if (rules.exportPropertyFilter.accept(name)) {
+            if (mapping.exportPropertyFilter.accept(name)) {
                 Object value = entry.getValue();
                 if (value instanceof Property) {
                     Property property = (Property) value;
-                    writeJsonProperty(writer, node, property, rules.propertyFormat);
+                    writeJsonProperty(writer, node, property, mapping);
                 } else {
                     // if no node exists (synthetic resource) the properties are simple values
-                    writeJsonProperty(writer, name, value, rules.propertyFormat);
+                    writeJsonProperty(writer, name, value, mapping);
                 }
             }
         }
-        if (rules.propertyFormat.scope != MappingRules.PropertyFormat.Scope.value) {
+        if (mapping.propertyFormat.scope != MappingRules.PropertyFormat.Scope.value) {
             writer.endArray();
         }
     }
@@ -324,19 +323,19 @@ public class JsonUtil {
      */
     public static Resource importJson(JsonReader reader, ResourceResolver resolver, String path)
             throws RepositoryException, IOException {
-        return importJson(reader, resolver, path, MappingRules.DEFAULT_MAPPING_RULES);
+        return importJson(reader, resolver, path, MappingRules.getDefaultMappingRules());
     }
 
     /**
      * @param reader
      * @param resolver
      * @param path
-     * @param rules
+     * @param mapping
      * @throws RepositoryException
      * @throws IOException
      */
     public static Resource importJson(JsonReader reader, ResourceResolver resolver,
-                                      String path, MappingRules rules)
+                                      String path, MappingRules mapping)
             throws RepositoryException, IOException {
 
         Session session = resolver.adaptTo(Session.class);
@@ -361,7 +360,7 @@ public class JsonUtil {
                         case BEGIN_OBJECT:
                             JsonProperty property = GSON.fromJson(reader, JsonProperty.class);
                             if (resource != null) {
-                                if (importJsonProperty(factory, resource, property, rules)) {
+                                if (importJsonProperty(factory, resource, property, mapping)) {
                                     // remember all properties found in JSON object for finalizing
                                     propertiesSet.put(property.name, property);
                                 }
@@ -387,9 +386,9 @@ public class JsonUtil {
                                 // to avoid expensive memory consumption the resource is created before
                                 // the first child is imported; that can be a problem if the types are
                                 // not available (primary type, mixin types) at this time
-                                resource = createResource(resolver, path, propertiesSet, factory, rules);
+                                resource = createResource(resolver, path, propertiesSet, factory, mapping);
                             }
-                            importJson(reader, resolver, path + "/" + name, rules);
+                            importJson(reader, resolver, path + "/" + name, mapping);
                         } catch (ConstraintViolationException cvex) {
                             LOG.error(cvex.getMessage() + " (" + path + "/" + name + ")", cvex);
                         }
@@ -438,7 +437,7 @@ public class JsonUtil {
                 }
                 if (property != null) {
                     if (resource != null) {
-                        if (importJsonProperty(factory, resource, property, rules)) {
+                        if (importJsonProperty(factory, resource, property, mapping)) {
                             // remember all properties found in JSON object for finalizing
                             propertiesSet.put(property.name, property);
                         }
@@ -453,10 +452,10 @@ public class JsonUtil {
         reader.endObject();
 
         if (resource == null) {
-            resource = createResource(resolver, path, propertiesSet, factory, rules);
+            resource = createResource(resolver, path, propertiesSet, factory, mapping);
         }
 
-        if (rules.changeRule == MappingRules.ChangeRule.update) {
+        if (mapping.changeRule == MappingRules.ChangeRule.update) {
             Node node = resource.adaptTo(Node.class);
             if (node != null && !node.isNew()) {
                 // remove all properties not included in JSON object if 'update' rule is specified
@@ -466,7 +465,7 @@ public class JsonUtil {
                         Property property = iterator.nextProperty();
                         String propertyName = property.getName();
                         if (propertiesSet.get(propertyName) == null
-                                && rules.importPropertyFilter.accept(propertyName)) {
+                                && mapping.importPropertyFilter.accept(propertyName)) {
                             try {
                                 node.setProperty(propertyName, (Value) null);
                             } catch (ValueFormatException vfex) {
@@ -478,7 +477,7 @@ public class JsonUtil {
                 // remove all children not included in JSON object if the 'update' rule is specified
                 for (Resource child : resource.getChildren()) {
                     String childName = child.getName();
-                    if (!childrenSet.contains(childName) && rules.resourceFilter.accept(child)) {
+                    if (!childrenSet.contains(childName) && mapping.resourceFilter.accept(child)) {
                         Node childNode = child.adaptTo(Node.class);
                         if (childNode != null) {
                             childNode.remove();
@@ -502,13 +501,13 @@ public class JsonUtil {
      * @param path
      * @param propertiesSet
      * @param factory
-     * @param rules
+     * @param mapping
      * @return
      * @throws RepositoryException
      */
     public static Resource createResource(ResourceResolver resolver, String path,
                                           Map<String, JsonProperty> propertiesSet,
-                                          ValueFactory factory, MappingRules rules)
+                                          ValueFactory factory, MappingRules mapping)
             throws RepositoryException {
         // determine the new nodes primary type from the properties
         JsonProperty primaryType = propertiesSet.get(PropertyUtil.PROP_PRIMARY_TYPE);
@@ -518,7 +517,7 @@ public class JsonUtil {
             JsonProperty mixinTypes = propertiesSet.get(PropertyUtil.PROP_MIXIN_TYPES);
             if (mixinTypes != null) {
                 // import mixin types property first(!)
-                if (!importJsonProperty(factory, resource, mixinTypes, rules)) {
+                if (!importJsonProperty(factory, resource, mixinTypes, mapping)) {
                     propertiesSet.remove(PropertyUtil.PROP_MIXIN_TYPES);
                 }
             }
@@ -527,7 +526,7 @@ public class JsonUtil {
                 // import all the other properties - not the primary and mixin types
                 if (!PropertyUtil.PROP_PRIMARY_TYPE.equals(property.name)
                         && !PropertyUtil.PROP_MIXIN_TYPES.equals(property.name)) {
-                    if (!importJsonProperty(factory, resource, property, rules)) {
+                    if (!importJsonProperty(factory, resource, property, mapping)) {
                         entry.setValue(null);
                     }
                 }
@@ -614,20 +613,20 @@ public class JsonUtil {
      * @param factory  the ValueFactory to create the JCR value from  the JSON value
      * @param resource the resource which stores the property
      * @param property the JSON POJO for the property
-     * @param rules    the change rules for merging with existing values
+     * @param mapping  the change rules for merging with existing values
      * @throws RepositoryException
      */
     public static boolean importJsonProperty(ValueFactory factory, Resource resource,
-                                             JsonProperty property, MappingRules rules)
+                                             JsonProperty property, MappingRules mapping)
             throws RepositoryException {
         Node node;
         if (resource != null && (node = resource.adaptTo(Node.class)) != null) {
             // change property if new or not only 'extend' is specified
-            if ((rules.changeRule != MappingRules.ChangeRule.extend
+            if ((mapping.changeRule != MappingRules.ChangeRule.extend
                     || node.getProperty(property.name) == null)
-                    && rules.importPropertyFilter.accept(property.name)) {
+                    && mapping.importPropertyFilter.accept(property.name)) {
                 try {
-                    setJsonProperty(factory, node, property, rules.propertyFormat);
+                    setJsonProperty(factory, node, property, mapping);
                     return true;
                 } catch (ConstraintViolationException cvex) {
                     LOG.info(cvex.toString() + " (" + node.getPath() + "@" + property.name + ")");
@@ -653,7 +652,7 @@ public class JsonUtil {
      * @throws java.io.IOException           error on write JSON
      */
     public static void writeJsonProperties(JsonWriter writer, StringFilter filter,
-                                           Node node, MappingRules.PropertyFormat format)
+                                           Node node, MappingRules mapping)
             throws RepositoryException, IOException {
         if (node != null) {
             TreeMap<String, Property> sortedProperties = new TreeMap<>();
@@ -665,15 +664,15 @@ public class JsonUtil {
                     sortedProperties.put(name, property);
                 }
             }
-            if (format.scope == MappingRules.PropertyFormat.Scope.value) {
+            if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value) {
                 writer.beginObject();
             } else {
                 writer.beginArray();
             }
             for (Map.Entry<String, Property> entry : sortedProperties.entrySet()) {
-                writeJsonProperty(writer, node, entry.getValue(), format);
+                writeJsonProperty(writer, node, entry.getValue(), mapping);
             }
-            if (format.scope == MappingRules.PropertyFormat.Scope.value) {
+            if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value) {
                 writer.endObject();
             } else {
                 writer.endArray();
@@ -691,7 +690,7 @@ public class JsonUtil {
      * @throws java.io.IOException           error on write JSON
      */
     public static void writeJsonValueMap(JsonWriter writer, StringFilter filter,
-                                         ValueMap values, MappingRules.PropertyFormat format)
+                                         ValueMap values, MappingRules mapping)
             throws RepositoryException, IOException {
         if (values != null) {
             TreeMap<String, Object> sortedProperties = new TreeMap<>();
@@ -703,15 +702,15 @@ public class JsonUtil {
                     sortedProperties.put(key, entry.getValue());
                 }
             }
-            if (format.scope == MappingRules.PropertyFormat.Scope.value) {
+            if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value) {
                 writer.beginObject();
             } else {
                 writer.beginArray();
             }
             for (Map.Entry<String, Object> entry : sortedProperties.entrySet()) {
-                writeJsonProperty(writer, entry.getKey(), entry.getValue(), format);
+                writeJsonProperty(writer, entry.getKey(), entry.getValue(), mapping);
             }
-            if (format.scope == MappingRules.PropertyFormat.Scope.value) {
+            if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value) {
                 writer.endObject();
             } else {
                 writer.endArray();
@@ -724,19 +723,19 @@ public class JsonUtil {
      *
      * @param writer   the JSON writer object (with the JSON state)
      * @param property the JCR property to write
-     * @param format   the format in the JSON output
+     * @param mapping  the format in the JSON output
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
     public static void writeJsonProperty(JsonWriter writer, Node node,
-                                         Property property, MappingRules.PropertyFormat format)
+                                         Property property, MappingRules mapping)
             throws RepositoryException, IOException {
         if (property != null &&
                 (PropertyType.BINARY != property.getType() ||
-                        format.binary != MappingRules.PropertyFormat.Binary.skip)) {
+                        mapping.propertyFormat.binary != MappingRules.PropertyFormat.Binary.skip)) {
             String name = property.getName();
             int type = property.getType();
-            if (format.scope == MappingRules.PropertyFormat.Scope.value) {
+            if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value) {
                 writer.name(name);
             } else {
                 writer.beginObject();
@@ -746,16 +745,16 @@ public class JsonUtil {
             if (property.isMultiple()) {
                 writer.beginArray();
                 for (Value value : property.getValues()) {
-                    JsonUtil.writeJsonValue(writer, node, name, value, type, format);
+                    JsonUtil.writeJsonValue(writer, node, name, value, type, mapping);
                 }
                 writer.endArray();
             } else {
-                JsonUtil.writeJsonValue(writer, node, name, property.getValue(), type, format);
+                JsonUtil.writeJsonValue(writer, node, name, property.getValue(), type, mapping);
             }
-            if (format.scope != MappingRules.PropertyFormat.Scope.value) {
+            if (mapping.propertyFormat.scope != MappingRules.PropertyFormat.Scope.value) {
                 writer.name("type").value(PropertyType.nameFromValue(type));
                 writer.name("multi").value(property.isMultiple());
-                if (format.scope == MappingRules.PropertyFormat.Scope.definition) {
+                if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.definition) {
                     PropertyDefinition definition = property.getDefinition();
                     writer.name("auto").value(definition.isAutoCreated());
                     writer.name("protected").value(definition.isProtected());
@@ -771,12 +770,12 @@ public class JsonUtil {
      * @param writer
      * @param name
      * @param value
-     * @param format
+     * @param mapping
      * @throws RepositoryException
      * @throws IOException
      */
     public static void writeJsonProperty(JsonWriter writer, String name,
-                                         Object value, MappingRules.PropertyFormat format)
+                                         Object value, MappingRules mapping)
             throws RepositoryException, IOException {
         if (name != null && value != null) {
             int type = PropertyType.STRING;
@@ -791,10 +790,10 @@ public class JsonUtil {
             } else if (value instanceof Calendar) {
                 type = PropertyType.DATE;
             }
-            if (format.scope != MappingRules.PropertyFormat.Scope.value) {
+            if (mapping.propertyFormat.scope != MappingRules.PropertyFormat.Scope.value) {
                 writer.beginObject();
             }
-            if (format.scope == MappingRules.PropertyFormat.Scope.value) {
+            if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value) {
                 writer.name(name);
             } else {
                 writer.name("name").value(name);
@@ -803,13 +802,13 @@ public class JsonUtil {
             if (value instanceof Object[]) {
                 writer.beginArray();
                 for (Object val : (Object[]) value) {
-                    JsonUtil.writeJsonValue(writer, null, name, val, type, format);
+                    JsonUtil.writeJsonValue(writer, null, name, val, type, mapping);
                 }
                 writer.endArray();
             } else {
-                JsonUtil.writeJsonValue(writer, null, name, value, type, format);
+                JsonUtil.writeJsonValue(writer, null, name, value, type, mapping);
             }
-            if (format.scope != MappingRules.PropertyFormat.Scope.value) {
+            if (mapping.propertyFormat.scope != MappingRules.PropertyFormat.Scope.value) {
                 writer.name("type").value(PropertyType.nameFromValue(type));
                 writer.name("multi").value(value instanceof Object[]);
                 writer.endObject();
@@ -830,13 +829,13 @@ public class JsonUtil {
      * @throws java.io.IOException           error on write JSON
      */
     public static void writeJsonValue(JsonWriter writer, Node node, String name, Object value,
-                                      Integer type, MappingRules.PropertyFormat format)
+                                      Integer type, MappingRules mapping)
             throws RepositoryException, IOException {
         Value jcrValue = value instanceof Value ? (Value) value : null;
         switch (type) {
             case PropertyType.BINARY:
                 if (node != null && jcrValue != null) {
-                    if (format.binary == MappingRules.PropertyFormat.Binary.link) {
+                    if (mapping.propertyFormat.binary == MappingRules.PropertyFormat.Binary.link) {
                         String uri = "/bin/core/property.bin"
                                 + LinkUtil.encodePath(node.getPath())
                                 + "?name=" + LinkUtil.encodePath(name);
@@ -844,11 +843,11 @@ public class JsonUtil {
                         writer.setHtmlSafe(false);
                         writer.value(uri);
                         writer.setHtmlSafe(htmlSafe);
-                    } else if (format.binary == MappingRules.PropertyFormat.Binary.base64) {
+                    } else if (mapping.propertyFormat.binary == MappingRules.PropertyFormat.Binary.base64) {
                         Binary binary = jcrValue.getBinary();
                         byte[] buffer = IOUtils.toByteArray(binary.getStream());
                         String encoded = Base64.encodeBase64String(buffer);
-                        writer.value(getValueString(encoded, type, format));
+                        writer.value(getValueString(encoded, type, mapping));
                     } else {
                         writer.nullValue();
                     }
@@ -862,18 +861,18 @@ public class JsonUtil {
             case PropertyType.DATE:
                 Calendar cal = jcrValue != null ? jcrValue.getDate() : (Calendar) value;
                 if (cal != null) {
-                    SimpleDateFormat dateFormat = MappingRules.MAP_DATE_FORMAT;
+                    SimpleDateFormat dateFormat = new SimpleDateFormat(MappingRules.MAP_DATE_FORMAT);
                     dateFormat.setTimeZone(cal.getTimeZone());
-                    writer.value(getValueString(dateFormat.format(cal.getTime()), type, format));
+                    writer.value(getValueString(dateFormat.format(cal.getTime()), type, mapping));
                 }
                 break;
             case PropertyType.DECIMAL:
                 writer.value(getValueString(jcrValue != null
-                        ? jcrValue.getDecimal() : (BigDecimal) value, type, format));
+                        ? jcrValue.getDecimal() : (BigDecimal) value, type, mapping));
                 break;
             case PropertyType.DOUBLE:
                 writer.value(getValueString(jcrValue != null
-                        ? jcrValue.getDouble() : (Double) value, type, format));
+                        ? jcrValue.getDouble() : (Double) value, type, mapping));
                 break;
             case PropertyType.LONG:
                 writer.value(jcrValue != null ? jcrValue.getLong() : (Long) value);
@@ -885,7 +884,7 @@ public class JsonUtil {
             case PropertyType.URI:
             case PropertyType.WEAKREFERENCE:
                 writer.value(getValueString(jcrValue != null
-                        ? jcrValue.getString() : value.toString(), type, format));
+                        ? jcrValue.getString() : value.toString(), type, mapping));
                 break;
             case PropertyType.UNDEFINED:
                 writer.nullValue();
@@ -920,12 +919,12 @@ public class JsonUtil {
      *
      * @param value
      * @param type
-     * @param format
+     * @param mapping
      * @return
      */
-    public static String getValueString(Object value, int type, MappingRules.PropertyFormat format) {
+    public static String getValueString(Object value, int type, MappingRules mapping) {
         String string = value.toString();
-        if (format.scope == MappingRules.PropertyFormat.Scope.value && type != PropertyType.STRING) {
+        if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value && type != PropertyType.STRING) {
             string = "{" + PropertyType.nameFromValue(type) + "}" + string;
         }
         return string;
@@ -975,7 +974,7 @@ public class JsonUtil {
      * @throws RepositoryException if storing was not possible (some reasons)
      */
     public static boolean setJsonProperty(ValueFactory factory, Node node,
-                                          JsonProperty property, MappingRules.PropertyFormat format)
+                                          JsonProperty property, MappingRules mapping)
             throws RepositoryException {
 
         if (property != null) {
@@ -1005,7 +1004,7 @@ public class JsonUtil {
                 Value[] values = new Value[jsonValues.length];
                 try {
                     for (int i = 0; i < jsonValues.length; i++) {
-                        values[i] = makeJcrValue(factory, type, jsonValues[i], format);
+                        values[i] = makeJcrValue(factory, type, jsonValues[i], mapping);
                     }
                 } catch (PropertyValueFormatException pfex) {
                     return false;
@@ -1036,7 +1035,7 @@ public class JsonUtil {
 
                 Value value = null;
                 try {
-                    value = makeJcrValue(factory, type, stringValue, format);
+                    value = makeJcrValue(factory, type, stringValue, mapping);
                 } catch (PropertyValueFormatException pfex) {
                     return false;
                 }
@@ -1069,18 +1068,18 @@ public class JsonUtil {
      * @return
      */
     public static Value makeJcrValue(ValueFactory factory, int type, Object object,
-                                     MappingRules.PropertyFormat format)
+                                     MappingRules mapping)
             throws PropertyValueFormatException, RepositoryException {
         Value value = null;
         if (object != null) {
             switch (type) {
                 case PropertyType.BINARY:
-                    if (format.binary != MappingRules.PropertyFormat.Binary.skip) {
+                    if (mapping.propertyFormat.binary != MappingRules.PropertyFormat.Binary.skip) {
                         InputStream input = null;
                         if (object instanceof InputStream) {
                             input = (InputStream) object;
                         } else if (object instanceof String) {
-                            if (format.binary == MappingRules.PropertyFormat.Binary.base64) {
+                            if (mapping.propertyFormat.binary == MappingRules.PropertyFormat.Binary.base64) {
                                 byte[] decoded = Base64.decodeBase64((String) object);
                                 input = new ByteArrayInputStream(decoded);
                             }
@@ -1099,16 +1098,7 @@ public class JsonUtil {
                     Date date = object instanceof Date ? (Date) object : null;
                     if (date == null) {
                         String string = object.toString();
-                        // try some date patterns...
-                        for (SimpleDateFormat dateFormat : MappingRules.DATE_PATTERNS) {
-                            try {
-                                date = dateFormat.parse(string);
-                                // break after first usable pattern
-                                break;
-                            } catch (ParseException pex) {
-                                // try next...
-                            }
-                        }
+                        date = mapping.dateParser.parse(string);
                     }
                     if (date != null) {
                         GregorianCalendar cal = new GregorianCalendar();

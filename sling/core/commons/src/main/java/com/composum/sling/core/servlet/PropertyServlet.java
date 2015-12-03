@@ -124,11 +124,13 @@ public class PropertyServlet extends AbstractServiceServlet {
             StringFilter filter = resource.isFile() ? BINARY_PROPS_FILTER : DEFAULT_PROPS_FILTER;
 
             try {
-                MappingRules.PropertyFormat propertyFormat = new MappingRules.PropertyFormat(
+                MappingRules mapping = new MappingRules(MappingRules.getDefaultMappingRules(),
+                        null, null, null, new MappingRules.PropertyFormat(
                         RequestUtil.getParameter(request, "format",
                                 RequestUtil.getSelector(request, MappingRules.PropertyFormat.Scope.definition)),
                         RequestUtil.getParameter(request, "binary",
-                                RequestUtil.getSelector(request, MappingRules.PropertyFormat.Binary.link)));
+                                RequestUtil.getSelector(request, MappingRules.PropertyFormat.Binary.link))),
+                        null, null);
 
                 JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
 
@@ -136,10 +138,10 @@ public class PropertyServlet extends AbstractServiceServlet {
 
                 Node node = resource.adaptTo(Node.class);
                 if (node != null) {
-                    JsonUtil.writeJsonProperties(jsonWriter, filter, node, propertyFormat);
+                    JsonUtil.writeJsonProperties(jsonWriter, filter, node, mapping);
                 } else {
                     ValueMap values = ResourceUtil.getValueMap(resource);
-                    JsonUtil.writeJsonValueMap(jsonWriter, filter, values, propertyFormat);
+                    JsonUtil.writeJsonValueMap(jsonWriter, filter, values, mapping);
                 }
 
             } catch (RepositoryException ex) {
@@ -206,7 +208,7 @@ public class PropertyServlet extends AbstractServiceServlet {
 
                     // update the property
                     boolean available = JsonUtil.setJsonProperty(valueFactory, node, property,
-                            ResponseUtil.PROPERTY_FORMAT);
+                            ResponseUtil.getDefaultJsonMapping());
                     session.save();
 
                     // answer 'OK' (200)

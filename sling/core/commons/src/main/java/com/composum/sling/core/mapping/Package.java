@@ -138,13 +138,13 @@ public class Package {
         if (pkgPath != null) {
             MappingRules rules = this.mappingRules.get(pkgPath.path);
             if (rules == null) {
-                rules = new MappingRules(MappingRules.DEFAULT_MAPPING_RULES,
+                rules = new MappingRules(MappingRules.getDefaultMappingRules(),
                         pkgPath.filter, null, null, null, null, pkgPath.changeRule);
                 this.mappingRules.put(pkgPath.path, rules);
             }
             return rules;
         } else {
-            return MappingRules.DEFAULT_MAPPING_RULES;
+            return MappingRules.getDefaultMappingRules();
         }
     }
 

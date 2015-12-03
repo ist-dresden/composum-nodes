@@ -16,9 +16,16 @@ public class ResponseUtil extends org.apache.sling.api.request.RequestUtil {
 
     public static final String JSON_CONTENT_TYPE = "application/json;charset=" + MappingRules.CHARSET;
 
-    public static final MappingRules.PropertyFormat PROPERTY_FORMAT = new MappingRules.PropertyFormat(
-            MappingRules.PropertyFormat.Scope.definition,
-            MappingRules.PropertyFormat.Binary.link);
+    /**
+     * the default rule set for general import an export features
+     */
+    public static MappingRules getDefaultJsonMapping() {
+        return new MappingRules(MappingRules.getDefaultMappingRules().MAPPING_NODE_FILTER,
+                MappingRules.MAPPING_EXPORT_FILTER, MappingRules.MAPPING_IMPORT_FILTER,
+                new MappingRules.PropertyFormat(MappingRules.PropertyFormat.Scope.definition,
+                        MappingRules.PropertyFormat.Binary.link),
+                0, MappingRules.ChangeRule.update);
+    }
 
     //
     // JSON streaming
@@ -55,7 +62,7 @@ public class ResponseUtil extends org.apache.sling.api.request.RequestUtil {
 
         javax.jcr.Property property = node.getProperty(name);
         if (property != null) {
-            JsonUtil.writeJsonProperty(jsonWriter, node, property, PROPERTY_FORMAT);
+            JsonUtil.writeJsonProperty(jsonWriter, node, property, getDefaultJsonMapping());
         }
     }
 }
