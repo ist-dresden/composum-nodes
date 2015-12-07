@@ -22,7 +22,7 @@
 <body id="felix" class="console">
   <div id="ui">
     <sling:call script="/libs/composum/sling/console/page/dialogs.jsp"/>
-    <sling:call script="/libs/composum/sling/console/page/navbar.jsp"/>
+    <sling:include resourceType="composum/sling/console/components/navbar"/>
     <div id="content-wrapper">
       <iframe width="100%" height="100%" src=""></iframe>
     </div>
@@ -56,5 +56,6 @@
     })(core.felix);
     })(window.core);
   </script>
+<sling:include resourceType="composum/sling/console/components/tryLogin"/>
 </body>
 </html>

@@ -10,7 +10,7 @@
 <body id="overview" class="console">
   <div id="ui">
     <sling:call script="dialogs.jsp"/>
-    <sling:call script="navbar.jsp"/>
+    <sling:include resourceType="composum/sling/console/components/navbar"/>
     <div class="content">
       <div class="row">
         <div class="left col-md-3 col-sm-4 col-xs-12">
@@ -77,6 +77,7 @@
     </div>
   </div>
 <sling:call script="script.jsp"/>
+<sling:include resourceType="composum/sling/console/components/tryLogin"/>
 </body>
 </html>
 </cpn:component>
