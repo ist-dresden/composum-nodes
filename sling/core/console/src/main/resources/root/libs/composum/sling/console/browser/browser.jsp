@@ -9,7 +9,7 @@
 <body id="browser" class="console left-open top-open">
   <div id="ui">
     <sling:call script="dialogs.jsp"/>
-    <sling:call script="/libs/composum/sling/console/page/navbar.jsp"/>
+    <sling:include resourceType="composum/sling/console/components/navbar"/>
     <div id="content-wrapper">
       <div id="split-view-horizontal-split" class="split-pane horizontal-split fixed-left">
         <div class="split-pane-component left-pane">
@@ -81,6 +81,7 @@
     </div>
   </div>
 <sling:call script="script.jsp"/>
+<sling:include resourceType="composum/sling/console/components/tryLogin"/>
 </body>
 </html>
 </cpn:component>
