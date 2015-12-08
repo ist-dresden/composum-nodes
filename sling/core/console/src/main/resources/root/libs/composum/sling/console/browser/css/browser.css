@@ -95,7 +95,7 @@
 
 #browser-query .query-head .query-actions form .input-group-addon.filter.off::after,
 #browser-view .node-view-content .detail-toolbar .resolver.off:after {
-    content: '\0092';
+    content: '\005c';
     color: #a94442; /* danger */
     position: absolute;
     left: 11px;
