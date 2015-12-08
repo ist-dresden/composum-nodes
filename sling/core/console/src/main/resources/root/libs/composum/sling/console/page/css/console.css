@@ -520,6 +520,11 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 /*
  * Detail Toolbar
  */
+
+.detail-view .detail-tabs {
+    background-color: #e4e4e4;
+}
+
 .detail-view .detail-toolbar .btn-group {
     display: inline-block;
     margin: 0;
