@@ -290,6 +290,11 @@
     padding: 0 28px 5px;
 }
 
+#browser-view .node-view-panel .detail-toolbar,
+#browser-view .node-view-panel .full-table-view .bootstrap-table .fixed-table-toolbar {
+    top: 0;
+}
+
 #browser-view .node-view-panel .node-tabs .btn-group {
     z-index: 10;
 }

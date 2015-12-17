@@ -90,6 +90,12 @@ fieldset {
     margin-top: 1px;
 }
 
+.btn-toolbar .btn-group-sm>.btn{
+    padding: 5px 9px;
+    width: 32px;
+    height: 30px;
+}
+
 .align-right label {
     margin-right: 5px;
 }
@@ -377,11 +383,6 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     background-color: #e4e4e4;
 }
 
-.tree-actions .btn {
-    width: 34px;
-    height: 30px;
-}
-
 .tree-actions .btn.fa:before,
 .tree-actions .btn.fa i {
     font-style: normal;
@@ -533,17 +534,20 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 .detail-view .detail-toolbar,
 .detail-view .full-table-view .bootstrap-table .fixed-table-toolbar {
     position: absolute;
-    top: 0;
+    top: 5px;
     right: 0;
     height: 33px;
     padding: 0 6px 0 0;
 }
 
+.detail-view .btn-toolbar .btn-group .btn.fa {
+    margin-top: 0;
+}
+
 .detail-view .detail-toolbar .btn,
 .detail-view .bootstrap-table .fixed-table-toolbar .btn {
     font-size: 14px;
-    padding: 4px 9px;
-    margin-top: 1px;
+    padding: 4px 9px 3px;
 }
 
 .detail-view .detail-toolbar .btn.fa-download {
@@ -570,7 +574,7 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 }
 
 .detail-view .bootstrap-table .fixed-table-toolbar .search input {
-    margin-top: 3px;
+    margin-top: 2px;
 
 }
 
@@ -616,7 +620,7 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     padding: 0;
 }
 
-.detail-view .bootstrap-table table th,
+.detail-view .bootstrap-table table thead>tr>th,
 .detail-view .bootstrap-table table td {
     font-size: 14px;
     font-weight: normal;
@@ -693,8 +697,8 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 
 .detail-view .full-table-view .bootstrap-table .fixed-table-container {
     position: absolute;
-    top: 37px;
+    top: 42px;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: 44px;
 }
