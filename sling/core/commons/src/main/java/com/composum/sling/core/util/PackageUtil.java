@@ -2,10 +2,11 @@ package com.composum.sling.core.util;
 
 import com.composum.sling.core.ResourceHandle;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
+import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
-import org.apache.jackrabbit.vault.packaging.PackageManager;
 import org.apache.jackrabbit.vault.packaging.PackagingService;
 import org.apache.jackrabbit.vault.util.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -16,19 +17,80 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
-/** Helper methods for Package handling (VLT Package Manager) */
+/**
+ * Helper methods for Package handling (VLT Package Manager)
+ */
 public class PackageUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageUtil.class);
 
     public enum TreeType {
         group, jcrpckg
+    }
+
+    public static class TrackingBuffer implements ProgressTrackerListener {
+
+        public static class Item {
+
+            public final String action;
+            public final String path;
+            public final String message;
+            public final String error;
+
+            public Item(Mode mode, String action, String path) {
+                this.action = action;
+                if (Mode.TEXT.equals(mode)) {
+                    this.message = path;
+                    this.path = null;
+                } else {
+                    this.message = null;
+                    this.path = path;
+                }
+                this.error = null;
+            }
+
+            public Item(Mode mode, String path, Exception ex) {
+                this.action = "E";
+                if (Mode.TEXT.equals(mode)) {
+                    this.message = path;
+                    this.path = null;
+                } else {
+                    this.message = null;
+                    this.path = path;
+                }
+                this.error = ex.toString();
+            }
+        }
+
+        private ArrayList<Item> items = new ArrayList<>();
+
+        private boolean errorDetected = false;
+
+        public boolean getErrorDetected() {
+            return errorDetected;
+        }
+
+        public List<Item> getItems() {
+            return items;
+        }
+
+        @Override
+        public void onMessage(Mode mode, String action, String path) {
+            items.add(new Item(mode, action, path));
+        }
+
+        @Override
+        public void onError(Mode mode, String path, Exception ex) {
+            errorDetected = true;
+            items.add(new Item(mode, path, ex));
+        }
     }
 
     public static JcrPackageManager createPackageManager(SlingHttpServletRequest request) {
@@ -71,6 +133,22 @@ public class PackageUtil {
             jcrPackage = manager.open(node);
         }
         return jcrPackage;
+    }
+
+    public static String getPackagePath(JcrPackageManager pckgMgr, JcrPackage pckg) {
+        String path = "";
+        try {
+            Node node = pckg.getNode();
+            path = node.getPath();
+            Node rootNode = pckgMgr.getPackageRoot(true);
+            String root = rootNode.getPath();
+            if (path.startsWith(root)) {
+                path = path.substring(root.length());
+            }
+        } catch (RepositoryException rex) {
+            LOG.error(rex.getMessage(), rex);
+        }
+        return path;
     }
 
     public static TreeType getTreeType(SlingHttpServletRequest request, String path) {
@@ -216,5 +294,33 @@ public class PackageUtil {
             LOG.error(rex.getMessage(), rex);
         }
         return result;
+    }
+
+    public static TrackingBuffer getCoverage(JcrPackage pckg, Session session) {
+        TrackingBuffer buffer = new TrackingBuffer();
+        try {
+            getCoverage(pckg.getDefinition(), session, buffer);
+        } catch (RepositoryException rex) {
+            LOG.error(rex.getMessage(), rex);
+            buffer.onError(ProgressTrackerListener.Mode.TEXT, "exception thrown", rex);
+        }
+        return buffer;
+    }
+
+    public static TrackingBuffer getCoverage(JcrPackageDefinition pckgDef, Session session) {
+        TrackingBuffer buffer = new TrackingBuffer();
+        getCoverage(pckgDef, session, buffer);
+        return buffer;
+    }
+
+    public static void getCoverage(JcrPackageDefinition pckgDef, Session session,
+                                   TrackingBuffer buffer) {
+        try {
+            WorkspaceFilter filter = pckgDef.getMetaInf().getFilter();
+            filter.dumpCoverage(session, buffer, false);
+        } catch (RepositoryException rex) {
+            LOG.error(rex.getMessage(), rex);
+            buffer.onError(ProgressTrackerListener.Mode.TEXT, "exception thrown", rex);
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.PackageUtil;
+import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -30,6 +31,7 @@ import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -73,7 +75,7 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
     public enum Operation {
-        download, upload, create, build, install, delete, tree, view
+        download, upload, create, build, install, delete, tree, view, coverage
     }
 
     protected PackageOperationSet operations = new PackageOperationSet(Extension.json);
@@ -95,6 +97,8 @@ public class PackageServlet extends AbstractServiceServlet {
         // GET
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.tree, new TreeOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.coverage, new CoverageOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.zip,
                 Operation.download, new DownloadOperation());
 
@@ -279,6 +283,32 @@ public class PackageServlet extends AbstractServiceServlet {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST,
                         PackageUtil.getPath(request) + " can not be found in the repository");
             }
+        }
+    }
+
+    protected class CoverageOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
+            Session session = RequestUtil.getSession(request);
+
+            PackageUtil.TrackingBuffer buffer = PackageUtil.getCoverage(jcrPackage, session);
+
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            writer.beginArray();
+            for (PackageUtil.TrackingBuffer.Item item : buffer.getItems()) {
+                writer.beginObject();
+                writer.name("action").value(item.action);
+                writer.name("value").value(item.path != null ? item.path : item.message);
+                writer.name("error").value(item.error);
+                writer.endObject();
+            }
+            writer.endArray();
         }
     }
 

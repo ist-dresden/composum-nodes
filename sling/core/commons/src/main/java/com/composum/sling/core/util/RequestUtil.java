@@ -4,11 +4,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
+import org.apache.sling.api.resource.ResourceResolver;
+
+import javax.jcr.Session;
 
 /**
  * A basic class for all '/bin/{service}/path/to/resource' servlets.
  */
 public class RequestUtil extends org.apache.sling.api.request.RequestUtil {
+
+    public static Session getSession(SlingHttpServletRequest request) {
+        ResourceResolver resolver = request.getResourceResolver();
+        Session session = resolver.adaptTo(Session.class);
+        return session;
+    }
 
     /**
      * Returns the enum value of the requests extension if appropriate otherwise the default value.

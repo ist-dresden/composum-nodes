@@ -49,7 +49,7 @@ public class PackageBean extends AbstractSlingBean {
         super.initialize(context, resource);
     }
 
-    protected JcrPackageManager getPckgMmgr() {
+    protected JcrPackageManager getPckgMgr() {
         if (pckgMmgr == null) {
             pckgMmgr = PackageUtil.createPackageManager(getRequest());
         }
@@ -59,7 +59,7 @@ public class PackageBean extends AbstractSlingBean {
     protected JcrPackage getPckg() {
         if (pckg == null) {
             try {
-                pckg = getPckgMmgr().open(getNode());
+                pckg = getPckgMgr().open(getNode());
             } catch (RepositoryException rex) {
                 LOG.error(rex.getMessage(), rex);
             }
@@ -92,13 +92,20 @@ public class PackageBean extends AbstractSlingBean {
             if (pckg.isInstalled()) {
                 addCssClass(cssClasses, "installed");
             }
-            if (! pckg.isSealed()) {
+            if (!pckg.isSealed()) {
                 addCssClass(cssClasses, "modified");
             }
         } catch (RepositoryException rex) {
             LOG.error(rex.getMessage(), rex);
         }
         return cssClasses.toString();
+    }
+
+    public String getPath() {
+        JcrPackageManager pckgMgr = getPckgMgr();
+        JcrPackage pckg = getPckg();
+        String path = PackageUtil.getPackagePath(pckgMgr, pckg);
+        return path;
     }
 
     public String getGroup() {

@@ -159,6 +159,9 @@
             selector: '> .package',
             tabType: pckgmgr.JcrPackageTab
         }, {
+            selector: '> .coverage',
+            tabType: pckgmgr.CoverageTab
+        }, {
             selector: '> .group',
             tabType: pckgmgr.GroupTab
         }, {
