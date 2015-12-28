@@ -11,8 +11,8 @@
         <span class="icon-bar"></span>
       </button>
       <div id="composum-logo" class="navbar-brand">
-        <a href="/libs/composum/sling/console/content.html">
-          <img src="/libs/composum/sling/console/page/images/composum-nodes-logo-on-black.png" />
+        <a href="${cpn:url(slingRequest,'/libs/composum/sling/console/content.html')}">
+          <img src="${cpn:url(slingRequest,'/libs/composum/sling/console/page/images/composum-nodes-logo-on-black.png')}" />
         </a>
       </div>
     </div>

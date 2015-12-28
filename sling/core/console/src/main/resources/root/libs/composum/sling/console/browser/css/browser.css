@@ -565,7 +565,6 @@
 
 #browser-view .image.detail-panel .detail-content .image-frame .image-background {
     display: inline-block;
-    background: url(/libs/composum/sling/console/browser/images/image-background.png);
 }
 
 #browser-view .image.detail-panel .detail-content .image-frame img {
@@ -737,7 +736,7 @@
     margin-left: -15.3px;
     line-height: 25px;
     padding: 3px 1px;
-}}
+}
 
 #browser-view .node-view-panel .node-view-content .script .split-pane .split-pane-component {
     min-height: 80px;

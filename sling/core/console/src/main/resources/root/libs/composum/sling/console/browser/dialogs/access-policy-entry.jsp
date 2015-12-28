@@ -8,7 +8,7 @@
       <div class="modal-content form-panel default">
 
         <form class="widget-form default" enctype="multipart/form-data"
-              action="/bin/core/system.accessPolicy.json${browser.current.pathEncoded}">
+              action="${slingRequest.contextPath}/bin/core/system.accessPolicy.json${browser.current.pathEncoded}">
 
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

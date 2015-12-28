@@ -8,7 +8,7 @@
     <div class="modal-dialog">
       <div class="modal-content form-panel default">
 
-        <form class="widget-form" enctype="multipart/form-data" action="/bin/core/node.map.json">
+        <form class="widget-form" enctype="multipart/form-data" action="${slingRequest.contextPath}/bin/core/node.map.json">
 
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
