@@ -24,8 +24,10 @@
                             pckgmgr.current = {
                                 path: path,
                                 node: result.responseJSON,
-                                viewUrl: '/libs/composum/sling/console/content/pckgmgr.view.html' + window.core.encodePath(path),
-                                nodeUrl: '/libs/composum/sling/console/content/pckgmgr.html' + window.core.encodePath(path)
+                                viewUrl: core.getContextUrl('/libs/composum/sling/console/content/pckgmgr.view.html'
+                                    + window.core.encodePath(path)),
+                                nodeUrl: core.getContextUrl('/libs/composum/sling/console/content/pckgmgr.html'
+                                    + window.core.encodePath(path))
                             }
                             core.console.getProfile().set('pckgmgr', 'current', path);
                             if (history.replaceState) {

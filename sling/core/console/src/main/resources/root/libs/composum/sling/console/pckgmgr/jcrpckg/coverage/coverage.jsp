@@ -11,10 +11,10 @@
             </div>
         </div>
         <div class="table-container">
-            <table class="coverage-table"
-                   data-path="/bin/core/package.coverage.json${pckg.path}"
-                   data-toolbar=".detail-content .detail-panel.coverage .table-toolbar">
-            </table>
+            <cpn:table classes="coverage-table"
+                       path="/bin/core/package.coverage.json${pckg.path}"
+                       toolbar=".detail-content .detail-panel.coverage .table-toolbar">
+            </cpn:table>
         </div>
     </div>
 </cpn:component>

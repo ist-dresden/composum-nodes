@@ -8,7 +8,7 @@
     <div class="modal-dialog">
       <div class="modal-content form-panel default">
 
-        <form class="widget-form" enctype="multipart/form-data" action="/bin/core/package.upload.json">
+        <cpn:form classes="widget-form" enctype="multipart/form-data" action="/bin/core/package.upload.json">
 
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -32,7 +32,7 @@
             <button type="button" class="btn btn-default cancel" data-dismiss="modal">Cancel</button>
             <button type="button" class="btn btn-primary upload">Upload</button>
           </div>
-        </form>
+        </cpn:form>
       </div>
     </div>
   </div>

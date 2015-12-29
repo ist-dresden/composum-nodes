@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects/>
 <cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.PackageManagerBean" scope="request">
-<html>
+<html data-context-path="${slingRequest.contextPath}">
 <sling:call script="head.jsp"/>
 <body id="pckgmgr" class="console left-open top-open">
   <div id="ui">
