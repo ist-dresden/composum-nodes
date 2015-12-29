@@ -213,7 +213,7 @@
             var path = this.getCurrentPath();
             if (path) {
                 var href=this.getTabUri(name) + window.core.encodePath(path)
-                this.$detailContent.load(href, _.bind (function() {
+                this.$detailContent.load(core.getContextUrl(href), _.bind (function() {
                     this.$detailTabs.find('a.active').removeClass('active');
                     var $item = this.$detailTabs.find('a[href="#' + name + '"]');
                     $item.addClass('active');

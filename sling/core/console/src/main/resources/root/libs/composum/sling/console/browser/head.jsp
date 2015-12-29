@@ -1,14 +1,16 @@
 <%@page session="false" pageEncoding="UTF-8"%>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2"%>
+<%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
+<sling:defineObjects/>
 <head>
 <sling:call script="/libs/composum/sling/console/page/head.jsp"/>
   <!-- browser style -->
-  <link rel="stylesheet" href="/libs/composum/sling/console/browser/css/nodes.css" />
-  <link rel="stylesheet" href="/libs/composum/sling/console/browser/css/browser.css" />
+  <cpn:clientlib path="composum/sling/console/browser/css/nodes.css"/>
+  <cpn:clientlib path="composum/sling/console/browser/css/browser.css"/>
   <!-- browser components -->
-  <link rel="stylesheet" href="/libs/composum/sling/console/browser/components/favorites/favorites.css" />
+  <cpn:clientlib path="composum/sling/console/browser/components/favorites/favorites.css"/>
+  <%--
   <!-- browser theme - experimental -->
-  <!--
-  <link rel="stylesheet" href="/libs/composum/sling/console/page/css/theme-dark.css" />
-  -->
+  <cpn:clientlib path="/libs/composum/sling/console/page/css/theme-dark.css"/>
+  --%>
 </head>

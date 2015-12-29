@@ -396,7 +396,6 @@
 
 #browser-view .image.detail-panel .detail-content .image-frame .image-background {
     display: inline-block;
-    background: url(/libs/composum/sling/console/browser/images/image-background.png);
 }
 
 #browser-view .image.detail-panel .detail-content .image-frame img {
