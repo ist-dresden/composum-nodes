@@ -65,15 +65,11 @@ public class ClientlibTag extends CpnlBodyTagSupport {
         this.rel = rel;
     }
 
-    protected void reset() {
-
-    }
-
-    @Override
-    public int doStartTag() throws JspException {
-        super.doStartTag();
-        reset();
-        return EVAL_BODY_INCLUDE;
+    protected void clear() {
+        super.clear();
+        type = null;
+        path = null;
+        rel = null;
     }
 
     @Override
@@ -84,7 +80,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
                 case link:
                 case css:
                     writer.write("<link rel=\"");
-                    writer.write(rel != null ? rel : "stylesheet");
+                    writer.write(StringUtils.isNotBlank(rel) ? rel : "stylesheet");
                     writer.write("\" href=\"");
                     writer.write(CpnlElFunctions.url(request, getPath()));
                     writer.write("\" />");
