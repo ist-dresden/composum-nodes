@@ -6,7 +6,7 @@
 <cpn:component id="status" type="com.composum.sling.core.console.Consoles">
   <div id="user-status-dialog" class="dialog modal fade" role="dialog" aria-hidden="true">
     <div class="modal-dialog form-panel">
-      <form accept-charset="UTF-8" action="/j_security_check" method="post">
+      <form accept-charset="UTF-8" action="${slingRequest.contextPath}/j_security_check" method="post">
 
         <div class="modal-content">
           <div class="modal-header">
