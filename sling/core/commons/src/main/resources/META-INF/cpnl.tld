@@ -72,6 +72,156 @@
     </tag>
 
     <tag>
+        <name>image</name>
+        <description>
+            Generates image elements with mapped source URLs
+        </description>
+        <tag-class>com.composum.sling.cpnl.ImageTag</tag-class>
+        <body-content>JSP</body-content>
+        <attribute>
+            <name>src</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>tagName</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>urlAttr</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>role</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>classes</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+    </tag>
+
+    <tag>
+        <name>link</name>
+        <description>
+            Generates link elements with mapped URLs
+        </description>
+        <tag-class>com.composum.sling.cpnl.LinkTag</tag-class>
+        <body-content>JSP</body-content>
+        <attribute>
+            <name>href</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>tagName</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>urlAttr</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>role</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>classes</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+    </tag>
+
+    <tag>
+        <name>form</name>
+        <description>
+            Generates form elements with mapped action URLs
+        </description>
+        <tag-class>com.composum.sling.cpnl.FormTag</tag-class>
+        <body-content>JSP</body-content>
+        <attribute>
+            <name>action</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>role</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>classes</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>enctype</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>method</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+    </tag>
+
+    <tag>
+        <name>table</name>
+        <description>
+            Generates a bootstrap table element with mapped AJAX URLs
+        </description>
+        <tag-class>com.composum.sling.cpnl.TableTag</tag-class>
+        <body-content>JSP</body-content>
+        <attribute>
+            <name>path</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>role</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>classes</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>toolbar</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+    </tag>
+
+    <tag>
         <name>text</name>
         <description>
             renders text values with optional tag and class, formatting and with escaping (XSS prevention)
