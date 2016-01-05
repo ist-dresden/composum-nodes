@@ -99,6 +99,8 @@
 
             onNodeSelected: function (path, node, element) {
                 $(document).trigger("path:select", [path]);
+                browser.nodeView.reload();
+                browser.treeActions.refreshNodeState();
             }
         });
 
@@ -215,9 +217,8 @@
                 if (node) {
                     //node.jcrState.checkedOut
                     core.ajaxPost('/bin/core/version.' + (node.jcrState.checkedOut ? 'checkin' : 'checkout') + '.json' + node.path,
-                        undefined, _.bind(function (result) {
+                        {}, {}, _.bind(function (result) {
                             this.tree.refresh();
-                            core.browser.nodeView.reload();
                         }, this), _.bind(function (result) {
                             core.alert('danger', 'Error', 'Error on toggle node lock', result);
                         }, this));
@@ -229,7 +230,7 @@
                 var node = this.tree.current();
                 if (node) {
                     core.ajaxPost('/bin/core/node.toggle.lock' + node.path,
-                        undefined, undefined, undefined, _.bind(function (result) {
+                        {}, {}, undefined, undefined, _.bind(function (result) {
                             if (result.status == 200) {
                                 this.tree.refresh();
                             } else {

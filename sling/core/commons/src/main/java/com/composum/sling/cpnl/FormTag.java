@@ -12,6 +12,7 @@ public class FormTag extends UrlTag {
 
     private String method;
     private String enctype;
+    private String charset;
 
     protected String getDefaultTagName() {
         return "form";
@@ -39,8 +40,17 @@ public class FormTag extends UrlTag {
         this.enctype = enctype;
     }
 
+    public void setCharset(String charset) {
+        this.charset = charset;
+    }
+
     protected void writeAttributes (JspWriter writer) throws IOException {
         super.writeAttributes(writer);
+        if (StringUtils.isNotBlank(charset)) {
+            writer.write(" accept-charset=\"");
+            writer.write(charset);
+            writer.write("\"");
+        }
         if (StringUtils.isNotBlank(enctype)) {
             writer.write(" enctype=\"");
             writer.write(enctype);
