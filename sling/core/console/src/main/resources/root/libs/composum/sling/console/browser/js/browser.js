@@ -275,7 +275,7 @@
                 var $target = $(event.currentTarget);
                 var $row = $target.closest('li');
                 var path = $row.attr('data-path');
-                browser.selectNode(path);
+                browser.setCurrentPath(path);
                 return false;
             }
         });
