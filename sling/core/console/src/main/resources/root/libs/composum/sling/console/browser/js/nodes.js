@@ -158,7 +158,7 @@
                 }), {
                     dataType: 'json'
                 }, _.bind(function (result) {
-                    core.browser.nodeView.reload();
+                    core.browser.tree.refresh();
                     this.hide();
                 }, this), _.bind(function (result) {
                     core.alert('danger', 'Error', 'Error on updating mixin entries', result);
