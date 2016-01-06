@@ -219,79 +219,36 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-                this.$path = this.$('input[name="path"]');
-                this.$name = this.$('input[name="name"]');
-                this.$newname = core.getWidget(this.el, 'input[name="newname"]', core.components.TextFieldWidget);
-                this.$('button.rename').click(_.bind(this.renameNode, this));
-                this.$el.on('shown.bs.modal', function () {
-                    $(this).find('input[name="newname"]').focus();
-                });
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.path = core.getWidget(this.el, '.path.path-widget', core.components.PathWidget);
+                this.$node = this.$('input[name="node"]');
+                this.newname = core.getWidget(this.el, 'input[name="newname"]', core.components.TextFieldWidget);
+                this.$('button.copy').click(_.bind(this.copyNode, this));
+                this.$el.on('shown.bs.modal', _.bind(function () {
+                    this.newname.focus();
+                    this.newname.selectAll();
+                },this));
             },
 
             reset: function () {
                 core.components.Dialog.prototype.reset.apply(this);
             },
 
-            setNode: function (node) {
-                this.$name.val(node.name);
-                this.$newname.setValue(node.name);
-                this.$node.val(node);
+            setNodePath: function (nodePath) {
+                var nodeName = core.getNameFromPath(nodePath);
+                this.newname.setValue(nodeName);
+                this.$node.val(nodePath);
             },
 
             setTargetPath: function (path) {
-                this.$path.val(path);
+                this.path.setValue(path);
             },
 
-            renameNode: function (event) {
+            copyNode: function (event) {
                 event.preventDefault();
-                core.ajaxPut("/bin/core/node.copy.json" + this.$path.val(), JSON.stringify({
-                    path: this.$node.val()
-                }), {
-                    dataType: 'json'
-                }, _.bind(function (result) {
-                    this.refreshTree();
-                }, this), _.bind(function (result) {
-                    core.alert('danger', 'Error', 'Error on copying node', result);
-                }, this));
-
-
-                return false;
-            }
-        });
-
-        nodes.RenameCopiedNodeDialog = core.components.Dialog.extend({
-
-            initialize: function (options) {
-                core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-                this.$path = this.$('input[name="path"]');
-                this.$name = this.$('input[name="name"]');
-                this.$newname = core.getWidget(this.el, 'input[name="newname"]', core.components.TextFieldWidget);
-                this.$('button.rename').click(_.bind(this.renameCopiedNode, this));
-                this.$el.on('shown.bs.modal', function () {
-                    $(this).find('input[name="newname"]').focus();
-                });
-            },
-
-            reset: function () {
-                core.components.Dialog.prototype.reset.apply(this);
-            },
-
-            setCopiedNode: function (node) {
-                this.$name.val(node.name);
-                this.$newname.setValue(node.name);
-                this.$node = node;
-            },
-
-            setTargetPath: function (path) {
-                this.$path.val(path);
-            },
-
-            renameCopiedNode: function (event) {
-                event.preventDefault();
-                core.ajaxPut("/bin/core/node.copy.json" + this.$path.val(), JSON.stringify({
-                    path: this.$node
+                core.ajaxPut("/bin/core/node.copy.json" + this.path.getValue(), JSON.stringify({
+                    path: this.$node.val(),
+                    name: this.newname.getValue()
                 }), {
                     dataType: 'json'
                 }, _.bind(function (result) {
@@ -300,7 +257,6 @@
                 }, this), _.bind(function (result) {
                     core.alert('danger', 'Error', 'Error on copying node', result);
                 }, this));
-
                 return false;
             }
         });

@@ -177,7 +177,7 @@
                 if (path && clipboard && clipboard.path) {
                     var dialog = core.nodes.getCopyNodeDialog();
                     dialog.show(_.bind(function () {
-                        dialog.setNode(clipboard.path);
+                        dialog.setNodePath(clipboard.path);
                         dialog.setTargetPath(path);
                     }, this));
                 }
