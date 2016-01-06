@@ -173,14 +173,10 @@
                 var path = browser.getCurrentPath();
                 var clipboard = core.console.getProfile().get('nodes', 'clipboard');
                 if (path && clipboard && clipboard.path) {
-                    core.ajaxPut("/bin/core/node.copy.json" + path, JSON.stringify({
-                        path: clipboard.path
-                    }), {
-                        dataType: 'json'
-                    }, _.bind(function (result) {
-                        this.refreshTree();
-                    }, this), _.bind(function (result) {
-                        core.alert('danger', 'Error', 'Error on copying node', result);
+                    var dialog = core.nodes.getCopyNodeDialog();
+                    dialog.show(_.bind(function () {
+                        dialog.setNode(clipboard.path);
+                        dialog.setTargetPath(path);
                     }, this));
                 }
             },
