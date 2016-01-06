@@ -24,10 +24,12 @@ public class LinkUtil {
     public static final String EXT_HTML = ".html";
 
     public static final String PROP_TARGET = "sling:target";
+    public static final String PROP_REDIRECT = "sling:redirect";
 
     public static final Pattern URL_PATTERN = Pattern.compile("^(https?)://([^/]+)(:\\d+)?(/.*)?$");
 
     public static final Pattern SELECTOR_PATTERN = Pattern.compile("^(.*/[^/]+)(\\.[^.]+)$");
+
 
     /**
      * Builds a mapped link to a path (resource path) without selectors and a determined extension.
@@ -88,7 +90,7 @@ public class LinkUtil {
 
                 // check for a necessary extension and determine it if not specified
                 extension = getExtension(resource, extension);
-            }
+            } 
 
             // map the path (the url) with the resource resolver (encodes the url)
             url = resolver.map(request, url);
@@ -173,6 +175,9 @@ public class LinkUtil {
                 throw new RedirectLoopException(trace, path);
             }
             String redirect = resource.getProperty(PROP_TARGET);
+            if (StringUtils.isBlank(redirect)) {
+                redirect = resource.getProperty(PROP_REDIRECT);
+            }
             if (StringUtils.isNotBlank(redirect)) {
                 trace.add(path);
                 finalTarget = redirect;

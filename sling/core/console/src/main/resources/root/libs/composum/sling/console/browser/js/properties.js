@@ -163,6 +163,7 @@
                         if (row.multi) {
                             return '<a class="editable">' + escaped + '</a>';
                         } else {
+                            escaped = core.getContextUrl(escaped);
                             return '<a href="' + escaped + '">download...</a>';
                         }
                     default:
