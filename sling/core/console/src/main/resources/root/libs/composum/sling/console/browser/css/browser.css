@@ -569,6 +569,16 @@
     padding: 3px 1px;
 }
 
+#browser-view .node-view-panel .node-view-content .script.error .editor-toolbar .run-script::after {
+    position: absolute;
+    top: 0;
+    right: 6px;
+    content: '!';
+    font-size: 20px;
+    font-weight: bold;
+    color: #a94442; /* danger */
+}
+
 #browser-view .node-view-panel .node-view-content .script .split-pane .split-pane-component {
     min-height: 80px;
 }
