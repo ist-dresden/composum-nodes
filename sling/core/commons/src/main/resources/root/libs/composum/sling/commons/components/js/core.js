@@ -53,9 +53,9 @@
             var ajaxConf = _.extend({
                 async: true,
                 cache: false,
-                success: function (result) {
+                success: function (data, msg, xhr) {
                     if (_.isFunction(onSuccess)) {
-                        onSuccess(result);
+                        onSuccess(data, msg, xhr);
                     }
                 },
                 error: function (result) {
