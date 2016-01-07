@@ -41,7 +41,7 @@
                 this.$iframe=$('#content-wrapper iframe');
                 this.$iframe.load(_.bind (this.onFrameLoad, this));
                 var url = core.console.getProfile().get('felix','url','/system/console/bundles');
-                this.$iframe.attr('src', url);
+                this.$iframe.attr('src', core.getContextUrl(url));
             },
 
             onFrameLoad: function(event) {
