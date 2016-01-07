@@ -216,9 +216,9 @@
 
             execute: function (event) {
                 if (this.scriptIsRunning) {
-                    this.poll('stopScript', _.bind(this.scriptStopped, this));
+                    this.poll('stopScript', _.bind(this.scriptStopped, this), _.bind(this.scriptError, this));
                 } else {
-                    this.poll('startScript', _.bind(this.scriptStarted, this));
+                    this.poll('startScript', _.bind(this.scriptStarted, this), _.bind(this.scriptError, this));
                 }
             },
 
