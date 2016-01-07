@@ -215,21 +215,40 @@
             },
 
             execute: function (event) {
+                this.delay();
                 if (this.scriptIsRunning) {
-                    this.poll('stopScript', _.bind(this.scriptStopped, this));
+                    this.poll('stopScript', _.bind(this.scriptStopped, this), _.bind(this.scriptError, this));
                 } else {
-                    this.poll('startScript', _.bind(this.scriptStarted, this));
+                    this.poll('startScript', _.bind(this.scriptStarted, this), _.bind(this.scriptError, this));
                 }
             },
 
             scriptStarted: function (data) {
-                this.scriptIsRunning = true;
-                this.$logOutput.html('');
-                this.$el.addClass('running');
+                if (!this.scriptIsRunning) {
+                    this.scriptIsRunning = true;
+                    this.$logOutput.html('');
+                    this.$el.removeClass('error');
+                    this.$el.addClass('running');
+                }
                 if (data) {
                     this.logAppend(data);
                 }
-                setTimeout(_.bind(this.checkScript, this), 500);
+                this.delay(1000);
+            },
+
+            scriptStopped: function (data) {
+                this.delay();
+                if (data) {
+                    this.logAppend(data);
+                }
+                if (this.scriptIsRunning) {
+                    this.$el.removeClass('running');
+                    this.scriptIsRunning = false;
+                }
+            },
+
+            scriptError: function (xhr) {
+                this.scriptStopped(xhr.responseText);
             },
 
             checkScript: function () {
@@ -238,28 +257,31 @@
                 }
             },
 
-            scriptStopped: function (data) {
-                this.logAppend(data);
-                this.$el.removeClass('running');
-                this.scriptIsRunning = false;
-            },
-
-            scriptError: function (result) {
-                if (result.status == 409) {
-                    this.scriptStarted(result.responseText);
-                } else {
-                    this.scriptStopped(result.responseText);
-                }
-            },
-
             onCheck: function (data, message, xhr) {
-                if (xhr && xhr.status == 205) {
+                var status = xhr ? xhr.getResponseHeader('Script-Status') : undefined;
+                if (
+                    status == 'initialized' ||
+                    status == 'starting' ||
+                    status == 'running'
+                ) {
+                    this.scriptStarted(xhr.responseText);
+
+                } else if (
+                    status == 'finished' ||
+                    status == 'aborted' ||
+                    status == 'error' ||
+                    status == 'unknown'
+                ) {
+                    if (status == 'error') {
+                        this.$el.addClass('error');
+                    }
                     this.scriptStopped(data);
+
                 } else {
                     this.logAppend(data);
                 }
                 if (this.scriptIsRunning) {
-                    setTimeout(_.bind(this.checkScript, this), 500);
+                    this.delay(1000);
                 }
             },
 
@@ -278,6 +300,16 @@
             poll: function (operation, onSuccess, onError) {
                 var path = browser.getCurrentPath();
                 core.ajaxGet('/bin/core/node.' + operation + '.groovy' + path, {}, onSuccess, onError);
+            },
+
+            delay: function (duration) {
+                if (this.timeout) {
+                    clearTimeout(this.timeout);
+                    this.timeout = undefined;
+                }
+                if (duration) {
+                    this.timeout = setTimeout(_.bind(this.checkScript, this), duration);
+                }
             }
         });
 

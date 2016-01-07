@@ -75,6 +75,8 @@ public class NodeServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodeServlet.class);
 
+    public static final String SCRIPT_STATUS_HEADER = "Script-Status";
+
     public static final String FILE_CONTENT_TYPE = "application/binary";
     public static final String FILE_NAME_EXT = ".json";
 
@@ -1218,14 +1220,7 @@ public class NodeServlet extends AbstractServiceServlet {
                 ResourceResolver resolver = request.getResourceResolver();
                 Session session = resolver.adaptTo(Session.class);
                 GroovyService.JobState status = groovyService.startScript(key, session, resource.getPath(), writer);
-                switch (status) {
-                    case initialized:
-                        response.setStatus(HttpServletResponse.SC_CONFLICT);
-                        break;
-                    case error:
-                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                        break;
-                }
+                response.setHeader(SCRIPT_STATUS_HEADER, status.name());
             } catch (RepositoryException rex) {
                 LOG.error(rex.getMessage(), rex);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, rex.getMessage());
@@ -1240,15 +1235,7 @@ public class NodeServlet extends AbstractServiceServlet {
                                 ResourceHandle resource, String key, PrintWriter writer)
                 throws ServletException, IOException {
             GroovyService.JobState status = groovyService.checkScript(key, writer);
-            switch (status) {
-                case finished:
-                case aborted:
-                    response.setStatus(HttpServletResponse.SC_RESET_CONTENT);
-                    break;
-                case error:
-                    response.setStatus(HttpServletResponse.SC_GONE);
-                    break;
-            }
+            response.setHeader(SCRIPT_STATUS_HEADER, status.name());
         }
     }
 
@@ -1259,13 +1246,7 @@ public class NodeServlet extends AbstractServiceServlet {
                                 ResourceHandle resource, String key, PrintWriter writer)
                 throws ServletException, IOException {
             GroovyService.JobState status = groovyService.stopScript(key, writer);
-            switch (status) {
-                case starting:
-                case running:
-                case error:
-                    response.setStatus(HttpServletResponse.SC_GONE);
-                    break;
-            }
+            response.setHeader(SCRIPT_STATUS_HEADER, status.name());
         }
     }
 

@@ -99,7 +99,6 @@
 
             onNodeSelected: function (path, node, element) {
                 $(document).trigger("path:select", [path]);
-                browser.nodeView.reload();
                 browser.treeActions.refreshNodeState();
             }
         });
