@@ -63,7 +63,7 @@ public class GroovyServiceImpl implements GroovyService {
 
     protected Map<String, ScriptJob> runningJobs;
 
-    protected class ScriptJob implements Runnable {
+    protected class ScriptJob implements Job, Runnable {
 
         public final String key;
         public final String scriptPath;
@@ -162,6 +162,12 @@ public class GroovyServiceImpl implements GroovyService {
             }
         }
 
+        @Override
+        public JobState getState() {
+            return state;
+        }
+
+        @Override
         public void flush(Writer out) throws IOException {
             StringBuffer buffer = this.outBuffer.getBuffer();
             synchronized (buffer) {
@@ -172,20 +178,19 @@ public class GroovyServiceImpl implements GroovyService {
         }
     }
 
-    public JobState startScript(String key, Session session, String scriptPath, PrintWriter out)
+    public Job startScript(String key, Session session, String scriptPath)
             throws IOException, RepositoryException {
         ScriptJob scriptJob = new ScriptJob(key, session, scriptPath);
         addJob(scriptJob);
         switch (scriptJob.state) {
             case starting:
                 scriptJob.start();
-                scriptJob.flush(out);
                 break;
         }
-        return scriptJob.state;
+        return scriptJob;
     }
 
-    public JobState checkScript(String key, PrintWriter out) throws IOException {
+    public Job checkScript(String key) throws IOException {
         ScriptJob scriptJob = getJob(key);
         if (scriptJob != null) {
             switch (scriptJob.state) {
@@ -195,13 +200,12 @@ public class GroovyServiceImpl implements GroovyService {
                     dropJob(key);
                     break;
             }
-            scriptJob.flush(out);
-            return scriptJob.state;
+            return scriptJob;
         }
-        return JobState.unknown;
+        return null;
     }
 
-    public JobState stopScript(String key, PrintWriter out) throws IOException {
+    public Job stopScript(String key) throws IOException {
         ScriptJob scriptJob = getJob(key);
         if (scriptJob != null) {
             switch (scriptJob.state) {
@@ -215,10 +219,9 @@ public class GroovyServiceImpl implements GroovyService {
                     scriptJob.out.write("\nscript execution aborted!");
                     break;
             }
-            scriptJob.flush(out);
-            return scriptJob.state;
+            return scriptJob;
         }
-        return JobState.unknown;
+        return null;
     }
 
     protected ScriptJob getJob(String key) {

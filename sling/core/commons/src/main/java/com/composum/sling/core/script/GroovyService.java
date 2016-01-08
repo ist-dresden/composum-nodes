@@ -4,15 +4,22 @@ package com.composum.sling.core.script;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.Writer;
 
 public interface GroovyService {
 
     enum JobState {initialized, starting, running, finished, aborted, error, unknown}
 
-    JobState startScript(String key, Session session, String scriptPath, PrintWriter out) throws IOException, RepositoryException;
+    interface Job {
 
-    JobState checkScript(String key, PrintWriter out) throws IOException;
+        JobState getState();
 
-    JobState stopScript(String key, PrintWriter out) throws IOException;
+        void flush(Writer out) throws IOException;
+    }
+
+    Job startScript(String key, Session session, String scriptPath) throws IOException, RepositoryException;
+
+    Job checkScript(String key) throws IOException;
+
+    Job stopScript(String key) throws IOException;
 }

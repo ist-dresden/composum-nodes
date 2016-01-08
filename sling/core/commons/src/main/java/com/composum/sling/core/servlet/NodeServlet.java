@@ -80,12 +80,16 @@ public class NodeServlet extends AbstractServiceServlet {
     public static final String FILE_CONTENT_TYPE = "application/binary";
     public static final String FILE_NAME_EXT = ".json";
 
-    /** the possible tree name options */
+    /**
+     * the possible tree name options
+     */
     public enum LabelType {
         name, title
     }
 
-    /** the names of the default filters configured statically */
+    /**
+     * the names of the default filters configured statically
+     */
     public static final String KEY_DEFAULT = "default";
     public static final String KEY_PAGE = "page";
     public static final String KEY_REFERENCEABLE = "referenceable";
@@ -325,12 +329,16 @@ public class NodeServlet extends AbstractServiceServlet {
     // JCR queries
     //
 
-    /** the pattern to check for a XPATH query and their simplified variation */
+    /**
+     * the pattern to check for a XPATH query and their simplified variation
+     */
     public static final Pattern XPATH_QUERY = Pattern.compile(
             "^((/jcr:root)?/[^ \\(\\[]*)( +([^ /\\(\\[]+) *|(.*))$"
     );
 
-    /** the pattern to check for a simple text (word) query */
+    /**
+     * the pattern to check for a simple text (word) query
+     */
     public static final Pattern WORD_QUERY = Pattern.compile("^ *([^ /]+) *$");
 
     protected class JsonQueryOperation implements ServletOperation {
@@ -1213,47 +1221,54 @@ public class NodeServlet extends AbstractServiceServlet {
     protected class StartGroovyNodeOperation extends ScriptOperation {
 
         @Override
-        protected void doScript(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                ResourceHandle resource, String key, PrintWriter writer)
+        protected GroovyService.Job doScript(
+                SlingHttpServletRequest request, SlingHttpServletResponse response,
+                ResourceHandle resource, String key)
                 throws ServletException, IOException {
+            GroovyService.Job job = null;
             try {
                 ResourceResolver resolver = request.getResourceResolver();
                 Session session = resolver.adaptTo(Session.class);
-                GroovyService.JobState status = groovyService.startScript(key, session, resource.getPath(), writer);
-                response.setHeader(SCRIPT_STATUS_HEADER, status.name());
+                job = groovyService.startScript(key, session, resource.getPath());
             } catch (RepositoryException rex) {
                 LOG.error(rex.getMessage(), rex);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, rex.getMessage());
             }
+            return job;
         }
     }
 
     protected class CheckScriptOperation extends ScriptOperation {
 
         @Override
-        protected void doScript(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                ResourceHandle resource, String key, PrintWriter writer)
+        protected GroovyService.Job doScript(
+                SlingHttpServletRequest request, SlingHttpServletResponse response,
+                ResourceHandle resource, String key)
                 throws ServletException, IOException {
-            GroovyService.JobState status = groovyService.checkScript(key, writer);
-            response.setHeader(SCRIPT_STATUS_HEADER, status.name());
+            GroovyService.Job job = groovyService.checkScript(key);
+            response.setHeader(SCRIPT_STATUS_HEADER, job != null ? job.getState().name() : "unknown");
+            return job;
         }
     }
 
     protected class StopScriptOperation extends ScriptOperation {
 
         @Override
-        protected void doScript(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                ResourceHandle resource, String key, PrintWriter writer)
+        protected GroovyService.Job doScript(
+                SlingHttpServletRequest request, SlingHttpServletResponse response,
+                ResourceHandle resource, String key)
                 throws ServletException, IOException {
-            GroovyService.JobState status = groovyService.stopScript(key, writer);
-            response.setHeader(SCRIPT_STATUS_HEADER, status.name());
+            GroovyService.Job job = groovyService.stopScript(key);
+            response.setHeader(SCRIPT_STATUS_HEADER, job != null ? job.getState().name() : "unknown");
+            return job;
         }
     }
 
     protected abstract class ScriptOperation implements ServletOperation {
 
-        protected abstract void doScript(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                         ResourceHandle resource, String key, PrintWriter writer)
+        protected abstract GroovyService.Job doScript(
+                SlingHttpServletRequest request, SlingHttpServletResponse response,
+                ResourceHandle resource, String key)
                 throws ServletException, IOException;
 
         @Override
@@ -1265,7 +1280,11 @@ public class NodeServlet extends AbstractServiceServlet {
             PrintWriter writer = new PrintWriter(response.getOutputStream());
             if (groovyService != null) {
                 String key = resource.getPath();
-                doScript(request, response, resource, key, writer);
+                GroovyService.Job job = doScript(request, response, resource, key);
+                response.setHeader(SCRIPT_STATUS_HEADER, job != null ? job.getState().name() : "unknown");
+                if (job != null) {
+                    job.flush(writer);
+                }
             } else {
                 writer.println("no scripting service available");
             }
