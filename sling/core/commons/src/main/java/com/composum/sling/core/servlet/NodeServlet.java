@@ -1308,8 +1308,9 @@ public class NodeServlet extends AbstractServiceServlet {
         boolean hasChildren = false;
         for (Resource child : resource.getChildren()) {
             hasChildren = true;
-            if (filter.accept(child)) {
-                children.add(child);
+            if (filter.accept(child) &&
+                    !(ResourceUtil.containsPath(children, child) && ResourceUtil.isSyntheticResource(child))) {
+                children.add(ResourceHandle.use(child));
             }
         }
         if (!hasChildren) {

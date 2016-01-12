@@ -48,6 +48,7 @@ public class ResourceHandle extends ResourceWrapper {
 
     private transient Boolean valid;
     private transient Node node;
+    private transient String path;
     private transient String id;
     private transient String title;
 
@@ -283,7 +284,15 @@ public class ResourceHandle extends ResourceWrapper {
 
     @Override
     public String getPath() {
-        return resource != null ? super.getPath() : null;
+        if (path == null) {
+            if (resource != null) {
+                path = super.getPath();
+                if (path.startsWith("//")) { // AEM 6.1 root elements !?
+                    path = path.substring(1);
+                }
+            }
+        }
+        return path;
     }
 
     @Override
