@@ -11,15 +11,15 @@
         <span class="icon-bar"></span>
       </button>
       <div id="composum-logo" class="navbar-brand">
-        <a href="/libs/composum/sling/console/content.html">
-          <img src="/libs/composum/sling/console/page/images/composum-nodes-logo-on-black.png" />
+        <a href="${cpn:url(slingRequest,'/libs/composum/sling/console/content')}">
+          <img src="${cpn:url(slingRequest,'/libs/composum/sling/console/page/images/composum-nodes-logo-on-black.png')}" />
         </a>
       </div>
     </div>
     <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
       <ul class="nav navbar-nav">
         <c:forEach items="${status.consoles}" var="console">
-          <li class="nav-item ${console.name} link"><a href="${console.path}.html">${console.label}</a></li>
+          <li class="nav-item ${console.name} link"><cpn:link href="${console.path}">${console.label}</cpn:link></li>
         </c:forEach>
       </ul>
       <ul class="system nav navbar-nav navbar-right">

@@ -12,7 +12,7 @@
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                 aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title">Move/Rename Node</h4>
+            <h4 class="modal-title">Move / Rename / Reorder Node</h4>
           </div>
           <div class="modal-body">
             <div class="messages">
@@ -39,7 +39,7 @@
             </div>
             <div class="form-group">
               <p>
-                If you choice 'reorder' (place before) than the node ist moved implicit if the targets parent differs from the nodes current parent.
+                If you choice 'reorder' (place before) than the node is moved implicit if the targets parent differs from the nodes current parent.
               </p>
             </div>
             <div class="form-group">

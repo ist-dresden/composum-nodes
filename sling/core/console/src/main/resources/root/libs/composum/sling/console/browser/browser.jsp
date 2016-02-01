@@ -4,12 +4,12 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects/>
 <cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
-<html>
+<html data-context-path="${slingRequest.contextPath}">
 <sling:call script="head.jsp"/>
 <body id="browser" class="console left-open top-open">
   <div id="ui">
     <sling:call script="dialogs.jsp"/>
-    <sling:call script="/libs/composum/sling/console/page/navbar.jsp"/>
+    <sling:include resourceType="composum/sling/console/components/navbar"/>
     <div id="content-wrapper">
       <div id="split-view-horizontal-split" class="split-pane horizontal-split fixed-left">
         <div class="split-pane-component left-pane">
@@ -81,6 +81,7 @@
     </div>
   </div>
 <sling:call script="script.jsp"/>
+<sling:include resourceType="composum/sling/console/components/tryLogin"/>
 </body>
 </html>
 </cpn:component>

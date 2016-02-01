@@ -37,6 +37,7 @@
         <bundle.category>Composum Core</bundle.category>
         <sling.host>localhost</sling.host>
         <sling.port>9090</sling.port>
+        <sling.context></sling.context>
     </properties>
 
     <scm>
@@ -141,6 +142,12 @@
                 </plugin>
 
                 <plugin>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>slingstart-maven-plugin</artifactId>
+                    <version>1.3.6</version>
+                </plugin>
+
+                <plugin>
                     <groupId>com.citytechinc.maven.plugins</groupId>
                     <artifactId>osgi-bundle-status-maven-plugin</artifactId>
                     <version>1.3.1</version>
@@ -148,6 +155,7 @@
                         <skip>true</skip>
                         <host>${sling.host}</host>
                         <port>${sling.port}</port>
+                        <path>${sling.context}/system/console</path>
                         <username>admin</username>
                         <password>admin</password>
                     </configuration>
@@ -183,7 +191,7 @@
                         <groupId>org.apache.sling</groupId>
                         <artifactId>maven-sling-plugin</artifactId>
                         <configuration>
-                            <slingUrl>http://${sling.host}:${sling.port}/system/console/install</slingUrl>
+                            <slingUrl>http://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
                         </configuration>
                         <executions>
                             <execution>
@@ -409,7 +417,7 @@
             <dependency>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>org.apache.felix.framework</artifactId>
-                <version>4.0.3</version>
+                <version>4.6.0</version>
                 <scope>provided</scope>
             </dependency>
             <!-- OSGi Core and Compendium API -->

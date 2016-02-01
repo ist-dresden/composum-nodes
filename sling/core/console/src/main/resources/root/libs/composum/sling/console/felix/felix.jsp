@@ -2,7 +2,7 @@
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects/>
-<html>
+<html data-context-path="${slingRequest.contextPath}">
 <head>
   <sling:call script="/libs/composum/sling/console/page/head.jsp"/>
   <style>
@@ -22,7 +22,7 @@
 <body id="felix" class="console">
   <div id="ui">
     <sling:call script="/libs/composum/sling/console/page/dialogs.jsp"/>
-    <sling:call script="/libs/composum/sling/console/page/navbar.jsp"/>
+    <sling:include resourceType="composum/sling/console/components/navbar"/>
     <div id="content-wrapper">
       <iframe width="100%" height="100%" src=""></iframe>
     </div>
@@ -41,7 +41,7 @@
                 this.$iframe=$('#content-wrapper iframe');
                 this.$iframe.load(_.bind (this.onFrameLoad, this));
                 var url = core.console.getProfile().get('felix','url','/system/console/bundles');
-                this.$iframe.attr('src', url);
+                this.$iframe.attr('src', core.getContextUrl(url));
             },
 
             onFrameLoad: function(event) {
@@ -56,5 +56,6 @@
     })(core.felix);
     })(window.core);
   </script>
+<sling:include resourceType="composum/sling/console/components/tryLogin"/>
 </body>
 </html>

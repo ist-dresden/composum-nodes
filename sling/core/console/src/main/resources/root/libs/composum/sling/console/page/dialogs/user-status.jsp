@@ -6,13 +6,13 @@
 <cpn:component id="status" type="com.composum.sling.core.console.Consoles">
   <div id="user-status-dialog" class="dialog modal fade" role="dialog" aria-hidden="true">
     <div class="modal-dialog form-panel">
-      <form accept-charset="UTF-8" action="/j_security_check" method="post">
+      <cpn:form charset="UTF-8" action="/j_security_check" method="post">
 
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                 aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title">User: ${status.currentUser}</h4>
+            <h4 class="modal-title">Current User: ${status.currentUser}</h4>
           </div>
 
           <div class="modal-body">
@@ -37,7 +37,7 @@
           </div>
         </div>
 
-      </form>
+      </cpn:form>
     </div>
   </div>
 </cpn:component>
