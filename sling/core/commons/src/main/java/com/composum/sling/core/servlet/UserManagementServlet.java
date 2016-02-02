@@ -1,8 +1,11 @@
 package com.composum.sling.core.servlet;
 
+import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.ResponseUtil;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import org.apache.felix.scr.annotations.Reference;
@@ -20,6 +23,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.security.Principal;
 import java.util.*;
@@ -30,7 +34,7 @@ import java.util.*;
  */
 @SlingServlet(
         paths = "/bin/core/usermanagement",
-        methods = {"GET", "PUT", "POST"}
+        methods = {"GET", "PUT", "POST", "DELETE"}
 )
 public class UserManagementServlet extends AbstractServiceServlet {
 
@@ -38,7 +42,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {users, user, groups, tree, group}
+    public enum Operation {users, user, groups, tree, group, authorizable}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -60,6 +64,12 @@ public class UserManagementServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.group, new GetGroup());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.tree, new GetTree());
 
+        // POST
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.user, new CreateUser());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.group, new CreateGroup());
+
+        // DELETE
+        operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.authorizable, new DeleteAuthorizable());
     }
 
     @Override protected ServletOperationSet getOperations() {
@@ -289,6 +299,47 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
         }
 
+    }
+
+    public static class CreateUser implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final String path = AbstractServiceServlet.getPath(request);
+            final UserManager userManager = session.getUserManager();
+            String username = request.getParameter("username");;
+            String password = request.getParameter("password");;
+            userManager.createUser(username, password);
+        }
+    }
+
+    public static class DeleteAuthorizable implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final String path = AbstractServiceServlet.getPath(request);
+            final UserManager userManager = session.getUserManager();
+            final Authorizable authorizable = userManager.getAuthorizable(path.substring(path.lastIndexOf('/')+1));
+            authorizable.remove();
+            session.save();
+            ResponseUtil.writeEmptyArray(response);
+        }
+    }
+
+    public static class CreateGroup implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final UserManager userManager = session.getUserManager();
+            String name = request.getParameter("name");
+            userManager.createGroup(name);
+        }
     }
 
     public static class GetGroup implements ServletOperation {

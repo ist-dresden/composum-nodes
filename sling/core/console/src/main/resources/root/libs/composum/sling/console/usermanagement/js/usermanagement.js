@@ -9,6 +9,83 @@
 
 (function(usermanagement) {
 
+    usermanagement.getAddUserDialog = function () {
+        return core.getView('#user-create-dialog', usermanagement.AddUserDialog);
+    };
+
+    usermanagement.getAddGroupDialog = function () {
+        return core.getView('#group-create-dialog', usermanagement.AddGroupDialog);
+    };
+
+    usermanagement.AddUserDialog = core.components.Dialog.extend({
+
+        initialize: function (options) {
+            core.components.Dialog.prototype.initialize.apply(this, [options]);
+            this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+            this.$name = this.$('input[name="username"]');
+            this.$password = this.$('input[name="password"]');
+            this.$('button.create').click(_.bind(this.addNewUser, this));
+        },
+
+        reset: function () {
+////                core.components.Dialog.prototype.reset.apply(this);
+//            this.$labelname.setValue("");
+        },
+
+        addNewUser: function (event) {
+            event.preventDefault();
+            var path = usermanagement.getCurrentPath();
+            var serializedData = this.$form.$el.serialize();
+            core.ajaxPost(
+                "/bin/core/usermanagement.user.json",
+                serializedData,
+                {
+                    dataType: 'post'
+                },
+                _.bind(function(result) {
+                    this.hide();
+                    usermanagement.tree.refresh();
+                }, this),
+                _.bind(function(result) {
+                    core.alert('danger', 'Error', 'Error creating group', result);
+                }, this));
+            return false;
+        }
+    });
+
+    usermanagement.AddGroupDialog = core.components.Dialog.extend({
+
+        initialize: function (options) {
+            core.components.Dialog.prototype.initialize.apply(this, [options]);
+            this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+            //this.$name = this.$('input[name="name"]');
+            this.$('button.create').click(_.bind(this.addNewGroup, this));
+        },
+
+        reset: function () {
+        },
+
+        addNewGroup: function (event) {
+            event.preventDefault();
+            var serializedData = this.$form.$el.serialize();
+            core.ajaxPost(
+                "/bin/core/usermanagement.group.json",
+                serializedData,
+                {
+                    dataType: 'post'
+                },
+                _.bind(function(result) {
+                    this.hide();
+                    usermanagement.tree.refresh();
+                }, this),
+                _.bind(function(result) {
+                    core.alert('danger', 'Error', 'Error creating group', result);
+                }, this));
+            return false;
+        }
+    });
+
+
     usermanagement.current = {};
 
     usermanagement.getCurrentPath = function() {
@@ -92,7 +169,11 @@
 
         initialize: function(options) {
             this.tree = usermanagement.tree;
+            this.table = core.getWidget(this.$el, '.table-container', usermanagement.UserTable);
             this.$('button.refresh').on('click', _.bind(this.refreshTree, this));
+            this.$('button.adduser').on('click', _.bind(this.addUser, this));
+            this.$('button.deleteauthorizable').on('click', _.bind(this.deleteAuthorizable, this));
+            this.$('button.addgroup').on('click', _.bind(this.addGroup, this));
         },
 
         refreshNodeState: function() {
@@ -104,6 +185,36 @@
 
         refreshTree: function(event) {
             this.tree.refresh();
+        },
+
+        reload: function () {
+            //this.table.loadContent();
+        },
+
+        addUser: function(event) {
+            var dialog = usermanagement.getAddUserDialog();
+            dialog.show(undefined, _.bind(this.reload, this));
+        },
+
+        deleteAuthorizable: function(event) {
+            var path = usermanagement.getCurrentPath();
+            core.ajaxDelete(
+                "/bin/core/usermanagement.authorizable.json" + path,
+                {
+                    dataType: 'json'
+                },
+                _.bind(function(result) {
+                    usermanagement.tree.refresh();
+                }, this),
+                _.bind(function(result) {
+                    core.alert('danger', 'Error', 'Error deleting Authorizable', result);
+                }, this));
+
+        },
+
+        addGroup: function(event) {
+            var dialog = usermanagement.getAddGroupDialog();
+            dialog.show(undefined, _.bind(this.reload, this));
         }
 
     });

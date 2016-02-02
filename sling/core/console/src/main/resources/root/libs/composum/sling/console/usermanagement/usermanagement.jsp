@@ -4,12 +4,12 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects/>
 <cpn:component id="usermanagement" type="com.composum.sling.core.usermanagement.UserManagement" scope="request">
-<html>
+<html  data-context-path="${slingRequest.contextPath}">
 <sling:call script="head.jsp"/>
 <body id="usermanagement" class="console left-open top-open">
   <div id="ui">
     <sling:call script="dialogs.jsp"/>
-    <sling:call script="/libs/composum/sling/console/page/navbar.jsp"/>
+    <sling:include resourceType="composum/sling/console/components/navbar"/>
     <div id="content-wrapper">
       <div id="split-view-horizontal-split" class="split-pane horizontal-split fixed-left">
         <div class="split-pane-component left-pane">
@@ -22,6 +22,9 @@
               <div class="align-left">
                 <div class="btn-group btn-group-sm" role="group">
                   <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh tree view"><span class="label">Refresh</span></button>
+                  <button type="button" class="adduser fa fa-user-plus btn btn-default" title="Add User"><span class="label">Add User</span></button>
+                  <button type="button" class="addgroup fa fa-users btn btn-default" title="Add Group"><span class="label">Add Group</span></button>
+                  <button type="button" class="deleteauthorizable fa fa-minus btn btn-default" title="Delete Authorizable"><span class="label">Delete Authorizable</span></button>
                 </div>
               </div>
               <div class="align-right">
