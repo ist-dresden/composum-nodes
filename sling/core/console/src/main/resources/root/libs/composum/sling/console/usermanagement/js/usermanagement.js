@@ -211,6 +211,14 @@
         }
     });
 
+    usermanagement.GroupsTab = core.console.DetailTab.extend({
+
+        initialize: function(options) {
+            this.table = core.getWidget(this.$el, '.table-container', usermanagement.GroupsTable);
+            this.table.loadContent();
+        }
+    });
+
     usermanagement.GroupTab = core.console.DetailTab.extend({
 
         initialize: function(options) {
@@ -233,6 +241,10 @@
     }, {
         selector: '> .preferences',
         tabType: usermanagement.PreferencesTab
+    }, {
+        // authorizable is member of groups listed here
+        selector: '> .groups',
+        tabType: usermanagement.GroupsTab
     }, {
         selector: '> .group',
         tabType: usermanagement.GroupTab

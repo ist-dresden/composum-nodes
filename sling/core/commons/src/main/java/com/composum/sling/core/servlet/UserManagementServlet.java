@@ -1,33 +1,39 @@
 package com.composum.sling.core.servlet;
 
-import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
-import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.ResponseUtil;
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.user.*;
+import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.security.user.Query;
+import org.apache.jackrabbit.api.security.user.QueryBuilder;
+import org.apache.jackrabbit.api.security.user.User;
+import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Mirko Zeibig
@@ -43,7 +49,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, password, properties}
+    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, password, groupsofauthorizable, properties}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -65,6 +71,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.group, new GetGroup());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.tree, new GetTree());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.properties, new GetProperties());
+        // curl -u admin:admin http://localhost:9090/bin/core/usermanagement.groupsofauthorizable.json/eeee
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.groupsofauthorizable, new GetGroupsOfAuthorizable());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.user, new CreateUser());
@@ -190,6 +198,30 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 strings.add(group.getID());
             }
             return strings.toArray(new String[strings.size()]);
+        }
+    }
+
+    public static class GetGroupsOfAuthorizable implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final String path = AbstractServiceServlet.getPath(request);
+            final UserManager userManager = session.getUserManager();
+            final Authorizable authorizable = userManager.getAuthorizable(path.startsWith("/") ? path.substring(1) : path);
+            Iterator<Group> groupIterator = authorizable.declaredMemberOf();
+            try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+                jsonWriter.beginArray();
+                while (groupIterator.hasNext()) {
+                    Group group = groupIterator.next();
+                    jsonWriter
+                            .value(group.getID());
+                }
+                jsonWriter.endArray();
+                jsonWriter.flush();
+            }
+
         }
     }
 
