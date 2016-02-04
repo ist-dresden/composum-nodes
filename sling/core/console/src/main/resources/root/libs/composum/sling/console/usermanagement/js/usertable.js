@@ -1,0 +1,76 @@
+(function(core) {
+    'use strict';
+
+    core.usermanagement = core.usermanagement || {};
+
+    (function(usermanagement) {
+
+        usermanagement.UserTable = Backbone.View.extend({
+            initialize: function(options) {
+                this.state = {
+                    load: false
+                };
+
+                this.$table = this.$('.user-table');
+                this.$table.bootstrapTable({
+                    search: true,
+                    showToggle: false,
+                    striped: true,
+                    singleSelect: true,
+                    clickToSelect: true,
+
+                    columns: [
+                        {
+                            class: 'name',
+                            field: 'name',
+                            title: 'Name',
+                            width: '200px'
+                        },
+                        {
+                            class: 'value',
+                            field: 'value',
+                            title: 'Value'
+                        }]
+                });
+
+            },
+
+            loadContent: function() {
+                var path = usermanagement.current.node.name;
+                var nodetype = usermanagement.current.node.type;
+                this.state.load = true;
+                $.ajax({
+                    url: "/bin/core/usermanagement." + nodetype + ".json/" + path,
+                    dataType: 'json',
+                    type: 'GET',
+                    success: _.bind (function (result) {
+                        var formattedResult = [
+                            {'name':'id', 'value':result.id},
+                            {'name':'path', 'value':result.path},
+                            {'name':'principal name', 'value':result.principalName},
+                            {'name':'member of', 'value':result.memberOf},
+                            {'name':'declared member of', 'value':result.declaredMemberOf}
+                        ];
+                        if (nodetype == 'user') {
+                            formattedResult.push(
+                                {'name': 'admin', 'value': result.admin},
+                                {'name': 'disabled', 'value': result.disabled},
+                                {'name': 'disabled reason', 'value': result.disabledReason});
+                        }
+                        this.$table.bootstrapTable('load', formattedResult);
+                    }, this),
+                    error: _.bind (function (result) {
+                        core.alert ('danger', 'Error', 'Error on loading properties', result);
+                    }, this),
+                    complete: _.bind (function (result) {
+                        this.state.load = false;
+                    }, this)
+                });
+            }
+
+        });
+
+
+    })(core.usermanagement);
+
+})(window.core);

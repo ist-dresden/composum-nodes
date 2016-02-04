@@ -5,16 +5,15 @@
 <sling:defineObjects />
 <cpn:component id="user" type="com.composum.sling.core.usermanagement.User" scope="request">
     <div class="user detail-panel full-table-view">
-        <div class="table-toolbar">
+        <div class="detail-tabs action-bar btn-toolbar" role="toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <button class="checkpoint fa fa-ban btn btn-default" title="Disable"><span class="label">Disable user</span></button>
+                <a class="general fa fa-list btn btn-default" href="#general" data-group="general" title="General"><span class="label">General</span></a>
+                <a class="profile fa fa-user btn btn-default" href="#profile" data-group="profile" title="Profile"><span class="label">Profile</span></a>
+                <a class="preferences fa fa-wrench btn btn-default" href="#preferences" data-group="preferences" title="Preferences"><span class="label">Preferences</span></a>
             </div>
         </div>
-        <div class="table-container">
-            <table id="user-view-user-table" class="user-table"
-                data-path="${user.suffix}"
-                data-toolbar=".user .table-toolbar">
-            </table>
-        </div>
     </div>
+    <div class="detail-content">
+    </div>
+
 </cpn:component>

@@ -15,7 +15,6 @@
                         <h4 class="modal-title">Create New Group</h4>
                     </div>
 
-                    <!-- todo: dialog content-->
                     <div class="modal-body">
                         <div class="messages">
                             <div class="alert"></div>

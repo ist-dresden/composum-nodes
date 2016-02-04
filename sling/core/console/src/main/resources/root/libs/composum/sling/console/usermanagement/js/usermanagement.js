@@ -9,83 +9,6 @@
 
 (function(usermanagement) {
 
-    usermanagement.getAddUserDialog = function () {
-        return core.getView('#user-create-dialog', usermanagement.AddUserDialog);
-    };
-
-    usermanagement.getAddGroupDialog = function () {
-        return core.getView('#group-create-dialog', usermanagement.AddGroupDialog);
-    };
-
-    usermanagement.AddUserDialog = core.components.Dialog.extend({
-
-        initialize: function (options) {
-            core.components.Dialog.prototype.initialize.apply(this, [options]);
-            this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-            this.$name = this.$('input[name="username"]');
-            this.$password = this.$('input[name="password"]');
-            this.$('button.create').click(_.bind(this.addNewUser, this));
-        },
-
-        reset: function () {
-////                core.components.Dialog.prototype.reset.apply(this);
-//            this.$labelname.setValue("");
-        },
-
-        addNewUser: function (event) {
-            event.preventDefault();
-            var path = usermanagement.getCurrentPath();
-            var serializedData = this.$form.$el.serialize();
-            core.ajaxPost(
-                "/bin/core/usermanagement.user.json",
-                serializedData,
-                {
-                    dataType: 'post'
-                },
-                _.bind(function(result) {
-                    this.hide();
-                    usermanagement.tree.refresh();
-                }, this),
-                _.bind(function(result) {
-                    core.alert('danger', 'Error', 'Error creating group', result);
-                }, this));
-            return false;
-        }
-    });
-
-    usermanagement.AddGroupDialog = core.components.Dialog.extend({
-
-        initialize: function (options) {
-            core.components.Dialog.prototype.initialize.apply(this, [options]);
-            this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-            //this.$name = this.$('input[name="name"]');
-            this.$('button.create').click(_.bind(this.addNewGroup, this));
-        },
-
-        reset: function () {
-        },
-
-        addNewGroup: function (event) {
-            event.preventDefault();
-            var serializedData = this.$form.$el.serialize();
-            core.ajaxPost(
-                "/bin/core/usermanagement.group.json",
-                serializedData,
-                {
-                    dataType: 'post'
-                },
-                _.bind(function(result) {
-                    this.hide();
-                    usermanagement.tree.refresh();
-                }, this),
-                _.bind(function(result) {
-                    core.alert('danger', 'Error', 'Error creating group', result);
-                }, this));
-            return false;
-        }
-    });
-
-
     usermanagement.current = {};
 
     usermanagement.getCurrentPath = function() {
@@ -172,8 +95,8 @@
             this.table = core.getWidget(this.$el, '.table-container', usermanagement.UserTable);
             this.$('button.refresh').on('click', _.bind(this.refreshTree, this));
             this.$('button.adduser').on('click', _.bind(this.addUser, this));
-            this.$('button.deleteauthorizable').on('click', _.bind(this.deleteAuthorizable, this));
             this.$('button.addgroup').on('click', _.bind(this.addGroup, this));
+            this.$('button.deleteauthorizable').on('click', _.bind(this.deleteAuthorizable, this));
         },
 
         refreshNodeState: function() {
@@ -222,90 +145,126 @@
     usermanagement.treeActions = core.getView('.tree-actions', usermanagement.TreeActions);
 
 
-    usermanagement.AuthorizableView = Backbone.View.extend({
+    usermanagement.UserTab = core.console.DetailTab.extend({
+
         initialize: function(options) {
-            $(document).on('path:selected', _.bind(this.reload, this));
-        },
-
-        reload: function() {
-            this.path = usermanagement.getCurrentPath();
-            if (this.path) {
-                // AJAX load for the current path with the 'viewUrl' from 'browser.current'
-                this.$el.load(usermanagement.current.viewUrl, _.bind (function() {
-                    this.userTable = core.getWidget(this.$el, '.table-container', usermanagement.UserTable);
-                    this.userTable.loadContent();
-                }, this));
-            } else {
-                this.$el.html(''); // clear the view if nothing selected
-            }
-        }
-    });
-
-    usermanagement.UserTable = Backbone.View.extend({
-        initialize: function(options) {
-            this.state = {
-                load: false
-            };
-
-            this.$table = this.$('.user-table');
-            this.$table.bootstrapTable({
-                search: true,
-                showToggle: false,
-                striped: true,
-                singleSelect: true,
-                clickToSelect: true,
-
-                columns: [
-                    {
-                        class: 'name',
-                        field: 'name',
-                        title: 'Name'
-                    },
-                    {
-                        class: 'value',
-                        field: 'value',
-                        title: 'Value'
-                    }]
-            });
+            this.table = core.getWidget(this.$el, '.table-container', usermanagement.UserTable);
+            this.table.loadContent();
+            this.$disableUserButton = this.$('.table-toolbar .disable-user');
+            this.$disableUserButton.click(_.bind(this.disableUser, this));
+            this.$enableUserButton = this.$('.table-toolbar .enable-user');
+            this.$enableUserButton.click(_.bind(this.enableUser, this));
 
         },
 
-        loadContent: function() {
+        reload: function () {
+            this.table.loadContent();
+        },
+
+        disableUser: function () {
+            var dialog = usermanagement.getDisableUserDialog();
+            dialog.setUser(usermanagement.current.node.name);
+            dialog.show(undefined, _.bind(this.reload, this));
+        },
+
+        enableUser: function () {
             var path = usermanagement.current.node.name;
-            var nodetype = usermanagement.current.node.type;
-            this.state.load = true;
-            $.ajax({
-                url: "/bin/core/usermanagement." + nodetype + ".json/" + path,
-                dataType: 'json',
-                type: 'GET',
-                success: _.bind (function (result) {
-                    var formattedResult = [
-                        {'name':'id', 'value':result.id},
-                        {'name':'path', 'value':result.path},
-                        {'name':'principal name', 'value':result.principalName},
-                        {'name':'member of', 'value':result.memberOf},
-                        {'name':'declared member of', 'value':result.declaredMemberOf}
-                    ];
-                    if (nodetype == 'user') {
-                        formattedResult.push(
-                            {'name': 'admin', 'value': result.admin},
-                            {'name': 'disabled', 'value': result.disabled},
-                            {'name': 'disabled reason', 'value': result.disabledReason});
-                    }
-                    this.$table.bootstrapTable('load', formattedResult);
+            core.ajaxPost(
+                "/bin/core/usermanagement.enable.json/" + path,
+                {
+
+                },
+                {
+                    dataType: 'json'
+                },
+                _.bind(function(result) {
+                    this.table.loadContent();
                 }, this),
-                error: _.bind (function (result) {
-                    core.alert ('danger', 'Error', 'Error on loading properties', result);
-                }, this),
-                complete: _.bind (function (result) {
-                    this.state.load = false;
-                }, this)
-            });
+                _.bind(function(result) {
+                    core.alert('danger', 'Error', 'Error on enable user', result);
+                }, this));
         }
 
     });
 
-    usermanagement.authorizableView = core.getView('#usermanagement-view', usermanagement.AuthorizableView);
+    usermanagement.ProfileTab = core.console.DetailTab.extend({
+
+        initialize: function(options) {
+            this.table = core.getWidget(this.$el, '.table-container', usermanagement.PropertiesTable);
+            this.table.loadContent("profile");
+        }
+    });
+
+    usermanagement.PreferencesTab = core.console.DetailTab.extend({
+
+        initialize: function(options) {
+            this.table = core.getWidget(this.$el, '.table-container', usermanagement.PropertiesTable);
+            this.table.loadContent("preferences");
+        }
+    });
+
+    usermanagement.GroupTab = core.console.DetailTab.extend({
+
+        initialize: function(options) {
+            this.table = core.getWidget(this.$el, '.table-container', usermanagement.UserTable);
+            this.table.loadContent();
+        }
+    });
+
+
+    //
+    // detail view (console)
+    //
+
+    usermanagement.detailViewTabTypes = [{
+        selector: '> .user',
+        tabType: usermanagement.UserTab
+    }, {
+        selector: '> .profile',
+        tabType: usermanagement.ProfileTab
+    }, {
+        selector: '> .preferences',
+        tabType: usermanagement.PreferencesTab
+    }, {
+        selector: '> .group',
+        tabType: usermanagement.GroupTab
+    }, {
+        // the fallback to the basic implementation as a default rule
+        selector: '> div',
+        tabType: core.console.DetailTab
+    }];
+
+    /**
+     * the node view (node detail) which controls the node view tabs
+     */
+    usermanagement.DetailView = core.console.DetailView.extend({
+
+        getProfileId: function () {
+            return 'usermanagement';
+        },
+
+        getCurrentPath: function () {
+            return usermanagement.current ? usermanagement.current.path : undefined;
+        },
+
+        getViewUri: function () {
+            return usermanagement.current.viewUrl;
+        },
+
+        getTabUri: function (name) {
+            return '/libs/composum/sling/console/content/usermanagement.tab.' + name + '.html';
+        },
+
+        getTabTypes: function () {
+            return usermanagement.detailViewTabTypes;
+        },
+
+        initialize: function (options) {
+            core.console.DetailView.prototype.initialize.apply(this, [options]);
+        }
+    });
+
+    usermanagement.DetailView = core.getView('#usermanagement-view', usermanagement.DetailView);
 
 
 

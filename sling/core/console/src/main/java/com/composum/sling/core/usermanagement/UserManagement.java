@@ -1,6 +1,8 @@
 package com.composum.sling.core.usermanagement;
 
 import com.composum.sling.core.AbstractSlingBean;
+import com.composum.sling.core.filter.StringFilter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.UserManager;
@@ -39,4 +41,10 @@ public class UserManagement extends AbstractSlingBean {
         String suffix = getRequest().getRequestPathInfo().getSuffix();
         return suffix;
     }
+
+    public String getTabType() {
+        String selector = getRequest().getSelectors(new StringFilter.BlackList("^tab$"));
+        return StringUtils.isNotBlank(selector) ? selector.substring(1) : "general";
+    }
+
 }

@@ -18,6 +18,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -42,7 +43,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {users, user, groups, tree, group, authorizable}
+    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, properties}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -63,10 +64,13 @@ public class UserManagementServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.groups, new GetGroups());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.group, new GetGroup());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.tree, new GetTree());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.properties, new GetProperties());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.user, new CreateUser());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.group, new CreateGroup());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.disable, new DisableUser());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.enable, new EnableUser());
 
         // DELETE
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.authorizable, new DeleteAuthorizable());
@@ -279,6 +283,85 @@ public class UserManagementServlet extends AbstractServiceServlet {
         }
     }
 
+    public static class GetProperties implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final String path = AbstractServiceServlet.getPath(request);
+            final UserManager userManager = session.getUserManager();
+            String[] split = path.split("/");
+            String userid = split[1];
+            String propPath = split[2];
+            final Authorizable authorizable = userManager.getAuthorizable(userid);
+            try {
+                Iterator<String> propertyNames = authorizable.getPropertyNames(propPath);
+                Map<String, String> p = new HashMap<>();
+                while (propertyNames.hasNext()) {
+                    String name = propertyNames.next();
+                    Value[] property = authorizable.getProperty(propPath + "/" + name);
+                    p.put(name, property[0].getString());
+                }
+                try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+                    jsonWriter.beginArray();
+                    for (final Map.Entry<String, String> e : p.entrySet()) {
+                        jsonWriter
+                                .beginObject()
+                                .name("name")
+                                .value(e.getKey())
+                                .name("value")
+                                .value(e.getValue())
+                                .endObject();
+                    }
+                    jsonWriter.endArray();
+                    jsonWriter.flush();
+                }
+            } catch (/*PathNotFoundException |*/ RepositoryException e) {
+                // sling8 throws RepositoryException: Relative path foo refers to items outside of scope of authorizable.
+                ResponseUtil.writeEmptyArray(response);
+            }
+        }
+    }
+
+    public static class DisableUser implements ServletOperation {
+
+        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+//            final String path = AbstractServiceServlet.getPath(request);
+            final UserManager userManager = session.getUserManager();
+            String username = request.getParameter("username");;
+            String reason = request.getParameter("reason");;
+
+            final Authorizable authorizable = userManager.getAuthorizable(username);
+//            final Authorizable authorizable = userManager.getAuthorizable(path.startsWith("/") ? path.substring(1) : path);
+            User user = (User) authorizable;
+            user.disable(reason);
+            session.save();
+            ResponseUtil.writeEmptyArray(response);
+        }
+
+    }
+
+    public static class EnableUser implements ServletOperation {
+
+        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final String path = AbstractServiceServlet.getPath(request);
+            final UserManager userManager = session.getUserManager();
+            final Authorizable authorizable = userManager.getAuthorizable(path.startsWith("/") ? path.substring(1) : path);
+            User user = (User) authorizable;
+            user.disable(null);
+            session.save();
+            ResponseUtil.writeEmptyArray(response);
+        }
+
+    }
+
     public static class GetUser implements ServletOperation {
 
         @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
@@ -312,6 +395,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
             String username = request.getParameter("username");;
             String password = request.getParameter("password");;
             userManager.createUser(username, password);
+            session.save();
         }
     }
 
@@ -339,6 +423,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final UserManager userManager = session.getUserManager();
             String name = request.getParameter("name");
             userManager.createGroup(name);
+            session.save();
         }
     }
 
