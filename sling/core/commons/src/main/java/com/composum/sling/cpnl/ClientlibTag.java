@@ -1,13 +1,16 @@
 package com.composum.sling.cpnl;
 
+import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.service.ClientlibService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * a tag build references to styles and script files
@@ -16,82 +19,75 @@ public class ClientlibTag extends CpnlBodyTagSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientlibTag.class);
 
-    enum Type {link, css, js}
-
-    private Type type;
-    private String path;
-    private String rel;
+    protected Clientlib.Type type;
+    protected String path;
+    protected Map<String, String> properties = new LinkedHashMap<>();
 
     public void setType(String type) {
-        this.type = Type.valueOf(type);
-    }
-
-    protected void setType(Type type) {
-        this.type = type;
-    }
-
-    protected Type getType() {
-        if (type == null) {
-            String ext = StringUtils.substringAfterLast(path, ".").toLowerCase();
-            try {
-                setType(ext);
-            } catch (Exception ex) {
-                setType(Type.link);
-            }
-        }
-        return type;
+        this.type = Clientlib.Type.valueOf(type);
     }
 
     public void setPath(String path) {
         this.path = path;
     }
 
-    protected String getPath() {
-        if (!path.startsWith("/")) {
-            Resource libResource = resourceResolver.getResource("/apps/" + path);
-            if (libResource != null) {
-                path = libResource.getPath();
-            } else {
-                libResource = resourceResolver.getResource("/libs/" + path);
-                if (libResource != null) {
-                    path = libResource.getPath();
-                }
-            }
-        }
-        return path;
-    }
-
     public void setRel(String rel) {
-        this.rel = rel;
+        properties.put(Clientlib.PROP_REL, rel);
     }
 
     protected void clear() {
         super.clear();
         type = null;
         path = null;
-        rel = null;
+        properties.clear();
+    }
+
+    protected Clientlib.Type getType() {
+        if (type == null) {
+            String ext = StringUtils.substringAfterLast(path, ".").toLowerCase();
+            try {
+                type = Clientlib.Type.valueOf(ext);
+            } catch (Exception ex) {
+                type = Clientlib.Type.link;
+            }
+        }
+        return type;
     }
 
     @Override
     public int doEndTag() throws JspException {
         try {
-            JspWriter writer = this.pageContext.getOut();
-            switch (getType()) {
-                case link:
-                case css:
-                    writer.write("<link rel=\"");
-                    writer.write(StringUtils.isNotBlank(rel) ? rel : "stylesheet");
-                    writer.write("\" href=\"");
-                    writer.write(CpnlElFunctions.url(request, getPath()));
-                    writer.write("\" />");
-                    break;
-                case js:
-                    writer.write("<script type=\"text/javascript\" src=\"");
-                    writer.write(CpnlElFunctions.url(request, getPath()));
-                    writer.write("\"></script>");
-                    break;
-                default:
-                    break;
+            Clientlib.Type type = getType();
+            Clientlib clientlib = new Clientlib(request, path, type);
+            if (clientlib.isValid()) {
+                JspWriter writer = this.pageContext.getOut();
+                ClientlibService service = this.sling.getScriptHelper().getService(ClientlibService.class);
+                service.renderClientlibLinks(clientlib, properties, writer);
+            } else {
+                String path = clientlib.getPath(this.path);
+                if (StringUtils.isNotBlank(path)) {
+                    JspWriter writer = this.pageContext.getOut();
+                    switch (type) {
+                        case link:
+                        case css:
+                            String rel = properties.get(Clientlib.PROP_REL);
+                            writer.write("<link rel=\"");
+                            writer.write(StringUtils.isNotBlank(rel) ? rel : "stylesheet");
+                            writer.write("\" href=\"");
+                            writer.write(CpnlElFunctions.url(request, path));
+                            writer.write("\" />");
+                            break;
+                        case js:
+                            writer.write("<script type=\"text/javascript\" src=\"");
+                            writer.write(CpnlElFunctions.url(request, path));
+                            writer.write("\"></script>");
+                            break;
+                        default:
+                            break;
+                    }
+                } else {
+                    LOG.warn("Clientlib (file) '" + this.path + "' not found or not accessible!");
+                }
             }
         } catch (IOException ioex) {
             LOG.error(ioex.getMessage(), ioex);
