@@ -1,0 +1,41 @@
+{
+  "components": {
+    "sling:resourceType": "composum/sling/commons/clientlib",
+    "css": {
+      "jcr:primaryType": "sling:OrderedFolder",
+      "components": {
+        "embed": "composum/sling/commons/components/css/components.css"
+      }
+    },
+    "js": {
+      "jcr:primaryType": "sling:OrderedFolder",
+      "core": {
+        "embed": "composum/sling/commons/components/js/core.js"
+      },
+      "x-editable": {
+        "embed": "composum/sling/commons/components/js/x-editable.js"
+      },
+      "splitPane": {
+        "embed": "composum/sling/commons/components/js/splitPane.js"
+      },
+      "tree": {
+        "embed": "composum/sling/commons/components/js/tree.js"
+      },
+      "multiform": {
+        "embed": "composum/sling/commons/components/js/multiform.js"
+      },
+      "components": {
+        "embed": "composum/sling/commons/components/js/components.js"
+      },
+      "init": {
+        "embed": "composum/sling/commons/components/js/init.js"
+      },
+      "dialogs": {
+        "embed": "composum/sling/commons/components/js/dialogs.js"
+      },
+      "codeEditor": {
+        "embed": "composum/sling/commons/components/js/codeEditor.js"
+      }
+    }
+  }
+}
