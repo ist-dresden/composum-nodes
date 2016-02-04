@@ -43,7 +43,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, properties}
+    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, password, properties}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -71,6 +71,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.group, new CreateGroup());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.disable, new DisableUser());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.enable, new EnableUser());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.password, new ChangePassword());
 
         // DELETE
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.authorizable, new DeleteAuthorizable());
@@ -324,19 +325,36 @@ public class UserManagementServlet extends AbstractServiceServlet {
         }
     }
 
+    public static class ChangePassword implements ServletOperation {
+
+        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final UserManager userManager = session.getUserManager();
+            String username = request.getParameter("username");;
+            String password = request.getParameter("password");;
+
+            final Authorizable authorizable = userManager.getAuthorizable(username);
+            User user = (User) authorizable;
+            user.changePassword(password);
+            session.save();
+            ResponseUtil.writeEmptyArray(response);
+        }
+
+    }
+
     public static class DisableUser implements ServletOperation {
 
         @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws RepositoryException, IOException, ServletException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
-//            final String path = AbstractServiceServlet.getPath(request);
             final UserManager userManager = session.getUserManager();
             String username = request.getParameter("username");;
             String reason = request.getParameter("reason");;
 
             final Authorizable authorizable = userManager.getAuthorizable(username);
-//            final Authorizable authorizable = userManager.getAuthorizable(path.startsWith("/") ? path.substring(1) : path);
             User user = (User) authorizable;
             user.disable(reason);
             session.save();

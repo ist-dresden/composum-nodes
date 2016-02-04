@@ -9,6 +9,7 @@
             <div class="btn-group btn-group-sm" role="group">
                 <button class="disable-user fa fa-ban btn btn-default" title="Disable"><span class="label">Disable user</span></button>
                 <button class="enable-user fa fa-check-circle-o btn btn-default" title="Enable"><span class="label">Enable user</span></button>
+                <button class="change-password fa fa-key btn btn-default" title="Change Password"><span class="label">Change Password</span></button>
             </div>
         </div>
         <div class="table-container">

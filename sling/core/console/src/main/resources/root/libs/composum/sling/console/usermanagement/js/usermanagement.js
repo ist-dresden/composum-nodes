@@ -154,6 +154,8 @@
             this.$disableUserButton.click(_.bind(this.disableUser, this));
             this.$enableUserButton = this.$('.table-toolbar .enable-user');
             this.$enableUserButton.click(_.bind(this.enableUser, this));
+            this.$changePasswordButton = this.$('.table-toolbar .change-password');
+            this.$changePasswordButton.click(_.bind(this.changePassword, this));
 
         },
 
@@ -163,6 +165,12 @@
 
         disableUser: function () {
             var dialog = usermanagement.getDisableUserDialog();
+            dialog.setUser(usermanagement.current.node.name);
+            dialog.show(undefined, _.bind(this.reload, this));
+        },
+
+        changePassword: function () {
+            var dialog = usermanagement.getChangePasswordDialog();
             dialog.setUser(usermanagement.current.node.name);
             dialog.show(undefined, _.bind(this.reload, this));
         },

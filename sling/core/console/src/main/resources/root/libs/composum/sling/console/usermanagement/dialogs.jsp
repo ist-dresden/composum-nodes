@@ -3,5 +3,6 @@
 <sling:defineObjects />
 <sling:call script="/libs/composum/sling/console/page/dialogs.jsp"/>
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/user-disable.jsp"/>
+<sling:call script="/libs/composum/sling/console/usermanagement/dialogs/user-changepw.jsp"/>
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/user-create.jsp"/>
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/group-create.jsp"/>
