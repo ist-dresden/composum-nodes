@@ -1,3 +1,4 @@
+<%@page session="false" pageEncoding="utf-8"%>
 <div class="form-group widget property-value-widget">
   <label class="control-label">Value</label>
   <div class="multi-form-content">
