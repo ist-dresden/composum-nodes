@@ -287,6 +287,11 @@ public class ResourceHandle extends ResourceWrapper {
     }
 
     @Override
+    public boolean isResourceType(final String resourceType) {
+        return resource != null && super.isResourceType(resourceType);
+    }
+
+    @Override
     public String getResourceType() {
         return resource != null ? super.getResourceType() : null;
     }
