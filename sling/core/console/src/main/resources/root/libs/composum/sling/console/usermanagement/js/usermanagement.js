@@ -216,6 +216,41 @@
         initialize: function(options) {
             this.table = core.getWidget(this.$el, '.table-container', usermanagement.GroupsTable);
             this.table.loadContent();
+            this.$addButton = this.$('.table-toolbar .add-user-to-group');
+            this.$addButton.click(_.bind(this.addUserToGroup, this));
+            this.$removeButton = this.$('.table-toolbar .remove-user-from-group');
+            this.$removeButton.click(_.bind(this.removeUserFromGroup, this));
+        },
+
+        reload: function () {
+            this.table.loadContent();
+        },
+
+        addUserToGroup: function() {
+            var dialog = usermanagement.getAddToGroupDialog();
+            dialog.show(function() {
+                dialog.setUser(usermanagement.current.node.name);
+            }, _.bind(this.reload, this));
+        },
+
+        removeUserFromGroup: function() {
+            var rows = this.table.getSelections();
+            if (rows.length > 0) {
+                core.ajaxPut(
+                    "/bin/core/usermanagement.removefromgroup.json",
+                    JSON.stringify({
+                        authorizable: usermanagement.current.node.name,
+                        group: (rows[0].name)
+                    }), {
+                        dataType: 'json'
+                    },
+                    _.bind(function (result) {
+                        this.table.loadContent();
+                    }, this),
+                    _.bind(function (result) {
+                        core.alert('danger', 'Error', 'Error removing user from group', result);
+                    }, this));
+            }
         }
     });
 

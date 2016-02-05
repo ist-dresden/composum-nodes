@@ -26,7 +26,6 @@
             },
 
             reset: function () {
-           //     this.$reason.setValue("no reason");
             },
 
             setUser: function (user) {

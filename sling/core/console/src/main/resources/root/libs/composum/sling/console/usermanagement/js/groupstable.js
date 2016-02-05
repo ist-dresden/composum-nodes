@@ -21,6 +21,10 @@
 
                     columns: [
                         {
+                            class: 'selection',
+                            checkbox: true,
+                            sortable: false
+                        }, {
                             class: 'name',
                             field: 'name',
                             title: 'Name'
@@ -29,14 +33,17 @@
 
             },
 
+            getSelections: function () {
+                return this.$table.bootstrapTable('getSelections');
+            },
+
             loadContent: function() {
                 var path = usermanagement.current.node.name;
                 this.state.load = true;
-                $.ajax({
-                    url: "/bin/core/usermanagement.groupsofauthorizable.json/" + path,
-                    dataType: 'json',
-                    type: 'GET',
-                    success: _.bind (function (result) {
+                core.ajaxGet(
+                    "/bin/core/usermanagement.groupsofauthorizable.json/" + path,
+                    {dataType: 'json'},
+                    _.bind (function (result) {
                         var formattedResult = [];
                         for (var i = 0; i < result.length; i++) {
                             formattedResult.push(
@@ -47,13 +54,14 @@
                         }
                         this.$table.bootstrapTable('load', formattedResult);
                     }, this),
-                    error: _.bind (function (result) {
+                    _.bind (function (result) {
                         core.alert ('danger', 'Error', 'Error on loading groups', result);
                     }, this),
-                    complete: _.bind (function (result) {
+                    _.bind (function (result) {
                         this.state.load = false;
                     }, this)
-                });
+
+                );
             }
 
         });

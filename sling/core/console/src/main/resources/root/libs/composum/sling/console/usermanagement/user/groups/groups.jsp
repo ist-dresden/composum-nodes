@@ -7,7 +7,8 @@
     <div class="groups detail-panel full-table-view">
         <div class="table-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                    <%--<button class="checkpoint fa fa-ban btn btn-default" title="Disable"><span class="label">Disable user</span></button>--%>
+                    <button class="add-user-to-group fa fa-plus btn btn-default" title="Add user to group"><span class="label">Add user to group</span></button>
+                    <button class="remove-user-from-group fa fa-minus btn btn-default" title="Remove user from group"><span class="label">Remove user from group</span></button>
             </div>
         </div>
         <div class="table-container">

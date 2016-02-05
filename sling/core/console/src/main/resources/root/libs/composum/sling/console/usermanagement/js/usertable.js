@@ -39,11 +39,10 @@
                 var path = usermanagement.current.node.name;
                 var nodetype = usermanagement.current.node.type;
                 this.state.load = true;
-                $.ajax({
-                    url: "/bin/core/usermanagement." + nodetype + ".json/" + path,
-                    dataType: 'json',
-                    type: 'GET',
-                    success: _.bind (function (result) {
+                core.ajaxGet(
+                    "/bin/core/usermanagement." + nodetype + ".json/" + path,
+                    {dataType: 'json'},
+                    _.bind (function (result) {
                         var formattedResult = [
                             {'name':'id', 'value':result.id},
                             {'name':'path', 'value':result.path},
@@ -59,13 +58,13 @@
                         }
                         this.$table.bootstrapTable('load', formattedResult);
                     }, this),
-                    error: _.bind (function (result) {
+                    _.bind (function (result) {
                         core.alert ('danger', 'Error', 'Error on loading properties', result);
                     }, this),
-                    complete: _.bind (function (result) {
+                    _.bind (function (result) {
                         this.state.load = false;
                     }, this)
-                });
+                );
             }
 
         });

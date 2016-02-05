@@ -2,7 +2,9 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.ResponseUtil;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import org.apache.felix.scr.annotations.Reference;
@@ -25,6 +27,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -49,7 +52,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, password, groupsofauthorizable, properties}
+    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, password, groupsofauthorizable, removefromgroup, addtogroup, properties}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -80,6 +83,9 @@ public class UserManagementServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.disable, new DisableUser());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.enable, new EnableUser());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.password, new ChangePassword());
+
+        operations.setOperation(ServletOperationSet.Method.PUT, Extension.json, Operation.removefromgroup, new RemoveFromGroup());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.addtogroup, new AddToGroup());
 
         // DELETE
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.authorizable, new DeleteAuthorizable());
@@ -222,6 +228,51 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 jsonWriter.flush();
             }
 
+        }
+    }
+
+    public static class AddToGroup implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final UserManager userManager = session.getUserManager();
+            String authorizableName = request.getParameter("authorizable");;
+            String groupName = request.getParameter("group");;
+//
+//            final Gson gson = new Gson();
+//            @SuppressWarnings("unchecked") final Map<String, String> p = gson.fromJson(
+//                    new InputStreamReader(request.getInputStream(), MappingRules.CHARSET.name()),
+//                    Map.class);
+//            String authorizableName = p.get("authorizable");
+//            String groupName = p.get("group");
+            final Authorizable authorizable = userManager.getAuthorizable(authorizableName);
+            final Group group = (Group) userManager.getAuthorizable(groupName);
+            boolean b = group.addMember(authorizable);
+            session.save();
+        }
+    }
+
+    public static class RemoveFromGroup implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final String path = AbstractServiceServlet.getPath(request);
+            final UserManager userManager = session.getUserManager();
+
+            final Gson gson = new Gson();
+            @SuppressWarnings("unchecked") final Map<String, String> p = gson.fromJson(
+                    new InputStreamReader(request.getInputStream(), MappingRules.CHARSET.name()),
+                    Map.class);
+            String authorizableName = p.get("authorizable");
+            String groupName = p.get("group");
+            final Authorizable authorizable = userManager.getAuthorizable(authorizableName);
+            final Group group = (Group) userManager.getAuthorizable(groupName);
+            group.removeMember(authorizable);
+            session.save();
         }
     }
 

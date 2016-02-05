@@ -22,8 +22,6 @@
             },
 
             reset: function () {
-        ////                core.components.Dialog.prototype.reset.apply(this);
-        //            this.$labelname.setValue("");
             },
 
             addNewUser: function (event) {

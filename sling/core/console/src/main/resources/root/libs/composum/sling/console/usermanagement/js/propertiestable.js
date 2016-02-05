@@ -40,20 +40,20 @@
                 var nodetype = usermanagement.current.node.type;
                 //var propertypath = "profile";
                 this.state.load = true;
-                $.ajax({
-                    url: "/bin/core/usermanagement.properties.json/" + path + "/" + propertypath,
-                    dataType: 'json',
-                    type: 'GET',
-                    success: _.bind (function (result) {
+
+                core.ajaxGet(
+                    "/bin/core/usermanagement.properties.json/" + path + "/" + propertypath,
+                    {dataType: 'json'},
+                    _.bind (function (result) {
                         this.$table.bootstrapTable('load', result);
                     }, this),
-                    error: _.bind (function (result) {
+                    _.bind (function (result) {
                         core.alert ('danger', 'Error', 'Error on loading properties', result);
                     }, this),
-                    complete: _.bind (function (result) {
+                    _.bind (function (result) {
                         this.state.load = false;
                     }, this)
-                });
+                );
             }
 
         });
