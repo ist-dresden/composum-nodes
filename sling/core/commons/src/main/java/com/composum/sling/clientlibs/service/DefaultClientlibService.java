@@ -6,6 +6,7 @@ import com.composum.sling.clientlibs.processor.CssProcessor;
 import com.composum.sling.clientlibs.processor.GzipProcessor;
 import com.composum.sling.clientlibs.processor.JavascriptProcessor;
 import com.composum.sling.clientlibs.processor.LinkRenderer;
+import com.composum.sling.clientlibs.processor.ProcessorContext;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -142,41 +143,46 @@ public class DefaultClientlibService implements ClientlibService {
         final Map<String, Object> hints = new HashMap<>();
         FileHandle file = getCachedFile(clientlib, encoding);
         if (file == null || !file.isValid()) {
-            Clientlib.Type type = clientlib.getType();
-            final ClientlibProcessor processor = processorMap.get(type);
             ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
-            String path = getCachePath(clientlib, encoding);
-            Resource cacheEntry = resolver.getResource(path);
-            if (cacheEntry != null) {
-                resolver.delete(cacheEntry);
-                resolver.commit();
-            }
-            String[] separated = Clientlib.splitPathAndName(path);
-            Resource parent = giveParent(resolver, separated[0]);
-            cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
-            resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
-            file = new FileHandle(cacheEntry);
-            if (file.isValid()) {
-                final PipedOutputStream outputStream = new PipedOutputStream();
-                InputStream inputStream = new PipedInputStream(outputStream);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            clientlib.processContent(outputStream, processor, hints);
-                        } catch (IOException | RepositoryException ex) {
-                            LOG.error(ex.getMessage(), ex);
-                        }
-                    }
-                }).start();
-                if (ENCODING_GZIP.equals(encoding)) {
-                    inputStream = gzipProcessor.processContent(clientlib, inputStream, hints);
+            final ProcessorContext context = new ProcessorContext(resolver, hints, 4);
+            try {
+                Clientlib.Type type = clientlib.getType();
+                final ClientlibProcessor processor = processorMap.get(type);
+                String path = getCachePath(clientlib, encoding);
+                Resource cacheEntry = resolver.getResource(path);
+                if (cacheEntry != null) {
+                    resolver.delete(cacheEntry);
+                    resolver.commit();
                 }
-                file.storeContent(inputStream);
-                ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
-                contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
-                contentValues.putAll(hints);
-                resolver.commit();
+                String[] separated = Clientlib.splitPathAndName(path);
+                Resource parent = giveParent(resolver, separated[0]);
+                cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
+                resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
+                file = new FileHandle(cacheEntry);
+                if (file.isValid()) {
+                    final PipedOutputStream outputStream = new PipedOutputStream();
+                    InputStream inputStream = new PipedInputStream(outputStream);
+                    context.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                clientlib.processContent(outputStream, processor, context);
+                            } catch (IOException | RepositoryException ex) {
+                                LOG.error(ex.getMessage(), ex);
+                            }
+                        }
+                    });
+                    if (ENCODING_GZIP.equals(encoding)) {
+                        inputStream = gzipProcessor.processContent(clientlib, inputStream, context);
+                    }
+                    file.storeContent(inputStream);
+                    ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
+                    contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
+                    contentValues.putAll(hints);
+                    resolver.commit();
+                }
+            } finally {
+                context.shutdown();
             }
         }
         if (file.isValid()) {
