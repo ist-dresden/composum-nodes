@@ -48,7 +48,9 @@
                             {'name':'path', 'value':result.path},
                             {'name':'principal name', 'value':result.principalName},
                             {'name':'member of', 'value':result.memberOf},
-                            {'name':'declared member of', 'value':result.declaredMemberOf}
+                            {'name':'declared member of', 'value':result.declaredMemberOf},
+                            {'name':'members', 'value':result.members},
+                            {'name':'declared members', 'value':result.declaredMembers}
                         ];
                         if (nodetype == 'user') {
                             formattedResult.push(

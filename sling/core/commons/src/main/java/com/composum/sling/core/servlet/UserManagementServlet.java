@@ -26,6 +26,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -69,8 +70,10 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
         // GET
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.users, new GetUsers());
+        // curl -u admin:admin http://localhost:9090/bin/core/usermanagement.user.json/eeee
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.user, new GetUser());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.groups, new GetGroups());
+        // curl -u admin:admin http://localhost:9090/bin/core/usermanagement.group.json/mygroup
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.group, new GetGroup());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.tree, new GetTree());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.properties, new GetProperties());
@@ -100,12 +103,22 @@ public class UserManagementServlet extends AbstractServiceServlet {
         String path;
         String[] memberOf = {};
         String[] declaredMemberOf = {};
+        String[] members = {};
+        String[] declaredMembers = {};
         String principalName;
-        protected static String[] getIDs(Iterator<Group> groupIterator) throws RepositoryException {
+//        protected static String[] getIDs(Iterator<Group> groupIterator) throws RepositoryException {
+//            List<String> strings = new ArrayList<>();
+//            while (groupIterator.hasNext()) {
+//                Group group = groupIterator.next();
+//                strings.add(group.getID());
+//            }
+//            return strings.toArray(new String[strings.size()]);
+//        }
+        protected static String[] getIDs(Iterator<? extends Authorizable> authorizableIterator) throws RepositoryException {
             List<String> strings = new ArrayList<>();
-            while (groupIterator.hasNext()) {
-                Group group = groupIterator.next();
-                strings.add(group.getID());
+            while (authorizableIterator.hasNext()) {
+                Authorizable authorizable = authorizableIterator.next();
+                strings.add(authorizable.getID());
             }
             return strings.toArray(new String[strings.size()]);
         }
@@ -149,11 +162,16 @@ public class UserManagementServlet extends AbstractServiceServlet {
             GroupEntry groupEntry = new GroupEntry();
             Iterator<Group> groupIterator = group.memberOf();
             Iterator<Group> declaredMemberOf = group.declaredMemberOf();
+            Iterator<Authorizable> members = group.getMembers();
+            Iterator<Authorizable> declaredMembers = group.getDeclaredMembers();
             groupEntry.id = group.getID();
             groupEntry.path = group.getPath();
             groupEntry.principalName = group.getPrincipal().getName();
             groupEntry.memberOf = getIDs(groupIterator);
             groupEntry.declaredMemberOf = getIDs(declaredMemberOf);
+            groupEntry.members = getIDs(members);
+            groupEntry.declaredMembers = getIDs(declaredMembers);
+
             return groupEntry;
         }
     }
@@ -240,13 +258,6 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final UserManager userManager = session.getUserManager();
             String authorizableName = request.getParameter("authorizable");;
             String groupName = request.getParameter("group");;
-//
-//            final Gson gson = new Gson();
-//            @SuppressWarnings("unchecked") final Map<String, String> p = gson.fromJson(
-//                    new InputStreamReader(request.getInputStream(), MappingRules.CHARSET.name()),
-//                    Map.class);
-//            String authorizableName = p.get("authorizable");
-//            String groupName = p.get("group");
             final Authorizable authorizable = userManager.getAuthorizable(authorizableName);
             final Group group = (Group) userManager.getAuthorizable(groupName);
             boolean b = group.addMember(authorizable);
@@ -470,33 +481,43 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final String path = AbstractServiceServlet.getPath(request);
-            final UserManager userManager = session.getUserManager();
-            final Authorizable authorizable = userManager.getAuthorizable(path.startsWith("/") ? path.substring(1) : path);
-            User user = (User) authorizable;
-            UserEntry userEntry = UserEntry.fromUser(user);
-            String s = new GsonBuilder().create().toJson(userEntry);
-            PrintWriter writer = response.getWriter();
-            writer.write(s);
-            writer.write('\n');
-            writer.flush();
-            writer.close();
-
+            if (path == null) {
+                ResponseUtil.writeEmptyArray(response);
+            } else {
+                final UserManager userManager = session.getUserManager();
+                final Authorizable authorizable = userManager.getAuthorizable(path.startsWith("/") ? path.substring(1) : path);
+                if (authorizable == null) {
+                    ResponseUtil.writeEmptyArray(response);
+                } else {
+                    User user = (User) authorizable;
+                    UserEntry userEntry = UserEntry.fromUser(user);
+                    String s = new GsonBuilder().create().toJson(userEntry);
+                    PrintWriter writer = response.getWriter();
+                    writer.write(s);
+                    writer.write('\n');
+                    writer.flush();
+                    writer.close();
+                }
+            }
         }
-
     }
 
     public static class CreateUser implements ServletOperation {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
-            final ResourceResolver resolver = request.getResourceResolver();
-            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
-            final String path = AbstractServiceServlet.getPath(request);
-            final UserManager userManager = session.getUserManager();
-            String username = request.getParameter("username");;
-            String password = request.getParameter("password");;
-            userManager.createUser(username, password);
-            session.save();
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final UserManager userManager = session.getUserManager();
+                String username = request.getParameter("username");
+                String password = request.getParameter("password");
+                userManager.createUser(username, password);
+                session.save();
+            } catch (IllegalArgumentException e) {
+                LOG.error(e.getMessage(), e);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+            }
         }
     }
 
@@ -506,12 +527,30 @@ public class UserManagementServlet extends AbstractServiceServlet {
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
-            final String path = AbstractServiceServlet.getPath(request);
             final UserManager userManager = session.getUserManager();
-            final Authorizable authorizable = userManager.getAuthorizable(path.substring(path.lastIndexOf('/')+1));
-            authorizable.remove();
-            session.save();
-            ResponseUtil.writeEmptyArray(response);
+            final String path = AbstractServiceServlet.getPath(request);
+            if (path != null) {
+                String authorizableName = path.substring(path.lastIndexOf('/') + 1);
+                if (authorizableName.equals("admin") || authorizableName.equals("anonymous")) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, authorizableName + " deleted. System destroyed.");
+                } else {
+                    final Authorizable authorizable = userManager.getAuthorizable(authorizableName);
+                    if (authorizable == null) {
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND, authorizableName + " not found.");
+                    } else {
+                        Iterator<Group> groupIterator = authorizable.declaredMemberOf();
+                        while (groupIterator.hasNext()) {
+                            Group group = groupIterator.next();
+                            group.removeMember(authorizable);
+                        }
+                        authorizable.remove();
+                        session.save();
+                        ResponseUtil.writeEmptyArray(response);
+                    }
+                }
+            } else {
+                ResponseUtil.writeEmptyArray(response);
+            }
         }
     }
 
@@ -535,17 +574,24 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final String path = AbstractServiceServlet.getPath(request);
-            final UserManager userManager = session.getUserManager();
-            final Authorizable authorizable = userManager.getAuthorizable(path.startsWith("/") ? path.substring(1) : path);
-            Group group = (Group) authorizable;
-            GroupEntry groupEntry = GroupEntry.fromGroup(group);
-            String s = new GsonBuilder().create().toJson(groupEntry);
-            PrintWriter writer = response.getWriter();
-            writer.write(s);
-            writer.write('\n');
-            writer.flush();
-            writer.close();
-
+            if (path == null) {
+                ResponseUtil.writeEmptyArray(response);
+            } else {
+                final UserManager userManager = session.getUserManager();
+                final Authorizable authorizable = userManager.getAuthorizable(path.startsWith("/") ? path.substring(1) : path);
+                if (authorizable==null) {
+                    ResponseUtil.writeEmptyArray(response);
+                } else {
+                    Group group = (Group) authorizable;
+                    GroupEntry groupEntry = GroupEntry.fromGroup(group);
+                    String s = new GsonBuilder().create().toJson(groupEntry);
+                    PrintWriter writer = response.getWriter();
+                    writer.write(s);
+                    writer.write('\n');
+                    writer.flush();
+                    writer.close();
+                }
+            }
         }
 
     }
