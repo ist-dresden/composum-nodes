@@ -27,7 +27,7 @@
                         }, {
                             class: 'name',
                             field: 'name',
-                            title: 'Name'
+                            title: 'Authorizable ' + usermanagement.current.node.name + ' belongs to these group(s)'
                         }]
                 });
 
