@@ -55,7 +55,6 @@ public class Clientlib {
     protected final Type type;
 
     private transient Calendar lastModified;
-    private transient FileHandle file;
 
     public Clientlib(SlingHttpServletRequest request, String path, Type type) {
         this.request = request;

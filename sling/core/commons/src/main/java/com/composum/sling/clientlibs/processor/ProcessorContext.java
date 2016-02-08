@@ -4,7 +4,6 @@ import org.apache.sling.api.resource.ResourceResolver;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by rw on 05.02.16.
@@ -16,11 +15,11 @@ public class ProcessorContext {
     protected final Map<String, Object> hints;
 
     public ProcessorContext(final ResourceResolver resolver,
-                            final Map<String, Object> hints,
-                            int maxPipelineLength) {
+                            ExecutorService executorService,
+                            final Map<String, Object> hints) {
         this.resolver = resolver;
         this.hints = hints;
-        executorService = Executors.newFixedThreadPool(maxPipelineLength);
+        this.executorService = executorService;
     }
 
     public ResourceResolver getResolver() {
@@ -29,10 +28,6 @@ public class ProcessorContext {
 
     public void execute(Runnable runnable) {
         executorService.execute(runnable);
-    }
-
-    public void shutdown() {
-        executorService.shutdown();
     }
 
     public void hint(String key, Object value) {

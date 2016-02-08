@@ -12,6 +12,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
@@ -38,6 +39,9 @@ import java.util.Calendar;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Component(
         label = "Clientlib Service",
@@ -50,12 +54,13 @@ public class DefaultClientlibService implements ClientlibService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultClientlibService.class);
 
+    public static final boolean DEFAULT_GZIP_ENABLED = false;
     public static final String GZIP_ENABLED = "gzip.enabled";
     @Property(
             name = GZIP_ENABLED,
             label = "GZip enabled",
             description = "if 'true' the content is zippend if possible",
-            boolValue = false
+            boolValue = DEFAULT_GZIP_ENABLED
     )
     protected boolean gzipEnabled;
 
@@ -68,6 +73,27 @@ public class DefaultClientlibService implements ClientlibService {
             value = DEFAULT_CACHE_ROOT
     )
     protected String cacheRoot;
+
+    public static final int DEFAULT_THREAD_POOL_MIN = 5;
+    public static final String MIN_THREAD_POOL_SIZE = "clientlibs.threadpool.min";
+    @Property(
+            name = MIN_THREAD_POOL_SIZE,
+            label = "Threadpool min",
+            description = "the minimum size of the thread pool for clientlib processing (must be "
+                    + DEFAULT_THREAD_POOL_MIN + " or greater)",
+            intValue = DEFAULT_THREAD_POOL_MIN
+    )
+    protected int threadPoolMin;
+
+    public static final int DEFAULT_THREAD_POOL_MAX = 20;
+    public static final String MAX_THREAD_POOL_SIZE = "clientlibs.threadpool.max";
+    @Property(
+            name = MAX_THREAD_POOL_SIZE,
+            label = "Threadpool max",
+            description = "the size (maximum) of the thread pool for clientlib processing (must be equal or greater tahn the minimum)",
+            intValue = DEFAULT_THREAD_POOL_MAX
+    )
+    protected int threadPoolMax;
 
     public static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
 
@@ -90,6 +116,8 @@ public class DefaultClientlibService implements ClientlibService {
 
     @Reference
     protected GzipProcessor gzipProcessor;
+
+    protected ThreadPoolExecutor executorService = null;
 
     protected Map<Clientlib.Type, ClientlibRenderer> rendererMap;
     protected Map<Clientlib.Type, ClientlibProcessor> processorMap;
@@ -143,48 +171,52 @@ public class DefaultClientlibService implements ClientlibService {
         final Map<String, Object> hints = new HashMap<>();
         FileHandle file = getCachedFile(clientlib, encoding);
         if (file == null || !file.isValid()) {
+            // used for maximum backwards compatibility
             ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
-            final ProcessorContext context = new ProcessorContext(resolver, hints, 4);
-            try {
-                Clientlib.Type type = clientlib.getType();
-                final ClientlibProcessor processor = processorMap.get(type);
-                String path = getCachePath(clientlib, encoding);
-                Resource cacheEntry = resolver.getResource(path);
-                if (cacheEntry != null) {
-                    resolver.delete(cacheEntry);
-                    resolver.commit();
-                }
-                String[] separated = Clientlib.splitPathAndName(path);
-                Resource parent = giveParent(resolver, separated[0]);
-                cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
-                resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
-                file = new FileHandle(cacheEntry);
-                if (file.isValid()) {
-                    final PipedOutputStream outputStream = new PipedOutputStream();
-                    InputStream inputStream = new PipedInputStream(outputStream);
-                    context.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                clientlib.processContent(outputStream, processor, context);
-                            } catch (IOException | RepositoryException ex) {
-                                LOG.error(ex.getMessage(), ex);
-                            }
-                        }
-                    });
-                    if (ENCODING_GZIP.equals(encoding)) {
-                        inputStream = gzipProcessor.processContent(clientlib, inputStream, context);
-                    }
-                    file.storeContent(inputStream);
-                    ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
-                    contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
-                    contentValues.putAll(hints);
-                    resolver.commit();
-                }
-            } finally {
-                context.shutdown();
+            final ProcessorContext context = new ProcessorContext(resolver, executorService, hints);
+
+            Clientlib.Type type = clientlib.getType();
+
+            String path = getCachePath(clientlib, encoding);
+            Resource cacheEntry = resolver.getResource(path);
+            if (cacheEntry != null) {
+                resolver.delete(cacheEntry);
+                resolver.commit();
             }
+
+            String[] separated = Clientlib.splitPathAndName(path);
+            Resource parent = giveParent(resolver, separated[0]);
+            cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
+            resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
+
+            file = new FileHandle(cacheEntry);
+            if (file.isValid()) {
+                final ClientlibProcessor processor = processorMap.get(type);
+                final PipedOutputStream outputStream = new PipedOutputStream();
+                InputStream inputStream = new PipedInputStream(outputStream);
+                context.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            clientlib.processContent(outputStream, processor, context);
+                        } catch (IOException | RepositoryException ex) {
+                            LOG.error(ex.getMessage(), ex);
+                        }
+                    }
+                });
+                if (ENCODING_GZIP.equals(encoding)) {
+                    inputStream = gzipProcessor.processContent(clientlib, inputStream, context);
+                }
+                file.storeContent(inputStream);
+
+                ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
+                contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
+                contentValues.putAll(hints);
+            }
+
+            resolver.commit();
         }
+
         if (file.isValid()) {
             ValueMap contentValues = file.getContent().adaptTo(ValueMap.class);
             hints.put(ResourceUtil.PROP_LAST_MODIFIED, contentValues.get(ResourceUtil.PROP_LAST_MODIFIED));
@@ -225,7 +257,7 @@ public class DefaultClientlibService implements ClientlibService {
         return path;
     }
 
-    protected Resource giveParent(ResourceResolver resolver, String path)
+    protected synchronized Resource giveParent(ResourceResolver resolver, String path)
             throws PersistenceException {
         Resource resource = resolver.getResource(path);
         if (resource == null) {
@@ -240,8 +272,14 @@ public class DefaultClientlibService implements ClientlibService {
     @Activate
     protected void activate(ComponentContext context) {
         Dictionary<String, Object> properties = context.getProperties();
-        gzipEnabled = PropertiesUtil.toBoolean(properties.get(GZIP_ENABLED), false);
+        gzipEnabled = PropertiesUtil.toBoolean(properties.get(GZIP_ENABLED), DEFAULT_GZIP_ENABLED);
         cacheRoot = PropertiesUtil.toString(properties.get(CACHE_ROOT), DEFAULT_CACHE_ROOT);
+        threadPoolMin = PropertiesUtil.toInteger(properties.get(MIN_THREAD_POOL_SIZE), DEFAULT_THREAD_POOL_MIN);
+        threadPoolMax = PropertiesUtil.toInteger(properties.get(MAX_THREAD_POOL_SIZE), DEFAULT_THREAD_POOL_MAX);
+        if (threadPoolMin < DEFAULT_THREAD_POOL_MIN) threadPoolMin = DEFAULT_THREAD_POOL_MIN;
+        if (threadPoolMax < threadPoolMin) threadPoolMax = threadPoolMin;
+        executorService = new ThreadPoolExecutor(threadPoolMin, threadPoolMax,
+                200L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
         rendererMap = new HashMap<>();
         rendererMap.put(Clientlib.Type.js, javascriptProcessor);
         rendererMap.put(Clientlib.Type.css, cssProcessor);
@@ -249,5 +287,13 @@ public class DefaultClientlibService implements ClientlibService {
         processorMap = new HashMap<>();
         processorMap.put(Clientlib.Type.js, javascriptProcessor);
         processorMap.put(Clientlib.Type.css, cssProcessor);
+    }
+
+    @Deactivate
+    protected void deactivate(ComponentContext context) {
+        if (executorService != null) {
+            executorService.shutdown();
+            executorService = null;
+        }
     }
 }
