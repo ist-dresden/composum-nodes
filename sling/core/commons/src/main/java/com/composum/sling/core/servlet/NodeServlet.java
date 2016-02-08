@@ -1309,6 +1309,7 @@ public class NodeServlet extends AbstractServiceServlet {
         for (Resource child : resource.getChildren()) {
             hasChildren = true;
             if (filter.accept(child) &&
+                    // filter out additional synthetic folders in addition to the 1st level '//...' nodes (AEM 6.1 !?)
                     !(ResourceUtil.containsPath(children, child) && ResourceUtil.isSyntheticResource(child))) {
                 children.add(ResourceHandle.use(child));
             }
