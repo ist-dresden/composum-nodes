@@ -22,7 +22,7 @@ import java.util.Map;
 
 @SlingServlet(
         resourceTypes = "composum/sling/commons/clientlib",
-        extensions = {"js", "css", "link"},
+        extensions = {"js", "css"},
         methods = {"GET"}
 )
 public class ClientlibServlet extends SlingSafeMethodsServlet {
