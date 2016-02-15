@@ -44,6 +44,45 @@
       }
     }
   },
+  "usermanagement": {
+    "sling:resourceType": "composum/sling/commons/clientlib",
+    "css": {
+      "jcr:primaryType": "sling:OrderedFolder"
+    },
+    "js": {
+      "jcr:primaryType": "sling:OrderedFolder",
+      "adduserdialog": {
+        "embed": "composum/sling/console/usermanagement/js/adduserdialog.js"
+      },
+      "addtogroupdialog": {
+        "embed": "composum/sling/console/usermanagement/js/addtogroupdialog.js"
+      },
+      "addgroupdialog": {
+        "embed": "composum/sling/console/usermanagement/js/addgroupdialog.js"
+      },
+      "disableuserdialog": {
+        "embed": "composum/sling/console/usermanagement/js/disableuserdialog.js"
+      },
+      "changepwdialog": {
+        "embed": "composum/sling/console/usermanagement/js/changepwdialog.js"
+      },
+      "propertiestable": {
+        "embed": "composum/sling/console/usermanagement/js/propertiestable.js"
+      },
+      "groupstable": {
+        "embed": "composum/sling/console/usermanagement/js/groupstable.js"
+      },
+      "usertable": {
+        "embed": "composum/sling/console/usermanagement/js/usertable.js"
+      },
+      "usermanagement": {
+        "embed": "composum/sling/console/usermanagement/js/usermanagement.js"
+      },
+      "startup": {
+        "embed": "composum/sling/console/usermanagement/js/startup.js"
+      }
+    }
+  },
   "console": {
     "sling:resourceType": "composum/sling/commons/clientlib",
     "link": {
