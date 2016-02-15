@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ProcessorPipeline implements ClientlibProcessor {
 
@@ -35,10 +34,10 @@ public class ProcessorPipeline implements ClientlibProcessor {
     }
 
     @Override
-    public InputStream processContent(final Clientlib clientlib, InputStream stream, Map<String,Object> hints)
+    public InputStream processContent(final Clientlib clientlib, InputStream stream, ProcessorContext context)
             throws IOException {
         for (ClientlibProcessor processor : processors) {
-            stream = processor.processContent(clientlib, stream, hints);
+            stream = processor.processContent(clientlib, stream, context);
         }
         return stream;
     }

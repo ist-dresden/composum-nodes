@@ -93,18 +93,18 @@ public class YUICssProcessor implements CssProcessor {
     }
 
     @Override
-    public InputStream processContent(Clientlib clientlib, final InputStream source, Map<String,Object> hints)
+    public InputStream processContent(Clientlib clientlib, final InputStream source, ProcessorContext context)
             throws IOException {
         InputStream result = source;
         if (source != null) {
-            hints.put(ResourceUtil.PROP_MIME_TYPE, "text/css");
+            context.hint(ResourceUtil.PROP_MIME_TYPE, "text/css");
             if (minimize) {
                 final InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET);
                 final PipedOutputStream outputStream = new PipedOutputStream();
                 result = new PipedInputStream(outputStream);
                 final OutputStreamWriter writer = new OutputStreamWriter(outputStream);
                 final CssCompressor compressor = new CssCompressor(sourceReader);
-                new Thread(new Runnable() {
+                context.execute(new Runnable() {
                     @Override
                     public void run() {
                         try {
@@ -115,7 +115,7 @@ public class YUICssProcessor implements CssProcessor {
                             LOG.error(ex.getMessage(), ex);
                         }
                     }
-                }).start();
+                });
             }
         }
         return result;

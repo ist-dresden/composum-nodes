@@ -34,7 +34,7 @@ import java.util.Map;
         metatype = true
 )
 @Service
-public class YUIJavascriptProcessor  implements JavascriptProcessor {
+public class YUIJavascriptProcessor implements JavascriptProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(YUIJavascriptProcessor.class);
 
@@ -113,11 +113,11 @@ public class YUIJavascriptProcessor  implements JavascriptProcessor {
     }
 
     @Override
-    public InputStream processContent(Clientlib clientlib, final InputStream source, Map<String,Object> hints)
+    public InputStream processContent(Clientlib clientlib, final InputStream source, ProcessorContext context)
             throws IOException {
         InputStream result = source;
         if (source != null) {
-            hints.put(ResourceUtil.PROP_MIME_TYPE, "application/javascript");
+            context.hint(ResourceUtil.PROP_MIME_TYPE, "application/javascript");
             if (minimize) {
                 final InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET);
                 final PipedOutputStream outputStream = new PipedOutputStream();
@@ -125,7 +125,7 @@ public class YUIJavascriptProcessor  implements JavascriptProcessor {
                 final OutputStreamWriter writer = new OutputStreamWriter(outputStream);
                 final Reporter errorReporter = new Reporter(clientlib);
                 final JavaScriptCompressor compressor = new JavaScriptCompressor(sourceReader, errorReporter);
-                new Thread(new Runnable() {
+                context.execute(new Runnable() {
                     @Override
                     public void run() {
                         try {
@@ -136,7 +136,7 @@ public class YUIJavascriptProcessor  implements JavascriptProcessor {
                             LOG.error(ex.getMessage(), ex);
                         }
                     }
-                }).start();
+                });
             }
         }
         return result;
