@@ -15,6 +15,7 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
+import java.util.List;
 
 /**
  *
@@ -39,8 +40,11 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
 
     public static final String PROP_DATA = "jcr:data";
     public static final String PROP_MIME_TYPE = "jcr:mimeType";
+    public static final String PROP_ENCODING = "jcr:encoding";
+    public static final String PROP_PRIMARY_TYPE = "jcr:primaryType";
     public static final String PROP_JCR_CONTENT = "jcr:content";
     public static final String PROP_LAST_MODIFIED = "jcr:lastModified";
+    public static final String PROP_FILE_REFERENCE = "fileReference";
 
     public static Resource getOrCreateResource(ResourceResolver resolver, String path)
             throws RepositoryException {
@@ -82,6 +86,19 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
             }
         }
         return resource;
+    }
+
+    public static boolean containsPath(List<Resource> collection, Resource resource) {
+        return containsPath(collection, resource.getPath());
+    }
+
+    public static boolean containsPath(List<Resource> collection, String path) {
+        for (Resource item : collection) {
+            if (item.getPath().equals(path)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

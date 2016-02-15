@@ -11,19 +11,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <!-- switch of auto link for phone numbers -->
   <meta name="format-detection" content="telephone=no"/>
-  <!-- favicon -->
-  <cpn:clientlib rel="shortcut icon" path="composum/sling/commons/components/images/cpn-64.png"/>
-  <cpn:clientlib rel="apple-touch-icon" path="composum/sling/commons/components/images/cpn-128.png"/>
-  <!-- library styles -->
+<cpn:clientlib type="link" path="composum/sling/console/clientlibs/console"/>
   <cpn:clientlib path="fonts/awesome/4.3.0/css/font-awesome.css"/>
   <cpn:clientlib path="jslibs/bootstrap/3.3.2/css/bootstrap.min.css"/>
-  <cpn:clientlib path="jslibs/bootstrap/3.3.2/css/bootstrap-theme.min.css"/>
-  <cpn:clientlib path="jslibs/bootstrap-table/1.7.0/bootstrap-table.min.css"/>
-  <cpn:clientlib path="jslibs/x-editable/1.5.1/bootstrap3-editable/css/bootstrap-editable.css"/>
-  <cpn:clientlib path="jslibs/bootstrap-datetimepicker/4.14.30/css/bootstrap-datetimepicker.min.css"/>
-  <cpn:clientlib path="jslibs/bootstrap-fileinput/4.1.8/css/fileinput.min.css"/>
-  <cpn:clientlib path="jslibs/jquery/split-pane/snapshot/split-pane.css"/>
   <cpn:clientlib path="jslibs/jstree/3.0.9/themes/proton/style.min.css"/>
-  <!-- console / components style -->
-<sling:call script="/libs/composum/sling/commons/components/head.jsp"/>
-  <cpn:clientlib path="composum/sling/console/page/css/console.css"/>
+  <cpn:clientlib path="jslibs/x-editable/1.5.1/bootstrap3-editable/css/bootstrap-editable.css"/>
+  <cpn:clientlib path="jslibs/bootstrap-fileinput/4.1.8/css/fileinput.min.css"/>
+<cpn:clientlib type="css" path="composum/sling/console/clientlibs/console"/>

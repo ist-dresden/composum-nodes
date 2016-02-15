@@ -4,13 +4,5 @@
 <sling:defineObjects/>
 <head>
 <sling:call script="/libs/composum/sling/console/page/head.jsp"/>
-  <!-- browser style -->
-  <cpn:clientlib path="composum/sling/console/browser/css/nodes.css"/>
-  <cpn:clientlib path="composum/sling/console/browser/css/browser.css"/>
-  <!-- browser components -->
-  <cpn:clientlib path="composum/sling/console/browser/components/favorites/favorites.css"/>
-  <%--
-  <!-- browser theme - experimental -->
-  <cpn:clientlib path="/libs/composum/sling/console/page/css/theme-dark.css"/>
-  --%>
+<cpn:clientlib type="css" path="composum/sling/console/clientlibs/browser"/>
 </head>
