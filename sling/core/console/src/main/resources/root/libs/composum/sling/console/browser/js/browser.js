@@ -25,7 +25,7 @@
                                 node: result.responseJSON,
                                 viewUrl: core.getContextUrl('/bin/browser.view.html' + window.core.encodePath(path)),
                                 nodeUrl: core.getContextUrl('/bin/browser.html' + window.core.encodePath(path))
-                            }
+                            };
                             core.console.getProfile().set('browser', 'current', path);
                             if (history.replaceState) {
                                 history.replaceState(browser.current.path, name, browser.current.nodeUrl);
@@ -174,14 +174,10 @@
                 var path = browser.getCurrentPath();
                 var clipboard = core.console.getProfile().get('nodes', 'clipboard');
                 if (path && clipboard && clipboard.path) {
-                    core.ajaxPut("/bin/core/node.copy.json" + path, JSON.stringify({
-                        path: clipboard.path
-                    }), {
-                        dataType: 'json'
-                    }, _.bind(function (result) {
-                        this.refreshTree();
-                    }, this), _.bind(function (result) {
-                        core.alert('danger', 'Error', 'Error on copying node', result);
+                    var dialog = core.nodes.getCopyNodeDialog();
+                    dialog.show(_.bind(function () {
+                        dialog.setNodePath(clipboard.path);
+                        dialog.setTargetPath(path);
                     }, this));
                 }
             },
@@ -283,11 +279,6 @@
         browser.getBreadcrumbs = function () {
             return core.getView('#browser-view .breadcrumbs', browser.Breadcrumbs);
         };
-
-        /**
-         * the base 'class' for all node tabs must be known before one of the special view implementations
-         */
-        browser.NodeTab = Backbone.View.extend({});
 
     })(core.browser);
 

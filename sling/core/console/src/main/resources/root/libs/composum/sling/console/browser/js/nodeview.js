@@ -9,7 +9,7 @@
 
     (function (browser) {
 
-        browser.DisplayTab = browser.NodeTab.extend({
+        browser.DisplayTab = core.console.DetailTab.extend({
 
             pathPattern: new RegExp('^(https?://[^/]+)?(/.*)$'),
             urlPattern: new RegExp('^(.*/[^/]+)(\\.[^.]+)$'),
@@ -185,7 +185,7 @@
             }
         });
 
-        browser.EditorTab = browser.NodeTab.extend({
+        browser.EditorTab = core.console.DetailTab.extend({
 
             initialize: function (options) {
                 this.editor = core.getWidget(this.$el, '.widget.code-editor-widget', core.components.CodeEditorWidget);
@@ -313,7 +313,7 @@
             }
         });
 
-        browser.JsonTab = browser.NodeTab.extend({
+        browser.JsonTab = core.console.DetailTab.extend({
 
             initialize: function (options) {
                 this.$iframe = this.$('.embedded iframe');
@@ -542,7 +542,7 @@
                         this.hide();
                     }, this), _.bind(function (result) {
                         core.alert('danger', 'Error', 'Error on adding access policy entries', result)
-                    }));
+                    }, this));
             }
 
         });
@@ -552,7 +552,7 @@
             dialog.show(undefined, callback);
         };
 
-        browser.PoliciesTab = browser.NodeTab.extend({
+        browser.PoliciesTab = core.console.DetailTab.extend({
 
             initialize: function (options) {
                 this.verticalSplit = core.getWidget(this.$el,
@@ -607,47 +607,72 @@
             }
         });
 
+        //
+        // detail view (console)
+        //
+
+        browser.detailViewTabTypes = [{
+            // the 'properties view' from 'properties.js'
+            selector: '> .properties',
+            tabType: browser.PropertiesTab
+        }, {
+            selector: '> .display',
+            tabType: browser.HtmlTab
+        }, {
+            selector: '> .image',
+            tabType: browser.ImageTab
+        }, {
+            selector: '> .video',
+            tabType: browser.VideoTab
+        }, {
+            selector: '> .editor',
+            tabType: browser.EditorTab
+        }, {
+            selector: '> .script',
+            tabType: browser.ScriptTab
+        }, {
+            selector: '> .json',
+            tabType: browser.JsonTab
+        }, {
+            selector: '> .acl',
+            tabType: browser.PoliciesTab
+        }, {
+            selector: '> .versions',
+            tabType: browser.VersionsTab
+        }, {
+            // the fallback to the basic implementation as a default rule
+            selector: '> div',
+            tabType: core.console.DetailTab
+        }];
+
         /**
          * the node view (node detail) which controls the node view tabs
          */
-        browser.NodeView = Backbone.View.extend({
+        browser.NodeView = core.console.DetailView.extend({
+
+            getProfileId: function () {
+                return 'browser';
+            },
+
+            getCurrentPath: function () {
+                return browser.current ? browser.current.path : undefined;
+            },
+
+            getViewUri: function () {
+                return browser.current.viewUrl;
+            },
+
+            getTabUri: function (name) {
+                return '/bin/browser.tab.' + name + '.html';
+            },
+
+            getTabTypes: function () {
+                return browser.detailViewTabTypes;
+            },
 
             initialize: function (options) {
-                this.tabTypes = [{
-                    // the 'properties view' from 'properties.js'
-                    selector: '> .properties',
-                    tabType: browser.PropertiesTab
-                }, {
-                    selector: '> .display',
-                    tabType: browser.HtmlTab
-                }, {
-                    selector: '> .image',
-                    tabType: browser.ImageTab
-                }, {
-                    selector: '> .video',
-                    tabType: browser.VideoTab
-                }, {
-                    selector: '> .editor',
-                    tabType: browser.EditorTab
-                }, {
-                    selector: '> .script',
-                    tabType: browser.ScriptTab
-                }, {
-                    selector: '> .json',
-                    tabType: browser.JsonTab
-                }, {
-                    selector: '> .acl',
-                    tabType: browser.PoliciesTab
-                }, {
-                    selector: '> .versions',
-                    tabType: browser.VersionsTab
-                }, {
-                    // the fallback to the basic implementation as a default rule
-                    selector: '> div',
-                    tabType: browser.NodeTab
-                }];
+                core.console.DetailView.prototype.initialize.apply(this, [options]);
                 this.$el.resize(_.bind(this.resize, this));
-                $(document).on('path:selected', _.bind(this.reload, this));
             },
 
             /**
@@ -664,39 +689,11 @@
             /**
              * (re)load the content with the view for the current node ('browser.getCurrentPath()')
              */
-            reload: function () {
-                this.path = browser.getCurrentPath();
-                if (this.path) {
-                    // AJAX load for the current path with the 'viewUrl' from 'browser.current'
-                    this.$el.load(browser.current.viewUrl, _.bind(function () {
-                        // iniatialize all view state attributes with the new content
-                        browser.getBreadcrumbs();
-                        this.$nodeView = this.$('.node-view-panel');
-                        this.$nodeTabs = this.$nodeView.find('.node-tabs');
-                        this.$nodeContent = this.$nodeView.find('.node-view-content');
-                        this.favoriteToggle = this.$nodeView.find('> .favorite-toggle');
-                        // add the click handler to the tab toolbar links
-                        this.$nodeTabs.find('a').click(_.bind(this.tabSelected, this));
-                        // get the group key of the last view from profile and restore this tab state if possible
-                        var group = core.console.getProfile().get('browser', 'nodeTab');
-                        var $tab;
-                        if (group) {
-                            // determinte the last view by the group id if such a view is available
-                            $tab = this.$nodeView.find('a[data-group="' + group + '"]');
-                        }
-                        if (!$tab || $tab.length < 1) {
-                            // if the group of the last view is not available use the view of the first tab
-                            $tab = this.$nodeTabs.find('a');
-                        }
-                        // get the tab key from the links anchor and select the tab
-                        var tab = $tab.attr('href').substring(1);
-                        this.selectTab(tab, group); // remember the group key(!)
-                        this.checkFavorite();
-                        this.favoriteToggle.click(_.bind(this.toggleFavorite, this));
-                    }, this));
-                } else {
-                    this.$el.html(''); // clear the view if nothing selected
-                }
+            onReload: function () {
+                browser.getBreadcrumbs();
+                this.favoriteToggle = this.$detailView.find('.favorite-toggle');
+                this.checkFavorite();
+                this.favoriteToggle.click(_.bind(this.toggleFavorite, this));
             },
 
             checkFavorite: function () {
@@ -718,52 +715,6 @@
                     $(document).trigger("favorite:toggle", [this.path]);
                     this.checkFavorite();
                 }
-            },
-
-            /**
-             * select a tab by the tabs anchor name; remember the group of the tab in the users profile,
-             * remember the group given here as parameter if this parameter is not undefined
-             */
-            selectTab: function (name, group) {
-                if (!name) {
-                    name = 'properties';
-                }
-                var path = browser.getCurrentPath();
-                if (path) {
-                    var href = '/bin/browser.tab.' + name + '.html' + window.core.encodePath(path)
-                    this.$nodeContent.load(core.getContextUrl(href),
-                        _.bind(function () {
-                            this.$nodeTabs.find('a.active').removeClass('active');
-                            var $item = this.$nodeTabs.find('a[href="#' + name + '"]');
-                            $item.addClass('active');
-                            if (!group) {
-                                group = $item.attr('data-group');
-                            }
-                            core.console.getProfile().set('browser', 'nodeTab', group);
-                            // initialize the new view
-                            this.viewWidget = undefined;
-                            for (var i = 0; !this.viewWidget && i < this.tabTypes.length; i++) {
-                                var type = this.tabTypes[i];
-                                this.viewWidget = core.getWidget(this.$nodeContent, type.selector, type.tabType);
-                            }
-                            if (this.viewWidget) {
-                                if (_.isFunction(this.viewWidget.reload)) {
-                                    this.viewWidget.reload();
-                                }
-                            }
-                        }, this));
-                }
-            },
-
-            /**
-             * the event handler for the tab actions (button links) calls 'selectTab' with the links anchor
-             */
-            tabSelected: function (event) {
-                event.preventDefault();
-                var $action = $(event.currentTarget).closest('a');
-                var tab = $action.attr('href').substring(1);
-                this.selectTab(tab);
-                return false;
             }
         });
 

@@ -251,6 +251,20 @@
             },
 
             /**
+             * sets the focus on the textfield
+             */
+            focus: function () {
+                this.$textField.focus();
+            },
+
+            /**
+             * selects the complete text of textfield
+             */
+            selectAll: function() {
+                this.$textField.select();
+            },
+
+            /**
              * retrieves the input field to use (for redefinition in more complex widgets)
              */
             textField: function () {

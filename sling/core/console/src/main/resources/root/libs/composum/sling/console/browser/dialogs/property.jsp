@@ -7,8 +7,8 @@
     <div class="modal-dialog">
       <div class="modal-content form-panel default">
 
-        <form class="widget-form default" enctype="multipart/form-data"
-              action="${slingRequest.contextPath}/bin/core/property.bin${browser.current.pathEncoded}">
+        <cpn:form classes="widget-form default" enctype="multipart/form-data"
+                  action="/bin/core/property.bin${browser.current.pathEncoded}">
 
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -45,7 +45,7 @@
             <button type="button" class="btn btn-primary binary upload">Upload</button>
           </div>
 
-        </form>
+        </cpn:form>
       </div>
     </div>
   </div>

@@ -26,7 +26,7 @@
       </div>
       <div class="row">
         <div class="left col-md-3 col-sm-4 col-xs-12">
-          <a href="${slingRequest.contextPath}/bin/browser.html"><h2>the Browser</h2></a>
+          <cpn:link href="/bin/browser.html"><h2>the Browser</h2></cpn:link>
           <p>
             <ul class="list-group">
               <li class="list-group-item">repository tree with configurable filters</li>

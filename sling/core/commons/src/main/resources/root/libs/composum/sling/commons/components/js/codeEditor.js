@@ -108,9 +108,9 @@
                 var path = this.getPath();
                 if (path) {
                     core.ajaxPut("/bin/core/property.bin" + path, this.ace.getValue(), {
-                            contentType: 'text/plain;charset=UTF-8',
-                            dataType: 'text'
-                        }, undefined, undefined, _.bind(function (result, x, y) {
+                        contentType: 'text/plain;charset=UTF-8',
+                        dataType: 'text'
+                    }, undefined, undefined, _.bind(function (result, x, y) {
                         if (result.status == 200) {
                             if (_.isFunction(onSuccess)) {
                                 onSuccess(result);

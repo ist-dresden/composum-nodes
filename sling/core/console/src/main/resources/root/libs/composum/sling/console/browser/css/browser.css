@@ -95,7 +95,7 @@
 
 #browser-query .query-head .query-actions form .input-group-addon.filter.off::after,
 #browser-view .node-view-content .detail-toolbar .resolver.off:after {
-    content: '\\';
+    content: '\005c';
     color: #a94442; /* danger */
     position: absolute;
     left: 11px;
@@ -288,7 +288,11 @@
 
 #browser-view .node-view-panel .node-tabs {
     padding: 0 28px 5px;
-    background-color: #e4e4e4;
+}
+
+#browser-view .node-view-panel .detail-toolbar,
+#browser-view .node-view-panel .full-table-view .bootstrap-table .fixed-table-toolbar {
+    top: 0;
 }
 
 #browser-view .node-view-panel .node-tabs .btn-group {
@@ -318,182 +322,9 @@
     overflow: auto;
 }
 
-#browser-view .node-view-content .detail-toolbar .btn-group {
-    display: inline-block;
-    margin: 0;
-}
-
-#browser-view .node-view-content .detail-toolbar,
-#browser-view .node-view-content .full-table-view .bootstrap-table .fixed-table-toolbar {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 33px;
-    padding: 0 6px 0 0;
-}
-
-#browser-view .node-view-content .detail-toolbar .btn,
-#browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .btn {
-    font-size: 14px;
-    padding: 4px 9px;
-    margin-top: 1px;
-}
-
-#browser-view .node-view-content .detail-toolbar .btn.fa-download {
-    padding: 5px 9px 3px;
-}
-
-#browser-view .node-view-content .detail-toolbar .input-group,
-#browser-view .node-view-content .detail-toolbar .input-group-addon,
-#browser-view .node-view-content .detail-toolbar .input-group .form-control,
-#browser-view .node-view-content .detail-toolbar .select-buttons-widget .btn,
-#browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .search input {
-    height: 27px;
-}
-
-#browser-view .node-view-content .detail-toolbar .input-group-addon.text-muted {
-    color: #777 /* muted */
-}
-
-#browser-view .node-view-content .detail-toolbar .select-buttons-widget .btn {
-    margin-top: 2px;
-    width: 29px;
-    padding: 3px 0px;
-    text-align: center;
-}
-
-#browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .search input {
-    margin-top: 3px;
-
-}
-
-#browser-view .node-view-content .detail-toolbar .input-group,
-#browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .search input {
-    max-width: 170px;
-}
-
-
-#browser-view .node-view-content .detail-toolbar .input-group-addon {
-    font-size: 14px;
-    padding: 3px 6px 1px;
-}
-
-#browser-view .node-view-content .detail-toolbar .input-group.selectors .input-group-addon {
-    padding: 3px 3px 1px;
-}
-
-#browser-view .node-view-content .detail-toolbar .input-group input {
-    padding: 5px;
-}
-
-#browser-view .node-view-content .detail-toolbar .btn span.label,
-#browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .btn span.label {
-    display: none;
-}
-
-/**
- * Tables
- */
-
-#browser-view .fixed-table-container,
-#browser-view .bootstrap-table table,
-#browser-view .bootstrap-table table tr,
-#browser-view .bootstrap-table table th,
-#browser-view .bootstrap-table table td {
-    border: none;
-}
-
-#browser-view .bootstrap-table table th .th-inner {
-    line-height: auto;
-    padding: 0;
-}
-
-#browser-view .bootstrap-table table th,
-#browser-view .bootstrap-table table td {
-    font-size: 14px;
-    font-weight: normal;
-    line-height: 25px;
-    padding: 2px 5px;
-}
-
-#browser-view .bootstrap-table table th.bs-checkbox,
-#browser-view .bootstrap-table table td.bs-checkbox {
-    padding: 8px 5px 8px 6px;
-}
-
-#browser-view .bootstrap-table thead tr {
-    border-bottom: 1px solid #aaa;
-}
-
-#browser-view .bootstrap-table table th {
-    background-color: #fff;
-}
-
 /**
  * Properties
  */
-
-#browser-view .bootstrap-table .fixed-table-toolbar .bars {
-    line-height: 27px;
-}
-
-#browser-view .bootstrap-table .fixed-table-toolbar .bars,
-#browser-view .bootstrap-table .fixed-table-toolbar .search {
-    margin: 0 0 0 5px;
-}
-
-#browser-view .bootstrap-table table td .editable {
-    border-bottom: none;
-}
-
-#browser-view .bootstrap-table table td .editable-inline,
-#browser-view .bootstrap-table table td .editable-inline .form-group,
-#browser-view .bootstrap-table table td .editable-inline .editable-input,
-#browser-view .bootstrap-table table td .editable-inline .editable-input input {
-    width: 100%;
-}
-
-#browser-view .bootstrap-table table td .editable-inline {
-    padding-right: 90px;
-}
-
-#browser-view .bootstrap-table table td.checkbox .editable-inline,
-#browser-view .bootstrap-table table td.checkbox .editable-inline .editable-input {
-    width: auto;
-}
-
-#browser-view .bootstrap-table table td .editable-inline .editable-input input,
-#browser-view .bootstrap-table table td .editable-inline .editable-input select {
-    height: 25px;
-    font-size: 14px;
-    padding-top: 0;
-    padding-bottom: 0;
-    line-height: 1;
-}
-
-#browser-view .bootstrap-table table td .editable-inline .editable-input .editable-checkbox {
-    min-width: 30px;
-}
-
-#browser-view .bootstrap-table table tr.protected td {
-    color: #aaa;
-}
-
-#browser-view .bootstrap-table table tr.current td {
-    background: #76b6ec
-}
-
-#browser-view .bootstrap-table table tr.protected td .editable {
-    color: #888;
-}
-
-#browser-view .full-table-view .bootstrap-table .fixed-table-container {
-    position: absolute;
-    top: 37px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-}
 
 #browser-view-property-dialog .form-group.type {
     width: 80%;
