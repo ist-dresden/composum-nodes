@@ -1,5 +1,6 @@
 package com.composum.sling.clientlibs.handle;
 
+import com.composum.sling.clientlibs.processor.ProcessorContext;
 import com.composum.sling.clientlibs.service.ClientlibProcessor;
 import com.composum.sling.clientlibs.servlet.ClientlibServlet;
 import com.composum.sling.core.ResourceHandle;
@@ -54,7 +55,6 @@ public class Clientlib {
     protected final Type type;
 
     private transient Calendar lastModified;
-    private transient FileHandle file;
 
     public Clientlib(SlingHttpServletRequest request, String path, Type type) {
         this.request = request;
@@ -204,18 +204,18 @@ public class Clientlib {
         return new Link(url, PROP_REL, rel);
     }
 
-    public void processContent(OutputStream output, ClientlibProcessor processor, Map<String, Object> hints)
+    public void processContent(OutputStream output, ClientlibProcessor processor, ProcessorContext context)
             throws IOException, RepositoryException {
-        processContent(definition, output, processor, hints);
+        processContent(definition, output, processor, context);
         output.close();
     }
 
     protected void processContent(ResourceHandle resource, OutputStream output,
-                                  ClientlibProcessor processor, Map<String, Object> hints)
+                                  ClientlibProcessor processor, ProcessorContext context)
             throws RepositoryException, IOException {
         if (resource.isValid()) {
             if (isFile(resource)) {
-                processFile(resource, output, processor, hints);
+                processFile(resource, output, processor, context);
             } else {
                 String reference = resource.getProperty(PROP_EMBED, "");
                 if (StringUtils.isNotBlank(reference)) {
@@ -223,14 +223,14 @@ public class Clientlib {
                     if (target != null) {
                         if (target.isResourceType(ClientlibServlet.TYPE_CLIENTLIB)) {
                             Clientlib embedded = new Clientlib(request, reference, type);
-                            embedded.processContent(embedded.definition, output, processor, hints);
+                            embedded.processContent(embedded.definition, output, processor, context);
                         } else {
-                            processFile(target, output, processor, hints);
+                            processFile(target, output, processor, context);
                         }
                     }
                 } else {
                     for (Resource child : resource.getChildren()) {
-                        processContent(ResourceHandle.use(child), output, processor, hints);
+                        processContent(ResourceHandle.use(child), output, processor, context);
                     }
                 }
             }
@@ -238,13 +238,13 @@ public class Clientlib {
     }
 
     protected void processFile(Resource resource, OutputStream output,
-                               ClientlibProcessor processor, Map<String, Object> hints)
+                               ClientlibProcessor processor, ProcessorContext context)
             throws RepositoryException, IOException {
         FileHandle file = new FileHandle(resource);
         InputStream content = file.getStream();
         if (content != null) {
             if (processor != null) {
-                content = processor.processContent(this, content, hints);
+                content = processor.processContent(this, content, context);
             }
             IOUtils.copy(content, output);
             output.write('\n');

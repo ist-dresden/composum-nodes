@@ -15,6 +15,7 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
+import java.util.List;
 
 /**
  *
@@ -85,6 +86,19 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
             }
         }
         return resource;
+    }
+
+    public static boolean containsPath(List<Resource> collection, Resource resource) {
+        return containsPath(collection, resource.getPath());
+    }
+
+    public static boolean containsPath(List<Resource> collection, String path) {
+        for (Resource item : collection) {
+            if (item.getPath().equals(path)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

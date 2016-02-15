@@ -39,6 +39,7 @@ public class FileHandle {
     protected transient String name;
     protected transient String extension;
     protected transient String mimeType;
+    protected transient String encoding;
     protected transient Calendar lastModified;
 
     public FileHandle(Resource resource) {
@@ -79,6 +80,15 @@ public class FileHandle {
             }
         }
         return mimeType;
+    }
+
+    public String getEncoding() {
+        if (encoding == null) {
+            if (content.isValid()) {
+                encoding = content.getProperty(ResourceUtil.PROP_ENCODING, "");
+            }
+        }
+        return encoding;
     }
 
     public Calendar getLastModified() {

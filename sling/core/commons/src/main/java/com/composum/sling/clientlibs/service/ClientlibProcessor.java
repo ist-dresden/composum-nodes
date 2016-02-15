@@ -1,10 +1,10 @@
 package com.composum.sling.clientlibs.service;
 
 import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.processor.ProcessorContext;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 
 public interface ClientlibProcessor {
 
@@ -18,6 +18,6 @@ public interface ClientlibProcessor {
      * @return the transformation result
      * @throws IOException
      */
-    InputStream processContent(Clientlib clientlib, InputStream sourceStream, Map<String,Object> hints)
+    InputStream processContent(Clientlib clientlib, InputStream sourceStream, ProcessorContext context)
             throws IOException;
 }
