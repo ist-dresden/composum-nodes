@@ -2,9 +2,17 @@ package com.composum.sling.core;
 
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
-import com.composum.sling.core.servlet.*;
+import com.composum.sling.core.servlet.AbstractServiceServlet;
+import com.composum.sling.core.servlet.NodeServlet;
+import com.composum.sling.core.servlet.PackageServlet;
+import com.composum.sling.core.servlet.PropertyServlet;
+import com.composum.sling.core.servlet.SecurityServlet;
+import com.composum.sling.core.servlet.SystemServlet;
+import com.composum.sling.core.servlet.VersionServlet;
 import com.composum.sling.core.util.ResourceUtil;
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -41,6 +49,17 @@ public class CoreConfigImpl implements CoreConfiguration {
             longValue = QUERY_RESULT_LIMIT_DEFAULT
     )
     private long queryResultLimit;
+
+    @Property(
+            name = QUERY_TEMPLATES_KEY,
+            label = "Query Templates",
+            description = "a list of templates for the initial query history list",
+            value = {
+                    "/content/test ${text}",
+                    "${path}//${name}[jcr:contains(.,'${word}')]"
+            }
+    )
+    private String[] queryTemplates;
 
     @Property(
             name = ERRORPAGES_PATH,
@@ -160,6 +179,11 @@ public class CoreConfigImpl implements CoreConfiguration {
     }
 
     @Override
+    public String[] getQueryTemplates() {
+        return queryTemplates;
+    }
+
+    @Override
     public ResourceFilter getPageNodeFilter() {
         return pageNodeFilter;
     }
@@ -244,9 +268,12 @@ public class CoreConfigImpl implements CoreConfiguration {
 
     protected Dictionary properties;
 
+    @Activate
+    @Modified
     protected void activate(ComponentContext context) {
         this.properties = context.getProperties();
-        queryResultLimit = PropertiesUtil.toLong(QUERY_RESULT_LIMIT_KEY, QUERY_RESULT_LIMIT_DEFAULT);
+        queryResultLimit = PropertiesUtil.toLong(properties.get(QUERY_RESULT_LIMIT_KEY), QUERY_RESULT_LIMIT_DEFAULT);
+        queryTemplates = PropertiesUtil.toStringArray(properties.get(QUERY_TEMPLATES_KEY));
         errorpagesPath = (String) properties.get(ERRORPAGES_PATH);
         if (errorpagesPath.endsWith("/") && errorpagesPath.length() > 1) {
             errorpagesPath = errorpagesPath.substring(errorpagesPath.length() - 1);

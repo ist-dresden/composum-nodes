@@ -385,7 +385,7 @@ public class NodeServlet extends AbstractServiceServlet {
                     QueryManager queryManager = workspace.getQueryManager();
 
                     Query query = queryManager.createQuery(queryString, queryLang);
-                    query.setLimit(coreConfig.getQueryResultLimit());
+                    query.setLimit(coreConfig.getQueryResultLimit() + 1);
                     QueryResult result = query.execute();
 
                     ResourceFilter filter = getNodeFilter(request);
@@ -393,7 +393,7 @@ public class NodeServlet extends AbstractServiceServlet {
 
                 } catch (RepositoryException rex) {
                     LOG.error(rex.getMessage(), rex);
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, rex.getMessage());
+                    writeError(response, queryString, rex);
                 }
             }
         }
@@ -455,6 +455,13 @@ public class NodeServlet extends AbstractServiceServlet {
 
             writer.endObject();
         }
+
+
+        protected void writeError(SlingHttpServletResponse response, String queryString, Exception ex)
+                throws IOException {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "query: '" + queryString + "' (" + ex.getMessage() + ")");
+        }
     }
 
     protected class HtmlQueryOperation extends JsonQueryOperation {
@@ -470,8 +477,9 @@ public class NodeServlet extends AbstractServiceServlet {
             NodeIterator iterator = result.getNodes();
 
             writer.append("<tbody>");
+            long limit = coreConfig.getQueryResultLimit();
             int count = 0;
-            while (iterator.hasNext()) {
+            while (count < limit && iterator.hasNext()) {
                 Node node = iterator.nextNode();
                 ResourceHandle resource = ResourceHandle.use(resolver.getResource(node.getPath()));
                 if (resource.isValid() && accept(filter, resource)) {
@@ -517,15 +525,30 @@ public class NodeServlet extends AbstractServiceServlet {
             }
             StringBuilder message = new StringBuilder();
             message.append(count).append(" items found");
-            long limit = coreConfig.getQueryResultLimit();
             if (count >= limit) {
-                message.append(" (current limit: ").append(limit).append(")");
+                message.append(" (current limit: ").append(limit).append(", ")
+                        .append(iterator.hasNext() ? "more items present" : "no more items").append(")");
             }
-            message.append(". &nbsp; ").append(queryString);
-            writer.append("<tr class=\"summary info\">");
-            writer.append("<td class=\"icon\" data-type=\"summary\"><span></span></td>");
-            writer.append("<td class=\"message\" colspan=\"5\">").append(message).append("</td>");
+            message.append(".");
+            writeSummary(queryString, message.toString(), writer, "summary info");
+            writer.append("</tbody>");
+        }
+
+        protected void writeSummary(String queryString, String message,
+                                    PrintWriter writer, String cssClasses)
+                throws IOException {
+            writer.append("<tr class=\"" + cssClasses + "\">");
+            writer.append("<td class=\"icon\" data-type=\"summary\" rowspan=\"2\"><span></span></td>");
+            writer.append("<td class=\"message\" colspan=\"5\">").append(message)
+                    .append("<br/>query: '").append(queryString).append("'</td>");
             writer.append("</tr>");
+        }
+
+        protected void writeError(SlingHttpServletResponse response, String queryString, Exception ex)
+                throws IOException {
+            PrintWriter writer = response.getWriter();
+            writer.append("<tbody>");
+            writeSummary(queryString, ex.getMessage(), writer, "error danger");
             writer.append("</tbody>");
         }
     }
