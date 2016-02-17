@@ -106,14 +106,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         String[] members = {};
         String[] declaredMembers = {};
         String principalName;
-//        protected static String[] getIDs(Iterator<Group> groupIterator) throws RepositoryException {
-//            List<String> strings = new ArrayList<>();
-//            while (groupIterator.hasNext()) {
-//                Group group = groupIterator.next();
-//                strings.add(group.getID());
-//            }
-//            return strings.toArray(new String[strings.size()]);
-//        }
+
         protected static String[] getIDs(Iterator<? extends Authorizable> authorizableIterator) throws RepositoryException {
             List<String> strings = new ArrayList<>();
             while (authorizableIterator.hasNext()) {

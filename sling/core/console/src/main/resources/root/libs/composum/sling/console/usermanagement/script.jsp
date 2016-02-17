@@ -31,8 +31,18 @@
 <script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/addgroupdialog.js"></script>
 <script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/disableuserdialog.js"></script>
 <script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/changepwdialog.js"></script>
+
 <script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/propertiestable.js"></script>
 <script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/groupstable.js"></script>
 <script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/usertable.js"></script>
+<script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/memberstable.js"></script>
+
+<script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/usertab.js"></script>
+<script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/profiletab.js"></script>
+<script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/preferencestab.js"></script>
+<script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/groupstab.js"></script>
+<script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/memberstab.js"></script>
+<script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/grouptab.js"></script>
+
 <script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/usermanagement.js"></script>
 <script type="text/javascript" src="/libs/composum/sling/console/usermanagement/js/startup.js"></script>
