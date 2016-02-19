@@ -47,7 +47,10 @@
   "usermanagement": {
     "sling:resourceType": "composum/sling/commons/clientlib",
     "css": {
-      "jcr:primaryType": "sling:OrderedFolder"
+      "jcr:primaryType": "sling:OrderedFolder",
+      "usermanagement": {
+        "embed": "composum/sling/console/usermanagement/css/usermanagement.css"
+      }
     },
     "js": {
       "jcr:primaryType": "sling:OrderedFolder",
@@ -95,6 +98,9 @@
       },
       "grouptab": {
         "embed": "composum/sling/console/usermanagement/js/grouptab.js"
+      },
+      "query": {
+        "embed": "composum/sling/console/usermanagement/js/query.js"
       },
       "usermanagement": {
         "embed": "composum/sling/console/usermanagement/js/usermanagement.js"
