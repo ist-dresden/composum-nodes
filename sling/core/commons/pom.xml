@@ -44,6 +44,7 @@
                             *
                         </Import-Package>
                         <Export-Package>
+                            com.composum.sling.clientlib.*,
                             com.composum.sling.core.*,
                             com.composum.sling.cpnl.*,
                             com.google.gson.*,
@@ -74,6 +75,11 @@
 
     <dependencies>
 
+        <!-- YUICompressor -->
+        <dependency>
+            <groupId>com.yahoo.platform.yui</groupId>
+            <artifactId>yuicompressor</artifactId>
+        </dependency>
 
         <!-- Apache Sling -->
         <dependency>
