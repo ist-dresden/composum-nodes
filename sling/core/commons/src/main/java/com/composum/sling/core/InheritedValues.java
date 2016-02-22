@@ -39,7 +39,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
             }
             put(name, value); // cache the found value
         }
-        return value != UNDEFINED ? (T)value : null;
+        return value != UNDEFINED ? (T) value : null;
     }
 
     /**
@@ -99,7 +99,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
                 }
                 path.insert(0, name);
                 parent = parent.getParent();
-                name = parent.getName();
+                name = parent != null ? parent.getName() : null;
             }
             if (parent != null && ResourceUtil.CONTENT_NODE.equals(name)) {
                 // the resource is a child of an element with a content subtree ('jcr:content/...')
