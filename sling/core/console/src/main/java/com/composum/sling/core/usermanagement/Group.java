@@ -5,9 +5,9 @@ import com.composum.sling.core.AbstractSlingBean;
 /**
  * Created by mzeibig on 17.11.15.
  */
-public class Group  extends AbstractSlingBean {
-    private String groupId = "testid";
-    private String groupPath = "/test/userPath";
+public class Group extends AbstractSlingBean {
+    private String groupId;
+    private String groupPath;
 
     public String getGroupId() {
         return groupId;

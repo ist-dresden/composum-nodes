@@ -32,6 +32,12 @@
                                    placeholder="enter password" data-rules="mandatory" autocomplete="off"/>
                         </div>
 
+                        <div class="form-group">
+                            <label class="control-label">Intermediate Path</label>
+                            <input name="intermediatePath" class="widget text-field-widget form-control" type="text"
+                                   placeholder="enter path" />
+                        </div>
+
                     </div>
 
                     <div class="modal-footer buttons">

@@ -16,10 +16,10 @@
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-                //this.$name = this.$('input[name="name"]');
+                //this.$name = this.$('input[name="groupname"]');
                 this.$('button.create').click(_.bind(this.addNewGroup, this));
                 this.$el.on('shown.bs.modal', function () {
-                    $(this).find('input[name="name"]').focus();
+                    $(this).find('input[name="groupname"]').focus();
                 });
             },
 

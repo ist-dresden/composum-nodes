@@ -3,7 +3,7 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects/>
-<cpn:component id="user" type="com.composum.sling.core.usermanagement.User" scope="request">
+<cpn:component id="group" type="com.composum.sling.core.usermanagement.Group" scope="request">
     <div id="group-create-dialog" class="dialog modal fade" role="dialog" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content form-panel default">
@@ -23,8 +23,14 @@
                         <input name="_charset_" type="hidden" value="UTF-8" />
                         <div class="form-group">
                             <label class="control-label">Groupname</label>
-                            <input name="name" class="widget text-field-widget form-control" type="text"
-                                   placeholder="enter groupname" data-rules="mandatory" />
+                            <input name="groupname" class="widget text-field-widget form-control" type="text"
+                                   placeholder="enter groupname" data-rules="mandatory" autocomplete="off"/>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Intermediate Path</label>
+                            <input name="intermediatePath" class="widget text-field-widget form-control" type="text"
+                                   placeholder="enter path" />
                         </div>
 
                     </div>

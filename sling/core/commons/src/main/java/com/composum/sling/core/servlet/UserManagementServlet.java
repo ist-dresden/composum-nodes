@@ -7,6 +7,7 @@ import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.api.JackrabbitSession;
@@ -16,6 +17,7 @@ import org.apache.jackrabbit.api.security.user.Query;
 import org.apache.jackrabbit.api.security.user.QueryBuilder;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.jackrabbit.core.security.UserPrincipal;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -549,9 +551,19 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
                 final UserManager userManager = session.getUserManager();
-                String username = request.getParameter("username");
+                final String username = request.getParameter("username");
                 String password = request.getParameter("password");
-                userManager.createUser(username, password);
+                String intermediatePath = request.getParameter("intermediatePath");
+                if (StringUtils.isEmpty(intermediatePath)) {
+                    userManager.createUser(username, password);
+                } else {
+                    userManager.createUser(username, password, new Principal(){
+                        @Override
+                        public String getName() {
+                            return username;
+                        }
+                    }, intermediatePath);
+                }
                 session.save();
             } catch (IllegalArgumentException e) {
                 LOG.error(e.getMessage(), e);
@@ -600,8 +612,19 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
-            String name = request.getParameter("name");
-            userManager.createGroup(name);
+            final String name = request.getParameter("groupname");
+            String intermediatePath = request.getParameter("intermediatePath");
+            if (StringUtils.isEmpty(intermediatePath)) {
+                userManager.createGroup(name);
+            } else {
+                userManager.createGroup(name, new Principal(){
+                    @Override
+                    public String getName() {
+                        return name;
+                    }
+                }, intermediatePath);
+            }
+
             session.save();
         }
     }

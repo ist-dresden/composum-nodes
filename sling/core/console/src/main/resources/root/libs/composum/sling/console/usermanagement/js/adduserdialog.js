@@ -30,7 +30,6 @@
 
             addNewUser: function (event) {
                 event.preventDefault();
-                var path = usermanagement.getCurrentPath();
                 var serializedData = this.$form.$el.serialize();
                 core.ajaxPost(
                     "/bin/core/usermanagement.user.json",
@@ -44,7 +43,7 @@
                     }, this),
                     _.bind(function(result) {
                         this.hide();
-                        core.alert('danger', 'Error', 'Error creating group', result);
+                        core.alert('danger', 'Error', 'Error creating user', result);
                     }, this));
                 return false;
             }
