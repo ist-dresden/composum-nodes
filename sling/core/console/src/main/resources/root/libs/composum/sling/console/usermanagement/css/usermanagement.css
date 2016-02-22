@@ -157,8 +157,8 @@
     white-space: normal;
 }
 
+/* #usermanagement-query .query-panel .query-result td.name, */
 #usermanagement-query .query-panel .query-result td.id,
-#usermanagement-query .query-panel .query-result td.name,
 #usermanagement-query .query-panel .query-result td.text {
     display: none;
 }

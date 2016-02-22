@@ -53,7 +53,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, password, groupsofauthorizable, removefromgroup, addtogroup, properties}
+    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, password, groupsofauthorizable, removefromgroup, addtogroup, query, properties}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -79,6 +79,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.properties, new GetProperties());
         // curl -u admin:admin http://localhost:9090/bin/core/usermanagement.groupsofauthorizable.json/eeee
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.groupsofauthorizable, new GetGroupsOfAuthorizable());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.query, new QueryAuthorizables());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.user, new CreateUser());
@@ -106,6 +107,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         String[] members = {};
         String[] declaredMembers = {};
         String principalName;
+        boolean isGroup;
 
         protected static String[] getIDs(Iterator<? extends Authorizable> authorizableIterator) throws RepositoryException {
             List<String> strings = new ArrayList<>();
@@ -135,6 +137,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
             userEntry.principalName = user.getPrincipal().getName();
             userEntry.memberOf = getIDs(groupIterator);
             userEntry.declaredMemberOf = getIDs(declaredMemberOf);
+            userEntry.isGroup = false;
             while (propertyNames.hasNext()) {
                 String name = propertyNames.next();
                 Value[] property = user.getProperty(name);
@@ -164,7 +167,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
             groupEntry.declaredMemberOf = getIDs(declaredMemberOf);
             groupEntry.members = getIDs(members);
             groupEntry.declaredMembers = getIDs(declaredMembers);
-
+            groupEntry.isGroup = true;
             return groupEntry;
         }
     }
@@ -215,6 +218,49 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 strings.add(group.getID());
             }
             return strings.toArray(new String[strings.size()]);
+        }
+    }
+
+    public static class QueryAuthorizables implements ServletOperation {
+
+        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException, ServletException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+            final UserManager userManager = session.getUserManager();
+            final String path = AbstractServiceServlet.getPath(request);
+            final Query q = new Query() {
+                @Override public <T> void build(final QueryBuilder<T> builder) {
+                    builder.setCondition(builder.nameMatches("%" + (path.startsWith("/") ? path.substring(1) : path) + "%"));
+                    builder.setSortOrder("@name", QueryBuilder.Direction.ASCENDING);
+                    builder.setSelector(Authorizable.class);
+                }
+            };
+            final Iterator<Authorizable> principals = userManager.findAuthorizables(q);
+
+            List<AuthorizableEntry> entries = new ArrayList<>();
+
+            while (principals.hasNext()) {
+                AuthorizableEntry entry = processPrincipal(principals.next());
+                entries.add(entry);
+            }
+
+            String s = new GsonBuilder().create().toJson(entries);
+            PrintWriter writer = response.getWriter();
+            writer.write(s);
+            writer.flush();
+            writer.close();
+
+        }
+
+        protected AuthorizableEntry processPrincipal(Authorizable authorizable) throws RepositoryException {
+            AuthorizableEntry authorizableEntry = new AuthorizableEntry();
+            Principal principal = authorizable.getPrincipal();
+            authorizableEntry.id = authorizable.getID();
+            authorizableEntry.path = authorizable.getPath();
+            authorizableEntry.principalName = principal.getName();
+            authorizableEntry.isGroup = authorizable.isGroup();
+            return authorizableEntry;
         }
     }
 
@@ -616,6 +662,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
             groupEntry.principalName = principal.getName();
             groupEntry.memberOf = getIDs(groupIterator);
             groupEntry.declaredMemberOf = getIDs(declaredMemberOf);
+            groupEntry.isGroup = true;
             return groupEntry;
         }
     }

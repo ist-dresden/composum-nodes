@@ -41,14 +41,14 @@
                 var path = usermanagement.current.node.name;
                 this.state.load = true;
                 core.ajaxGet(
-                    "/bin/core/usermanagement.groupsofauthorizable.json/" + path,
+                    "/bin/core/usermanagement.group.json/" + path,
                     {dataType: 'json'},
                     _.bind (function (result) {
                         var formattedResult = [];
-                        for (var i = 0; i < result.length; i++) {
+                        for (var i = 0; i < result.declaredMembers.length; i++) {
                             formattedResult.push(
                                 {
-                                    'name': result[i]
+                                    'name': result.declaredMembers[i]
                                 }
                             );
                         }
