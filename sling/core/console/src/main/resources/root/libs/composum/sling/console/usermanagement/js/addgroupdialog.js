@@ -18,9 +18,13 @@
                 this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 //this.$name = this.$('input[name="name"]');
                 this.$('button.create').click(_.bind(this.addNewGroup, this));
+                this.$el.on('shown.bs.modal', function () {
+                    $(this).find('input[name="name"]').focus();
+                });
             },
 
             reset: function () {
+                core.components.Dialog.prototype.reset.apply(this);
             },
 
             addNewGroup: function (event) {
@@ -37,6 +41,7 @@
                         usermanagement.tree.refresh();
                     }, this),
                     _.bind(function(result) {
+                        this.hide();
                         core.alert('danger', 'Error', 'Error creating group', result);
                     }, this));
                 return false;

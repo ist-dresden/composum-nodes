@@ -19,9 +19,13 @@
                 this.$name = this.$('input[name="username"]');
                 this.$password = this.$('input[name="password"]');
                 this.$('button.create').click(_.bind(this.addNewUser, this));
+                this.$el.on('shown.bs.modal', function () {
+                    $(this).find('input[name="username"]').focus();
+                });
             },
 
             reset: function () {
+                core.components.Dialog.prototype.reset.apply(this);
             },
 
             addNewUser: function (event) {
@@ -39,6 +43,7 @@
                         usermanagement.tree.refresh();
                     }, this),
                     _.bind(function(result) {
+                        this.hide();
                         core.alert('danger', 'Error', 'Error creating group', result);
                     }, this));
                 return false;

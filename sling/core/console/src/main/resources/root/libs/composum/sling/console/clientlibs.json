@@ -63,6 +63,9 @@
       "addgroupdialog": {
         "embed": "composum/sling/console/usermanagement/js/addgroupdialog.js"
       },
+      "deleteauthorizabledialog": {
+        "embed": "composum/sling/console/usermanagement/js/deleteauthorizabledialog.js"
+      },
       "disableuserdialog": {
         "embed": "composum/sling/console/usermanagement/js/disableuserdialog.js"
       },

@@ -50,6 +50,7 @@
                         usermanagement.tree.refresh();
                     }, this),
                     _.bind(function(result) {
+                        this.hide();
                         core.alert('danger', 'Error', 'Error creating group', result);
                     }, this));
                 return false;

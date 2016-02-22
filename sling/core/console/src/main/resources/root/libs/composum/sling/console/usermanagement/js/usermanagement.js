@@ -121,17 +121,9 @@
 
         deleteAuthorizable: function(event) {
             var path = usermanagement.getCurrentPath();
-            core.ajaxDelete(
-                "/bin/core/usermanagement.authorizable.json" + path,
-                {
-                    dataType: 'json'
-                },
-                _.bind(function(result) {
-                    usermanagement.tree.refresh();
-                }, this),
-                _.bind(function(result) {
-                    core.alert('danger', 'Error', 'Error deleting Authorizable', result);
-                }, this));
+            var dialog = usermanagement.getDeleteAuthorizableDialog();
+            dialog.setUser(path);
+            dialog.show(undefined, _.bind(this.reload, this));
 
         },
 
