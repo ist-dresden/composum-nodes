@@ -6,18 +6,17 @@
     (function(usermanagement) {
 
 
-        usermanagement.getAddUserDialog = function () {
-            return core.getView('#user-create-dialog', usermanagement.AddUserDialog);
+        usermanagement.getAddSystemUserDialog = function () {
+            return core.getView('#systemuser-create-dialog', usermanagement.AddSystemUserDialog);
         };
 
 
-        usermanagement.AddUserDialog = core.components.Dialog.extend({
+        usermanagement.AddSystemUserDialog = core.components.Dialog.extend({
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$name = this.$('input[name="username"]');
-                this.$password = this.$('input[name="password"]');
                 this.$('button.create').click(_.bind(this.addNewUser, this));
                 this.$el.on('shown.bs.modal', function () {
                     $(this).find('input[name="username"]').focus();
@@ -32,7 +31,7 @@
                 event.preventDefault();
                 var serializedData = this.$form.$el.serialize();
                 core.ajaxPost(
-                    "/bin/core/usermanagement.user.json",
+                    "/bin/core/usermanagement.systemuser.json",
                     serializedData,
                     {
                         dataType: 'post'

@@ -22,6 +22,11 @@
               <div class="align-left">
                 <div class="btn-group btn-group-sm" role="group">
                   <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh tree view"><span class="label">Refresh</span></button>
+                  <button type="button" class="addsystemuser fa fa-stack btn btn-default" title="Add System User">
+                    <i class="fa fa-user fa-stack-1x"></i>
+                    <i class="fa fa-plus-circle fa-stack-1x"></i>
+                    <span class="label">Add System User</span>
+                  </button>
                   <button type="button" class="adduser fa fa-stack btn btn-default" title="Add User">
                     <i class="fa fa-user fa-stack-1x"></i>
                     <i class="fa fa-plus-circle fa-stack-1x"></i>

@@ -55,6 +55,7 @@
                         if (nodetype == 'user') {
                             formattedResult.push(
                                 {'name': 'admin', 'value': result.admin},
+                                {'name': 'system user', 'value': result.systemUser},
                                 {'name': 'disabled', 'value': result.disabled},
                                 {'name': 'disabled reason', 'value': result.disabledReason});
                         }

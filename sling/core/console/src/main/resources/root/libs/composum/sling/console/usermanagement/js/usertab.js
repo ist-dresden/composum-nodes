@@ -17,7 +17,17 @@
                 this.$enableUserButton.click(_.bind(this.enableUser, this));
                 this.$changePasswordButton = this.$('.table-toolbar .change-password');
                 this.$changePasswordButton.click(_.bind(this.changePassword, this));
-
+                var current = usermanagement.current.node;
+                if (current.disabled) {
+                    this.$disableUserButton.addClass('disabled');
+                    this.$enableUserButton.removeClass('disabled');
+                } else {
+                    this.$disableUserButton.removeClass('disabled');
+                    this.$enableUserButton.addClass('disabled');
+                }
+                if (current.systemUser) {
+                    this.$changePasswordButton.addClass('disabled');
+                }
             },
 
             reload: function () {
@@ -28,6 +38,8 @@
                 var dialog = usermanagement.getDisableUserDialog();
                 dialog.setUser(usermanagement.current.node.name);
                 dialog.show(undefined, _.bind(this.reload, this));
+                this.$disableUserButton.addClass('disabled');
+                this.$enableUserButton.removeClass('disabled');
             },
 
             changePassword: function () {
@@ -48,6 +60,8 @@
                     },
                     _.bind(function(result) {
                         this.table.loadContent();
+                        this.$disableUserButton.removeClass('disabled');
+                        this.$enableUserButton.addClass('disabled');
                     }, this),
                     _.bind(function(result) {
                         core.alert('danger', 'Error', 'Error on enable user', result);

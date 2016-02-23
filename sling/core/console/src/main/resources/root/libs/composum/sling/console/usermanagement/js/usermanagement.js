@@ -82,7 +82,16 @@
 
         onNodeSelected: function(path, node, element) {
             $(document).trigger("path:select", [path]);
+        },
+
+        refreshNodeState: function ($node, node) {
+            core.components.Tree.prototype.refreshNodeState.apply(this, [$node, node]);
+            if (node.original.systemUser) {
+                $node.addClass('systemuser');
+            }
+            return node;
         }
+
 
     });
 
@@ -95,6 +104,7 @@
             this.table = core.getWidget(this.$el, '.table-container', usermanagement.UserTable);
             this.$('button.refresh').on('click', _.bind(this.refreshTree, this));
             this.$('button.adduser').on('click', _.bind(this.addUser, this));
+            this.$('button.addsystemuser').on('click', _.bind(this.addSystemUser, this));
             this.$('button.addgroup').on('click', _.bind(this.addGroup, this));
             this.$('button.deleteauthorizable').on('click', _.bind(this.deleteAuthorizable, this));
         },
@@ -116,6 +126,11 @@
 
         addUser: function(event) {
             var dialog = usermanagement.getAddUserDialog();
+            dialog.show(undefined, _.bind(this.reload, this));
+        },
+
+        addSystemUser: function(event) {
+            var dialog = usermanagement.getAddSystemUserDialog();
             dialog.show(undefined, _.bind(this.reload, this));
         },
 

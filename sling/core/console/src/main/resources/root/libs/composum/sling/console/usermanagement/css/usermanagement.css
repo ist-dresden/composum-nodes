@@ -206,3 +206,14 @@
     opacity: 1;
     color: #a94442; /* danger */
 }
+
+
+button.addsystemuser,
+button.addsystemuser:focus,
+button.addsystemuser:hover {
+    color: #a94442;
+}
+
+.jstree-node.systemuser .jstree-icon {
+    color: #a94442;
+}

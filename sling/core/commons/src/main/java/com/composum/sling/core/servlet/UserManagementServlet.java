@@ -17,13 +17,18 @@ import org.apache.jackrabbit.api.security.user.Query;
 import org.apache.jackrabbit.api.security.user.QueryBuilder;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.jackrabbit.core.security.UserPrincipal;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -32,6 +37,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,7 +62,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, password, groupsofauthorizable, removefromgroup, addtogroup, query, properties}
+    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, password, groupsofauthorizable, removefromgroup, addtogroup, query, systemuser, properties}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -85,6 +92,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.user, new CreateUser());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.systemuser, new CreateSystemUser());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.group, new CreateGroup());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.disable, new DisableUser());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.enable, new EnableUser());
@@ -123,6 +131,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     static class UserEntry extends AuthorizableEntry {
         boolean admin;
+        boolean systemUser;
         boolean disabled;
         String disabledReason;
         Map<String, Object> properties = new HashMap<>();
@@ -140,6 +149,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
             userEntry.memberOf = getIDs(groupIterator);
             userEntry.declaredMemberOf = getIDs(declaredMemberOf);
             userEntry.isGroup = false;
+            userEntry.systemUser = isSystemUser(user);
             while (propertyNames.hasNext()) {
                 String name = propertyNames.next();
                 Value[] property = user.getProperty(name);
@@ -153,6 +163,20 @@ public class UserManagementServlet extends AbstractServiceServlet {
         }
 
 
+    }
+
+    protected static boolean isSystemUser(Authorizable user) {
+        boolean su;//public boolean isSystemUser()
+        try {
+            Method method = user.getClass().getMethod("isSystemUser");
+            method.setAccessible(true);
+            Boolean result = (Boolean) method.invoke(user);
+            su = (result == null ? false : result.booleanValue());
+        } catch (Exception e) {
+            //ignore
+            su = false;
+        }
+        return su;
     }
 
     static class GroupEntry extends AuthorizableEntry {
@@ -389,6 +413,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
                             .name("name").value(authorizableByRequestPath.getID())
                             .name("path").value(authorizableByRequestPath.getPath())
                             .name("type").value(authorizableByRequestPath.isGroup()?"group":"user")
+                            .name("disabled").value(authorizableByRequestPath.isGroup() ? false : ((User) authorizableByRequestPath).isDisabled())
+                            .name("systemUser").value(isSystemUser(authorizableByRequestPath))
                             .name("state").beginObject().name("loaded").value(true).endObject()
                             .name("children")
                             .beginArray();
@@ -409,6 +435,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
                             .name("name").value(authorizable.getID())
                             .name("path").value(authorizable.getPath())
                             .name("type").value(authorizable.isGroup()?"group":"user")
+                            .name("disabled").value(authorizable.isGroup() ? false : ((User) authorizable).isDisabled())
+                            .name("systemUser").value(isSystemUser(authorizable))
                             .name("state").beginObject().name("loaded").value(true).endObject()
                             .endObject();
                 }
@@ -543,6 +571,43 @@ public class UserManagementServlet extends AbstractServiceServlet {
         }
     }
 
+    public class CreateSystemUser implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
+                final UserManager userManager = session.getUserManager();
+                final String username = request.getParameter("username");
+                String intermediatePath = request.getParameter("intermediatePath");
+                //public User createSystemUser(String userID, String intermediatePath)
+                Method method = userManager.getClass().getMethod("createSystemUser", String.class, String.class);
+                Object newUser = method.invoke(userManager, username, StringUtils.isEmpty(intermediatePath) ? null : intermediatePath);
+                session.save();
+                UserEntry userEntry = UserEntry.fromUser((User) newUser);
+                String s = new GsonBuilder().create().toJson(userEntry);
+                PrintWriter writer = response.getWriter();
+                writer.write(s);
+                writer.write('\n');
+                writer.flush();
+                writer.close();
+
+            } catch (NoSuchMethodException e) {
+                // ignore. server too old
+            } catch (IllegalAccessException e) {
+                // ignore
+            } catch (InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof RepositoryException) {
+                    throw (RepositoryException) cause;
+                } else {
+                    throw new ServletException(cause);
+                }
+            }
+        }
+    }
+
     public static class CreateUser implements ServletOperation {
 
         @Override
@@ -554,10 +619,11 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 final String username = request.getParameter("username");
                 String password = request.getParameter("password");
                 String intermediatePath = request.getParameter("intermediatePath");
+                final User newUser;
                 if (StringUtils.isEmpty(intermediatePath)) {
-                    userManager.createUser(username, password);
+                    newUser = userManager.createUser(username, password);
                 } else {
-                    userManager.createUser(username, password, new Principal(){
+                    newUser = userManager.createUser(username, password, new Principal(){
                         @Override
                         public String getName() {
                             return username;
@@ -565,6 +631,14 @@ public class UserManagementServlet extends AbstractServiceServlet {
                     }, intermediatePath);
                 }
                 session.save();
+                UserEntry userEntry = UserEntry.fromUser(newUser);
+                String s = new GsonBuilder().create().toJson(userEntry);
+                PrintWriter writer = response.getWriter();
+                writer.write(s);
+                writer.write('\n');
+                writer.flush();
+                writer.close();
+
             } catch (IllegalArgumentException e) {
                 LOG.error(e.getMessage(), e);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
@@ -614,18 +688,25 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final UserManager userManager = session.getUserManager();
             final String name = request.getParameter("groupname");
             String intermediatePath = request.getParameter("intermediatePath");
+            final Group newGroup;
             if (StringUtils.isEmpty(intermediatePath)) {
-                userManager.createGroup(name);
+                newGroup = userManager.createGroup(name);
             } else {
-                userManager.createGroup(name, new Principal(){
+                newGroup = userManager.createGroup(name, new Principal(){
                     @Override
                     public String getName() {
                         return name;
                     }
                 }, intermediatePath);
             }
-
             session.save();
+            GroupEntry groupEntry = GroupEntry.fromGroup(newGroup);
+            String s = new GsonBuilder().create().toJson(groupEntry);
+            PrintWriter writer = response.getWriter();
+            writer.write(s);
+            writer.write('\n');
+            writer.flush();
+            writer.close();
         }
     }
 

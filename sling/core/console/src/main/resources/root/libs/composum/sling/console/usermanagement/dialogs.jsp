@@ -5,6 +5,7 @@
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/user-disable.jsp"/>
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/user-changepw.jsp"/>
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/user-create.jsp"/>
+<sling:call script="/libs/composum/sling/console/usermanagement/dialogs/systemuser-create.jsp"/>
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/group-create.jsp"/>
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/add-to-group.jsp"/>
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/authorizable-delete.jsp"/>
