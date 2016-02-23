@@ -228,6 +228,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             }
 
             String s = new GsonBuilder().create().toJson(entries);
+            response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
+            response.setCharacterEncoding(MappingRules.CHARSET.name());
             PrintWriter writer = response.getWriter();
             writer.write(s);
             writer.flush();
@@ -561,6 +563,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
                     User user = (User) authorizable;
                     UserEntry userEntry = UserEntry.fromUser(user);
                     String s = new GsonBuilder().create().toJson(userEntry);
+                    response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
+                    response.setCharacterEncoding(MappingRules.CHARSET.name());
                     PrintWriter writer = response.getWriter();
                     writer.write(s);
                     writer.write('\n');
@@ -588,6 +592,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 UserEntry userEntry = UserEntry.fromUser((User) newUser);
                 String s = new GsonBuilder().create().toJson(userEntry);
                 PrintWriter writer = response.getWriter();
+                response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
+                response.setCharacterEncoding(MappingRules.CHARSET.name());
                 writer.write(s);
                 writer.write('\n');
                 writer.flush();
@@ -633,6 +639,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 session.save();
                 UserEntry userEntry = UserEntry.fromUser(newUser);
                 String s = new GsonBuilder().create().toJson(userEntry);
+                response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
+                response.setCharacterEncoding(MappingRules.CHARSET.name());
                 PrintWriter writer = response.getWriter();
                 writer.write(s);
                 writer.write('\n');
@@ -702,6 +710,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             session.save();
             GroupEntry groupEntry = GroupEntry.fromGroup(newGroup);
             String s = new GsonBuilder().create().toJson(groupEntry);
+            response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
+            response.setCharacterEncoding(MappingRules.CHARSET.name());
             PrintWriter writer = response.getWriter();
             writer.write(s);
             writer.write('\n');
@@ -728,6 +738,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
                     Group group = (Group) authorizable;
                     GroupEntry groupEntry = GroupEntry.fromGroup(group);
                     String s = new GsonBuilder().create().toJson(groupEntry);
+                    response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
+                    response.setCharacterEncoding(MappingRules.CHARSET.name());
                     PrintWriter writer = response.getWriter();
                     writer.write(s);
                     writer.write('\n');
