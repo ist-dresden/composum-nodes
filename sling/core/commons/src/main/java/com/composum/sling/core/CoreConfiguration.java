@@ -20,6 +20,7 @@ public interface CoreConfiguration {
 
     long QUERY_RESULT_LIMIT_DEFAULT = 500L;
     String QUERY_RESULT_LIMIT_KEY = "query.result.limit";
+    String QUERY_TEMPLATES_KEY = "query.templates";
 
     String GROOVY_SETUP_SCRIPT = "groovy.setup.script";
 
@@ -37,6 +38,8 @@ public interface CoreConfiguration {
     String VERSION_SERVLET_ENABLED = "version.servlet.enabled";
 
     long getQueryResultLimit();
+
+    String[] getQueryTemplates();
 
     boolean isEnabled(AbstractServiceServlet servlet);
 

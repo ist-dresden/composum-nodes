@@ -122,7 +122,8 @@
         },
 
         resultMessage: function (result, message) {
-            var hint = result.responseText.match(/^.*<title>(.*)<\/title>.*$/m);
+            var hintPattern = new RegExp('<title>(.+)</title>', 'im');
+            var hint = hintPattern.exec(result.responseText);
             var text = (message ? (message + ' - ') : '') + result.status + ': ' + result.statusText
                 + (hint ? ('\n\n(' + hint[1] + ')') : '');
             return text;
