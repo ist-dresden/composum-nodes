@@ -62,7 +62,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public enum Extension {json, html}
 
-    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, password, groupsofauthorizable, removefromgroup, addtogroup, query, systemuser, properties}
+    public enum Operation {users, user, groups, tree, group, authorizable, disable, enable, password, groupsofauthorizable, removefromgroup, addtogroup, query, systemuser, authorizables, properties}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -78,6 +78,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         super.init();
 
         // GET
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.authorizables, new GetAllAuthorizables());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.users, new GetUsers());
         // curl -u admin:admin http://localhost:9090/bin/core/usermanagement.user.json/eeee
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.user, new GetUser());
@@ -598,11 +599,9 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 writer.write('\n');
                 writer.flush();
                 writer.close();
-
-            } catch (NoSuchMethodException e) {
+            } catch (NoSuchMethodException | IllegalAccessException e) {
                 // ignore. server too old
-            } catch (IllegalAccessException e) {
-                // ignore
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "createSystemUser is not supported on your system");
             } catch (InvocationTargetException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof RepositoryException) {
@@ -749,6 +748,26 @@ public class UserManagementServlet extends AbstractServiceServlet {
             }
         }
 
+    }
+
+    public static class GetAllAuthorizables extends GetAuthorizables<Authorizable, AuthorizableEntry> {
+        public GetAllAuthorizables() {
+            super(Authorizable.class);
+        }
+
+        @Override protected AuthorizableEntry processPrincipal(Authorizable authorizable) throws RepositoryException {
+            AuthorizableEntry authorizableEntry = new AuthorizableEntry();
+            Principal principal = authorizable.getPrincipal();
+            Iterator<Group> groupIterator = authorizable.memberOf();
+            Iterator<Group> declaredMemberOf = authorizable.declaredMemberOf();
+            authorizableEntry.id = authorizable.getID();
+            authorizableEntry.path = authorizable.getPath();
+            authorizableEntry.principalName = principal.getName();
+            authorizableEntry.memberOf = getIDs(groupIterator);
+            authorizableEntry.declaredMemberOf = getIDs(declaredMemberOf);
+            authorizableEntry.isGroup = authorizable.isGroup();
+            return authorizableEntry;
+        }
     }
 
     public static class GetUsers extends GetAuthorizables<User, UserEntry> {

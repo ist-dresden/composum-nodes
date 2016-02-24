@@ -6,27 +6,27 @@
     (function(usermanagement) {
 
 
-        usermanagement.getAddToGroupDialog = function () {
-            return core.getView('#add-to-group-dialog', usermanagement.AddToGroupDialog);
+        usermanagement.getAddMemberDialog = function () {
+            return core.getView('#add-member-dialog', usermanagement.AddMemberDialog);
         };
 
 
-        usermanagement.AddToGroupDialog = core.components.Dialog.extend({
+        usermanagement.AddMemberDialog = core.components.Dialog.extend({
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-                this.authorizable = core.getWidget(this.el, 'input[name="authorizable"]', core.components.TextFieldWidget);
-                this.$group = this.$('input[name="group"]');
-                this.$('button.create').click(_.bind(this.addToGroup, this));
+                this.$authorizable = this.$('input[name="authorizable"]');
+                this.group = core.getWidget(this.el, 'input[name="group"]', core.components.TextFieldWidget);
+                this.$('button.create').click(_.bind(this.addMember, this));
                 this.$el.on('shown.bs.modal', function () {
-                    $(this).find('input[name="group"]').focus();
+                    $(this).find('input[name="authorizable"]').focus();
                 });
-                this.$group.attr('autocomplete', 'off');
-                this.$group.typeahead({
+                this.$authorizable.attr('autocomplete', 'off');
+                this.$authorizable.typeahead({
                     minLength: 1,
                     source: function (query, callback) {
-                        core.getJson('/bin/core/usermanagement.groups.json/' + query, function (data) {
+                        core.getJson('/bin/core/usermanagement.authorizables.json/' + query, function (data) {
                             var list = [];
                             for (var i = 0; i < data.length; i++) {
                                 list.push(data[i].id);
@@ -42,11 +42,11 @@
                 core.components.Dialog.prototype.reset.apply(this);
             },
 
-            setUser: function (user) {
-                this.authorizable.setValue(user);
+            setGroup: function (group) {
+                this.group.setValue(group);
             },
 
-            addToGroup: function (event) {
+            addMember: function (event) {
                 event.preventDefault();
                 var serializedData = this.form.$el.serialize();
                 core.ajaxPost(

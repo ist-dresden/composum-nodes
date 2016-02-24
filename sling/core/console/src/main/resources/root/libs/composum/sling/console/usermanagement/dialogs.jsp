@@ -8,4 +8,5 @@
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/systemuser-create.jsp"/>
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/group-create.jsp"/>
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/add-to-group.jsp"/>
+<sling:call script="/libs/composum/sling/console/usermanagement/dialogs/add-member.jsp"/>
 <sling:call script="/libs/composum/sling/console/usermanagement/dialogs/authorizable-delete.jsp"/>

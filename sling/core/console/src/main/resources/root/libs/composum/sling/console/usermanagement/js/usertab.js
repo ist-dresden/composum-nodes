@@ -32,20 +32,24 @@
 
             reload: function () {
                 this.table.loadContent();
+                if (usermanagement.current.node.disabled) {
+                    this.$disableUserButton.addClass('disabled');
+                    this.$enableUserButton.removeClass('disabled');
+                }
             },
 
             disableUser: function () {
                 var dialog = usermanagement.getDisableUserDialog();
-                dialog.setUser(usermanagement.current.node.name);
-                dialog.show(undefined, _.bind(this.reload, this));
-                this.$disableUserButton.addClass('disabled');
-                this.$enableUserButton.removeClass('disabled');
+                dialog.show(function() {
+                    dialog.setUser(usermanagement.current.node.name);
+                }, _.bind(this.reload, this));
             },
 
             changePassword: function () {
                 var dialog = usermanagement.getChangePasswordDialog();
-                dialog.setUser(usermanagement.current.node.name);
-                dialog.show(undefined, _.bind(this.reload, this));
+                dialog.show(function() {
+                    dialog.setUser(usermanagement.current.node.name);
+                }, _.bind(this.reload, this));
             },
 
             enableUser: function () {

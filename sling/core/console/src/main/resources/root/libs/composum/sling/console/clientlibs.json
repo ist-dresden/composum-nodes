@@ -60,6 +60,9 @@
       "addsystemuserdialog": {
         "embed": "composum/sling/console/usermanagement/js/addsystemuserdialog.js"
       },
+      "addmemberdialog": {
+        "embed": "composum/sling/console/usermanagement/js/addmemberdialog.js"
+      },
       "addtogroupdialog": {
         "embed": "composum/sling/console/usermanagement/js/addtogroupdialog.js"
       },

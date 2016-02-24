@@ -15,9 +15,9 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 //this.$name = this.$('input[name="username"]');
-                this.$name = core.getWidget(this.el, 'input[name="username"]', core.components.TextFieldWidget);
+                this.name = core.getWidget(this.el, 'input[name="username"]', core.components.TextFieldWidget);
                 this.password = this.$('input[name="password"]');
                 this.$('button.create').click(_.bind(this.disableUser, this));
                 this.$el.on('shown.bs.modal', function () {
@@ -26,16 +26,17 @@
             },
 
             reset: function () {
+                core.components.Dialog.prototype.reset.apply(this);
             },
 
             setUser: function (user) {
-                this.$name.setValue(user);
+                this.name.setValue(user);
             },
 
             disableUser: function (event) {
                 event.preventDefault();
                 var path = usermanagement.getCurrentPath();
-                var serializedData = this.$form.$el.serialize();
+                var serializedData = this.form.$el.serialize();
                 core.ajaxPost(
                     "/bin/core/usermanagement.password.json",
                     serializedData,

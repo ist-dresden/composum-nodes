@@ -5,7 +5,6 @@
 
     (function(usermanagement) {
 
-
         usermanagement.getDisableUserDialog = function () {
             return core.getView('#user-disable-dialog', usermanagement.DisableUserDialog);
         };
@@ -15,30 +14,27 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-                //this.$name = this.$('input[name="username"]');
-                this.$name = core.getWidget(this.el, 'input[name="username"]', core.components.TextFieldWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.name = core.getWidget(this.el, 'input[name="username"]', core.components.TextFieldWidget);
                 this.$reason = this.$('input[name="reason"]');
                 this.$('button.create').click(_.bind(this.disableUser, this));
-                this.username = '';
                 this.$el.on('shown.bs.modal', function () {
                     $(this).find('input[name="reason"]').focus();
                 });
             },
 
             reset: function () {
-           //     this.$reason.setValue("no reason");
+                core.components.Dialog.prototype.reset.apply(this);
             },
 
             setUser: function (user) {
-                this.$name.setValue(user);
-                this.username = user;
+                this.name.setValue(user);
             },
 
             disableUser: function (event) {
                 event.preventDefault();
                 var path = usermanagement.getCurrentPath();
-                var serializedData = this.$form.$el.serialize();
+                var serializedData = this.form.$el.serialize();
                 core.ajaxPost(
                     "/bin/core/usermanagement.disable.json",
                     serializedData,
@@ -46,8 +42,9 @@
                         dataType: 'post'
                     },
                     _.bind(function(result) {
-                        this.hide();
+                        usermanagement.current.node.disabled = true;
                         usermanagement.tree.refresh();
+                        this.hide();
                     }, this),
                     _.bind(function(result) {
                         this.hide();

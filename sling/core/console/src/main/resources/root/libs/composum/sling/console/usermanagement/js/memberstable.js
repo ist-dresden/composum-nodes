@@ -27,7 +27,7 @@
                         }, {
                             class: 'name',
                             field: 'name',
-                            title: 'Authorizable ' + usermanagement.current.node.name + ' has these member(s)'
+                            title: 'Authorizable "' + usermanagement.current.node.name + '" has these member(s)'
                         }]
                 });
 

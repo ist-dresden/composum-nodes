@@ -15,7 +15,7 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$name = this.$('input[name="username"]');
                 this.$password = this.$('input[name="password"]');
                 this.$('button.create').click(_.bind(this.addNewUser, this));
@@ -30,7 +30,7 @@
 
             addNewUser: function (event) {
                 event.preventDefault();
-                var serializedData = this.$form.$el.serialize();
+                var serializedData = this.form.$el.serialize();
                 core.ajaxPost(
                     "/bin/core/usermanagement.user.json",
                     serializedData,

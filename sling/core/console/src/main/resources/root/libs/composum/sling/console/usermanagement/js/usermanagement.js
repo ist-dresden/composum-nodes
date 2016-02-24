@@ -137,8 +137,9 @@
         deleteAuthorizable: function(event) {
             var path = usermanagement.getCurrentPath();
             var dialog = usermanagement.getDeleteAuthorizableDialog();
-            dialog.setUser(path);
-            dialog.show(undefined, _.bind(this.reload, this));
+            dialog.show(function() {
+                dialog.setUser(path);
+            }, _.bind(this.reload, this));
 
         },
 

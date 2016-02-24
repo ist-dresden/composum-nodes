@@ -11,23 +11,23 @@
                 this.table = core.getWidget(this.$el, '.table-container', usermanagement.MembersTable);
                 this.table.loadContent();
                 this.$addButton = this.$('.table-toolbar .add-authorizable-to-group');
-                this.$addButton.click(_.bind(this.addAuthorizableToGroup, this));
+                this.$addButton.click(_.bind(this.addMemberToThisToGroup, this));
                 this.$removeButton = this.$('.table-toolbar .remove-authorizable-from-group');
-                this.$removeButton.click(_.bind(this.removeAuthorizableFromGroup, this));
+                this.$removeButton.click(_.bind(this.removeMemberFromThisGroup, this));
             },
 
             reload: function () {
                 this.table.loadContent();
             },
 
-            addAuthorizableToGroup: function() {
-                var dialog = usermanagement.getAddToGroupDialog();
+            addMemberToThisToGroup: function() {
+                var dialog = usermanagement.getAddMemberDialog();
                 dialog.show(function() {
-                    dialog.setUser(usermanagement.current.node.name);
+                    dialog.setGroup(usermanagement.current.node.name);
                 }, _.bind(this.reload, this));
             },
 
-            removeAuthorizableFromGroup: function() {
+            removeMemberFromThisGroup: function() {
                 var rows = this.table.getSelections();
                 if (rows.length > 0) {
                     core.ajaxPut(
