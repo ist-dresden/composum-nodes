@@ -7,7 +7,6 @@
     <div class="profile detail-panel full-table-view">
         <div class="table-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <%--<button class="checkpoint fa fa-ban btn btn-default" title="Disable"><span class="label">Disable user</span></button>--%>
             </div>
         </div>
         <div class="table-container">

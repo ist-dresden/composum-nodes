@@ -92,7 +92,6 @@
             return node;
         }
 
-
     });
 
     usermanagement.tree = core.getView('#usermanagement-tree', usermanagement.Tree);
@@ -213,8 +212,6 @@
     });
 
     usermanagement.DetailView = core.getView('#usermanagement-view', usermanagement.DetailView);
-
-
 
 })(core.usermanagement);
 

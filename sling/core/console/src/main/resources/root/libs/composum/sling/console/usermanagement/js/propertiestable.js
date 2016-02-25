@@ -37,8 +37,6 @@
 
             loadContent: function(propertypath) {
                 var path = usermanagement.current.node.name;
-                var nodetype = usermanagement.current.node.type;
-                //var propertypath = "profile";
                 this.state.load = true;
 
                 core.ajaxGet(
@@ -57,7 +55,6 @@
             }
 
         });
-
 
     })(core.usermanagement);
 

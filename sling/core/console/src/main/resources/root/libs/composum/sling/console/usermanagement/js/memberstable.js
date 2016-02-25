@@ -30,7 +30,6 @@
                             title: 'Authorizable "' + usermanagement.current.node.name + '" has these member(s)'
                         }]
                 });
-
             },
 
             getSelections: function () {

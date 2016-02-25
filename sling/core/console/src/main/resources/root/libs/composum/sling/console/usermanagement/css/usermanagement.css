@@ -207,6 +207,9 @@
     color: #a94442; /* danger */
 }
 
+#usermanagement-query .query-result .systemuser {
+    color: #a94442;
+}
 
 button.addsystemuser,
 button.addsystemuser:focus,
@@ -217,3 +220,4 @@ button.addsystemuser:hover {
 .jstree-node.systemuser .jstree-icon {
     color: #a94442;
 }
+

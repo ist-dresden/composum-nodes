@@ -5,11 +5,9 @@
 
     (function(usermanagement) {
 
-
         usermanagement.getAddMemberDialog = function () {
             return core.getView('#add-member-dialog', usermanagement.AddMemberDialog);
         };
-
 
         usermanagement.AddMemberDialog = core.components.Dialog.extend({
 
@@ -35,7 +33,6 @@
                         });
                     }
                 });
-
             },
 
             reset: function () {

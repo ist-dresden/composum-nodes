@@ -5,18 +5,16 @@
 
     (function(usermanagement) {
 
-
         usermanagement.getDeleteAuthorizableDialog = function () {
             return core.getView('#authorizable-delete-dialog', usermanagement.DeleteAuthorizableDialog);
         };
-
 
         usermanagement.DeleteAuthorizableDialog = core.components.Dialog.extend({
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-                this.name = core.getWidget(this.el, 'input[name="authorizable"]', core.components.TextFieldWidget);
+                this.authorizable = core.getWidget(this.el, 'input[name="authorizable"]', core.components.TextFieldWidget);
                 this.$('button.delete').click(_.bind(this.deleteAuthorizable, this));
                 this.$el.on('shown.bs.modal', function () {
                     $(this).find('button.delete').focus();
@@ -28,7 +26,7 @@
             },
 
             setUser: function (user) {
-                this.name.setValue(user);
+                this.authorizable.setValue(user);
             },
 
             deleteAuthorizable: function (event) {

@@ -9,7 +9,6 @@
             return core.getView('#user-disable-dialog', usermanagement.DisableUserDialog);
         };
 
-
         usermanagement.DisableUserDialog = core.components.Dialog.extend({
 
             initialize: function (options) {
@@ -48,12 +47,11 @@
                     }, this),
                     _.bind(function(result) {
                         this.hide();
-                        core.alert('danger', 'Error', 'Error creating group', result);
+                        core.alert('danger', 'Error', 'Error an disable user', result);
                     }, this));
                 return false;
             }
         });
-
 
     })(core.usermanagement);
 

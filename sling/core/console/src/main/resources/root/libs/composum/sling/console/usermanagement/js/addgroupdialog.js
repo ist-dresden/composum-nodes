@@ -5,18 +5,16 @@
 
     (function(usermanagement) {
 
-
         usermanagement.getAddGroupDialog = function () {
             return core.getView('#group-create-dialog', usermanagement.AddGroupDialog);
         };
-
 
         usermanagement.AddGroupDialog = core.components.Dialog.extend({
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-                //this.$name = this.$('input[name="groupname"]');
+                this.$groupname = this.$('input[name="groupname"]');
                 this.$('button.create').click(_.bind(this.addNewGroup, this));
                 this.$el.on('shown.bs.modal', function () {
                     $(this).find('input[name="groupname"]').focus();

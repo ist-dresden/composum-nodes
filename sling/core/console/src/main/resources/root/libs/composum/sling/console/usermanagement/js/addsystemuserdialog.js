@@ -5,18 +5,16 @@
 
     (function(usermanagement) {
 
-
         usermanagement.getAddSystemUserDialog = function () {
             return core.getView('#systemuser-create-dialog', usermanagement.AddSystemUserDialog);
         };
-
 
         usermanagement.AddSystemUserDialog = core.components.Dialog.extend({
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-                this.$name = this.$('input[name="username"]');
+                this.$username = this.$('input[name="username"]');
                 this.$('button.create').click(_.bind(this.addNewUser, this));
                 this.$el.on('shown.bs.modal', function () {
                     $(this).find('input[name="username"]').focus();
@@ -45,12 +43,11 @@
                     }, this),
                     _.bind(function(result) {
                         this.hide();
-                        core.alert('danger', 'Error', 'Error creating user', result);
+                        core.alert('danger', 'Error', 'Error adding system user', result);
                     }, this));
                 return false;
             }
         });
-
 
     })(core.usermanagement);
 

@@ -69,9 +69,7 @@
                     }, this)
                 );
             }
-
         });
-
 
     })(core.usermanagement);
 

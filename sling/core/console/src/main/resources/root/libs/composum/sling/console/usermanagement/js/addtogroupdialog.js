@@ -5,11 +5,9 @@
 
     (function(usermanagement) {
 
-
         usermanagement.getAddToGroupDialog = function () {
             return core.getView('#add-to-group-dialog', usermanagement.AddToGroupDialog);
         };
-
 
         usermanagement.AddToGroupDialog = core.components.Dialog.extend({
 
@@ -35,7 +33,6 @@
                         });
                     }
                 });
-
             },
 
             reset: function () {
@@ -65,7 +62,6 @@
                 return false;
             }
         });
-
 
     })(core.usermanagement);
 

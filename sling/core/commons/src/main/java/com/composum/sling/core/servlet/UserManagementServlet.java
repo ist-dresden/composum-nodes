@@ -19,16 +19,10 @@ import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.ResourceResolverFactory;
-import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jcr.Node;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -119,6 +113,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         String[] declaredMembers = {};
         String principalName;
         boolean isGroup;
+        boolean systemUser;
 
         protected static String[] getIDs(Iterator<? extends Authorizable> authorizableIterator) throws RepositoryException {
             List<String> strings = new ArrayList<>();
@@ -132,7 +127,6 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     static class UserEntry extends AuthorizableEntry {
         boolean admin;
-        boolean systemUser;
         boolean disabled;
         String disabledReason;
         Map<String, Object> properties = new HashMap<>();
@@ -289,6 +283,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
             authorizableEntry.path = authorizable.getPath();
             authorizableEntry.principalName = principal.getName();
             authorizableEntry.isGroup = authorizable.isGroup();
+            authorizableEntry.systemUser = isSystemUser(authorizable);
             return authorizableEntry;
         }
     }
@@ -324,8 +319,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
-            String authorizableName = request.getParameter("authorizable");;
-            String groupName = request.getParameter("group");;
+            String authorizableName = request.getParameter("authorizable");
+            String groupName = request.getParameter("group");
             final Authorizable authorizable = userManager.getAuthorizable(authorizableName);
             final Group group = (Group) userManager.getAuthorizable(groupName);
             boolean b = group.addMember(authorizable);
@@ -339,7 +334,6 @@ public class UserManagementServlet extends AbstractServiceServlet {
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
-            final String path = AbstractServiceServlet.getPath(request);
             final UserManager userManager = session.getUserManager();
 
             final Gson gson = new Gson();
@@ -498,8 +492,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
-            String username = request.getParameter("username");;
-            String password = request.getParameter("password");;
+            String username = request.getParameter("username");
+            String password = request.getParameter("password");
 
             final Authorizable authorizable = userManager.getAuthorizable(username);
             User user = (User) authorizable;
@@ -517,8 +511,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
-            String username = request.getParameter("username");;
-            String reason = request.getParameter("reason");;
+            String username = request.getParameter("username");
+            String reason = request.getParameter("reason");
 
             final Authorizable authorizable = userManager.getAuthorizable(username);
             User user = (User) authorizable;

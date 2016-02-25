@@ -30,7 +30,6 @@
                             title: 'Authorizable "' + usermanagement.current.node.name + '" belongs to these group(s)'
                         }]
                 });
-
             },
 
             getSelections: function () {
@@ -55,7 +54,7 @@
                         this.$table.bootstrapTable('load', formattedResult);
                     }, this),
                     _.bind (function (result) {
-                        core.alert ('danger', 'Error', 'Error on loading groups', result);
+                        core.alert ('danger', 'Error', 'Error loading groups', result);
                     }, this),
                     _.bind (function (result) {
                         this.state.load = false;
@@ -65,7 +64,6 @@
             }
 
         });
-
 
     })(core.usermanagement);
 

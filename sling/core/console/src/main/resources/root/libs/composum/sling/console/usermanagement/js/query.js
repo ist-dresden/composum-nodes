@@ -27,7 +27,7 @@
                     var queryWidget = this;
                     var row = _.template(
                         '<tr data-path="<%= path %>">' +
-                            '<td class="icon"><span class="fa <%= icon %>"></span></td>' +
+                            '<td class="icon"><span class="fa <%= icon %> <%= systemuser %>"></span></td>' +
                             '<td class="name"><%= id %></td>' +
                             '<td class="path"><a href="<%= path %>"><%= path %></a></td>' +
                         '</tr>');
@@ -36,6 +36,7 @@
                         result.forEach(function(r) {
                             tab += row({
                                 icon: (r.isGroup ? 'fa-users' : 'fa-user'),
+                                systemuser: (r.systemUser ? 'systemuser' : ''),
                                 path: r.path,
                                 id: r.id
                             });
@@ -69,7 +70,6 @@
         });
 
         usermanagement.query = core.getView('#usermanagement-query .query-panel', usermanagement.Query);
-
 
     })(core.usermanagement);
 

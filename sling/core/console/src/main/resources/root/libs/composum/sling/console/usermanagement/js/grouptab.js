@@ -5,7 +5,6 @@
 
     (function(usermanagement) {
 
-
         usermanagement.GroupTab = core.console.DetailTab.extend({
 
             initialize: function(options) {

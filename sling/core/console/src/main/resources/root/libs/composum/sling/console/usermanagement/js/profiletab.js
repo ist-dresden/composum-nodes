@@ -13,7 +13,6 @@
             }
         });
 
-
     })(core.usermanagement);
 
 })(window.core);

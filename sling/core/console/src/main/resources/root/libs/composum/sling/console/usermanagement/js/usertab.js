@@ -74,7 +74,6 @@
 
         });
 
-
     })(core.usermanagement);
 
 })(window.core);
