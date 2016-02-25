@@ -50,7 +50,7 @@ public class SystemServlet extends AbstractServiceServlet {
 
     public enum Extension {json}
 
-    public enum Operation {propertyTypes, primaryTypes, mixinTypes, profile}
+    public enum Operation {propertyTypes, primaryTypes, mixinTypes, queryTemplates}
 
     protected ServletOperationSet operations = new ServletOperationSet(Extension.json);
 
@@ -77,6 +77,8 @@ public class SystemServlet extends AbstractServiceServlet {
                 Operation.primaryTypes, new GetPrimaryTypes());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.mixinTypes, new GetMixinTypes());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.queryTemplates, new GetQueryTemplates());
     }
 
     //
@@ -236,6 +238,23 @@ public class SystemServlet extends AbstractServiceServlet {
             }
             Collections.sort(nodeTypes);
             return nodeTypes;
+        }
+    }
+
+    //
+    // Query templates
+    //
+
+    public class GetQueryTemplates implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws ServletException, IOException {
+
+            JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+            response.setStatus(HttpServletResponse.SC_OK);
+            JsonUtil.writeJsonArray(jsonWriter, coreConfig.getQueryTemplates());
         }
     }
 }

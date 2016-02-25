@@ -13,20 +13,16 @@
 
             queryParamsPattern: new RegExp('^[^\\$]*(\\$\\{[^\\}]+\\})([^\\$]*(\\$\\{[^\\}]+\\}))?([^\\$]*(\\$\\{[^\\}]+\\}))?([^\\$]*(\\$\\{[^\\}]+\\}))?.*$'),
             paramNamePattern: new RegExp('^\\$\\{([^\\}]+)\\}$'),
-            queryExamples: [
-                '//test ${text}',
-                "${path}//${name}[jcr:contains(.,'${word}')]",
-                "${r}//${n}[jcr:contains(${p},'${v}')]"
-            ],
 
             initialize: function (options) {
+                this.loadTemplates();
+                window.setTimeout(_.bind (this.setupQueriesMenu, this), 500);
                 this.$form = this.$('.query-actions form');
                 this.$selectMenu = this.$('.query-actions ul.select');
                 this.$queryInput = this.$('.query-actions form input');
                 this.$execButton = this.$('.query-actions .exec');
                 this.$filterButton = this.$('.query-actions .filter');
                 this.$resultTable = this.$('.query-result table');
-                this.setupQueriesMenu();
                 this.$form.on('submit', _.bind(this.executeQuery, this));
                 this.$execButton.on('click.query', _.bind(this.executeQuery, this));
                 this.$filterButton.on('click.query', _.bind(this.toggleFilter, this));
@@ -66,9 +62,6 @@
                         var $td = $(this);
                         $td.find('a').on('click', _.bind(queryWidget.pathSelected, queryWidget));
                     });
-                    if (empty) {
-                        this.$resultTable.html('<tbody><tr><td align="center" class="info">no matching nodes found</td></tr></tbody>');
-                    }
                 }, this), _.bind(function (result) {
                     var message = core.resultMessage(result, 'error on execute query');
                     this.$resultTable.html('<tbody><tr><td class="error danger">' + message + '</td></tr></tbody>');
@@ -129,7 +122,7 @@
             },
 
             memorizeQuery: function (query) {
-                var queries = core.console.getProfile().get('query', 'history', this.queryExamples);
+                var queries = core.console.getProfile().get('query', 'history', this.queryTemplates);
                 queries = _.without(queries, query); // remove existing entry
                 queries = _.union([query], queries); // insert query at first pos
                 queries = _.first(queries, 12); // restrict history to 12 entries
@@ -138,7 +131,7 @@
 
             setupQueriesMenu: function () {
                 this.$selectMenu.html('');
-                var queries = core.console.getProfile().get('query', 'history', this.queryExamples);
+                var queries = core.console.getProfile().get('query', 'history', this.queryTemplates);
                 if (queries) {
                     for (var i = 0; i < queries.length; i++) {
                         this.$selectMenu.append('<li><a href="#">' + queries[i] + '</a></li>');
@@ -185,6 +178,12 @@
                 }
                 core.console.getProfile().set('query', 'filtered', this.isFiltered());
                 return false;
+            },
+
+            loadTemplates: function () {
+                core.getJson("/bin/core/system.queryTemplates.json", _.bind(function (templates) {
+                    this.queryTemplates = templates;
+                }, this));
             }
         });
 

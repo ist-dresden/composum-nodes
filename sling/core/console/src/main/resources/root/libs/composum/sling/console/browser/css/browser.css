@@ -215,7 +215,8 @@
 }
 
 #browser-query .query-panel .query-result td a,
-#browser-query .query-panel .query-result td.path {
+#browser-query .query-panel .query-result td.path,
+#browser-query .query-panel .query-result td.message {
     width: 100%;
 }
 

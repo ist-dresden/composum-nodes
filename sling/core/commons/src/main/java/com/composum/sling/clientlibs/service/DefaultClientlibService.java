@@ -7,6 +7,7 @@ import com.composum.sling.clientlibs.processor.GzipProcessor;
 import com.composum.sling.clientlibs.processor.JavascriptProcessor;
 import com.composum.sling.clientlibs.processor.LinkRenderer;
 import com.composum.sling.clientlibs.processor.ProcessorContext;
+import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -103,7 +104,10 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     @Reference
-    ResourceResolverFactory resolverFactory;
+    protected ResourceResolverFactory resolverFactory;
+
+    @Reference
+    protected SequencerService sequencer;
 
     @Reference
     protected JavascriptProcessor javascriptProcessor;
@@ -143,7 +147,8 @@ public class DefaultClientlibService implements ClientlibService {
     public void resetContent(Clientlib clientlib, String encoding)
             throws IOException, RepositoryException, LoginException {
         encoding = adjustEncoding(encoding);
-        FileHandle file = getCachedFile(clientlib, encoding);
+        String cachePath = getCachePath(clientlib, encoding);
+        FileHandle file = getCachedFile(clientlib, cachePath);
         if (file != null && file.isValid()) {
             ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
             resolver.delete(file.getResource());
@@ -155,7 +160,8 @@ public class DefaultClientlibService implements ClientlibService {
     public void deliverContent(final Clientlib clientlib, Writer writer, String encoding)
             throws IOException, RepositoryException {
         encoding = adjustEncoding(encoding);
-        FileHandle file = getCachedFile(clientlib, encoding);
+        String cachePath = getCachePath(clientlib, encoding);
+        FileHandle file = getCachedFile(clientlib, cachePath);
         if (file != null && file.isValid()) {
             InputStream content = file.getStream();
             if (content != null) {
@@ -167,68 +173,81 @@ public class DefaultClientlibService implements ClientlibService {
     @Override
     public Map<String, Object> prepareContent(final Clientlib clientlib, String encoding)
             throws IOException, RepositoryException, LoginException {
-        encoding = adjustEncoding(encoding);
+
         final Map<String, Object> hints = new HashMap<>();
-        FileHandle file = getCachedFile(clientlib, encoding);
-        if (file == null || !file.isValid()) {
-            // used for maximum backwards compatibility
-            ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
-            final ProcessorContext context = new ProcessorContext(resolver, executorService, hints);
 
-            Clientlib.Type type = clientlib.getType();
+        encoding = adjustEncoding(encoding);
+        String cachePath = getCachePath(clientlib, encoding);
 
-            String path = getCachePath(clientlib, encoding);
-            Resource cacheEntry = resolver.getResource(path);
-            if (cacheEntry != null) {
-                resolver.delete(cacheEntry);
-                resolver.commit();
-            }
+        Object token = sequencer.acquire(cachePath);
+        try {
+            FileHandle file = getCachedFile(clientlib, cachePath);
 
-            String[] separated = Clientlib.splitPathAndName(path);
-            Resource parent = giveParent(resolver, separated[0]);
-            cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
-            resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
+            if (file == null || !file.isValid()) {
 
-            file = new FileHandle(cacheEntry);
-            if (file.isValid()) {
-                final ClientlibProcessor processor = processorMap.get(type);
-                final PipedOutputStream outputStream = new PipedOutputStream();
-                InputStream inputStream = new PipedInputStream(outputStream);
-                context.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            clientlib.processContent(outputStream, processor, context);
-                        } catch (IOException | RepositoryException ex) {
-                            LOG.error(ex.getMessage(), ex);
-                        }
-                    }
-                });
-                if (ENCODING_GZIP.equals(encoding)) {
-                    inputStream = gzipProcessor.processContent(clientlib, inputStream, context);
+                // used for maximum backwards compatibility
+                ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
+                final ProcessorContext context = new ProcessorContext(resolver, executorService, hints);
+
+                Clientlib.Type type = clientlib.getType();
+
+                Resource cacheEntry = resolver.getResource(cachePath);
+                if (cacheEntry != null) {
+                    resolver.delete(cacheEntry);
+                    resolver.commit();
                 }
-                file.storeContent(inputStream);
 
-                ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
-                contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
-                contentValues.putAll(hints);
+                String[] separated = Clientlib.splitPathAndName(cachePath);
+                Resource parent = giveParent(resolver, separated[0]);
+                cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
+                resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
+
+                file = new FileHandle(cacheEntry);
+                if (file.isValid()) {
+
+                    final ClientlibProcessor processor = processorMap.get(type);
+                    final PipedOutputStream outputStream = new PipedOutputStream();
+                    InputStream inputStream = new PipedInputStream(outputStream);
+                    context.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                clientlib.processContent(outputStream, processor, context);
+                            } catch (IOException | RepositoryException ex) {
+                                LOG.error(ex.getMessage(), ex);
+                            }
+                        }
+                    });
+                    if (ENCODING_GZIP.equals(encoding)) {
+                        inputStream = gzipProcessor.processContent(clientlib, inputStream, context);
+                    }
+
+                    file.storeContent(inputStream);
+
+                    ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
+                    contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
+                    contentValues.putAll(hints);
+
+                    resolver.commit();
+                }
             }
 
-            resolver.commit();
+            if (file.isValid()) {
+                ValueMap contentValues = file.getContent().adaptTo(ValueMap.class);
+                hints.put(ResourceUtil.PROP_LAST_MODIFIED, contentValues.get(ResourceUtil.PROP_LAST_MODIFIED));
+                hints.put(ResourceUtil.PROP_MIME_TYPE, contentValues.get(ResourceUtil.PROP_MIME_TYPE));
+                hints.put(ResourceUtil.PROP_ENCODING, contentValues.get(ResourceUtil.PROP_ENCODING));
+                hints.put("size", file.getSize());
+            }
+
+        } finally {
+            sequencer.release(token);
         }
 
-        if (file.isValid()) {
-            ValueMap contentValues = file.getContent().adaptTo(ValueMap.class);
-            hints.put(ResourceUtil.PROP_LAST_MODIFIED, contentValues.get(ResourceUtil.PROP_LAST_MODIFIED));
-            hints.put(ResourceUtil.PROP_MIME_TYPE, contentValues.get(ResourceUtil.PROP_MIME_TYPE));
-            hints.put(ResourceUtil.PROP_ENCODING, contentValues.get(ResourceUtil.PROP_ENCODING));
-            hints.put("size", file.getSize());
-        }
         return hints;
     }
 
-    protected FileHandle getCachedFile(Clientlib clientlib, String encoding) {
-        String path = getCachePath(clientlib, encoding);
+    protected FileHandle getCachedFile(Clientlib clientlib, String path) {
         ResourceResolver resolver = clientlib.getResolver();
         FileHandle file = new FileHandle(resolver.getResource(path));
         if (file.isValid()) {
@@ -259,11 +278,18 @@ public class DefaultClientlibService implements ClientlibService {
 
     protected synchronized Resource giveParent(ResourceResolver resolver, String path)
             throws PersistenceException {
-        Resource resource = resolver.getResource(path);
-        if (resource == null) {
-            String[] separated = Clientlib.splitPathAndName(path);
-            Resource parent = giveParent(resolver, separated[0]);
-            resource = resolver.create(parent, separated[1], CRUD_CACHE_FOLDER_PROPS);
+        Resource resource = null;
+        Object token = sequencer.acquire(path);
+        try {
+            resource = resolver.getResource(path);
+            if (resource == null) {
+                String[] separated = Clientlib.splitPathAndName(path);
+                Resource parent = giveParent(resolver, separated[0]);
+                resource = resolver.create(parent, separated[1], CRUD_CACHE_FOLDER_PROPS);
+                resolver.commit();
+            }
+        } finally {
+            sequencer.release(token);
         }
         return resource;
     }
@@ -291,9 +317,11 @@ public class DefaultClientlibService implements ClientlibService {
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        if (executorService != null) {
-            executorService.shutdown();
-            executorService = null;
+        synchronized (this) {
+            if (executorService != null) {
+                executorService.shutdown();
+                executorService = null;
+            }
         }
     }
 }

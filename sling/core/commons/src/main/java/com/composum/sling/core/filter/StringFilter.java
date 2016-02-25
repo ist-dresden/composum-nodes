@@ -37,6 +37,7 @@ public interface StringFilter {
 
     /**
      * to build a rebuildable string view of the filter
+     *
      * @param builder
      */
     void toString(StringBuilder builder);
@@ -71,7 +72,33 @@ public interface StringFilter {
     /**
      * the abstract base for filters which are using regular expression patterns
      */
-    abstract class PatternList implements StringFilter {
+    abstract class FilterBase implements StringFilter {
+
+        public List<String> getFiltered(Iterable<String> values) {
+            List<String> result = new ArrayList<>();
+            for (String value : values) {
+                if (accept(value)) {
+                    result.add(value);
+                }
+            }
+            return result;
+        }
+
+        public String[] getFiltered(String... values) {
+            List<String> result = new ArrayList<>();
+            for (String value : values) {
+                if (accept(value)) {
+                    result.add(value);
+                }
+            }
+            return result.toArray(new String[result.size()]);
+        }
+    }
+
+    /**
+     * the abstract base for filters which are using regular expression patterns
+     */
+    abstract class PatternList extends FilterBase {
 
         /** such a filter uses a list of patterns to implement the filter function */
         protected List<Pattern> patterns;
@@ -295,7 +322,7 @@ public interface StringFilter {
     /**
      * An implementation to combine StringFilters to complex rules.
      */
-    class FilterSet implements StringFilter {
+    class FilterSet extends FilterBase {
 
         /**
          * the combination rule options:

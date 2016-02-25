@@ -44,7 +44,7 @@
                             *
                         </Import-Package>
                         <Export-Package>
-                            com.composum.sling.clientlib.*,
+                            com.composum.sling.clientlibs.*,
                             com.composum.sling.core.*,
                             com.composum.sling.cpnl.*,
                             com.google.gson.*,
