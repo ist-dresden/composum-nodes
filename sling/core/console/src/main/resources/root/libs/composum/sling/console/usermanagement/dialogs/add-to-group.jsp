@@ -36,7 +36,7 @@
 
                     <div class="modal-footer buttons">
                         <button type="button" class="btn btn-default cancel" data-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary create">Add</button>
+                        <button type="submit" class="btn btn-primary create">Add</button>
                     </div>
 
                 </cpn:form>
