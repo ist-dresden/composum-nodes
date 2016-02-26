@@ -398,8 +398,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 if (authorizableByRequestPath == null) {
                     jsonWriter.beginObject()
                             .name("id").value(originalRequestPath)
-                            .name("text").value(originalRequestPath.substring(originalRequestPath.lastIndexOf('/') + 1))
-                            .name("name").value(originalRequestPath.substring(originalRequestPath.lastIndexOf('/') + 1))
+                            .name("text").value(originalRequestPath.equals("/") ? "/" : originalRequestPath.substring(originalRequestPath.lastIndexOf('/') + 1))
+                            .name("name").value(originalRequestPath.equals("/") ? "/" : originalRequestPath.substring(originalRequestPath.lastIndexOf('/') + 1))
                             .name("path").value(originalRequestPath)
                             .name("children")
                             .beginArray();

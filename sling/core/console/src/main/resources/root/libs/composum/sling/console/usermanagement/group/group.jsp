@@ -10,8 +10,8 @@
                 <a class="general fa fa-list btn btn-default" href="#general" data-group="general" title="General"><span class="label">General</span></a>
                 <a class="profile fa fa-user btn btn-default" href="#profile" data-group="profile" title="Profile"><span class="label">Profile</span></a>
                 <a class="preferences fa fa-wrench btn btn-default" href="#preferences" data-group="preferences" title="Preferences"><span class="label">Preferences</span></a>
-                <a class="groups fa fa-users btn btn-default" href="#groups" data-group="groups" title="Groups"><span class="label">Groups</span></a>
-                <a class="groups fa fa-users btn btn-default" href="#members" data-group="members" title="Members"><span class="label">Members</span></a>
+                <a class="groups fa fa-expand btn btn-default" href="#groups" data-group="groups" title="Groups"><span class="label">Groups</span></a>
+                <a class="groups fa fa-compress btn btn-default" href="#members" data-group="members" title="Members"><span class="label">Members</span></a>
             </div>
         </div>
     </div>

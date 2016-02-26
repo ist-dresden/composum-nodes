@@ -17,6 +17,14 @@
     border: none;
 }
 
+#usermanagement.left-open #usermanagement-query .query-head .query-actions form {
+    padding-left: 6px;
+}
+
+#usermanagement #usermanagement-query .query-head .query-actions form {
+    padding-left: 29px;
+}
+
 #usermanagement-query .query-head .query-actions form {
     position: absolute;
     top: 6px;
@@ -210,6 +218,14 @@
 #usermanagement-query .query-result .systemuser {
     color: #a94442;
 }
+
+
+/******/
+
+#usermanagement .user-table td.name {
+    min-width: 200px;
+}
+
 
 button.addsystemuser,
 button.addsystemuser:focus,
