@@ -92,14 +92,13 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
         if (entryPoint == null) {
             StringBuilder path = new StringBuilder();
             ResourceHandle parent = resource.getParent();
-            String name = parent.getName();
-            while (parent != null && !ResourceUtil.CONTENT_NODE.equals(name)) {
+            String name = null;
+            while (parent != null && !ResourceUtil.CONTENT_NODE.equals(name = parent.getName())) {
                 if (path.length() > 0) {
                     path.insert(0, '/');
                 }
                 path.insert(0, name);
                 parent = parent.getParent();
-                name = parent != null ? parent.getName() : null;
             }
             if (parent != null && ResourceUtil.CONTENT_NODE.equals(name)) {
                 // the resource is a child of an element with a content subtree ('jcr:content/...')
