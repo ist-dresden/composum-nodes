@@ -22,6 +22,8 @@
               <div class="align-left">
                 <div class="btn-group btn-group-sm" role="group">
                   <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh tree view"><span class="label">Refresh</span></button>
+                </div>
+                <div class="btn-group btn-group-sm" role="group">
                   <button type="button" class="addsystemuser fa fa-stack btn btn-default" title="Add System User">
                     <i class="fa fa-user fa-stack-1x"></i>
                     <i class="fa fa-plus-circle fa-stack-1x"></i>
@@ -35,7 +37,10 @@
                   <button type="button" class="addgroup fa fa-stack btn btn-default" title="Add Group">
                     <i class="fa fa-users fa-stack-1x"></i>
                     <i class="fa fa-plus-circle fa-stack-1x"></i>
-                    <span class="label">Add Group</span></button>
+                    <span class="label">Add Group</span>
+                  </button>
+                </div>
+                <div class="btn-group btn-group-sm" role="group">
                   <button type="button" class="deleteauthorizable fa fa-minus btn btn-default" title="Delete Authorizable"><span class="label">Delete Authorizable</span></button>
                 </div>
               </div>
