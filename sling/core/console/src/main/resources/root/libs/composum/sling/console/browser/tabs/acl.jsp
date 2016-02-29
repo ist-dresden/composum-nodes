@@ -9,6 +9,10 @@
         <button class="add fa fa-plus btn btn-default" title="Add policy to current node"><span class="label">Add</span></button>
         <button class="remove fa fa-minus btn btn-default" title="Remove selected policies"><span class="label">Remove</span></button>
       </div>
+      <div class="btn-group btn-group-sm" role="group">
+        <button class="up fa fa-arrow-up btn btn-default" title="Move selected policies up"><span class="label">Up</span></button>
+        <button class="down fa fa-arrow-down btn btn-default" title="Move selected policies down"><span class="label">Down</span></button>
+      </div>
     </div>
     <div class="detail-content">
       <div class="split-pane vertical-split fixed-top">
