@@ -157,7 +157,7 @@
 
             setValue: function (value, triggerChange) {
                 var $radio = this.$('input[type="radio"][value="' + value + '"]');
-                $radio.attr('checked', 'checked');
+                $radio.prop("checked", true);
                 this.getValue();
                 if (triggerChange) {
                     this.$el.trigger('change');
