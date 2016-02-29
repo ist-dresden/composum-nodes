@@ -121,11 +121,15 @@
             /**
              * refreshes the tree view, clears all cached tree structure and reopens the selected node
              */
-            refresh: function () {
+            refresh: function (callback) {
                 var current = this.current();
                 this.delegate('refresh.jstree', _.bind(function () {
-                    if (current) {
-                        this.selectNode(current.path);
+                    if (_.isFunction(callback)) {
+                        callback(current);
+                    } else {
+                        if (current) {
+                            this.selectNode(current.path);
+                        }
                     }
                     this.undelegate('refresh.jstree');
                 }, this));

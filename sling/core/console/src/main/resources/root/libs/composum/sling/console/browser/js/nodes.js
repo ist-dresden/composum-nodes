@@ -11,37 +11,37 @@
 
         nodes.getCreateNodeDialog = function () {
             return core.getView('#node-create-dialog', nodes.CreateNodeDialog);
-        }
+        };
 
         nodes.getMoveNodeDialog = function () {
             return core.getView('#node-move-dialog', nodes.MoveNodeDialog);
-        }
+        };
 
         nodes.getRenameNodeDialog = function () {
             return core.getView('#node-rename-dialog', nodes.RenameNodeDialog);
-        }
+        };
 
         nodes.getCopyNodeDialog = function () {
             return core.getView('#node-copy-dialog', nodes.CopyNodeDialog);
-        }
+        };
 
         nodes.getNodeMixinsDialog = function () {
             return core.getView('#node-mixins-dialog', nodes.NodeMixinsDialog);
-        }
+        };
 
         nodes.getDeleteNodeDialog = function () {
             return core.getView('#node-delete-dialog', nodes.DeleteNodeDialog);
-        }
+        };
 
         nodes.getUploadNodeDialog = function () {
             return core.getView('#node-upload-dialog', nodes.UploadNodeDialog);
-        }
+        };
 
         nodes.CreateNodeDialog = core.components.Dialog.extend({
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$panel = this.$('.form-panel');
                 this.$path = this.$('input[name="path"]');
                 this.$type = this.$('input[name="type"]');
@@ -49,7 +49,11 @@
                 this.$file = this.$('input[name="file"]');
                 this.$type.on('change.type', _.bind(this.typeChanged, this));
                 this.$file.on('change.file', _.bind(this.fileChanged, this));
+                this.form.onsubmit = _.bind(this.createNode, this);
                 this.$('button.create').click(_.bind(this.createNode, this));
+                this.$el.on('shown.bs.modal', function () {
+                    $(this).find('input[name="type"]').focus();
+                });
             },
 
             initParentPath: function (path) {
@@ -58,9 +62,12 @@
 
             createNode: function (event) {
                 event.preventDefault();
-                if (this.$form.isValid()) {
-                    this.submitForm(function () {
-                        core.browser.tree.refresh();
+                if (this.form.isValid()) {
+                    this.submitForm(function (result) {
+                        core.browser.tree.refresh(function() {
+                            var path = result.path;
+                            $(document).trigger("path:select", [path]);
+                        });
                     });
                 } else {
                     this.alert('danger', 'a parent path, type and name must be specified');
@@ -112,10 +119,15 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$path = this.$('input[name="path"]');
-                this.$multi = core.getWidget(this.el, 'div.multi-form-widget', core.components.MultiFormWidget);
+                this.multi = core.getWidget(this.el, 'div.multi-form-widget', core.components.MultiFormWidget);
+                this.form.onsubmit = _.bind(this.saveNode, this);
                 this.$('button.submit').click(_.bind(this.saveNode, this));
+                this.$el.on('shown.bs.modal', function () {
+                    $(this).find('input[name="value"]').focus();
+                });
+
             },
 
             reset: function () {
@@ -135,8 +147,8 @@
                 this.$path.val(node.path);
                 core.getJson("/bin/core/property.get.json" + node.path + "?name=jcr:mixinTypes",
                     _.bind(function (mixins) {
-                        this.$multi.reset(mixins.value.length);
-                        var values = this.$multi.$('input[name="value"]');
+                        this.multi.reset(mixins.value.length);
+                        var values = this.multi.$('input[name="value"]');
                         for (var i = 0; i < mixins.value.length; i++) {
                             this.setWidgetValue($(values[i]), mixins.value[i]);
                         }
@@ -176,11 +188,12 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$path = this.$('input[name="path"]');
                 this.$name = this.$('input[name="name"]');
                 this.$newname = core.getWidget(this.el, 'input[name="newname"]', core.components.TextFieldWidget);
                 this.$('button.rename').click(_.bind(this.renameNode, this));
+                this.form.onsubmit = _.bind(this.renameNode, this);
                 this.$el.on('shown.bs.modal', function () {
                     $(this).find('input[name="newname"]').focus();
                 });
@@ -201,16 +214,17 @@
                 core.ajaxPut("/bin/core/node.move.json" + this.$path.val() + '/' + this.$name.val(),
                     JSON.stringify({
                         name: this.$newname.getValue(),
-                        path: this.$path.val()
-                    }), {
+                        path: this.$path.val()}),
+                    {
                         dataType: 'json'
-                    }, _.bind(function (result) {
+                    },
+                    _.bind(function (result) {
                         core.browser.tree.refresh();
                         this.hide();
-                    }, this), _.bind(function (result) {
-                        core.alert('danger', 'Error', 'Error on renaming node', result);
+                    }, this),
+                    _.bind(function (result) {
+                        this.alert('danger', 'Error on renaming node', result);
                     }, this));
-
                 return false;
             }
         });
@@ -319,9 +333,13 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$path = this.$('input[name="path"]');
                 this.$('button.delete').click(_.bind(this.deleteNode, this));
+                this.form.onsubmit = _.bind(this.deleteNode, this);
+                this.$el.on('shown.bs.modal', function () {
+                    $(this).find('input[name="path"]').focus();
+                });
             },
 
             setNode: function (node) {
@@ -331,16 +349,15 @@
             deleteNode: function (event) {
                 event.preventDefault();
                 var path = this.$path.val();
-                if (this.$form.isValid()) {
+                if (this.form.isValid()) {
                     core.ajaxDelete("/bin/core/node.json" + core.encodePath(path),
-                        {}, undefined, undefined,
-                        _.bind(function (result) {
-                            if (result.status == 200) {
-                                this.hide();
-                                core.browser.tree.refresh();
-                            } else {
-                                this.alert('danger', 'Error on delete node', result);
-                            }
+                        {},
+                        _.bind(function(result){
+                            this.hide();
+                            core.browser.tree.refresh();
+                        }, this),
+                        _.bind(function(result){
+                            this.alert('danger', 'Error on delete node', result);
                         }, this));
                 } else {
                     this.alert('danger', 'a valid node path must be specified');
