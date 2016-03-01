@@ -1,24 +1,59 @@
 package com.composum.sling.core.console;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.ResourceFilter;
-import com.composum.sling.core.filter.StringFilter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.Session;
+import javax.jcr.query.Query;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 public class Consoles extends ConsolePage {
 
     private static final Logger LOG = LoggerFactory.getLogger(Consoles.class);
 
-    public static final ResourceFilter CONSOLES_FILTER = new ResourceFilter.ResourceTypeFilter(
-            new StringFilter.WhiteList("^composum/sling/console/.*$")
-    );
+    public static final String CONTENT_QUERY = "/jcr:root//content[@sling:resourceType='composum/sling/console/page']";
+
+    public static class ConsoleFilter implements ResourceFilter {
+
+        private final List<String> selectors;
+
+        public ConsoleFilter(String... selectors) {
+            this.selectors = Arrays.asList(selectors);
+        }
+
+        @Override
+        public boolean accept(Resource resource) {
+            ValueMap values = resource.adaptTo(ValueMap.class);
+            String[] categories = values.get("categories", new String[0]);
+            for (String category : categories) {
+                if (selectors.contains(category)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public boolean isRestriction() {
+            return true;
+        }
+
+        @Override
+        public void toString(StringBuilder builder) {
+            builder.append("console(").append(StringUtils.join(selectors, ',')).append(")");
+        }
+    }
 
     public Consoles(BeanContext context, Resource resource) {
         super(context, resource);
@@ -69,12 +104,19 @@ public class Consoles extends ConsolePage {
 
     public List<Console> getConsoles() {
         List<Console> consoles = new ArrayList<>();
-        Resource consoleContent = getResolver().getResource("/libs/composum/sling/console/content");
-        if (consoleContent != null) {
-            for (Resource console : consoleContent.getChildren()) {
-                if (CONSOLES_FILTER.accept(console)) {
-                    ResourceHandle handle = ResourceHandle.use(console);
-                    consoles.add(new Console(handle.getTitle(), handle.getName(), handle.getPath()));
+        ResourceResolver resolver = getResolver();
+        Iterator<Resource> consoleContentResources = resolver.findResources(CONTENT_QUERY, Query.XPATH);
+        if (consoleContentResources != null) {
+            while (consoleContentResources.hasNext()) {
+                CoreConfiguration configuration = getSling().getService(CoreConfiguration.class);
+                String[] categories = configuration.getConsoleCategories();
+                ResourceFilter consoleFilter = new ConsoleFilter(categories);
+                Resource consoleContent = consoleContentResources.next();
+                for (Resource console : consoleContent.getChildren()) {
+                    if (consoleFilter.accept(console)) {
+                        ResourceHandle handle = ResourceHandle.use(console);
+                        consoles.add(new Console(handle.getTitle(), handle.getName(), handle.getPath()));
+                    }
                 }
             }
         }

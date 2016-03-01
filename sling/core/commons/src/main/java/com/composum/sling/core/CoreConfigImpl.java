@@ -43,6 +43,17 @@ import java.util.Map;
 public class CoreConfigImpl implements CoreConfiguration {
 
     @Property(
+            name = CONSOLE_CATEGORIES_KEY,
+            label = "Console Categories",
+            description = "the list of categories to determine the views in the core console",
+            value = {
+                    "core",
+                    "nodes"
+            }
+    )
+    private String[] consoleCategories;
+
+    @Property(
             name = QUERY_RESULT_LIMIT_KEY,
             label = "Query Result Limit",
             description = "the maximum node count for query results (default: 500)",
@@ -174,6 +185,11 @@ public class CoreConfigImpl implements CoreConfiguration {
     }
 
     @Override
+    public String[] getConsoleCategories() {
+        return consoleCategories;
+    }
+
+    @Override
     public long getQueryResultLimit() {
         return queryResultLimit;
     }
@@ -272,6 +288,7 @@ public class CoreConfigImpl implements CoreConfiguration {
     @Modified
     protected void activate(ComponentContext context) {
         this.properties = context.getProperties();
+        consoleCategories = PropertiesUtil.toStringArray(properties.get(CONSOLE_CATEGORIES_KEY));
         queryResultLimit = PropertiesUtil.toLong(properties.get(QUERY_RESULT_LIMIT_KEY), QUERY_RESULT_LIMIT_DEFAULT);
         queryTemplates = PropertiesUtil.toStringArray(properties.get(QUERY_TEMPLATES_KEY));
         errorpagesPath = (String) properties.get(ERRORPAGES_PATH);

@@ -18,6 +18,8 @@ public interface CoreConfiguration {
     String ERRORPAGE_STATUS = "errorpage.status";
     String ERRORPAGES_PATH = "errorpages.path";
 
+    String CONSOLE_CATEGORIES_KEY = "console.categories";
+
     long QUERY_RESULT_LIMIT_DEFAULT = 500L;
     String QUERY_RESULT_LIMIT_KEY = "query.result.limit";
     String QUERY_TEMPLATES_KEY = "query.templates";
@@ -36,6 +38,8 @@ public interface CoreConfiguration {
     String NODE_SERVLET_ENABLED = "node.servlet.enabled";
     String PROPERTY_SERVLET_ENABLED = "property.servlet.enabled";
     String VERSION_SERVLET_ENABLED = "version.servlet.enabled";
+
+    String[] getConsoleCategories();
 
     long getQueryResultLimit();
 
