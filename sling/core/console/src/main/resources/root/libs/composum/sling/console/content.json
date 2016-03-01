@@ -12,7 +12,8 @@
     "categories": [
       "core",
       "nodes"
-    ]
+    ],
+    "order": 10
   },
   "felix": {
     "jcr:primaryType": "nt:unstructured",
@@ -20,6 +21,7 @@
     "sling:resourceType": "composum/sling/console/felix",
     "categories": [
       "core"
-    ]
+    ],
+    "order": 80
   }
 }
