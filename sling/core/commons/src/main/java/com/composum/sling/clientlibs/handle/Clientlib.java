@@ -11,6 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import java.io.IOException;
@@ -23,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Clientlib {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Clientlib.class);
 
     public enum Type {link, css, js}
 
@@ -43,6 +47,18 @@ public class Clientlib {
                     properties.put(props[i], props[i + 1]);
                 }
             }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof Link
+                    && url.equals(((Link) other).url)
+                    && properties.equals(((Link) other).properties);
+        }
+
+        @Override
+        public int hashCode() {
+            return url.hashCode() | properties.hashCode();
         }
     }
 
@@ -166,10 +182,7 @@ public class Clientlib {
         if (resource.isValid()) {
             if (isFile(resource)) {
                 FileHandle file = new FileHandle(resource);
-                if (file.isValid()) {
-                    ResourceHandle fileRes = file.getResource();
-                    links.add(getLink(fileRes, fileRes, properties, null));
-                }
+                addFileToList(links, properties, file);
             } else {
                 String reference = resource.getProperty(PROP_EMBED, "");
                 if (StringUtils.isNotBlank(reference)) {
@@ -180,9 +193,7 @@ public class Clientlib {
                             embedded.getLinks(embedded.definition, properties, links);
                         } else {
                             FileHandle file = new FileHandle(target);
-                            if (file.isValid()) {
-                                links.add(getLink(resource, file.getResource(), properties, null));
-                            }
+                            addFileToList(links, properties, file);
                         }
                     }
                 } else {
@@ -190,6 +201,18 @@ public class Clientlib {
                         getLinks(ResourceHandle.use(child), properties, links);
                     }
                 }
+            }
+        }
+    }
+
+    protected void addFileToList(List<Link> links, Map<String, String> properties, FileHandle file) {
+        if (file.isValid()) {
+            ResourceHandle fileRes = file.getResource();
+            Link link = getLink(resource, fileRes, properties, null);
+            if (!links.contains(link)) {
+                links.add(link);
+            } else {
+                LOG.warn ("dulicated clientlib entry found: '" + link.url + "'");
             }
         }
     }
