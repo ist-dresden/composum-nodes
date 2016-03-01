@@ -18,18 +18,16 @@
         };
 
         browser.DeleteVersionDialog = core.components.Dialog.extend({
+
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.name = core.getWidget(this.el, 'input[name="name"]', core.components.TextFieldWidget);
                 this.$('button.delete').click(_.bind(this.deleteVersion, this));
                 this.$el.on('shown.bs.modal', function () {
                     $(this).find('input[name="name"]').focus();
                 });
                 var path = browser.getCurrentPath();
-            },
-
-            reset: function () {
             },
 
             setVersion: function (version) {
@@ -44,19 +42,20 @@
                     data: JSON.stringify({
                         version: version,
                         path: path
-                    }),
-                    //dataType: 'json'
-                }, _.bind(function (result) {
-                    this.hide();
-                }, this), _.bind(function (result) {
-                    core.alert('danger', 'Error', 'Error on deleting version', result);
-                }, this));
+                    })},
+                    _.bind(function (result) {
+                        this.hide();
+                    }, this),
+                    _.bind(function (result) {
+                        this.alert('danger', 'Error on deleting version', result);
+                    }, this));
 
                 return false;
             }
         });
 
         browser.DeleteLabelDialog = core.components.Dialog.extend({
+
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
@@ -76,11 +75,6 @@
                             });
                     }
                 });
-
-            },
-
-            reset: function () {
-                this.labelname.setValue("");
             },
 
             deleteLabel: function (event) {
@@ -95,7 +89,7 @@
                 }, _.bind(function (result) {
                     this.hide();
                 }, this), _.bind(function (result) {
-                    core.alert('danger', 'Error', 'Error on deleting version label', result);
+                    this.alert('danger', 'Error on deleting version label', result);
                 }, this));
 
                 return false;
@@ -114,11 +108,6 @@
                 this.$el.on('shown.bs.modal', function () {
                     $(this).find('input[name="labelname"]').focus();
                 });
-            },
-
-            reset: function () {
-//                core.components.Dialog.prototype.reset.apply(this);
-                this.$labelname.setValue("");
             },
 
             setVersion: function (path, version) {
@@ -203,8 +192,10 @@
                 var path = browser.getCurrentPath();
                 var dialog = browser.getAddLabelDialog();
                 var rows = this.table.getSelections();
-                dialog.show(undefined, _.bind(this.reload, this));
-                dialog.setVersion(path, rows[0].name);
+                dialog.show(function() {
+                    dialog.setVersion(path, rows[0].name);
+                }, _.bind(this.reload, this));
+
             },
 
             removeLabel: function (event) {
@@ -251,8 +242,10 @@
             deleteVersion: function (event) {
                 var dialog = browser.getDeleteVersionDialog();
                 var rows = this.table.getSelections();
-                dialog.show(undefined, _.bind(this.reload, this));
-                dialog.setVersion(rows.length == 0 ? "" : rows[0].name);
+                dialog.show(function() {
+                    dialog.setVersion(rows.length == 0 ? "" : rows[0].name);
+                }, _.bind(this.reload, this));
+
             },
 
             restoreVersion: function (event) {
