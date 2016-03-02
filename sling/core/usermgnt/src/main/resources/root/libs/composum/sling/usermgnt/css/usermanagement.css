@@ -226,6 +226,9 @@
     min-width: 200px;
 }
 
+#usermanagement .blank.detail-panel .general {
+    visibility: hidden;
+}
 
 button.addsystemuser,
 button.addsystemuser:focus,
