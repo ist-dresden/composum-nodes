@@ -4,20 +4,17 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.ResourceFilter;
-import com.composum.sling.core.filter.StringFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.jcr.Session;
 import javax.jcr.query.Query;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +27,7 @@ public class Consoles extends ConsolePage {
     public static final int ORDER_DEFAULT = 50;
 
     public static final String PROP_PRECONDITION = "precondition";
-
     public static final String PRECONDITION_CLASS_AVAILABILITY = "class";
-
-    public static final ResourceFilter CONSOLES_FILTER = new ConsoleFilter();
 
     public static final Map<String, PreconditionFilter> PRECONDITION_FILTERS;
 
@@ -61,14 +55,14 @@ public class Consoles extends ConsolePage {
             String[] categories = values.get(CATEGORIES, new String[0]);
             for (String category : categories) {
                 if (selectors.contains(category)) {
-                        String precondition = values.get(PROP_PRECONDITION, "");
-                        if (StringUtils.isNotBlank(precondition)) {
-                            String[] rule = StringUtils.split(precondition, ":");
-                            PreconditionFilter filter = PRECONDITION_FILTERS.get(rule[0]);
-                            if (filter != null) {
-                                return filter.accept(resource, rule.length > 0 ? rule[1] : null);
-                            }
+                    String precondition = values.get(PROP_PRECONDITION, "");
+                    if (StringUtils.isNotBlank(precondition)) {
+                        String[] rule = StringUtils.split(precondition, ":");
+                        PreconditionFilter filter = PRECONDITION_FILTERS.get(rule[0]);
+                        if (filter != null) {
+                            return filter.accept(resource, rule.length > 0 ? rule[1] : null);
                         }
+                    }
                     return true;
                 }
             }
@@ -178,7 +172,6 @@ public class Consoles extends ConsolePage {
                 }
             }
         }
-        return consoles;
     }
 
     //
@@ -205,7 +198,7 @@ public class Consoles extends ConsolePage {
         public boolean accept(Resource resource, String className) {
             boolean classAvailable = false;
             try {
-                getClass().forName(className);
+                Class.forName(className);
                 classAvailable = true;
             } catch (Exception ex) {
                 // ok, not available
