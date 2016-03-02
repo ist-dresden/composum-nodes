@@ -179,7 +179,7 @@ public class DefaultClientlibService implements ClientlibService {
         encoding = adjustEncoding(encoding);
         String cachePath = getCachePath(clientlib, encoding);
 
-        Object token = sequencer.acquire(cachePath);
+        SequencerService.Token token = sequencer.acquire(cachePath);
         try {
             FileHandle file = getCachedFile(clientlib, cachePath);
 
@@ -279,7 +279,7 @@ public class DefaultClientlibService implements ClientlibService {
     protected synchronized Resource giveParent(ResourceResolver resolver, String path)
             throws PersistenceException {
         Resource resource = null;
-        Object token = sequencer.acquire(path);
+        SequencerService.Token token = sequencer.acquire(path);
         try {
             resource = resolver.getResource(path);
             if (resource == null) {

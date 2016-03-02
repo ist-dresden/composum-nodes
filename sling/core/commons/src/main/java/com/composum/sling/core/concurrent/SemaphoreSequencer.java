@@ -17,7 +17,7 @@ public class SemaphoreSequencer implements SequencerService<SemaphoreSequencer.T
 
     private static final Logger LOG = LoggerFactory.getLogger(SemaphoreSequencer.class);
 
-    public static final class Token {
+    public static final class Token implements SequencerService.Token {
 
         protected final String key;
         protected final Semaphore semaphore;
@@ -43,7 +43,7 @@ public class SemaphoreSequencer implements SequencerService<SemaphoreSequencer.T
         }
 
         try {
-            LOG.debug("aquire (" + key + ")");
+            LOG.debug("acquire (" + key + ")");
             semaphore.acquire();
 
         } catch (InterruptedException ex) {
@@ -70,12 +70,12 @@ public class SemaphoreSequencer implements SequencerService<SemaphoreSequencer.T
     }
 
     @Activate
-    protected void activate(ComponentContext context) {
+    protected void activate(@SuppressWarnings("UnusedParameters") ComponentContext context) {
         semaphores = new HashMap<>();
     }
 
     @Deactivate
-    protected void deactivate(ComponentContext context) {
+    protected void deactivate(@SuppressWarnings("UnusedParameters") ComponentContext context) {
         synchronized (this) {
             if (semaphores != null) {
                 for (Semaphore semaphore : semaphores.values()) {
