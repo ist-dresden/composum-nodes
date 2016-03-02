@@ -15,12 +15,6 @@
     ],
     "order": 10
   },
-  "pckgmgr": {
-    "jcr:primaryType": "nt:unstructured",
-    "jcr:title": "Packages",
-    "sling:resourceType": "composum/sling/console/pckgmgr",
-    "precondition": "class:org.apache.jackrabbit.vault.packaging.JcrPackageManager"
-  },
   "felix": {
     "jcr:primaryType": "nt:unstructured",
     "jcr:title": "Felix",

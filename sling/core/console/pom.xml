@@ -94,11 +94,6 @@
             <groupId>javax.jcr</groupId>
             <artifactId>jcr</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.jackrabbit.vault</groupId>
-            <artifactId>org.apache.jackrabbit.vault</artifactId>
-            <optional>true</optional>
-        </dependency>
 
         <!-- JSON -->
         <dependency>
@@ -122,6 +117,16 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <groupId>taglibs</groupId>
+            <artifactId>standard</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
         </dependency>
 
     </dependencies>

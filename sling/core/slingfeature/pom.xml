@@ -46,7 +46,15 @@
             <groupId>com.composum.sling.core</groupId>
             <artifactId>composum-sling-core-console</artifactId>
         </dependency>
-        
+        <dependency>
+            <groupId>com.composum.sling.core</groupId>
+            <artifactId>composum-sling-package-manager</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.sling.core</groupId>
+            <artifactId>composum-sling-user-management</artifactId>
+        </dependency>
+
         <!-- Commons Lang -->
         <dependency>
             <groupId>org.apache.commons</groupId>

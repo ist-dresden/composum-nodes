@@ -5,3 +5,5 @@
   com.composum.sling.core/composum-sling-core-commons
   com.composum.sling.core/composum-sling-core-jslibs
   com.composum.sling.core/composum-sling-core-console
+  com.composum.sling.core/composum-sling-package-manager
+  com.composum.sling.core/composum-sling-user-management
