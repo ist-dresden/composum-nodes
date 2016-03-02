@@ -177,11 +177,20 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private boolean versionServletEnabled;
 
-    private Map<Class<? extends AbstractServiceServlet>, Boolean> enabledServlets;
+    public static final String USER_MANAGEMENT_SERVLET_ENABLED = "usermanagement.servlet.enabled";
+    @Property(
+            name = "usermanagement.servlet.enabled",
+            label = "User Management Servlet",
+            description = "the general on/off switch for the services of the User Management Servlet",
+            boolValue = true
+    )
+    private boolean userManagementServletEnabled;
+
+    private Map<String, Boolean> enabledServlets;
 
     @Override
     public boolean isEnabled(AbstractServiceServlet servlet) {
-        Boolean result = enabledServlets.get(servlet.getClass());
+        Boolean result = enabledServlets.get(servlet.getClass().getSimpleName());
         return result != null ? result : false;
     }
 
@@ -305,18 +314,20 @@ public class CoreConfigImpl implements CoreConfiguration {
         orderableNodesFilter = ResourceFilterMapping.fromString(
                 (String) properties.get(ORDERABLE_NODES_FILTER_KEY));
         enabledServlets = new HashMap<>();
-        enabledServlets.put(SystemServlet.class, systemServletEnabled =
+        enabledServlets.put(SystemServlet.class.getSimpleName(), systemServletEnabled =
                 (Boolean) properties.get(SYSTEM_SERVLET_ENABLED));
-        enabledServlets.put(PackageServlet.class, packageServletEnabled =
+        enabledServlets.put(PackageServlet.class.getSimpleName(), packageServletEnabled =
                 (Boolean) properties.get(PACKAGE_SERVLET_ENABLED));
-        enabledServlets.put(SecurityServlet.class, securityServletEnabled =
+        enabledServlets.put(SecurityServlet.class.getSimpleName(), securityServletEnabled =
                 (Boolean) properties.get(SECURITY_SERVLET_ENABLED));
-        enabledServlets.put(NodeServlet.class, nodeServletEnabled =
+        enabledServlets.put(NodeServlet.class.getSimpleName(), nodeServletEnabled =
                 (Boolean) properties.get(NODE_SERVLET_ENABLED));
-        enabledServlets.put(PropertyServlet.class, propertyServletEnabled =
+        enabledServlets.put(PropertyServlet.class.getSimpleName(), propertyServletEnabled =
                 (Boolean) properties.get(PROPERTY_SERVLET_ENABLED));
-        enabledServlets.put(VersionServlet.class, versionServletEnabled =
+        enabledServlets.put(VersionServlet.class.getSimpleName(), versionServletEnabled =
                 (Boolean) properties.get(VERSION_SERVLET_ENABLED));
+        enabledServlets.put("UserManagementServlet", userManagementServletEnabled =
+                (Boolean) properties.get(USER_MANAGEMENT_SERVLET_ENABLED));
     }
 
     @Deactivate

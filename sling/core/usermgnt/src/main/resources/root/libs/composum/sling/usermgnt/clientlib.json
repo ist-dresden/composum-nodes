@@ -1,0 +1,75 @@
+{
+  "sling:resourceType": "composum/sling/commons/clientlib",
+  "css": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "usermanagement": {
+      "embed": "composum/sling/usermgnt/css/usermanagement.css"
+    }
+  },
+  "js": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "adduserdialog": {
+      "embed": "composum/sling/usermgnt/dialogs/adduser/adduserdialog.js"
+    },
+    "addsystemuserdialog": {
+      "embed": "composum/sling/usermgnt/dialogs/addsystemuser/addsystemuserdialog.js"
+    },
+    "addmemberdialog": {
+      "embed": "composum/sling/usermgnt/dialogs/addmember/addmemberdialog.js"
+    },
+    "addtogroupdialog": {
+      "embed": "composum/sling/usermgnt/dialog/addtogroup/addtogroupdialog.js"
+    },
+    "addgroupdialog": {
+      "embed": "composum/sling/usermgnt/dialogs/addgroup/addgroupdialog.js"
+    },
+    "deleteauthorizabledialog": {
+      "embed": "composum/sling/usermgnt/dialogs/deleteauthorizable/deleteauthorizabledialog.js"
+    },
+    "disableuserdialog": {
+      "embed": "composum/sling/usermgnt/dialogs/disableuser/disableuserdialog.js"
+    },
+    "changepwdialog": {
+      "embed": "composum/sling/usermgnt/dialogs/changepassword/changepwdialog.js"
+    },
+    "propertiestable": {
+      "embed": "composum/sling/usermgnt/js/propertiestable.js"
+    },
+    "groupstable": {
+      "embed": "composum/sling/usermgnt/js/groupstable.js"
+    },
+    "usertable": {
+      "embed": "composum/sling/usermgnt/js/usertable.js"
+    },
+    "memberstable": {
+      "embed": "composum/sling/usermgnt/js/memberstable.js"
+    },
+    "usertab": {
+      "embed": "composum/sling/usermgnt/js/usertab.js"
+    },
+    "profiletab": {
+      "embed": "composum/sling/usermgnt/js/profiletab.js"
+    },
+    "preferencestab": {
+      "embed": "composum/sling/usermgnt/js/preferencestab.js"
+    },
+    "groupstab": {
+      "embed": "composum/sling/usermgnt/js/groupstab.js"
+    },
+    "memberstab": {
+      "embed": "composum/sling/usermgnt/js/memberstab.js"
+    },
+    "grouptab": {
+      "embed": "composum/sling/usermgnt/js/grouptab.js"
+    },
+    "query": {
+      "embed": "composum/sling/usermgnt/js/query.js"
+    },
+    "usermanagement": {
+      "embed": "composum/sling/usermgnt/js/usermanagement.js"
+    },
+    "startup": {
+      "embed": "composum/sling/usermgnt/js/startup.js"
+    }
+  }
+}
