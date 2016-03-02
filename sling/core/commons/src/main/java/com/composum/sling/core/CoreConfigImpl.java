@@ -12,6 +12,7 @@ import com.composum.sling.core.servlet.VersionServlet;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
@@ -247,16 +248,14 @@ public class CoreConfigImpl implements CoreConfiguration {
                     }
                     resource = resolver.resolve(request, path);
                 }
-                if (resource != null) {
-                    while (errorpage == null && resource != null) {
-                        path = resource.getPath();
-                        if ("/".equals(path)) {
-                            path = "";
-                        }
-                        errorpage = resolver.getResource(path + "/" + errorpagesPath + "/" + status);
-                        if (errorpage == null) {
-                            resource = resource.getParent();
-                        }
+                while (errorpage == null && resource != null) {
+                    path = resource.getPath();
+                    if ("/".equals(path)) {
+                        path = "";
+                    }
+                    errorpage = resolver.getResource(path + "/" + errorpagesPath + "/" + status);
+                    if (errorpage == null) {
+                        resource = resource.getParent();
                     }
                 }
             }
@@ -320,6 +319,7 @@ public class CoreConfigImpl implements CoreConfiguration {
                 (Boolean) properties.get(VERSION_SERVLET_ENABLED));
     }
 
+    @Deactivate
     protected void deactivate(ComponentContext context) {
         this.properties = null;
     }
