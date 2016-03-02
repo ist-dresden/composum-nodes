@@ -9,28 +9,28 @@
   "js": {
     "jcr:primaryType": "sling:OrderedFolder",
     "adduserdialog": {
-      "embed": "composum/sling/usermgnt/js/adduserdialog.js"
+      "embed": "composum/sling/usermgnt/dialogs/adduser/adduserdialog.js"
     },
     "addsystemuserdialog": {
-      "embed": "composum/sling/usermgnt/js/addsystemuserdialog.js"
+      "embed": "composum/sling/usermgnt/dialogs/addsystemuser/addsystemuserdialog.js"
     },
     "addmemberdialog": {
-      "embed": "composum/sling/usermgnt/js/addmemberdialog.js"
+      "embed": "composum/sling/usermgnt/dialogs/addmember/addmemberdialog.js"
     },
     "addtogroupdialog": {
-      "embed": "composum/sling/usermgnt/js/addtogroupdialog.js"
+      "embed": "composum/sling/usermgnt/dialog/addtogroup/addtogroupdialog.js"
     },
     "addgroupdialog": {
-      "embed": "composum/sling/usermgnt/js/addgroupdialog.js"
+      "embed": "composum/sling/usermgnt/dialogs/addgroup/addgroupdialog.js"
     },
     "deleteauthorizabledialog": {
-      "embed": "composum/sling/usermgnt/js/deleteauthorizabledialog.js"
+      "embed": "composum/sling/usermgnt/dialogs/deleteauthorizable/deleteauthorizabledialog.js"
     },
     "disableuserdialog": {
-      "embed": "composum/sling/usermgnt/js/disableuserdialog.js"
+      "embed": "composum/sling/usermgnt/dialogs/disableuser/disableuserdialog.js"
     },
     "changepwdialog": {
-      "embed": "composum/sling/usermgnt/js/changepwdialog.js"
+      "embed": "composum/sling/usermgnt/dialogs/changepassword/changepwdialog.js"
     },
     "propertiestable": {
       "embed": "composum/sling/usermgnt/js/propertiestable.js"
