@@ -8,7 +8,12 @@
     ],
     "jcr:title": "Browser",
     "sling:resourceType": "composum/sling/console/page",
-    "sling:redirect": "/bin/browser.html"
+    "sling:redirect": "/bin/browser.html",
+    "categories": [
+      "core",
+      "nodes"
+    ],
+    "order": 10
   },
   "pckgmgr": {
     "jcr:primaryType": "nt:unstructured",
@@ -19,6 +24,10 @@
   "felix": {
     "jcr:primaryType": "nt:unstructured",
     "jcr:title": "Felix",
-    "sling:resourceType": "composum/sling/console/felix"
+    "sling:resourceType": "composum/sling/console/felix",
+    "categories": [
+      "core"
+    ],
+    "order": 80
   }
 }

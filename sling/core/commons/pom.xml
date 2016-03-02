@@ -44,7 +44,7 @@
                             *
                         </Import-Package>
                         <Export-Package>
-                            com.composum.sling.clientlib.*,
+                            com.composum.sling.clientlibs.*,
                             com.composum.sling.core.*,
                             com.composum.sling.cpnl.*,
                             com.google.gson.*,
@@ -54,7 +54,8 @@
                             *;scope=compile|runtime
                         </Embed-Dependency>
                         <Sling-Initial-Content>
-                            root/libs/composum/sling/commons;path:=/libs/composum/sling/commons;overwrite:=true
+                            root/libs/composum/sling/commons;path:=/libs/composum/sling/commons;overwrite:=true,
+                            root/libs/fonts/composum;path:=/libs/fonts/composum;overwrite:=true
                         </Sling-Initial-Content>
                     </instructions>
                 </configuration>

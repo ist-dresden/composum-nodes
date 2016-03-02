@@ -67,7 +67,7 @@ public class ResourceHandle extends ResourceWrapper {
      */
     protected ResourceHandle(Resource resource) {
         super(resource);
-        this.resource = resource;
+        this.resource = super.getResource();
         this.properties = ResourceUtil.getValueMap(this.resource);
     }
 
@@ -192,7 +192,7 @@ public class ResourceHandle extends ResourceWrapper {
     }
 
     public <T> T getInherited(String key, Class<T> type) {
-        T value = (T) getContentProperty(key, type);
+        T value = (T) getProperty(key, type);
         if (value == null) {
             value = getInheritedValues().get(key, type);
         }

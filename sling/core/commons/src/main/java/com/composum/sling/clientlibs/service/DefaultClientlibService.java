@@ -7,6 +7,7 @@ import com.composum.sling.clientlibs.processor.GzipProcessor;
 import com.composum.sling.clientlibs.processor.JavascriptProcessor;
 import com.composum.sling.clientlibs.processor.LinkRenderer;
 import com.composum.sling.clientlibs.processor.ProcessorContext;
+import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -40,7 +41,6 @@ import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -104,7 +104,10 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     @Reference
-    ResourceResolverFactory resolverFactory;
+    protected ResourceResolverFactory resolverFactory;
+
+    @Reference
+    protected SequencerService sequencer;
 
     @Reference
     protected JavascriptProcessor javascriptProcessor;
@@ -119,7 +122,6 @@ public class DefaultClientlibService implements ClientlibService {
     protected GzipProcessor gzipProcessor;
 
     protected ThreadPoolExecutor executorService = null;
-    protected HashMap<String, Semaphore> semaphores;
 
     protected Map<Clientlib.Type, ClientlibRenderer> rendererMap;
     protected Map<Clientlib.Type, ClientlibProcessor> processorMap;
@@ -172,23 +174,13 @@ public class DefaultClientlibService implements ClientlibService {
     public Map<String, Object> prepareContent(final Clientlib clientlib, String encoding)
             throws IOException, RepositoryException, LoginException {
 
+        final Map<String, Object> hints = new HashMap<>();
+
         encoding = adjustEncoding(encoding);
         String cachePath = getCachePath(clientlib, encoding);
 
-        Semaphore semaphore;
-        synchronized (this) {
-            semaphore = semaphores.get(cachePath);
-            if (semaphore == null) {
-                semaphores.put(cachePath, semaphore = new Semaphore(1));
-            }
-        }
-
-        final Map<String, Object> hints = new HashMap<>();
-
-        // ensure that the same cache file is not build multiply
-        semaphore.acquireUninterruptibly();
-
-        try {   
+        SequencerService.Token token = sequencer.acquire(cachePath);
+        try {
             FileHandle file = getCachedFile(clientlib, cachePath);
 
             if (file == null || !file.isValid()) {
@@ -249,12 +241,7 @@ public class DefaultClientlibService implements ClientlibService {
             }
 
         } finally {
-            synchronized (this) {
-                semaphore.release();
-                if (!semaphore.hasQueuedThreads()) {
-                    semaphores.remove(cachePath);
-                }
-            }
+            sequencer.release(token);
         }
 
         return hints;
@@ -291,12 +278,18 @@ public class DefaultClientlibService implements ClientlibService {
 
     protected synchronized Resource giveParent(ResourceResolver resolver, String path)
             throws PersistenceException {
-        Resource resource = resolver.getResource(path);
-        if (resource == null) {
-            String[] separated = Clientlib.splitPathAndName(path);
-            Resource parent = giveParent(resolver, separated[0]);
-            resource = resolver.create(parent, separated[1], CRUD_CACHE_FOLDER_PROPS);
-            resolver.commit();
+        Resource resource = null;
+        SequencerService.Token token = sequencer.acquire(path);
+        try {
+            resource = resolver.getResource(path);
+            if (resource == null) {
+                String[] separated = Clientlib.splitPathAndName(path);
+                Resource parent = giveParent(resolver, separated[0]);
+                resource = resolver.create(parent, separated[1], CRUD_CACHE_FOLDER_PROPS);
+                resolver.commit();
+            }
+        } finally {
+            sequencer.release(token);
         }
         return resource;
     }
@@ -320,7 +313,6 @@ public class DefaultClientlibService implements ClientlibService {
         processorMap = new HashMap<>();
         processorMap.put(Clientlib.Type.js, javascriptProcessor);
         processorMap.put(Clientlib.Type.css, cssProcessor);
-        semaphores = new HashMap<>();
     }
 
     @Deactivate
@@ -329,15 +321,6 @@ public class DefaultClientlibService implements ClientlibService {
             if (executorService != null) {
                 executorService.shutdown();
                 executorService = null;
-            }
-            if (semaphores != null) {
-                for (Semaphore semaphore : semaphores.values()) {
-                    while (semaphore.hasQueuedThreads()) {
-                        semaphore.release();
-                    }
-                }
-                semaphores.clear();
-                semaphores = null;
             }
         }
     }

@@ -33,6 +33,15 @@
       "properties": {
         "embed": "composum/sling/console/browser/js/properties.js"
       },
+      "accessPolicyEntryDialog": {
+        "embed": "composum/sling/console/browser/js/accessPolicyEntryDialog.js"
+      },
+      "policiesTable": {
+        "embed": "composum/sling/console/browser/js/policiesTable.js"
+      },
+      "policiesTab": {
+        "embed": "composum/sling/console/browser/js/policiesTab.js"
+      },
       "version": {
         "embed": "composum/sling/console/browser/js/version.js"
       },
