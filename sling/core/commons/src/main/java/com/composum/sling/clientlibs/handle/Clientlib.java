@@ -182,7 +182,7 @@ public class Clientlib {
         if (resource.isValid()) {
             if (isFile(resource)) {
                 FileHandle file = new FileHandle(resource);
-                addFileToList(links, properties, file);
+                addFileToList(links, resource, file, properties);
             } else {
                 String reference = resource.getProperty(PROP_EMBED, "");
                 if (StringUtils.isNotBlank(reference)) {
@@ -193,7 +193,7 @@ public class Clientlib {
                             embedded.getLinks(embedded.definition, properties, links);
                         } else {
                             FileHandle file = new FileHandle(target);
-                            addFileToList(links, properties, file);
+                            addFileToList(links, resource, file, properties);
                         }
                     }
                 } else {
@@ -205,14 +205,15 @@ public class Clientlib {
         }
     }
 
-    protected void addFileToList(List<Link> links, Map<String, String> properties, FileHandle file) {
+    protected void addFileToList(List<Link> links, ResourceHandle reference, FileHandle file,
+                                 Map<String, String> properties) {
         if (file.isValid()) {
             ResourceHandle fileRes = file.getResource();
-            Link link = getLink(resource, fileRes, properties, null);
+            Link link = getLink(reference, fileRes, properties, null);
             if (!links.contains(link)) {
                 links.add(link);
             } else {
-                LOG.warn ("dulicated clientlib entry found: '" + link.url + "'");
+                LOG.warn("dulicated clientlib entry found: '" + link.url + "'");
             }
         }
     }

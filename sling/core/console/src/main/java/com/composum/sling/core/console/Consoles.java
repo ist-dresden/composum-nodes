@@ -21,8 +21,6 @@ import java.util.List;
 
 public class Consoles extends ConsolePage {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Consoles.class);
-
     public static final String CATEGORIES = "categories";
 
     public static final String ORDER = "order";
