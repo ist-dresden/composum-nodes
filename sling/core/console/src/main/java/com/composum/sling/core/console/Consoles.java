@@ -3,11 +3,14 @@ package com.composum.sling.core.console;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.SlingHandle;
 import com.composum.sling.core.filter.ResourceFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jcr.Session;
 import javax.jcr.query.Query;
@@ -20,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Consoles extends ConsolePage {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Consoles.class);
 
     public static final String CATEGORIES = "categories";
 
@@ -41,7 +46,7 @@ public class Consoles extends ConsolePage {
     public static final String CONTENT_QUERY_LIBS = CONTENT_QUERY_BASE + "/libs" + CONTENT_QUERY_RULE;
     public static final String CONTENT_QUERY_APPS = CONTENT_QUERY_BASE + "/apps" + CONTENT_QUERY_RULE;
 
-    public static class ConsoleFilter implements ResourceFilter {
+    public class ConsoleFilter implements ResourceFilter {
 
         private final List<String> selectors;
 
@@ -60,7 +65,8 @@ public class Consoles extends ConsolePage {
                         String[] rule = StringUtils.split(precondition, ":");
                         PreconditionFilter filter = PRECONDITION_FILTERS.get(rule[0]);
                         if (filter != null) {
-                            return filter.accept(resource, rule.length > 0 ? rule[1] : null);
+                            boolean accept = filter.accept(context, resource, rule.length > 0 ? rule[1] : null);
+                            return accept;
                         }
                     }
                     return true;
@@ -186,7 +192,7 @@ public class Consoles extends ConsolePage {
         /**
          * check the configured precondition for the concole resource
          */
-        boolean accept(Resource resource, String precondition);
+        boolean accept(BeanContext context, Resource resource, String precondition);
     }
 
     /**
@@ -195,13 +201,14 @@ public class Consoles extends ConsolePage {
     public static class ClassAvailabilityFilter implements PreconditionFilter {
 
         @Override
-        public boolean accept(Resource resource, String className) {
+        public boolean accept(BeanContext context, Resource resource, String className) {
             boolean classAvailable = false;
             try {
-                Class.forName(className);
+                SlingHandle slingHandle = new SlingHandle(context);
+                slingHandle.getType(className);
                 classAvailable = true;
             } catch (Exception ex) {
-                // ok, not available
+                LOG.warn("precondition check failed: " + ex.getMessage());
             }
             return classAvailable;
         }
