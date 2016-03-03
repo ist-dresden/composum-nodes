@@ -190,7 +190,7 @@ public class Consoles extends ConsolePage {
     public interface PreconditionFilter {
 
         /**
-         * check the configured precondition for the concole resource
+         * check the configured precondition for the console resource
          */
         boolean accept(BeanContext context, Resource resource, String precondition);
     }
