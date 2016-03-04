@@ -168,9 +168,9 @@ public abstract class AbstractSlingBean {
 
     public Node getNode() {
         if (node == null) {
-            node = context.getAttribute("currentNode", Node.class);
+            node = getResource().getNode();
             if (node == null) {
-                node = getResource().getNode();
+                node = context.getAttribute("currentNode", Node.class);
             }
         }
         return node;
