@@ -22,8 +22,11 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
-/** The abstract base class for 'Beans' to implement a Model based on e JCR resource without a mapping framework. Such a 'bean' can be declared as variable in
- * aJSP context using the 'component' tag of the Composum 'nodes' tag library (cpnl). */
+/**
+ * The abstract base class for 'Beans' to implement a Model based on e JCR resource without a mapping framework.
+ * Such a 'bean' can be declared as variable in aJSP context using the 'component' tag of the Composum 'nodes'
+ * tag library (cpnl).
+ */
 public abstract class AbstractSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractSlingBean.class);
@@ -58,31 +61,42 @@ public abstract class AbstractSlingBean {
 
     private transient Node node;
 
-    /** initialize bean using the context an the resource given explicitly */
+    /**
+     * initialize bean using the context an the resource given explicitly
+     */
     public AbstractSlingBean(BeanContext context, Resource resource) {
         initialize(context, resource);
     }
 
-    /** initialize bean using the context with the 'resource' attribute within */
+    /**
+     * initialize bean using the context with the 'resource' attribute within
+     */
     public AbstractSlingBean(BeanContext context) {
         initialize(context);
     }
 
-    /** if this constructor is used, the bean must be initialized using the 'initialize' method! */
+    /**
+     * if this constructor is used, the bean must be initialized using the 'initialize' method!
+     */
     public AbstractSlingBean() {
     }
 
-    /** Uses the contexts 'resource' attribute for initialization (content.getResource()).
+    /**
+     * Uses the contexts 'resource' attribute for initialization (content.getResource()).
      *
-     * @param context the scripting context (e.g. a JSP PageContext or a Groovy scripting context) */
+     * @param context the scripting context (e.g. a JSP PageContext or a Groovy scripting context)
+     */
     public void initialize(BeanContext context) {
         initialize(context, context.getResource());
     }
 
-    /** This basic initialization sets up the context and resource attributes only, all the other attributes are set 'lazy' during their getter calls.
+    /**
+     * This basic initialization sets up the context and resource attributes only,
+     * all the other attributes are set 'lazy' during their getter calls.
      *
-     * @param context the scripting context (e.g. a JSP PageContext or a Groovy scripting context)
-     * @param resource the resource to use (normally the resource addressed by the request) */
+     * @param context  the scripting context (e.g. a JSP PageContext or a Groovy scripting context)
+     * @param resource the resource to use (normally the resource addressed by the request)
+     */
     public void initialize(BeanContext context, Resource resource) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("initialize (" + context + ", " + resource + ")");
@@ -91,7 +105,9 @@ public abstract class AbstractSlingBean {
         this.resource = ResourceHandle.use(resource);
     }
 
-    /** Returns the handle to the 'Sling world' and all available services. */
+    /**
+     * Returns the handle to the 'Sling world' and all available services.
+     */
     public SlingScriptHelper getSling() {
         if (sling == null) {
             sling = context.getAttribute("sling", SlingScriptHelper.class);
@@ -99,7 +115,9 @@ public abstract class AbstractSlingBean {
         return sling;
     }
 
-    /** Returns the resolver using the resource of this bean (resource.getResolver()). */
+    /**
+     * Returns the resolver using the resource of this bean (resource.getResolver()).
+     */
     public ResourceResolver getResolver() {
         if (resolver == null) {
             resolver = getResource().getResourceResolver();
@@ -107,14 +125,18 @@ public abstract class AbstractSlingBean {
         return resolver;
     }
 
-    /** the getter for the resource which defines this bean instance. */
+    /**
+     * the getter for the resource which defines this bean instance.
+     */
     public ResourceHandle getResource() {
         return resource;
     }
 
-    /** Returns the URL to the resource of this bean (mapped and with the appropriate extension).
+    /**
+     * Returns the URL to the resource of this bean (mapped and with the appropriate extension).
      *
-     * @see LinkUtil#getUrl(SlingHttpServletRequest, String) */
+     * @see LinkUtil#getUrl(SlingHttpServletRequest, String)
+     */
     public String getUrl() {
         if (url == null) {
             RequestHandle request = getRequest();
@@ -146,15 +168,17 @@ public abstract class AbstractSlingBean {
 
     public Node getNode() {
         if (node == null) {
-            node = getResource().getNode();
+            node = context.getAttribute("currentNode", Node.class);
             if (node == null) {
-                node = context.getAttribute("currentNode", Node.class);
+                node = getResource().getNode();
             }
         }
         return node;
     }
 
-    /** Determine a typed parent resource. */
+    /**
+     * Determine a typed parent resource.
+     */
     public ResourceHandle getParent(String resourceType) {
         ResourceHandle result = getResource();
         while (result.isValid() && !result.isResourceType(resourceType)) {
@@ -166,7 +190,9 @@ public abstract class AbstractSlingBean {
         return result;
     }
 
-    /** Use path instead of resource (e.g. if resource is synthetic or non existing) to determine a typed parent. */
+    /**
+     * Use path instead of resource (e.g. if resource is synthetic or non existing) to determine a typed parent.
+     */
     public ResourceHandle getParent(String resourceType, String path) {
         ResourceResolver resolver = getResolver();
         Resource resource;
@@ -223,32 +249,16 @@ public abstract class AbstractSlingBean {
 
     public RequestHandle getRequest() {
         if (request == null) {
-            request = RequestHandle.use(getSling().getRequest());
+            request = RequestHandle.use(context.getRequest());
         }
         return request;
     }
 
     public SlingHttpServletResponse getResponse() {
         if (response == null) {
-            response = getSling().getResponse();
+            response = context.getResponse();
         }
         return response;
-    }
-
-    //
-    // CSS helpers
-    //
-
-    public void addCssClass(StringBuilder cssClasses, String classToAdd) {
-        if (!classToAdd.equals(cssClasses)
-                && cssClasses.indexOf(classToAdd + " ") != 0
-                && cssClasses.indexOf(" " + classToAdd) != cssClasses.length() - classToAdd.length() - 1
-                && cssClasses.indexOf(" " + classToAdd + " ") < 0) {
-            if (cssClasses.length() > 0) {
-                cssClasses.append(" ");
-            }
-            cssClasses.append(classToAdd);
-        }
     }
 
     //
@@ -330,9 +340,11 @@ public abstract class AbstractSlingBean {
         return principal != null ? principal.getName() : "";
     }
 
-    /** A 'toString' implementation for logging and debugging.
+    /**
+     * A 'toString' implementation for logging and debugging.
      *
-     * @param builder the buffer to write into */
+     * @param builder the buffer to write into
+     */
     public void toString(StringBuilder builder) {
         String jvmId = getStringId();
         String id = getId();
@@ -346,9 +358,11 @@ public abstract class AbstractSlingBean {
         builder.append(",resource:").append(resource);
     }
 
-    /** Returns the default 'toString' value with the JVM 'id' of the object.
+    /**
+     * Returns the default 'toString' value with the JVM 'id' of the object.
      *
-     * @return the general JVM 'id' */
+     * @return the general JVM 'id'
+     */
     public String getStringId() {
         return super.toString();
     }
