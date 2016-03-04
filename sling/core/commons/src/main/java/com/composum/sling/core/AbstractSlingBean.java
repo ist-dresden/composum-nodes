@@ -249,14 +249,14 @@ public abstract class AbstractSlingBean {
 
     public RequestHandle getRequest() {
         if (request == null) {
-            request = RequestHandle.use(getSling().getRequest());
+            request = RequestHandle.use(context.getRequest());
         }
         return request;
     }
 
     public SlingHttpServletResponse getResponse() {
         if (response == null) {
-            response = getSling().getResponse();
+            response = context.getResponse();
         }
         return response;
     }
