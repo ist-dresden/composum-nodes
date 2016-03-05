@@ -4,6 +4,7 @@ import com.composum.sling.clientlibs.handle.Clientlib;
 import com.composum.sling.clientlibs.service.ClientlibProcessor;
 import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.util.HttpUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
@@ -11,7 +12,6 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
 
 import javax.jcr.RepositoryException;
@@ -47,14 +47,14 @@ public class ClientlibServlet extends SlingSafeMethodsServlet {
             String encoding = null;
             String header;
 
-            header = request.getHeader("Accept-Encoding");
+            header = request.getHeader(HttpUtil.HEADER_ACCEPT_ENCODING);
             if (StringUtils.isNotBlank(header) && header.contains("gzip")) {
                 encoding = ClientlibService.ENCODING_GZIP;
             }
 
-            header = request.getHeader("Cache-Control");
+            header = request.getHeader(HttpUtil.HEADER_CACHE_CONTROL);
             if (StringUtils.isNotBlank(header)) {
-                if (header.contains("no-cache")) {
+                if (header.contains(HttpUtil.VALUE_NO_CACHE)) {
 
                     clientlibService.resetContent(clientlib, encoding);
                 }
@@ -67,14 +67,14 @@ public class ClientlibServlet extends SlingSafeMethodsServlet {
                 response.setContentType(value + "; charset=" + ClientlibProcessor.DEFAULT_CHARSET);
             }
             if ((value = hints.get(ResourceUtil.PROP_ENCODING)) != null) {
-                response.setHeader("Content-Encoding", value.toString());
-                response.setHeader("Vary", "Accept-Encoding");
+                response.setHeader(HttpUtil.HEADER_CONTENT_ENCODING, value.toString());
+                response.setHeader(HttpUtil.HEADER_VARY, HttpUtil.HEADER_ACCEPT_ENCODING);
             }
             if ((value = hints.get("size")) != null) {
-                response.setHeader("Content-Length", value.toString());
+                response.setHeader(HttpUtil.HEADER_CONTENT_LENGTH, value.toString());
             }
             if ((value = hints.get(ResourceUtil.PROP_LAST_MODIFIED)) instanceof Calendar) {
-                response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, ((Calendar) value).getTimeInMillis());
+                response.setDateHeader(HttpUtil.HEADER_LAST_MODIFIED, ((Calendar) value).getTimeInMillis());
             }
 
             clientlibService.deliverContent(clientlib, response.getWriter(), encoding);
