@@ -3,6 +3,7 @@ package com.composum.sling.core.pckgmgr.view;
 import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
@@ -13,7 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class PackageBean extends AbstractSlingBean {
 
@@ -86,19 +89,22 @@ public class PackageBean extends AbstractSlingBean {
     }
 
     public String getCssClasses() {
-        StringBuilder cssClasses = new StringBuilder();
+        return StringUtils.join(collectCssClasses(new ArrayList<String>()), " ");
+    }
+
+    protected List<String> collectCssClasses (List<String> collection) {
         try {
             getPckg();
             if (pckg.isInstalled()) {
-                addCssClass(cssClasses, "installed");
+                collection.add("installed");
             }
             if (!pckg.isSealed()) {
-                addCssClass(cssClasses, "modified");
+                collection.add("modified");
             }
         } catch (RepositoryException rex) {
             LOG.error(rex.getMessage(), rex);
         }
-        return cssClasses.toString();
+        return collection;
     }
 
     public String getPath() {
