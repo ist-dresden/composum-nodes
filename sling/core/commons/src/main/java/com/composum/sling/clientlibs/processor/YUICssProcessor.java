@@ -74,15 +74,17 @@ public class YUICssProcessor implements CssProcessor {
     protected String template;
 
     @Override
-    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties, Writer writer)
+    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
+                                     Writer writer, RendererContext context)
             throws IOException {
-        renderClientlibLinks(clientlib, properties, writer, template);
+        renderClientlibLinks(clientlib, properties, writer, context, template);
     }
 
-    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties, Writer writer,
+    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
+                                     Writer writer, RendererContext context,
                                      String template)
             throws IOException {
-        List<Clientlib.Link> links = clientlib.getLinks(debug, properties);
+        List<Clientlib.Link> links = clientlib.getLinks(debug, false, false, properties, context);
         for (int i = 0; i < links.size(); ) {
             Clientlib.Link link = links.get(i);
             writer.append(MessageFormat.format(template, link.url));
