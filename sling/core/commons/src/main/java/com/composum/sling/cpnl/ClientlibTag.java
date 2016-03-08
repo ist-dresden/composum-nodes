@@ -38,6 +38,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
         properties.put(Clientlib.PROP_REL, rel);
     }
 
+    @Override
     protected void clear() {
         super.clear();
         type = null;

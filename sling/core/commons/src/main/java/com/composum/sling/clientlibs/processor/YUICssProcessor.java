@@ -48,7 +48,7 @@ public class YUICssProcessor implements CssProcessor {
     public static final String MINIMIZE = "javascript.minimize";
     @Property(
             name = MINIMIZE,
-            label = "Mimimize",
+            label = "Minimize",
             description = "compress with VUI compressor (if not 'debug' set)",
             boolValue = true
     )
