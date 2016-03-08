@@ -50,7 +50,7 @@ public class YUIJavascriptProcessor implements JavascriptProcessor {
     public static final String MINIMIZE = "javascript.minimize";
     @Property(
             name = MINIMIZE,
-            label = "Mimimize",
+            label = "Minimize",
             description = "compress with VUI compressor (if not 'debug' set)",
             boolValue = false
     )
@@ -115,22 +115,21 @@ public class YUIJavascriptProcessor implements JavascriptProcessor {
     }
 
     @Override
-    public InputStream processContent(Clientlib clientlib, final InputStream source, ProcessorContext context)
+    public InputStream processContent(final Clientlib clientlib, final InputStream source, ProcessorContext context)
             throws IOException {
         InputStream result = source;
         if (source != null) {
             context.hint(ResourceUtil.PROP_MIME_TYPE, "application/javascript");
             if (minimize) {
-                final InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET);
                 final PipedOutputStream outputStream = new PipedOutputStream();
                 result = new PipedInputStream(outputStream);
-                final OutputStreamWriter writer = new OutputStreamWriter(outputStream);
-                final Reporter errorReporter = new Reporter(clientlib);
-                final JavaScriptCompressor compressor = new JavaScriptCompressor(sourceReader, errorReporter);
                 context.execute(new Runnable() {
                     @Override
                     public void run() {
-                        try {
+                        try (OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+                             InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET)) {
+                            final Reporter errorReporter = new Reporter(clientlib);
+                            final JavaScriptCompressor compressor = new JavaScriptCompressor(sourceReader, errorReporter);
                             compressor.compress(writer, lineBreak, munge, false, true, !optimize);
                             writer.flush();
                             writer.close();

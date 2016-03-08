@@ -38,6 +38,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
         properties.put(Clientlib.PROP_REL, rel);
     }
 
+    @Override
     protected void clear() {
         super.clear();
         type = null;
@@ -66,10 +67,10 @@ public class ClientlibTag extends CpnlBodyTagSupport {
             Clientlib clientlib = new Clientlib(request, path, type);
 
             if (clientlib.isValid()) {
-                String path = clientlib.getPath();
-                    JspWriter writer = this.pageContext.getOut();
-                    ClientlibService service = this.sling.getScriptHelper().getService(ClientlibService.class);
-                    service.renderClientlibLinks(clientlib, properties, writer, rendererContext);
+
+                JspWriter writer = this.pageContext.getOut();
+                ClientlibService service = this.sling.getScriptHelper().getService(ClientlibService.class);
+                service.renderClientlibLinks(clientlib, properties, writer, rendererContext);
 
             } else {
                 String path = clientlib.getPath(this.path);
