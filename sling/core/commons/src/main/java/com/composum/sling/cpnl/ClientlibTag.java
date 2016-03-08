@@ -1,6 +1,7 @@
 package com.composum.sling.cpnl;
 
 import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.processor.RendererContext;
 import com.composum.sling.clientlibs.service.ClientlibService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -19,6 +20,8 @@ public class ClientlibTag extends CpnlBodyTagSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientlibTag.class);
 
+    public static final String ALREADY_EMBEDDED = "clientlib.alreadyEmbedded";
+
     protected Clientlib.Type type;
     protected String path;
     protected Map<String, String> properties = new LinkedHashMap<>();
@@ -35,6 +38,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
         properties.put(Clientlib.PROP_REL, rel);
     }
 
+    @Override
     protected void clear() {
         super.clear();
         type = null;
@@ -57,33 +61,42 @@ public class ClientlibTag extends CpnlBodyTagSupport {
     @Override
     public int doEndTag() throws JspException {
         try {
+            RendererContext rendererContext = RendererContext.instance(request);
+
             Clientlib.Type type = getType();
             Clientlib clientlib = new Clientlib(request, path, type);
+
             if (clientlib.isValid()) {
+
                 JspWriter writer = this.pageContext.getOut();
                 ClientlibService service = this.sling.getScriptHelper().getService(ClientlibService.class);
-                service.renderClientlibLinks(clientlib, properties, writer);
+                service.renderClientlibLinks(clientlib, properties, writer, rendererContext);
+
             } else {
                 String path = clientlib.getPath(this.path);
                 if (StringUtils.isNotBlank(path)) {
-                    JspWriter writer = this.pageContext.getOut();
-                    switch (type) {
-                        case link:
-                        case css:
-                            String rel = properties.get(Clientlib.PROP_REL);
-                            writer.write("<link rel=\"");
-                            writer.write(StringUtils.isNotBlank(rel) ? rel : "stylesheet");
-                            writer.write("\" href=\"");
-                            writer.write(CpnlElFunctions.url(request, path));
-                            writer.write("\" />");
-                            break;
-                        case js:
-                            writer.write("<script type=\"text/javascript\" src=\"");
-                            writer.write(CpnlElFunctions.url(request, path));
-                            writer.write("\"></script>");
-                            break;
-                        default:
-                            break;
+                    if (rendererContext.tryAndRegister(path)) {
+                        JspWriter writer = this.pageContext.getOut();
+                        switch (type) {
+                            case link:
+                            case css:
+                                String rel = properties.get(Clientlib.PROP_REL);
+                                writer.write("<link rel=\"");
+                                writer.write(StringUtils.isNotBlank(rel) ? rel : "stylesheet");
+                                writer.write("\" href=\"");
+                                writer.write(CpnlElFunctions.url(request, path));
+                                writer.write("\" />");
+                                break;
+                            case js:
+                                writer.write("<script type=\"text/javascript\" src=\"");
+                                writer.write(CpnlElFunctions.url(request, path));
+                                writer.write("\"></script>");
+                                break;
+                            default:
+                                break;
+                        }
+                    } else {
+                        LOG.warn("Clientlib (file) '" + path + "' already embedded - igenored here.");
                     }
                 } else {
                     LOG.warn("Clientlib (file) '" + this.path + "' not found or not accessible!");

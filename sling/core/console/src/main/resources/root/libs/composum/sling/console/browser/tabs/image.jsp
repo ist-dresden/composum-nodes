@@ -29,7 +29,7 @@
     </div>
     <div class="detail-content">
       <div class="image-frame ${browser.imageCSS}">
-        <div class="image-background" style="background-image: url(${cpn:url(slingRequest,'/libs/composum/sling/console/browser/images/image-background.png')})">
+        <div class="image-background">
           <img src=""/>
         </div>
       </div>

@@ -3,10 +3,13 @@ package com.composum.sling.clientlibs.service;
 import com.composum.sling.clientlibs.handle.Clientlib;
 import com.composum.sling.clientlibs.handle.FileHandle;
 import com.composum.sling.clientlibs.processor.CssProcessor;
+import com.composum.sling.clientlibs.processor.CssUrlMapper;
 import com.composum.sling.clientlibs.processor.GzipProcessor;
 import com.composum.sling.clientlibs.processor.JavascriptProcessor;
 import com.composum.sling.clientlibs.processor.LinkRenderer;
 import com.composum.sling.clientlibs.processor.ProcessorContext;
+import com.composum.sling.clientlibs.processor.ProcessorPipeline;
+import com.composum.sling.clientlibs.processor.RendererContext;
 import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.io.IOUtils;
@@ -18,6 +21,7 @@ import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.PersistenceException;
@@ -38,6 +42,7 @@ import java.io.PipedOutputStream;
 import java.io.Writer;
 import java.util.Calendar;
 import java.util.Dictionary;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -123,16 +128,17 @@ public class DefaultClientlibService implements ClientlibService {
 
     protected ThreadPoolExecutor executorService = null;
 
-    protected Map<Clientlib.Type, ClientlibRenderer> rendererMap;
-    protected Map<Clientlib.Type, ClientlibProcessor> processorMap;
+    protected EnumMap<Clientlib.Type, ClientlibRenderer> rendererMap;
+    protected EnumMap<Clientlib.Type, ClientlibProcessor> processorMap;
 
     @Override
-    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties, Writer writer)
+    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
+                                     Writer writer, RendererContext context)
             throws IOException {
         Clientlib.Type type = clientlib.getType();
         ClientlibRenderer renderer = rendererMap.get(type);
         if (renderer != null) {
-            renderer.renderClientlibLinks(clientlib, properties, writer);
+            renderer.renderClientlibLinks(clientlib, properties, writer, context);
         }
     }
 
@@ -146,13 +152,20 @@ public class DefaultClientlibService implements ClientlibService {
     @Override
     public void resetContent(Clientlib clientlib, String encoding)
             throws IOException, RepositoryException, LoginException {
+
         encoding = adjustEncoding(encoding);
         String cachePath = getCachePath(clientlib, encoding);
+
         FileHandle file = getCachedFile(clientlib, cachePath);
         if (file != null && file.isValid()) {
-            ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
-            resolver.delete(file.getResource());
-            resolver.commit();
+
+            ResourceResolver resolver = createResolverForChanges();
+            try {
+                resolver.delete(file.getResource());
+                resolver.commit();
+            } finally {
+                resolver.close();
+            }
         }
     }
 
@@ -171,7 +184,8 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     @Override
-    public Map<String, Object> prepareContent(final Clientlib clientlib, String encoding)
+    public Map<String, Object> prepareContent(final SlingHttpServletRequest request,
+                                              final Clientlib clientlib, String encoding)
             throws IOException, RepositoryException, LoginException {
 
         final Map<String, Object> hints = new HashMap<>();
@@ -184,60 +198,66 @@ public class DefaultClientlibService implements ClientlibService {
             FileHandle file = getCachedFile(clientlib, cachePath);
 
             if (file == null || !file.isValid()) {
+                LOG.info("prepare clientlib '" + clientlib.getPath() + "'...");
 
-                // used for maximum backwards compatibility
-                ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
-                final ProcessorContext context = new ProcessorContext(resolver, executorService, hints);
+                ResourceResolver resolver = createResolverForChanges();
+                try {
+                    final ProcessorContext context = new ProcessorContext(request, resolver, executorService, hints);
 
-                Clientlib.Type type = clientlib.getType();
+                    final Clientlib.Type type = clientlib.getType();
 
-                Resource cacheEntry = resolver.getResource(cachePath);
-                if (cacheEntry != null) {
-                    resolver.delete(cacheEntry);
-                    resolver.commit();
-                }
-
-                String[] separated = Clientlib.splitPathAndName(cachePath);
-                Resource parent = giveParent(resolver, separated[0]);
-                cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
-                resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
-
-                file = new FileHandle(cacheEntry);
-                if (file.isValid()) {
-
-                    final ClientlibProcessor processor = processorMap.get(type);
-                    final PipedOutputStream outputStream = new PipedOutputStream();
-                    InputStream inputStream = new PipedInputStream(outputStream);
-                    context.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                clientlib.processContent(outputStream, processor, context);
-                            } catch (IOException | RepositoryException ex) {
-                                LOG.error(ex.getMessage(), ex);
-                            }
-                        }
-                    });
-                    if (ENCODING_GZIP.equals(encoding)) {
-                        inputStream = gzipProcessor.processContent(clientlib, inputStream, context);
+                    Resource cacheEntry = resolver.getResource(cachePath);
+                    if (cacheEntry != null) {
+                        resolver.delete(cacheEntry);
+                        resolver.commit();
                     }
 
-                    file.storeContent(inputStream);
+                    String[] separated = Clientlib.splitPathAndName(cachePath);
+                    Resource parent = giveParent(resolver, separated[0]);
+                    cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
+                    resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
 
-                    ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
-                    contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
-                    contentValues.putAll(hints);
+                    file = new FileHandle(cacheEntry);
+                    if (file.isValid()) {
+                        LOG.debug("create clientlib cache content '" + file.getResource().getPath() + "'...");
 
-                    resolver.commit();
+                        final ClientlibProcessor processor = processorMap.get(type);
+                        final PipedOutputStream outputStream = new PipedOutputStream();
+                        InputStream inputStream = new PipedInputStream(outputStream);
+                        context.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    clientlib.processContent(outputStream, processor, context);
+                                } catch (IOException | RepositoryException ex) {
+                                    LOG.error(ex.getMessage(), ex);
+                                }
+                            }
+                        });
+                        if (ENCODING_GZIP.equals(encoding)) {
+                            inputStream = gzipProcessor.processContent(clientlib, inputStream, context);
+                        }
+
+                        file.storeContent(inputStream);
+
+                        ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
+                        contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
+                        contentValues.putAll(hints);
+
+                        resolver.commit();
+                        LOG.debug("clientlib cache content '" + file.getResource().getPath() + "' created.");
+
+                        getFileHints(file, hints);
+
+                    } else {
+                        LOG.error("can't create cache content in '" +
+                                (file != null ? file.getResource().getPath() : "null") + "'!");
+                    }
+                } finally {
+                    resolver.close();
                 }
-            }
-
-            if (file.isValid()) {
-                ValueMap contentValues = file.getContent().adaptTo(ValueMap.class);
-                hints.put(ResourceUtil.PROP_LAST_MODIFIED, contentValues.get(ResourceUtil.PROP_LAST_MODIFIED));
-                hints.put(ResourceUtil.PROP_MIME_TYPE, contentValues.get(ResourceUtil.PROP_MIME_TYPE));
-                hints.put(ResourceUtil.PROP_ENCODING, contentValues.get(ResourceUtil.PROP_ENCODING));
-                hints.put("size", file.getSize());
+            } else {
+                getFileHints(file, hints);
             }
 
         } finally {
@@ -245,6 +265,22 @@ public class DefaultClientlibService implements ClientlibService {
         }
 
         return hints;
+    }
+
+    protected ResourceResolver createResolverForChanges() throws LoginException {
+        // used for maximum backwards compatibility; TODO recheck and decide from time to time
+        ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
+        return resolver;
+    }
+
+    protected void getFileHints(final FileHandle file, final Map<String, Object> hints) {
+        if (file.isValid()) {
+            ValueMap contentValues = file.getContent().adaptTo(ValueMap.class);
+            hints.put(ResourceUtil.PROP_LAST_MODIFIED, contentValues.get(ResourceUtil.PROP_LAST_MODIFIED));
+            hints.put(ResourceUtil.PROP_MIME_TYPE, contentValues.get(ResourceUtil.PROP_MIME_TYPE));
+            hints.put(ResourceUtil.PROP_ENCODING, contentValues.get(ResourceUtil.PROP_ENCODING));
+            hints.put("size", file.getSize());
+        }
     }
 
     protected FileHandle getCachedFile(Clientlib clientlib, String path) {
@@ -276,8 +312,7 @@ public class DefaultClientlibService implements ClientlibService {
         return path;
     }
 
-    protected synchronized Resource giveParent(ResourceResolver resolver, String path)
-            throws PersistenceException {
+    protected synchronized Resource giveParent(ResourceResolver resolver, String path) {
         Resource resource = null;
         SequencerService.Token token = sequencer.acquire(path);
         try {
@@ -285,8 +320,14 @@ public class DefaultClientlibService implements ClientlibService {
             if (resource == null) {
                 String[] separated = Clientlib.splitPathAndName(path);
                 Resource parent = giveParent(resolver, separated[0]);
-                resource = resolver.create(parent, separated[1], CRUD_CACHE_FOLDER_PROPS);
-                resolver.commit();
+                try {
+                    resource = resolver.create(parent, separated[1], CRUD_CACHE_FOLDER_PROPS);
+                    resolver.commit();
+                } catch (PersistenceException pex) {
+                    // catch it and hope that the parent is available
+                    // necessary to continue on transaction isolation problems
+                    LOG.error("clientlib giveParent('" + path + "'): " + pex.toString());
+                }
             }
         } finally {
             sequencer.release(token);
@@ -306,13 +347,13 @@ public class DefaultClientlibService implements ClientlibService {
         if (threadPoolMax < threadPoolMin) threadPoolMax = threadPoolMin;
         executorService = new ThreadPoolExecutor(threadPoolMin, threadPoolMax,
                 200L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-        rendererMap = new HashMap<>();
+        rendererMap = new EnumMap<>(Clientlib.Type.class);
         rendererMap.put(Clientlib.Type.js, javascriptProcessor);
         rendererMap.put(Clientlib.Type.css, cssProcessor);
         rendererMap.put(Clientlib.Type.link, linkRenderer);
-        processorMap = new HashMap<>();
+        processorMap = new EnumMap<>(Clientlib.Type.class);
         processorMap.put(Clientlib.Type.js, javascriptProcessor);
-        processorMap.put(Clientlib.Type.css, cssProcessor);
+        processorMap.put(Clientlib.Type.css, new ProcessorPipeline(new CssUrlMapper(), cssProcessor));
     }
 
     @Deactivate
