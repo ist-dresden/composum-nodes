@@ -101,18 +101,16 @@ public class YUICssProcessor implements CssProcessor {
         if (source != null) {
             context.hint(ResourceUtil.PROP_MIME_TYPE, "text/css");
             if (minimize) {
-                final InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET);
                 final PipedOutputStream outputStream = new PipedOutputStream();
                 result = new PipedInputStream(outputStream);
-                final OutputStreamWriter writer = new OutputStreamWriter(outputStream);
-                final CssCompressor compressor = new CssCompressor(sourceReader);
                 context.execute(new Runnable() {
                     @Override
                     public void run() {
-                        try {
+                        try (OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+                             InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET)) {
+                            final CssCompressor compressor = new CssCompressor(sourceReader);
                             compressor.compress(writer, lineBreak);
                             writer.flush();
-                            writer.close();
                         } catch (IOException ex) {
                             LOG.error(ex.getMessage(), ex);
                         }

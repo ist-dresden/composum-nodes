@@ -33,22 +33,12 @@ public class CssUrlMapper implements ClientlibProcessor {
         context.execute(new Runnable() {
             @Override
             public void run() {
-                final OutputStreamWriter writer = new OutputStreamWriter(outputStream);
-                try {
-                    try {
-                        String css = IOUtils.toString(source, DEFAULT_CHARSET);
-                        map(css, writer, context);
-                        writer.flush();
-                        writer.close();
-                    } catch (IOException ex) {
-                        LOG.error(ex.getMessage(), ex);
-                    }
-                } finally {
-                    try {
-                        writer.close();
-                    } catch (IOException ex) {
-                        LOG.error(ex.getMessage(), ex);
-                    }
+                try (OutputStreamWriter writer = new OutputStreamWriter(outputStream)) {
+                    String css = IOUtils.toString(source, DEFAULT_CHARSET);
+                    map(css, writer, context);
+                    writer.flush();
+                } catch (IOException ex) {
+                    LOG.error(ex.getMessage(), ex);
                 }
             }
         });
