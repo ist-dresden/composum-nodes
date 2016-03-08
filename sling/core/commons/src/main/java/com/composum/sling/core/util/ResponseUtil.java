@@ -12,7 +12,7 @@ import java.io.PrintWriter;
 /**
  * A basic class for all '/bin/{service}/path/to/resource' servlets.
  */
-public class ResponseUtil extends org.apache.sling.api.request.RequestUtil {
+public class ResponseUtil {
 
     public static final String JSON_CONTENT_TYPE = "application/json;charset=" + MappingRules.CHARSET;
 

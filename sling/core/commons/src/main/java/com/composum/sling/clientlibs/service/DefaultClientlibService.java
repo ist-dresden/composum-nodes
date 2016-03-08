@@ -3,10 +3,13 @@ package com.composum.sling.clientlibs.service;
 import com.composum.sling.clientlibs.handle.Clientlib;
 import com.composum.sling.clientlibs.handle.FileHandle;
 import com.composum.sling.clientlibs.processor.CssProcessor;
+import com.composum.sling.clientlibs.processor.CssUrlMapper;
 import com.composum.sling.clientlibs.processor.GzipProcessor;
 import com.composum.sling.clientlibs.processor.JavascriptProcessor;
 import com.composum.sling.clientlibs.processor.LinkRenderer;
 import com.composum.sling.clientlibs.processor.ProcessorContext;
+import com.composum.sling.clientlibs.processor.ProcessorPipeline;
+import com.composum.sling.clientlibs.processor.RendererContext;
 import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.io.IOUtils;
@@ -18,6 +21,7 @@ import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.PersistenceException;
@@ -31,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
@@ -127,12 +132,13 @@ public class DefaultClientlibService implements ClientlibService {
     protected Map<Clientlib.Type, ClientlibProcessor> processorMap;
 
     @Override
-    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties, Writer writer)
+    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
+                                     Writer writer, RendererContext context)
             throws IOException {
         Clientlib.Type type = clientlib.getType();
         ClientlibRenderer renderer = rendererMap.get(type);
         if (renderer != null) {
-            renderer.renderClientlibLinks(clientlib, properties, writer);
+            renderer.renderClientlibLinks(clientlib, properties, writer, context);
         }
     }
 
@@ -171,7 +177,8 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     @Override
-    public Map<String, Object> prepareContent(final Clientlib clientlib, String encoding)
+    public Map<String, Object> prepareContent(final SlingHttpServletRequest request,
+                                              final Clientlib clientlib, String encoding)
             throws IOException, RepositoryException, LoginException {
 
         final Map<String, Object> hints = new HashMap<>();
@@ -184,10 +191,11 @@ public class DefaultClientlibService implements ClientlibService {
             FileHandle file = getCachedFile(clientlib, cachePath);
 
             if (file == null || !file.isValid()) {
+                LOG.info("prepare clientlib '" + clientlib.getPath() + "'...");
 
                 // used for maximum backwards compatibility
                 ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
-                final ProcessorContext context = new ProcessorContext(resolver, executorService, hints);
+                final ProcessorContext context = new ProcessorContext(request, resolver, executorService, hints);
 
                 Clientlib.Type type = clientlib.getType();
 
@@ -204,6 +212,7 @@ public class DefaultClientlibService implements ClientlibService {
 
                 file = new FileHandle(cacheEntry);
                 if (file.isValid()) {
+                    LOG.debug("create clientlib cache content '" + file.getResource().getPath() + "'...");
 
                     final ClientlibProcessor processor = processorMap.get(type);
                     final PipedOutputStream outputStream = new PipedOutputStream();
@@ -229,6 +238,11 @@ public class DefaultClientlibService implements ClientlibService {
                     contentValues.putAll(hints);
 
                     resolver.commit();
+                    LOG.debug("clientlib cache content '" + file.getResource().getPath() + "' created.");
+
+                } else {
+                    LOG.error("can't create cache content in '" +
+                            (file != null ? file.getResource().getPath() : "null") + "'!");
                 }
             }
 
@@ -276,8 +290,7 @@ public class DefaultClientlibService implements ClientlibService {
         return path;
     }
 
-    protected synchronized Resource giveParent(ResourceResolver resolver, String path)
-            throws PersistenceException {
+    protected synchronized Resource giveParent(ResourceResolver resolver, String path) {
         Resource resource = null;
         SequencerService.Token token = sequencer.acquire(path);
         try {
@@ -285,8 +298,14 @@ public class DefaultClientlibService implements ClientlibService {
             if (resource == null) {
                 String[] separated = Clientlib.splitPathAndName(path);
                 Resource parent = giveParent(resolver, separated[0]);
-                resource = resolver.create(parent, separated[1], CRUD_CACHE_FOLDER_PROPS);
-                resolver.commit();
+                try {
+                    resource = resolver.create(parent, separated[1], CRUD_CACHE_FOLDER_PROPS);
+                    resolver.commit();
+                } catch (PersistenceException pex) {
+                    // catch it and hope that the parent is available
+                    // necessary to continue on transaction isolation problems
+                    LOG.error("clientlib giveParent('" + path + "'): " + pex.toString());
+                }
             }
         } finally {
             sequencer.release(token);
@@ -312,7 +331,7 @@ public class DefaultClientlibService implements ClientlibService {
         rendererMap.put(Clientlib.Type.link, linkRenderer);
         processorMap = new HashMap<>();
         processorMap.put(Clientlib.Type.js, javascriptProcessor);
-        processorMap.put(Clientlib.Type.css, cssProcessor);
+        processorMap.put(Clientlib.Type.css, new ProcessorPipeline(new CssUrlMapper(), cssProcessor));
     }
 
     @Deactivate
