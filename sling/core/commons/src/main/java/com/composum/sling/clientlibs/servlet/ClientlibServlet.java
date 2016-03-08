@@ -76,7 +76,7 @@ public class ClientlibServlet extends SlingSafeMethodsServlet {
             }
         }
 
-        Map<String, Object> hints = null;
+        Map<String, Object> hints;
         try {
             hints = clientlibService.prepareContent(request, clientlib, encoding);
         } catch (PersistenceException ex) {
