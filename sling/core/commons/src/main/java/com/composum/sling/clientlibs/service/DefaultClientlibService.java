@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
@@ -152,13 +151,20 @@ public class DefaultClientlibService implements ClientlibService {
     @Override
     public void resetContent(Clientlib clientlib, String encoding)
             throws IOException, RepositoryException, LoginException {
+
         encoding = adjustEncoding(encoding);
         String cachePath = getCachePath(clientlib, encoding);
+
         FileHandle file = getCachedFile(clientlib, cachePath);
         if (file != null && file.isValid()) {
-            ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
-            resolver.delete(file.getResource());
-            resolver.commit();
+
+            ResourceResolver resolver = createResolverForChanges();
+            try {
+                resolver.delete(file.getResource());
+                resolver.commit();
+            } finally {
+                resolver.close();
+            }
         }
     }
 
@@ -193,65 +199,64 @@ public class DefaultClientlibService implements ClientlibService {
             if (file == null || !file.isValid()) {
                 LOG.info("prepare clientlib '" + clientlib.getPath() + "'...");
 
-                // used for maximum backwards compatibility
-                ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
-                final ProcessorContext context = new ProcessorContext(request, resolver, executorService, hints);
+                ResourceResolver resolver = createResolverForChanges();
+                try {
+                    final ProcessorContext context = new ProcessorContext(request, resolver, executorService, hints);
 
-                Clientlib.Type type = clientlib.getType();
+                    final Clientlib.Type type = clientlib.getType();
 
-                Resource cacheEntry = resolver.getResource(cachePath);
-                if (cacheEntry != null) {
-                    resolver.delete(cacheEntry);
-                    resolver.commit();
-                }
-
-                String[] separated = Clientlib.splitPathAndName(cachePath);
-                Resource parent = giveParent(resolver, separated[0]);
-                cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
-                resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
-
-                file = new FileHandle(cacheEntry);
-                if (file.isValid()) {
-                    LOG.debug("create clientlib cache content '" + file.getResource().getPath() + "'...");
-
-                    final ClientlibProcessor processor = processorMap.get(type);
-                    final PipedOutputStream outputStream = new PipedOutputStream();
-                    InputStream inputStream = new PipedInputStream(outputStream);
-                    context.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                clientlib.processContent(outputStream, processor, context);
-                            } catch (IOException | RepositoryException ex) {
-                                LOG.error(ex.getMessage(), ex);
-                            }
-                        }
-                    });
-                    if (ENCODING_GZIP.equals(encoding)) {
-                        inputStream = gzipProcessor.processContent(clientlib, inputStream, context);
+                    Resource cacheEntry = resolver.getResource(cachePath);
+                    if (cacheEntry != null) {
+                        resolver.delete(cacheEntry);
+                        resolver.commit();
                     }
 
-                    file.storeContent(inputStream);
+                    String[] separated = Clientlib.splitPathAndName(cachePath);
+                    Resource parent = giveParent(resolver, separated[0]);
+                    cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
+                    resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
 
-                    ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
-                    contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
-                    contentValues.putAll(hints);
+                    file = new FileHandle(cacheEntry);
+                    if (file.isValid()) {
+                        LOG.debug("create clientlib cache content '" + file.getResource().getPath() + "'...");
 
-                    resolver.commit();
-                    LOG.debug("clientlib cache content '" + file.getResource().getPath() + "' created.");
+                        final ClientlibProcessor processor = processorMap.get(type);
+                        final PipedOutputStream outputStream = new PipedOutputStream();
+                        InputStream inputStream = new PipedInputStream(outputStream);
+                        context.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    clientlib.processContent(outputStream, processor, context);
+                                } catch (IOException | RepositoryException ex) {
+                                    LOG.error(ex.getMessage(), ex);
+                                }
+                            }
+                        });
+                        if (ENCODING_GZIP.equals(encoding)) {
+                            inputStream = gzipProcessor.processContent(clientlib, inputStream, context);
+                        }
 
-                } else {
-                    LOG.error("can't create cache content in '" +
-                            (file != null ? file.getResource().getPath() : "null") + "'!");
+                        file.storeContent(inputStream);
+
+                        ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
+                        contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
+                        contentValues.putAll(hints);
+
+                        resolver.commit();
+                        LOG.debug("clientlib cache content '" + file.getResource().getPath() + "' created.");
+
+                        getFileHints(file, hints);
+
+                    } else {
+                        LOG.error("can't create cache content in '" +
+                                (file != null ? file.getResource().getPath() : "null") + "'!");
+                    }
+                } finally {
+                    resolver.close();
                 }
-            }
-
-            if (file.isValid()) {
-                ValueMap contentValues = file.getContent().adaptTo(ValueMap.class);
-                hints.put(ResourceUtil.PROP_LAST_MODIFIED, contentValues.get(ResourceUtil.PROP_LAST_MODIFIED));
-                hints.put(ResourceUtil.PROP_MIME_TYPE, contentValues.get(ResourceUtil.PROP_MIME_TYPE));
-                hints.put(ResourceUtil.PROP_ENCODING, contentValues.get(ResourceUtil.PROP_ENCODING));
-                hints.put("size", file.getSize());
+            } else {
+                getFileHints(file, hints);
             }
 
         } finally {
@@ -259,6 +264,22 @@ public class DefaultClientlibService implements ClientlibService {
         }
 
         return hints;
+    }
+
+    protected ResourceResolver createResolverForChanges() throws LoginException {
+        // used for maximum backwards compatibility; TODO recheck and decide from time to time
+        ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
+        return resolver;
+    }
+
+    protected void getFileHints(final FileHandle file, final Map<String, Object> hints) {
+        if (file.isValid()) {
+            ValueMap contentValues = file.getContent().adaptTo(ValueMap.class);
+            hints.put(ResourceUtil.PROP_LAST_MODIFIED, contentValues.get(ResourceUtil.PROP_LAST_MODIFIED));
+            hints.put(ResourceUtil.PROP_MIME_TYPE, contentValues.get(ResourceUtil.PROP_MIME_TYPE));
+            hints.put(ResourceUtil.PROP_ENCODING, contentValues.get(ResourceUtil.PROP_ENCODING));
+            hints.put("size", file.getSize());
+        }
     }
 
     protected FileHandle getCachedFile(Clientlib clientlib, String path) {
