@@ -41,6 +41,10 @@ public class CssUrlMapper implements ClientlibProcessor {
                     writer.close();
                 } catch (IOException ex) {
                     LOG.error(ex.getMessage(), ex);
+                    try {
+                        writer.close();
+                    } catch (IOException exx) {
+                    }
                 }
             }
         });

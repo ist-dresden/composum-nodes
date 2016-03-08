@@ -337,12 +337,16 @@ public class Clientlib {
         FileHandle file = new FileHandle(resource);
         InputStream content = file.getStream();
         if (content != null) {
-            if (processor != null) {
-                content = processor.processContent(this, content, context);
+            try {
+                if (processor != null) {
+                    content = processor.processContent(this, content, context);
+                }
+                IOUtils.copy(content, output);
+                output.write('\n');
+                output.flush();
+            } finally {
+                content.close();
             }
-            IOUtils.copy(content, output);
-            output.write('\n');
-            output.flush();
         } else {
             logNotAvailable(file.getResource(), "[content]", optional);
         }

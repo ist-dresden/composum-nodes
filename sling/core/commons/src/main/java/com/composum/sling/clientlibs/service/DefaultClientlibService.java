@@ -42,6 +42,7 @@ import java.io.PipedOutputStream;
 import java.io.Writer;
 import java.util.Calendar;
 import java.util.Dictionary;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -127,8 +128,8 @@ public class DefaultClientlibService implements ClientlibService {
 
     protected ThreadPoolExecutor executorService = null;
 
-    protected Map<Clientlib.Type, ClientlibRenderer> rendererMap;
-    protected Map<Clientlib.Type, ClientlibProcessor> processorMap;
+    protected EnumMap<Clientlib.Type, ClientlibRenderer> rendererMap;
+    protected EnumMap<Clientlib.Type, ClientlibProcessor> processorMap;
 
     @Override
     public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
@@ -346,11 +347,11 @@ public class DefaultClientlibService implements ClientlibService {
         if (threadPoolMax < threadPoolMin) threadPoolMax = threadPoolMin;
         executorService = new ThreadPoolExecutor(threadPoolMin, threadPoolMax,
                 200L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-        rendererMap = new HashMap<>();
+        rendererMap = new EnumMap<>(Clientlib.Type.class);
         rendererMap.put(Clientlib.Type.js, javascriptProcessor);
         rendererMap.put(Clientlib.Type.css, cssProcessor);
         rendererMap.put(Clientlib.Type.link, linkRenderer);
-        processorMap = new HashMap<>();
+        processorMap = new EnumMap<>(Clientlib.Type.class);
         processorMap.put(Clientlib.Type.js, javascriptProcessor);
         processorMap.put(Clientlib.Type.css, new ProcessorPipeline(new CssUrlMapper(), cssProcessor));
     }
