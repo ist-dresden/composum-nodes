@@ -52,8 +52,9 @@ public class SystemServlet extends AbstractServiceServlet {
 
     public enum Operation {propertyTypes, primaryTypes, mixinTypes, queryTemplates}
 
-    protected ServletOperationSet operations = new ServletOperationSet(Extension.json);
+    protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
+    @Override
     protected ServletOperationSet getOperations() {
         return operations;
     }
@@ -71,14 +72,10 @@ public class SystemServlet extends AbstractServiceServlet {
         super.init();
 
         // GET
-        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
-                Operation.propertyTypes, new GetPropertyTypes());
-        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
-                Operation.primaryTypes, new GetPrimaryTypes());
-        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
-                Operation.mixinTypes, new GetMixinTypes());
-        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
-                Operation.queryTemplates, new GetQueryTemplates());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.propertyTypes, new GetPropertyTypes());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.primaryTypes, new GetPrimaryTypes());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.mixinTypes, new GetMixinTypes());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.queryTemplates, new GetQueryTemplates());
     }
 
     //
@@ -103,8 +100,7 @@ public class SystemServlet extends AbstractServiceServlet {
     public class GetPropertyTypes implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws ServletException, IOException {
 
             JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
@@ -200,14 +196,14 @@ public class SystemServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws ServletException, IOException {
 
             try {
                 String query = request.getParameter(PARAM_QUERY);
 
                 ResourceResolver resolver = request.getResourceResolver();
+                @SuppressWarnings("unchecked")
                 List<String> nodeTypes = (List<String>) this.queryCache.get(query == null ? ALL_QUERY_KEY : query);
                 if (nodeTypes == null) {
                     nodeTypes = getNodeTypes(resolver, query != null ? query.toLowerCase() : null);
@@ -227,7 +223,7 @@ public class SystemServlet extends AbstractServiceServlet {
 
         public List<String> getNodeTypes(ResourceResolver resolver, String query) throws RepositoryException {
 
-            List<String> nodeTypes = new ArrayList<String>();
+            List<String> nodeTypes = new ArrayList<>();
             Resource typesResource = resolver.getResource(NODE_TYPES_PATH);
             for (Resource type : typesResource.getChildren()) {
                 String name = type.getName();
@@ -248,8 +244,7 @@ public class SystemServlet extends AbstractServiceServlet {
     public class GetQueryTemplates implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws ServletException, IOException {
 
             JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);

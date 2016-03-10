@@ -23,6 +23,13 @@
                 <div>last modified: ${pckg.lastModified} by ${pckg.lastModifiedBy}</div>
                 <div><a href="${pckg.downloadUrl}">download: ${pckg.filename}</a></div>
             </div>
+            <div class="filters">
+                <ul>
+                    <c:forEach items="${pckg.filterList}" var="filter">
+                        <li>${filter.root}</li>
+                    </c:forEach>
+                </ul>
+            </div>
         </div>
     </div>
 </cpn:component>

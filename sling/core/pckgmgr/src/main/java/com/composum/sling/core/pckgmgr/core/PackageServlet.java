@@ -2,11 +2,11 @@ package com.composum.sling.core.pckgmgr.core;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.util.JsonUtil;
-import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.stream.JsonReader;
@@ -18,6 +18,7 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
+import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
@@ -314,6 +315,85 @@ public class PackageServlet extends AbstractServiceServlet {
             writer.endArray();
         }
     }
+
+
+    protected abstract class FilterOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
+            Session session = RequestUtil.getSession(request);
+
+            DefaultWorkspaceFilter filters = new DefaultWorkspaceFilter();
+            PathFilterSet filter = new PathFilterSet("root");
+            filter.addExclude(new DefaultPathFilter("pattern"));
+            filters.add(filter);
+            JcrPackageDefinition definition = jcrPackage.getDefinition();
+            definition.setFilter(filters, true);
+        }
+    }
+    protected class AddFilterOperation extends FilterOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
+            Session session = RequestUtil.getSession(request);
+
+            DefaultWorkspaceFilter filters = new DefaultWorkspaceFilter();
+            PathFilterSet filter = new PathFilterSet("root");
+            filter.addExclude(new DefaultPathFilter("pattern"));
+            filters.add(filter);
+            JcrPackageDefinition definition = jcrPackage.getDefinition();
+            definition.setFilter(filters, true);
+        }
+    }
+    protected class RemoveFilterOperation extends FilterOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
+            Session session = RequestUtil.getSession(request);
+
+            DefaultWorkspaceFilter filters = new DefaultWorkspaceFilter();
+            PathFilterSet filter = new PathFilterSet("root");
+            filter.addExclude(new DefaultPathFilter("pattern"));
+            filters.add(filter);
+            JcrPackageDefinition definition = jcrPackage.getDefinition();
+            definition.setFilter(filters, true);
+        }
+    }
+    protected class ChangeFilterOperation extends FilterOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
+            Session session = RequestUtil.getSession(request);
+
+            DefaultWorkspaceFilter filters = new DefaultWorkspaceFilter();
+            PathFilterSet filter = new PathFilterSet("root");
+            filter.addExclude(new DefaultPathFilter("pattern"));
+            filters.add(filter);
+            JcrPackageDefinition definition = jcrPackage.getDefinition();
+            definition.setFilter(filters, true);
+        }
+    }
+
 
     //
     // Tree Mapping of the flat Package list
