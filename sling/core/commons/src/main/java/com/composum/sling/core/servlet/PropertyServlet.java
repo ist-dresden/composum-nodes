@@ -52,8 +52,8 @@ public class PropertyServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(PropertyServlet.class);
 
-    public static final StringFilter DEFAULT_PROPS_FILTER = new StringFilter.BlackList(new String[0]);
-    public static final StringFilter BINARY_PROPS_FILTER = new StringFilter.BlackList(new String[0]);
+    public static final StringFilter DEFAULT_PROPS_FILTER = new StringFilter.BlackList();
+    public static final StringFilter BINARY_PROPS_FILTER = new StringFilter.BlackList();
 
     @Reference
     private CoreConfiguration coreConfig;
@@ -66,7 +66,7 @@ public class PropertyServlet extends AbstractServiceServlet {
 
     public enum Operation {get, put, map, copy, remove}
 
-    protected ServletOperationSet operations = new ServletOperationSet(Extension.json);
+    protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
     protected ServletOperationSet getOperations() {
         return operations;

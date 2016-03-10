@@ -197,8 +197,9 @@ public class NodeServlet extends AbstractServiceServlet {
         startScript, checkScript, stopScript
     }
 
-    protected ServletOperationSet operations = new ServletOperationSet(Extension.json);
+    protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
+    @Override
     protected ServletOperationSet getOperations() {
         return operations;
     }
