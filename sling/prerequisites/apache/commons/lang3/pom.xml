@@ -5,13 +5,13 @@
 
     <groupId>org.apache.commons</groupId>
     <artifactId>org-apache-commons-lang3</artifactId>
-    <version>3.3.1</version>
+    <version>3.3.2</version>
     <packaging>bundle</packaging>
 
     <name>Apache Commons Lang3 OSGi Bundle</name>
 
     <properties>
-        <bundle.category>Apache Project Libraries</bundle.category>
+        <bundle.category>apache,commons</bundle.category>
         <bundle.name>org.apache.commons.lang3</bundle.name>
     </properties>
 
@@ -33,7 +33,7 @@
                             org.apache.commons.lang3.*
                         </Export-Package>
                         <Embed-Dependency>
-                            *;scope=runtime
+                            *;scope=runtime,inline=true
                         </Embed-Dependency>
                     </instructions>
                 </configuration>
