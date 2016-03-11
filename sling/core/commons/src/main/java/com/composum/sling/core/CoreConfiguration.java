@@ -24,8 +24,6 @@ public interface CoreConfiguration {
     String QUERY_RESULT_LIMIT_KEY = "query.result.limit";
     String QUERY_TEMPLATES_KEY = "query.templates";
 
-    String GROOVY_SETUP_SCRIPT = "groovy.setup.script";
-
     String PAGE_NODE_FILTER_KEY = "node.page.filter";
     String DEFAULT_NODE_FILTER_KEY = "node.default.filter";
     String TREE_INTERMEDIATE_FILTER_KEY = "tree.intermediate.filter";
