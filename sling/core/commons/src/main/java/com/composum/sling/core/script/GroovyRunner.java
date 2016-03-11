@@ -5,13 +5,10 @@ import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.MissingPropertyException;
 import groovy.lang.Script;
-import groovy.transform.ThreadInterrupt;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
-import org.codehaus.groovy.control.CompilerConfiguration;
-import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -99,10 +96,7 @@ public class GroovyRunner {
     }
 
     public Object run(Reader scriptReader, Map<String, Object> variables) throws InterruptedException {
-        CompilerConfiguration config = new CompilerConfiguration();
-        config.addCompilationCustomizers(
-                new ASTTransformationCustomizer(ThreadInterrupt.class));
-        Script script = getScript(scriptReader, variables, config);
+        Script script = getScript(scriptReader, variables);
         Object setupVariables = setup(script);
         extendBinding(script, setupVariables);
         extendBinding(script, generalBindings);
@@ -111,16 +105,11 @@ public class GroovyRunner {
     }
 
     protected Script getScript(Reader scriptReader, Map<String, Object> variables) {
-        return getScript(scriptReader, variables, CompilerConfiguration.DEFAULT);
-    }
-
-    protected Script getScript(Reader scriptReader, Map<String, Object> variables,
-                               CompilerConfiguration config) {
         if (variables == null) {
             variables = new HashMap<>();
         }
         Binding binding = new Binding(variables);
-        GroovyShell shell = new GroovyShell(binding, config);
+        GroovyShell shell = new GroovyShell(binding);
         Script script = shell.parse(scriptReader);
         return script;
     }
@@ -137,7 +126,7 @@ public class GroovyRunner {
                     if (binding.getVariable(name) == null) {
                         binding.setVariable(name, entry.getValue());
                     }
-                } catch (MissingPropertyException mpex) {
+                } catch (MissingPropertyException mpex){
                     binding.setVariable(name, entry.getValue());
                 }
             }
