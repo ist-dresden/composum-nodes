@@ -36,7 +36,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String TYPE_REFERENCEABLE = "mix:referenceable";
 
     public static final String PROP_TITLE = "jcr:title";
-    public static final String PROP_UUID= "jcr:uuid";
+    public static final String PROP_UUID = "jcr:uuid";
 
     public static final String PROP_DATA = "jcr:data";
     public static final String PROP_MIME_TYPE = "jcr:mimeType";
@@ -198,12 +198,16 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
                         case TYPE_FILE:
                             return true;
                         case TYPE_RESOURCE:
+                        case TYPE_UNSTRUCTURED:
                             try {
                                 Property mimeType = node.getProperty(PROP_MIME_TYPE);
                                 if (mimeType != null && StringUtils.isNotBlank(mimeType.getString())) {
+                                    node.getProperty(ResourceUtil.PROP_DATA);
+                                    // PathNotFountException if not present
                                     return true;
                                 }
                             } catch (PathNotFoundException pnfex) {
+                                // ok, was a check only
                             }
                             break;
                     }
