@@ -82,14 +82,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     private String errorpagesPath;
 
     @Property(
-            name = GROOVY_SETUP_SCRIPT,
-            label = "Groovy setup script",
-            description = "the optional path to a custom groovy script to setup a groovy runner script object",
-            value = ""
-    )
-    private String groovySetupScript;
-
-    @Property(
             name = PAGE_NODE_FILTER_KEY,
             label = "Content Page Filter",
             description = "the filter configuration to set the scope to the content pages",

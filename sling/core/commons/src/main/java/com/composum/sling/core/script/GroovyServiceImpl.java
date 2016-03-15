@@ -3,12 +3,13 @@ package com.composum.sling.core.script;
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.util.PropertyUtil;
 import groovy.lang.GroovyShell;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.commons.threads.ModifiableThreadPoolConfig;
 import org.apache.sling.commons.threads.ThreadPool;
 import org.apache.sling.commons.threads.ThreadPoolConfig;
@@ -31,6 +32,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,6 +50,36 @@ public class GroovyServiceImpl implements GroovyService {
 
     private static final Logger LOG = LoggerFactory.getLogger(GroovyServiceImpl.class);
 
+    public static final String GROOVY_SETUP_SCRIPT = "groovy.setup.script";
+    @Property(
+            name = GROOVY_SETUP_SCRIPT,
+            label = "Groovy setup script",
+            description = "the optional path to a custom groovy script to setup a groovy runner script object",
+            value = ""
+    )
+    protected String groovySetupScript;
+
+    public static final int DEFAULT_THREAD_POOL_MIN = 0;
+    public static final String MIN_THREAD_POOL_SIZE = "groovy.threadpool.min";
+    @Property(
+            name = MIN_THREAD_POOL_SIZE,
+            label = "Threadpool min",
+            description = "the minimum size of the thread pool for groovy script processing (must be "
+                    + DEFAULT_THREAD_POOL_MIN + " or greater)",
+            intValue = DEFAULT_THREAD_POOL_MIN
+    )
+    protected int threadPoolMin;
+
+    public static final int DEFAULT_THREAD_POOL_MAX = 5;
+    public static final String MAX_THREAD_POOL_SIZE = "groovy.threadpool.max";
+    @Property(
+            name = MAX_THREAD_POOL_SIZE,
+            label = "Threadpool max",
+            description = "the size (maximum) of the thread pool for groovy script processing (must be equal or greater than the minimum)",
+            intValue = DEFAULT_THREAD_POOL_MAX
+    )
+    protected int threadPoolMax;
+
     @Reference
     protected CoreConfiguration coreConfig;
 
@@ -58,8 +90,6 @@ public class GroovyServiceImpl implements GroovyService {
     protected ThreadPoolManager threadPoolManager;
 
     protected ThreadPool threadPool;
-
-    protected String setupScript;
 
     protected Map<String, ScriptJob> runningJobs;
 
@@ -121,7 +151,7 @@ public class GroovyServiceImpl implements GroovyService {
 
         public void run() {
             state = JobState.starting;
-            runner = new GroovyRunner(session, out, setupScript);
+            runner = new GroovyRunner(session, out, groovySetupScript);
             try {
                 Node node = session.getNode(scriptPath);
                 Binary binary = PropertyUtil.getBinaryData(node);
@@ -259,27 +289,31 @@ public class GroovyServiceImpl implements GroovyService {
     }
 
     @Activate
-    protected void activate(ComponentContext ctx) throws Exception {
+    protected void activate(ComponentContext context) throws Exception {
 
         // try availability of the groovy framework
         GroovyShell shell = new GroovyShell();
 
+        Dictionary<String, Object> properties = context.getProperties();
+
+        threadPoolMin = PropertiesUtil.toInteger(properties.get(MIN_THREAD_POOL_SIZE), DEFAULT_THREAD_POOL_MIN);
+        threadPoolMax = PropertiesUtil.toInteger(properties.get(MAX_THREAD_POOL_SIZE), DEFAULT_THREAD_POOL_MAX);
+        if (threadPoolMin < DEFAULT_THREAD_POOL_MIN) threadPoolMin = DEFAULT_THREAD_POOL_MIN;
+        if (threadPoolMax < threadPoolMin) threadPoolMax = threadPoolMin;
+
         ModifiableThreadPoolConfig threadPoolConfig = new ModifiableThreadPoolConfig();
-        threadPoolConfig.setMaxPoolSize(0);
-        threadPoolConfig.setMaxPoolSize(5);
+        threadPoolConfig.setMinPoolSize(threadPoolMin);
+        threadPoolConfig.setMaxPoolSize(threadPoolMax);
         threadPoolConfig.setPriority(ThreadPoolConfig.ThreadPriority.NORM);
         threadPool = threadPoolManager.create(threadPoolConfig);
 
         runningJobs = new HashMap<>();
 
-        setupScript = (String) coreConfig.getProperties().get(CoreConfiguration.GROOVY_SETUP_SCRIPT);
-        if (StringUtils.isBlank(setupScript)) {
-            setupScript = GroovyRunner.DEFAULT_SETUP_SCRIPT;
-        }
+        groovySetupScript = PropertiesUtil.toString(GROOVY_SETUP_SCRIPT, GroovyRunner.DEFAULT_SETUP_SCRIPT);
     }
 
     @Deactivate
-    protected void deactivate(ComponentContext ctx) throws Exception {
+    protected void deactivate(ComponentContext context) throws Exception {
         synchronized (runningJobs) {
             for (Map.Entry<String, ScriptJob> entry : runningJobs.entrySet()) {
                 entry.getValue().stop();
