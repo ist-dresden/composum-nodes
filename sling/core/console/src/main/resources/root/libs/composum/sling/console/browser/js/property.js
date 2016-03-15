@@ -62,7 +62,7 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$title = this.$('h4.modal-title');
                 this.$path = this.$('input[name="path"]');
                 this.$name = this.$('input[name="name"]');
@@ -90,16 +90,16 @@
                     this.busy = false;
                 }
                 if (type == 'Binary') {
-                    this.$form.$el.removeClass('default');
-                    this.$form.$el.addClass('binary');
+                    this.form.$el.removeClass('default');
+                    this.form.$el.addClass('binary');
                     if (this.$multi.prop('checked')) {
                         this.$multi.prop('checked', false);
                         this.multiChanged();
                     }
                     this.$multi.closest('.form-group').addClass('invisible');
                 } else {
-                    this.$form.$el.removeClass('binary');
-                    this.$form.$el.addClass('default');
+                    this.form.$el.removeClass('binary');
+                    this.form.$el.addClass('default');
                     this.$multi.closest('.form-group').removeClass('invisible');
                 }
             },
@@ -167,7 +167,7 @@
             },
 
             saveProperty: function () {
-                if (this.$form.isValid()) {
+                if (this.form.isValid()) {
                     this.getProperty().save(_.bind(function () {
                             this.hide();
                         }, this),
@@ -319,24 +319,6 @@
                 } else {
                     this.reset();
                     this.setWidgetValue('input[name="value"]', value);
-                }
-            },
-
-            getWidgetValue: function (element, value) {
-                var widget = core.widgetOf(element, this);
-                if (widget && _.isFunction(widget.getValue)) {
-                    return widget.getValue();
-                } else {
-                    return element.val();
-                }
-            },
-
-            setWidgetValue: function (element, value) {
-                var widget = core.widgetOf(element, this);
-                if (widget && _.isFunction(widget.setValue)) {
-                    widget.setValue(value);
-                } else {
-                    element.val(value);
                 }
             }
         });

@@ -142,9 +142,12 @@
          * @param element the DOM element or a selector to retrieve it
          * @param viewClass the generator function to create the View
          * @param initializer an option initializer callback caller after creation
+         * @param force if 'true' the view is (re)created using the 'viewClass' event if a view
+         *        is already available; this is useful if a subclass should be used instead of the
+         *        general 'components' class which is probably bound during the components 'init'
          */
-        getView: function (element, viewClass, initializer) {
-            return window.core.getWidget(document, element, viewClass, initializer);
+        getView: function (element, viewClass, initializer, force) {
+            return window.core.getWidget(document, element, viewClass, initializer, force);
         },
 
         /**
@@ -154,8 +157,11 @@
          * @param viewClass the generator function to create the View
          * @param initializer an optional initializer callback function called after creation
          *        or an options object for the view construction
+         * @param force if 'true' the view is (re)created using the 'viewClass' event if a view
+         *        is already available; this is useful if a subclass should be used instead of the
+         *        general 'components' class which is probably bound during the components 'init'
          */
-        getWidget: function (root, element, viewClass, initializer) {
+        getWidget: function (root, element, viewClass, initializer, force) {
             var $element;
             if (typeof element === 'string') {
                 $element = $(root).find(element);
@@ -164,7 +170,7 @@
             }
             if ($element && $element.length > 0) {
                 element = $element[0];
-                if (!element.view) {
+                if (!element.view || force) {
                     var options = {
                         el: element
                     };
