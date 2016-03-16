@@ -5,8 +5,6 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
-import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
-import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
@@ -180,15 +178,7 @@ public class PackageBean extends AbstractSlingBean {
         return lastModifiedBy;
     }
 
-    public WorkspaceFilter getFilter() throws RepositoryException {
-        JcrPackageDefinition definition = getPckgDef();
-        MetaInf metaInf = definition.getMetaInf();
-        WorkspaceFilter filter = metaInf.getFilter();
-        return filter;
-    }
-
     public List<PathFilterSet> getFilterList() throws RepositoryException {
-        WorkspaceFilter filter = getFilter();
-        return filter.getFilterSets();
+        return PackageUtil.getFilterList(getPckgDef());
     }
 }

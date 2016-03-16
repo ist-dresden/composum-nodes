@@ -161,6 +161,9 @@
             selector: '> .package',
             tabType: pckgmgr.JcrPackageTab
         }, {
+            selector: '> .filters',
+            tabType: pckgmgr.FiltersTab
+        }, {
             selector: '> .coverage',
             tabType: pckgmgr.CoverageTab
         }, {

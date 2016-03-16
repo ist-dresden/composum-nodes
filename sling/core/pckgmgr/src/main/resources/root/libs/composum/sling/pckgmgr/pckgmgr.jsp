@@ -20,21 +20,16 @@
             </div>
             <div class="tree-actions action-bar btn-toolbar" role="toolbar">
               <div class="align-left">
-                <div class="menu btn-group btn-group-sm dropup" role="group">
-                  <button type="button" class="glyphicon-menu-hamburger glyphicon btn btn-default dropdown-toggle" data-toggle="dropdown" title="More actions..."><span class="label">More...</span></button>
-                  <ul class="dropdown-menu" role="menu">
-                  </ul>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh tree view"><span class="label">Refresh</span></button>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
-                  <button type="button" class="create glyphicon-plus glyphicon btn btn-default" title="Create a new package"><span class="label">Create</span></button>
-                  <button type="button" class="delete glyphicon-minus glyphicon btn btn-default" title="Delete selected package"><span class="label">Delete</span></button>
+                  <button type="button" class="create fa fa-plus btn btn-default" title="Create a new package"><span class="label">Create</span></button>
+                  <button type="button" class="delete fa fa-minus btn btn-default" title="Delete selected package"><span class="label">Delete</span></button>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
                   <button type="button" class="upload fa fa-upload btn btn-default" title="Upload a new package"><span class="label">Upload</span></button>
                   <button type="button" class="download fa fa-download btn btn-default" title="Download selected package"><span class="label">Download</span></button>
-                </div>
-                <div class="btn-group btn-group-sm" role="group">
-                  <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh tree view"><span class="label">Refresh</span></button>
                 </div>
               </div>
             </div>

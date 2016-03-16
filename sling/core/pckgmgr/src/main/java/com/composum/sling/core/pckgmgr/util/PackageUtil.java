@@ -1,9 +1,12 @@
 package com.composum.sling.core.pckgmgr.util;
 
 import com.composum.sling.core.ResourceHandle;
+import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
+import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
@@ -20,7 +23,7 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
 
@@ -35,7 +38,7 @@ public class PackageUtil {
         group, jcrpckg
     }
 
-    public static class TrackingBuffer implements ProgressTrackerListener {
+    public static class JsonTracking implements ProgressTrackerListener {
 
         public static class Item {
 
@@ -69,7 +72,11 @@ public class PackageUtil {
             }
         }
 
-        private ArrayList<Item> items = new ArrayList<>();
+        protected final JsonWriter writer;
+
+        public JsonTracking (JsonWriter writer) {
+            this.writer = writer;
+        }
 
         private boolean errorDetected = false;
 
@@ -77,19 +84,28 @@ public class PackageUtil {
             return errorDetected;
         }
 
-        public List<Item> getItems() {
-            return items;
-        }
-
         @Override
         public void onMessage(Mode mode, String action, String path) {
-            items.add(new Item(mode, action, path));
+            writeItem(new Item(mode, action, path));
         }
 
         @Override
         public void onError(Mode mode, String path, Exception ex) {
             errorDetected = true;
-            items.add(new Item(mode, path, ex));
+            writeItem(new Item(mode, path, ex));
+        }
+
+        protected void writeItem(Item item) {
+            try {
+                writer.beginObject();
+                writer.name("action").value(item.action);
+                writer.name("value").value(item.path != null ? item.path : item.message);
+                writer.name("error").value(item.error);
+                writer.endObject();
+            } catch (IOException ex) {
+                errorDetected = true;
+                LOG.error (ex.getMessage(), ex);
+            }
         }
     }
 
@@ -162,6 +178,13 @@ public class PackageUtil {
             // ok, it's not a package related resource
         }
         return type;
+    }
+
+    public static String getGroupPath(JcrPackage pckg) throws RepositoryException {
+        JcrPackageDefinition definition = pckg.getDefinition();
+        String group = definition.get(JcrPackageDefinition.PN_GROUP);
+        group = StringUtils.isNotBlank(group) ? ("/" + group + "/") : "/";
+        return group;
     }
 
     public static String getFilename(JcrPackage pckg) {
@@ -296,31 +319,27 @@ public class PackageUtil {
         return result;
     }
 
-    public static TrackingBuffer getCoverage(JcrPackage pckg, Session session) {
-        TrackingBuffer buffer = new TrackingBuffer();
-        try {
-            getCoverage(pckg.getDefinition(), session, buffer);
-        } catch (RepositoryException rex) {
-            LOG.error(rex.getMessage(), rex);
-            buffer.onError(ProgressTrackerListener.Mode.TEXT, "exception thrown", rex);
-        }
-        return buffer;
-    }
-
-    public static TrackingBuffer getCoverage(JcrPackageDefinition pckgDef, Session session) {
-        TrackingBuffer buffer = new TrackingBuffer();
-        getCoverage(pckgDef, session, buffer);
-        return buffer;
-    }
-
     public static void getCoverage(JcrPackageDefinition pckgDef, Session session,
-                                   TrackingBuffer buffer) {
+                                   ProgressTrackerListener liestener) {
         try {
             WorkspaceFilter filter = pckgDef.getMetaInf().getFilter();
-            filter.dumpCoverage(session, buffer, false);
+            filter.dumpCoverage(session, liestener, false);
         } catch (RepositoryException rex) {
             LOG.error(rex.getMessage(), rex);
-            buffer.onError(ProgressTrackerListener.Mode.TEXT, "exception thrown", rex);
+            liestener.onError(ProgressTrackerListener.Mode.TEXT, "exception thrown", rex);
         }
+    }
+
+    // Filters
+
+    public static WorkspaceFilter getFilter(JcrPackageDefinition pckgDef) throws RepositoryException {
+        MetaInf metaInf = pckgDef.getMetaInf();
+        WorkspaceFilter filter = metaInf.getFilter();
+        return filter;
+    }
+
+    public static List<PathFilterSet> getFilterList(JcrPackageDefinition pckgDef) throws RepositoryException {
+        WorkspaceFilter filter = getFilter(pckgDef);
+        return filter.getFilterSets();
     }
 }

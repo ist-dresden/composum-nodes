@@ -3,8 +3,5 @@
 <%@ taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <head>
 <sling:call script="/libs/composum/sling/console/page/head.jsp"/>
-  <!-- package manager styles -->
-  <cpn:clientlib path="composum/sling/pckgmgr/css/pckgmgr.css" />
-  <cpn:clientlib path="composum/sling/pckgmgr/group/css/group.css" />
-  <cpn:clientlib path="composum/sling/pckgmgr/jcrpckg/css/jcrpckg.css" />
+<cpn:clientlib type="css" path="composum/sling/pckgmgr/clientlib" />
 </head>

@@ -1,0 +1,44 @@
+
+#pckg-filter-dialog form.change button.create,
+#pckg-filter-dialog form.create button.delete,
+#pckg-filter-dialog form.create button.save {
+    display: none;
+}
+
+#pckg-filter-dialog .rules .type {
+    width: 20%;
+    float: left;
+}
+
+#pckg-filter-dialog .rules .pattern {
+    width: 78%;
+    float: right;
+}
+
+.detail-panel.filters .filters-table .filter-rules {
+    margin: 0;
+    padding: 0 0.5em 0.2em 1.5em;
+    list-style: none;
+}
+
+.detail-panel.filters .filters-table .filter-rules .rule {
+    font-size: 0.9em;
+    line-height: 1.4em;
+}
+
+.detail-panel.filters .filters-table .filter-rules .type,
+.detail-panel.filters .filters-table .filter-rules .pattern {
+    display: inline-block;
+}
+
+.detail-panel.filters .filters-table .filter-rules .type {
+    width: 5em;
+}
+
+.detail-panel.filters .filters-table .filter-rules .include .type {
+    color: #3c763d; /* success */
+}
+
+.detail-panel.filters .filters-table .filter-rules .exclude .type {
+    color: #a94442; /* danger */
+}

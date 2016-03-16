@@ -7,11 +7,23 @@
     <div class="detail-panel package ${pckg.cssClasses}">
         <div class="display-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <span class="resolver fa fa-external-link btn btn-default" title="Resolver Mapping ON/OFF"></span>
+                <button class="edit fa fa-pencil btn btn-default" title="Edit package properties"><span class="label">Edit</span></button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span></button>
-                <button type="button" class="open fa fa-globe btn btn-default" title="Open in a separate view"><span class="label">Open</span></button>
+                <button class="install fa fa-sign-in btn btn-default" title="(Re)Install the package"><span class="label">(Re)Install</span></button>
+                <button class="build fa fa-suitcase btn btn-default" title="(Re)Build the package"><span class="label">(Re)Build</span></button>
+                <button class="rewrap fa fa-magic btn btn-default" title="Rewrap the package"><span class="label">Rewrap</span></button>
+            </div>
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="upload fa fa-upload btn btn-default" title="Upload a new package"><span class="label">Upload</span></button>
+                <button class="download fa fa-download btn btn-default" title="Download selected package"><span class="label">Download</span></button>
+            </div>
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="create fa fa-plus btn btn-default" title="Create a new package"><span class="label">Create</span></button>
+                <button class="delete fa fa-minus btn btn-default" title="Delete this package"><span class="label">Delete</span></button>
+            </div>
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span></button>
             </div>
         </div>
         <div class="detail-content">
