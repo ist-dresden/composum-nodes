@@ -124,6 +124,7 @@
             refresh: function (callback) {
                 var current = this.current();
                 this.delegate('refresh.jstree', _.bind(function () {
+                    this.undelegate('refresh.jstree');
                     if (_.isFunction(callback)) {
                         callback(current);
                     } else {
@@ -131,7 +132,6 @@
                             this.selectNode(current.path);
                         }
                     }
-                    this.undelegate('refresh.jstree');
                 }, this));
                 this.$el.jstree('refresh', true, true);
             },

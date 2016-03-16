@@ -1,0 +1,57 @@
+{
+  "sling:resourceType": "composum/sling/commons/clientlib",
+  "css": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "depends": [
+      "composum/sling/console/clientlibs/console"
+    ],
+    "embed": [
+      "composum/sling/usermgnt/css/usermanagement.css"
+    ]
+  },
+  "js": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "depends": [
+      "composum/sling/console/clientlibs/console"
+    ],
+    "dialogs": {
+      "embed": [
+        "composum/sling/usermgnt/dialogs/adduser/adduserdialog.js",
+        "composum/sling/usermgnt/dialogs/addsystemuser/addsystemuserdialog.js",
+        "composum/sling/usermgnt/dialogs/addmember/addmemberdialog.js",
+        "composum/sling/usermgnt/dialog/addtogroup/addtogroupdialog.js",
+        "composum/sling/usermgnt/dialogs/addgroup/addgroupdialog.js",
+        "composum/sling/usermgnt/dialogs/deleteauthorizable/deleteauthorizabledialog.js",
+        "composum/sling/usermgnt/dialogs/disableuser/disableuserdialog.js",
+        "composum/sling/usermgnt/dialogs/changepassword/changepwdialog.js"
+      ]
+    },
+    "tables": {
+      "embed": [
+        "composum/sling/usermgnt/js/propertiestable.js",
+        "composum/sling/usermgnt/js/groupstable.js",
+        "composum/sling/usermgnt/js/usertable.js",
+        "composum/sling/usermgnt/js/memberstable.js"
+      ]
+    },
+    "tabs": {
+      "embed": [
+        "composum/sling/usermgnt/js/usertab.js",
+        "composum/sling/usermgnt/js/profiletab.js",
+        "composum/sling/usermgnt/js/preferencestab.js",
+        "composum/sling/usermgnt/js/groupstab.js",
+        "composum/sling/usermgnt/js/memberstab.js",
+        "composum/sling/usermgnt/js/grouptab.js"
+      ]
+    },
+    "query": {
+      "embed": "composum/sling/usermgnt/js/query.js"
+    },
+    "usermanagement": {
+      "embed": "composum/sling/usermgnt/js/usermanagement.js"
+    },
+    "startup": {
+      "embed": "composum/sling/usermgnt/js/startup.js"
+    }
+  }
+}

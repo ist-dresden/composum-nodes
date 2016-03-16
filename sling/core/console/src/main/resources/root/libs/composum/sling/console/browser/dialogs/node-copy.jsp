@@ -28,7 +28,7 @@
             </div>
 
             <div class="form-group">
-              <label class="control-label">To directory</span></label>
+              <label class="control-label">To directory</label>
               <div class="path input-group widget path-widget">
                 <input name="path" class="form-control" data-rules="mandatory" type="text" />
                   <span class="input-group-btn">

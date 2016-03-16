@@ -1,0 +1,20 @@
+@font-face {
+    font-family: 'composum';
+    src: url('../fonts/composum.eot');
+    src: url('../fonts/composum.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/composum.woff') format('woff'),
+         url('../fonts/composum.ttf') format('truetype'),
+         url('../fonts/composum.svg#composum') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+[class*='icon-']:before{
+	display: inline-block;
+   font-family: 'composum';
+   font-style: normal;
+   font-weight: normal;
+   line-height: 1;
+   -webkit-font-smoothing: antialiased;
+   -moz-osx-font-smoothing: grayscale
+}
+.icon-Composum-font:before{content:'\0041';}

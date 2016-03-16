@@ -48,7 +48,7 @@ public class YUICssProcessor implements CssProcessor {
     public static final String MINIMIZE = "javascript.minimize";
     @Property(
             name = MINIMIZE,
-            label = "Mimimize",
+            label = "Minimize",
             description = "compress with VUI compressor (if not 'debug' set)",
             boolValue = true
     )
@@ -74,15 +74,17 @@ public class YUICssProcessor implements CssProcessor {
     protected String template;
 
     @Override
-    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties, Writer writer)
+    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
+                                     Writer writer, RendererContext context)
             throws IOException {
-        renderClientlibLinks(clientlib, properties, writer, template);
+        renderClientlibLinks(clientlib, properties, writer, context, template);
     }
 
-    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties, Writer writer,
+    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
+                                     Writer writer, RendererContext context,
                                      String template)
             throws IOException {
-        List<Clientlib.Link> links = clientlib.getLinks(debug, properties);
+        List<Clientlib.Link> links = clientlib.getLinks(debug, false, false, properties, context);
         for (int i = 0; i < links.size(); ) {
             Clientlib.Link link = links.get(i);
             writer.append(MessageFormat.format(template, link.url));
@@ -99,18 +101,16 @@ public class YUICssProcessor implements CssProcessor {
         if (source != null) {
             context.hint(ResourceUtil.PROP_MIME_TYPE, "text/css");
             if (minimize) {
-                final InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET);
                 final PipedOutputStream outputStream = new PipedOutputStream();
                 result = new PipedInputStream(outputStream);
-                final OutputStreamWriter writer = new OutputStreamWriter(outputStream);
-                final CssCompressor compressor = new CssCompressor(sourceReader);
                 context.execute(new Runnable() {
                     @Override
                     public void run() {
-                        try {
+                        try (OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+                             InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET)) {
+                            final CssCompressor compressor = new CssCompressor(sourceReader);
                             compressor.compress(writer, lineBreak);
                             writer.flush();
-                            writer.close();
                         } catch (IOException ex) {
                             LOG.error(ex.getMessage(), ex);
                         }

@@ -60,8 +60,9 @@ public class SecurityServlet extends AbstractServiceServlet {
 
     public enum Operation {accessPolicy, accessPolicies, allPolicies, reorder, supportedPrivileges, principals, restrictionNames}
 
-    protected ServletOperationSet operations = new ServletOperationSet(Extension.json);
+    protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
+    @Override
     protected ServletOperationSet getOperations() {
         return operations;
     }

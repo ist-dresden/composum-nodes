@@ -2,52 +2,39 @@
   "browser": {
     "sling:resourceType": "composum/sling/commons/clientlib",
     "css": {
-      "jcr:primaryType": "sling:OrderedFolder",
-      "nodes": {
-        "embed": "composum/sling/console/browser/css/nodes.css"
-      },
-      "browser": {
-        "embed": "composum/sling/console/browser/css/browser.css"
-      },
-      "favorites": {
-        "embed": "composum/sling/console/browser/components/favorites/favorites.css"
-      }
+      "jcr:primaryType": "nt:unstructured",
+      "embed": [
+        "composum/sling/console/browser/css/nodes.css",
+        "composum/sling/console/browser/css/browser.css",
+        "composum/sling/console/browser/components/favorites/favorites.css"
+      ]
     },
     "js": {
-      "jcr:primaryType": "sling:OrderedFolder",
-      "property": {
-        "embed": "composum/sling/console/browser/js/property.js"
-      },
-      "nodes": {
-        "embed": "composum/sling/console/browser/js/nodes.js"
-      },
-      "query": {
-        "embed": "composum/sling/console/browser/js/query.js"
-      },
-      "browser": {
-        "embed": "composum/sling/console/browser/js/browser.js"
-      },
-      "favorites": {
-        "embed": "composum/sling/console/browser/components/favorites/favorites.js"
-      },
-      "properties": {
-        "embed": "composum/sling/console/browser/js/properties.js"
-      },
-      "version": {
-        "embed": "composum/sling/console/browser/js/version.js"
-      },
-      "nodeview": {
-        "embed": "composum/sling/console/browser/js/nodeview.js"
-      },
-      "startup": {
-        "embed": "composum/sling/console/browser/js/startup.js"
-      }
+      "jcr:primaryType": "nt:unstructured",
+      "depends": [
+        "composum/sling/console/clientlibs/console",
+        "composum/sling/console/clientlibs/ace"
+      ],
+      "embed": [
+        "composum/sling/console/browser/js/property.js",
+        "composum/sling/console/browser/js/nodes.js",
+        "composum/sling/console/browser/js/query.js",
+        "composum/sling/console/browser/js/browser.js",
+        "composum/sling/console/browser/components/favorites/favorites.js",
+        "composum/sling/console/browser/js/properties.js",
+        "composum/sling/console/browser/js/accessPolicyEntryDialog.js",
+        "composum/sling/console/browser/js/policiesTable.js",
+        "composum/sling/console/browser/js/policiesTab.js",
+        "composum/sling/console/browser/js/version.js",
+        "composum/sling/console/browser/js/nodeview.js",
+        "composum/sling/console/browser/js/startup.js"
+      ]
     }
   },
   "console": {
     "sling:resourceType": "composum/sling/commons/clientlib",
     "link": {
-      "jcr:primaryType": "sling:OrderedFolder",
+      "jcr:primaryType": "nt:unstructured",
       "cpn-64": {
         "rel": "shortcut icon",
         "embed": "composum/sling/commons/components/images/cpn-64.png"
@@ -58,39 +45,27 @@
       }
     },
     "css": {
-      "jcr:primaryType": "sling:OrderedFolder",
-      "bootstrap-theme": {
-        "embed": "jslibs/bootstrap/3.3.2/css/bootstrap-theme.min.css"
-      },
-      "bootstrap-table": {
-        "embed": "jslibs/bootstrap-table/1.7.0/bootstrap-table.min.css"
-      },
-      "bootstrap-datetimepicker": {
-        "embed": "jslibs/bootstrap-datetimepicker/4.14.30/css/bootstrap-datetimepicker.min.css"
-      },
-      "split-pane": {
-        "embed": "jslibs/jquery/split-pane/snapshot/split-pane.css"
-      },
-      "components": {
-        "embed": "composum/sling/commons/components/clientlibs/components"
-      },
-      "console": {
-        "embed": "composum/sling/console/page/css/console.css"
-      }
+      "jcr:primaryType": "nt:unstructured",
+      "embed": [
+        "jslibs/bootstrap/3.3.2/css/bootstrap-theme.min.css",
+        "jslibs/bootstrap-table/1.7.0/bootstrap-table.min.css",
+        "jslibs/bootstrap-datetimepicker/4.14.30/css/bootstrap-datetimepicker.min.css",
+        "jslibs/jquery/split-pane/snapshot/split-pane.css",
+        "composum/sling/commons/components/clientlibs/components",
+        "composum/sling/console/page/css/console.css"
+      ]
     },
     "js": {
-      "jcr:primaryType": "sling:OrderedFolder",
+      "jcr:primaryType": "nt:unstructured",
       "jquery": {
         "embed": "jslibs/jquery/1.11.0/jquery.min.js"
       },
       "aem-6.1": {
-        "hint": "for AEM 6.1 compatibility, works only on appropriate AEM systems because each library file is only embedded if existing...",
-        "externalize": {
-          "embed": "/etc/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js"
-        },
-        "csrf": {
-          "embed": "/etc/clientlibs/granite/jquery/granite/csrf/source/csrf.js"
-        }
+        "optional": true,
+        "embed": [
+          "/etc/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js",
+          "/etc/clientlibs/granite/jquery/granite/csrf/source/csrf.js"
+        ]
       },
       "underscore": {
         "embed": "jslibs/underscore/1.8.3/underscore-min.js"
@@ -139,53 +114,25 @@
   "ace": {
     "sling:resourceType": "composum/sling/commons/clientlib",
     "js": {
-      "jcr:primaryType": "sling:OrderedFolder",
       "expanded": true,
-      "ace": {
-        "embed": "jslibs/ace/1.1.8/ace.js"
-      },
-      "mode-json": {
-        "embed": "jslibs/ace/1.1.8/mode-json.js"
-      },
-      "mode-xml": {
-        "embed": "jslibs/ace/1.1.8/mode-xml.js"
-      },
-      "mode-html": {
-        "embed": "jslibs/ace/1.1.8/mode-html.js"
-      },
-      "mode-jsp": {
-        "embed": "jslibs/ace/1.1.8/mode-jsp.js"
-      },
-      "mode-css": {
-        "embed": "jslibs/ace/1.1.8/mode-css.js"
-      },
-      "mode-less": {
-        "embed": "jslibs/ace/1.1.8/mode-less.js"
-      },
-      "mode-javascript": {
-        "embed": "jslibs/ace/1.1.8/mode-javascript.js"
-      },
-      "mode-dart": {
-        "embed": "jslibs/ace/1.1.8/mode-dart.js"
-      },
-      "mode-groovy": {
-        "embed": "jslibs/ace/1.1.8/mode-groovy.js"
-      },
-      "mode-java": {
-        "embed": "jslibs/ace/1.1.8/mode-java.js"
-      },
-      "mode-scala": {
-        "embed": "jslibs/ace/1.1.8/mode-scala.js"
-      },
-      "mode-markdown": {
-        "embed": "jslibs/ace/1.1.8/mode-markdown.js"
-      },
-      "mode-text": {
-        "embed": "jslibs/ace/1.1.8/mode-text.js"
-      },
-      "theme-clouds": {
-        "embed": "jslibs/ace/1.1.8/theme-clouds.js"
-      }
+      "jcr:primaryType": "nt:unstructured",
+      "embed": [
+        "jslibs/ace/1.1.8/ace.js",
+        "jslibs/ace/1.1.8/mode-json.js",
+        "jslibs/ace/1.1.8/mode-xml.js",
+        "jslibs/ace/1.1.8/mode-html.js",
+        "jslibs/ace/1.1.8/mode-jsp.js",
+        "jslibs/ace/1.1.8/mode-css.js",
+        "jslibs/ace/1.1.8/mode-less.js",
+        "jslibs/ace/1.1.8/mode-javascript.js",
+        "jslibs/ace/1.1.8/mode-dart.js",
+        "jslibs/ace/1.1.8/mode-groovy.js",
+        "jslibs/ace/1.1.8/mode-java.js",
+        "jslibs/ace/1.1.8/mode-scala.js",
+        "jslibs/ace/1.1.8/mode-markdown.js",
+        "jslibs/ace/1.1.8/mode-text.js",
+        "jslibs/ace/1.1.8/theme-clouds.js"
+      ]
     }
   }
 }

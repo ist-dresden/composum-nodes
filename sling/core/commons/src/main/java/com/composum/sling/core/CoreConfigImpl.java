@@ -12,6 +12,7 @@ import com.composum.sling.core.servlet.VersionServlet;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
@@ -43,6 +44,17 @@ import java.util.Map;
 public class CoreConfigImpl implements CoreConfiguration {
 
     @Property(
+            name = CONSOLE_CATEGORIES_KEY,
+            label = "Console Categories",
+            description = "the list of categories to determine the views in the core console",
+            value = {
+                    "core",
+                    "nodes"
+            }
+    )
+    private String[] consoleCategories;
+
+    @Property(
             name = QUERY_RESULT_LIMIT_KEY,
             label = "Query Result Limit",
             description = "the maximum node count for query results (default: 500)",
@@ -68,14 +80,6 @@ public class CoreConfigImpl implements CoreConfiguration {
             value = "meta/errorpages"
     )
     private String errorpagesPath;
-
-    @Property(
-            name = GROOVY_SETUP_SCRIPT,
-            label = "Groovy setup script",
-            description = "the optional path to a custom groovy script to setup a groovy runner script object",
-            value = ""
-    )
-    private String groovySetupScript;
 
     @Property(
             name = PAGE_NODE_FILTER_KEY,
@@ -165,12 +169,26 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private boolean versionServletEnabled;
 
-    private Map<Class<? extends AbstractServiceServlet>, Boolean> enabledServlets;
+    public static final String USER_MANAGEMENT_SERVLET_ENABLED = "usermanagement.servlet.enabled";
+    @Property(
+            name = "usermanagement.servlet.enabled",
+            label = "User Management Servlet",
+            description = "the general on/off switch for the services of the User Management Servlet",
+            boolValue = true
+    )
+    private boolean userManagementServletEnabled;
+
+    private Map<String, Boolean> enabledServlets;
 
     @Override
     public boolean isEnabled(AbstractServiceServlet servlet) {
-        Boolean result = enabledServlets.get(servlet.getClass());
+        Boolean result = enabledServlets.get(servlet.getClass().getSimpleName());
         return result != null ? result : false;
+    }
+
+    @Override
+    public String[] getConsoleCategories() {
+        return consoleCategories;
     }
 
     @Override
@@ -231,16 +249,14 @@ public class CoreConfigImpl implements CoreConfiguration {
                     }
                     resource = resolver.resolve(request, path);
                 }
-                if (resource != null) {
-                    while (errorpage == null && resource != null) {
-                        path = resource.getPath();
-                        if ("/".equals(path)) {
-                            path = "";
-                        }
-                        errorpage = resolver.getResource(path + "/" + errorpagesPath + "/" + status);
-                        if (errorpage == null) {
-                            resource = resource.getParent();
-                        }
+                while (errorpage == null && resource != null) {
+                    path = resource.getPath();
+                    if ("/".equals(path)) {
+                        path = "";
+                    }
+                    errorpage = resolver.getResource(path + "/" + errorpagesPath + "/" + status);
+                    if (errorpage == null) {
+                        resource = resource.getParent();
                     }
                 }
             }
@@ -272,6 +288,7 @@ public class CoreConfigImpl implements CoreConfiguration {
     @Modified
     protected void activate(ComponentContext context) {
         this.properties = context.getProperties();
+        consoleCategories = PropertiesUtil.toStringArray(properties.get(CONSOLE_CATEGORIES_KEY));
         queryResultLimit = PropertiesUtil.toLong(properties.get(QUERY_RESULT_LIMIT_KEY), QUERY_RESULT_LIMIT_DEFAULT);
         queryTemplates = PropertiesUtil.toStringArray(properties.get(QUERY_TEMPLATES_KEY));
         errorpagesPath = (String) properties.get(ERRORPAGES_PATH);
@@ -289,20 +306,23 @@ public class CoreConfigImpl implements CoreConfiguration {
         orderableNodesFilter = ResourceFilterMapping.fromString(
                 (String) properties.get(ORDERABLE_NODES_FILTER_KEY));
         enabledServlets = new HashMap<>();
-        enabledServlets.put(SystemServlet.class, systemServletEnabled =
+        enabledServlets.put(SystemServlet.class.getSimpleName(), systemServletEnabled =
                 (Boolean) properties.get(SYSTEM_SERVLET_ENABLED));
-        enabledServlets.put(PackageServlet.class, packageServletEnabled =
+        enabledServlets.put(PackageServlet.class.getSimpleName(), packageServletEnabled =
                 (Boolean) properties.get(PACKAGE_SERVLET_ENABLED));
-        enabledServlets.put(SecurityServlet.class, securityServletEnabled =
+        enabledServlets.put(SecurityServlet.class.getSimpleName(), securityServletEnabled =
                 (Boolean) properties.get(SECURITY_SERVLET_ENABLED));
-        enabledServlets.put(NodeServlet.class, nodeServletEnabled =
+        enabledServlets.put(NodeServlet.class.getSimpleName(), nodeServletEnabled =
                 (Boolean) properties.get(NODE_SERVLET_ENABLED));
-        enabledServlets.put(PropertyServlet.class, propertyServletEnabled =
+        enabledServlets.put(PropertyServlet.class.getSimpleName(), propertyServletEnabled =
                 (Boolean) properties.get(PROPERTY_SERVLET_ENABLED));
-        enabledServlets.put(VersionServlet.class, versionServletEnabled =
+        enabledServlets.put(VersionServlet.class.getSimpleName(), versionServletEnabled =
                 (Boolean) properties.get(VERSION_SERVLET_ENABLED));
+        enabledServlets.put("UserManagementServlet", userManagementServletEnabled =
+                (Boolean) properties.get(USER_MANAGEMENT_SERVLET_ENABLED));
     }
 
+    @Deactivate
     protected void deactivate(ComponentContext context) {
         this.properties = null;
     }

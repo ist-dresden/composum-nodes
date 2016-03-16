@@ -168,9 +168,9 @@ public abstract class AbstractSlingBean {
 
     public Node getNode() {
         if (node == null) {
-            node = context.getAttribute("currentNode", Node.class);
+            node = getResource().getNode();
             if (node == null) {
-                node = getResource().getNode();
+                node = context.getAttribute("currentNode", Node.class);
             }
         }
         return node;
@@ -249,14 +249,14 @@ public abstract class AbstractSlingBean {
 
     public RequestHandle getRequest() {
         if (request == null) {
-            request = RequestHandle.use(getSling().getRequest());
+            request = RequestHandle.use(context.getRequest());
         }
         return request;
     }
 
     public SlingHttpServletResponse getResponse() {
         if (response == null) {
-            response = getSling().getResponse();
+            response = context.getResponse();
         }
         return response;
     }
