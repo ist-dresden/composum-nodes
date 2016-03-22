@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.jcr.base.util.AccessControlUtil;
 
 import javax.jcr.Binary;
@@ -16,6 +17,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -24,6 +26,8 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
 
     public static final String PROP_RESOURCE_TYPE =
             SlingConstants.NAMESPACE_PREFIX + ":" + SlingConstants.PROPERTY_RESOURCE_TYPE;
+    public static final String PROP_RESOURCE_SUPER_TYPE =
+            SlingConstants.NAMESPACE_PREFIX + ":" + SlingConstants.PROPERTY_RESOURCE_SUPER_TYPE;
     public static final String CONTENT_NODE = "jcr:content";
 
     public static final String TYPE_FILE = "nt:file";
@@ -35,8 +39,9 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String TYPE_ORDERABLE = "mix:orderable";
     public static final String TYPE_REFERENCEABLE = "mix:referenceable";
 
-    public static final String PROP_TITLE = "jcr:title";
     public static final String PROP_UUID = "jcr:uuid";
+    public static final String PROP_TITLE = "jcr:title";
+    public static final String PROP_DESCRIPTION = "jcr:description";
 
     public static final String PROP_DATA = "jcr:data";
     public static final String PROP_MIME_TYPE = "jcr:mimeType";
@@ -45,6 +50,71 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String PROP_JCR_CONTENT = "jcr:content";
     public static final String PROP_LAST_MODIFIED = "jcr:lastModified";
     public static final String PROP_FILE_REFERENCE = "fileReference";
+
+    public static Resource getResourceType(Resource resource) {
+        return resource != null ? getResourceType(resource.getResourceResolver(),
+                resource.getResourceType()) : null;
+    }
+
+    public static Resource getResourceType(ResourceResolver resolver, String resourceTypeName) {
+        Resource resourceType = null;
+        if (StringUtils.isNotBlank(resourceTypeName)) {
+            if (resourceTypeName.startsWith("/")) {
+                resourceType = resolver.getResource(resourceTypeName);
+            } else {
+                resourceType = resolver.getResource("/apps/" + resourceTypeName);
+                if (resourceType == null) {
+                    resourceType = resolver.getResource("/libs/" + resourceTypeName);
+                }
+            }
+        }
+        return resourceType;
+    }
+
+    public static boolean isResourceType(Resource resource, Pattern pattern) {
+        return resource != null ? isResourceType(resource.getResourceResolver(),
+                resource.getResourceType(), pattern) : null;
+    }
+
+    public static boolean isResourceType(ResourceResolver resolver, String resourceTypeName,
+                                         Pattern pattern) {
+        Resource resourceType = null;
+        if (StringUtils.isNotBlank(resourceTypeName)) {
+            if (pattern.matcher(resourceTypeName).find()) {
+                return true;
+            } else {
+                ValueMap values = resourceType.adaptTo(ValueMap.class);
+                String resourceSuperTypeName = values.get(PROP_RESOURCE_SUPER_TYPE, "");
+                return isResourceType(resolver, resourceSuperTypeName, pattern);
+            }
+        }
+        return false;
+    }
+
+    public static <T> T getTypeProperty(Resource resource, String name, T defaultValue) {
+        T value = getTypeProperty(resource, name, PropertyUtil.getType(defaultValue));
+        return value != null ? value : defaultValue;
+    }
+
+    public static <T> T getTypeProperty(Resource resource, String name, Class<T> type) {
+        return resource != null ? getTypeProperty(resource.getResourceResolver(),
+                resource.getResourceType(), name, type) : null;
+    }
+
+    public static <T> T getTypeProperty(ResourceResolver resolver, String resourceTypeName,
+                                        String name, Class<T> type) {
+        T value = null;
+        Resource resourceType = getResourceType(resolver, resourceTypeName);
+        if (resourceType != null) {
+            ValueMap values = resourceType.adaptTo(ValueMap.class);
+            value = values.get(name, type);
+            if (value == null) {
+                String resourceSuperTypeName = values.get(PROP_RESOURCE_SUPER_TYPE, "");
+                value = getTypeProperty(resolver, resourceSuperTypeName, name, type);
+            }
+        }
+        return value;
+    }
 
     public static Resource getOrCreateResource(ResourceResolver resolver, String path)
             throws RepositoryException {
