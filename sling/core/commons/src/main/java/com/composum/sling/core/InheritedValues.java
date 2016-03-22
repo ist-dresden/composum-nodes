@@ -2,6 +2,7 @@ package com.composum.sling.core;
 
 import com.composum.sling.core.util.PropertyUtil;
 import com.composum.sling.core.util.ResourceUtil;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 
 import java.util.HashMap;
@@ -13,12 +14,12 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
 
     public static final Object UNDEFINED = new String("");
 
-    protected ResourceHandle resource;
+    protected Resource resource;
 
-    protected transient ResourceHandle entryPoint;
+    protected transient Resource entryPoint;
     protected transient String relativePath;
 
-    public InheritedValues(ResourceHandle resource) {
+    public InheritedValues(Resource resource) {
         this.resource = resource;
     }
 
@@ -75,8 +76,9 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
     protected <T> T scanNodeHierarchy(String name, Class<T> type) {
         T value;
         String path = relativePath + name;
-        for (ResourceHandle parent = entryPoint; parent != null; parent = parent.getParent()) {
-            value = parent.getProperty(path, type);
+        for (Resource parent = entryPoint; parent != null; parent = parent.getParent()) {
+            ValueMap parentProps = parent.adaptTo(ValueMap.class);
+            value = parentProps.get(path, type);
             if (value != null) {
                 return value;
             }
@@ -91,7 +93,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
     protected void findEntryPoint() {
         if (entryPoint == null) {
             StringBuilder path = new StringBuilder();
-            ResourceHandle parent = resource.getParent();
+            Resource parent = resource.getParent();
             String name = null;
             while (parent != null && !ResourceUtil.CONTENT_NODE.equals(name = parent.getName())) {
                 if (path.length() > 0) {
