@@ -45,6 +45,7 @@
                 core.components.SplitView.prototype.initialize.apply(this, [options]);
                 $(document).on('path:select', _.bind(this.onPathSelect, this));
                 $(document).on('path:selected', _.bind(this.onPathSelected, this));
+                $(document).on('path:changed', _.bind(this.onPathChanged, this));
             },
 
             onPathSelect: function (event, path) {
@@ -55,9 +56,11 @@
             },
 
             onPathSelected: function (event, path) {
-                browser.tree.selectNode(path, _.bind(function (path) {
-                    browser.treeActions.refreshNodeState();
-                }, this));
+                browser.treeActions.refreshNodeState();
+            },
+
+            onPathChanged: function (event, path) {
+                browser.treeActions.refreshNodeState();
             }
         });
 
@@ -68,6 +71,19 @@
             nodeIdPrefix: 'BT_',
 
             initialize: function (options) {
+                options = _.extend(options || {}, {
+                    dragAndDrop: {
+                        is_draggable: _.bind(this.nodeIsDraggable, this),
+                        inside_pos: 'last',
+                        copy: false,
+                        check_while_dragging: false,
+                        drag_selection: false,
+                        touch: 'selection',
+                        large_drag_target: true,
+                        large_drop_target: true,
+                        use_html5: false
+                    }
+                });
                 this.initialSelect = this.$el.attr('data-selected');
                 if (!this.initialSelect || this.initialSelect == '/') {
                     this.initialSelect = core.console.getProfile().get('browser', 'current', "/");
@@ -76,30 +92,32 @@
                 core.components.Tree.prototype.initialize.apply(this, [options]);
             },
 
-            dragAndDrop: {
-                copy: false,
-                is_draggable: function () {
-                    return true;
-                }
+            nodeIsDraggable: function (selection, event) {
+                return true;
             },
 
-            dropNode: function (draggedNode, targetNode) {
-                var path = draggedNode.path;
-                var dialog = core.nodes.getMoveNodeDialog();
-                dialog.show(_.bind(function () {
-                    dialog.setValues(draggedNode, targetNode);
-                    this.selectNode(path);
-                }, this));
+            dropNode: function (draggedNode, targetNode, index) {
+                var parentPath = targetNode.path;
+                var oldPath = draggedNode.path;
+                var nodeName = core.getNameFromPath(oldPath);
+                var newPath = parentPath + '/' + nodeName;
+                core.ajaxPut('/bin/core/node.move.json' + core.encodePath(oldPath),
+                    JSON.stringify({
+                        path: parentPath,
+                        name: nodeName,
+                        index: index
+                    }), {
+                        dataType: 'json'
+                    }, _.bind(function (data) {
+                        $(document).trigger('path:moved', [oldPath, newPath]);
+                    }, this), _.bind(function (result) {
+                        core.alert('danger', 'Error', 'Error on moving node!', result);
+                    }, this));
             },
 
             dataUrlForPath: function (path) {
                 var params = this.filter && 'default' != this.filter ? '?filter=' + this.filter : '';
                 return '/bin/core/node.tree.json' + path + params;
-            },
-
-            onNodeSelected: function (path, node, element) {
-                $(document).trigger("path:select", [path]);
-                browser.treeActions.refreshNodeState();
             }
         });
 
@@ -116,7 +134,7 @@
                 this.$('a.mixins').on('click', _.bind(this.nodeMixins, this));
                 this.$toggleLock.on('click', _.bind(this.toggleLock, this));
                 this.$toggleCheckout.on('click', _.bind(this.toggleCheckout, this));
-                this.$('button.refresh').on('click', _.bind(this.refreshTree, this));
+                this.$('button.refresh').on('click', _.bind(this.refreshNode, this));
                 this.$('button.create').on('click', _.bind(this.createNode, this));
                 this.$('button.delete').on('click', _.bind(this.deleteNode, this));
                 this.$('button.copy').on('click', _.bind(this.clipboardCopy, this));
@@ -151,14 +169,16 @@
             },
 
             refreshNodeState: function () {
-                var node = this.tree.current();
-                if (node && node.jcrState) {
-                    this.$toggleLock.text(node.jcrState.locked ? 'Unlock' : 'Lock');
-                    this.$toggleCheckout.text(node.jcrState.checkedOut ? 'Checkin' : 'Checkout');
-                    if (node.jcrState.isVersionable) {
-                        this.$toggleCheckout.parent().removeClass('disabled');
-                    } else {
-                        this.$toggleCheckout.parent().addClass('disabled');
+                if (browser.current) {
+                    var node = browser.current.node;
+                    if (node && node.jcrState) {
+                        this.$toggleLock.text(node.jcrState.locked ? 'Unlock' : 'Lock');
+                        this.$toggleCheckout.text(node.jcrState.checkedOut ? 'Checkin' : 'Checkout');
+                        if (node.jcrState.isVersionable) {
+                            this.$toggleCheckout.parent().removeClass('disabled');
+                        } else {
+                            this.$toggleCheckout.parent().addClass('disabled');
+                        }
                     }
                 }
             },
@@ -213,7 +233,7 @@
                     //node.jcrState.checkedOut
                     core.ajaxPost('/bin/core/version.' + (node.jcrState.checkedOut ? 'checkin' : 'checkout') + '.json' + node.path,
                         {}, {}, _.bind(function (result) {
-                            this.tree.refresh();
+                            $(document).trigger('path:changed' [node.path]);
                         }, this), _.bind(function (result) {
                             core.alert('danger', 'Error', 'Error on toggle node lock', result);
                         }, this));
@@ -227,7 +247,7 @@
                     core.ajaxPost('/bin/core/node.toggle.lock' + node.path,
                         {}, {}, undefined, undefined, _.bind(function (result) {
                             if (result.status == 200) {
-                                this.tree.refresh();
+                                $(document).trigger('path:changed' [node.path]);
                             } else {
                                 core.alert('danger', 'Error', 'Error on toggle node lock', result);
                             }
@@ -246,15 +266,18 @@
             },
 
             deleteNode: function (event) {
-                var dialog = core.nodes.getDeleteNodeDialog();
-                dialog.show(_.bind(function () {
-                    dialog.setNode(this.tree.current());
-                }, this));
-
+                event.preventDefault();
+                var path = this.tree.getSelectedPath();
+                if (path) {
+                    var dialog = core.nodes.getDeleteNodeDialog();
+                    dialog.show(_.bind(function () {
+                        dialog.setPath(path);
+                    }, this));
+                }
             },
 
-            refreshTree: function (event) {
-                this.tree.refresh();
+            refreshNode: function (event) {
+                this.tree.refreshNodeById();
             }
         });
 

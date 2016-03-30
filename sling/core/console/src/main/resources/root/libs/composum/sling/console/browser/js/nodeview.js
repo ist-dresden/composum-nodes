@@ -143,7 +143,7 @@
                                 url: url
                             }
                         }, _.bind(function (data) {
-                            browser.tree.selectNode(data.path);
+                            browser.tree.selectNode(data.path, undefined, true);
                         }, this), undefined, _.bind(function (data) {
                             this.busy = false;
                         }, this)

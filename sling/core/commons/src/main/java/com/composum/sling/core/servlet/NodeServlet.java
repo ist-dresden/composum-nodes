@@ -38,6 +38,7 @@ import javax.jcr.Property;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.Workspace;
 import javax.jcr.lock.Lock;
 import javax.jcr.lock.LockManager;
@@ -806,29 +807,52 @@ public class NodeServlet extends AbstractServiceServlet {
 
                 if (NODE_PATH_PATTERN.matcher(newPath).matches()) {
 
-                    JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                    response.setStatus(HttpServletResponse.SC_OK);
-
                     String oldPath = node.getPath();
-                    if (oldPath.equals(newPath)) {
+                    boolean changesMade = false;
+
+                    Session session = node.getSession();
+                    if (!oldPath.equals(newPath)) {
+                        session.move(oldPath, newPath);
+                        changesMade = true;
+                    }
+
+                    ResourceResolver resolver = resource.getResourceResolver();
+                    ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newPath));
+
+                    if (params.index != null) {
+
+                        Node parentNode = session.getNode(params.path);
+                        NodeIterator siblingsIterator = parentNode.getNodes();
+                        for (int i = 0; i < params.index && siblingsIterator.hasNext(); i++) {
+                            siblingsIterator.nextNode();
+                        }
+
+                        if (siblingsIterator.hasNext()) {
+                            Node siblingNode = siblingsIterator.nextNode();
+                            try {
+                                parentNode.orderBefore(resource.getName(), siblingNode.getName());
+                                changesMade = true;
+                            } catch (UnsupportedRepositoryOperationException ex) {
+                                // ordering not supported... ignore it
+                            }
+                        }
+                    }
+
+                    JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                    if (changesMade) {
+
+                        session.save();
+                        response.setStatus(HttpServletResponse.SC_OK);
+                        writeJsonNode(jsonWriter, MappingRules.DEFAULT_NODE_FILTER,
+                                newResource, LabelType.name, coreConfig, false);
+
+                    } else {
 
                         response.setStatus(HttpServletResponse.SC_ACCEPTED);
-
                         jsonWriter.beginObject();
                         jsonWriter.name("message").value("no modification");
                         jsonWriter.endObject();
 
-                    } else {
-
-                        Session session = node.getSession();
-                        session.move(oldPath, newPath);
-                        session.save();
-
-                        ResourceResolver resolver = resource.getResourceResolver();
-                        ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newPath));
-
-                        writeJsonNode(jsonWriter, MappingRules.DEFAULT_NODE_FILTER,
-                                newResource, LabelType.name, coreConfig, false);
                     }
                 } else {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST,
@@ -1527,6 +1551,7 @@ public class NodeServlet extends AbstractServiceServlet {
 
         public String type;
         public String path;
+        public Integer index;
         public String name;
         public String title;
         public String mimeType;
@@ -1539,6 +1564,7 @@ public class NodeServlet extends AbstractServiceServlet {
         NodeParameters params = new NodeParameters();
         params.name = request.getParameter(PARAM_NAME);
         params.path = request.getParameter(PARAM_PATH);
+        params.index = RequestUtil.getParameter(request, PARAM_INDEX, (Integer) null);
         params.type = request.getParameter(PARAM_TYPE);
         params.title = request.getParameter(PARAM_TITLE);
         params.mimeType = request.getParameter(PARAM_MIME_TYPE);

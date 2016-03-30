@@ -101,7 +101,7 @@
         "embed": "jslibs/jquery/split-pane/snapshot/split-pane.js"
       },
       "jstree": {
-        "embed": "jslibs/jstree/3.0.9/jstree.min.js"
+        "embed": "jslibs/jstree/3.3.0/jstree.js"
       },
       "components": {
         "embed": "composum/sling/commons/components/clientlibs/components"

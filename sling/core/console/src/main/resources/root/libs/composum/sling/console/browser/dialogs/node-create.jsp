@@ -23,11 +23,6 @@
 
             <input name="_charset_" type="hidden" value="UTF-8" />
             <div class="form-group">
-              <label class="control-label">Primary Type</label>
-              <input name="type" class="widget primary-type-widget form-control" type="text"
-                     placeholder="enter primary type" autofocus data-rules="mandatory" />
-            </div>
-            <div class="form-group">
               <label class="control-label">Parent Path</label>
               <div class="path input-group widget path-widget">
                 <input name="path" class="form-control" data-rules="mandatory" type="text" />
@@ -35,6 +30,11 @@
                   <button class="select btn btn-default" type="button" title="Select Repository Path">...</button>
                 </span>
               </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label">Primary Type</label>
+              <input name="type" class="widget primary-type-widget form-control" type="text"
+                     placeholder="enter primary type" autofocus data-rules="mandatory" />
             </div>
             <div class="form-group">
               <label class="control-label">New Node Name</label>
