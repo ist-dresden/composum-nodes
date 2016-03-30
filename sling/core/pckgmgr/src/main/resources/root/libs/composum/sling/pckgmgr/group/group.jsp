@@ -7,7 +7,7 @@
     <div class="detail-panel group">
         <div class="detail-tabs action-bar btn-toolbar" role="toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <a class="general fa fa-list btn btn-default" href="#general" data-group="general" title="Group"><span class="label">Group</span></a>
+                <a class="general" href="#general" data-group="general" title="Group"><div class="title">${pckgmgr.path}</div></a>
             </div>
         </div>
         <div class="detail-content">

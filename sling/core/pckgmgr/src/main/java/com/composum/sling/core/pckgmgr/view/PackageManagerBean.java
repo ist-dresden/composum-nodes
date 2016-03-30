@@ -7,6 +7,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.RepositoryException;
+import java.util.ArrayList;
+import java.util.List;
+
 public class PackageManagerBean extends AbstractSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageManagerBean.class);
@@ -31,5 +35,22 @@ public class PackageManagerBean extends AbstractSlingBean {
     public String getTabType() {
         String selector = getRequest().getSelectors(new StringFilter.BlackList("^tab$"));
         return StringUtils.isNotBlank(selector) ? selector.substring(1) : "general";
+    }
+
+    public List<PackageUtil.PackageItem> getCurrentGroupPackages() {
+        List<PackageUtil.PackageItem> items = new ArrayList<>();
+        try {
+            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(request);
+            for (PackageUtil.TreeItem item : treeNode) {
+                if (item instanceof PackageUtil.PackageItem) {
+                    if (((PackageUtil.PackageItem) item).getDefinition() != null) {
+                        items.add((PackageUtil.PackageItem) item);
+                    }
+                }
+            }
+        } catch (RepositoryException e) {
+            e.printStackTrace();
+        }
+        return items;
     }
 }

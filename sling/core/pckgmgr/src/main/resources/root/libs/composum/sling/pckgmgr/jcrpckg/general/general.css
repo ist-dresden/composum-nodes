@@ -1,0 +1,146 @@
+
+.detail-panel.jcrpckg .package-detail {
+    position: absolute;
+    top: 40px;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    overflow: scroll;
+}
+
+.detail-panel.jcrpckg .panel {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.detail-panel.jcrpckg .panel-heading.header,
+.detail-panel.jcrpckg .panel-body.status {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.detail-panel.jcrpckg .panel-heading.header {
+    align-items: flex-start;
+}
+
+.detail-panel.jcrpckg .panel-body.status {
+    align-items: flex-end;
+}
+
+.detail-panel.jcrpckg .panel-heading.header .description {
+    flex-basis: 200px;
+    flex-grow: 1;
+}
+
+.detail-panel.jcrpckg .panel-body.status {
+    padding: 8px 5px;
+}
+
+.detail-panel.jcrpckg .panel-body.status .status-block {
+    padding: 7px 10px;
+}
+
+.detail-panel.jcrpckg .panel-body.status .status-block .fa {
+    width: 20px;
+}
+
+.detail-panel.jcrpckg .panel-body.status .status-block .date,
+.detail-panel.jcrpckg .panel-body.status .status-block .name {
+    display: inline-block;;
+}
+
+.detail-panel.jcrpckg .panel-body.status .status-block .date {
+    width: 10em;
+}
+
+.detail-panel.jcrpckg .panel-body.status .status-block .name {
+    width: 6.5em;
+}
+
+.detail-panel.jcrpckg .panel-body.status .status-block.pack-state .name {
+    width: 7.5em;
+}
+
+.detail-panel.jcrpckg .thumbnail {
+    display: inline-block;
+}
+
+.detail-panel.jcrpckg .thumbnail,
+.detail-panel.jcrpckg .identifiers {
+    margin-right: 15px;
+    margin-bottom: 10px;
+}
+
+.detail-panel.jcrpckg .thumbnail .image-wrapper {
+    width: 64px;
+    height: 64px;
+}
+
+.detail-panel.jcrpckg .thumbnail .image-wrapper img {
+    margin: auto;
+}
+
+.detail-panel.jcrpckg .identifiers h3 {
+    font-size: 1em;
+    line-height: 1.2em;
+}
+
+.detail-panel.jcrpckg .identifiers h1 {
+    font-size: 1.5em;
+    line-height: 1.2em;
+}
+
+.detail-panel.jcrpckg .identifiers h2 {
+    font-size: 1.2em;
+    line-height: 1.0em;
+}
+
+.indicator-block {
+    width: 126px;
+    margin-bottom: 0;
+    list-style: square inside;
+    -webkit-padding-start: 0;
+}
+
+.indicator-block .status-indicator {
+    padding: 0 0 0 8px;
+}
+
+.indicator-block .install-status {
+    background-color: #eee; /* disabled */
+}
+
+.indicator-block .sealed-status {
+    background-color: #fcf8e3; /* warning */
+}
+
+.indicator-block .valid-status {
+    background-color: #f2dede; /* danger */
+}
+
+.indicator-block.installed .install-status {
+    background-color: #d9edf7; /* info */
+}
+
+.indicator-block.sealed .sealed-status {
+    background-color: #d9edf7; /* info */
+}
+
+.indicator-block.valid .valid-status {
+    background-color: #d9edf7; /* info */
+}
+
+.indicator-block .is-installed,
+.indicator-block.installed .not-installed,
+.indicator-block .is-sealed,
+.indicator-block.sealed .not-sealed,
+.indicator-block .is-valid,
+.indicator-block.valid .not-valid {
+    display: none;
+}
+
+.indicator-block.installed .is-installed,
+.indicator-block.sealed .is-sealed,
+.indicator-block.valid .is-valid {
+    display: block;
+}

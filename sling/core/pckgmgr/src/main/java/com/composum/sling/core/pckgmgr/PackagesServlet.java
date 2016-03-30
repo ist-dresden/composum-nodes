@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 )
 public class PackagesServlet extends SlingSafeMethodsServlet {
 
+    public static final String SERVLET_PATH = "/bin/packages.html";
+
     public static final Pattern PATH_PATTERN = Pattern.compile("^(/bin/packages(\\.[^/]+)?\\.html)(/.*)?$");
 
     @Override

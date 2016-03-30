@@ -6,7 +6,6 @@ import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
-import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.stream.JsonReader;
@@ -36,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.Binary;
-import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -45,14 +43,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /** The servlet to provide download and upload of content packages and package definitions. */
 @SlingServlet(paths = "/bin/core/package", methods = {"GET", "POST", "PUT", "DELETE"})
@@ -62,10 +54,9 @@ public class PackageServlet extends AbstractServiceServlet {
 
     public static final String PARAM_GROUP = "group";
     public static final String PARAM_PACKAGE = "package";
+    public static final String PARAM_FORCE = "force";
 
     public static final String ZIP_CONTENT_TYPE = "application/zip";
-
-    public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     public static final boolean AUTO_SAVE = true;
 
@@ -119,6 +110,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.create, new CreateOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.upload, new UploadOperation());
+
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
                 Operation.filterChange, new ChangeFilterOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
@@ -167,17 +159,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            String path = PackageUtil.getPath(request);
-
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
-            List<JcrPackage> jcrPackages = manager.listPackages();
-
-            TreeNode treeNode = new TreeNode(path);
-            for (JcrPackage jcrPackage : jcrPackages) {
-                if (treeNode.addPackage(jcrPackage)) {
-                    break;
-                }
-            }
+            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(request);
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             treeNode.sort();
@@ -250,9 +232,10 @@ public class PackageServlet extends AbstractServiceServlet {
             RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
             if (file != null) {
                 InputStream input = file.getInputStream();
+                boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
 
                 JcrPackageManager manager = PackageUtil.createPackageManager(request);
-                JcrPackage jcrPackage = manager.upload(input, true);
+                JcrPackage jcrPackage = manager.upload(input, true, force);
 
                 JsonWriter writer = ResponseUtil.getJsonWriter(response);
                 jsonAnswer(writer, "upload", "successful", jcrPackage);
@@ -284,7 +267,7 @@ public class PackageServlet extends AbstractServiceServlet {
                         (binary = data.getBinary()) != null &&
                         (stream = binary.getStream()) != null) {
 
-                    PackageItem item = new PackageItem(jcrPackage);
+                    PackageUtil.PackageItem item = new PackageUtil.PackageItem(jcrPackage);
 
                     response.setHeader("Content-Disposition", "inline; filename=" + item.getFilename());
                     Calendar lastModified = item.getLastModified();
@@ -436,6 +419,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 if (index >= 0 && index < filterRequest.filters.size()) {
                     filterRequest.filters.set(index, filterRequest.filter);
                     filterRequest.definition.setFilter(filterRequest.workspaceFilter, true);
+                    PackageUtil.setLastModified(filterRequest.definition);
                     response.setStatus(HttpServletResponse.SC_OK);
                     response.setContentLength(0);
                 } else {
@@ -462,6 +446,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 }
                 filterRequest.filters.add(index, filterRequest.filter);
                 filterRequest.definition.setFilter(filterRequest.workspaceFilter, true);
+                PackageUtil.setLastModified(filterRequest.definition);
                 response.setStatus(HttpServletResponse.SC_OK);
                 response.setContentLength(0);
             } else {
@@ -482,6 +467,7 @@ public class PackageServlet extends AbstractServiceServlet {
             if (index >= 0 && index < filterRequest.filters.size()) {
                 filterRequest.filters.remove(index);
                 filterRequest.definition.setFilter(filterRequest.workspaceFilter, true);
+                PackageUtil.setLastModified(filterRequest.definition);
                 response.setStatus(HttpServletResponse.SC_OK);
                 response.setContentLength(0);
             } else {
@@ -531,193 +517,6 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
     //
-    // Tree Mapping of the flat Package list
-    //
-
-    public interface TreeItem {
-
-        String getName();
-
-        void toJson(JsonWriter writer) throws RepositoryException, IOException;
-    }
-
-    public static class FolderItem extends LinkedHashMap<String, Object> implements TreeItem {
-
-        public FolderItem(String path, String name) {
-            put("id", path);
-            put("path", path);
-            put("name", name);
-            put("text", name);
-            put("type", "/".equals(path) ? "root" : "folder");
-            Map<String, Object> treeState = new LinkedHashMap<>();
-            treeState.put("loaded", Boolean.FALSE);
-            put("state", treeState);
-        }
-
-        @Override
-        public String getName() {
-            return (String) get("text");
-        }
-
-        @Override
-        public void toJson(JsonWriter writer) throws IOException {
-            JsonUtil.jsonMap(writer, this);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return getName().equals(((TreeItem) other).getName());
-        }
-    }
-
-    public static class PackageItem implements TreeItem {
-
-        private final JcrPackage jcrPackage;
-        private final JcrPackageDefinition definition;
-
-        public PackageItem(JcrPackage jcrPackage) throws RepositoryException {
-            this.jcrPackage = jcrPackage;
-            definition = jcrPackage.getDefinition();
-        }
-
-        @Override
-        public String getName() {
-            return definition.get(JcrPackageDefinition.PN_NAME);
-        }
-
-        public JcrPackageDefinition getDefinition() {
-            return definition;
-        }
-
-        @Override
-        public void toJson(JsonWriter writer) throws RepositoryException, IOException {
-            String name = getFilename();
-            String groupPath = PackageUtil.getGroupPath(jcrPackage);
-            String path = groupPath + name;
-            Map<String, Object> treeState = new LinkedHashMap<>();
-            treeState.put("loaded", Boolean.TRUE);
-            Map<String, Object> additionalAttributes = new LinkedHashMap<>();
-            additionalAttributes.put("id", path);
-            additionalAttributes.put("path", path);
-            additionalAttributes.put("name", name);
-            additionalAttributes.put("text", name);
-            additionalAttributes.put("type", "package");
-            additionalAttributes.put("state", treeState);
-            additionalAttributes.put("file", getFilename());
-            PackageServlet.toJson(writer, jcrPackage, additionalAttributes);
-        }
-
-        public String getFilename() {
-            return PackageUtil.getFilename(jcrPackage);
-        }
-
-        public Calendar getLastModified() {
-            Calendar lastModified = PackageUtil.getLastModified(jcrPackage);
-            if (lastModified != null) {
-                return lastModified;
-            }
-            return PackageUtil.getCreated(jcrPackage);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return getName().equals(((TreeItem) other).getName());
-        }
-    }
-
-    /** the tree node implementation for the requested path (folder or package) */
-    protected static class TreeNode extends ArrayList<TreeItem> {
-
-        private final String path;
-        private boolean isLeaf = false;
-
-        public TreeNode(String path) {
-            this.path = path;
-        }
-
-        /**
-         * adds a package or the appropriate folder to the nodes children if it is a child of this node
-         *
-         * @param jcrPackage the current package in the iteration
-         * @return true, if this package is the nodes target and a leaf - iteration can be stopped
-         * @throws RepositoryException
-         */
-        public boolean addPackage(JcrPackage jcrPackage) throws RepositoryException {
-            String groupUri = path.endsWith("/") ? path : path + "/";
-            String groupPath = PackageUtil.getGroupPath(jcrPackage);
-            if (groupPath.startsWith(groupUri)) {
-                TreeItem item;
-                if (groupPath.equals(groupUri)) {
-                    // this node is the packages parent - use the package as node child
-                    item = new PackageItem(jcrPackage);
-                } else {
-                    // this node is a group parent - insert a folder for the subgroup
-                    String name = groupPath.substring(path.length());
-                    if (name.startsWith("/")) {
-                        name = name.substring(1);
-                    }
-                    int nextDelimiter = name.indexOf("/");
-                    if (nextDelimiter > 0) {
-                        name = name.substring(0, nextDelimiter);
-                    }
-                    item = new FolderItem(groupUri + name, name);
-                }
-                if (!contains(item)) {
-                    add(item);
-                }
-                return false;
-            } else {
-                PackageItem item = new PackageItem(jcrPackage);
-                if (path.equals(groupPath + item.getFilename())) {
-                    // this node (teh path) represents the package itself and is a leaf
-                    isLeaf = true;
-                    add(item);
-                    // we can stop the iteration
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        public boolean isLeaf() {
-            return isLeaf;
-        }
-
-        public void sort() {
-            Collections.sort(this, new Comparator<TreeItem>() {
-
-                @Override
-                public int compare(TreeItem o1, TreeItem o2) {
-                    return o1.getName().compareToIgnoreCase(o2.getName());
-                }
-            });
-        }
-
-        public void toJson(JsonWriter writer) throws IOException, RepositoryException {
-            if (isLeaf()) {
-                get(0).toJson(writer);
-            } else {
-                int lastPathSegment = path.lastIndexOf("/");
-                String name = path.substring(lastPathSegment + 1);
-                if (StringUtils.isBlank(name)) {
-                    name = "packages ";
-                }
-                FolderItem myself = new FolderItem(path, name);
-
-                writer.beginObject();
-                JsonUtil.jsonMapEntries(writer, myself);
-                writer.name("children");
-                writer.beginArray();
-                for (TreeItem item : this) {
-                    item.toJson(writer);
-                }
-                writer.endArray();
-                writer.endObject();
-            }
-        }
-    }
-
-    //
     // JSON mapping helpers
     //
 
@@ -728,39 +527,7 @@ public class PackageServlet extends AbstractServiceServlet {
         writer.name("operation").value(operation);
         writer.name("status").value(status);
         writer.name("package");
-        toJson(writer, jcrPackage, null);
-        writer.endObject();
-    }
-
-    protected static void toJson(JsonWriter writer, JcrPackage jcrPackage,
-                                 Map<String, Object> additionalAttributes)
-            throws RepositoryException, IOException {
-        writer.beginObject();
-        Node node = jcrPackage.getNode();
-        writer.name("definition");
-        toJson(writer, jcrPackage.getDefinition());
-        JsonUtil.jsonMapEntries(writer, additionalAttributes);
-        writer.endObject();
-    }
-
-    protected static void toJson(JsonWriter writer, JcrPackageDefinition definition)
-            throws RepositoryException, IOException {
-        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-        String version = definition.get(JcrPackageDefinition.PN_VERSION);
-        String description = definition.get(JcrPackageDefinition.PN_DESCRIPTION);
-        Calendar lastModified = definition.getCalendar(JcrPackageDefinition.PN_LASTMODIFIED);
-        writer.beginObject();
-        writer.name(JcrPackageDefinition.PN_GROUP).value(definition.get(JcrPackageDefinition.PN_GROUP));
-        writer.name(JcrPackageDefinition.PN_NAME).value(definition.get(JcrPackageDefinition.PN_NAME));
-        if (version != null) {
-            writer.name(JcrPackageDefinition.PN_VERSION).value(version);
-        }
-        if (description != null) {
-            writer.name(JcrPackageDefinition.PN_DESCRIPTION).value(description);
-        }
-        if (lastModified != null) {
-            writer.name(JcrPackageDefinition.PN_LASTMODIFIED).value(dateFormat.format(lastModified.getTime()));
-        }
+        PackageUtil.toJson(writer, jcrPackage, null);
         writer.endObject();
     }
 

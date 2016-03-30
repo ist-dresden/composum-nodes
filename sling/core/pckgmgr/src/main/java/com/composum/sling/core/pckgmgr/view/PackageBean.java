@@ -2,7 +2,9 @@ package com.composum.sling.core.pckgmgr.view;
 
 import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.pckgmgr.PackagesServlet;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
+import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
@@ -25,13 +27,15 @@ public class PackageBean extends AbstractSlingBean {
 
     public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
-    private transient JcrPackageManager pckgMmgr;
-    private transient JcrPackage pckg;
-    private transient JcrPackageDefinition pckgDef;
+    protected String path;
+    protected JcrPackageManager pckgMgr;
+    protected JcrPackage pckg;
+    protected JcrPackageDefinition pckgDef;
 
     private transient String group;
     private transient String name;
     private transient String version;
+    private transient String description;
 
     private transient String filename;
     private transient String downloadUrl;
@@ -40,49 +44,36 @@ public class PackageBean extends AbstractSlingBean {
     private transient String createdBy;
     private transient Calendar lastModified;
     private transient String lastModifiedBy;
+    private transient Calendar lastUnpacked;
+    private transient String lastUnpackedBy;
+    private transient Calendar lastUnwrapped;
+    private transient String lastUnwrappedBy;
+    private transient Calendar lastWrapped;
+    private transient String lastWrappedBy;
+
+    private transient List<PathFilterSet> filterList;
+
+    private transient String thumbnailUrl;
 
     @Override
     public void initialize(BeanContext context, Resource resource) {
         SlingHttpServletRequest request = context.getRequest();
-        String path = PackageUtil.getPath(request);
+        path = PackageUtil.getPath(request);
         try {
             resource = PackageUtil.getResource(request, path);
         } catch (RepositoryException rex) {
             LOG.error(rex.getMessage(), rex);
         }
         super.initialize(context, resource);
-    }
-
-    protected JcrPackageManager getPckgMgr() {
-        if (pckgMmgr == null) {
-            pckgMmgr = PackageUtil.createPackageManager(getRequest());
-        }
-        return pckgMmgr;
-    }
-
-    protected JcrPackage getPckg() {
-        if (pckg == null) {
-            try {
-                pckg = getPckgMgr().open(getNode());
-            } catch (RepositoryException rex) {
-                LOG.error(rex.getMessage(), rex);
-            }
-        }
-        return pckg;
-    }
-
-    protected JcrPackageDefinition getPckgDef() {
-        if (pckgDef == null) {
-            getPckg();
+        try {
+            pckgMgr = PackageUtil.createPackageManager(getRequest());
+            pckg = pckgMgr.open(getNode());
             if (pckg != null) {
-                try {
-                    pckgDef = pckg.getDefinition();
-                } catch (RepositoryException rex) {
-                    LOG.error(rex.getMessage(), rex);
-                }
+                pckgDef = pckg.getDefinition();
             }
+        } catch (RepositoryException rex) {
+            LOG.error(rex.getMessage(), rex);
         }
-        return pckgDef;
     }
 
     protected String format(Calendar date) {
@@ -95,12 +86,16 @@ public class PackageBean extends AbstractSlingBean {
 
     protected List<String> collectCssClasses(List<String> collection) {
         try {
-            getPckg();
-            if (pckg.isInstalled()) {
-                collection.add("installed");
-            }
-            if (!pckg.isSealed()) {
-                collection.add("modified");
+            if (pckg != null) {
+                if (pckg.isInstalled()) {
+                    collection.add("installed");
+                }
+                if (pckg.isSealed()) {
+                    collection.add("sealed");
+                }
+                if (pckg.isValid()) {
+                    collection.add("valid");
+                }
             }
         } catch (RepositoryException rex) {
             LOG.error(rex.getMessage(), rex);
@@ -108,77 +103,184 @@ public class PackageBean extends AbstractSlingBean {
         return collection;
     }
 
+
+    @Override
+    public String getUrl() {
+        return LinkUtil.getUrl(getRequest(), PackagesServlet.SERVLET_PATH + getPath());
+    }
+
+    @Override
     public String getPath() {
-        JcrPackageManager pckgMgr = getPckgMgr();
-        JcrPackage pckg = getPckg();
         String path = PackageUtil.getPackagePath(pckgMgr, pckg);
         return path;
     }
 
     public String getGroup() {
         if (group == null) {
-            group = PackageUtil.getDefAttr(getPckgDef(), JcrPackageDefinition.PN_GROUP, "");
+            group = PackageUtil.getDefAttr(pckgDef, JcrPackageDefinition.PN_GROUP, "");
+            if (StringUtils.isBlank(group)) {
+                int lastSlash;
+                if (path != null && (lastSlash = path.lastIndexOf('/')) >= 0) {
+                    group = path.substring(0, lastSlash);
+                }
+            }
         }
         return group;
     }
 
+    @Override
     public String getName() {
         if (name == null) {
-            name = PackageUtil.getDefAttr(getPckgDef(), JcrPackageDefinition.PN_NAME, "");
+            name = PackageUtil.getDefAttr(pckgDef, JcrPackageDefinition.PN_NAME, "");
+            if (StringUtils.isBlank(name)) {
+                if (path != null) {
+                    name = path.substring(path.lastIndexOf('/') + 1);
+                }
+            }
         }
         return name;
     }
 
     public String getVersion() {
         if (version == null) {
-            version = PackageUtil.getDefAttr(getPckgDef(), JcrPackageDefinition.PN_VERSION, "");
+            version = PackageUtil.getDefAttr(pckgDef, JcrPackageDefinition.PN_VERSION, "");
         }
         return version;
     }
 
+    public String getDescription() {
+        if (description == null) {
+            if (pckgDef != null) {
+                description = pckgDef.getDescription();
+            }
+            if (description == null) {
+                description = "";
+            }
+        }
+        return description;
+    }
+
     public String getFilename() {
         if (filename == null) {
-            filename = PackageUtil.getFilename(getPckg());
+            filename = PackageUtil.getFilename(pckg);
         }
         return filename;
     }
 
     public String getDownloadUrl() {
         if (downloadUrl == null) {
-            downloadUrl = PackageUtil.getDownloadUrl(getPckg());
+            downloadUrl = PackageUtil.getDownloadUrl(pckg);
         }
         return downloadUrl;
     }
 
     public String getCreated() {
         if (created == null) {
-            created = PackageUtil.getCreated(getPckg());
+            created = PackageUtil.getCreated(pckg);
         }
-        return format(created);
+        return created != null ? format(created) : "--";
     }
 
     public String getCreatedBy() {
         if (createdBy == null) {
-            createdBy = PackageUtil.getCreatedBy(getPckg());
+            createdBy = PackageUtil.getCreatedBy(pckg);
         }
-        return createdBy;
+        return createdBy != null ? createdBy : "--";
     }
 
     public String getLastModified() {
         if (lastModified == null) {
-            lastModified = PackageUtil.getLastModified(getPckg());
+            lastModified = PackageUtil.getLastModified(pckg);
         }
-        return format(lastModified);
+        return lastModified != null ? format(lastModified) : "--";
     }
 
     public String getLastModifiedBy() {
         if (lastModifiedBy == null) {
-            lastModifiedBy = PackageUtil.getLastModifiedBy(getPckg());
+            lastModifiedBy = PackageUtil.getLastModifiedBy(pckg);
         }
-        return lastModifiedBy;
+        return lastModifiedBy != null ? lastModifiedBy : "--";
     }
 
-    public List<PathFilterSet> getFilterList() throws RepositoryException {
-        return PackageUtil.getFilterList(getPckgDef());
+    public String getLastUnpacked() {
+        if (lastUnpacked == null) {
+            if (pckgDef != null) {
+                lastUnpacked = pckgDef.getLastUnpacked();
+            }
+        }
+        return lastUnpacked != null ? format(lastUnpacked) : "--";
+    }
+
+    public String getLastUnpackedBy() {
+        if (lastUnpackedBy == null) {
+            if (pckgDef != null) {
+                lastUnpackedBy = pckgDef.getLastUnpackedBy();
+            }
+        }
+        return lastUnpackedBy != null ? lastUnpackedBy : "--";
+    }
+
+    public String getLastUnwrapped() {
+        if (lastUnwrapped == null) {
+            if (pckgDef != null) {
+                lastUnwrapped = pckgDef.getLastUnwrapped();
+            }
+        }
+        return lastUnwrapped != null ? format(lastUnwrapped) : "--";
+    }
+
+    public String getLastUnwrappedBy() {
+        if (lastUnwrappedBy == null) {
+            if (pckgDef != null) {
+                lastUnwrappedBy = pckgDef.getLastUnwrappedBy();
+            }
+        }
+        return lastUnwrappedBy != null ? lastUnwrappedBy : "--";
+    }
+
+    public String getLastWrapped() {
+        if (lastWrapped == null) {
+            if (pckgDef != null) {
+                lastWrapped = pckgDef.getLastWrapped();
+            }
+        }
+        return lastWrapped != null ? format(lastWrapped) : "--";
+    }
+
+    public String getLastWrappedBy() {
+        if (lastWrappedBy == null) {
+            if (pckgDef != null) {
+                lastWrappedBy = pckgDef.getLastWrappedBy();
+            }
+        }
+        return lastWrappedBy != null ? lastWrappedBy : "--";
+    }
+
+    public List<PathFilterSet> getFilterList() {
+        if (filterList == null) {
+            try {
+                return PackageUtil.getFilterList(pckgDef);
+            } catch (RepositoryException rex) {
+                LOG.error(rex.getMessage(), rex);
+            }
+            filterList = new ArrayList<>();
+        }
+        return filterList;
+    }
+
+    public String getThumbnailUrl() {
+        if (thumbnailUrl == null) {
+            StringBuilder builder = new StringBuilder();
+            try {
+                String path = PackageUtil.getThumbnailPath(pckgDef);
+                if (StringUtils.isNotBlank(path)) {
+                    builder.append(LinkUtil.getUrl(request, path));
+                }
+            } catch (RepositoryException rex) {
+                LOG.error(rex.getMessage(), rex);
+            }
+            thumbnailUrl = builder.toString();
+        }
+        return thumbnailUrl;
     }
 }

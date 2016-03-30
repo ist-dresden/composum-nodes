@@ -26,6 +26,10 @@
               <input name="file" class="widget file-upload-widget form-control" type="file"
                      data-options="hidePreview"/>
             </div>
+            <div class="form-group">
+              <label class="control-label">Force Upload</label>
+              <input name="force" class="widget checkbox-widget form-control" type="checkbox"/>
+            </div>
           </div>
 
           <div class="modal-footer buttons">

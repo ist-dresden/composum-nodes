@@ -10,6 +10,8 @@
 
     (function (pckgmgr) {
 
+        pckgmgr.pathPattern = /^\/((.+)\/)?([^\/]+)-([^\/]+)\.(zip|jar)$/;
+
         pckgmgr.current = {};
 
         pckgmgr.getCurrentPath = function () {
@@ -19,10 +21,15 @@
         pckgmgr.setCurrentPath = function (path) {
             if (!pckgmgr.current || pckgmgr.current.path != path) {
                 if (path) {
-                    core.getJson ('/bin/core/package.tree.json' + path, undefined, undefined,
-                        _.bind (function (result) {
+                    core.getJson('/bin/core/package.tree.json' + path, undefined, undefined,
+                        _.bind(function (result) {
+                            var pathMatch = pckgmgr.pathPattern.exec(path);
                             pckgmgr.current = {
                                 path: path,
+                                group: pathMatch ? pathMatch[2] : undefined,
+                                name: pathMatch ? pathMatch[3] : undefined,
+                                version: pathMatch ? pathMatch[4] : undefined,
+                                extension: pathMatch ? pathMatch[5] : undefined,
                                 node: result.responseJSON,
                                 viewUrl: core.getContextUrl('/bin/packages.view.html'
                                     + window.core.encodePath(path)),
@@ -31,7 +38,7 @@
                             }
                             core.console.getProfile().set('pckgmgr', 'current', path);
                             if (history.replaceState) {
-                                history.replaceState (pckgmgr.current.path, name, pckgmgr.current.nodeUrl);
+                                history.replaceState(pckgmgr.current.path, name, pckgmgr.current.nodeUrl);
                             }
                             $(document).trigger("path:selected", [path]);
                         }, this));
@@ -89,9 +96,9 @@
             dropNode: function (draggedNode, targetNode) {
                 var path = draggedNode.path;
                 var dialog = core.nodes.getMoveNodeDialog();
-                dialog.show(_.bind (function () {
+                dialog.show(_.bind(function () {
                     dialog.setValues(draggedNode, targetNode);
-                    this.selectNode (path);
+                    this.selectNode(path);
                 }, this));
             },
 
@@ -122,7 +129,7 @@
 
             createPackage: function (event) {
                 var dialog = pckgmgr.getCreatePackageDialog();
-                dialog.show(_.bind (function () {
+                dialog.show(_.bind(function () {
                     var parentNode = this.tree.current();
                     if (parentNode) {
                         dialog.initGroup(parentNode.path);
@@ -131,15 +138,17 @@
             },
 
             deletePackage: function (event) {
-                var dialog = pckgmgr.getDeletePackageDialog();
-                dialog.show(_.bind (function () {
-                    dialog.setPackage(this.tree.current());
-                }, this));
+                if (pckgmgr.current.name) {
+                    var dialog = pckgmgr.getDeletePackageDialog();
+                    dialog.show(_.bind(function () {
+                        dialog.setPackage(pckgmgr.current);
+                    }, this), this.tree.adjustTreeAfterDelete());
+                }
             },
 
             uploadPackage: function (event) {
                 var dialog = pckgmgr.getUploadPackageDialog();
-                dialog.show(_.bind (function () {
+                dialog.show(_.bind(function () {
                 }, this));
             },
 

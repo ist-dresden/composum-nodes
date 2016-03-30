@@ -1,0 +1,60 @@
+
+.detail-panel.group .action-bar .title {
+    height: 30px;
+    padding: 5px 13px;
+}
+
+.detail-panel.group .group-detail {
+    position: absolute;
+    top: 40px;
+    bottom: 40px;
+    left: 0;
+    right: 5px;
+    overflow: scroll;
+}
+
+.detail-panel.group .group-detail > .panel {
+    margin: 10px 0;
+}
+
+.detail-panel.group .panel-heading.header {
+    display: flex;
+    align-items: flex-end;
+}
+
+.detail-panel.group .panel-heading.header .identifiers {
+    flex-grow: 1;
+}
+
+.detail-panel.group .thumbnail {
+    display: inline-block;
+}
+
+.detail-panel.group .thumbnail,
+.detail-panel.group .identifiers {
+    margin-right: 15px;
+    margin-bottom: 0;
+}
+
+.detail-panel.group .thumbnail .image-wrapper {
+    width: 64px;
+    height: 64px;
+}
+
+.detail-panel.group .thumbnail .image-wrapper img {
+    margin: auto;
+}
+
+.detail-panel.group .identifiers h3 {
+    display: none;
+}
+
+.detail-panel.group .identifiers h1 {
+    font-size: 1.5em;
+    line-height: 1.2em;
+}
+
+.detail-panel.group .identifiers h2 {
+    font-size: 1.2em;
+    line-height: 1.1em;
+}

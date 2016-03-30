@@ -55,17 +55,30 @@
         initialize: function(options) {
             core.components.Dialog.prototype.initialize.apply(this, [options]);
             this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-            this.$path = this.$('input[name="path"]');
+            this.$group = this.$('input[name="group"]');
+            this.$name = this.$('input[name="name"]');
+            this.$version = this.$('input[name="version"]');
             this.$('button.delete').click(_.bind(this.deletePackage, this));
         },
 
         setPackage: function(pckg) {
-            this.$path.val(pckg.path);
+            if (pckg) {
+                this.$group.val(pckg.group);
+                this.$name.val(pckg.name);
+                this.$version.val(pckg.version);
+            } else {
+                this.$group.val(undefined);
+                this.$name.val(undefined);
+                this.$version.val(undefined);
+            }
         },
 
         deletePackage: function(event) {
             event.preventDefault();
-            var path = this.$path.val();
+            var group = this.$group.val();
+            var name = this.$name.val();
+            var version = this.$version.val();
+            var path = '/' + (group ? (group + '/') : '') + name + (version ? ('-' + version) : '') + '.zip';
             if (this.$form.isValid()) {
                 $.ajax({
                     url: "/bin/core/package.json" + core.encodePath(path),
@@ -73,7 +86,6 @@
                     complete: _.bind (function (result) {
                         if (result.status == 200) {
                             this.hide();
-                            pckgmgr.tree.refresh();
                         } else {
                             this.alert('danger', 'Error on delete Package', result);
                         }
