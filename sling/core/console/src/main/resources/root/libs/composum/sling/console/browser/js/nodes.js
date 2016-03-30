@@ -62,12 +62,13 @@
 
             createNode: function (event) {
                 event.preventDefault();
+                var parentPath = this.$path.val();
+                var newNodeName = this.$name.val();
+                var newNodePath = parentPath + '/' + newNodeName;
                 if (this.form.isValid()) {
                     this.submitForm(function (result) {
-                        core.browser.tree.refresh(function() {
-                            var path = result.path;
-                            $(document).trigger("path:select", [path]);
-                        });
+                        $(document).trigger("path:inserted", [parentPath, newNodeName]);
+                        $(document).trigger("path:select", [newNodePath]);
                     });
                 } else {
                     this.alert('danger', 'a parent path, type and name must be specified');
@@ -166,15 +167,16 @@
                 }
 
                 var mixinStrings = mixinValues(this.$('input[name="value"]'));
+                var path = this.$path.val();
 
-                core.ajaxPut("/bin/core/property.put.json" + this.$path.val(), JSON.stringify({
+                core.ajaxPut("/bin/core/property.put.json" + path, JSON.stringify({
                     name: 'jcr:mixinTypes',
                     multi: true,
                     value: mixinStrings
                 }), {
                     dataType: 'json'
                 }, _.bind(function (result) {
-                    core.browser.tree.refresh();
+                    $(document).trigger('path:changed', [path]);
                     this.hide();
                 }, this), _.bind(function (result) {
                     core.alert('danger', 'Error', 'Error on updating mixin entries', result);
@@ -211,15 +213,18 @@
 
             renameNode: function (event) {
                 event.preventDefault();
-                core.ajaxPut("/bin/core/node.move.json" + this.$path.val() + '/' + this.$name.val(),
+                var oldPath = this.$path.val() + '/' + this.$name.val();
+                var newPath = this.$path.val() + '/' + this.$newname.getValue();
+                core.ajaxPut("/bin/core/node.move.json" + oldPath,
                     JSON.stringify({
                         name: this.$newname.getValue(),
-                        path: this.$path.val()}),
+                        path: this.$path.val()
+                    }),
                     {
                         dataType: 'json'
                     },
                     _.bind(function (result) {
-                        core.browser.tree.refresh();
+                        $(document).trigger('path:moved', [oldPath, newPath]);
                         this.hide();
                     }, this),
                     _.bind(function (result) {
@@ -241,7 +246,7 @@
                 this.$el.on('shown.bs.modal', _.bind(function () {
                     this.newname.focus();
                     this.newname.selectAll();
-                },this));
+                }, this));
             },
 
             reset: function () {
@@ -260,13 +265,15 @@
 
             copyNode: function (event) {
                 event.preventDefault();
-                core.ajaxPut("/bin/core/node.copy.json" + this.path.getValue(), JSON.stringify({
+                var parentPath = this.path.getValue();
+                var newNodeName = this.newname.getValue();
+                core.ajaxPut("/bin/core/node.copy.json" + parentPath, JSON.stringify({
                     path: this.$node.val(),
-                    name: this.newname.getValue()
+                    name: newNodeName
                 }), {
                     dataType: 'json'
                 }, _.bind(function (result) {
-                    core.browser.tree.refresh();
+                    $(document).trigger('path:inserted', [parentPath, newNodeName]);
                     this.hide();
                 }, this), _.bind(function (result) {
                     core.alert('danger', 'Error', 'Error on copying node', result);
@@ -312,16 +319,17 @@
             },
 
             moveOrReorderNode: function (option) {
-                var node = this.$node.val();
                 if (this.$form.isValid()) {
+                    var oldPath = this.$node.val();
+                    var newPath = this.$path.val() + '/' + this.$name.val();
                     this.submitPUT(
                         'reorder node',
-                        '/bin/core/node.' + option + '.json' + core.encodePath(node), {
+                        '/bin/core/node.' + option + '.json' + core.encodePath(oldPath), {
                             name: this.$name.val(),
                             path: this.$path.val()
                         },
                         function () {
-                            core.browser.tree.refresh();
+                            $(document).trigger('path:moved', [oldPath, newPath]);
                         });
                 } else {
                     this.alert('danger', 'a valid target path and the node must be specified');
@@ -334,7 +342,7 @@
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-                this.$path = this.$('input[name="path"]');
+                this.path = core.getWidget(this.el, '.path.path-widget', core.components.PathWidget);
                 this.$('button.delete').click(_.bind(this.deleteNode, this));
                 this.form.onsubmit = _.bind(this.deleteNode, this);
                 this.$el.on('shown.bs.modal', function () {
@@ -342,21 +350,21 @@
                 });
             },
 
-            setNode: function (node) {
-                this.$path.val(node.path);
+            setPath: function (path) {
+                this.path.setValue(path);
             },
 
             deleteNode: function (event) {
                 event.preventDefault();
-                var path = this.$path.val();
                 if (this.form.isValid()) {
+                    var path = this.path.getValue();
                     core.ajaxDelete("/bin/core/node.json" + core.encodePath(path),
                         {},
-                        _.bind(function(result){
+                        _.bind(function (result) {
                             this.hide();
-                            core.browser.tree.refresh();
+                            $(document).trigger('path:deleted', [path]);
                         }, this),
-                        _.bind(function(result){
+                        _.bind(function (result) {
                             this.alert('danger', 'Error on delete node', result);
                         }, this));
                 } else {
@@ -387,8 +395,10 @@
             uploadNode: function (event) {
                 event.preventDefault();
                 if (this.$form.isValid()) {
+                    var parentPath = this.$path.val();
+                    var newNodeName = this.$name.val();
                     this.submitForm(function () {
-                        core.browser.tree.refresh();
+                        $(document).trigger('path:inserted', [parentPath, newNodeName]);
                     });
                 } else {
                     this.alert('danger', 'a parent path and file must be specified');

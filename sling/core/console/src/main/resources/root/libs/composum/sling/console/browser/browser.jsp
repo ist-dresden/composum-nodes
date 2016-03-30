@@ -39,7 +39,7 @@
                   <button type="button" class="paste fa fa-paste btn btn-default" title="Paste node from clipboard into the selected node"><span class="label">Paste</span></button>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
-                  <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh tree view"><span class="label">Refresh</span></button>
+                  <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh the selected tree node"><span class="label">Refresh</span></button>
                 </div>
               </div>
               <div class="align-right">
