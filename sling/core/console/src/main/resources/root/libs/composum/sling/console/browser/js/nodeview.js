@@ -443,7 +443,22 @@
 
             initialize: function (options) {
                 core.console.DetailView.prototype.initialize.apply(this, [options]);
+                $(document).off('path:selected.DetailView')
+                    .on('path:selected.NodeView', _.bind(this.onPathSelected, this));
+                $(document).on('path:changed.NodeView', _.bind(this.onPathChanged, this));
                 this.$el.resize(_.bind(this.resize, this));
+            },
+
+            onPathSelected: function (event, path) {
+                if (path == this.getCurrentPath()) {
+                    this.reload();
+                }
+            },
+
+            onPathChanged: function (event, path) {
+                if (path == this.getCurrentPath()) {
+                    this.reload();
+                }
             },
 
             /**

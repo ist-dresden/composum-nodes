@@ -53,7 +53,7 @@
                     core.ajaxPut("/bin/core/property.copy.json" + path, JSON.stringify(clipboard), {
                         dataType: 'json'
                     }, _.bind(function (result) {
-                        this.reload();
+                        $(document).trigger('path:changed', [path]);
                     }, this), _.bind(function (result) {
                         core.alert('danger', 'Error', 'Error on copying properties', result);
                     }, this));
@@ -72,7 +72,7 @@
                         data: JSON.stringify({names: names}),
                         dataType: 'json'
                     }, _.bind(function (result) {
-                        this.reload();
+                        $(document).trigger('path:changed', [path]);
                     }, this), _.bind(function (result) {
                         core.alert('danger', 'Error', 'Error on removing properties', result);
                     }, this));
@@ -245,7 +245,7 @@
                         value: params.value
                     })
                     property.save(_.bind(function (result) {
-                        view.loadContent(event);
+                        $(document).trigger('path:changed', [browser.getCurrentPath()]);
                     }, view), _.bind(function (result) {
                         if (result.status != 200) {
                             core.alert('danger', 'Error', 'Error on updating properties', result);

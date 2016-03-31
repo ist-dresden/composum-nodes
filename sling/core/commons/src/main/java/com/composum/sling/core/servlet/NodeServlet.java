@@ -194,7 +194,7 @@ public class NodeServlet extends AbstractServiceServlet {
 
     public enum Operation {
         create, copy, move, reorder, delete, toggle,
-        tree, reference, resolve, typeahead, query, filters, map,
+        tree, reference, mixins, resolve, typeahead, query, filters, map,
         startScript, checkScript, stopScript
     }
 
@@ -231,6 +231,8 @@ public class NodeServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.reference, new ReferenceOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.mixins, new GetMixinsOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.filters, new ListFiltersAsJson());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.html,
                 Operation.filters, new ListFiltersAsHtml());
@@ -258,8 +260,6 @@ public class NodeServlet extends AbstractServiceServlet {
                 Operation.copy, new CopyOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.move, new MoveOperation());
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
-                Operation.reorder, new ReorderOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.lock,
                 Operation.toggle, new ToggleLockOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.groovy,
@@ -278,8 +278,6 @@ public class NodeServlet extends AbstractServiceServlet {
                 Operation.copy, new PutCopyOperation());
         operations.setOperation(ServletOperationSet.Method.PUT, Extension.json,
                 Operation.move, new PutMoveOperation());
-        operations.setOperation(ServletOperationSet.Method.PUT, Extension.json,
-                Operation.reorder, new PutReorderOperation());
 
         // DELETE
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json,
@@ -740,6 +738,39 @@ public class NodeServlet extends AbstractServiceServlet {
         }
     }
 
+    protected class GetMixinsOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws ServletException, IOException {
+
+            Node node = null;
+            if (!resource.isValid() || (node = resource.adaptTo(Node.class)) == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
+            try {
+                response.setStatus(HttpServletResponse.SC_OK);
+                JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+
+                jsonWriter.beginArray();
+                NodeType[] mixins = node.getMixinNodeTypes();
+                if (mixins != null) {
+                    for (NodeType type : mixins) {
+                        jsonWriter.value(type.getName());
+                    }
+                }
+                jsonWriter.endArray();
+
+            } catch (RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
+
     //
     // Change Operations
     //
@@ -808,6 +839,14 @@ public class NodeServlet extends AbstractServiceServlet {
                 if (NODE_PATH_PATTERN.matcher(newPath).matches()) {
 
                     String oldPath = node.getPath();
+                    Node oldParentNode = node.getParent();
+                    Integer index = params.index;
+                    if (index == null && oldParentNode != null && params.path.equals(oldParentNode.getPath())) {
+                        // preserve index in case of a simple rename
+                        NodeIterator nodes = oldParentNode.getNodes();
+                        for (index = 0; nodes.hasNext() && !oldPath.equals(nodes.nextNode().getPath()); index++) ;
+                    }
+
                     boolean changesMade = false;
 
                     Session session = node.getSession();
@@ -819,40 +858,50 @@ public class NodeServlet extends AbstractServiceServlet {
                     ResourceResolver resolver = resource.getResourceResolver();
                     ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newPath));
 
-                    if (params.index != null) {
+                    if (newResource.isValid()) {
 
-                        Node parentNode = session.getNode(params.path);
-                        NodeIterator siblingsIterator = parentNode.getNodes();
-                        for (int i = 0; i < params.index && siblingsIterator.hasNext(); i++) {
-                            siblingsIterator.nextNode();
-                        }
+                        if (index != null && index >= 0) {
 
-                        if (siblingsIterator.hasNext()) {
-                            Node siblingNode = siblingsIterator.nextNode();
-                            try {
-                                parentNode.orderBefore(resource.getName(), siblingNode.getName());
-                                changesMade = true;
-                            } catch (UnsupportedRepositoryOperationException ex) {
-                                // ordering not supported... ignore it
+                            Node parentNode = session.getNode(params.path);
+                            NodeIterator siblingsIterator = parentNode.getNodes();
+                            for (int i = 0; i < index && siblingsIterator.hasNext(); i++) {
+                                siblingsIterator.nextNode();
+                            }
+
+                            if (siblingsIterator.hasNext()) {
+                                Node siblingNode = siblingsIterator.nextNode();
+                                String siblingName = siblingNode.getName();
+                                String newName = newResource.getName();
+                                if (!newName.equals(siblingName)) {
+                                    try {
+                                        parentNode.orderBefore(newName, siblingName);
+                                        changesMade = true;
+                                    } catch (UnsupportedRepositoryOperationException ex) {
+                                        // ordering not supported... ignore it
+                                    }
+                                }
                             }
                         }
-                    }
 
-                    JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                    if (changesMade) {
+                        JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                        if (changesMade) {
 
-                        session.save();
-                        response.setStatus(HttpServletResponse.SC_OK);
-                        writeJsonNode(jsonWriter, MappingRules.DEFAULT_NODE_FILTER,
-                                newResource, LabelType.name, coreConfig, false);
+                            session.save();
+                            response.setStatus(HttpServletResponse.SC_OK);
+                            writeJsonNode(jsonWriter, MappingRules.DEFAULT_NODE_FILTER,
+                                    newResource, LabelType.name, coreConfig, false);
+
+                        } else {
+
+                            response.setStatus(HttpServletResponse.SC_ACCEPTED);
+                            jsonWriter.beginObject();
+                            jsonWriter.name("message").value("no modification");
+                            jsonWriter.endObject();
+                        }
 
                     } else {
-
-                        response.setStatus(HttpServletResponse.SC_ACCEPTED);
-                        jsonWriter.beginObject();
-                        jsonWriter.name("message").value("no modification");
-                        jsonWriter.endObject();
-
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                                "invalid node after move '" + newPath + "'");
                     }
                 } else {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST,
@@ -871,84 +920,6 @@ public class NodeServlet extends AbstractServiceServlet {
     }
 
     protected class PutMoveOperation extends MoveOperation {
-
-        @Override
-        public NodeParameters getNodeParameters(SlingHttpServletRequest request)
-                throws IOException {
-            return getJsonObject(request, NodeParameters.class);
-        }
-    }
-
-    /**
-     * move a node to a new position (before a specified sibling); if the node is not a
-     * child of the new siblings parent the node is moved and than placed
-     * 'url path' the node to move
-     * - 'path' parameter: the path of the new successor
-     */
-    protected class ReorderOperation implements ServletOperation {
-
-        @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
-                throws RepositoryException, IOException {
-
-            Node node = resource.adaptTo(Node.class);
-
-            if (node != null) {
-                ResourceResolver resolver = resource.getResourceResolver();
-                NodeParameters params = getNodeParameters(request);
-
-                String name = params.name;
-                if (StringUtils.isBlank(name)) {
-                    name = node.getName();
-                }
-                String nodePath = node.getPath();
-
-                String siblingPath = params.path;
-                Resource sibling = resolver.getResource(siblingPath);
-                Node siblingNode;
-                Node parentNode;
-                String parentPath;
-
-                if (sibling != null && (siblingNode = sibling.adaptTo(Node.class)) != null &&
-                        (parentNode = siblingNode.getParent()) != null &&
-                        !nodePath.equals(parentPath = parentNode.getPath())) {
-
-                    Session session = node.getSession();
-
-                    // implicit move if parent of the new sibling differs or name is changed
-                    String newNodePath = parentPath + (parentPath.endsWith("/") ? "" : "/") + name;
-                    if (!nodePath.equals(newNodePath)) {
-                        session.move(nodePath, newNodePath);
-                        nodePath = newNodePath;
-                    }
-
-                    // reorder node before the specified sibling
-                    parentNode.orderBefore(node.getName(), siblingNode.getName());
-                    session.save();
-
-                    ResourceHandle newResource = ResourceHandle.use(resolver.getResource(nodePath));
-                    JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                    writeJsonNode(jsonWriter, MappingRules.DEFAULT_NODE_FILTER,
-                            newResource, LabelType.name, coreConfig, false);
-
-                } else {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            "invalid reorder paths path '" + nodePath + " / " + siblingPath + "'");
-                }
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "can't determine target node '" + resource.getPath() + "'");
-            }
-        }
-
-        public NodeParameters getNodeParameters(SlingHttpServletRequest request)
-                throws IOException {
-            return getFormParameters(request);
-        }
-    }
-
-    protected class PutReorderOperation extends ReorderOperation {
 
         @Override
         public NodeParameters getNodeParameters(SlingHttpServletRequest request)

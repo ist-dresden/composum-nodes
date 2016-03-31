@@ -26,7 +26,7 @@
                     <li><a href="#" class="checkout" title="Checkout/Checkin the selected node">Checkout</a></li>
                     <li><a href="#" class="lock" title="Lock/Unlock the selected node">Lock</a></li>
                     <li><a href="#" class="mixins" title="View/Change the nodes mixin types">Mixin Types...</a></li>
-                    <li><a href="#" class="move" title="Move/Rename/Reorder the selected node">Move / Rename / Reorder</a></li>
+                    <li><a href="#" class="move" title="Move the selected node">Move Node</a></li>
                     <li><a href="#" class="rename" title="Rename the selected node">Rename</a></li>
                   </ul>
                 </div>

@@ -28,7 +28,7 @@
             </div>
             <div class="form-group multi">
               <label class="control-label">Multi</label>
-              <input name="multi" class="multi-select-box form-control" type="checkbox">
+              <input name="multi" class="multi-select-box form-control widget checkbox-widget" type="checkbox">
             </div>
             <div class="form-group name">
               <label class="control-label">Name</label>

@@ -15,27 +15,44 @@
             return browser.current ? browser.current.path : undefined;
         };
 
-        browser.setCurrentPath = function (path) {
+        browser.setCurrentPath = function (path, supressEvent) {
             if (!browser.current || browser.current.path != path) {
                 if (path) {
-                    core.getJson('/bin/core/node.tree.json' + path, undefined, undefined,
-                        _.bind(function (result) {
-                            browser.current = {
-                                path: path,
-                                node: result.responseJSON,
-                                viewUrl: core.getContextUrl('/bin/browser.view.html' + window.core.encodePath(path)),
-                                nodeUrl: core.getContextUrl('/bin/browser.html' + window.core.encodePath(path))
-                            };
-                            core.console.getProfile().set('browser', 'current', path);
-                            if (history.replaceState) {
-                                history.replaceState(browser.current.path, name, browser.current.nodeUrl);
-                            }
+                    browser.refreshCurrentPath(path, _.bind(function (result) {
+                        core.console.getProfile().set('browser', 'current', path);
+                        if (history.replaceState) {
+                            history.replaceState(browser.current.path, name, browser.current.nodeUrl);
+                        }
+                        if (!supressEvent) {
                             $(document).trigger("path:selected", [path]);
-                        }, this));
+                        }
+                    }, this));
                 } else {
                     browser.current = undefined;
-                    $(document).trigger("path:selected", [path]);
+                    if (!supressEvent) {
+                        $(document).trigger("path:selected", [path]);
+                    }
                 }
+            }
+        };
+
+        browser.refreshCurrentPath = function (path, callback) {
+            if (!path && browser.current) {
+                path = browser.current.path;
+            }
+            if (path) {
+                core.getJson('/bin/core/node.tree.json' + path, undefined, undefined,
+                    _.bind(function (result) {
+                        browser.current = {
+                            path: path,
+                            node: result.responseJSON,
+                            viewUrl: core.getContextUrl('/bin/browser.view.html' + window.core.encodePath(path)),
+                            nodeUrl: core.getContextUrl('/bin/browser.html' + window.core.encodePath(path))
+                        };
+                        if (_.isFunction(callback)) {
+                            callback.call(this, path);
+                        }
+                    }, this));
             }
         };
 
@@ -43,9 +60,9 @@
 
             initialize: function (options) {
                 core.components.SplitView.prototype.initialize.apply(this, [options]);
-                $(document).on('path:select', _.bind(this.onPathSelect, this));
-                $(document).on('path:selected', _.bind(this.onPathSelected, this));
-                $(document).on('path:changed', _.bind(this.onPathChanged, this));
+                $(document).on('path:select.Browser', _.bind(this.onPathSelect, this));
+                $(document).on('path:selected.Browser', _.bind(this.onPathSelected, this));
+                $(document).on('path:changed.Browser', _.bind(this.onPathChanged, this));
             },
 
             onPathSelect: function (event, path) {
@@ -60,7 +77,9 @@
             },
 
             onPathChanged: function (event, path) {
-                browser.treeActions.refreshNodeState();
+                browser.refreshCurrentPath(path, _.bind(function () {
+                    browser.treeActions.refreshNodeState();
+                }, this));
             }
         });
 
@@ -96,6 +115,28 @@
                 return true;
             },
 
+            renameNode: function (node, oldName, newName) {
+                var nodePath = node.path;
+                var parentPath = core.getParentPath(nodePath);
+                var oldPath = parentPath + '/' + oldName;
+                var newPath = parentPath + '/' + newName;
+                core.ajaxPut('/bin/core/node.move.json' + core.encodePath(oldPath),
+                    JSON.stringify({
+                        path: parentPath,
+                        name: newName
+                    }), {
+                        dataType: 'json'
+                    }, _.bind(function (data) {
+                        $(document).trigger('path:moved', [oldPath, newPath]);
+                    }, this), _.bind(function (result) {
+                        var dialog = core.nodes.getRenameNodeDialog();
+                        dialog.show(_.bind(function () {
+                            dialog.setNode(node, newName);
+                            dialog.alert('danger', 'Error on renaming node!', result);
+                        }, this));
+                    }, this));
+            },
+
             dropNode: function (draggedNode, targetNode, index) {
                 var parentPath = targetNode.path;
                 var oldPath = draggedNode.path;
@@ -111,7 +152,11 @@
                     }, _.bind(function (data) {
                         $(document).trigger('path:moved', [oldPath, newPath]);
                     }, this), _.bind(function (result) {
-                        core.alert('danger', 'Error', 'Error on moving node!', result);
+                        var dialog = core.nodes.getMoveNodeDialog();
+                        dialog.show(_.bind(function () {
+                            dialog.setValues(draggedNode, targetNode, index);
+                            dialog.alert('danger', 'Error on moving node!', result);
+                        }, this));
                     }, this));
             },
 
@@ -233,7 +278,7 @@
                     //node.jcrState.checkedOut
                     core.ajaxPost('/bin/core/version.' + (node.jcrState.checkedOut ? 'checkin' : 'checkout') + '.json' + node.path,
                         {}, {}, _.bind(function (result) {
-                            $(document).trigger('path:changed' [node.path]);
+                            $(document).trigger('path:changed', [node.path]);
                         }, this), _.bind(function (result) {
                             core.alert('danger', 'Error', 'Error on toggle node lock', result);
                         }, this));
@@ -247,7 +292,7 @@
                     core.ajaxPost('/bin/core/node.toggle.lock' + node.path,
                         {}, {}, undefined, undefined, _.bind(function (result) {
                             if (result.status == 200) {
-                                $(document).trigger('path:changed' [node.path]);
+                                $(document).trigger('path:changed', [node.path]);
                             } else {
                                 core.alert('danger', 'Error', 'Error on toggle node lock', result);
                             }

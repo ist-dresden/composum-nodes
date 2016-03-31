@@ -360,7 +360,7 @@ public class ResourceHandle extends ResourceWrapper {
         if (type == ResourceHandle.class) {
             return type.cast(this);
         } else {
-            return super.adaptTo(type);
+            return this.resource != null ? super.adaptTo(type) : null;
         }
     }
 
