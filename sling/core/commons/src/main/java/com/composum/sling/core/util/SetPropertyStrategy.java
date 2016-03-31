@@ -1,5 +1,6 @@
 package com.composum.sling.core.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +81,10 @@ public interface SetPropertyStrategy {
             List<String> valueList = new ArrayList<String>();
             if (values != null) {
                 for (Value val : values) {
-                    valueList.add(val.getString());
+                    String mixin = val.getString();
+                    if (StringUtils.isNotBlank(mixin)) {
+                        valueList.add(mixin);
+                    }
                 }
             }
             NodeType[] mixins = node.getMixinNodeTypes();

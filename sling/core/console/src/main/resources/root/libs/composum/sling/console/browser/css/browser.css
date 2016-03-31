@@ -397,6 +397,16 @@
     display: none;
 }
 
+#node-move-dialog .form-group.name {
+    width: 85%;
+    float: left;
+}
+
+#node-move-dialog .form-group.index {
+    width: 12%;
+    float: right;
+}
+
 /**
  * Tables
  */
@@ -511,12 +521,6 @@
     float: right;
 }
 
-#browser-view-property-dialog .form-group.multi input,
-#browser-view-property-dialog .form-group .checkbox-widget{
-    box-shadow: none;
-    margin-top: 0;
-}
-
 #browser-view-property-dialog form.default button.upload {
     display: none;
 }
@@ -552,10 +556,32 @@
     bottom: 37px;
 }
 
-#browser-view .node-view-content .detail-toolbar .input-group.prefix,
-#browser-view .node-view-content .detail-toolbar .input-group.selectors,
-#browser-view .node-view-content .detail-toolbar .input-group.parameters {
-    max-width: 115px;
+#browser-view .node-view-content .detail-toolbar.display-toolbar {
+    left: 200px;
+    height: 29px;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+#browser-view .node-view-content .detail-toolbar.display-toolbar .btn-group {
+    display: flex;
+    flex-wrap: nowrap;
+    margin-left: 5px;
+}
+
+#browser-view .node-view-content .detail-toolbar.display-toolbar .input-group {
+    max-width: none;
+}
+
+#browser-view .node-view-content .detail-toolbar.display-toolbar .toolbar-input-field {
+    flex-grow: 1;
+    margin-top: 2px;
+}
+
+#browser-view .node-view-content .detail-toolbar.display-toolbar .toolbar-input-field .input-group {
+    width: 100%;
 }
 
 /**

@@ -169,6 +169,7 @@
             saveProperty: function () {
                 if (this.form.isValid()) {
                     this.getProperty().save(_.bind(function () {
+                            $(document).trigger('path:changed', [browser.getCurrentPath()]);
                             this.hide();
                         }, this),
                         _.bind(function (result) {
@@ -182,6 +183,7 @@
 
             deleteProperty: function () {
                 this.getProperty().destroy(_.bind(function () {
+                        $(document).trigger('path:changed', [browser.getCurrentPath()]);
                         this.hide();
                     }, this),
                     _.bind(function (result) {

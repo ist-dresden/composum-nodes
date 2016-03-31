@@ -146,12 +146,12 @@
 
             setNode: function (node) {
                 this.$path.val(node.path);
-                core.getJson("/bin/core/property.get.json" + node.path + "?name=jcr:mixinTypes",
+                core.getJson("/bin/core/node.mixins.json" + node.path,
                     _.bind(function (mixins) {
-                        this.multi.reset(mixins.value.length);
+                        this.multi.reset(mixins.length);
                         var values = this.multi.$('input[name="value"]');
-                        for (var i = 0; i < mixins.value.length; i++) {
-                            this.setWidgetValue($(values[i]), mixins.value[i]);
+                        for (var i = 0; i < mixins.length; i++) {
+                            this.setWidgetValue($(values[i]), mixins[i]);
                         }
                     }, this));
             },
@@ -172,7 +172,8 @@
                 core.ajaxPut("/bin/core/property.put.json" + path, JSON.stringify({
                     name: 'jcr:mixinTypes',
                     multi: true,
-                    value: mixinStrings
+                    value: mixinStrings,
+                    type: 'Name'
                 }), {
                     dataType: 'json'
                 }, _.bind(function (result) {
@@ -182,54 +183,6 @@
                     core.alert('danger', 'Error', 'Error on updating mixin entries', result);
                 }, this));
 
-                return false;
-            }
-        });
-
-        nodes.RenameNodeDialog = core.components.Dialog.extend({
-
-            initialize: function (options) {
-                core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-                this.$path = this.$('input[name="path"]');
-                this.$name = this.$('input[name="name"]');
-                this.$newname = core.getWidget(this.el, 'input[name="newname"]', core.components.TextFieldWidget);
-                this.$('button.rename').click(_.bind(this.renameNode, this));
-                this.form.onsubmit = _.bind(this.renameNode, this);
-                this.$el.on('shown.bs.modal', function () {
-                    $(this).find('input[name="newname"]').focus();
-                });
-            },
-
-            reset: function () {
-                core.components.Dialog.prototype.reset.apply(this);
-            },
-
-            setNode: function (node) {
-                this.$path.val(core.getParentPath(node.path));
-                this.$name.val(node.name);
-                this.$newname.setValue(node.name);
-            },
-
-            renameNode: function (event) {
-                event.preventDefault();
-                var oldPath = this.$path.val() + '/' + this.$name.val();
-                var newPath = this.$path.val() + '/' + this.$newname.getValue();
-                core.ajaxPut("/bin/core/node.move.json" + oldPath,
-                    JSON.stringify({
-                        name: this.$newname.getValue(),
-                        path: this.$path.val()
-                    }),
-                    {
-                        dataType: 'json'
-                    },
-                    _.bind(function (result) {
-                        $(document).trigger('path:moved', [oldPath, newPath]);
-                        this.hide();
-                    }, this),
-                    _.bind(function (result) {
-                        this.alert('danger', 'Error on renaming node', result);
-                    }, this));
                 return false;
             }
         });
@@ -290,8 +243,8 @@
                 this.$node = this.$('input[name="target-node"]');
                 this.$path = this.$('input[name="path"]');
                 this.$name = this.$('input[name="name"]');
+                this.$index = this.$('input[name="index"]');
                 this.$('button.move').click(_.bind(this.moveNode, this));
-                this.$('button.order').click(_.bind(this.reorderNode, this));
             },
 
             setNode: function (node) {
@@ -300,33 +253,30 @@
                 this.$name.val(node.name);
             },
 
-            setValues: function (draggedNode, dropTarget) {
+            setValues: function (draggedNode, dropTarget, index) {
                 this.$node.val(draggedNode.path);
                 this.$path.val(dropTarget.path);
                 this.$name.val(draggedNode.name);
+                this.$index.val(index);
             },
 
             moveNode: function (event) {
                 event.preventDefault();
-                this.moveOrReorderNode('move');
-                return false;
-            },
-
-            reorderNode: function (event) {
-                event.preventDefault();
-                this.moveOrReorderNode('reorder');
-                return false;
-            },
-
-            moveOrReorderNode: function (option) {
                 if (this.$form.isValid()) {
                     var oldPath = this.$node.val();
-                    var newPath = this.$path.val() + '/' + this.$name.val();
+                    var name = this.$name.val();
+                    var targetPath = this.$path.val();
+                    var index = this.$index.val();
+                    if (!index && index != 0) {
+                        index = -1
+                    }
+                    var newPath = targetPath + '/' + name;
                     this.submitPUT(
-                        'reorder node',
-                        '/bin/core/node.' + option + '.json' + core.encodePath(oldPath), {
-                            name: this.$name.val(),
-                            path: this.$path.val()
+                        'move node',
+                        '/bin/core/node.move.json' + core.encodePath(oldPath), {
+                            name: name,
+                            path: targetPath,
+                            index: index
                         },
                         function () {
                             $(document).trigger('path:moved', [oldPath, newPath]);
@@ -334,6 +284,56 @@
                 } else {
                     this.alert('danger', 'a valid target path and the node must be specified');
                 }
+            }
+        });
+
+        nodes.RenameNodeDialog = core.components.Dialog.extend({
+
+            initialize: function (options) {
+                core.components.Dialog.prototype.initialize.apply(this, [options]);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.$path = this.$('input[name="path"]');
+                this.$name = this.$('input[name="name"]');
+                this.$newname = core.getWidget(this.el, 'input[name="newname"]', core.components.TextFieldWidget);
+                this.$('button.rename').click(_.bind(this.renameNode, this));
+                this.form.onsubmit = _.bind(this.renameNode, this);
+                this.$el.on('shown.bs.modal', function () {
+                    $(this).find('input[name="newname"]').focus();
+                });
+            },
+
+            reset: function () {
+                core.components.Dialog.prototype.reset.apply(this);
+            },
+
+            setNode: function (node, newName) {
+                this.$path.val(core.getParentPath(node.path));
+                this.$name.val(node.name);
+                this.$newname.setValue(newName ? newName : node.name);
+            },
+
+            renameNode: function (event) {
+                event.preventDefault();
+                var path = this.$path.val();
+                var oldName = this.$name.val();
+                var newName = this.$newname.getValue();
+                var oldPath = path + '/' + oldName;
+                var newPath = path + '/' + newName;
+                core.ajaxPut("/bin/core/node.move.json" + oldPath,
+                    JSON.stringify({
+                        name: newName,
+                        path: path
+                    }), {
+                        dataType: 'json'
+                    },
+                    _.bind(function (result) {
+                        $(document).trigger('path:moved', [oldPath, newPath]);
+                        this.hide();
+                    }, this),
+                    _.bind(function (result) {
+                        this.alert('danger', 'Error on renaming node', result);
+                    }, this));
+                return false;
             }
         });
 

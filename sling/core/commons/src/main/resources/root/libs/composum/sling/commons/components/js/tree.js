@@ -294,6 +294,10 @@
                 this.$jstree = this.$el.jstree(treeOptions);
                 this.jstree = this.$el.jstree(true);
 
+                if (_.isFunction(this.renameNode)) {
+                    this.$jstree.off('dblclick').on('dblclick', '.jstree-anchor', _.bind(this.editNodeName, this));
+                }
+
                 // bind all event handlers - for initialization and tree functions
                 // the initialization events handler will be unbind after execution
                 this.delegateEvents({
@@ -304,11 +308,11 @@
                 });
 
                 $(document)
-                    .on('path:selected', _.bind(this.onPathSelected, this))
-                    .on('path:inserted', _.bind(this.onPathInserted, this))
-                    .on('path:changed', _.bind(this.onPathChanged, this))
-                    .on('path:moved', _.bind(this.onPathMoved, this))
-                    .on('path:deleted', _.bind(this.onPathDeleted, this))
+                    .on('path:selected.Tree', _.bind(this.onPathSelected, this))
+                    .on('path:inserted.Tree', _.bind(this.onPathInserted, this))
+                    .on('path:changed.Tree', _.bind(this.onPathChanged, this))
+                    .on('path:moved.Tree', _.bind(this.onPathMoved, this))
+                    .on('path:deleted.Tree', _.bind(this.onPathDeleted, this))
             },
 
             /**
@@ -338,7 +342,7 @@
                         this.busy = true;
                         try {
                             this.selectNode(path);
-                        } finally  {
+                        } finally {
                             this.busy = false;
                         }
                     }
@@ -346,11 +350,13 @@
             },
 
             onPathInserted: function (event, parentPath, nodeName) {
-                this.refreshNodeById(this.nodeId(parentPath));
+                var nodeId = this.nodeId(parentPath);
+                this.refreshNodeById(nodeId);
             },
 
             onPathChanged: function (event, path) {
-                this.refreshNodeStateById(this.nodeId(path));
+                var nodeId = this.nodeId(path);
+                this.refreshNodeById(nodeId);
             },
 
             onPathMoved: function (event, oldPath, newPath) {
@@ -358,7 +364,6 @@
                 if (oldNode) {
                     var selected = this.getSelectedTreeNode();
                     var restoreSelection = (selected && selected.original.path == oldPath);
-                    this.jstree.delete_node(oldNode);
                     var oldParentPath = core.getParentPath(oldPath);
                     var parentPath = core.getParentPath(newPath);
                     if (oldParentPath != parentPath) {
@@ -525,6 +530,26 @@
             // -----------------------
             // 'jstree' event handlers
 
+            editNodeName: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                var selection = this.jstree.get_selected();
+                if (selection.length > 0) {
+                    var nodeId = selection[0];
+                    var node = this.jstree.get_node(nodeId);
+                    var oldName = node.text;
+                    this.jstree.edit(node, null, _.bind(function (node, success, cancelled) {
+                        if (success && !cancelled) {
+                            var newName = node.text.replace(/^\s+/,'').replace(/\s+$/,'');
+                            if (newName != oldName) {
+                                this.renameNode(node.original, oldName, newName);
+                            }
+                        }
+                    }, this));
+                }
+            },
+
             /**
              * the 'check_callback' is used here as the final drag and drop handler
              * and determines the dragged and the target node and the position in the target node
@@ -567,11 +592,13 @@
                 var $node = this.$('#' + (id ? id : this.nodeId(path)));
                 this.jstree.open_node($node);
                 this.onNodeSelected(path, data.node, $node);
-            },
+            }
+            ,
 
             onNodeSelected: function (path, node, element) {
                 $(document).trigger("path:select", [path]);
-            },
+            }
+            ,
 
             /**
              * 'jstree' eventhandler for 'redraw'
@@ -582,7 +609,8 @@
                 for (var i = 0; i < data.nodes.length; i++) {
                     var node = this.refreshNodeStateById(data.nodes[i]);
                 }
-            },
+            }
+            ,
 
             /**
              * 'jstree' event handler for 'open_node'
@@ -598,7 +626,8 @@
                         }
                     }
                 }
-            },
+            }
+            ,
 
             // jstree helpers
 
@@ -623,7 +652,8 @@
                         }, this));
                     }, this));
                 }
-            },
+            }
+            ,
 
             getParentNodeId: function (mixed) {
                 var parentId = undefined;
@@ -636,7 +666,8 @@
                     }
                 }
                 return parentId;
-            },
+            }
+            ,
 
             getNodeIndex: function (mixed) {
                 if (mixed) {
@@ -662,7 +693,8 @@
                 }
                 return undefined;
             }
-        });
+        })
+        ;
 
     })(core.components);
 
