@@ -86,22 +86,6 @@
                 core.components.Tree.prototype.initialize.apply(this, [options]);
             },
 
-            dragAndDrop: {
-                copy: false,
-                is_draggable: function () {
-                    return true;
-                }
-            },
-
-            dropNode: function (draggedNode, targetNode) {
-                var path = draggedNode.path;
-                var dialog = core.nodes.getMoveNodeDialog();
-                dialog.show(_.bind(function () {
-                    dialog.setValues(draggedNode, targetNode);
-                    this.selectNode(path);
-                }, this));
-            },
-
             dataUrlForPath: function (path) {
                 return '/bin/core/package.tree.json' + path;
             },
