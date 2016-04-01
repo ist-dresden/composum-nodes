@@ -109,6 +109,70 @@
                 }
                 this.filter = core.console.getProfile().get('browser', 'filter');
                 core.components.Tree.prototype.initialize.apply(this, [options]);
+                this.$jstree.on('keydown.BrowserTree', '.jstree-anchor', _.bind(this.customKeys, this));
+            },
+
+            customKeys: function (event) {
+                var tagName = event.target.tagName;
+                if (tagName && tagName.toLowerCase() === "input") {
+                    // interfere any input
+                    return true;
+                }
+                var node = this.jstree.get_node(event.currentTarget.id);
+                if (node) {
+                    var path = node.original.path;
+                    var keyCode = event.which;
+                    switch (keyCode) {
+                        case 68:  // D(elete)
+                            if (!event.ctrlKey && !event.metaKey) {
+                                break;
+                            }
+                        case 189: // '-'
+                            event.preventDefault();
+                            var nearest = this.findNearestOfDeletion(path);
+                            browser.treeActions.deleteNode(undefined, path);
+                            return false;
+                        case 65:  // A(dd)
+                            if (!event.ctrlKey && !event.metaKey) {
+                                break;
+                            }
+                        case 187: // '+'
+                            event.preventDefault();
+                            browser.treeActions.createNode(undefined, path, _.bind(function () {
+                                event.currentTarget.focus();
+                            }, this));
+                            return false;
+                        case 67: // C(opy)
+                            if (event.ctrlKey || event.metaKey) {
+                                event.preventDefault();
+                                browser.treeActions.clipboardCopy(undefined, path, _.bind(function () {
+                                    event.currentTarget.focus();
+                                }, this));
+                                return false;
+                            }
+                            break;
+                        case 86: // V(erbatim)
+                            if (event.ctrlKey || event.metaKey) {
+                                event.preventDefault();
+                                browser.treeActions.clipboardPaste(undefined, path, _.bind(function () {
+                                    event.currentTarget.focus();
+                                }, this));
+                                return false;
+                            }
+                            break;
+                        case 82: // R(efresh)
+                            if (event.ctrlKey || event.metaKey) {
+                                event.preventDefault();
+                                browser.treeActions.refreshNode(undefined, path, _.bind(function () {
+                                    event.currentTarget.focus();
+                                }, this));
+                                return false;
+                            }
+                            break;
+                    }
+                }
+                // let the others their chance
+                return true;
             },
 
             nodeIsDraggable: function (selection, event) {
@@ -228,27 +292,57 @@
                 }
             },
 
-            clipboardCopy: function (event) {
-                var path = browser.getCurrentPath();
+            clipboardCopy: function (event, path, callback) {
+                if (event) {
+                    event.preventDefault();
+                }
+                if (!path) {
+                    path = browser.getCurrentPath();
+                }
                 core.console.getProfile().set('nodes', 'clipboard', {
                     path: path
                 });
+                if (_.isFunction(callback)) {
+                    callback.call(this, path);
+                }
             },
 
-            clipboardPaste: function (event) {
-                var path = browser.getCurrentPath();
+            clipboardPaste: function (event, path, callback) {
+                if (event) {
+                    event.preventDefault();
+                }
+                if (!path) {
+                    path = browser.getCurrentPath();
+                }
                 var clipboard = core.console.getProfile().get('nodes', 'clipboard');
                 if (path && clipboard && clipboard.path) {
-                    var dialog = core.nodes.getCopyNodeDialog();
-                    dialog.show(_.bind(function () {
-                        dialog.setNodePath(clipboard.path);
-                        dialog.setTargetPath(path);
+                    var name = core.getNameFromPath(clipboard.path);
+                    core.ajaxPut("/bin/core/node.copy.json" + path, JSON.stringify({
+                        path: clipboard.path,
+                        name: name
+                    }), {
+                        dataType: 'json'
+                    }, _.bind(function (result) {
+                        $(document).trigger('path:inserted', [path, name]);
+                    }, this), _.bind(function (result) {
+                        var dialog = core.nodes.getCopyNodeDialog();
+                        dialog.show(_.bind(function () {
+                            dialog.setNodePath(clipboard.path);
+                            dialog.setTargetPath(path);
+                            dialog.alert('danger', 'Error on copying node!', result);
+                        }, this), _.bind(function () {
+                            if (_.isFunction(callback)) {
+                                callback.call(this, path);
+                            }
+                        }, this));
                     }, this));
                 }
             },
 
             moveNode: function (event) {
-                event.preventDefault();
+                if (event) {
+                    event.preventDefault();
+                }
                 var dialog = core.nodes.getMoveNodeDialog();
                 dialog.show(_.bind(function () {
                     dialog.setNode(this.tree.current());
@@ -256,7 +350,9 @@
             },
 
             renameNode: function (event) {
-                event.preventDefault();
+                if (event) {
+                    event.preventDefault();
+                }
                 var dialog = core.nodes.getRenameNodeDialog();
                 dialog.show(_.bind(function () {
                     dialog.setNode(this.tree.current());
@@ -264,7 +360,9 @@
             },
 
             nodeMixins: function (event) {
-                event.preventDefault();
+                if (event) {
+                    event.preventDefault();
+                }
                 var dialog = core.nodes.getNodeMixinsDialog();
                 dialog.show(_.bind(function () {
                     dialog.setNode(this.tree.current());
@@ -272,7 +370,9 @@
             },
 
             toggleCheckout: function (event) {
-                event.preventDefault();
+                if (event) {
+                    event.preventDefault();
+                }
                 var node = this.tree.current();
                 if (node) {
                     //node.jcrState.checkedOut
@@ -286,7 +386,9 @@
             },
 
             toggleLock: function (event) {
-                event.preventDefault();
+                if (event) {
+                    event.preventDefault();
+                }
                 var node = this.tree.current();
                 if (node) {
                     core.ajaxPost('/bin/core/node.toggle.lock' + node.path,
@@ -300,29 +402,60 @@
                 }
             },
 
-            createNode: function (event) {
+            createNode: function (event, path, callback) {
+                if (event) {
+                    event.preventDefault();
+                }
+                if (!path) {
+                    path = this.tree.getSelectedPath();
+                }
                 var dialog = core.nodes.getCreateNodeDialog();
                 dialog.show(_.bind(function () {
-                    var parentNode = this.tree.current();
-                    if (parentNode) {
-                        dialog.initParentPath(parentNode.path);
+                    if (path) {
+                        dialog.initParentPath(path);
+                    }
+                }, this), _.bind(function () {
+                    if (_.isFunction(callback)) {
+                        callback.call(this, path);
                     }
                 }, this));
             },
 
-            deleteNode: function (event) {
-                event.preventDefault();
-                var path = this.tree.getSelectedPath();
+            deleteNode: function (event, path, callback) {
+                if (event) {
+                    event.preventDefault();
+                }
+                if (!path) {
+                    path = this.tree.getSelectedPath();
+                }
                 if (path) {
                     var dialog = core.nodes.getDeleteNodeDialog();
                     dialog.show(_.bind(function () {
                         dialog.setPath(path);
+                        if (event && (event.ctrlKey || event.metaKey)) {
+                            // show dialog if clicked with 'ctrl' or 'meta'
+                            dialog.setSmart(false);
+                        }
+                    }, this), _.bind(function () {
+                        if (_.isFunction(callback)) {
+                            callback.call(this, path);
+                        }
                     }, this));
                 }
             },
 
-            refreshNode: function (event) {
-                this.tree.refreshNodeById();
+            refreshNode: function (event, path, callback) {
+                if (event) {
+                    event.preventDefault();
+                }
+                var id = undefined;
+                if (path) {
+                    id = this.tree.nodeId(path);
+                }
+                this.tree.refreshNodeById(id);
+                if (_.isFunction(callback)) {
+                    callback.call(this, path);
+                }
             }
         });
 

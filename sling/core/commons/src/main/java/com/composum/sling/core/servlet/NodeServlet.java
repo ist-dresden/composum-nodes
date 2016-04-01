@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
@@ -1029,12 +1028,6 @@ public class NodeServlet extends AbstractServiceServlet {
                     String nodePath = node.getPath() + "/"
                             + (StringUtils.isNotBlank(params.name) ? params.name : templateNode.getName());
                     String newNodePath = nodePath;
-                    try {
-                        for (int i = 1; session.getNode(newNodePath) != null; i++) {
-                            newNodePath = nodePath + i;
-                        }
-                    } catch (PathNotFoundException pnfex) {
-                    }
 
                     Workspace workspace = session.getWorkspace();
                     workspace.copy(path, newNodePath);

@@ -343,6 +343,7 @@
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.path = core.getWidget(this.el, '.path.path-widget', core.components.PathWidget);
+                this.$smart = this.$('input.smart');
                 this.$('button.delete').click(_.bind(this.deleteNode, this));
                 this.form.onsubmit = _.bind(this.deleteNode, this);
                 this.$el.on('shown.bs.modal', function () {
@@ -350,27 +351,64 @@
                 });
             },
 
+            show: function (initView, callback) {
+                if (this.doItSmart()) {
+                    this.initView = initView;
+                    this.callback = callback;
+                    this.onShown();
+                    // check 'smart' once more because it can be reset during 'initView'
+                    if (this.doItSmart()) {
+                        this.deleteNode();
+                    } else {
+                        this.$el.modal('show');
+                    }
+                } else {
+                    core.components.Dialog.prototype.show.apply(this, [initView, callback]);
+                }
+            },
+
             setPath: function (path) {
                 this.path.setValue(path);
             },
 
             deleteNode: function (event) {
-                event.preventDefault();
+                if (event) {
+                    event.preventDefault();
+                }
                 if (this.form.isValid()) {
                     var path = this.path.getValue();
                     core.ajaxDelete("/bin/core/node.json" + core.encodePath(path),
                         {},
                         _.bind(function (result) {
-                            this.hide();
                             $(document).trigger('path:deleted', [path]);
+                            this.hide();
                         }, this),
                         _.bind(function (result) {
-                            this.alert('danger', 'Error on delete node', result);
+                            // if event is present than this is triggered by the dialog
+                            if (!event && this.doItSmart()) {
+                                this.show(_.bind(function () {
+                                    this.doAlert(result);
+                                }, this), this.callback)
+                            } else {
+                                this.doAlert(result);
+                            }
                         }, this));
                 } else {
                     this.alert('danger', 'a valid node path must be specified');
                 }
                 return false;
+            },
+
+            doItSmart: function () {
+                return this.$smart.prop('checked');
+            },
+
+            setSmart: function (value) {
+                this.$smart.prop('checked', value);
+            },
+
+            doAlert: function (result) {
+                this.alert('danger', 'Error on delete node!', result);
             }
         });
 

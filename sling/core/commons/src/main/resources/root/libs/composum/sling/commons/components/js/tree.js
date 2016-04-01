@@ -126,6 +126,32 @@
             },
 
             /**
+             * @returns the jsTree node object which represents the path
+             */
+            getTreeNode: function (path) {
+                var id = this.nodeId(path);
+                return this.jstree.get_node(id);
+            },
+
+
+            /**
+             * @returns the jsTree jQuery (DOM) object which represents the path
+             */
+            get$TreeNode: function (path) {
+                var id = this.nodeId(path);
+                return this.jstree.get_node(id, true);
+            },
+
+            /**
+             * @returns the jsTree jQuery (DOM) anchor object of the path
+             */
+            get$TreeNodeAnchor: function (path) {
+                var $node = this.get$TreeNode(path);
+                var $anchor = $node.children('.jstree-anchor');
+                return $anchor;
+            },
+
+            /**
              * refreshes the tree view, clears all cached tree structure and reopens the selected node
              */
             refresh: function (callback) {
@@ -383,24 +409,41 @@
                 var deleted = this.getTreeNodeByPath(path);
                 if (deleted) {
                     var selected = this.getSelectedTreeNode();
-                    var $nextSelected = undefined;
+                    var nearestFocus = this.findNearestOfDeletion(path);
+                    var nearestSelection = undefined;
                     if (selected && selected.original.path == path) {
-                        $nextSelected = this.jstree.get_next_dom(selected, true);
-                        if (!$nextSelected || $nextSelected.length < 1) {
-                            $nextSelected = this.jstree.get_prev_dom(selected, true);
-                        }
-                        if (!$nextSelected || $nextSelected.length < 1) {
-                            $nextSelected = this.jstree.get_prev_dom(selected);
-                        }
+                        nearestSelection = this.findNearestOfDeletion(path);
                     }
                     this.refreshNodeById(this.getParentNodeId(deleted.id), _.bind(function () {
-                        if ($nextSelected && $nextSelected.length > 0) {
-                            var node = this.jstree.get_node($nextSelected[0].id);
-                            var path = node.original.path;
+                        if (nearestSelection) {
+                            var path = nearestSelection.original.path;
                             this.selectNode(path);
+                        }
+                        if (nearestFocus) {
+                            var path = nearestFocus.original.path;
+                            var $anchor = this.get$TreeNodeAnchor(path);
+                            $anchor.focus();
                         }
                     }, this));
                 }
+            },
+
+            findNearestOfDeletion: function (path) {
+                var node = this.getTreeNode(path);
+                if (node) {
+                    var $nearest = this.jstree.get_next_dom(node, true);
+                    if (!$nearest || $nearest.length < 1) {
+                        $nearest = this.jstree.get_prev_dom(node, true);
+                    }
+                    if (!$nearest || $nearest.length < 1) {
+                        $nearest = this.jstree.get_prev_dom(node);
+                    }
+                    if ($nearest && $nearest.length > 0) {
+                        var nearest = this.jstree.get_node($nearest[0].id);
+                        return nearest;
+                    }
+                }
+                return undefined;
             },
 
             // ---------------------
@@ -541,7 +584,7 @@
                     var oldName = node.text;
                     this.jstree.edit(node, null, _.bind(function (node, success, cancelled) {
                         if (success && !cancelled) {
-                            var newName = node.text.replace(/^\s+/,'').replace(/\s+$/,'');
+                            var newName = node.text.replace(/^\s+/, '').replace(/\s+$/, '');
                             if (newName != oldName) {
                                 this.renameNode(node.original, oldName, newName);
                             }
@@ -592,13 +635,11 @@
                 var $node = this.$('#' + (id ? id : this.nodeId(path)));
                 this.jstree.open_node($node);
                 this.onNodeSelected(path, data.node, $node);
-            }
-            ,
+            },
 
             onNodeSelected: function (path, node, element) {
                 $(document).trigger("path:select", [path]);
-            }
-            ,
+            },
 
             /**
              * 'jstree' eventhandler for 'redraw'
@@ -609,8 +650,7 @@
                 for (var i = 0; i < data.nodes.length; i++) {
                     var node = this.refreshNodeStateById(data.nodes[i]);
                 }
-            }
-            ,
+            },
 
             /**
              * 'jstree' event handler for 'open_node'
@@ -626,8 +666,7 @@
                         }
                     }
                 }
-            }
-            ,
+            },
 
             // jstree helpers
 
@@ -652,8 +691,7 @@
                         }, this));
                     }, this));
                 }
-            }
-            ,
+            },
 
             getParentNodeId: function (mixed) {
                 var parentId = undefined;
@@ -666,8 +704,7 @@
                     }
                 }
                 return parentId;
-            }
-            ,
+            },
 
             getNodeIndex: function (mixed) {
                 if (mixed) {
@@ -693,8 +730,7 @@
                 }
                 return undefined;
             }
-        })
-        ;
+        });
 
     })(core.components);
 
