@@ -420,7 +420,7 @@
 }
 
 #browser-view .bootstrap-table table th .th-inner {
-    line-height: auto;
+    line-height: normal;
     padding: 0;
 }
 
