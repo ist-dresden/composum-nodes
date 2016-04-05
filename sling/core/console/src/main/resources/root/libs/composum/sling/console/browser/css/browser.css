@@ -584,6 +584,10 @@
     width: 100%;
 }
 
+#browser-view .node-view-content .detail-toolbar.display-toolbar .toolbar-input-field .input-group.extension {
+    width: 75px;
+}
+
 /**
  * Image view
  */

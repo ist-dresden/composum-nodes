@@ -21,6 +21,18 @@
         </div>
       </div>
       <div class="btn-group btn-group-sm toolbar-input-field" role="group">
+        <div class="extension input-group input-group-sm">
+          <span class="input-group-addon" title="Extension">.xt</span>
+          <input type="text" class="form-control" placeholder="Ext.">
+        </div>
+      </div>
+      <div class="btn-group btn-group-sm toolbar-input-field" role="group">
+        <div class="suffix input-group input-group-sm">
+          <span class="input-group-addon" title="Sling suffix">/..</span>
+          <input type="text" class="form-control" placeholder="Sling suffix">
+        </div>
+      </div>
+      <div class="btn-group btn-group-sm toolbar-input-field" role="group">
         <div class="parameters input-group input-group-sm">
           <span class="fa fa-question input-group-addon" title="URL parameter"></span>
           <input type="text" class="form-control" placeholder="URL parameter">

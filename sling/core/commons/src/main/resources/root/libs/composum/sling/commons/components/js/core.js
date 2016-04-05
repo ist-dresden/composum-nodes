@@ -226,7 +226,7 @@
 
         getParentPath: function (nodePath) {
             var lastSlash = nodePath.lastIndexOf('/');
-            var parentPath = nodePath.substring(0, lastSlash > 0 ? lastSlash : 0);
+            var parentPath = nodePath.substring(0, lastSlash > 0 ? lastSlash : lastSlash + 1);
             return parentPath;
         },
 
