@@ -26,7 +26,6 @@
         initialize: function(options) {
             core.components.Dialog.prototype.initialize.apply(this, [options]);
             this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-            this.$panel = this.$('.form-panel');
             this.$group = this.$('input[name="group"]');
             this.$name = this.$('input[name="name"]');
             this.$version = this.$('input[name="version"]');
@@ -40,11 +39,15 @@
         createPackage: function(event) {
             event.preventDefault();
             if (this.$form.isValid()) {
-                this.submitForm(function() {
-                    pckgmgr.tree.refresh();
+                this.submitForm(function(result) {
+                    var path = result.path;
+                    var parentPath = core.getParentPath(path);
+                    var nodeName = core.getNameFromPath(path);
+                    $(document).trigger("path:inserted", [parentPath, nodeName]);
+                    $(document).trigger("path:select", [path]);
                 });
             } else {
-                this.alert ('danger', 'a group and name must be specified');
+                this.alert ('danger', 'a name must be specified');
             }
             return false;
         }
@@ -85,6 +88,7 @@
                     type: 'DELETE',
                     complete: _.bind (function (result) {
                         if (result.status == 200) {
+                            $(document).trigger('path:deleted', [path]);
                             this.hide();
                         } else {
                             this.alert('danger', 'Error on delete Package', result);
@@ -103,7 +107,6 @@
         initialize: function(options) {
             core.components.Dialog.prototype.initialize.apply(this, [options]);
             this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-            this.$panel = this.$('.form-panel');
             this.$file = this.$('input[name="file"]');
             this.$file.on('change.file', _.bind(this.fileChanged, this));
             this.$('button.upload').click(_.bind(this.uploadPackage, this));
@@ -115,8 +118,12 @@
         uploadPackage: function(event) {
             event.preventDefault();
             if (this.$form.isValid()) {
-                this.submitForm(function() {
-                    pckgmgr.tree.refresh();
+                this.submitForm(function(result) {
+                    var path = result.path;
+                    var parentPath = core.getParentPath(path);
+                    var nodeName = core.getNameFromPath(path);
+                    $(document).trigger("path:inserted", [parentPath, nodeName]);
+                    $(document).trigger("path:select", [path]);
                 });
             } else {
                 this.alert ('danger', 'a file must be specified');

@@ -1,0 +1,147 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.sling.core</groupId>
+        <artifactId>composum-sling-core-parent</artifactId>
+        <version>1.5.0-SNAPSHOT</version>
+        <relativePath>../../../../.parent</relativePath>
+    </parent>
+
+    <artifactId>vlt-package-test</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>content-package</packaging>
+
+    <name>VLT Package Manager Test Package</name>
+    <description>the illustration and test for packages built by Maven</description>
+
+    <properties>
+        <package.group>test/packages</package.group>
+        <package.company>IST GmbH Dresden</package.company>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>adobe-public-releases</id>
+            <name>Adobe Basel Public Repository</name>
+            <url>https://repo.adobe.com/nexus/content/groups/public</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>adobe-public-releases</id>
+            <name>Adobe Basel Public Repository</name>
+            <url>https://repo.adobe.com/nexus/content/groups/public</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+
+                <plugin>
+                    <groupId>com.day.jcr.vault</groupId>
+                    <artifactId>content-package-maven-plugin</artifactId>
+                    <version>0.0.24</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <failOnError>true</failOnError>
+                        <targetURL>http://${sling.host}:${sling.port}${sling.context}/bin/core/package.service.html</targetURL>
+                        <userId>admin</userId>
+                        <password>admin</password>
+                        <useProxy>false</useProxy>
+                        <failOnMissingEmbed>true</failOnMissingEmbed>
+                        <group>${package.group}</group>
+                        <properties>
+                            <createdBy>${package.company}</createdBy>
+                        </properties>
+                    </configuration>
+                </plugin>
+
+            </plugins>
+        </pluginManagement>
+        <resources>
+
+            <resource>
+                <directory>src/main/content/jcr_root</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/.vlt*</exclude>
+                    <exclude>**/.DS_Store</exclude>
+                    <exclude>**/.gitignore</exclude>
+                </excludes>
+            </resource>
+
+            <resource>
+                <directory>${basedir}/src/main/content/META-INF</directory>
+                <targetPath>../vault-work/META-INF</targetPath>
+            </resource>
+
+        </resources>
+        <plugins>
+
+            <plugin>
+                <groupId>com.day.jcr.vault</groupId>
+                <artifactId>content-package-maven-plugin</artifactId>
+                <configuration>
+                    <groupId>test/pckgmgr</groupId>
+                    <filters>
+
+                        <filter>
+                            <root>/content/test/composum/pckgmgr</root>
+                        </filter>
+
+                    </filters>
+                    <embeddeds>
+
+                    </embeddeds>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+    <dependencies>
+
+    </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installPackage</id>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>com.day.jcr.vault</groupId>
+                        <artifactId>content-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-content-package</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+</project>

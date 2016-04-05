@@ -115,8 +115,12 @@
                 var dialog = pckgmgr.getCreatePackageDialog();
                 dialog.show(_.bind(function () {
                     var parentNode = this.tree.current();
+                    var parentPath = parentNode.path;
+                    if (parentNode.type == 'package') {
+                        parentPath = core.getParentPath(parentPath);
+                    }
                     if (parentNode) {
-                        dialog.initGroup(parentNode.path);
+                        dialog.initGroup(parentPath.substring(1));
                     }
                 }, this));
             },
@@ -126,7 +130,7 @@
                     var dialog = pckgmgr.getDeletePackageDialog();
                     dialog.show(_.bind(function () {
                         dialog.setPackage(pckgmgr.current);
-                    }, this), this.tree.adjustTreeAfterDelete());
+                    }, this));
                 }
             },
 
