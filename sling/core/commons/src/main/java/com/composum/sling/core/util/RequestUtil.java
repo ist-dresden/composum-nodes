@@ -140,8 +140,8 @@ public class RequestUtil extends org.apache.sling.api.request.RequestUtil {
         return result;
     }
 
-    public static boolean getParameter(SlingHttpServletRequest request, String name, boolean defaultValue) {
-        Boolean result = defaultValue;
+    public static Boolean getParameter(SlingHttpServletRequest request, String name, Boolean defaultValue) {
+        Boolean result = null;
         String string = request.getParameter(name);
         if (StringUtils.isNotBlank(string)) {
             result = Boolean.parseBoolean(string);

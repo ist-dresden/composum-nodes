@@ -11,7 +11,7 @@
 
         browser.getPropertiesTab = function () {
             return core.getView('.node-view-panel .properties', browser.PropertiesTab);
-        }
+        };
 
         browser.PropertiesTab = core.console.DetailTab.extend({
 
@@ -169,7 +169,6 @@
                     default:
                         return '<a class="editable">' + escaped + '</a>';
                 }
-                return escaped;
             },
 
             getSelections: function () {
@@ -192,7 +191,7 @@
                                 mode: 'inline',
                                 width: '100%',
                                 url: this.editableChange
-                            }
+                            };
                             if (editableType) {
                                 editableType = row.multi ? editableType.multi : editableType.single;
                                 if (editableType) {
@@ -243,7 +242,7 @@
                         type: $row.find('td.type').text(),
                         multi: ('true' == ($row.find('td.multi').text())),
                         value: params.value
-                    })
+                    });
                     property.save(_.bind(function (result) {
                         $(document).trigger('path:changed', [browser.getCurrentPath()]);
                     }, view), _.bind(function (result) {
