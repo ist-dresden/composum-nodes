@@ -2,16 +2,16 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.composum.sling.parent</groupId>
-	<artifactId>composum-sling-reactor</artifactId>
+	<groupId>com.composum.sling.prerequisites</groupId>
+	<artifactId>composum-sling-prerequisites-reactor</artifactId>
 	<packaging>pom</packaging>
-	<version>2</version>
+	<version>1</version>
 
-	<name>Composum Sling - all modules - reactor</name>
+	<name>Composum Sling - prerequisites - reactor</name>
 
 	<modules>
-		<module>core</module>
-		<module>prerequisites</module>
+		<module>apache/commons/lang3</module>
+		<module>apache/commons/collections</module>
 	</modules>
 
 </project>

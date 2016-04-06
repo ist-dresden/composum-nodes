@@ -26,7 +26,7 @@
                     <li><a href="#" class="checkout" title="Checkout/Checkin the selected node">Checkout</a></li>
                     <li><a href="#" class="lock" title="Lock/Unlock the selected node">Lock</a></li>
                     <li><a href="#" class="mixins" title="View/Change the nodes mixin types">Mixin Types...</a></li>
-                    <li><a href="#" class="move" title="Move/Rename/Reorder the selected node">Move / Rename / Reorder</a></li>
+                    <li><a href="#" class="move" title="Move the selected node">Move Node</a></li>
                     <li><a href="#" class="rename" title="Rename the selected node">Rename</a></li>
                   </ul>
                 </div>
@@ -39,7 +39,7 @@
                   <button type="button" class="paste fa fa-paste btn btn-default" title="Paste node from clipboard into the selected node"><span class="label">Paste</span></button>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
-                  <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh tree view"><span class="label">Refresh</span></button>
+                  <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default" title="Refresh the selected tree node"><span class="label">Refresh</span></button>
                 </div>
               </div>
               <div class="align-right">

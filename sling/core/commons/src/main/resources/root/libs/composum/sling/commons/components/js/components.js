@@ -470,7 +470,7 @@
 
             initialize: function (options) {
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
-                var dataOptions = this.$el.attr('data-options');
+                var dataOptions = this.$el.data('options');
                 if (dataOptions) {
                     var values = dataOptions.split(':');
                     if (values.length > 0) options.minValue = values[0];

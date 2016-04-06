@@ -101,21 +101,54 @@
         components.Tree = Backbone.View.extend({
 
             /**
-             * sets the filter key for the tree; the key is the 'name' in the filter OSGi configuration)
+             * returns the model data of the selected node; 'undefined' if no node is selected
+             * @deprecated use getSelectedPath() or getSelectedTreeNode() instead of current()
              */
-            setFilter: function (filter, refresh) {
-                this.filter = filter;
-                if (refresh === undefined || refresh) {
-                    this.refresh();
-                }
+            current: function () {
+                var selectedTreeNode = this.getSelectedTreeNode();
+                return selectedTreeNode ? selectedTreeNode.original : undefined;
             },
 
             /**
-             * returns the model data of the selected node; 'undefined' if no node is selected
+             * @returns the path of the resource selected currently; {undefined} if nothing selected
              */
-            current: function () {
-                var selected = this.$el.jstree('get_selected', true);
-                return selected && selected.length > 0 ? selected[0].original : undefined;
+            getSelectedPath: function () {
+                var selectedTreeNode = this.getSelectedTreeNode();
+                return selectedTreeNode ? selectedTreeNode.original.path : undefined;
+            },
+
+            /**
+             * @returns the jsTree node object selected currently; {undefined} if nothing selected
+             */
+            getSelectedTreeNode: function () {
+                var $selection = this.jstree.get_selected(true);
+                return $selection && $selection.length > 0 ? $selection[0] : undefined;
+            },
+
+            /**
+             * @returns the jsTree node object which represents the path
+             */
+            getTreeNode: function (path) {
+                var id = this.nodeId(path);
+                return this.jstree.get_node(id);
+            },
+
+
+            /**
+             * @returns the jsTree jQuery (DOM) object which represents the path
+             */
+            get$TreeNode: function (path) {
+                var id = this.nodeId(path);
+                return this.jstree.get_node(id, true);
+            },
+
+            /**
+             * @returns the jsTree jQuery (DOM) anchor object of the path
+             */
+            get$TreeNodeAnchor: function (path) {
+                var $node = this.get$TreeNode(path);
+                var $anchor = $node.children('.jstree-anchor');
+                return $anchor;
             },
 
             /**
@@ -129,18 +162,18 @@
                         callback(current);
                     } else {
                         if (current) {
-                            this.selectNode(current.path);
+                            this.selectNode(current.path, undefined, true);
                         }
                     }
                 }, this));
-                this.$el.jstree('refresh', true, true);
+                this.jstree.refresh(true, true);
             },
 
             /**
              * selects the node specified by its node path if the node is accepted by the filter
              * opens all nodes up to the target node automatically
              */
-            selectNode: function (path, callback) {
+            selectNode: function (path, callback, supressEvent) {
                 this.resetSelection();
                 if (path) {
                     var names = $.isArray(path) ? path : path.split('/');
@@ -152,11 +185,11 @@
                             $node = this.$('#' + id);
                             index++;
                             if ($node) {
-                                if (this.$el.jstree('is_open', $node)) {
+                                if (this.jstree.is_open($node)) {
                                     drilldown.apply(this);
                                 } else {
-                                    if (!this.$el.jstree('is_leaf', $node)) {
-                                        this.$el.jstree('open_node', $node);
+                                    if (!this.jstree.is_leaf($node)) {
+                                        this.jstree.open_node($node);
                                     } else {
                                         this.undelegate('after_open.jstree');
                                         if (_.isFunction(callback)) {
@@ -174,7 +207,7 @@
                             var id = this.nodeId(_.first(names, names.length));
                             $node = this.$('#' + id);
                             if ($node) {
-                                this.$el.jstree('select_node', $node);
+                                this.jstree.select_node($node, supressEvent);
                                 this.scrollIntoView($node);
                             }
                             this.undelegate('after_open.jstree');
@@ -186,11 +219,11 @@
                     this.delegate('after_open.jstree', undefined, _.bind(drilldown, this));
                     $node = this.$('#' + this.nodeId('/'));
                     if ($node) {
-                        if (this.$el.jstree('is_open', $node)) {
+                        if (this.jstree.is_open($node)) {
                             drilldown.apply(this);
                         } else {
-                            if (!this.$el.jstree('is_leaf', $node)) {
-                                this.$el.jstree('open_node', $node);
+                            if (!this.jstree.is_leaf($node)) {
+                                this.jstree.open_node($node);
                             } else {
                                 this.undelegate('after_open.jstree');
                                 if (_.isFunction(callback)) {
@@ -202,13 +235,20 @@
                 }
             },
 
+            resetSelection: function () {
+                this.jstree.deselect_all();
+            },
+
+            reset: function () {
+                this.resetSelection();
+            },
+
             /**
              * scrolls the trees viewport that the specified node (jQuery element of the node)
              * is visible within the viewport (scrolls if necessary - node not visible - only)
              */
             scrollIntoView: function ($node) {
-                var $tree = this.$el.jstree('get_container');
-                var $panel = $tree.closest('.tree-panel');
+                var $panel = this.$jstree.closest('.tree-panel');
                 var nodePos = $node.position();
                 if (nodePos) {
                     var nodeTop = nodePos.top;
@@ -222,12 +262,16 @@
                 }
             },
 
-            resetSelection: function () {
-                this.$el.jstree('deselect_all');
-            },
+            // tree initialization
 
-            reset: function () {
-                this.resetSelection();
+            /**
+             * sets the filter key for the tree; the key is the 'name' in the filter OSGi configuration)
+             */
+            setFilter: function (filter, refresh) {
+                this.filter = filter;
+                if (refresh === undefined || refresh) {
+                    this.refresh();
+                }
             },
 
             initialize: function (options) {
@@ -241,6 +285,7 @@
                     ],
                     'core': {
                         'animation': false,
+                        'check_callback': _.bind(this.checkCallback, this),
                         'data': _.bind(this.nodeData, this),
                         'cache': false,
                         'load_open': true,
@@ -260,7 +305,6 @@
                 if (this.dragAndDrop) {
                     treeOptions.plugins = _.union(treeOptions.plugins, ['dnd']);
                     treeOptions.dnd = this.dragAndDrop;
-                    $(document).on('dnd_stop.vakata', _.bind(this.dragStop, this));
                 }
 
                 //  extend initialization to set up a context menu if configured in the options
@@ -273,7 +317,12 @@
                 }
 
                 // establish the tree with all configured options
-                this.$el.jstree(treeOptions);
+                this.$jstree = this.$el.jstree(treeOptions);
+                this.jstree = this.$el.jstree(true);
+
+                if (_.isFunction(this.renameNode)) {
+                    this.$jstree.off('dblclick').on('dblclick', '.jstree-anchor', _.bind(this.editNodeName, this));
+                }
 
                 // bind all event handlers - for initialization and tree functions
                 // the initialization events handler will be unbind after execution
@@ -283,6 +332,13 @@
                     'open_node.jstree': this.onOpenNode,
                     'select_node.jstree': this.nodeSelected
                 });
+
+                $(document)
+                    .on('path:selected.Tree', _.bind(this.onPathSelected, this))
+                    .on('path:inserted.Tree', _.bind(this.onPathInserted, this))
+                    .on('path:changed.Tree', _.bind(this.onPathChanged, this))
+                    .on('path:moved.Tree', _.bind(this.onPathMoved, this))
+                    .on('path:deleted.Tree', _.bind(this.onPathDeleted, this))
             },
 
             /**
@@ -300,6 +356,98 @@
                 }
                 this.undelegate('loaded.jstree');
             },
+
+            // ---------------
+            // document events
+
+            onPathSelected: function (event, path) {
+                var node = this.getSelectedTreeNode();
+                if (!node || node.original.path != path) {
+                    if (!this.busy) {
+                        // prevent from endless self activation
+                        this.busy = true;
+                        try {
+                            this.selectNode(path);
+                        } finally {
+                            this.busy = false;
+                        }
+                    }
+                }
+            },
+
+            onPathInserted: function (event, parentPath, nodeName) {
+                var nodeId = this.nodeId(parentPath);
+                this.refreshNodeById(nodeId);
+            },
+
+            onPathChanged: function (event, path) {
+                var nodeId = this.nodeId(path);
+                this.refreshNodeById(nodeId);
+            },
+
+            onPathMoved: function (event, oldPath, newPath) {
+                var oldNode = this.getTreeNodeByPath(oldPath);
+                if (oldNode) {
+                    var selected = this.getSelectedTreeNode();
+                    var restoreSelection = (selected && selected.original.path == oldPath);
+                    var oldParentPath = core.getParentPath(oldPath);
+                    var parentPath = core.getParentPath(newPath);
+                    if (oldParentPath != parentPath) {
+                        var oldParentId = this.nodeId(oldParentPath);
+                        this.refreshNodeById(oldParentId);
+                    }
+                    var parentId = this.nodeId(parentPath);
+                    this.refreshNodeById(parentId, _.bind(function () {
+                        if (restoreSelection) {
+                            this.selectNode(newPath);
+                        }
+                    }, this));
+                }
+            },
+
+            onPathDeleted: function (event, path) {
+                var deleted = this.getTreeNodeByPath(path);
+                if (deleted) {
+                    var selected = this.getSelectedTreeNode();
+                    var nearestFocus = this.findNearestOfDeletion(path);
+                    var nearestSelection = undefined;
+                    if (selected && selected.original.path == path) {
+                        nearestSelection = this.findNearestOfDeletion(path);
+                    }
+                    this.refreshNodeById(this.getParentNodeId(deleted.id), _.bind(function () {
+                        if (nearestSelection) {
+                            var path = nearestSelection.original.path;
+                            this.selectNode(path);
+                        }
+                        if (nearestFocus) {
+                            var path = nearestFocus.original.path;
+                            var $anchor = this.get$TreeNodeAnchor(path);
+                            $anchor.focus();
+                        }
+                    }, this));
+                }
+            },
+
+            findNearestOfDeletion: function (path) {
+                var node = this.getTreeNode(path);
+                if (node) {
+                    var $nearest = this.jstree.get_next_dom(node, true);
+                    if (!$nearest || $nearest.length < 1) {
+                        $nearest = this.jstree.get_prev_dom(node, true);
+                    }
+                    if (!$nearest || $nearest.length < 1) {
+                        $nearest = this.jstree.get_prev_dom(node);
+                    }
+                    if ($nearest && $nearest.length > 0) {
+                        var nearest = this.jstree.get_node($nearest[0].id);
+                        return nearest;
+                    }
+                }
+                return undefined;
+            },
+
+            // ---------------------
+            // node ID and data load
 
             // the default instance prefix,
             // make it unique it if more than one tree is used on one page
@@ -335,14 +483,14 @@
                 var tree = this; // for later use via closure
                 core.getJson(url, function (result) {
                         // transform all ids (node path) into the tree (jQuery) compatible format
-                        result.id = tree.nodeId(result.id);
+                        result.id = tree.nodeId(result.path);
                         if (result.children) {
                             for (var i = 0; i < result.children.length; i++) {
                                 // transform the ids for each child in the children list also
-                                result.children[i].id = tree.nodeId(result.children[i].id);
+                                result.children[i].id = tree.nodeId(result.children[i].path);
                             }
                         }
-                        callback.call(this, result);
+                        callback.call(tree.$jstree, result);
                     }
                 );
             },
@@ -366,82 +514,13 @@
             },
 
             /**
-             * the node selected event handler opens the selected node and
-             * calls the 'onNodeSelected' function if declared
-             */
-            nodeSelected: function (event, data) {
-                var id = data.node.id;
-                var path = data.node.original.path;
-                var $node = this.$('#' + (id ? id : this.nodeId(path)));
-                this.$el.jstree('open_node', $node);
-                if (_.isFunction(this.onNodeSelected)) {
-                    this.onNodeSelected(path, data.node, $node);
-                }
-            },
-
-            /**
-             * the final drag and drop handler determines the dragged and the target node
-             * an delegates these to the 'this.dropNode' function which must be provided
-             * by the Tree 'superclass' or 'instance' if this extension has
-             * the 'dnd' functionality switched on.
-             */
-            dragStop: function (event, data) {
-                var dragId = data.element.id;
-                var dragTreeObj = this.$el.jstree('get_node', dragId);
-                var dropTarget = data.event.target;
-                var $dropNode = $(dropTarget).closest('li.jstree-node');
-                var dropId = $dropNode.attr('id');
-                if (dragTreeObj && dropId) {
-                    var dropTreeObj = this.$el.jstree('get_node', dropId);
-                    if (dropTreeObj) {
-                        var dropNode = dropTreeObj.original;
-                        var dragNode = dragTreeObj.original;
-                        if (_.isFunction(this.dropNode)) {
-                            this.dropNode(dragNode, dropNode);
-                        } else {
-                            core.alert('warning', 'Drag Stop... (no implemented action)',
-                                'dragged: ' + dragNode.path + '<br/>' +
-                                'to target: ' + dropNode.path);
-                        }
-                    }
-                }
-            },
-
-            /**
-             * 'jstree' eventhandler for 'redraw'
-             * refreshes the node state
-             * @param data data.nodes - the list of node ids
-             */
-            onRedrawNode: function (event, data) {
-                for (var i = 0; i < data.nodes.length; i++) {
-                    var node = this.refreshNodeStateById(data.nodes[i]);
-                }
-            },
-
-            /**
-             * 'jstree' event handler for 'open_node'
-             * refreshes the node state for the node itself and its children
-             * @param data data.node - the node (model), see 'jstree'
-             */
-            onOpenNode: function (event, data) {
-                if (data.node) {
-                    this.refreshNodeStateById(data.node.id);
-                    if (data.node.children) {
-                        for (var j = 0; j < data.node.children.length; j++) {
-                            this.refreshNodeStateById(data.node.children[j]);
-                        }
-                    }
-                }
-            },
-
-            /**
              * declares the attributes and classes according to the state (JCR state)
              * of the node loaded in the 'original' data object of the node
              */
             refreshNodeStateById: function (id) {
-                var node = this.$el.jstree('get_node', id);
+                var node = this.jstree.get_node(id);
                 if (node && node.original) {
-                    var $node = this.$el.jstree('get_node', id, true);
+                    var $node = this.jstree.get_node(id, true);
                     if ($node.length > 0) {
                         this.refreshNodeState($node, node);
                     }
@@ -479,6 +558,177 @@
                     }
                 }
                 return node;
+            },
+
+            getTreeNodeByPath: function (path) {
+                var id = this.nodeId(path);
+                var node = this.getTreeNodeById(id);
+                return node;
+            },
+
+            getTreeNodeById: function (id) {
+                return this.jstree.get_node(id);
+            },
+
+            // -----------------------
+            // 'jstree' event handlers
+
+            editNodeName: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                var selection = this.jstree.get_selected();
+                if (selection.length > 0) {
+                    var nodeId = selection[0];
+                    var node = this.jstree.get_node(nodeId);
+                    var oldName = node.text;
+                    this.jstree.edit(node, null, _.bind(function (node, success, cancelled) {
+                        if (success && !cancelled) {
+                            var newName = node.text.replace(/^\s+/, '').replace(/\s+$/, '');
+                            if (newName != oldName) {
+                                this.renameNode(node.original, oldName, newName);
+                            }
+                        }
+                    }, this));
+                }
+            },
+
+            /**
+             * the 'check_callback' is used here as the final drag and drop handler
+             * and determines the dragged and the target node and the position in the target node
+             * to delegates these to the 'this.dropNode' function which must be provided
+             * by the Tree 'superclass' or 'instance' if that extension has
+             * the 'dnd' functionality switched on.
+             */
+            checkCallback: function (op, node, par, pos, more) {
+                if (op == 'move_node') {
+                    if (node && par) {
+                        var dropNode = par.original;
+                        var dragNode = node.original;
+                        if (dragNode.path != dropNode.path) {
+                            var reorder = (dropNode.path == core.getParentPath(dragNode.path));
+                            if (!reorder || pos != this.getNodeIndex(node)) {
+                                if (_.isFunction(this.dropNode)) {
+                                    this.dropNode(dragNode, dropNode, pos, reorder);
+                                } else {
+                                    core.alert('warning', 'Drag Stop... (no implemented action)',
+                                        'dragged: ' + dragNode.path + '<br/>' +
+                                        'to target: ' + dropNode.path + " / pos: " + pos +
+                                        ' (' + (reorder ? 'reorder' : 'move') + ')');
+                                }
+                            }
+                        }
+                    }
+                    return false;
+                }
+                return true;
+            },
+
+            /**
+             * 'jstree' eventhandler for 'selected'
+             * the node selected event handler opens the selected node and
+             * calls the 'onNodeSelected' function if declared
+             */
+            nodeSelected: function (event, data) {
+                var id = data.node.id;
+                var path = data.node.original.path;
+                var $node = this.$('#' + (id ? id : this.nodeId(path)));
+                this.jstree.open_node($node);
+                this.onNodeSelected(path, data.node, $node);
+            },
+
+            onNodeSelected: function (path, node, element) {
+                $(document).trigger("path:select", [path]);
+            },
+
+            /**
+             * 'jstree' eventhandler for 'redraw'
+             * refreshes the node state
+             * @param data data.nodes - the list of node ids
+             */
+            onRedrawNode: function (event, data) {
+                for (var i = 0; i < data.nodes.length; i++) {
+                    var node = this.refreshNodeStateById(data.nodes[i]);
+                }
+            },
+
+            /**
+             * 'jstree' event handler for 'open_node'
+             * refreshes the node state for the node itself and its children
+             * @param data data.node - the node (model), see 'jstree'
+             */
+            onOpenNode: function (event, data) {
+                if (data.node) {
+                    this.refreshNodeStateById(data.node.id);
+                    if (data.node.children) {
+                        for (var j = 0; j < data.node.children.length; j++) {
+                            this.refreshNodeStateById(data.node.children[j]);
+                        }
+                    }
+                }
+            },
+
+            // jstree helpers
+
+            refreshNodeById: function (id, callback) {
+                if (!id) {
+                    var selected = this.jstree.get_selected();
+                    if (selected && selected.length > 0) {
+                        id = selected[0];
+                    }
+                }
+                if (id) {
+                    var selected = this.jstree.get_selected();
+                    this.jstree.load_node(id, _.bind(function () {
+                        this.jstree.open_node(id, _.bind(function () {
+                            if (selected && this.jstree.get_node(selected)) {
+                                this.jstree.select_node(selected, true);
+                                this.refreshNodeStateById(selected);
+                            }
+                            if (_.isFunction(callback)) {
+                                callback.call(this, selected);
+                            }
+                        }, this));
+                    }, this));
+                }
+            },
+
+            getParentNodeId: function (mixed) {
+                var parentId = undefined;
+                if (mixed) {
+                    var node = this.jstree.get_node(mixed);
+                    if (node && node.original) {
+                        var path = node.original.path;
+                        path = core.getParentPath(path);
+                        parentId = this.nodeId(path);
+                    }
+                }
+                return parentId;
+            },
+
+            getNodeIndex: function (mixed) {
+                if (mixed) {
+                    var node = this.jstree.get_node(mixed);
+                    if (node && node.original) {
+                        var path = node.original.path;
+                        var parentPath = core.getParentPath(path);
+                        if (parentPath) {
+                            var parentId = this.nodeId(parentPath);
+                            var parentNode = this.jstree.get_node(parentId);
+                            if (parentNode && parentNode.original) {
+                                var children = parentNode.original.children;
+                                if (children) {
+                                    for (var i = 0; i < children.length; i++) {
+                                        if (children[i].path == path) {
+                                            return i;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return undefined;
             }
         });
 

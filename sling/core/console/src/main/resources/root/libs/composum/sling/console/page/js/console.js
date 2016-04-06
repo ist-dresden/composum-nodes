@@ -162,7 +162,7 @@
         // detail view implementation
 
         initialize: function(options) {
-            $(document).on('path:selected', _.bind(this.reload, this));
+            $(document).on('path:selected.DetailView', _.bind(this.reload, this));
         },
         
         /**

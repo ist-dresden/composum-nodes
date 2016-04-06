@@ -104,8 +104,8 @@ public class RequestUtil extends org.apache.sling.api.request.RequestUtil {
         return result != null && StringUtils.isNotBlank(result) ? result : defaultValue;
     }
 
-    public static int getParameter(RequestParameterMap parameters, String name, int defaultValue) {
-        int result = defaultValue;
+    public static Integer getParameter(RequestParameterMap parameters, String name, Integer defaultValue) {
+        Integer result = defaultValue;
         RequestParameter parameter = parameters.getValue(name);
         String string;
         if (parameter != null && StringUtils.isNotBlank(string = parameter.getString())) {
@@ -118,8 +118,8 @@ public class RequestUtil extends org.apache.sling.api.request.RequestUtil {
         return result;
     }
 
-    public static int getParameter(SlingHttpServletRequest request, String name, int defaultValue) {
-        int result = defaultValue;
+    public static Integer getParameter(SlingHttpServletRequest request, String name, Integer defaultValue) {
+        Integer result = defaultValue;
         String string = request.getParameter(name);
         if (StringUtils.isNotBlank(string)) {
             try {
@@ -129,6 +129,15 @@ public class RequestUtil extends org.apache.sling.api.request.RequestUtil {
             }
         }
         return result;
+    }
+
+    public static Boolean getParameter(SlingHttpServletRequest request, String name, Boolean defaultValue) {
+        Boolean result = null;
+        String string = request.getParameter(name);
+        if (StringUtils.isNotBlank(string)) {
+            result = Boolean.parseBoolean(string);
+        }
+        return result != null ? result : defaultValue;
     }
 
     public static <T extends Enum> T getParameter(RequestParameterMap parameters, String name, T defaultValue) {

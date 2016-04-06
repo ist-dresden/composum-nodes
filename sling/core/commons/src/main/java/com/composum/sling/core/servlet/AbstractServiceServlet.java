@@ -14,8 +14,11 @@ import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.lang.reflect.Type;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 
 /**
  * A basic class for all '/bin/{service}/path/to/resource' servlets.
@@ -26,6 +29,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     public static final String PARAM_FILE = "file";
     public static final String PARAM_FILTER = "filter";
     public static final String PARAM_ID = "id";
+    public static final String PARAM_INDEX = "index";
     public static final String PARAM_JCR_CONTENT = "jcrContent";
     public static final String PARAM_LABEL = "label";
     public static final String PARAM_MIME_TYPE = "mimeType";

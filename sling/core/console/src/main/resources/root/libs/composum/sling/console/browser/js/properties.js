@@ -11,7 +11,7 @@
 
         browser.getPropertiesTab = function () {
             return core.getView('.node-view-panel .properties', browser.PropertiesTab);
-        }
+        };
 
         browser.PropertiesTab = core.console.DetailTab.extend({
 
@@ -53,7 +53,7 @@
                     core.ajaxPut("/bin/core/property.copy.json" + path, JSON.stringify(clipboard), {
                         dataType: 'json'
                     }, _.bind(function (result) {
-                        this.reload();
+                        $(document).trigger('path:changed', [path]);
                     }, this), _.bind(function (result) {
                         core.alert('danger', 'Error', 'Error on copying properties', result);
                     }, this));
@@ -72,7 +72,7 @@
                         data: JSON.stringify({names: names}),
                         dataType: 'json'
                     }, _.bind(function (result) {
-                        this.reload();
+                        $(document).trigger('path:changed', [path]);
                     }, this), _.bind(function (result) {
                         core.alert('danger', 'Error', 'Error on removing properties', result);
                     }, this));
@@ -169,7 +169,6 @@
                     default:
                         return '<a class="editable">' + escaped + '</a>';
                 }
-                return escaped;
             },
 
             getSelections: function () {
@@ -192,7 +191,7 @@
                                 mode: 'inline',
                                 width: '100%',
                                 url: this.editableChange
-                            }
+                            };
                             if (editableType) {
                                 editableType = row.multi ? editableType.multi : editableType.single;
                                 if (editableType) {
@@ -243,9 +242,9 @@
                         type: $row.find('td.type').text(),
                         multi: ('true' == ($row.find('td.multi').text())),
                         value: params.value
-                    })
+                    });
                     property.save(_.bind(function (result) {
-                        view.loadContent(event);
+                        $(document).trigger('path:changed', [browser.getCurrentPath()]);
                     }, view), _.bind(function (result) {
                         if (result.status != 200) {
                             core.alert('danger', 'Error', 'Error on updating properties', result);

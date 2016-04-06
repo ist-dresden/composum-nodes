@@ -28,6 +28,8 @@
                 this.$mappedButton = this.$('.detail-toolbar .resolver');
                 this.$pathPrefix = this.$('.detail-toolbar .prefix input');
                 this.$selectors = this.$('.detail-toolbar .selectors input');
+                this.$extension = this.$('.detail-toolbar .extension input');
+                this.$suffix = this.$('.detail-toolbar .suffix input');
                 this.$parameters = this.$('.detail-toolbar .parameters input');
                 this.$('.detail-toolbar .reload').click(_.bind(this.reload, this));
                 this.$('.detail-toolbar .open').click(_.bind(this.open, this));
@@ -35,6 +37,10 @@
                 this.$pathPrefix.on('change.display', _.bind(this.onPrefixChange, this));
                 this.$selectors.val(core.console.getProfile().get(this.displayKey, 'selectors'));
                 this.$selectors.on('change.display', _.bind(this.onSelectorsChange, this));
+                this.$extension.val(core.console.getProfile().get(this.displayKey, 'extension'));
+                this.$extension.on('change.display', _.bind(this.onExtensionChange, this));
+                this.$suffix.val(core.console.getProfile().get(this.displayKey, 'suffix'));
+                this.$suffix.on('change.display', _.bind(this.onSuffixChange, this));
                 this.$parameters.val(core.console.getProfile().get(this.displayKey, 'parameters'));
                 this.$parameters.on('change.display', _.bind(this.onParametersChange, this));
                 this.$mappedButton.on('click.display', _.bind(this.toggleMapped, this));
@@ -49,6 +55,16 @@
             onSelectorsChange: function (event) {
                 var args = this.$selectors.val();
                 core.console.getProfile().set(this.displayKey, 'selectors', args);
+            },
+
+            onExtensionChange: function (event) {
+                var args = this.$extension.val();
+                core.console.getProfile().set(this.displayKey, 'extension', args);
+            },
+
+            onSuffixChange: function (event) {
+                var args = this.$suffix.val();
+                core.console.getProfile().set(this.displayKey, 'suffix', args);
             },
 
             onParametersChange: function (event) {
@@ -86,34 +102,52 @@
                 var url = this.$el.attr(this.isMapped() ? 'data-mapped' : 'data-path');
                 var pathPrefix = this.$pathPrefix.val();
                 if (pathPrefix) {
-                    var parts = this.pathPattern.exec(url);
-                    if (parts && parts.length > 1) {
-                        if (parts[1]) {
-                            url = parts[1];
+                    var pathMatch = this.pathPattern.exec(url);
+                    if (pathMatch && pathMatch.length > 1) {
+                        if (pathMatch[1]) {
+                            url = pathMatch[1];
                         } else {
                             url = "";
                         }
-                        url += pathPrefix + parts[2];
+                        url += pathPrefix + pathMatch[2];
                     }
+                }
+                var urlMatch = this.urlPattern.exec(url);
+                if (urlMatch) {
+                    url = urlMatch[1];
                 }
                 var selectors = this.$selectors.val();
                 if (selectors) {
-                    var parts = this.urlPattern.exec(url);
                     while (selectors.indexOf('.') === 0) {
                         selectors = selectors.substring(1);
                     }
                     while (selectors.endsWith('.')) {
                         selectors = selectors.substring(0, selectors.length - 1);
                     }
-                    url = (parts && parts.length > 1 ? (parts[1] + '.' + selectors + parts[2])
-                        : (url + "." + selectors + ".html"));
+                    url += '.' + selectors;
+                }
+                var extension = this.$extension.val();
+                if (extension) {
+                    if (extension.indexOf('.') != 0) {
+                        extension = '.' + extension;
+                    }
+                } else {
+                    extension = (urlMatch ? urlMatch[2] : ".html");
+                }
+                url += extension;
+                var suffix = this.$suffix.val();
+                if (suffix) {
+                    if (suffix.indexOf('/') != 0) {
+                        suffix = '/' + suffix;
+                    }
+                    url += suffix;
                 }
                 var params = this.$parameters.val();
                 if (params) {
                     if (params.indexOf('?') === 0) {
                         params = params.substring(1);
                     }
-                    url = url + '?' + params;
+                    url += '?' + params;
                 }
                 return url;
             }
@@ -143,7 +177,7 @@
                                 url: url
                             }
                         }, _.bind(function (data) {
-                            browser.tree.selectNode(data.path);
+                            browser.tree.selectNode(data.path, undefined, true);
                         }, this), undefined, _.bind(function (data) {
                             this.busy = false;
                         }, this)
@@ -443,7 +477,22 @@
 
             initialize: function (options) {
                 core.console.DetailView.prototype.initialize.apply(this, [options]);
+                $(document).off('path:selected.DetailView')
+                    .on('path:selected.NodeView', _.bind(this.onPathSelected, this));
+                $(document).on('path:changed.NodeView', _.bind(this.onPathChanged, this));
                 this.$el.resize(_.bind(this.resize, this));
+            },
+
+            onPathSelected: function (event, path) {
+                if (path == this.getCurrentPath()) {
+                    this.reload();
+                }
+            },
+
+            onPathChanged: function (event, path) {
+                if (path == this.getCurrentPath()) {
+                    this.reload();
+                }
             },
 
             /**

@@ -170,17 +170,31 @@
     color: #a94442; /* danger */
 }
 
+.jstree-rename-input {
+    color: #000;
+}
+
 /**
  * Dialogs
  */
 
 .form-panel label span {
     font-weight: normal;
-    margin-left: 15px;
+    margin-left: 5px;
+}
+
+.modal-dialog .form-group.cl,
+.modal-dialog .modal-footer {
+    clear: both;
 }
 
 .modal-dialog .modal-footer button.delete {
     float: left;
+}
+
+.modal-dialog .form-group .checkbox-widget {
+    box-shadow: none;
+    margin-top: 0;
 }
 
 /*
