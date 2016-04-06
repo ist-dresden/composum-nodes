@@ -8,6 +8,16 @@
     overflow: scroll;
 }
 
+.detail-toolbar.display-toolbar {
+    min-width: 320px;
+    text-align: right;
+    right: 20px;
+}
+
+body.top-open .detail-toolbar.display-toolbar {
+    right: 0;
+}
+
 .detail-panel.jcrpckg .panel {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
@@ -21,6 +31,7 @@
 
 .detail-panel.jcrpckg .panel-heading.header {
     align-items: flex-start;
+    padding-bottom: 0;
 }
 
 .detail-panel.jcrpckg .panel-body.status {
@@ -30,6 +41,7 @@
 .detail-panel.jcrpckg .panel-heading.header .description {
     flex-basis: 200px;
     flex-grow: 1;
+    margin-bottom: 10px;
 }
 
 .detail-panel.jcrpckg .panel-body.status {
@@ -143,4 +155,24 @@
 .indicator-block.sealed .is-sealed,
 .indicator-block.valid .is-valid {
     display: block;
+}
+
+.feedback-aspect .header {
+    height: 95px;
+    overflow: hidden;
+}
+
+.feedback-aspect .status {
+    height: 90px;
+    overflow: hidden;
+}
+
+.feedback-aspect .feedback-display {
+    position: absolute;
+    top: 228px;
+    left: 0;
+    right: 0;
+    bottom: 15px;
+    overflow: auto;
+    padding: 3px 6px;
 }

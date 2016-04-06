@@ -40,8 +40,7 @@
       "embed": [
         "composum/sling/pckgmgr/jcrpckg/general/general.js",
         "composum/sling/pckgmgr/jcrpckg/filter/filter.js",
-        "composum/sling/pckgmgr/jcrpckg/coverage/coverage.js",
-        "composum/sling/pckgmgr/jcrpckg/js/jcrpckg.js"
+        "composum/sling/pckgmgr/jcrpckg/coverage/coverage.js"
       ]
     },
     "pckgmgr": {
