@@ -113,6 +113,9 @@
                     }
                 }
                 var urlMatch = this.urlPattern.exec(url);
+                if (urlMatch) {
+                    url = urlMatch[1];
+                }
                 var selectors = this.$selectors.val();
                 if (selectors) {
                     while (selectors.indexOf('.') === 0) {
@@ -121,7 +124,7 @@
                     while (selectors.endsWith('.')) {
                         selectors = selectors.substring(0, selectors.length - 1);
                     }
-                    url = (urlMatch ? urlMatch[1] : url) + '.' + selectors;
+                    url += '.' + selectors;
                 }
                 var extension = this.$extension.val();
                 if (extension) {
