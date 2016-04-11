@@ -17,6 +17,7 @@ public class PackageManagerBean extends AbstractSlingBean {
 
     private transient String path;
     private transient PackageUtil.TreeType type;
+    private transient String downloadUrl;
 
     public String getPath() {
         if (path == null) {

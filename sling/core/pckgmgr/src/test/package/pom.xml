@@ -14,6 +14,7 @@
 
     <name>VLT Package Manager Test - Package</name>
     <description>the illustration and test for packages built by Maven</description>
+    <url>https://docs.adobe.com/content/docs/en/cq/5-6-1/core/how_to/how_to_use_the_vlttool/vlt-mavenplugin.html</url>
 
     <properties>
         <package.group>test/packages</package.group>

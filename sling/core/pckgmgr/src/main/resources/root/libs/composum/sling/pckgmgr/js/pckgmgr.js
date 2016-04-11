@@ -34,8 +34,11 @@
                                 viewUrl: core.getContextUrl('/bin/packages.view.html'
                                     + window.core.encodePath(path)),
                                 nodeUrl: core.getContextUrl('/bin/packages.html'
-                                    + window.core.encodePath(path))
-                            }
+                                    + window.core.encodePath(path)),
+                                downloadUrl: pathMatch
+                                    ? core.getContextUrl('/bin/core/package.download.zip' + path)
+                                    : ''
+                            };
                             core.console.getProfile().set('pckgmgr', 'current', path);
                             if (history.replaceState) {
                                 history.replaceState(pckgmgr.current.path, name, pckgmgr.current.nodeUrl);
@@ -105,10 +108,15 @@
                 this.$('button.create').on('click', _.bind(this.createPackage, this));
                 this.$('button.delete').on('click', _.bind(this.deletePackage, this));
                 this.$('button.upload').on('click', _.bind(this.uploadPackage, this));
-                this.$('button.download').on('click', _.bind(this.downloadPackage, this));
+                this.$download = this.$('a.download');
             },
 
             refreshNodeState: function () {
+                if (pckgmgr.current) {
+                    this.$download.attr('href', pckgmgr.current.downloadUrl);
+                } else {
+                    this.$download.attr('href', '');
+                }
             },
 
             createPackage: function (event) {
@@ -202,7 +210,7 @@
             }
         });
 
-        pckgmgr.DetailView = core.getView('#pckgmgr-view', pckgmgr.DetailView);
+        pckgmgr.detailView = core.getView('#pckgmgr-view', pckgmgr.DetailView);
 
     })(core.pckgmgr);
 

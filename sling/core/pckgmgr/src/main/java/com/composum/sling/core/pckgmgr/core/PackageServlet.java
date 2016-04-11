@@ -35,6 +35,7 @@ import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Calendar;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /** The servlet to provide download and upload of content packages and package definitions. */
 @SlingServlet(paths = "/bin/core/package", methods = {"GET", "POST", "DELETE"})
@@ -67,10 +69,15 @@ public class PackageServlet extends AbstractServiceServlet {
 
     public static final boolean AUTO_SAVE = true;
 
+    public static final Pattern IMPORT_DONE = Pattern.compile("^Package imported\\.$");
+
     // service references
 
     @Reference
     private CoreConfiguration coreConfig;
+
+    @Reference
+    private DynamicClassLoaderManager classLoaderManager;
 
     //
     // Servlet operations
@@ -327,14 +334,13 @@ public class PackageServlet extends AbstractServiceServlet {
             options.setDryRun(RequestUtil.getParameter(request, PARAM_DRY_RUN, false));
             options.setAutoSaveThreshold(RequestUtil.getParameter(request, PARAM_SAVE_THRESHOLD, 1024));
             options.setImportMode(RequestUtil.getParameter(request, PARAM_IMPORT_MODE, ImportMode.REPLACE));
+            options.setHookClassLoader(classLoaderManager.getDynamicClassLoader());
 
             PackageProgressTracker tracker = createTracker(response);
             options.setListener(tracker);
             tracker.writePrologue();
 
             installPackage(response, jcrPackage, options);
-
-            tracker.writeEpilogue();
         }
 
         protected void installPackage(SlingHttpServletResponse response,
@@ -351,7 +357,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
         protected PackageProgressTracker createTracker(SlingHttpServletResponse response)
                 throws IOException {
-            return new PackageProgressTracker.JsonTracking(response);
+            return new PackageProgressTracker.JsonTracking(response, IMPORT_DONE);
         }
     }
 
@@ -360,7 +366,7 @@ public class PackageServlet extends AbstractServiceServlet {
         @Override
         protected PackageProgressTracker createTracker(SlingHttpServletResponse response)
                 throws IOException {
-            return new PackageProgressTracker.HtmlTracking(response);
+            return new PackageProgressTracker.HtmlStreamTracking(response, IMPORT_DONE);
         }
     }
 
@@ -395,7 +401,7 @@ public class PackageServlet extends AbstractServiceServlet {
         @Override
         protected PackageProgressTracker createTracker(SlingHttpServletResponse response)
                 throws IOException {
-            return new PackageProgressTracker.HtmlTracking(response);
+            return new PackageProgressTracker.HtmlTracking(response, IMPORT_DONE);
         }
     }
 
@@ -469,7 +475,7 @@ public class PackageServlet extends AbstractServiceServlet {
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
             Session session = RequestUtil.getSession(request);
 
-            PackageProgressTracker tracker = new PackageProgressTracker.JsonTracking(response);
+            PackageProgressTracker tracker = new PackageProgressTracker.JsonTracking(response, null);
             tracker.writePrologue();
             PackageUtil.getCoverage(jcrPackage.getDefinition(), session, tracker);
             tracker.writeEpilogue();

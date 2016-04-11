@@ -22,8 +22,8 @@
             <div class="btn-group btn-group-sm" role="group">
                 <button class="upload fa fa-upload btn btn-default" title="Upload a new package"><span class="label">Upload</span>
                 </button>
-                <button class="download fa fa-download btn btn-default" title="Download selected package"><span
-                        class="label">Download</span></button>
+                <a type="button" class="download fa fa-download btn btn-default" href="${pckg.downloadUrl}"
+                   title="Download selected package"><span class="label">Download</span></a>
             </div>
             <div class="btn-group btn-group-sm" role="group">
                 <button class="create fa fa-plus btn btn-default" title="Create a new package"><span class="label">Create</span>
@@ -37,7 +37,7 @@
             </div>
         </div>
         <div class="package-detail">
-            <div class="panel panel-default default-aspect hidden">
+            <div class="panel panel-default default-aspect">
                 <sling:include replaceSelectors="header"/>
                 <div class="panel-heading">Filter List</div>
                 <ul class="list-group">
@@ -46,12 +46,13 @@
                     </c:forEach>
                 </ul>
             </div>
-            <div class="panel panel-default feedback-aspect">
+            <div class="panel panel-default feedback-aspect hidden">
                 <sling:include replaceSelectors="header"/>
                 <div class="panel-heading"><span class="title"></span>&nbsp;
                     <button class="close" title="Close"><span class="fa fa-close"></span></button>
                 </div>
-                <div class="feedback-display">
+                <div class="panel-body feedback-display">
+                    <table></table>
                 </div>
             </div>
         </div>

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.regex.Pattern;
 
 /**
  * Helper methods for Package handling (VLT Package Manager)
@@ -118,26 +119,28 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
 
     // JSON Output
 
-    public static class JsonTracking extends PackageProgressTracker {
+    public static class JsonStreamTracking extends PackageProgressTracker {
 
         protected final JsonWriter writer;
+        protected final Pattern finalizedIndicator;
 
-        public JsonTracking(SlingHttpServletResponse response) throws IOException {
-            this(ResponseUtil.getJsonWriter(response));
+        public JsonStreamTracking(SlingHttpServletResponse response, Pattern finalizedIndicator)
+                throws IOException {
+            this(ResponseUtil.getJsonWriter(response), finalizedIndicator);
         }
 
-        public JsonTracking(JsonWriter writer) throws IOException {
+        public JsonStreamTracking(JsonWriter writer, Pattern finalizedIndicator)
+                throws IOException {
             this.writer = writer;
+            this.finalizedIndicator = finalizedIndicator;
         }
 
         @Override
         public void writePrologue() throws IOException {
-            writer.beginArray();
         }
 
         @Override
         public void writeEpilogue() throws IOException {
-            writer.endArray();
         }
 
         @Override
@@ -147,26 +150,57 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
             writer.name("value").value(item.path != null ? item.path : item.message);
             writer.name("error").value(item.error);
             writer.endObject();
+            if (finalizedIndicator != null && finalizedIndicator.matcher(item.action).matches()) {
+                writeEpilogue();
+            }
+        }
+    }
+
+    public static class JsonTracking extends JsonStreamTracking {
+
+        public JsonTracking(SlingHttpServletResponse response, Pattern finalizedIndicator)
+                throws IOException {
+            super(response, finalizedIndicator);
+        }
+
+        public JsonTracking(JsonWriter writer, Pattern finalizedIndicator)
+                throws IOException {
+            super(writer, finalizedIndicator);
+        }
+
+        @Override
+        public void writePrologue() throws IOException {
+            writer.beginArray();
+            super.writePrologue();
+        }
+
+        @Override
+        public void writeEpilogue() throws IOException {
+            super.writeEpilogue();
+            writer.endArray();
         }
     }
 
     // HTML Output
 
-    public static class HtmlTracking extends PackageProgressTracker {
+    public static class HtmlStreamTracking extends PackageProgressTracker {
 
         protected final Writer writer;
+        protected final Pattern finalizedIndicator;
 
-        public HtmlTracking(SlingHttpServletResponse response) throws IOException {
-            this(response.getWriter());
+        public HtmlStreamTracking(SlingHttpServletResponse response, Pattern finalizedIndicator)
+                throws IOException {
+            this(response.getWriter(), finalizedIndicator);
         }
 
-        public HtmlTracking(Writer writer) throws IOException {
+        public HtmlStreamTracking(Writer writer, Pattern finalizedIndicator)
+                throws IOException {
             this.writer = writer;
+            this.finalizedIndicator = finalizedIndicator;
         }
 
         @Override
         public void writePrologue() throws IOException {
-            writer.append("<table>\n");
         }
 
         @Override
@@ -179,7 +213,6 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
             writer.append(", actions: ").append(Integer.toString(actionCount));
             writer.append(", errors: ").append(Integer.toString(errorCount));
             writer.append("</td></tr>\n");
-            writer.append("</table>\n");
         }
 
         @Override
@@ -201,6 +234,34 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
                 writer.append("<td class=\"errmsg\">").append(item.error).append("</td>");
             }
             writer.append("</tr>\n");
+            if (finalizedIndicator != null && finalizedIndicator.matcher(item.action).matches()) {
+                writeEpilogue();
+            }
+        }
+    }
+
+    public static class HtmlTracking extends HtmlStreamTracking {
+
+        public HtmlTracking(SlingHttpServletResponse response, Pattern finalizedIndicator)
+                throws IOException {
+            super(response, finalizedIndicator);
+        }
+
+        public HtmlTracking(Writer writer, Pattern finalizedIndicator)
+                throws IOException {
+            super(writer, finalizedIndicator);
+        }
+
+        @Override
+        public void writePrologue() throws IOException {
+            writer.append("<table>\n");
+            super.writePrologue();
+        }
+
+        @Override
+        public void writeEpilogue() throws IOException {
+            super.writeEpilogue();
+            writer.append("</table>\n");
         }
     }
 }

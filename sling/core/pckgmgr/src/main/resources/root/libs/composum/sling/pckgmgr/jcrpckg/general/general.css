@@ -19,8 +19,8 @@ body.top-open .detail-toolbar.display-toolbar {
 }
 
 .detail-panel.jcrpckg .panel {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
+    border: none;
+    border-radius: 0;
 }
 
 .detail-panel.jcrpckg .panel-heading.header,
@@ -89,6 +89,8 @@ body.top-open .detail-toolbar.display-toolbar {
 }
 
 .detail-panel.jcrpckg .thumbnail .image-wrapper img {
+    max-width: 64px;
+    max-height: 64px;
     margin: auto;
 }
 
@@ -157,6 +159,20 @@ body.top-open .detail-toolbar.display-toolbar {
     display: block;
 }
 
+.detail-panel.jcrpckg .package-detail .list-group-item {
+    padding: 5px 15px;
+}
+
+.feedback-aspect,
+.feedback-aspect .feedback-display {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 10px;
+    margin: 0;
+}
+
 .feedback-aspect .header {
     height: 95px;
     overflow: hidden;
@@ -168,11 +184,30 @@ body.top-open .detail-toolbar.display-toolbar {
 }
 
 .feedback-aspect .feedback-display {
-    position: absolute;
     top: 228px;
-    left: 0;
-    right: 0;
-    bottom: 15px;
+    bottom: 4px;
     overflow: auto;
     padding: 3px 6px;
+}
+
+.feedback-aspect .feedback-display table,
+.feedback-aspect .feedback-display table * {
+    font-size: 14px;
+}
+
+.feedback-aspect .feedback-display table {
+    white-space: pre;
+}
+
+.feedback-aspect .feedback-display table h1 {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.feedback-aspect .feedback-display table pre {
+    font-size: 11px;
+}
+
+.feedback-aspect .feedback-display td {
+    padding: 1px 4px;
 }

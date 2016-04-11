@@ -78,6 +78,34 @@
             $.ajax(ajaxConf);
         },
 
+        ajaxPoll: function (method, url, progress, onSuccess, onError) {
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                if (_.isFunction(onSuccess)) {
+                    var snippet = xhr.responseText.substring(xhr.previous_text_length);
+                    onSuccess(xhr, snippet);
+                }
+            };
+            xhr.onerror = function () {
+                if (_.isFunction(onError)) {
+                    var snippet = xhr.responseText.substring(xhr.previous_text_length);
+                    onError(xhr, snippet);
+                }
+            };
+            xhr.previous_text_length = 0;
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState > 2) {
+                    var snippet = xhr.responseText.substring(xhr.previous_text_length);
+                    if (_.isFunction(progress)) {
+                        progress(xhr, snippet);
+                    }
+                    xhr.previous_text_length = xhr.responseText.length;
+                }
+            };
+            xhr.open(method, core.getContextUrl(url), true);
+            xhr.send();
+        },
+
         /** deprecated */
         getRequest: function (dataType, url, onSuccess, onError, onComplete) {
             core.ajaxGet(url, {dataType: dataType}, onSuccess, onError, onComplete);
