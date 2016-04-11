@@ -5,10 +5,13 @@ import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.MissingPropertyException;
 import groovy.lang.Script;
+import groovy.transform.ThreadInterrupt;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -96,20 +99,30 @@ public class GroovyRunner {
     }
 
     public Object run(Reader scriptReader, Map<String, Object> variables) throws InterruptedException {
-        Script script = getScript(scriptReader, variables);
-        Object setupVariables = setup(script);
-        extendBinding(script, setupVariables);
-        extendBinding(script, generalBindings);
-        Object result = script.run();
-        return result;
+        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+        try {
+            Script script = getScript(scriptReader, variables);
+            Object setupVariables = setup(script);
+            extendBinding(script, setupVariables);
+            extendBinding(script, generalBindings);
+            Object result = script.run();
+            return result;
+        } finally {
+            Thread.currentThread().setContextClassLoader(tccl);
+        }
     }
 
     protected Script getScript(Reader scriptReader, Map<String, Object> variables) {
         if (variables == null) {
             variables = new HashMap<>();
         }
+        CompilerConfiguration compilerConfig = new CompilerConfiguration();
+        compilerConfig.addCompilationCustomizers(
+                new ASTTransformationCustomizer(ThreadInterrupt.class));
+
         Binding binding = new Binding(variables);
-        GroovyShell shell = new GroovyShell(binding);
+        GroovyShell shell = new GroovyShell(binding,compilerConfig);
         Script script = shell.parse(scriptReader);
         return script;
     }
@@ -168,10 +181,8 @@ public class GroovyRunner {
                         if (inputStream != null) {
                             reader = new InputStreamReader(inputStream, ENCODING);
                         }
-                    } catch (UnsupportedEncodingException ueex) {
+                    } catch (UnsupportedEncodingException | RepositoryException ueex) {
                         LOG.error(ueex.getMessage(), ueex);
-                    } catch (RepositoryException rex) {
-                        LOG.error(rex.getMessage(), rex);
                     }
                 }
             }
@@ -207,7 +218,7 @@ public class GroovyRunner {
 
         ResourceResolver resolver = null;
 
-        HashMap<String, Object> authMap = new HashMap();
+        HashMap<String, Object> authMap = new HashMap<>();
         authMap.put("user.jcr.session", session);
 
         try {

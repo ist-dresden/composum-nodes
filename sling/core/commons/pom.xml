@@ -115,6 +115,19 @@
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.osgi</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.event</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.discovery.api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>biz.aQute</groupId>
+            <artifactId>bndlib</artifactId>
+        </dependency>
+
 
         <!-- JCR API, Jackrabbit -->
         <dependency>
