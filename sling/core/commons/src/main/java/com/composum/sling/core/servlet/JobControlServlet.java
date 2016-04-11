@@ -17,7 +17,6 @@ import org.apache.sling.event.jobs.JobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -43,6 +42,7 @@ import java.util.regex.Pattern;
         methods = {"GET", "PUT", "POST", "DELETE"}
 )
 public class JobControlServlet extends AbstractServiceServlet {
+
     private static final Logger LOG = LoggerFactory.getLogger(JobControlServlet.class);
 
     public enum Extension {txt, json}
@@ -69,22 +69,29 @@ public class JobControlServlet extends AbstractServiceServlet {
         super.init();
 
         // GET
-        //curl -X GET http://localhost:9090/bin/core/jobcontrol.jobs.HISTORY.json/
+        // curl -X GET http://localhost:9090/bin/core/jobcontrol.jobs.HISTORY.json/
+        // [ALL, ACTIVE, QUEUED, HISTORY, CANCELLED, SUCCEEDED, STOPPED, GIVEN_UP, ERROR, DROPPED]
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.jobs, new GetAllJobs());
 
-        //curl -r 100-125 -X GET http://localhost:9090/bin/core/jobcontrol.outfile.txt/
+        // curl http://localhost:9090/bin/core/jobcontrol.job.json/2016/4/11/13/48/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_0
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.job, new GetJob());
+
+        // curl -r 100-125 -X GET http://localhost:9090/bin/core/jobcontrol.outfile.txt/
         operations.setOperation(ServletOperationSet.Method.GET, Extension.txt, Operation.outfile, new GetOutfile());
 
         // POST
-        //curl -v -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Fscript=/hello.groovy -Foutfileprefix=groovyjob -X POST http://localhost:9090/bin/core/jobcontrol.job.json
+        // curl -v -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Fscript=/hello.groovy -Foutfileprefix=groovyjob -X POST http://localhost:9090/bin/core/jobcontrol.job.json
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.job, new CreateJob());
 
         // DELETE
-        //curl -v -X DELETE http://localhost:9090/bin/core/jobcontrol.job.json/2016/4/8/15/21/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_81
+        // curl -v -X DELETE http://localhost:9090/bin/core/jobcontrol.job.json/2016/4/8/15/21/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_81
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.job, new CancelJob());
 
     }
 
+    /**
+     * Gets a part of the named temp. outputfile.
+     */
     private class GetOutfile implements ServletOperation {
 
         @Override
@@ -118,11 +125,13 @@ public class JobControlServlet extends AbstractServiceServlet {
         }
     }
 
+    /**
+     * Gets a list of all jobs matching the state given in the extra selector.
+     */
     private class GetAllJobs implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
-                throws RepositoryException, IOException, ServletException {
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
             JobManager.QueryType selector = RequestUtil.getSelector(request, JobManager.QueryType.ALL);
             Collection<Job> jobs = jobManager.findJobs(selector, null, 0);
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
@@ -135,20 +144,38 @@ public class JobControlServlet extends AbstractServiceServlet {
         }
     }
 
+    /**
+     * Retrieves a singe job.
+     */
+    private class GetJob implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
+            final String path = AbstractServiceServlet.getPath(request);
+            String jobId = path.substring(1);
+            Job job = jobManager.getJobById(jobId);
+            try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+                job2json2(jsonWriter, job);
+            }
+        }
+    }
+
+    /**
+     * Cancel a single job by its id.
+     */
     private class CancelJob implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) {
             final String path = AbstractServiceServlet.getPath(request);
             String jobId = path.substring(1);
-            final Job jobById = jobManager.getJobById(jobId);
-            System.out.println(jobById);
-            System.out.println("stoppe job: " + path);
             jobManager.stopJobById(jobId);
         }
     }
 
     /**
+     * Creates a new job.
+     *
      * used parameters:
      * <ul>
      *     <li>outfileprefix</li>
@@ -159,11 +186,12 @@ public class JobControlServlet extends AbstractServiceServlet {
     private class CreateJob implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             String topic = "";
             Map<String, Object> properties = new HashMap<>();
+            @SuppressWarnings("unchecked")
             Map<String, String []> parameters = request.getParameterMap();
             for (Map.Entry<String, String []> parameter: parameters.entrySet()) {
                 if (parameter.getKey().equals("event.job.topic")) {

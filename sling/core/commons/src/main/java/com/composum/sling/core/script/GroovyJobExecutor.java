@@ -48,7 +48,7 @@ import java.util.concurrent.Future;
 @Properties({
         @Property(
                 name = JobExecutor.PROPERTY_TOPICS,
-                value = "com/composum/sling/core/script/GroovyJobExecutor",
+                value = GroovyJobExecutor.GROOVY_TOPIC,
                 propertyPrivate = true),
         @Property(
                 name = EventConstants.EVENT_TOPIC,
@@ -59,6 +59,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(GroovyJobExecutor.class);
     private static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
+    static final String GROOVY_TOPIC = "com/composum/sling/core/script/GroovyJobExecutor";
 
     static {
         Map<String, Object> map = new HashMap<>();
@@ -200,7 +201,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
                 event.getTopic().equals(NotificationConstants.TOPIC_JOB_FAILED) ||
                 event.getTopic().equals(NotificationConstants.TOPIC_JOB_CANCELLED)) {
             final String topic = (String)event.getProperty(NotificationConstants.NOTIFICATION_PROPERTY_JOB_TOPIC);
-            if (topic.equals("com/composum/sling/core/script/GroovyJobExecutor")) {
+            if (topic.equals(GROOVY_TOPIC)) {
                 final String script = (String) event.getProperty("script");
                 final Calendar eventJobStartetTime = (Calendar) event.getProperty("event.job.started.time");
                 final String auditPath = buildAuditPathIntern(script, eventJobStartetTime);
