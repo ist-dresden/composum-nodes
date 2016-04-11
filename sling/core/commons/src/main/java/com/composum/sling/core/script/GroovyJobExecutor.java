@@ -92,6 +92,12 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
         Session adminSession = adminResolver.adaptTo(Session.class);
         Resource auditResource = giveParent(adminResolver, auditPath);
         try {
+            adminResolver.commit();
+        } catch (PersistenceException e) {
+            LOG.error("Error creating audit of groovy script Job.", e);
+            return context.result().message(e.getMessage()).failed();
+        }
+        try {
             Session session = adminSession.impersonate(new SimpleCredentials(userId, new char[0]));
             try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile);
                  PrintWriter out = new PrintWriter(fileOutputStream)) {
@@ -124,7 +130,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
             return context.result().message(tempFile.getPath()).succeeded();
         } catch (Exception e) {
             LOG.error("Error executing groovy script Job.", e);
-            return context.result().message(e.getMessage()).failed();
+            return context.result().message(e.getMessage()).cancelled();
         } finally {
             try {
                 Resource logFileResource = adminResolver.create(auditResource, outfile.substring(outfile.lastIndexOf(File.separator)+1), new HashMap<String, Object>() {{
