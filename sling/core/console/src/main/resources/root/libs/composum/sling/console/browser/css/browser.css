@@ -569,23 +569,31 @@
     display: flex;
     flex-wrap: nowrap;
     margin-left: 5px;
+    min-width: 35px;
 }
 
 #browser-view .node-view-content .detail-toolbar.display-toolbar .input-group {
     max-width: none;
 }
 
+#browser-view .node-view-content .detail-toolbar.display-toolbar .btn-group.webview {
+    min-width: 63px;
+}
+
 #browser-view .node-view-content .detail-toolbar.display-toolbar .toolbar-input-field {
     flex-grow: 1;
     margin-top: 2px;
+    width: 100%;
+}
+
+#browser-view .node-view-content .detail-toolbar.display-toolbar .toolbar-input-field.extension {
+    flex-grow: 0;
+    min-width: 70px;
+    width: 70px;
 }
 
 #browser-view .node-view-content .detail-toolbar.display-toolbar .toolbar-input-field .input-group {
     width: 100%;
-}
-
-#browser-view .node-view-content .detail-toolbar.display-toolbar .toolbar-input-field .input-group.extension {
-    width: 75px;
 }
 
 /**

@@ -128,8 +128,12 @@
                 }
                 var extension = this.$extension.val();
                 if (extension) {
-                    if (extension.indexOf('.') != 0) {
-                        extension = '.' + extension;
+                    if (extension == '-') {
+                        extension = '';
+                    } else {
+                        if (extension.indexOf('.') != 0) {
+                            extension = '.' + extension;
+                        }
                     }
                 } else {
                     extension = (urlMatch ? urlMatch[2] : ".html");
