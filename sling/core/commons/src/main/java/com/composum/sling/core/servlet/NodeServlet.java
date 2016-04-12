@@ -1,6 +1,5 @@
 package com.composum.sling.core.servlet;
 
-import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.config.FilterConfiguration;
 import com.composum.sling.core.exception.ParameterValidationException;
@@ -33,8 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.Property;
-import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
@@ -56,8 +53,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +66,7 @@ import java.util.regex.Pattern;
         paths = "/bin/core/node",
         methods = {"GET", "POST", "PUT", "DELETE"}
 )
-public class NodeServlet extends AbstractServiceServlet {
+public class NodeServlet extends NodeTreeServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodeServlet.class);
 
@@ -79,13 +74,6 @@ public class NodeServlet extends AbstractServiceServlet {
 
     public static final String FILE_CONTENT_TYPE = "application/binary";
     public static final String FILE_NAME_EXT = ".json";
-
-    /**
-     * the possible tree name options
-     */
-    public enum LabelType {
-        name, title
-    }
 
     /**
      * the names of the default filters configured statically
@@ -98,12 +86,6 @@ public class NodeServlet extends AbstractServiceServlet {
     public static final Pattern NODE_PATH_PATTERN = Pattern.compile("^(/[^/]+)+$");
 
     protected Map<String, ResourceFilter> nodeFilters = new LinkedHashMap<>();
-
-    /**
-     * injection of the configuration for the Composum core layer
-     */
-    @Reference
-    private CoreConfiguration coreConfig;
 
     /**
      * injection of the filter configurations provided by the OSGi configuration
@@ -555,43 +537,6 @@ public class NodeServlet extends AbstractServiceServlet {
     //
     // node retrieval
     //
-
-    /**
-     * creates a JSON object for the requested node (requested by the suffix);
-     * this JSON response contains the node identifiers, some node type hints and
-     * a list of the children of the node; this operation provides the data for
-     * a tree implementation which requests the nodes on demand
-     * suffix: the path to the node
-     * selectors / parameters:
-     * - 'label': 'name' or 'title' - selects the value to use for the nodes 'text' attribute
-     * URL examples:
-     * - http://host/bin/core/node.tree.json/path/to/the/node
-     * - http://host/bin/core/node.tree.title.json/path/to/the/node
-     * - http://host/bin/core/node.tree.json/path/to/the/node?label=title
-     */
-    protected class TreeOperation implements ServletOperation {
-
-        @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
-                throws ServletException, IOException {
-
-            if (!resource.isValid()) {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
-
-            ResourceFilter filter = getNodeFilter(request);
-            LabelType labelType = RequestUtil.getParameter(request, PARAM_LABEL,
-                    RequestUtil.getSelector(request, LabelType.name));
-
-            JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-
-            response.setStatus(HttpServletResponse.SC_OK);
-
-            writeJsonNode(jsonWriter, filter, resource, labelType, coreConfig, false);
-        }
-    }
 
     /**
      * similar to the 'tree' operation creates this operation a JSON object for the requested
@@ -1302,332 +1247,5 @@ public class NodeServlet extends AbstractServiceServlet {
             }
             writer.flush();
         }
-    }
-
-    //
-    // JSON helpers
-    //
-
-    public static void writeJsonNode(JsonWriter writer, ResourceFilter filter,
-                                     ResourceHandle resource, LabelType labelType,
-                                     CoreConfiguration coreConfig, boolean isVirtual)
-            throws IOException {
-        writer.beginObject();
-        String type = writeNodeIdentifiers(writer, resource, labelType, isVirtual);
-        writeNodeTreeType(writer, filter, resource, isVirtual);
-        writeNodeJcrState(writer, resource);
-        List<Resource> children = new ArrayList<>();
-        boolean hasChildren = false;
-        for (Resource child : resource.getChildren()) {
-            hasChildren = true;
-            if (filter.accept(child) &&
-                    // filter out additional synthetic folders in addition to the 1st level '//...' nodes (AEM 6.1 !?)
-                    !(ResourceUtil.containsPath(children, child) && ResourceUtil.isSyntheticResource(child))) {
-                children.add(ResourceHandle.use(child));
-            }
-        }
-        if (!hasChildren) {
-            if (!isVirtual) {
-                addVirtualContent(writer, filter, resource, labelType, coreConfig);
-            }
-        } else {
-            if (!coreConfig.getOrderableNodesFilter().accept(resource)) {
-                Collections.sort(children, new Comparator<Resource>() {
-                    @Override
-                    public int compare(Resource r1, Resource r2) {
-                        return getSortName(r1).compareTo(getSortName(r2));
-                    }
-                });
-            }
-            writer.name("children").beginArray();
-            for (Resource child : children) {
-                ResourceHandle handle = ResourceHandle.use(child);
-                writer.beginObject();
-                writeNodeIdentifiers(writer, ResourceHandle.use(child), labelType, isVirtual);
-                writeNodeTreeType(writer, filter, handle, isVirtual);
-                writeNodeJcrState(writer, handle);
-                writer.name("state").beginObject(); // that's the 'jstree' state object
-                writer.name("loaded").value(false);
-                writer.endObject();
-                writer.endObject();
-            }
-            writer.endArray();
-        }
-        writer.endObject();
-    }
-
-    public static void writeNodeTreeType(JsonWriter writer, ResourceFilter filter,
-                                         ResourceHandle resource, boolean isVirtual)
-            throws IOException {
-        String treeType = isVirtual ? "virtual" : "";
-        if (StringUtils.isBlank(treeType) &&
-                filter instanceof ResourceFilter.FilterSet &&
-                ((ResourceFilter.FilterSet) filter).isIntermediate(resource)) {
-            treeType = "intermediate";
-        }
-        if (StringUtils.isNotBlank(treeType)) {
-            writer.name("treeType").value(treeType);
-        }
-    }
-
-    public static void addVirtualContent(JsonWriter writer, ResourceFilter filter,
-                                         ResourceHandle resource, LabelType labelType,
-                                         CoreConfiguration coreConfig)
-            throws IOException {
-        Node node = resource.adaptTo(Node.class);
-        if (node != null) {
-            try {
-                Property property = node.getProperty(ResourceUtil.CONTENT_NODE);
-                if (property != null && PropertyType.REFERENCE == property.getType()) {
-                    ResourceResolver resolver = resource.getResourceResolver();
-                    String reference = property.getString();
-                    Session session = node.getSession();
-                    Node targetNode;
-                    Resource targetResource;
-                    if (StringUtils.isNotBlank(reference) &&
-                            (targetNode = session.getNodeByIdentifier(reference)) != null &&
-                            (targetResource = resolver.getResource(targetNode.getPath() +
-                                    "/" + ResourceUtil.CONTENT_NODE)) != null) {
-                        writer.name("children").beginArray();
-                        writeJsonNode(writer, filter, ResourceHandle.use(targetResource),
-                                labelType, coreConfig, true);
-                        writer.endArray();
-                    }
-                }
-            } catch (RepositoryException ex) {
-            }
-        }
-    }
-
-    public static String getSortName(Resource resource) {
-        String name = resource.getName().toLowerCase();
-        if (name.startsWith("rep:")) {
-            name = "a" + name;
-        } else if (name.startsWith("jcr:")) {
-            name = "b" + name;
-        } else {
-            name = "x" + name;
-        }
-        return name;
-    }
-
-    public static String getNodeLabel(ResourceHandle resource, LabelType labelType) {
-        String text = resource.getName();
-        if (labelType == LabelType.title) {
-            String title = resource.getProperty(ResourceUtil.PROP_TITLE, "");
-            if (StringUtils.isBlank(title)) {
-                Resource contentResource = resource.getContentResource();
-                if (contentResource != null) {
-                    title = ResourceHandle.use(contentResource).getProperty(ResourceUtil.PROP_TITLE, "");
-                }
-            }
-            if (StringUtils.isNotBlank(title)) {
-                text = title;
-            }
-        }
-        if (StringUtils.isBlank(text) && "/".equals(resource.getPath())) {
-            text = "jcr:root";
-        }
-        return text;
-    }
-
-    public static String writeNodeIdentifiers(JsonWriter writer, ResourceHandle resource,
-                                              LabelType labelType, boolean isVirtual)
-            throws IOException {
-        String text = getNodeLabel(resource, labelType);
-        String type = getTypeKey(resource);
-        String contentType = getContentTypeKey(resource, null);
-        if (StringUtils.isNotBlank(contentType)) {
-            writer.name("contentType").value(contentType);
-            if ("designer".equals(contentType)) {
-                type += "-" + contentType;
-            }
-        }
-        if (StringUtils.isNotBlank(type)) {
-            writer.name("type").value(type);
-        }
-        String path = resource.getPath();
-        writer.name("id").value(path + (isVirtual ? "-v" : ""));
-        writer.name("name").value(resource.getName());
-        writer.name("text").value(text);
-        writer.name("path").value(path);
-        String uuid = resource.getProperty(ResourceUtil.PROP_UUID);
-        if (StringUtils.isNotBlank(uuid)) {
-            writer.name("uuid").value(uuid);
-        }
-        return type;
-    }
-
-    public static void writeNodeJcrState(JsonWriter writer,
-                                         ResourceHandle resource)
-            throws IOException {
-        writer.name("jcrState").beginObject();
-        try {
-            Node node = resource.adaptTo(Node.class);
-            if (node != null) {
-                try {
-                    String nodePath = node.getPath();
-                    Session session = node.getSession();
-                    Workspace workspace = session.getWorkspace();
-                    LockManager lockManager = workspace.getLockManager();
-                    JsonUtil.writeValue(writer, "checkedOut", node.isCheckedOut());
-                    JsonUtil.writeValue(writer, "isVersionable", isVersionable(node));
-                    boolean isLocked = node.isLocked();
-                    JsonUtil.writeValue(writer, "locked", isLocked);
-                    if (isLocked) {
-                        writer.name("lock").beginObject();
-                        try {
-                            Lock lock = lockManager.getLock(nodePath);
-                            String holderPath = lock.getNode().getPath();
-                            JsonUtil.writeValue(writer, "isDeep", lock.isDeep());
-                            JsonUtil.writeValue(writer, "isHolder", holderPath.equals(nodePath));
-                            JsonUtil.writeValue(writer, "node", holderPath);
-                            JsonUtil.writeValue(writer, "owner", lock.getLockOwner());
-                            JsonUtil.writeValue(writer, "sessionScoped", lock.isSessionScoped());
-                        } finally {
-                            writer.endObject();
-                        }
-                    }
-                } catch (RepositoryException rex) {
-                    LOG.error(rex.getMessage(), rex);
-                }
-            }
-        } finally {
-            writer.endObject();
-        }
-    }
-
-    private static boolean isVersionable(Node node) throws RepositoryException {
-        final NodeType[] mixinNodeTypes = node.getMixinNodeTypes();
-        for (final NodeType mixinNodeType : mixinNodeTypes) {
-            if (mixinNodeType.isNodeType(NodeType.MIX_VERSIONABLE) || mixinNodeType.isNodeType(NodeType.MIX_SIMPLE_VERSIONABLE)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    // receiving JSON ...
-
-    /**
-     * the structure for parsing property values from JSON using Gson
-     */
-    public static class NodeParameters {
-
-        public String type;
-        public String path;
-        public Integer index;
-        public String name;
-        public String title;
-        public String mimeType;
-        public String resourceType;
-        public String jcrContent;
-    }
-
-    public static NodeParameters getFormParameters(SlingHttpServletRequest request) {
-        // copy parameters from request
-        NodeParameters params = new NodeParameters();
-        params.name = request.getParameter(PARAM_NAME);
-        params.path = request.getParameter(PARAM_PATH);
-        params.index = RequestUtil.getParameter(request, PARAM_INDEX, (Integer) null);
-        params.type = request.getParameter(PARAM_TYPE);
-        params.title = request.getParameter(PARAM_TITLE);
-        params.mimeType = request.getParameter(PARAM_MIME_TYPE);
-        params.resourceType = request.getParameter(PARAM_RESOURCE_TYPE);
-        params.jcrContent = request.getParameter(PARAM_JCR_CONTENT);
-        return params;
-    }
-
-    //
-    // node type key generation
-    //
-
-    public static String getTypeKey(ResourceHandle resource) {
-        String type = getPrimaryTypeKey(resource);
-        if ("file".equals(type)) {
-            type = getFileTypeKey(resource, "file-");
-        } else if ("resource".equals(type)) {
-            type = getMimeTypeKey(resource, "resource-");
-        } else if (StringUtils.isBlank(type) || "unstructured".equals(type)) {
-            type = getResourceTypeKey(resource, "resource-");
-        }
-        return type;
-    }
-
-    public static String getContentTypeKey(ResourceHandle resource, String prefix) {
-        String contentType = null;
-        if (!ResourceUtil.CONTENT_NODE.equals(resource.getName())) {
-            resource = ResourceHandle.use(resource.getChild(ResourceUtil.CONTENT_NODE));
-        }
-        if (resource.isValid()) {
-            contentType = getResourceTypeKey(resource, prefix);
-        }
-        return contentType;
-    }
-
-    public static String getPrimaryTypeKey(ResourceHandle resource) {
-        String primaryType = resource.getPrimaryType();
-        String type = primaryType;
-        if (StringUtils.isNotBlank(type)) {
-            int namespace = type.lastIndexOf(':');
-            if (namespace >= 0) {
-                type = type.substring(namespace + 1);
-            }
-            type = type.toLowerCase();
-        }
-        return type;
-    }
-
-    public static String getResourceTypeKey(ResourceHandle resource, String prefix) {
-        String primaryType = resource.getPrimaryType();
-        String type = null;
-        if (resource.isValid()) {
-            String resourceType = resource.getResourceType();
-            if (StringUtils.isNotBlank(resourceType) && !resourceType.equals(primaryType)) {
-                int namespace = resourceType.lastIndexOf(':');
-                if (namespace >= 0) {
-                    resourceType = resourceType.substring(namespace + 1);
-                }
-                int dot = resourceType.lastIndexOf('.');
-                if (dot >= 0) {
-                    resourceType = resourceType.substring(dot + 1);
-                }
-                type = resourceType.substring(resourceType.lastIndexOf('/') + 1);
-                type = type.toLowerCase();
-            }
-        }
-        if (StringUtils.isNotBlank(type) && StringUtils.isNotBlank(prefix)) {
-            type = prefix + type;
-        }
-        return type;
-    }
-
-    public static String getFileTypeKey(ResourceHandle resource, String prefix) {
-        String type = null;
-        ResourceHandle content = ResourceHandle.use(resource.getChild(ResourceUtil.CONTENT_NODE));
-        if (content.isValid()) {
-            type = getMimeTypeKey(content, prefix);
-        }
-        return type;
-    }
-
-    public static String getMimeTypeKey(ResourceHandle resource, String prefix) {
-        String type = null;
-        String mimeType = MimeTypeUtil.getMimeType(resource, "");
-        if (StringUtils.isNotBlank(mimeType)) {
-            int delim = mimeType.indexOf('/');
-            String major = mimeType.substring(0, delim);
-            String minor = mimeType.substring(delim + 1);
-            type = major;
-            if ("text".equals(major)) {
-                type += "-" + minor;
-            } else if ("application".equals(major)) {
-                type = minor;
-            }
-            type = type.toLowerCase();
-        }
-        if (StringUtils.isNotBlank(type) && StringUtils.isNotBlank(prefix)) {
-            type = prefix + type;
-        }
-        return type;
     }
 }
