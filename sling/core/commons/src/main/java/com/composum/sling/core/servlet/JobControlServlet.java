@@ -27,11 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -154,6 +151,46 @@ public class JobControlServlet extends AbstractServiceServlet {
                 pos++;
             }
         }
+
+        class Range {
+            Integer start;
+            Integer end;
+            Integer suffixLength;
+        }
+
+        private List<Range> decodeRange(String rangeHeader) {
+            List<Range> ranges = new ArrayList<>();
+            if (StringUtils.isEmpty(rangeHeader)) {
+                ranges.add(new Range());
+                return ranges;
+            }
+            String byteRangeSetRegex = "(((?<byteRangeSpec>(?<firstBytePos>\\d+)-(?<lastBytePos>\\d+)?)|(?<suffixByteRangeSpec>-(?<suffixLength>\\d+)))(,|$))";
+            String byteRangesSpecifierRegex = "bytes=(?<byteRangeSet>" + byteRangeSetRegex + "{1,})";
+            Pattern byteRangeSetPattern = Pattern.compile(byteRangeSetRegex);
+            Pattern byteRangesSpecifierPattern = Pattern.compile(byteRangesSpecifierRegex);
+            Matcher byteRangesSpecifierMatcher = byteRangesSpecifierPattern.matcher(rangeHeader);
+            if (byteRangesSpecifierMatcher.matches()) {
+                String byteRangeSet = byteRangesSpecifierMatcher.group("byteRangeSet");
+                Matcher byteRangeSetMatcher = byteRangeSetPattern.matcher(byteRangeSet);
+                while (byteRangeSetMatcher.find()) {
+                    Range range = new Range();
+                    if (byteRangeSetMatcher.group("byteRangeSpec") != null) {
+                        String start = byteRangeSetMatcher.group("firstBytePos");
+                        String end = byteRangeSetMatcher.group("lastBytePos");
+                        range.start = Integer.valueOf(start);
+                        range.end = end == null ? null : Integer.valueOf(end);
+                    } else if (byteRangeSetMatcher.group("suffixByteRangeSpec") != null) {
+                        range.suffixLength = Integer.valueOf(byteRangeSetMatcher.group("suffixLength"));
+                    } else {
+                        return Collections.emptyList();
+                    }
+                    ranges.add(range);
+                }
+            } else {
+                return Collections.emptyList();
+            }
+            return ranges;
+        }
     }
 
     /**
@@ -172,10 +209,10 @@ public class JobControlServlet extends AbstractServiceServlet {
                     if (path.length() > 1) {
                         final String script = job.getProperty("script", String.class);
                         if (script != null && script.equals(path)) {
-                            job2json2(jsonWriter, job);
+                            job2json(jsonWriter, job);
                         }
                     } else {
-                        job2json2(jsonWriter, job);
+                        job2json(jsonWriter, job);
                     }
                 }
                 jsonWriter.endArray();
@@ -194,7 +231,7 @@ public class JobControlServlet extends AbstractServiceServlet {
             String jobId = path.substring(1);
             Job job = jobManager.getJobById(jobId);
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
-                job2json2(jsonWriter, job);
+                job2json(jsonWriter, job);
             }
         }
     }
@@ -289,12 +326,12 @@ public class JobControlServlet extends AbstractServiceServlet {
             properties.put("outfile", outfile);
             Job job = jobManager.addJob(topic, properties);
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
-                job2json2(jsonWriter, job);
+                job2json(jsonWriter, job);
             }
         }
     }
 
-    private void job2json2(JsonWriter jsonWriter, Job job) throws IOException {
+    private void job2json(JsonWriter jsonWriter, Job job) throws IOException {
         jsonWriter.beginObject();
         Set<String> propertyNames = job.getPropertyNames();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -328,45 +365,5 @@ public class JobControlServlet extends AbstractServiceServlet {
             }
         }
         jsonWriter.endObject();
-    }
-
-    class Range {
-        Integer start;
-        Integer end;
-        Integer suffixLength;
-    }
-
-    private List<Range> decodeRange(String rangeHeader) {
-        List<Range> ranges = new ArrayList<>();
-        if (StringUtils.isEmpty(rangeHeader)) {
-            ranges.add(new Range());
-            return ranges;
-        }
-        String byteRangeSetRegex = "(((?<byteRangeSpec>(?<firstBytePos>\\d+)-(?<lastBytePos>\\d+)?)|(?<suffixByteRangeSpec>-(?<suffixLength>\\d+)))(,|$))";
-        String byteRangesSpecifierRegex = "bytes=(?<byteRangeSet>" + byteRangeSetRegex + "{1,})";
-        Pattern byteRangeSetPattern = Pattern.compile(byteRangeSetRegex);
-        Pattern byteRangesSpecifierPattern = Pattern.compile(byteRangesSpecifierRegex);
-        Matcher byteRangesSpecifierMatcher = byteRangesSpecifierPattern.matcher(rangeHeader);
-        if (byteRangesSpecifierMatcher.matches()) {
-            String byteRangeSet = byteRangesSpecifierMatcher.group("byteRangeSet");
-            Matcher byteRangeSetMatcher = byteRangeSetPattern.matcher(byteRangeSet);
-            while (byteRangeSetMatcher.find()) {
-                Range range = new Range();
-                if (byteRangeSetMatcher.group("byteRangeSpec") != null) {
-                    String start = byteRangeSetMatcher.group("firstBytePos");
-                    String end = byteRangeSetMatcher.group("lastBytePos");
-                    range.start = Integer.valueOf(start);
-                    range.end = end == null ? null : Integer.valueOf(end);
-                } else if (byteRangeSetMatcher.group("suffixByteRangeSpec") != null) {
-                    range.suffixLength = Integer.valueOf(byteRangeSetMatcher.group("suffixLength"));
-                } else {
-                    return Collections.emptyList();
-                }
-                ranges.add(range);
-            }
-        } else {
-            return Collections.emptyList();
-        }
-        return ranges;
     }
 }
