@@ -30,7 +30,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
@@ -100,7 +102,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
         try {
             Session session = adminSession.impersonate(new SimpleCredentials(userId, new char[0]));
             try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile);
-                 PrintWriter out = new PrintWriter(fileOutputStream)) {
+                 PrintWriter out = new PrintWriter(new OutputStreamWriter(fileOutputStream, "UTF-8"))) {
                 final GroovyRunner groovyRunner = new GroovyRunner(session, out);
                 final HashMap<String, Object> variables = new HashMap<>();
                 variables.put("jctx", context);
@@ -133,7 +135,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
             return context.result().message(e.getMessage()).cancelled();
         } finally {
             try {
-                Resource logFileResource = adminResolver.create(auditResource, outfile.substring(outfile.lastIndexOf(File.separator)+1), new HashMap<String, Object>() {{
+                Resource logFileResource = adminResolver.create(auditResource, outfile.substring(outfile.lastIndexOf(File.separator) + 1), new HashMap<String, Object>() {{
                     put(ResourceUtil.PROP_PRIMARY_TYPE, ResourceUtil.TYPE_FILE);
                 }});
                 try (final InputStream inputStream = new FileInputStream(tempFile)) {
@@ -143,6 +145,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
                         put(ResourceUtil.PROP_DATA, inputStream);
                     }});
                 }
+                final boolean deleted = tempFile.delete();
                 final Set<String> propertyNames = job.getPropertyNames();
                 final ModifiableValueMap map = auditResource.adaptTo(ModifiableValueMap.class);
                 for (String propertyName: propertyNames) {

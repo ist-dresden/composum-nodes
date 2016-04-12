@@ -27,13 +27,18 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -106,26 +111,47 @@ public class JobControlServlet extends AbstractServiceServlet {
             final List<Range> ranges = decodeRange(range);
             final String filename = System.getProperty("java.io.tmpdir") + path.substring(1);
             final File file = new File(filename);
-            try (final ServletOutputStream outputStream = response.getOutputStream();
-                 final FileInputStream inputStream = new FileInputStream(file)) {
-                long end = Long.MAX_VALUE;
-                long pos = 0L;
-                if (!ranges.isEmpty()) {
-                    final Range range1 = ranges.get(0);
-                    if (range1.start != null) {
-                        inputStream.skip(range1.start);
-                        pos = range1.start;
-                    }
-                    if (range1.end != null) {
-                        end = range1.end;
-                    }
+            response.setCharacterEncoding("UTF-8");
+            response.setContentType("text/plain;charset=utf-8");
+            if (file.exists()) {
+                try (final ServletOutputStream outputStream = response.getOutputStream();
+                     final InputStream inputStream = new FileInputStream(file)) {
+                    writeStream(ranges, outputStream, inputStream);
+                } catch (FileNotFoundException e) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, path.substring(1));
                 }
-                while (inputStream.available() > 0 && !(pos > end)) {
-                    outputStream.write(inputStream.read());
-                    pos++;
+            } else {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs//*[outfile='" + filename + "']", "xpath");
+                if (resources.hasNext()) {
+                    final Resource audit = resources.next();
+                    final Resource outfileResource = resolver.getResource(audit, path.substring(1));
+                    try (final ServletOutputStream outputStream = response.getOutputStream();
+                         final InputStream inputStream = outfileResource.adaptTo(InputStream.class)) {
+                        writeStream(ranges, outputStream, inputStream);
+                    }
+                } else {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, path.substring(1));
                 }
-            } catch (FileNotFoundException e) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, path.substring(1));
+            }
+        }
+
+        private void writeStream(List<Range> ranges, ServletOutputStream outputStream, InputStream inputStream) throws IOException {
+            long end = Long.MAX_VALUE;
+            long pos = 0L;
+            if (!ranges.isEmpty()) {
+                final Range range1 = ranges.get(0);
+                if (range1.start != null) {
+                    inputStream.skip(range1.start);
+                    pos = range1.start;
+                }
+                if (range1.end != null) {
+                    end = range1.end;
+                }
+            }
+            while (inputStream.available() > 0 && !(pos > end)) {
+                outputStream.write(inputStream.read());
+                pos++;
             }
         }
     }
@@ -186,26 +212,29 @@ public class JobControlServlet extends AbstractServiceServlet {
         }
     }
 
+    /**
+     * Cleans up audit and tempfile.
+     */
     private class CleanupJob implements ServletOperation {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
             try {
                 final String path = AbstractServiceServlet.getPath(request);
-                String jobId = path.substring(1);
+                final String jobId = path.substring(1);
                 final Job job = jobManager.getJobById(jobId);
                 final String outfile = job.getProperty("outfile", String.class);
-                final String script = job.getProperty("script", String.class);
-                final Calendar eventJobStartedTime = job.getProperty("event.job.started.time", Calendar.class);
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
-                String auditPath = "/var/audit/jobs/com.composum.sling.core.script.GroovyJobExecutor" + script + "/" + sdf.format(eventJobStartedTime.getTime());
+                final String topic = job.getProperty("event.job.topic", String.class);
                 final ResourceResolver resolver = request.getResourceResolver();
-                final Resource audit = resolver.getResource(auditPath);
+                final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs/" + topic + "//*[slingevent:eventId='" + jobId + "']", "xpath");
                 boolean auditResourceDeleted = false;
-                if (audit != null && !ResourceUtil.isNonExistingResource(audit)) {
-                    resolver.delete(audit);
-                    resolver.commit();
-                    auditResourceDeleted = true;
+                if (resources.hasNext()) {
+                    final Resource audit = resources.next();
+                    if (audit != null && !ResourceUtil.isNonExistingResource(audit)) {
+                        resolver.delete(audit);
+                        resolver.commit();
+                        auditResourceDeleted = true;
+                    }
                 }
                 final boolean b = new File(outfile).delete();
                 try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
@@ -309,6 +338,10 @@ public class JobControlServlet extends AbstractServiceServlet {
 
     private List<Range> decodeRange(String rangeHeader) {
         List<Range> ranges = new ArrayList<>();
+        if (StringUtils.isEmpty(rangeHeader)) {
+            ranges.add(new Range());
+            return ranges;
+        }
         String byteRangeSetRegex = "(((?<byteRangeSpec>(?<firstBytePos>\\d+)-(?<lastBytePos>\\d+)?)|(?<suffixByteRangeSpec>-(?<suffixLength>\\d+)))(,|$))";
         String byteRangesSpecifierRegex = "bytes=(?<byteRangeSet>" + byteRangeSetRegex + "{1,})";
         Pattern byteRangeSetPattern = Pattern.compile(byteRangeSetRegex);
