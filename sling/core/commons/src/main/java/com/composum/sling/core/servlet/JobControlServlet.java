@@ -3,6 +3,7 @@ package com.composum.sling.core.servlet;
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.RequestUtil;
+import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
@@ -84,11 +85,12 @@ public class JobControlServlet extends AbstractServiceServlet {
         // POST
         // curl -v -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Fscript=/hello.groovy -Foutfileprefix=groovyjob -X POST http://localhost:9090/bin/core/jobcontrol.job.json
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.job, new CreateJob());
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.cleanup, new CleanupJob());
 
         // DELETE
         // curl -v -X DELETE http://localhost:9090/bin/core/jobcontrol.job.json/2016/4/8/15/21/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_81
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.job, new CancelJob());
+        // curl -u admin:admin -X DELETE http://localhost:9090/bin/core/jobcontrol.cleanup.json/2016/4/12/9/50/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_0
+        operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.cleanup, new CleanupJob());
 
     }
 
@@ -188,20 +190,35 @@ public class JobControlServlet extends AbstractServiceServlet {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
-            final String path = AbstractServiceServlet.getPath(request);
-            String jobId = path.substring(1);
-            final Job job = jobManager.getJobById(jobId);
-            final String outfile = job.getProperty("outfile", String.class);
-            final String script = job.getProperty("script", String.class);
-            final Calendar eventJobStartedTime = job.getProperty("event.job.started.time", Calendar.class);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
-            String auditPath = "/var/audit/jobs/com.composum.sling.core.script.GroovyJobExecutor" + script + "/" + sdf.format(eventJobStartedTime.getTime());
-            final ResourceResolver resolver = request.getResourceResolver();
-            final Resource audit = resolver.getResource(auditPath);
-            resolver.delete(audit);
-            new File(outfile).delete();
-
-
+            try {
+                final String path = AbstractServiceServlet.getPath(request);
+                String jobId = path.substring(1);
+                final Job job = jobManager.getJobById(jobId);
+                final String outfile = job.getProperty("outfile", String.class);
+                final String script = job.getProperty("script", String.class);
+                final Calendar eventJobStartedTime = job.getProperty("event.job.started.time", Calendar.class);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
+                String auditPath = "/var/audit/jobs/com.composum.sling.core.script.GroovyJobExecutor" + script + "/" + sdf.format(eventJobStartedTime.getTime());
+                final ResourceResolver resolver = request.getResourceResolver();
+                final Resource audit = resolver.getResource(auditPath);
+                boolean auditResourceDeleted = false;
+                if (audit != null && !ResourceUtil.isNonExistingResource(audit)) {
+                    resolver.delete(audit);
+                    resolver.commit();
+                    auditResourceDeleted = true;
+                }
+                final boolean b = new File(outfile).delete();
+                try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+                    jsonWriter
+                        .beginObject()
+                            .name("audit").value(auditResourceDeleted)
+                            .name("outfilefile").value(b)
+                        .endObject();
+                }
+            } catch (final Exception ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
         }
     }
 
