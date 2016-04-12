@@ -161,8 +161,8 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
 
     private String buildAuditPath(Job job) {
         String script = job.getProperty("script", String.class);
-        final Calendar eventJobStartetTime = job.getProperty("event.job.started.time", Calendar.class);
-        return buildAuditPathIntern(script, eventJobStartetTime);
+        final Calendar eventJobStartedTime = job.getProperty("event.job.started.time", Calendar.class);
+        return buildAuditPathIntern(script, eventJobStartedTime);
     }
 
     private String buildAuditPathIntern(String script, Calendar eventJobStartetTime) {
