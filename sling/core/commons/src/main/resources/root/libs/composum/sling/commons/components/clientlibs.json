@@ -18,6 +18,9 @@
       "jquery": {
         "embed": "jslibs/jquery/1.11.0/jquery.min.js"
       },
+      "jquery.base64": {
+        "embed": "jslibs/jquery/base64/jquery.base64.js"
+      },
       "aem-6.1": {
         "optional": true,
         "embed": [
