@@ -11,12 +11,14 @@ import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -46,7 +48,7 @@ public class JobControlServlet extends AbstractServiceServlet {
     private static final Logger LOG = LoggerFactory.getLogger(JobControlServlet.class);
 
     public enum Extension {txt, json}
-    public enum Operation {job, jobs, outfile}
+    public enum Operation {job, jobs, outfile, cleanup}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -82,6 +84,7 @@ public class JobControlServlet extends AbstractServiceServlet {
         // POST
         // curl -v -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Fscript=/hello.groovy -Foutfileprefix=groovyjob -X POST http://localhost:9090/bin/core/jobcontrol.job.json
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.job, new CreateJob());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.cleanup, new CleanupJob());
 
         // DELETE
         // curl -v -X DELETE http://localhost:9090/bin/core/jobcontrol.job.json/2016/4/8/15/21/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_81
@@ -132,12 +135,20 @@ public class JobControlServlet extends AbstractServiceServlet {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
+            final String path = AbstractServiceServlet.getPath(request);
             JobManager.QueryType selector = RequestUtil.getSelector(request, JobManager.QueryType.ALL);
             Collection<Job> jobs = jobManager.findJobs(selector, null, 0);
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
                 jsonWriter.beginArray();
                 for (Job job: jobs) {
-                    job2json2(jsonWriter, job);
+                    if (path.length() > 1) {
+                        final String script = job.getProperty("script", String.class);
+                        if (script != null && script.equals(path)) {
+                            job2json2(jsonWriter, job);
+                        }
+                    } else {
+                        job2json2(jsonWriter, job);
+                    }
                 }
                 jsonWriter.endArray();
             }
@@ -170,6 +181,27 @@ public class JobControlServlet extends AbstractServiceServlet {
             final String path = AbstractServiceServlet.getPath(request);
             String jobId = path.substring(1);
             jobManager.stopJobById(jobId);
+        }
+    }
+
+    private class CleanupJob implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            final String path = AbstractServiceServlet.getPath(request);
+            String jobId = path.substring(1);
+            final Job job = jobManager.getJobById(jobId);
+            final String outfile = job.getProperty("outfile", String.class);
+            final String script = job.getProperty("script", String.class);
+            final Calendar eventJobStartedTime = job.getProperty("event.job.started.time", Calendar.class);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
+            String auditPath = "/var/audit/jobs/com.composum.sling.core.script.GroovyJobExecutor" + script + "/" + sdf.format(eventJobStartedTime.getTime());
+            final ResourceResolver resolver = request.getResourceResolver();
+            final Resource audit = resolver.getResource(auditPath);
+            resolver.delete(audit);
+            new File(outfile).delete();
+
+
         }
     }
 
