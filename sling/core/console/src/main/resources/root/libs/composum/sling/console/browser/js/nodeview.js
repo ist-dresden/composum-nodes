@@ -242,10 +242,15 @@
         browser.ScriptTab = browser.EditorTab.extend({
 
             initialize: function (options) {
+                this.id = 'scriptView';
+                this.profile = core.console.getProfile().get(this.id, 'split', {
+                    vertical: undefined
+                });
                 this.verticalSplit = core.getWidget(this.$el,
                     '.split-pane.vertical-split', core.components.VerticalSplitPane);
                 browser.EditorTab.prototype.initialize.apply(this, [options]);
-                this.verticalSplit.setPosition(this.verticalSplit.checkPosition(120));
+                this.verticalSplit.setPosition(this.verticalSplit.checkPosition(this.profile.vertical));
+                this.verticalSplit.$el.on('resize.' + this.id, _.bind(this.onSplitResize, this));
                 this.$logOutput = this.$('.detail-content .log-output');
                 this.$execute = this.$('.editor-toolbar .run-script');
                 this.$execute.click(_.bind(this.execute, this));
@@ -323,7 +328,7 @@
 
             checkJob: function () {
                 // pollOutput on each check even if 'scriptIsRunning' is set to 'false'
-                this.pollOutput(_.bind(function(){
+                this.pollOutput(_.bind(function () {
                     if (this.scriptIsRunning && this.scriptJob) {
                         core.ajaxGet('/bin/core/jobcontrol.job.json/' + this.scriptJob['slingevent:eventId'], {},
                             _.bind(function (data, msg, xhr) {
@@ -423,6 +428,19 @@
                     this.timeout = setTimeout(_.bind(this.checkJob, this),
                         typeof duration === 'boolean' ? 500 : duration);
                 }
+            },
+
+            onSplitResize: function () {
+                var last = _.clone(this.profile);
+                this.profile.vertical = this.verticalSplit.getPosition();
+                if (!_.isEqual(last, this.profile)) {
+                    this.stateChanged();
+                }
+            },
+
+            stateChanged: function () {
+                core.console.getProfile().set(this.id, 'split', this.profile);
+                this.verticalSplit.stateChanged();
             }
         });
 
