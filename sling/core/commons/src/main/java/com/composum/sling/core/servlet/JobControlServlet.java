@@ -372,7 +372,7 @@ public class JobControlServlet extends AbstractServiceServlet {
 
     private void job2json(JsonWriter jsonWriter, Job job) throws IOException {
         jsonWriter.beginObject();
-        Set<String> propertyNames = job.getPropertyNames();
+        Set<String> propertyNames = Collections.unmodifiableSet(job.getPropertyNames());
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         for (String propertyName: propertyNames) {
             Object property = job.getProperty(propertyName);

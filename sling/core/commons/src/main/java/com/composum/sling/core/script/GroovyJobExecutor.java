@@ -13,6 +13,7 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.NotificationConstants;
 import org.apache.sling.event.jobs.consumer.JobExecutionContext;
@@ -77,9 +78,12 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
     @Reference
     protected SequencerService<SequencerService.Token> sequencer;
 
+    @Reference
+    protected DynamicClassLoaderManager dynamicClassLoaderManager;
+
 
     @Override
-    public JobExecutionResult process(Job job, JobExecutionContext context) {
+    public JobExecutionResult process(final Job job, final JobExecutionContext context) {
         String userId = job.getProperty("userid", String.class);
         String outfile = job.getProperty("outfile", String.class);
         final String script = job.getProperty("script", String.class);
@@ -100,18 +104,26 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
             return context.result().message(e.getMessage()).failed();
         }
         try {
-            Session session = adminSession.impersonate(new SimpleCredentials(userId, new char[0]));
+            final Session session = adminSession.impersonate(new SimpleCredentials(userId, new char[0]));
             try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile);
                  PrintWriter out = new PrintWriter(new OutputStreamWriter(fileOutputStream, "UTF-8"))) {
-                final GroovyRunner groovyRunner = new GroovyRunner(session, out);
-                final HashMap<String, Object> variables = new HashMap<>();
-                variables.put("jctx", context);
-                variables.put("job", job);
+
                 final ExecutorService executorService = Executors.newSingleThreadExecutor();
                 final Future<Object> submit = executorService.submit(new Callable<Object>() {
                     @Override
                     public Object call() throws Exception {
-                        return groovyRunner.run(script, variables);
+                        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+                        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+//                        Thread.currentThread().setContextClassLoader(dynamicClassLoaderManager.getDynamicClassLoader());
+                        final GroovyRunner groovyRunner = new GroovyRunner(session, out);
+                        final HashMap<String, Object> variables = new HashMap<>();
+                        variables.put("jctx", context);
+                        variables.put("job", job);
+                        try {
+                            return groovyRunner.run(script, variables);
+                        } finally {
+                            Thread.currentThread().setContextClassLoader(tccl);
+                        }
                     }
                 });
                 while (!submit.isDone()) {

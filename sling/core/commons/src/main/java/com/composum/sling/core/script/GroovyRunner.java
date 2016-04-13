@@ -10,6 +10,7 @@ import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
 import org.osgi.framework.Bundle;
@@ -99,18 +100,12 @@ public class GroovyRunner {
     }
 
     public Object run(Reader scriptReader, Map<String, Object> variables) throws InterruptedException {
-        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-        try {
-            Script script = getScript(scriptReader, variables);
-            Object setupVariables = setup(script);
-            extendBinding(script, setupVariables);
-            extendBinding(script, generalBindings);
-            Object result = script.run();
-            return result;
-        } finally {
-            Thread.currentThread().setContextClassLoader(tccl);
-        }
+        Script script = getScript(scriptReader, variables);
+        Object setupVariables = setup(script);
+        extendBinding(script, setupVariables);
+        extendBinding(script, generalBindings);
+        Object result = script.run();
+        return result;
     }
 
     protected Script getScript(Reader scriptReader, Map<String, Object> variables) {
