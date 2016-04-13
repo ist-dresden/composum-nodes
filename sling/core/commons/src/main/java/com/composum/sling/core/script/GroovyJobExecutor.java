@@ -33,7 +33,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
@@ -113,8 +112,8 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
                     @Override
                     public Object call() throws Exception {
                         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-                        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-//                        Thread.currentThread().setContextClassLoader(dynamicClassLoaderManager.getDynamicClassLoader());
+//                        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+                        Thread.currentThread().setContextClassLoader(dynamicClassLoaderManager.getDynamicClassLoader());
                         final GroovyRunner groovyRunner = new GroovyRunner(session, out);
                         final HashMap<String, Object> variables = new HashMap<>();
                         variables.put("jctx", context);
