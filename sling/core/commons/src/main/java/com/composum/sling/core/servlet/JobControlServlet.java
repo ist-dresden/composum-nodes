@@ -136,7 +136,6 @@ public class JobControlServlet extends AbstractServiceServlet {
                         response.sendError(HttpServletResponse.SC_NOT_FOUND, path);
                     }
                 }
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, path);
             }
         }
 
