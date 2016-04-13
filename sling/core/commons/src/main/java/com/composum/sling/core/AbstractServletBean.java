@@ -28,6 +28,7 @@ public class AbstractServletBean extends AbstractSlingBean {
     /**
      * extract the resource referenced to display in the browsers view as the components resource
      */
+    @Override
     public void initialize(BeanContext context) {
         SlingHttpServletRequest request = context.getAttribute("slingRequest", SlingHttpServletRequest.class);
         if (request == null) {

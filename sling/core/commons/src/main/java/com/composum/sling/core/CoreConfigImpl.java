@@ -177,6 +177,15 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private boolean userManagementServletEnabled;
 
+    public static final String JOBCONTROL_SERVLET_ENABLED = "jobcontrol.servlet.enabled";
+    @Property(
+            name = "jobcontrol.servlet.enabled",
+            label = "Jobcontrol Servlet",
+            description = "the general on/off switch for the services of the Jobcontrol Servlet",
+            boolValue = true
+    )
+    private boolean jobcontrolServletEnabled;
+
     private Map<String, Boolean> enabledServlets;
 
     @Override
@@ -319,6 +328,8 @@ public class CoreConfigImpl implements CoreConfiguration {
                 (Boolean) properties.get(VERSION_SERVLET_ENABLED));
         enabledServlets.put("UserManagementServlet", userManagementServletEnabled =
                 (Boolean) properties.get(USER_MANAGEMENT_SERVLET_ENABLED));
+        enabledServlets.put("JobControlServlet", jobcontrolServletEnabled =
+                (Boolean) properties.get(JOBCONTROL_SERVLET_ENABLED));
     }
 
     @Deactivate

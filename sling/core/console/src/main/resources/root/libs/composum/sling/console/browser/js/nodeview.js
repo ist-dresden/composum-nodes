@@ -251,12 +251,17 @@
                 this.$execute.click(_.bind(this.execute, this));
             },
 
+            reload: function () {
+                browser.EditorTab.prototype.reload.apply(this);
+                this.setupStatus();
+            },
+
             execute: function (event) {
-                this.delay();
                 if (this.scriptIsRunning) {
-                    this.poll('stopScript', _.bind(this.scriptStopped, this), _.bind(this.scriptError, this));
+                    this.cancelJob();
                 } else {
-                    this.poll('startScript', _.bind(this.scriptStarted, this), _.bind(this.scriptError, this));
+                    this.scriptStarted(); // set status immediately
+                    this.startJob();
                 }
             },
 
@@ -270,11 +275,9 @@
                 if (data) {
                     this.logAppend(data);
                 }
-                this.delay(1000);
             },
 
             scriptStopped: function (data) {
-                this.delay();
                 if (data) {
                     this.logAppend(data);
                 }
@@ -284,42 +287,10 @@
                 }
             },
 
-            scriptError: function (xhr) {
-                this.scriptStopped(xhr.responseText);
-            },
-
-            checkScript: function () {
-                if (this.scriptIsRunning) {
-                    this.poll('checkScript', _.bind(this.onCheck, this), _.bind(this.scriptError, this));
-                }
-            },
-
-            onCheck: function (data, message, xhr) {
-                var status = xhr ? xhr.getResponseHeader('Script-Status') : undefined;
-                if (
-                    status == 'initialized' ||
-                    status == 'starting' ||
-                    status == 'running'
-                ) {
-                    this.scriptStarted(xhr.responseText);
-
-                } else if (
-                    status == 'finished' ||
-                    status == 'aborted' ||
-                    status == 'error' ||
-                    status == 'unknown'
-                ) {
-                    if (status == 'error') {
-                        this.$el.addClass('error');
-                    }
-                    this.scriptStopped(data);
-
-                } else {
-                    this.logAppend(data);
-                }
-                if (this.scriptIsRunning) {
-                    this.delay(1000);
-                }
+            scriptError: function (text, xhr) {
+                this.$el.addClass('error');
+                this.scriptStopped(text + xhr.statusText + (xhr.status ? (' (' + xhr.status + ')') : '') + '\n');
+                this.delay(true); // probably one last 'pollOutput' after final status reached
             },
 
             logAppend: function (data) {
@@ -334,18 +305,123 @@
                 }
             },
 
-            poll: function (operation, onSuccess, onError) {
+            setupStatus: function () {
                 var path = browser.getCurrentPath();
-                core.ajaxGet('/bin/core/node.' + operation + '.groovy' + path, {}, onSuccess, onError);
+                core.ajaxGet('/bin/core/jobcontrol.jobs.ACTIVE.json' + path, {},
+                    _.bind(function (data, msg, xhr) {
+                        if (data && data.length > 0) {
+                            this.scriptStarted();
+                            this.logOffset = 0;
+                            this.scriptJob = data[0];
+                            this.delay(true);
+                        }
+                    }, this),
+                    _.bind(function (xhr) {
+                        this.scriptError('Script status check failed: ', xhr);
+                    }, this));
             },
 
+            checkJob: function () {
+                // pollOutput on each check even if 'scriptIsRunning' is set to 'false'
+                this.pollOutput(_.bind(function(){
+                    if (this.scriptIsRunning && this.scriptJob) {
+                        core.ajaxGet('/bin/core/jobcontrol.job.json/' + this.scriptJob['slingevent:eventId'], {},
+                            _.bind(function (data, msg, xhr) {
+                                this.scriptJob = data;
+                                if (this.scriptJob['slingevent:finishedState']) {
+                                    switch (this.scriptJob['slingevent:finishedState']) {
+                                        case 'SUCCEEDED':
+                                            this.scriptStopped('Script finished successfully.\n');
+                                            break;
+                                        case 'STOPPED':
+                                            this.scriptStopped('Script execution stopped.\n');
+                                            break;
+                                        case 'ERROR':
+                                            this.scriptError("Script finished with 'Error': ", {
+                                                statusText: this.scriptJob['slingevent:resultMessage']
+                                            });
+                                            break;
+                                        default:
+                                            this.scriptStopped("Script execution finished with '" +
+                                                this.scriptJob['slingevent:finishedState'] + "'.\n");
+                                            break;
+                                    }
+                                }
+                            }, this),
+                            _.bind(function (xhr) {
+                                this.scriptError('Script status check failed: ', xhr);
+                            }, this));
+                        this.delay(true);
+                    }
+                }, this));
+            },
+
+            startJob: function () {
+                var path = browser.getCurrentPath();
+                this.delay(); // cancel all open timeouts
+                this.logOffset = 0;
+                core.ajaxPost('/bin/core/jobcontrol.job.json', {
+                        'event.job.topic': 'com/composum/sling/core/script/GroovyJobExecutor',
+                        'script': path
+                    }, {},
+                    _.bind(function (data, msg, xhr) {
+                        this.scriptJob = data;
+                        this.delay(true);
+                    }, this),
+                    _.bind(function (xhr) {
+                        this.scriptError('Script start failed: ', xhr);
+                    }, this));
+            },
+
+            cancelJob: function () {
+                if (this.scriptJob) {
+                    core.ajaxDelete('/bin/core/jobcontrol.job.json/' + this.scriptJob['slingevent:eventId'], {},
+                        _.bind(function (data, msg, xhr) {
+                            this.logAppend('Script cancellation requested...\n');
+                            this.delay(true);
+                        }, this),
+                        _.bind(function (xhr) {
+                            this.scriptError('Script cancellation failed: ', xhr);
+                        }, this));
+                }
+            },
+
+            pollOutput: function (callback) {
+                if (this.scriptJob) {
+                    core.ajaxGet('/bin/core/jobcontrol.outfile.txt/' + this.scriptJob['slingevent:eventId'], {
+                            headers: {
+                                Range: 'bytes=' + this.logOffset + '-' // get all output from last offset
+                            }
+                        },
+                        _.bind(function (data, msg, xhr) {
+                            this.logAppend(data);
+                            this.logOffset += parseInt(xhr.getResponseHeader('Content-Length'));
+                            if (_.isFunction(callback)) {
+                                callback.call(this);
+                            }
+                        }, this),
+                        _.bind(function (xhr) {
+                            this.logAppend('Script output retrieval failed: '
+                                + xhr.statusText + ' (' + xhr.status + ')\n');
+                            if (_.isFunction(callback)) {
+                                callback.call(this);
+                            }
+                        }, this));
+                }
+            },
+
+            /**
+             * Set timeout for the next 'checkJob' if duration is 'true' or given as milliseconds.
+             * @param duration 'true' (default slice) or milliseconds; 'undefined' / 'false' to clear all timeouts only
+             */
             delay: function (duration) {
                 if (this.timeout) {
                     clearTimeout(this.timeout);
                     this.timeout = undefined;
                 }
                 if (duration) {
-                    this.timeout = setTimeout(_.bind(this.checkScript, this), duration);
+                    this.timeout = setTimeout(_.bind(this.checkJob, this),
+                        typeof duration === 'boolean' ? 500 : duration);
                 }
             }
         });
