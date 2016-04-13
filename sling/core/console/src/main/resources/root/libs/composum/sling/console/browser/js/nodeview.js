@@ -388,7 +388,7 @@
                         },
                         _.bind(function (data, msg, xhr) {
                             this.logAppend(data);
-                            this.logOffset += xhr.getResponseHeader('Content-Length');
+                            this.logOffset += parseInt(xhr.getResponseHeader('Content-Length'));
                         }, this),
                         _.bind(function (xhr) {
                             this.logAppend('Script output retrieval failed: '
