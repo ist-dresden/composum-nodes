@@ -14,8 +14,11 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.event.impl.jobs.JobImpl;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
+import org.apache.sling.event.jobs.JobUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +84,7 @@ public class JobControlServlet extends AbstractServiceServlet {
         // curl http://localhost:9090/bin/core/jobcontrol.job.json/2016/4/11/13/48/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_0
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.job, new GetJob());
 
-        // curl -r 100-125 -X GET http://localhost:9090/bin/core/jobcontrol.outfile.txt/
+        // curl -r 100-125 -X GET http://localhost:9090/bin/core/jobcontrol.outfile.txt/2016/4/8/15/21/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_81
         operations.setOperation(ServletOperationSet.Method.GET, Extension.txt, Operation.outfile, new GetOutfile());
 
         // POST
@@ -103,33 +106,37 @@ public class JobControlServlet extends AbstractServiceServlet {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
-            final String path = AbstractServiceServlet.getPath(request);
-            final String range = request.getHeader("Range");
-            final List<Range> ranges = decodeRange(range);
-            final String filename = System.getProperty("java.io.tmpdir") + path.substring(1);
-            final File file = new File(filename);
-            response.setCharacterEncoding("UTF-8");
-            response.setContentType("text/plain;charset=utf-8");
-            if (file.exists()) {
-                try (final ServletOutputStream outputStream = response.getOutputStream();
-                     final InputStream inputStream = new FileInputStream(file)) {
-                    writeStream(ranges, outputStream, inputStream);
-                } catch (FileNotFoundException e) {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, path.substring(1));
-                }
-            } else {
-                final ResourceResolver resolver = request.getResourceResolver();
-                final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs//*[outfile='" + filename + "']", "xpath");
-                if (resources.hasNext()) {
-                    final Resource audit = resources.next();
-                    final Resource outfileResource = resolver.getResource(audit, path.substring(1));
+            final String jobId = AbstractServiceServlet.getPath(request).substring(1);
+            final Job job = getJobById(jobId, request);
+            if (job != null) {
+                final String path = job.getProperty("outfile", String.class);
+                final String range = request.getHeader("Range");
+                final List<Range> ranges = decodeRange(range);
+                final File file = new File(path);
+                response.setCharacterEncoding("UTF-8");
+                response.setContentType("text/plain;charset=utf-8");
+                if (file.exists()) {
                     try (final ServletOutputStream outputStream = response.getOutputStream();
-                         final InputStream inputStream = outfileResource.adaptTo(InputStream.class)) {
+                         final InputStream inputStream = new FileInputStream(file)) {
                         writeStream(ranges, outputStream, inputStream);
+                    } catch (FileNotFoundException e) {
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND, path);
                     }
                 } else {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, path.substring(1));
+                    final ResourceResolver resolver = request.getResourceResolver();
+                    final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs//*[outfile='" + path + "']", "xpath");
+                    if (resources.hasNext()) {
+                        final Resource audit = resources.next();
+                        final Resource outfileResource = resolver.getResource(audit, path.substring(path.lastIndexOf('/')+1));
+                        try (final ServletOutputStream outputStream = response.getOutputStream();
+                             final InputStream inputStream = outfileResource.adaptTo(InputStream.class)) {
+                            writeStream(ranges, outputStream, inputStream);
+                        }
+                    } else {
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND, path);
+                    }
                 }
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, path);
             }
         }
 
@@ -202,10 +209,20 @@ public class JobControlServlet extends AbstractServiceServlet {
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
             final String path = AbstractServiceServlet.getPath(request);
             JobManager.QueryType selector = RequestUtil.getSelector(request, JobManager.QueryType.ALL);
+            boolean useAudit = (selector == JobManager.QueryType.ALL || selector == JobManager.QueryType.HISTORY || selector == JobManager.QueryType.SUCCEEDED);
             Collection<Job> jobs = jobManager.findJobs(selector, null, 0);
+            Collection<Job> allJobs = new ArrayList<>(jobs);
+            if (useAudit) {
+                final Collection<Job> auditJobs = getAuditJobs(selector, request.getResourceResolver());
+                for (Job auditJob: auditJobs) {
+                    if (!containsJob(jobs, auditJob)) {
+                        allJobs.add(auditJob);
+                    }
+                }
+            }
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
                 jsonWriter.beginArray();
-                for (Job job: jobs) {
+                for (Job job: allJobs) {
                     if (path.length() > 1) {
                         final String script = job.getProperty("script", String.class);
                         if (script != null && script.equals(path)) {
@@ -217,6 +234,15 @@ public class JobControlServlet extends AbstractServiceServlet {
                 }
                 jsonWriter.endArray();
             }
+        }
+
+        private boolean containsJob(Collection<Job> jobs, Job jobToFind) {
+            for (Job job: jobs) {
+                if (job.getId().equals(jobToFind.getId())) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -230,8 +256,21 @@ public class JobControlServlet extends AbstractServiceServlet {
             final String path = AbstractServiceServlet.getPath(request);
             String jobId = path.substring(1);
             Job job = jobManager.getJobById(jobId);
-            try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
-                job2json(jsonWriter, job);
+            if (job != null) {
+                try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+                    job2json(jsonWriter, job);
+                }
+            } else {
+                //fallback: use audit
+                final ResourceResolver resolver = request.getResourceResolver();
+                final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs//*[slingevent:eventId='" + jobId + "']", "xpath");
+                if (resources.hasNext()) {
+                    final Resource audit = resources.next();
+                    final AuditJob auditJob = new AuditJob(audit);
+                    try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+                        job2json(jsonWriter, auditJob);
+                    }
+                }
             }
         }
     }
@@ -364,6 +403,192 @@ public class JobControlServlet extends AbstractServiceServlet {
                 jsonWriter.name(propertyName).value(String.valueOf(property));
             }
         }
+        jsonWriter.name("jobState").value(job.getJobState().name());
         jsonWriter.endObject();
+    }
+
+    private Job getJobById(String jobId, SlingHttpServletRequest request) {
+        Job job = jobManager.getJobById(jobId);
+        if (job != null) {
+            return job;
+        } else {
+            //fallback: use audit
+            final ResourceResolver resolver = request.getResourceResolver();
+            final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs//*[slingevent:eventId='" + jobId + "']", "xpath");
+            if (resources.hasNext()) {
+                final Resource audit = resources.next();
+                final AuditJob auditJob = new AuditJob(audit);
+                return auditJob;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    private Collection<Job> getAuditJobs(JobManager.QueryType state, final ResourceResolver resolver) {
+        final List<Job> result = new ArrayList<>();
+        final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs//*[@slingevent:eventId]", "xpath");
+        while (resources.hasNext()) {
+            final AuditJob job = new AuditJob(resources.next());
+            final Job.JobState jobState = job.getJobState();
+            if (state == JobManager.QueryType.ALL || state == JobManager.QueryType.HISTORY || state.name().equals(jobState.name())) {
+                result.add(job);
+            }
+        }
+        return result;
+    }
+
+    private static class AuditJob implements Job {
+
+        private Resource resource;
+
+        AuditJob(Resource resource) {
+            this.resource = resource;
+        }
+
+        private String getStringProperty(String name) {
+            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+            return valueMap.get(name, "");
+        }
+
+        @Override
+        public String getTopic() {
+            return getStringProperty("event.job.topic");
+        }
+
+        @Override
+        public String getId() {
+            return getStringProperty("slingevent:eventId");
+        }
+
+        @Override
+        public String getName() {
+            return getStringProperty(Job.PROPERTY_JOB_TITLE);
+        }
+
+        @Override
+        public Object getProperty(String name) {
+            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+            return valueMap.get(name);
+        }
+
+        @Override
+        public Set<String> getPropertyNames() {
+            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+            return valueMap.keySet();
+        }
+
+        @Override
+        public <T> T getProperty(String name, Class<T> type) {
+            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+            return valueMap.get(name, type);
+        }
+
+        @Override
+        public <T> T getProperty(String name, T defaultValue) {
+            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+            return valueMap.get(name, defaultValue);
+        }
+
+        @Override
+        @Deprecated
+        public JobUtil.JobPriority getJobPriority() {
+            return JobUtil.JobPriority.NORM;
+        }
+
+        @Override
+        public int getRetryCount() {
+            return (Integer)this.getProperty(Job.PROPERTY_JOB_RETRY_COUNT);
+        }
+
+        @Override
+        public int getNumberOfRetries() {
+            return (Integer)this.getProperty(Job.PROPERTY_JOB_RETRIES);
+        }
+
+        @Override
+        public String getQueueName() {
+            return (String)this.getProperty(Job.PROPERTY_JOB_QUEUE_NAME);
+        }
+
+        @Override
+        public String getTargetInstance() {
+            return (String)this.getProperty(Job.PROPERTY_JOB_TARGET_INSTANCE);
+        }
+
+        @Override
+        public Calendar getProcessingStarted() {
+            return (Calendar)this.getProperty(Job.PROPERTY_JOB_STARTED_TIME);
+        }
+
+        @Override
+        public Calendar getCreated() {
+            return (Calendar)this.getProperty(Job.PROPERTY_JOB_CREATED);
+        }
+
+        @Override
+        public String getCreatedInstance() {
+            return (String)this.getProperty(Job.PROPERTY_JOB_CREATED_INSTANCE);
+        }
+
+        @Override
+        public JobState getJobState() {
+            final String enumValue = this.getProperty(JobImpl.PROPERTY_FINISHED_STATE, String.class);
+            if ( enumValue == null ) {
+                if ( this.getProcessingStarted() != null ) {
+                    return JobState.ACTIVE;
+                }
+                return JobState.QUEUED;
+            }
+            return JobState.valueOf(enumValue);
+        }
+
+        /**
+         * @see org.apache.sling.event.jobs.Job#getFinishedDate()
+         */
+        @Override
+        public Calendar getFinishedDate() {
+            return this.getProperty(Job.PROPERTY_FINISHED_DATE, Calendar.class);
+        }
+
+        /**
+         * @see org.apache.sling.event.jobs.Job#getResultMessage()
+         */
+        @Override
+        public String getResultMessage() {
+            return this.getProperty(Job.PROPERTY_RESULT_MESSAGE, String.class);
+        }
+
+        /**
+         * @see org.apache.sling.event.jobs.Job#getProgressLog()
+         */
+        @Override
+        public String[] getProgressLog() {
+            return this.getProperty(Job.PROPERTY_JOB_PROGRESS_LOG, String[].class);
+        }
+
+        /**
+         * @see org.apache.sling.event.jobs.Job#getProgressStepCount()
+         */
+        @Override
+        public int getProgressStepCount() {
+            return this.getProperty(Job.PROPERTY_JOB_PROGRESS_STEPS, -1);
+        }
+
+        /**
+         * @see org.apache.sling.event.jobs.Job#getFinishedProgressStep()
+         */
+        @Override
+        public int getFinishedProgressStep() {
+            return this.getProperty(Job.PROPERTY_JOB_PROGRESS_STEP, 0);
+        }
+
+        /**
+         * @see org.apache.sling.event.jobs.Job#getProgressETA()
+         */
+        @Override
+        public Calendar getProgressETA() {
+            return this.getProperty(Job.PROPERTY_JOB_PROGRESS_ETA, Calendar.class);
+        }
     }
 }
