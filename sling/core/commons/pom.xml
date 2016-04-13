@@ -40,6 +40,8 @@
                             {maven-resources}
                         </Include-Resource>
                         <Import-Package>
+                            org.apache.sling.event.jobs.consumer.*;version="[1.1,2)",
+                            org.apache.sling.event.jobs.*;version="[1.5,1.7)",
                             groovy.lang.*;version="[1.8.2,3)",
                             *
                         </Import-Package>
