@@ -312,7 +312,7 @@
 
             setupStatus: function () {
                 var path = browser.getCurrentPath();
-                core.ajaxGet('/bin/core/jobcontrol.jobs.ACTIVE.json' + path, {},
+                core.ajaxGet('/bin/core/jobcontrol.jobs.ACTIVE.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
                     _.bind(function (data, msg, xhr) {
                         if (data && data.length > 0) {
                             this.scriptStarted();
