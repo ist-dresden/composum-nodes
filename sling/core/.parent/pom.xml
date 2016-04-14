@@ -192,6 +192,8 @@
                         <artifactId>maven-sling-plugin</artifactId>
                         <configuration>
                             <slingUrl>http://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
+                            <user>${sling.user}</user>
+                            <password>${sling.password}</password>
                         </configuration>
                         <executions>
                             <execution>
@@ -211,6 +213,8 @@
                             <retryDelay>2000</retryDelay>
                             <retryLimit>10</retryLimit>
                             <quiet>true</quiet>
+                            <username>${sling.user}</username>
+                            <password>${sling.password}</password>
                         </configuration>
                         <executions>
                             <execution>
@@ -353,7 +357,7 @@
             <dependency>
                 <groupId>org.apache.sling</groupId>
                 <artifactId>org.apache.sling.event</artifactId>
-                <version>3.3.12</version>
+                <version>3.3.0</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
