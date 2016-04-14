@@ -217,7 +217,8 @@ public class DefaultClientlibService implements ClientlibService {
 
                 ResourceResolver resolver = createResolverForChanges();
                 try {
-                    final ProcessorContext context = new ProcessorContext(request, resolver, executorService, hints);
+                    final ProcessorContext context = new ProcessorContext(
+                            request, resolver, executorService, hints, mapClientlibURLs());
 
                     final Clientlib.Type type = clientlib.getType();
 

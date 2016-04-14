@@ -51,6 +51,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
         if (type == null) {
             String ext = StringUtils.substringAfterLast(path, ".").toLowerCase();
             try {
+                ext = ext.replaceAll("(png|jpg)", "img");
                 type = Clientlib.Type.valueOf(ext);
             } catch (Exception ex) {
                 type = Clientlib.Type.link;
@@ -87,15 +88,22 @@ public class ClientlibTag extends CpnlBodyTagSupport {
                                 writer.write("\" href=\"");
                                 writer.write(rendererContext.mapClientlibURLs()
                                         ? CpnlElFunctions.url(request, path)
-                                        : path);
+                                        : request.getContextPath() + path);
                                 writer.write("\" />");
                                 break;
                             case js:
                                 writer.write("<script type=\"text/javascript\" src=\"");
                                 writer.write(rendererContext.mapClientlibURLs()
                                         ? CpnlElFunctions.url(request, path)
-                                        : path);
+                                        : request.getContextPath() + path);
                                 writer.write("\"></script>");
+                                break;
+                            case img:
+                                writer.write("<img src=\"");
+                                writer.write(rendererContext.mapClientlibURLs()
+                                        ? CpnlElFunctions.url(request, path)
+                                        : request.getContextPath() + path);
+                                writer.write("\"/>");
                                 break;
                             default:
                                 break;

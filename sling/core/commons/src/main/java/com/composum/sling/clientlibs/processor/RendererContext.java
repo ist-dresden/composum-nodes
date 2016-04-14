@@ -7,6 +7,7 @@ import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.ServletRequest;
 import java.util.HashSet;
 
 /**
@@ -28,8 +29,9 @@ public class RendererContext {
         return attribute;
     }
 
-    protected final BeanContext context;
-    protected final SlingHttpServletRequest request;
+    public final BeanContext context;
+    public final SlingHttpServletRequest request;
+
     protected final HashSet<String> alreadyRendered;
 
     private transient SlingScriptHelper scriptHelper;

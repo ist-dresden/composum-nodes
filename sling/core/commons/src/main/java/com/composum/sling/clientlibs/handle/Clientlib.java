@@ -30,7 +30,7 @@ public class Clientlib {
 
     public static final String RESOURCE_TYPE = "composum/sling/commons/clientlib";
 
-    public enum Type {link, css, js}
+    public enum Type {link, css, js, img}
 
     public static final String PROP_EXPANDED = "expanded";
     public static final String PROP_OPTIONAL = "optional";
@@ -295,6 +295,8 @@ public class Clientlib {
         }
         if (context.mapClientlibURLs()) {
             url = LinkUtil.getUrl(request, url);
+        } else {
+            url = context.request.getContextPath() + url;
         }
         String rel = reference.getProperty(PROP_REL, properties.get(PROP_REL));
         return new Link(url, PROP_REL, rel);

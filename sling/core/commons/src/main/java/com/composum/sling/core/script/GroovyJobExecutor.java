@@ -115,6 +115,10 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
 
     @Override
     public JobExecutionResult process(final Job job, final JobExecutionContext context) {
+        // if -Dcomposum.never.start.groovy=true is set on command line, no scripts will be executed.
+        if (Boolean.getBoolean("composum.never.start.groovy")) {
+            return context.result().message("property \"composum.never.start.groovy\" set. script execution cancelled.").cancelled();
+        }
         String userId = job.getProperty("userid", String.class);
         String outfile = job.getProperty("outfile", String.class);
         final String script = job.getProperty(SCRIPT_PROPERTY_NAME, String.class);
@@ -124,7 +128,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
         try {
             adminResolver = resolverFactory.getAdministrativeResourceResolver(null);
         } catch (LoginException e) {
-            return context.result().message(e.getMessage()).failed();
+            return context.result().message(e.getMessage()).cancelled();
         }
         Session adminSession = adminResolver.adaptTo(Session.class);
         Resource auditResource = giveParent(adminResolver, auditPath);
@@ -132,7 +136,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
             adminResolver.commit();
         } catch (PersistenceException e) {
             LOG.error("Error creating audit of groovy script Job.", e);
-            return context.result().message(e.getMessage()).failed();
+            return context.result().message(e.getMessage()).cancelled();
         }
         try {
             final Session session = adminSession.impersonate(new SimpleCredentials(userId, new char[0]));

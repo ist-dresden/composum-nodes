@@ -362,7 +362,9 @@ public class JobControlServlet extends AbstractServiceServlet {
             }
             properties.put("userid", session.getUserID());
             String outfilePrefix = (String) properties.get("outfileprefix");
-            String outfile = System.getProperty("java.io.tmpdir") + (StringUtils.isBlank(outfilePrefix) ? "slingjob" : outfilePrefix) + "_" + System.currentTimeMillis() + ".out";
+            final String tmpdir = System.getProperty("java.io.tmpdir");
+            final boolean endsWithSeparator = (tmpdir.charAt(tmpdir.length()-1) == File.separatorChar);
+            String outfile = tmpdir + (endsWithSeparator?"":File.separator) + (StringUtils.isBlank(outfilePrefix) ? "slingjob" : outfilePrefix) + "_" + System.currentTimeMillis() + ".out";
             properties.put("outfile", outfile);
             Job job = jobManager.addJob(topic, properties);
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
