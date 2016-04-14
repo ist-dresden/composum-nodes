@@ -115,6 +115,10 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
 
     @Override
     public JobExecutionResult process(final Job job, final JobExecutionContext context) {
+        // if -Dcomposum.never.start.groovy=true is set on command line, no scripts will be executed.
+        if (Boolean.getBoolean("composum.never.start.groovy")) {
+            return context.result().message("property \"composum.never.start.groovy\" set. script execution cancelled.").cancelled();
+        }
         String userId = job.getProperty("userid", String.class);
         String outfile = job.getProperty("outfile", String.class);
         final String script = job.getProperty(SCRIPT_PROPERTY_NAME, String.class);
