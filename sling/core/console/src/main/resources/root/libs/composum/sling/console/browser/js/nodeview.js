@@ -303,7 +303,7 @@
                 var vheight = $scrollPane.height();
                 var height = this.$logOutput[0].scrollHeight;
                 var autoscroll = ($scrollPane.scrollTop() > height - vheight - 30);
-                this.$logOutput.append(data);
+                this.$logOutput.text(this.$logOutput.text() + data);
                 if (autoscroll) {
                     height = this.$logOutput[0].scrollHeight;
                     $scrollPane.scrollTop(height - vheight);
