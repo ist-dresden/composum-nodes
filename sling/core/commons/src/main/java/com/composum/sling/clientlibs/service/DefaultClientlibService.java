@@ -217,7 +217,8 @@ public class DefaultClientlibService implements ClientlibService {
 
                 ResourceResolver resolver = createResolverForChanges();
                 try {
-                    final ProcessorContext context = new ProcessorContext(request, resolver, executorService, hints);
+                    final ProcessorContext context = new ProcessorContext(
+                            request, resolver, executorService, hints, mapClientlibURLs());
 
                     final Clientlib.Type type = clientlib.getType();
 
@@ -369,9 +370,7 @@ public class DefaultClientlibService implements ClientlibService {
         rendererMap.put(Clientlib.Type.link, linkRenderer);
         processorMap = new EnumMap<>(Clientlib.Type.class);
         processorMap.put(Clientlib.Type.js, javascriptProcessor);
-        processorMap.put(Clientlib.Type.css, mapClientlibURLs()
-                ? new ProcessorPipeline(new CssUrlMapper(), cssProcessor)
-                : cssProcessor);
+        processorMap.put(Clientlib.Type.css, new ProcessorPipeline(new CssUrlMapper(), cssProcessor));
     }
 
     @Deactivate

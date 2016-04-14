@@ -2,7 +2,6 @@ package com.composum.sling.clientlibs.processor;
 
 import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.core.BeanContext;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.slf4j.Logger;
@@ -29,8 +28,9 @@ public class RendererContext {
         return attribute;
     }
 
-    protected final BeanContext context;
-    protected final SlingHttpServletRequest request;
+    public final BeanContext context;
+    public final SlingHttpServletRequest request;
+
     protected final HashSet<String> alreadyRendered;
 
     private transient SlingScriptHelper scriptHelper;
@@ -54,17 +54,6 @@ public class RendererContext {
 
     public boolean mapClientlibURLs() {
         return getClientlibService().mapClientlibURLs();
-    }
-
-    public String getContextAndPath(String path) {
-        String contextPath = request.getContextPath();
-        if (StringUtils.isNotBlank(contextPath) && !"/".equals(contextPath)) {
-            if (!contextPath.endsWith("/")) {
-                contextPath += "/";
-            }
-            return contextPath + path;
-        }
-        return path;
     }
 
     public ClientlibService getClientlibService() {
