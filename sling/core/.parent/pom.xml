@@ -363,7 +363,7 @@
             <dependency>
                 <groupId>org.apache.sling</groupId>
                 <artifactId>org.apache.sling.event</artifactId>
-                <version>3.3.12</version>
+                <version>3.3.0</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
