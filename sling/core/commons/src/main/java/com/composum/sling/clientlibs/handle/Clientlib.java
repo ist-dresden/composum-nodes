@@ -295,6 +295,8 @@ public class Clientlib {
         }
         if (context.mapClientlibURLs()) {
             url = LinkUtil.getUrl(request, url);
+        } else {
+            url = context.getContextAndPath(url);
         }
         String rel = reference.getProperty(PROP_REL, properties.get(PROP_REL));
         return new Link(url, PROP_REL, rel);
