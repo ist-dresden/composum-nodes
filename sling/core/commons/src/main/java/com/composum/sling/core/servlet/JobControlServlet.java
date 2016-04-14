@@ -12,6 +12,7 @@ import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -77,7 +78,7 @@ public class JobControlServlet extends AbstractServiceServlet {
         super.init();
 
         // GET
-        // curl -X GET http://localhost:9090/bin/core/jobcontrol.jobs.HISTORY.json/
+        // curl -X GET http://localhost:9090/bin/core/jobcontrol.jobs.HISTORY.json/?topic=com/composum/sling/core/script/GroovyJobExecutor
         // [ALL, ACTIVE, QUEUED, HISTORY, CANCELLED, SUCCEEDED, STOPPED, GIVEN_UP, ERROR, DROPPED]
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.jobs, new GetAllJobs());
 
@@ -136,6 +137,8 @@ public class JobControlServlet extends AbstractServiceServlet {
                         response.sendError(HttpServletResponse.SC_NOT_FOUND, path);
                     }
                 }
+            } else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
         }
 
@@ -207,9 +210,10 @@ public class JobControlServlet extends AbstractServiceServlet {
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
             final String path = AbstractServiceServlet.getPath(request);
+            final RequestParameter topic = request.getRequestParameter("topic");
             JobManager.QueryType selector = RequestUtil.getSelector(request, JobManager.QueryType.ALL);
             boolean useAudit = (selector == JobManager.QueryType.ALL || selector == JobManager.QueryType.HISTORY || selector == JobManager.QueryType.SUCCEEDED);
-            Collection<Job> jobs = jobManager.findJobs(selector, null, 0);
+            Collection<Job> jobs = jobManager.findJobs(selector, topic.getString(), 0);
             Collection<Job> allJobs = new ArrayList<>(jobs);
             if (useAudit) {
                 final Collection<Job> auditJobs = getAuditJobs(selector, request.getResourceResolver());
