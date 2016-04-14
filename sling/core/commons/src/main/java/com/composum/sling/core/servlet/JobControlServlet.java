@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -55,6 +56,7 @@ public class JobControlServlet extends AbstractServiceServlet {
     private static final Logger LOG = LoggerFactory.getLogger(JobControlServlet.class);
 
     public enum Extension {txt, json}
+
     public enum Operation {job, jobs, outfile, cleanup}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
@@ -65,11 +67,13 @@ public class JobControlServlet extends AbstractServiceServlet {
     @Reference
     private JobManager jobManager;
 
-    @Override protected boolean isEnabled() {
+    @Override
+    protected boolean isEnabled() {
         return coreConfig.isEnabled(this);
     }
 
-    @Override protected ServletOperationSet getOperations() {
+    @Override
+    protected ServletOperationSet getOperations() {
         return operations;
     }
 
@@ -128,7 +132,7 @@ public class JobControlServlet extends AbstractServiceServlet {
                     final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs//*[outfile='" + path + "']", "xpath");
                     if (resources.hasNext()) {
                         final Resource audit = resources.next();
-                        final Resource outfileResource = resolver.getResource(audit, path.substring(path.lastIndexOf('/')+1));
+                        final Resource outfileResource = resolver.getResource(audit, path.substring(path.lastIndexOf('/') + 1));
                         try (final ServletOutputStream outputStream = response.getOutputStream();
                              final InputStream inputStream = outfileResource.adaptTo(InputStream.class)) {
                             writeStream(ranges, outputStream, inputStream);
@@ -212,18 +216,24 @@ public class JobControlServlet extends AbstractServiceServlet {
             JobManager.QueryType selector = RequestUtil.getSelector(request, JobManager.QueryType.ALL);
             boolean useAudit = (selector == JobManager.QueryType.ALL || selector == JobManager.QueryType.HISTORY || selector == JobManager.QueryType.SUCCEEDED);
             Collection<Job> jobs = jobManager.findJobs(selector, topic.getString(), 0);
-            Collection<Job> allJobs = new ArrayList<>(jobs);
+            List<Job> allJobs = new ArrayList<>(jobs);
             if (useAudit) {
                 final Collection<Job> auditJobs = getAuditJobs(selector, request.getResourceResolver());
-                for (Job auditJob: auditJobs) {
+                for (Job auditJob : auditJobs) {
                     if (!containsJob(jobs, auditJob)) {
                         allJobs.add(auditJob);
                     }
                 }
             }
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+                Collections.sort(allJobs, new Comparator<Job>() {
+                    @Override
+                    public int compare(Job o1, Job o2) {
+                        return o1.getCreated().compareTo(o2.getCreated());
+                    }
+                });
                 jsonWriter.beginArray();
-                for (Job job: allJobs) {
+                for (Job job : allJobs) {
                     if (path.length() > 1) {
                         final String script = job.getProperty("reference", String.class);
                         if (script != null && script.equals(path)) {
@@ -238,7 +248,7 @@ public class JobControlServlet extends AbstractServiceServlet {
         }
 
         private boolean containsJob(Collection<Job> jobs, Job jobToFind) {
-            for (Job job: jobs) {
+            for (Job job : jobs) {
                 if (job.getId().equals(jobToFind.getId())) {
                     return true;
                 }
@@ -316,10 +326,10 @@ public class JobControlServlet extends AbstractServiceServlet {
                 final boolean b = new File(outfile).delete();
                 try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
                     jsonWriter
-                        .beginObject()
+                            .beginObject()
                             .name("audit").value(auditResourceDeleted)
                             .name("outfile").value(b)
-                        .endObject();
+                            .endObject();
                 }
             } catch (final Exception ex) {
                 LOG.error(ex.getMessage(), ex);
@@ -333,9 +343,9 @@ public class JobControlServlet extends AbstractServiceServlet {
      *
      * used parameters:
      * <ul>
-     *     <li>outfileprefix</li>
-     *     <li>event.job.topic</li>
-     *     <li>reference</li>
+     * <li>outfileprefix</li>
+     * <li>event.job.topic</li>
+     * <li>reference</li>
      * </ul>
      */
     private class CreateJob implements ServletOperation {
@@ -347,8 +357,8 @@ public class JobControlServlet extends AbstractServiceServlet {
             String topic = "";
             Map<String, Object> properties = new HashMap<>();
             @SuppressWarnings("unchecked")
-            Map<String, String []> parameters = request.getParameterMap();
-            for (Map.Entry<String, String []> parameter: parameters.entrySet()) {
+            Map<String, String[]> parameters = request.getParameterMap();
+            for (Map.Entry<String, String[]> parameter : parameters.entrySet()) {
                 if (parameter.getKey().equals("event.job.topic")) {
                     topic = parameter.getValue()[0];
                 } else {
@@ -363,8 +373,8 @@ public class JobControlServlet extends AbstractServiceServlet {
             properties.put("userid", session.getUserID());
             String outfilePrefix = (String) properties.get("outfileprefix");
             final String tmpdir = System.getProperty("java.io.tmpdir");
-            final boolean endsWithSeparator = (tmpdir.charAt(tmpdir.length()-1) == File.separatorChar);
-            String outfile = tmpdir + (endsWithSeparator?"":File.separator) + (StringUtils.isBlank(outfilePrefix) ? "slingjob" : outfilePrefix) + "_" + System.currentTimeMillis() + ".out";
+            final boolean endsWithSeparator = (tmpdir.charAt(tmpdir.length() - 1) == File.separatorChar);
+            String outfile = tmpdir + (endsWithSeparator ? "" : File.separator) + (StringUtils.isBlank(outfilePrefix) ? "slingjob" : outfilePrefix) + "_" + System.currentTimeMillis() + ".out";
             properties.put("outfile", outfile);
             Job job = jobManager.addJob(topic, properties);
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
@@ -377,10 +387,10 @@ public class JobControlServlet extends AbstractServiceServlet {
         jsonWriter.beginObject();
         Set<String> propertyNames = Collections.unmodifiableSet(job.getPropertyNames());
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        for (String propertyName: propertyNames) {
+        for (String propertyName : propertyNames) {
             Object property = job.getProperty(propertyName);
             if (property instanceof Calendar) {
-                dateFormat.setTimeZone(((Calendar)property).getTimeZone());
+                dateFormat.setTimeZone(((Calendar) property).getTimeZone());
                 jsonWriter.name(propertyName).value(dateFormat.format(((Calendar) property).getTime()));
             } else if (property instanceof Boolean) {
                 jsonWriter.name(propertyName).value((Boolean) property);
@@ -398,7 +408,7 @@ public class JobControlServlet extends AbstractServiceServlet {
             } else if (property instanceof Object[]) {
                 jsonWriter.name(propertyName);
                 jsonWriter.beginArray();
-                for (Object o: (Object[])property) {
+                for (Object o : (Object[]) property) {
                     jsonWriter.value(String.valueOf(o));
                 }
                 jsonWriter.endArray();
@@ -501,44 +511,44 @@ public class JobControlServlet extends AbstractServiceServlet {
 
         @Override
         public int getRetryCount() {
-            return (Integer)this.getProperty(Job.PROPERTY_JOB_RETRY_COUNT);
+            return (Integer) this.getProperty(Job.PROPERTY_JOB_RETRY_COUNT);
         }
 
         @Override
         public int getNumberOfRetries() {
-            return (Integer)this.getProperty(Job.PROPERTY_JOB_RETRIES);
+            return (Integer) this.getProperty(Job.PROPERTY_JOB_RETRIES);
         }
 
         @Override
         public String getQueueName() {
-            return (String)this.getProperty(Job.PROPERTY_JOB_QUEUE_NAME);
+            return (String) this.getProperty(Job.PROPERTY_JOB_QUEUE_NAME);
         }
 
         @Override
         public String getTargetInstance() {
-            return (String)this.getProperty(Job.PROPERTY_JOB_TARGET_INSTANCE);
+            return (String) this.getProperty(Job.PROPERTY_JOB_TARGET_INSTANCE);
         }
 
         @Override
         public Calendar getProcessingStarted() {
-            return (Calendar)this.getProperty(Job.PROPERTY_JOB_STARTED_TIME);
+            return (Calendar) this.getProperty(Job.PROPERTY_JOB_STARTED_TIME);
         }
 
         @Override
         public Calendar getCreated() {
-            return (Calendar)this.getProperty(Job.PROPERTY_JOB_CREATED);
+            return (Calendar) this.getProperty(Job.PROPERTY_JOB_CREATED);
         }
 
         @Override
         public String getCreatedInstance() {
-            return (String)this.getProperty(Job.PROPERTY_JOB_CREATED_INSTANCE);
+            return (String) this.getProperty(Job.PROPERTY_JOB_CREATED_INSTANCE);
         }
 
         @Override
         public JobState getJobState() {
             final String enumValue = this.getProperty(JobImpl.PROPERTY_FINISHED_STATE, String.class);
-            if ( enumValue == null ) {
-                if ( this.getProcessingStarted() != null ) {
+            if (enumValue == null) {
+                if (this.getProcessingStarted() != null) {
                     return JobState.ACTIVE;
                 }
                 return JobState.QUEUED;
