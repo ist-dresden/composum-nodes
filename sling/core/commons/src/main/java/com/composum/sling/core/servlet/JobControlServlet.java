@@ -133,8 +133,6 @@ public class JobControlServlet extends AbstractServiceServlet {
                              final InputStream inputStream = outfileResource.adaptTo(InputStream.class)) {
                             writeStream(ranges, outputStream, inputStream);
                         }
-                    } else {
-                        response.sendError(HttpServletResponse.SC_NOT_FOUND, path);
                     }
                 }
             } else {
@@ -227,7 +225,7 @@ public class JobControlServlet extends AbstractServiceServlet {
                 jsonWriter.beginArray();
                 for (Job job: allJobs) {
                     if (path.length() > 1) {
-                        final String script = job.getProperty("script", String.class);
+                        final String script = job.getProperty("reference", String.class);
                         if (script != null && script.equals(path)) {
                             job2json(jsonWriter, job);
                         }
@@ -320,7 +318,7 @@ public class JobControlServlet extends AbstractServiceServlet {
                     jsonWriter
                         .beginObject()
                             .name("audit").value(auditResourceDeleted)
-                            .name("outfilefile").value(b)
+                            .name("outfile").value(b)
                         .endObject();
                 }
             } catch (final Exception ex) {
@@ -337,7 +335,7 @@ public class JobControlServlet extends AbstractServiceServlet {
      * <ul>
      *     <li>outfileprefix</li>
      *     <li>event.job.topic</li>
-     *     <li>script - only for groovy jobs</li>
+     *     <li>reference</li>
      * </ul>
      */
     private class CreateJob implements ServletOperation {
