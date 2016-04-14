@@ -1,9 +1,12 @@
 package com.composum.sling.clientlibs.processor;
 
+import com.composum.sling.clientlibs.service.ClientlibService;
+import com.composum.sling.core.BeanContext;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletRequest;
 import java.util.HashSet;
 
 /**
@@ -16,18 +19,25 @@ public class RendererContext {
 
     public static final String CONTEXT_KEY = RendererContext.class.getName() + ".instance";
 
-    public static RendererContext instance(ServletRequest request) {
+    public static RendererContext instance(BeanContext context, SlingHttpServletRequest request) {
         RendererContext attribute = (RendererContext) request.getAttribute(CONTEXT_KEY);
         if (attribute == null) {
-            attribute = new RendererContext();
+            attribute = new RendererContext(context, request);
             request.setAttribute(CONTEXT_KEY, attribute);
         }
         return attribute;
     }
 
+    protected final BeanContext context;
+    protected final SlingHttpServletRequest request;
     protected final HashSet<String> alreadyRendered;
 
-    protected RendererContext() {
+    private transient SlingScriptHelper scriptHelper;
+    private transient ClientlibService clientlibService;
+
+    protected RendererContext(BeanContext context, SlingHttpServletRequest request) {
+        this.context = context;
+        this.request = request;
         this.alreadyRendered = new HashSet<>();
     }
 
@@ -39,5 +49,27 @@ public class RendererContext {
         }
         LOG.debug("rejected: " + key);
         return false;
+    }
+
+    public boolean mapClientlibURLs() {
+        return getClientlibService().mapClientlibURLs();
+    }
+
+    public ClientlibService getClientlibService() {
+        if (clientlibService == null) {
+            clientlibService = getService(ClientlibService.class);
+        }
+        return clientlibService;
+    }
+
+    public SlingScriptHelper getScriptHelper() {
+        if (scriptHelper == null) {
+            scriptHelper = context.getAttribute("sling", SlingScriptHelper.class);
+        }
+        return scriptHelper;
+    }
+
+    public <ServiceType> ServiceType getService(Class<ServiceType> type) {
+        return getScriptHelper().getService(type);
     }
 }

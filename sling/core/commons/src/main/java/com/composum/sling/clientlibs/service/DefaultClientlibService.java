@@ -80,6 +80,16 @@ public class DefaultClientlibService implements ClientlibService {
     )
     protected String cacheRoot;
 
+    public static final boolean DEFAULT_MAP_CLIENTLIB_URLS = true;
+    public static final String MAP_CLIENTLIB_URLS = "clientlib.url.map";
+    @Property(
+            name = MAP_CLIENTLIB_URLS,
+            label = "Map Clientlib URLs",
+            description = "if 'on' (defaut) all clientlib URLs are mapped by the Resource Resolver",
+            boolValue = true
+    )
+    private boolean mapClientlibURLs;
+
     public static final int DEFAULT_THREAD_POOL_MIN = 5;
     public static final String MIN_THREAD_POOL_SIZE = "clientlibs.threadpool.min";
     @Property(
@@ -130,6 +140,11 @@ public class DefaultClientlibService implements ClientlibService {
 
     protected EnumMap<Clientlib.Type, ClientlibRenderer> rendererMap;
     protected EnumMap<Clientlib.Type, ClientlibProcessor> processorMap;
+
+    @Override
+    public boolean mapClientlibURLs() {
+        return mapClientlibURLs;
+    }
 
     @Override
     public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
@@ -339,6 +354,7 @@ public class DefaultClientlibService implements ClientlibService {
     @Activate
     protected void activate(ComponentContext context) {
         Dictionary<String, Object> properties = context.getProperties();
+        mapClientlibURLs = PropertiesUtil.toBoolean(properties.get(MAP_CLIENTLIB_URLS), DEFAULT_MAP_CLIENTLIB_URLS);
         gzipEnabled = PropertiesUtil.toBoolean(properties.get(GZIP_ENABLED), DEFAULT_GZIP_ENABLED);
         cacheRoot = PropertiesUtil.toString(properties.get(CACHE_ROOT), DEFAULT_CACHE_ROOT);
         threadPoolMin = PropertiesUtil.toInteger(properties.get(MIN_THREAD_POOL_SIZE), DEFAULT_THREAD_POOL_MIN);
@@ -353,7 +369,9 @@ public class DefaultClientlibService implements ClientlibService {
         rendererMap.put(Clientlib.Type.link, linkRenderer);
         processorMap = new EnumMap<>(Clientlib.Type.class);
         processorMap.put(Clientlib.Type.js, javascriptProcessor);
-        processorMap.put(Clientlib.Type.css, new ProcessorPipeline(new CssUrlMapper(), cssProcessor));
+        processorMap.put(Clientlib.Type.css, mapClientlibURLs()
+                ? new ProcessorPipeline(new CssUrlMapper(), cssProcessor)
+                : cssProcessor);
     }
 
     @Deactivate
