@@ -2,6 +2,8 @@ package com.composum.sling.core.script;
 
 import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.util.ResourceUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
@@ -14,11 +16,13 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
+import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.NotificationConstants;
 import org.apache.sling.event.jobs.consumer.JobExecutionContext;
 import org.apache.sling.event.jobs.consumer.JobExecutionResult;
 import org.apache.sling.event.jobs.consumer.JobExecutor;
+import org.osgi.service.component.ComponentContext;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
@@ -36,16 +40,25 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Dictionary;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-@Component
+import static com.composum.sling.core.script.GroovyRunner.DEFAULT_SETUP_SCRIPT;
+
+@Component(
+        label = "Groovy Job Executor Service",
+        description = "Provides the execution of groovy scripts in the repository context.",
+        immediate = true,
+        metatype = true
+)
 @Service(value = {JobExecutor.class, EventHandler.class})
 @Properties({
         @Property(
@@ -62,6 +75,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
     private static final Logger LOG = LoggerFactory.getLogger(GroovyJobExecutor.class);
     private static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
     static final String GROOVY_TOPIC = "com/composum/sling/core/script/GroovyJobExecutor";
+    private static final String SCRIPT_PROPERTY_NAME = "reference";
 
     static {
         Map<String, Object> map = new HashMap<>();
@@ -70,6 +84,16 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
     }
 
     private static final String AUDIT_BASE_PATH = "/var/audit/jobs/com.composum.sling.core.script.GroovyJobExecutor";
+
+
+    public static final String GROOVY_SETUP_SCRIPT = "groovy.setup.script";
+    @Property(
+            name = GROOVY_SETUP_SCRIPT,
+            label = "Groovy setup script",
+            description = "the optional path to a custom groovy script to setup a groovy runner script object",
+            value = ""
+    )
+    protected String groovySetupScript;
 
     @Reference
     private ResourceResolverFactory resolverFactory;
@@ -80,12 +104,20 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
     @Reference
     protected DynamicClassLoaderManager dynamicClassLoaderManager;
 
+    @Activate
+    protected void activate(ComponentContext context) throws Exception {
+        Dictionary<String, Object> properties = context.getProperties();
+        groovySetupScript = PropertiesUtil.toString(properties.get(GROOVY_SETUP_SCRIPT), DEFAULT_SETUP_SCRIPT);
+        if (StringUtils.isBlank(groovySetupScript)) {
+            groovySetupScript = DEFAULT_SETUP_SCRIPT;
+        }
+    }
 
     @Override
     public JobExecutionResult process(final Job job, final JobExecutionContext context) {
         String userId = job.getProperty("userid", String.class);
         String outfile = job.getProperty("outfile", String.class);
-        final String script = job.getProperty("script", String.class);
+        final String script = job.getProperty(SCRIPT_PROPERTY_NAME, String.class);
         final String auditPath = buildAuditPath(job);
         ResourceResolver adminResolver;
         File tempFile = new File(outfile);
@@ -114,7 +146,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
                         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
 //                        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
                         Thread.currentThread().setContextClassLoader(dynamicClassLoaderManager.getDynamicClassLoader());
-                        final GroovyRunner groovyRunner = new GroovyRunner(session, out);
+                        final GroovyRunner groovyRunner = new GroovyRunner(session, out, groovySetupScript);
                         final HashMap<String, Object> variables = new HashMap<>();
                         variables.put("jctx", context);
                         variables.put("job", job);
@@ -136,14 +168,14 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
                     }
                 }
                 final Object run = submit.get();
-                if (run != null) {
-                    context.log(run.toString());
-                }
+                return context.result().message(String.valueOf(run)).succeeded();
             }
-            return context.result().message(tempFile.getPath()).succeeded();
-        } catch (Exception e) {
+        } catch (ExecutionException e) {
             LOG.error("Error executing groovy script Job.", e);
             return context.result().message(e.getMessage()).cancelled();
+        } catch (Exception e) {
+            LOG.error("Error executing groovy script Job.", e);
+            return context.result().message(e.toString()).cancelled();
         } finally {
             try {
                 Resource logFileResource = adminResolver.create(auditResource, outfile.substring(outfile.lastIndexOf(File.separator) + 1), new HashMap<String, Object>() {{
@@ -174,7 +206,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
     }
 
     private String buildAuditPath(Job job) {
-        String script = job.getProperty("script", String.class);
+        String script = job.getProperty(SCRIPT_PROPERTY_NAME, String.class);
         final Calendar eventJobStartedTime = job.getProperty("event.job.started.time", Calendar.class);
         return buildAuditPathIntern(script, eventJobStartedTime);
     }
@@ -222,7 +254,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
                 event.getTopic().equals(NotificationConstants.TOPIC_JOB_CANCELLED)) {
             final String topic = (String)event.getProperty(NotificationConstants.NOTIFICATION_PROPERTY_JOB_TOPIC);
             if (topic.equals(GROOVY_TOPIC)) {
-                final String script = (String) event.getProperty("script");
+                final String script = (String) event.getProperty(SCRIPT_PROPERTY_NAME);
                 final Calendar eventJobStartetTime = (Calendar) event.getProperty("event.job.started.time");
                 final String auditPath = buildAuditPathIntern(script, eventJobStartetTime);
                 ResourceResolver adminResolver = null;

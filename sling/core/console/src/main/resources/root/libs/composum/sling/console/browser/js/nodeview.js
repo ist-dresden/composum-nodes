@@ -367,7 +367,7 @@
                 this.logOffset = 0;
                 core.ajaxPost('/bin/core/jobcontrol.job.json', {
                         'event.job.topic': 'com/composum/sling/core/script/GroovyJobExecutor',
-                        'script': path
+                        'reference': path
                     }, {},
                     _.bind(function (data, msg, xhr) {
                         this.scriptJob = data;
