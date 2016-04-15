@@ -242,18 +242,30 @@
         browser.ScriptTab = browser.EditorTab.extend({
 
             initialize: function (options) {
-                this.id = 'scriptView';
-                this.profile = core.console.getProfile().get(this.id, 'split', {
-                    vertical: undefined
+                this.profile = core.console.getProfile().get('browser', 'scriptView', {
+                    vertical: undefined,
+                    audit: false
                 });
                 this.verticalSplit = core.getWidget(this.$el,
                     '.split-pane.vertical-split', core.components.VerticalSplitPane);
                 browser.EditorTab.prototype.initialize.apply(this, [options]);
-                this.verticalSplit.setPosition(this.verticalSplit.checkPosition(this.profile.vertical));
-                this.verticalSplit.$el.on('resize.' + this.id, _.bind(this.onSplitResize, this));
-                this.$logOutput = this.$('.detail-content .log-output');
+                this.$bottomArea = this.$('.detail-content .bottom-area');
+                this.$logOutput = this.$bottomArea.find('.log-output');
+                this.$history = this.$bottomArea.find('.history');
+                this.$historyList = this.$history.find('.executions');
+                this.$history.find('.toolbar .audit-link').click(_.bind(this.selectAuditNode, this));
+                this.$history.find('.toolbar .refresh').click(_.bind(this.loadHistory, this));
+                this.$history.find('.toolbar .purge').click(_.bind(this.purgeHistory, this));
+                this.$history.find('.toolbar .close').click(_.bind(this.toggleHistory, this));
                 this.$execute = this.$('.editor-toolbar .run-script');
                 this.$execute.click(_.bind(this.execute, this));
+                this.$toogleHistory = this.$('.editor-toolbar .history');
+                this.$toogleHistory.click(_.bind(this.toggleHistory, this));
+                this.verticalSplit.setPosition(this.verticalSplit.checkPosition(this.profile.vertical));
+                this.verticalSplit.$el.on('resize.' + this.id, _.bind(this.stateChanged, this));
+                if (this.profile.audit) {
+                    this.toggleHistory();
+                }
             },
 
             reload: function () {
@@ -273,13 +285,14 @@
             scriptStarted: function (data) {
                 if (!this.scriptIsRunning) {
                     this.scriptIsRunning = true;
-                    this.$logOutput.html('');
+                    this.$logOutput.text('');
                     this.$el.removeClass('error');
                     this.$el.addClass('running');
                 }
                 if (data) {
                     this.logAppend(data);
                 }
+                this.loadHistory();
             },
 
             scriptStopped: function (data) {
@@ -290,6 +303,7 @@
                     this.$el.removeClass('running');
                     this.scriptIsRunning = false;
                 }
+                this.loadHistory();
             },
 
             scriptError: function (text, xhr) {
@@ -391,9 +405,14 @@
                 }
             },
 
-            pollOutput: function (callback) {
-                if (this.scriptJob) {
-                    core.ajaxGet('/bin/core/jobcontrol.outfile.txt/' + this.scriptJob['slingevent:eventId'], {
+            pollOutput: function (callback, jobId) {
+                if (!jobId) {
+                    if (this.scriptJob) {
+                        jobId = this.scriptJob['slingevent:eventId'];
+                    }
+                }
+                if (jobId) {
+                    core.ajaxGet('/bin/core/jobcontrol.outfile.txt/' + jobId, {
                             headers: {
                                 Range: 'bytes=' + this.logOffset + '-' // get all output from last offset
                             }
@@ -430,17 +449,79 @@
                 }
             },
 
-            onSplitResize: function () {
-                var last = _.clone(this.profile);
-                this.profile.vertical = this.verticalSplit.getPosition();
-                if (!_.isEqual(last, this.profile)) {
-                    this.stateChanged();
+            toggleHistory: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                this.$bottomArea.toggleClass('history');
+                this.loadHistory();
+                this.stateChanged();
+            },
+
+            loadHistory: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                this.$historyList.html('');
+                if (this.$bottomArea.hasClass('history')) {
+                    var path = browser.getCurrentPath();
+                    core.ajaxGet('/bin/core/jobcontrol.jobs.ALL.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
+                        _.bind(function (data, msg, xhr) {
+                            for (var i = 0; i < data.length; i++) {
+                                var state = data[i].jobState;
+                                this.$historyList.append('<li class="'
+                                    + (state ? state.toLowerCase() : 'unknown')
+                                    + '"><a href="#" data-id="'
+                                    + data[i]['slingevent:eventId']
+                                    + '"><span class="time created">'
+                                    + data[i]['slingevent:created']
+                                    + '</span><span class="state">'
+                                    + state
+                                    + '</span><span class="time finished">'
+                                    + data[i]['slingevent:finishedDate']
+                                    + '</span><span class="result">'
+                                    + data[i]['slingevent:resultMessage']
+                                    + '</span></a></li>');
+                            }
+                            this.$historyList.find('a').click(_.bind(this.loadLog, this));
+                        }, this),
+                        _.bind(function (xhr) {
+                            this.logAppend('Script history load failed: ' + xhr.statusText);
+                        }, this));
                 }
             },
 
+            loadLog: function (event) {
+                event.preventDefault();
+                var $link = $(event.currentTarget);
+                this.$logOutput.text('');
+                this.logOffset = 0;
+                this.pollOutput(_.bind(function () {
+                    this.logAppend($link.find('.result').text());
+                }, this), $link.data('id'));
+            },
+
+            purgeHistory: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+            },
+
+            selectAuditNode: function (event) {
+                    event.preventDefault();
+                var $link = $(event.currentTarget);
+                var path = '/var/audit/jobs/com.composum.sling.core.script.GroovyJobExecutor' + $link.data('path');
+                $(document).trigger('path:select', [path]);
+            },
+
             stateChanged: function () {
-                core.console.getProfile().set(this.id, 'split', this.profile);
-                this.verticalSplit.stateChanged();
+                var last = _.clone(this.profile);
+                this.profile.audit = this.$bottomArea.hasClass('history');
+                this.profile.vertical = this.verticalSplit.getPosition();
+                if (!_.isEqual(last, this.profile)) {
+                    core.console.getProfile().set('browser', 'scriptView', this.profile);
+                    this.verticalSplit.stateChanged();
+                }
             }
         });
 
