@@ -1,7 +1,6 @@
 package com.composum.sling.core.script;
 
 import com.composum.sling.core.concurrent.SequencerService;
-import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -18,7 +17,6 @@ import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.event.jobs.Job;
-import org.apache.sling.event.jobs.NotificationConstants;
 import org.apache.sling.event.jobs.consumer.JobExecutionContext;
 import org.apache.sling.event.jobs.consumer.JobExecutionResult;
 import org.apache.sling.event.jobs.consumer.JobExecutor;
@@ -52,6 +50,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static com.composum.sling.core.script.GroovyRunner.DEFAULT_SETUP_SCRIPT;
+import static com.composum.sling.core.util.ResourceUtil.*;
+import static org.apache.sling.event.jobs.Job.JobState.*;
+import static org.apache.sling.event.jobs.Job.*;
+import static org.apache.sling.event.jobs.NotificationConstants.*;
 
 @Component(
         label = "Groovy Job Executor Service",
@@ -79,7 +81,7 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
 
     static {
         Map<String, Object> map = new HashMap<>();
-        map.put(ResourceUtil.PROP_PRIMARY_TYPE, "sling:Folder");
+        map.put(PROP_PRIMARY_TYPE, "sling:Folder");
         CRUD_CACHE_FOLDER_PROPS = Collections.unmodifiableMap(map);
     }
 
@@ -183,24 +185,25 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
         } finally {
             try {
                 Resource logFileResource = adminResolver.create(auditResource, outfile.substring(outfile.lastIndexOf(File.separator) + 1), new HashMap<String, Object>() {{
-                    put(ResourceUtil.PROP_PRIMARY_TYPE, ResourceUtil.TYPE_FILE);
+                    put(PROP_PRIMARY_TYPE, TYPE_FILE);
                 }});
                 try (final InputStream inputStream = new FileInputStream(tempFile)) {
-                    adminResolver.create(logFileResource, ResourceUtil.CONTENT_NODE, new HashMap<String, Object>() {{
-                        put(ResourceUtil.PROP_PRIMARY_TYPE, ResourceUtil.TYPE_RESOURCE);
-                        put(ResourceUtil.PROP_MIME_TYPE, "text/plain");
-                        put(ResourceUtil.PROP_DATA, inputStream);
+                    adminResolver.create(logFileResource, CONTENT_NODE, new HashMap<String, Object>() {{
+                        put(PROP_PRIMARY_TYPE, TYPE_RESOURCE);
+                        put(PROP_MIME_TYPE, "text/plain");
+                        put(PROP_DATA, inputStream);
                     }});
                 }
                 final boolean deleted = tempFile.delete();
                 final Set<String> propertyNames = job.getPropertyNames();
                 final ModifiableValueMap map = auditResource.adaptTo(ModifiableValueMap.class);
                 for (String propertyName: propertyNames) {
-                    if (!propertyName.startsWith("jcr:") && !propertyName.equals("sling:resourceType")) {
+                    if (!propertyName.startsWith("jcr:") && !propertyName.equals(PROP_RESOURCE_TYPE)) {
                         final Object property = job.getProperty(propertyName);
                         map.put(propertyName, property);
                     }
                 }
+                map.put(PROP_RESOURCE_TYPE, "composum/sling/jobcontrol/audit");
                 adminResolver.commit();
             } catch (Exception e) {
                 LOG.error("Error writing audit of groovy script Job.", e);
@@ -253,45 +256,50 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
 
     @Override
     public void handleEvent(Event event) {
-        if (event.getTopic().equals(NotificationConstants.TOPIC_JOB_FINISHED) ||
-                event.getTopic().equals(NotificationConstants.TOPIC_JOB_FAILED) ||
-                event.getTopic().equals(NotificationConstants.TOPIC_JOB_CANCELLED)) {
-            final String topic = (String)event.getProperty(NotificationConstants.NOTIFICATION_PROPERTY_JOB_TOPIC);
+        if (event.getTopic().equals(TOPIC_JOB_FINISHED) ||
+                event.getTopic().equals(TOPIC_JOB_FAILED) ||
+                event.getTopic().equals(TOPIC_JOB_CANCELLED)) {
+            final String topic = (String)event.getProperty(NOTIFICATION_PROPERTY_JOB_TOPIC);
             if (topic.equals(GROOVY_TOPIC)) {
                 final String script = (String) event.getProperty(SCRIPT_PROPERTY_NAME);
-                final Calendar eventJobStartetTime = (Calendar) event.getProperty("event.job.started.time");
+                final Calendar eventJobStartetTime = (Calendar) event.getProperty(PROPERTY_JOB_STARTED_TIME);
                 final String auditPath = buildAuditPathIntern(script, eventJobStartetTime);
                 ResourceResolver adminResolver = null;
                 try {
                     adminResolver = resolverFactory.getAdministrativeResourceResolver(null);
                     final Resource auditResource = adminResolver.getResource(auditPath);
                     final ModifiableValueMap map = auditResource.adaptTo(ModifiableValueMap.class);
-                    if (event.containsProperty("slingevent:resultMessage")) {
-                        map.put("slingevent:resultMessage", event.getProperty("slingevent:resultMessage"));
+                    if (event.containsProperty(PROPERTY_RESULT_MESSAGE)) {
+                        map.put(PROPERTY_RESULT_MESSAGE, event.getProperty(PROPERTY_RESULT_MESSAGE));
                     }
-                    if (event.containsProperty("slingevent:finishedDate")) {
-                        map.put("slingevent:finishedDate", event.getProperty("slingevent:finishedDate"));
+                    if (event.containsProperty(PROPERTY_FINISHED_DATE)) {
+                        final Calendar finishedDate = (Calendar) event.getProperty(PROPERTY_FINISHED_DATE);
+                        map.put(PROPERTY_FINISHED_DATE, finishedDate);
+                        final long executionTime = finishedDate.getTimeInMillis() - eventJobStartetTime.getTimeInMillis();
+                        map.put("executionTime", executionTime);
                     } else {
                         //FIXME slingevent:finishedDate is never part of the job properties
-                        map.put("slingevent:finishedDate", GregorianCalendar.getInstance());
-                    }
+                        final Calendar finishedDate = GregorianCalendar.getInstance();
+                        map.put(PROPERTY_FINISHED_DATE, finishedDate);
+                        final long executionTime = finishedDate.getTimeInMillis() - eventJobStartetTime.getTimeInMillis();
+                        map.put("executionTime", executionTime);                    }
                     if (event.containsProperty("slingevent:finishedState")) {
                         map.put("slingevent:finishedState", event.getProperty("slingevent:finishedState"));
                     } else {
                         //FIXME slingevent:finishedState is never part of the job properties
                         switch (event.getTopic()) {
-                            case NotificationConstants.TOPIC_JOB_FINISHED:
-                                map.put("slingevent:finishedState", Job.JobState.SUCCEEDED.name());
+                            case TOPIC_JOB_FINISHED:
+                                map.put("slingevent:finishedState", SUCCEEDED.name());
                                 break;
-                            case NotificationConstants.TOPIC_JOB_CANCELLED:
+                            case TOPIC_JOB_CANCELLED:
                                 if ("execution stopped".equals(event.getProperty("slingevent:resultMessage"))) {
-                                    map.put("slingevent:finishedState", Job.JobState.STOPPED.name());
+                                    map.put("slingevent:finishedState", STOPPED.name());
                                 } else {
-                                    map.put("slingevent:finishedState", Job.JobState.ERROR.name());
+                                    map.put("slingevent:finishedState", ERROR.name());
                                 }
                                 break;
-                            case NotificationConstants.TOPIC_JOB_FAILED:
-                                map.put("slingevent:finishedState", Job.JobState.GIVEN_UP.name());
+                            case TOPIC_JOB_FAILED:
+                                map.put("slingevent:finishedState", GIVEN_UP.name());
                                 break;
                         }
                     }

@@ -13,6 +13,7 @@ import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -38,7 +39,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -89,8 +92,11 @@ public class JobControlServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.txt, Operation.outfile, new GetOutfile());
 
         // POST
-        // curl -v -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Fscript=/hello.groovy -Foutfileprefix=groovyjob -X POST http://localhost:9090/bin/core/jobcontrol.job.json
+        // curl -v -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Freference=/hello.groovy -Foutfileprefix=groovyjob -X POST http://localhost:9090/bin/core/jobcontrol.job.json
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.job, new CreateJob());
+        // curl -v -u admin:admin -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Freference=/libs/hello.groovy -Fkeep=2 -X POST http://localhost:9090/bin/core/jobcontrol.cleanup.json
+        // curl -v -u admin:admin -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Fkeep=2 -X POST http://localhost:9090/bin/core/jobcontrol.cleanup.json
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.cleanup, new PurgeAudit());
 
         // DELETE
         // curl -v -X DELETE http://localhost:9090/bin/core/jobcontrol.job.json/2016/4/8/15/21/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_81
@@ -289,6 +295,69 @@ public class JobControlServlet extends AbstractServiceServlet {
         }
     }
 
+    private class PurgeAudit implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            try {
+                final ResourceResolver resolver = request.getResourceResolver();
+                final int keep = Integer.parseInt(request.getRequestParameter("keep").getString());
+                final RequestParameter reference = request.getRequestParameter("reference");
+                final RequestParameter topic = request.getRequestParameter("event.job.topic");
+                if (reference != null) {
+                    final String referenceString = reference.getString();
+                    final String query = "/jcr:root/var/audit/jobs/" + topic.getString().replaceAll("/", ".") + referenceString + "/*[@slingevent:eventId]";
+                    final Iterator<Resource> auditResources = resolver.findResources(query, "xpath");
+                    removeAudits(resolver, keep, auditResources);
+                } else {
+                    final String allAuditsQuery = "/jcr:root/var/audit/jobs/" + topic.getString().replaceAll("/", ".") + "//*[@slingevent:eventId]";
+                    final Iterator<Resource> allAuditResources = resolver.findResources(allAuditsQuery, "xpath");
+                    final Set<String> referencePaths = new HashSet<>();
+                    while (allAuditResources.hasNext()) {
+                        final Resource auditResource = allAuditResources.next();
+                        final String referencePath = auditResource.getParent().getPath();
+                        referencePaths.add(referencePath);
+                    }
+                    for (String path : referencePaths) {
+                        final Resource referenceResource = resolver.getResource(path);
+                        final Iterable<Resource> auditResources = referenceResource.getChildren();
+                        removeAudits(resolver, keep, auditResources.iterator());
+                    }
+
+                }
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+            }
+        }
+
+        private void removeAudits(ResourceResolver resolver, int keep, Iterator<Resource> auditResources) throws PersistenceException {
+            final List<AuditJob> allAuditJobs = new ArrayList<>();
+            while (auditResources.hasNext()) {
+                final Resource auditResource = auditResources.next();
+                final AuditJob auditJob = new AuditJob(auditResource);
+                allAuditJobs.add(auditJob);
+            }
+            final Comparator<AuditJob> comparator = new AuditJobComparator();
+            Collections.sort(allAuditJobs, comparator);
+            int size = allAuditJobs.size();
+            for (int i = 0; i < size - keep; i++) {
+                final AuditJob x = allAuditJobs.get(i);
+                resolver.delete(x.resource);
+            }
+            resolver.commit();
+        }
+
+        private class AuditJobComparator implements Comparator<AuditJob> {
+            @Override
+            public int compare(AuditJob o1, AuditJob o2) {
+                final Calendar j1s = o1.getProcessingStarted();
+                final Calendar j2s = o2.getProcessingStarted();
+                return j1s.compareTo(j2s);
+            }
+        }
+    }
+
     /**
      * Cleans up audit and tempfile.
      */
@@ -443,7 +512,7 @@ public class JobControlServlet extends AbstractServiceServlet {
 
     private static class AuditJob implements Job {
 
-        private Resource resource;
+        protected Resource resource;
 
         AuditJob(Resource resource) {
             this.resource = resource;
