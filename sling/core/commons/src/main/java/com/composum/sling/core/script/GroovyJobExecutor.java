@@ -144,41 +144,43 @@ public class GroovyJobExecutor implements JobExecutor, EventHandler {
             final Session session = adminSession.impersonate(new SimpleCredentials(userId, new char[0]));
             try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile);
                  PrintWriter out = new PrintWriter(new OutputStreamWriter(fileOutputStream, "UTF-8"))) {
-
                 final ExecutorService executorService = Executors.newSingleThreadExecutor();
-                final Future<Object> submit = executorService.submit(new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
-                        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+                try {
+                    final Future<Object> submit = executorService.submit(new Callable<Object>() {
+                        @Override
+                        public Object call() throws Exception {
+                            ClassLoader tccl = Thread.currentThread().getContextClassLoader();
 //                        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-                        Thread.currentThread().setContextClassLoader(dynamicClassLoaderManager.getDynamicClassLoader());
-                        final GroovyRunner groovyRunner = new GroovyRunner(session, out, groovySetupScript);
-                        final HashMap<String, Object> variables = new HashMap<>();
-                        variables.put("jctx", context);
-                        variables.put("job", job);
-                        try {
-                            return groovyRunner.run(script, variables);
-                        } finally {
-                            Thread.currentThread().setContextClassLoader(tccl);
+                            Thread.currentThread().setContextClassLoader(dynamicClassLoaderManager.getDynamicClassLoader());
+                            final GroovyRunner groovyRunner = new GroovyRunner(session, out, groovySetupScript);
+                            final HashMap<String, Object> variables = new HashMap<>();
+                            variables.put("jctx", context);
+                            variables.put("job", job);
+                            try {
+                                return groovyRunner.run(script, variables);
+                            } finally {
+                                Thread.currentThread().setContextClassLoader(tccl);
+                            }
+                        }
+                    });
+                    while (!submit.isDone()) {
+                        Thread.yield();
+                        out.flush();
+                        if (context.isStopped()) {
+                            LOG.warn("context for script {} stopped", script);
+                            executorService.shutdownNow();
+                            // magic string. message must not be changed!
+                            return context.result().message("execution stopped").cancelled();
                         }
                     }
-                });
-                while (!submit.isDone()) {
-                    Thread.yield();
-                    out.flush();
-                    if (context.isStopped()) {
-                        LOG.warn("context for script {} stopped", script);
-                        executorService.shutdownNow();
-                        // magic string. message must not be changed!
-                        return context.result().message("execution stopped").cancelled();
-                    }
+                    final Object run = submit.get();
+                    return context.result().message(String.valueOf(run)).succeeded();
+                } catch (ExecutionException e) {
+                    LOG.error("Error executing groovy script Job.", e);
+                    e.printStackTrace(out);
+                    return context.result().message(e.getMessage()).cancelled();
                 }
-                final Object run = submit.get();
-                return context.result().message(String.valueOf(run)).succeeded();
             }
-        } catch (ExecutionException e) {
-            LOG.error("Error executing groovy script Job.", e);
-            return context.result().message(e.getMessage()).cancelled();
         } catch (Exception e) {
             LOG.error("Error executing groovy script Job.", e);
             return context.result().message(e.toString()).cancelled();
