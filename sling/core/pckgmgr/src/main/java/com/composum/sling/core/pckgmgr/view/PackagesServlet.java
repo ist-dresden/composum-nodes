@@ -1,4 +1,4 @@
-package com.composum.sling.core.pckgmgr;
+package com.composum.sling.core.pckgmgr.view;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.sling.SlingServlet;

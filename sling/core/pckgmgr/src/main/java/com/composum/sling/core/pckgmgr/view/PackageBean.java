@@ -2,7 +2,6 @@ package com.composum.sling.core.pckgmgr.view;
 
 import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
-import com.composum.sling.core.pckgmgr.PackagesServlet;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;

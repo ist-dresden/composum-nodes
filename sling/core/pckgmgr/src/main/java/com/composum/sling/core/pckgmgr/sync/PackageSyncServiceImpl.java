@@ -1,4 +1,4 @@
-package com.composum.sling.core.pckgmgr.vault;
+package com.composum.sling.core.pckgmgr.sync;
 
 /**
  * Created by rw on 02.12.15.

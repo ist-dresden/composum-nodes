@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Helper methods for Package handling (VLT Package Manager)
@@ -48,6 +49,8 @@ public class PackageUtil {
     public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     public static final String THUMBNAIL_PNG = "thumbnail.png";
+
+    public static final Pattern IMPORT_DONE = Pattern.compile("^Package imported\\.$");
 
     public enum TreeType {
         group, jcrpckg

@@ -1,4 +1,4 @@
-package com.composum.sling.core.pckgmgr.core;
+package com.composum.sling.core.pckgmgr;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
@@ -51,7 +51,8 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Calendar;
 import java.util.List;
-import java.util.regex.Pattern;
+
+import static com.composum.sling.core.pckgmgr.util.PackageUtil.IMPORT_DONE;
 
 /** The servlet to provide download and upload of content packages and package definitions. */
 @SlingServlet(paths = "/bin/core/package", methods = {"GET", "POST", "DELETE"})
@@ -68,8 +69,6 @@ public class PackageServlet extends AbstractServiceServlet {
     public static final String ZIP_CONTENT_TYPE = "application/zip";
 
     public static final boolean AUTO_SAVE = true;
-
-    public static final Pattern IMPORT_DONE = Pattern.compile("^Package imported\\.$");
 
     // service references
 

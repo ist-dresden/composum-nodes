@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.regex.Pattern;
 
@@ -18,6 +19,8 @@ import java.util.regex.Pattern;
 public abstract class PackageProgressTracker implements ProgressTrackerListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageUtil.class);
+
+    public static final String PLAIN_TEXT_ACTION_INDENT = "     ";
 
     public static class Item {
 
@@ -113,6 +116,52 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
                     builder.append(", error: ").append(item.error);
                 }
                 LOG.debug(builder.toString());
+            }
+        }
+    }
+
+    // Plain text Output
+
+    public static class TextWriterTracking extends PackageProgressTracker {
+
+        protected final PrintWriter writer;
+        protected final Pattern finalizedIndicator;
+
+        public TextWriterTracking(SlingHttpServletResponse response, Pattern finalizedIndicator)
+                throws IOException {
+            this(response.getWriter(), finalizedIndicator);
+        }
+
+        public TextWriterTracking(PrintWriter writer, Pattern finalizedIndicator)
+                throws IOException {
+            this.writer = writer;
+            this.finalizedIndicator = finalizedIndicator;
+        }
+
+        @Override
+        public void writePrologue() throws IOException {
+        }
+
+        @Override
+        public void writeEpilogue() throws IOException {
+        }
+
+        @Override
+        protected void writeItem(Item item) throws IOException {
+            if (item.action != null) {
+                writer.append(item.action);
+                writer.append(PLAIN_TEXT_ACTION_INDENT.substring(item.action.length()));
+            } else {
+                writer.append(PLAIN_TEXT_ACTION_INDENT);
+            }
+            writer.append(item.path != null ? item.path : item.message);
+            if (item.errorDetected) {
+                writer.append("\n  ! ");
+                writer.append(item.error);
+            }
+            writer.append('\n');
+            if (finalizedIndicator != null && finalizedIndicator.matcher(item.action).matches()) {
+                writeEpilogue();
             }
         }
     }
