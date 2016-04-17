@@ -130,7 +130,6 @@
             <artifactId>bndlib</artifactId>
         </dependency>
 
-
         <!-- JCR API, Jackrabbit -->
         <dependency>
             <groupId>javax.jcr</groupId>
