@@ -84,17 +84,12 @@ public class GroovyRunner {
 
     public Object run(String path, Map<String, Object> variables) throws InterruptedException {
         Object result = null;
-        Reader reader = getScriptResource(path);
-        if (reader != null) {
-            try {
-                try {
-                    result = run(reader, variables);
-                } finally {
-                    reader.close();
-                }
-            } catch (IOException ioex) {
-                LOG.error(ioex.getMessage(), ioex);
+        try (Reader reader = getScriptResource(path)) {
+            if (reader != null) {
+                result = run(reader, variables);
             }
+        } catch (IOException ioex) {
+            LOG.error(ioex.getMessage(), ioex);
         }
         return result;
     }
