@@ -80,13 +80,13 @@ public class DefaultClientlibService implements ClientlibService {
     )
     protected String cacheRoot;
 
-    public static final boolean DEFAULT_MAP_CLIENTLIB_URLS = true;
+    public static final boolean DEFAULT_MAP_CLIENTLIB_URLS = false;
     public static final String MAP_CLIENTLIB_URLS = "clientlib.url.map";
     @Property(
             name = MAP_CLIENTLIB_URLS,
             label = "Map Clientlib URLs",
-            description = "if 'on' (defaut) all clientlib URLs are mapped by the Resource Resolver",
-            boolValue = true
+            description = "if 'on' all clientlib URLs are mapped by the Resource Resolver; default: 'off'",
+            boolValue = DEFAULT_MAP_CLIENTLIB_URLS
     )
     private boolean mapClientlibURLs;
 

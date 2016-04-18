@@ -23,14 +23,11 @@ import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import java.io.PrintWriter;
-import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static com.composum.sling.core.script.GroovyRunner.DEFAULT_SETUP_SCRIPT;
-import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
 
 @Component(
         label = "Groovy Job Executor Service",
@@ -49,18 +46,11 @@ import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
                 value = {"org/apache/sling/event/notification/job/*"},
                 propertyPrivate = true)
 })
-public class GroovyJobExecutor extends AbstractJobExecutor {
+public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
 
     private static final Logger LOG = LoggerFactory.getLogger(GroovyJobExecutor.class);
-    private static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
     static final String GROOVY_TOPIC = "com/composum/sling/core/script/GroovyJobExecutor";
     private static final String SCRIPT_PROPERTY_NAME = "reference";
-
-    static {
-        Map<String, Object> map = new HashMap<>();
-        map.put(PROP_PRIMARY_TYPE, "sling:Folder");
-        CRUD_CACHE_FOLDER_PROPS = Collections.unmodifiableMap(map);
-    }
 
     private static final String AUDIT_BASE_PATH = AUDIT_ROOT_PATH + "com.composum.sling.core.script.GroovyJobExecutor";
 
@@ -76,6 +66,7 @@ public class GroovyJobExecutor extends AbstractJobExecutor {
     @Reference
     protected DynamicClassLoaderManager dynamicClassLoaderManager;
 
+    @Override
     @Activate
     protected void activate(ComponentContext context) throws Exception {
         Dictionary<String, Object> properties = context.getProperties();
