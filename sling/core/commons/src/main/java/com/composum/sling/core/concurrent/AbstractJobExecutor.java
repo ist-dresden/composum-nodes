@@ -62,7 +62,7 @@ import static org.apache.sling.event.jobs.NotificationConstants.TOPIC_JOB_FAILED
 import static org.apache.sling.event.jobs.NotificationConstants.TOPIC_JOB_FINISHED;
 
 @Component(componentAbstract = true)
-public abstract class AbstractJobExecutor implements JobExecutor, EventHandler {
+public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractJobExecutor.class);
 
@@ -103,13 +103,13 @@ public abstract class AbstractJobExecutor implements JobExecutor, EventHandler {
     /**
      * The Callable does the job wich is prepared by the executor.
      */
-    protected abstract Callable<Object> createCallable(final Job job,
+    protected abstract Callable<Result> createCallable(final Job job,
                                                        final JobExecutionContext context,
                                                        final ResourceResolver adminResolver,
                                                        final PrintWriter out)
             throws Exception;
 
-    protected abstract class UserContextCallable implements Callable<Object> {
+    protected abstract class UserContextCallable implements Callable<Result> {
 
         protected final Job job;
         protected final JobExecutionContext context;
@@ -165,7 +165,7 @@ public abstract class AbstractJobExecutor implements JobExecutor, EventHandler {
                  PrintWriter out = new PrintWriter(new OutputStreamWriter(fileOutputStream, "UTF-8"))) {
                 final ExecutorService executorService = Executors.newSingleThreadExecutor();
                 try {
-                    final Future<Object> submit = executorService.submit(
+                    final Future<Result> submit = executorService.submit(
                             createCallable(job, context, adminResolver, out));
                     while (!submit.isDone()) {
                         Thread.yield();
