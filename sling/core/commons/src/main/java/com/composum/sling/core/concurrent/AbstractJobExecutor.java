@@ -268,8 +268,8 @@ public abstract class AbstractJobExecutor implements JobExecutor, EventHandler {
             final String topic = (String) event.getProperty(NOTIFICATION_PROPERTY_JOB_TOPIC);
             if (topic.equals(getJobTopic())) {
                 final String script = (String) event.getProperty(JOB_REFRENCE_PROPERTY);
-                final Calendar eventJobStartetTime = (Calendar) event.getProperty(PROPERTY_JOB_STARTED_TIME);
-                final String auditPath = buildAuditPathIntern(script, eventJobStartetTime);
+                final Calendar eventJobStartedTime = (Calendar) event.getProperty(PROPERTY_JOB_STARTED_TIME);
+                final String auditPath = buildAuditPathIntern(script, eventJobStartedTime);
                 ResourceResolver adminResolver = null;
                 try {
                     adminResolver = resolverFactory.getAdministrativeResourceResolver(null);
@@ -281,13 +281,13 @@ public abstract class AbstractJobExecutor implements JobExecutor, EventHandler {
                     if (event.containsProperty(PROPERTY_FINISHED_DATE)) {
                         final Calendar finishedDate = (Calendar) event.getProperty(PROPERTY_FINISHED_DATE);
                         map.put(PROPERTY_FINISHED_DATE, finishedDate);
-                        final long executionTime = finishedDate.getTimeInMillis() - eventJobStartetTime.getTimeInMillis();
+                        final long executionTime = finishedDate.getTimeInMillis() - eventJobStartedTime.getTimeInMillis();
                         map.put("executionTime", executionTime);
                     } else {
                         //FIXME slingevent:finishedDate is never part of the job properties
                         final Calendar finishedDate = GregorianCalendar.getInstance();
                         map.put(PROPERTY_FINISHED_DATE, finishedDate);
-                        final long executionTime = finishedDate.getTimeInMillis() - eventJobStartetTime.getTimeInMillis();
+                        final long executionTime = finishedDate.getTimeInMillis() - eventJobStartedTime.getTimeInMillis();
                         map.put("executionTime", executionTime);
                     }
                     if (event.containsProperty("slingevent:finishedState")) {
