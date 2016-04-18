@@ -52,15 +52,8 @@ import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
 public class GroovyJobExecutor extends AbstractJobExecutor {
 
     private static final Logger LOG = LoggerFactory.getLogger(GroovyJobExecutor.class);
-    private static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
     static final String GROOVY_TOPIC = "com/composum/sling/core/script/GroovyJobExecutor";
     private static final String SCRIPT_PROPERTY_NAME = "reference";
-
-    static {
-        Map<String, Object> map = new HashMap<>();
-        map.put(PROP_PRIMARY_TYPE, "sling:Folder");
-        CRUD_CACHE_FOLDER_PROPS = Collections.unmodifiableMap(map);
-    }
 
     private static final String AUDIT_BASE_PATH = AUDIT_ROOT_PATH + "com.composum.sling.core.script.GroovyJobExecutor";
 
@@ -76,6 +69,7 @@ public class GroovyJobExecutor extends AbstractJobExecutor {
     @Reference
     protected DynamicClassLoaderManager dynamicClassLoaderManager;
 
+    @Override
     @Activate
     protected void activate(ComponentContext context) throws Exception {
         Dictionary<String, Object> properties = context.getProperties();
