@@ -71,7 +71,7 @@ public abstract class UrlTag extends CpnlBodyTagSupport {
         writer.write("=\"");
         writer.write(rendererContext.mapClientlibURLs()
                 ? CpnlElFunctions.url(request, url)
-                : request.getContextPath() + url);
+                : CpnlElFunctions.unmappedUrl(request, url));
         writer.write("\"");
         if (StringUtils.isNotBlank(role)) {
             writer.write(" role=\"");

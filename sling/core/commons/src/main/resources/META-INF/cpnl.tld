@@ -287,10 +287,17 @@
     </function>
 
     <function>
+        <name>unmappedUrl</name>
+        <description>transforms a string value for URL (complete) rendering</description>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String unmappedUrl(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
+    </function>
+
+    <function>
         <name>value</name>
         <description>transforms a string value for rendering (does nothing)</description>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
-        <function-signature>java.lang.String value(java.lang.String)</function-signature>
+        <function-signature>java.lang.Object value(java.lang.Object)</function-signature>
     </function>
 
     <function>

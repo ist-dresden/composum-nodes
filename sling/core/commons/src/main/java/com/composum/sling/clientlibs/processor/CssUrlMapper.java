@@ -69,6 +69,6 @@ public class CssUrlMapper implements ClientlibProcessor {
         SlingHttpServletRequest request = context.getRequest();
         return context.mapClientlibURLs()
                 ? LinkUtil.getUrl(request, url)
-                : request.getContextPath() + url;
+                : LinkUtil.getUnmappedUrl(request, url);
     }
 }

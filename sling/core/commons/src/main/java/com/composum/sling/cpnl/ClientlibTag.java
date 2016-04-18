@@ -88,21 +88,21 @@ public class ClientlibTag extends CpnlBodyTagSupport {
                                 writer.write("\" href=\"");
                                 writer.write(rendererContext.mapClientlibURLs()
                                         ? CpnlElFunctions.url(request, path)
-                                        : request.getContextPath() + path);
+                                        : CpnlElFunctions.unmappedUrl(request, path));
                                 writer.write("\" />");
                                 break;
                             case js:
                                 writer.write("<script type=\"text/javascript\" src=\"");
                                 writer.write(rendererContext.mapClientlibURLs()
                                         ? CpnlElFunctions.url(request, path)
-                                        : request.getContextPath() + path);
+                                        : CpnlElFunctions.unmappedUrl(request, path));
                                 writer.write("\"></script>");
                                 break;
                             case img:
                                 writer.write("<img src=\"");
                                 writer.write(rendererContext.mapClientlibURLs()
                                         ? CpnlElFunctions.url(request, path)
-                                        : request.getContextPath() + path);
+                                        : CpnlElFunctions.unmappedUrl(request, path));
                                 writer.write("\"/>");
                                 break;
                             default:

@@ -30,11 +30,11 @@ public class LinkUtil {
 
     public static final Pattern SELECTOR_PATTERN = Pattern.compile("^(.*/[^/]+)(\\.[^.]+)$");
 
-
     /**
      * Builds a mapped link to a path (resource path) without selectors and a determined extension.
+     *
      * @param request the request context for path mapping (the result is always mapped)
-     * @param url the URL to use (complete) or the path to an addressed resource (without any extension)
+     * @param url     the URL to use (complete) or the path to an addressed resource (without any extension)
      * @return the mapped url for the referenced resource
      */
     public static String getUrl(SlingHttpServletRequest request, String url) {
@@ -42,9 +42,21 @@ public class LinkUtil {
     }
 
     /**
-     * Builds a mapped link to a path (resource path) without selectors and with the given extension.
+     * Builds a unmapped link to a path (resource path) without selectors and a determined extension.
+     *
      * @param request the request context for path mapping (the result is always mapped)
-     * @param url the URL to use (complete) or the path to an addressed resource (without any extension)
+     * @param url     the URL to use (complete) or the path to an addressed resource (without any extension)
+     * @return the mapped url for the referenced resource
+     */
+    public static String getUnmappedUrl(SlingHttpServletRequest request, String url) {
+        return getUrl(request, url, null, null, false);
+    }
+
+    /**
+     * Builds a mapped link to a path (resource path) without selectors and with the given extension.
+     *
+     * @param request   the request context for path mapping (the result is always mapped)
+     * @param url       the URL to use (complete) or the path to an addressed resource (without any extension)
      * @param extension the extension (can be 'null'; should be 'html or '.html' by default)
      * @return the mapped url for the referenced resource
      */
@@ -54,14 +66,30 @@ public class LinkUtil {
 
     /**
      * Builds a mapped link to the path (resource path) with optional selectors and extension.
-     * @param request the request context for path mapping (the result is always mapped)
-     * @param url the URL to use (complete) or the path to an addressed resource (without any extension)
+     *
+     * @param request   the request context for path mapping (the result is always mapped)
+     * @param url       the URL to use (complete) or the path to an addressed resource (without any extension)
      * @param selectors an optional selector string with all necessary selectors (can be 'null')
      * @param extension an optional extension (can be 'null' for extension determination)
      * @return the mapped url for the referenced resource
      */
     public static String getUrl(SlingHttpServletRequest request, String url,
                                 String selectors, String extension) {
+        return getUrl(request, url, selectors, extension, true);
+    }
+
+    /**
+     * Builds a mapped link to the path (resource path) with optional selectors and extension.
+     *
+     * @param request   the request context for path mapping (the result is always mapped)
+     * @param url       the URL to use (complete) or the path to an addressed resource (without any extension)
+     * @param selectors an optional selector string with all necessary selectors (can be 'null')
+     * @param extension an optional extension (can be 'null' for extension determination)
+     * @param mapUrl    if 'true': use Resolver for a final URL mapping
+     * @return the mapped url for the referenced resource
+     */
+    public static String getUrl(SlingHttpServletRequest request, String url,
+                                String selectors, String extension, boolean mapUrl) {
 
         // skip blank urls
         if (StringUtils.isBlank(url)) {
@@ -90,10 +118,14 @@ public class LinkUtil {
 
                 // check for a necessary extension and determine it if not specified
                 extension = getExtension(resource, extension);
-            } 
+            }
 
             // map the path (the url) with the resource resolver (encodes the url)
-            url = resolver.map(request, url);
+            if (mapUrl) {
+                url = resolver.map(request, url);
+            } else {
+                url = request.getContextPath() + url;
+            }
 
             if (StringUtils.isNotBlank(extension)) {
                 url += extension;   // extension starts with a '.'
@@ -117,8 +149,9 @@ public class LinkUtil {
 
     /**
      * Makes a URL already built external; the url should be built by the 'getUrl' method.
+     *
      * @param request the request as the externalization context
-     * @param url the url value (the local URL)
+     * @param url     the url value (the local URL)
      * @return
      */
     public static String getAbsoluteUrl(SlingHttpServletRequest request, String url) {
@@ -131,6 +164,7 @@ public class LinkUtil {
 
     /**
      * Builds the 'authority' part (host:port) of an absolute URL.
+     *
      * @param request the current request with the 'host' and 'port' values
      */
     public static String getAuthority(SlingHttpServletRequest request) {
@@ -157,6 +191,7 @@ public class LinkUtil {
 
     /**
      * Retrieves the target for a resource if there are redirects declared.
+     *
      * @return the target path or url (can be external); 'null' if no redirect detected
      * @throws RedirectLoopException if a 'loop' has been detected during redirect resolving
      */
@@ -212,7 +247,8 @@ public class LinkUtil {
     /**
      * Returns the extension for a URL to a resource based on a predefined value (can be null or '').
      * The result is always not 'null' and can be added without check; it starts with a '.' if not blank.
-     * @param resource the referenced resource
+     *
+     * @param resource  the referenced resource
      * @param extension the predefined extension (can be 'null' or blank for determination)
      * @return the string which has to add to the resources path; '' if nothing should add
      */
@@ -223,8 +259,9 @@ public class LinkUtil {
     /**
      * Returns the extension for a URL to a resource based on a predefined value (can be null or '').
      * The result is always not 'null' and can be added without check; it starts with a '.' if not blank.
-     * @param resource the referenced resource
-     * @param extension the predefined extension (can be 'null' or blank for determination)
+     *
+     * @param resource                the referenced resource
+     * @param extension               the predefined extension (can be 'null' or blank for determination)
      * @param detectMimeTypeExtension if 'true' an extension according to the mime type will be detected
      * @return the string which has to add to the resources path; '' if nothing should add
      */
@@ -263,6 +300,7 @@ public class LinkUtil {
 
     /**
      * URL encoding for a resource path (without the encoding for the '/' path delimiters).
+     *
      * @param path the path to encode
      * @return the URL encoded path
      */

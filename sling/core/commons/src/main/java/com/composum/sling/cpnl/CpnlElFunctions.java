@@ -12,6 +12,7 @@ public class CpnlElFunctions {
 
     /**
      * Returns the repository path of a child of a resource.
+     *
      * @param base the parent resource object
      * @param path the relative path to the child resource
      * @return the absolute path of the child if found, otherwise the original path value
@@ -23,8 +24,9 @@ public class CpnlElFunctions {
 
     /**
      * Builds the URL for a repository path using the LinkUtil.getURL() method.
+     *
      * @param request the current request (domain host hint)
-     * @param path the repository path
+     * @param path    the repository path
      * @return the URL built in the context of the requested domain host
      */
     public static String url(SlingHttpServletRequest request, String path) {
@@ -32,7 +34,19 @@ public class CpnlElFunctions {
     }
 
     /**
+     * Builds the URL for a repository path using the LinkUtil.getUnmappedURL() method.
+     *
+     * @param request the current request (domain host hint)
+     * @param path    the repository path
+     * @return the URL built in the context of the requested domain host
+     */
+    public static String unmappedUrl(SlingHttpServletRequest request, String path) {
+        return LinkUtil.getUnmappedUrl(request, path);
+    }
+
+    /**
      * A 'placeholder' to signal 'avoid escaping' during text rendering.
+     *
      * @param value the value to render
      * @return the unescaped value
      */
@@ -42,6 +56,7 @@ public class CpnlElFunctions {
 
     /**
      * Returns the escaped text of a value (HTML escaping to prevent from XSS).
+     *
      * @param value the value to escape
      * @return the HTML escaped text of the value
      */
@@ -51,6 +66,7 @@ public class CpnlElFunctions {
 
     /**
      * Returns the escaped text of a rich text value (reduced HTML escaping).
+     *
      * @param value the rich text value to escape
      * @return the escaped HTML code of the value
      */
@@ -60,6 +76,7 @@ public class CpnlElFunctions {
 
     /**
      * Returns the encoded path of a of a repository path.
+     *
      * @param value the path to encode
      * @return the encoded path
      */
@@ -69,6 +86,7 @@ public class CpnlElFunctions {
 
     /**
      * Returns the escaped script code of a value (Script escaping to prevent from XSS).
+     *
      * @param value the value to escape
      * @return the Script escaped code of the value
      */
