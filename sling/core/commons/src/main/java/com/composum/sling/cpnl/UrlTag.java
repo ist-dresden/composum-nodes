@@ -1,5 +1,7 @@
 package com.composum.sling.cpnl;
 
+import com.composum.sling.clientlibs.processor.RendererContext;
+import com.composum.sling.core.BeanContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,11 +64,14 @@ public abstract class UrlTag extends CpnlBodyTagSupport {
         classes = null;
     }
 
-    protected void writeAttributes (JspWriter writer) throws IOException {
+    protected void writeAttributes(JspWriter writer) throws IOException {
+        RendererContext rendererContext = RendererContext.instance(new BeanContext.Page(pageContext), request);
         writer.write(" ");
         writer.write(getUrlAttr());
         writer.write("=\"");
-        writer.write(CpnlElFunctions.url(request, url));
+        writer.write(rendererContext.mapClientlibURLs()
+                ? CpnlElFunctions.url(request, url)
+                : CpnlElFunctions.unmappedUrl(request, url));
         writer.write("\"");
         if (StringUtils.isNotBlank(role)) {
             writer.write(" role=\"");

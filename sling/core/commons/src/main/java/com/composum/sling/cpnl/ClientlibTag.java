@@ -3,6 +3,7 @@ package com.composum.sling.cpnl;
 import com.composum.sling.clientlibs.handle.Clientlib;
 import com.composum.sling.clientlibs.processor.RendererContext;
 import com.composum.sling.clientlibs.service.ClientlibService;
+import com.composum.sling.core.BeanContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
         if (type == null) {
             String ext = StringUtils.substringAfterLast(path, ".").toLowerCase();
             try {
+                ext = ext.replaceAll("(png|jpg)", "img");
                 type = Clientlib.Type.valueOf(ext);
             } catch (Exception ex) {
                 type = Clientlib.Type.link;
@@ -61,7 +63,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
     @Override
     public int doEndTag() throws JspException {
         try {
-            RendererContext rendererContext = RendererContext.instance(request);
+            RendererContext rendererContext = RendererContext.instance(new BeanContext.Page(pageContext), request);
 
             Clientlib.Type type = getType();
             Clientlib clientlib = new Clientlib(request, path, type);
@@ -84,13 +86,24 @@ public class ClientlibTag extends CpnlBodyTagSupport {
                                 writer.write("<link rel=\"");
                                 writer.write(StringUtils.isNotBlank(rel) ? rel : "stylesheet");
                                 writer.write("\" href=\"");
-                                writer.write(CpnlElFunctions.url(request, path));
+                                writer.write(rendererContext.mapClientlibURLs()
+                                        ? CpnlElFunctions.url(request, path)
+                                        : CpnlElFunctions.unmappedUrl(request, path));
                                 writer.write("\" />");
                                 break;
                             case js:
                                 writer.write("<script type=\"text/javascript\" src=\"");
-                                writer.write(CpnlElFunctions.url(request, path));
+                                writer.write(rendererContext.mapClientlibURLs()
+                                        ? CpnlElFunctions.url(request, path)
+                                        : CpnlElFunctions.unmappedUrl(request, path));
                                 writer.write("\"></script>");
+                                break;
+                            case img:
+                                writer.write("<img src=\"");
+                                writer.write(rendererContext.mapClientlibURLs()
+                                        ? CpnlElFunctions.url(request, path)
+                                        : CpnlElFunctions.unmappedUrl(request, path));
+                                writer.write("\"/>");
                                 break;
                             default:
                                 break;

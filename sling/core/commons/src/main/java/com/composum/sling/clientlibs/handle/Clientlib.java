@@ -30,7 +30,7 @@ public class Clientlib {
 
     public static final String RESOURCE_TYPE = "composum/sling/commons/clientlib";
 
-    public enum Type {link, css, js}
+    public enum Type {link, css, js, img}
 
     public static final String PROP_EXPANDED = "expanded";
     public static final String PROP_OPTIONAL = "optional";
@@ -188,7 +188,7 @@ public class Clientlib {
         optional = definition.getProperty(PROP_OPTIONAL, optional);
         List<Link> links = new ArrayList<>();
         if (definition.isValid()) {
-            Link link = getLink(resource, resource, properties, type);
+            Link link = getLink(context, resource, resource, properties, type);
             if (context.tryAndRegister(link.getKey())) {
                 if (expanded) {
                     getLinks(definition, properties, context, links, false, optional);
@@ -274,7 +274,7 @@ public class Clientlib {
                                  RendererContext context, boolean depends, boolean optional) {
         if (file.isValid()) {
             ResourceHandle fileRes = file.getResource();
-            Link link = getLink(reference, fileRes, properties, null);
+            Link link = getLink(context, reference, fileRes, properties, null);
             if (context.tryAndRegister(link.getKey())) {
                 links.add(link);
             } else {
@@ -287,12 +287,17 @@ public class Clientlib {
         }
     }
 
-    protected Link getLink(ResourceHandle reference, Resource target, Map<String, String> properties, Type type) {
+    protected Link getLink(RendererContext context, ResourceHandle reference, Resource target,
+                           Map<String, String> properties, Type type) {
         String url = target.getPath();
         if (type != null) {
             url += "." + type;
         }
-        url = LinkUtil.getUrl(request, url);
+        if (context.mapClientlibURLs()) {
+            url = LinkUtil.getUrl(request, url);
+        } else {
+            url = LinkUtil.getUnmappedUrl(request, url);
+        }
         String rel = reference.getProperty(PROP_REL, properties.get(PROP_REL));
         return new Link(url, PROP_REL, rel);
     }

@@ -242,39 +242,60 @@
         browser.ScriptTab = browser.EditorTab.extend({
 
             initialize: function (options) {
+                this.profile = core.console.getProfile().get('browser', 'scriptView', {
+                    vertical: undefined,
+                    audit: false
+                });
                 this.verticalSplit = core.getWidget(this.$el,
                     '.split-pane.vertical-split', core.components.VerticalSplitPane);
                 browser.EditorTab.prototype.initialize.apply(this, [options]);
-                this.verticalSplit.setPosition(this.verticalSplit.checkPosition(120));
-                this.$logOutput = this.$('.detail-content .log-output');
+                this.$bottomArea = this.$('.detail-content .bottom-area');
+                this.$logOutput = this.$bottomArea.find('.log-output');
+                this.$history = this.$bottomArea.find('.history');
+                this.$historyList = this.$history.find('.executions');
+                this.$history.find('.toolbar .audit-link').click(_.bind(this.selectAuditNode, this));
+                this.$history.find('.toolbar .refresh').click(_.bind(this.loadHistory, this));
+                this.$history.find('.toolbar .purge').click(_.bind(this.purgeHistory, this));
+                this.$history.find('.toolbar .close').click(_.bind(this.toggleHistory, this));
                 this.$execute = this.$('.editor-toolbar .run-script');
                 this.$execute.click(_.bind(this.execute, this));
+                this.$toogleHistory = this.$('.editor-toolbar .history');
+                this.$toogleHistory.click(_.bind(this.toggleHistory, this));
+                this.verticalSplit.setPosition(this.verticalSplit.checkPosition(this.profile.vertical));
+                this.verticalSplit.$el.on('resize.' + this.id, _.bind(this.stateChanged, this));
+                if (this.profile.audit) {
+                    this.toggleHistory();
+                }
+            },
+
+            reload: function () {
+                browser.EditorTab.prototype.reload.apply(this);
+                this.setupStatus();
             },
 
             execute: function (event) {
-                this.delay();
                 if (this.scriptIsRunning) {
-                    this.poll('stopScript', _.bind(this.scriptStopped, this), _.bind(this.scriptError, this));
+                    this.cancelJob();
                 } else {
-                    this.poll('startScript', _.bind(this.scriptStarted, this), _.bind(this.scriptError, this));
+                    this.scriptStarted(); // set status immediately
+                    this.startJob();
                 }
             },
 
             scriptStarted: function (data) {
                 if (!this.scriptIsRunning) {
                     this.scriptIsRunning = true;
-                    this.$logOutput.html('');
+                    this.$logOutput.text('');
                     this.$el.removeClass('error');
                     this.$el.addClass('running');
                 }
                 if (data) {
                     this.logAppend(data);
                 }
-                this.delay(1000);
+                this.loadHistory();
             },
 
             scriptStopped: function (data) {
-                this.delay();
                 if (data) {
                     this.logAppend(data);
                 }
@@ -282,44 +303,13 @@
                     this.$el.removeClass('running');
                     this.scriptIsRunning = false;
                 }
+                this.loadHistory();
             },
 
-            scriptError: function (xhr) {
-                this.scriptStopped(xhr.responseText);
-            },
-
-            checkScript: function () {
-                if (this.scriptIsRunning) {
-                    this.poll('checkScript', _.bind(this.onCheck, this), _.bind(this.scriptError, this));
-                }
-            },
-
-            onCheck: function (data, message, xhr) {
-                var status = xhr ? xhr.getResponseHeader('Script-Status') : undefined;
-                if (
-                    status == 'initialized' ||
-                    status == 'starting' ||
-                    status == 'running'
-                ) {
-                    this.scriptStarted(xhr.responseText);
-
-                } else if (
-                    status == 'finished' ||
-                    status == 'aborted' ||
-                    status == 'error' ||
-                    status == 'unknown'
-                ) {
-                    if (status == 'error') {
-                        this.$el.addClass('error');
-                    }
-                    this.scriptStopped(data);
-
-                } else {
-                    this.logAppend(data);
-                }
-                if (this.scriptIsRunning) {
-                    this.delay(1000);
-                }
+            scriptError: function (text, xhr) {
+                this.$el.addClass('error');
+                this.scriptStopped(text + xhr.statusText + (xhr.status ? (' (' + xhr.status + ')') : '') + '\n');
+                this.delay(true); // probably one last 'pollOutput' after final status reached
             },
 
             logAppend: function (data) {
@@ -327,25 +317,210 @@
                 var vheight = $scrollPane.height();
                 var height = this.$logOutput[0].scrollHeight;
                 var autoscroll = ($scrollPane.scrollTop() > height - vheight - 30);
-                this.$logOutput.append(data);
+                this.$logOutput.text(this.$logOutput.text() + data);
                 if (autoscroll) {
                     height = this.$logOutput[0].scrollHeight;
                     $scrollPane.scrollTop(height - vheight);
                 }
             },
 
-            poll: function (operation, onSuccess, onError) {
+            setupStatus: function () {
                 var path = browser.getCurrentPath();
-                core.ajaxGet('/bin/core/node.' + operation + '.groovy' + path, {}, onSuccess, onError);
+                core.ajaxGet('/bin/core/jobcontrol.jobs.ACTIVE.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
+                    _.bind(function (data, msg, xhr) {
+                        if (data && data.length > 0) {
+                            this.scriptStarted();
+                            this.logOffset = 0;
+                            this.scriptJob = data[0];
+                            this.delay(true);
+                        }
+                    }, this),
+                    _.bind(function (xhr) {
+                        this.scriptError('Script status check failed: ', xhr);
+                    }, this));
             },
 
+            checkJob: function () {
+                // pollOutput on each check even if 'scriptIsRunning' is set to 'false'
+                this.pollOutput(_.bind(function () {
+                    if (this.scriptIsRunning && this.scriptJob) {
+                        core.ajaxGet('/bin/core/jobcontrol.job.json/' + this.scriptJob['slingevent:eventId'], {},
+                            _.bind(function (data, msg, xhr) {
+                                this.scriptJob = data;
+                                if (this.scriptJob['slingevent:finishedState']) {
+                                    switch (this.scriptJob['slingevent:finishedState']) {
+                                        case 'SUCCEEDED':
+                                            this.scriptStopped('Script finished successfully.\n');
+                                            break;
+                                        case 'STOPPED':
+                                            this.scriptStopped('Script execution stopped.\n');
+                                            break;
+                                        case 'ERROR':
+                                            this.scriptError("Script finished with 'Error': ", {
+                                                statusText: this.scriptJob['slingevent:resultMessage']
+                                            });
+                                            break;
+                                        default:
+                                            this.scriptStopped("Script execution finished with '" +
+                                                this.scriptJob['slingevent:finishedState'] + "'.\n");
+                                            break;
+                                    }
+                                }
+                            }, this),
+                            _.bind(function (xhr) {
+                                this.scriptError('Script status check failed: ', xhr);
+                            }, this));
+                        this.delay(true);
+                    }
+                }, this));
+            },
+
+            startJob: function () {
+                var path = browser.getCurrentPath();
+                this.delay(); // cancel all open timeouts
+                this.logOffset = 0;
+                core.ajaxPost('/bin/core/jobcontrol.job.json', {
+                        'event.job.topic': 'com/composum/sling/core/script/GroovyJobExecutor',
+                        'reference': path
+                    }, {},
+                    _.bind(function (data, msg, xhr) {
+                        this.scriptJob = data;
+                        this.delay(true);
+                    }, this),
+                    _.bind(function (xhr) {
+                        this.scriptError('Script start failed: ', xhr);
+                    }, this));
+            },
+
+            cancelJob: function () {
+                if (this.scriptJob) {
+                    core.ajaxDelete('/bin/core/jobcontrol.job.json/' + this.scriptJob['slingevent:eventId'], {},
+                        _.bind(function (data, msg, xhr) {
+                            this.logAppend('Script cancellation requested...\n');
+                            this.delay(true);
+                        }, this),
+                        _.bind(function (xhr) {
+                            this.scriptError('Script cancellation failed: ', xhr);
+                        }, this));
+                }
+            },
+
+            pollOutput: function (callback, jobId) {
+                if (!jobId) {
+                    if (this.scriptJob) {
+                        jobId = this.scriptJob['slingevent:eventId'];
+                    }
+                }
+                if (jobId) {
+                    core.ajaxGet('/bin/core/jobcontrol.outfile.txt/' + jobId, {
+                            headers: {
+                                Range: 'bytes=' + this.logOffset + '-' // get all output from last offset
+                            }
+                        },
+                        _.bind(function (data, msg, xhr) {
+                            this.logAppend(data);
+                            this.logOffset += parseInt(xhr.getResponseHeader('Content-Length'));
+                            if (_.isFunction(callback)) {
+                                callback.call(this);
+                            }
+                        }, this),
+                        _.bind(function (xhr) {
+                            this.logAppend('Script output retrieval failed: '
+                                + xhr.statusText + ' (' + xhr.status + ')\n');
+                            if (_.isFunction(callback)) {
+                                callback.call(this);
+                            }
+                        }, this));
+                }
+            },
+
+            /**
+             * Set timeout for the next 'checkJob' if duration is 'true' or given as milliseconds.
+             * @param duration 'true' (default slice) or milliseconds; 'undefined' / 'false' to clear all timeouts only
+             */
             delay: function (duration) {
                 if (this.timeout) {
                     clearTimeout(this.timeout);
                     this.timeout = undefined;
                 }
                 if (duration) {
-                    this.timeout = setTimeout(_.bind(this.checkScript, this), duration);
+                    this.timeout = setTimeout(_.bind(this.checkJob, this),
+                        typeof duration === 'boolean' ? 500 : duration);
+                }
+            },
+
+            toggleHistory: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                this.$bottomArea.toggleClass('history');
+                this.loadHistory();
+                this.stateChanged();
+            },
+
+            loadHistory: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                this.$historyList.html('');
+                if (this.$bottomArea.hasClass('history')) {
+                    var path = browser.getCurrentPath();
+                    core.ajaxGet('/bin/core/jobcontrol.jobs.ALL.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
+                        _.bind(function (data, msg, xhr) {
+                            for (var i = 0; i < data.length; i++) {
+                                var state = data[i].jobState;
+                                this.$historyList.append('<li class="'
+                                    + (state ? state.toLowerCase() : 'unknown')
+                                    + '"><a href="#" data-id="'
+                                    + data[i]['slingevent:eventId']
+                                    + '"><span class="time created">'
+                                    + data[i]['slingevent:created']
+                                    + '</span><span class="state">'
+                                    + state
+                                    + '</span><span class="time finished">'
+                                    + data[i]['slingevent:finishedDate']
+                                    + '</span><span class="result">'
+                                    + data[i]['slingevent:resultMessage']
+                                    + '</span></a></li>');
+                            }
+                            this.$historyList.find('a').click(_.bind(this.loadLog, this));
+                        }, this),
+                        _.bind(function (xhr) {
+                            this.logAppend('Script history load failed: ' + xhr.statusText);
+                        }, this));
+                }
+            },
+
+            loadLog: function (event) {
+                event.preventDefault();
+                var $link = $(event.currentTarget);
+                this.$logOutput.text('');
+                this.logOffset = 0;
+                this.pollOutput(_.bind(function () {
+                    this.logAppend($link.find('.result').text());
+                }, this), $link.data('id'));
+            },
+
+            purgeHistory: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+            },
+
+            selectAuditNode: function (event) {
+                    event.preventDefault();
+                var $link = $(event.currentTarget);
+                var path = '/var/audit/jobs/com.composum.sling.core.script.GroovyJobExecutor' + $link.data('path');
+                $(document).trigger('path:select', [path]);
+            },
+
+            stateChanged: function () {
+                var last = _.clone(this.profile);
+                this.profile.audit = this.$bottomArea.hasClass('history');
+                this.profile.vertical = this.verticalSplit.getPosition();
+                if (!_.isEqual(last, this.profile)) {
+                    core.console.getProfile().set('browser', 'scriptView', this.profile);
+                    this.verticalSplit.stateChanged();
                 }
             }
         });

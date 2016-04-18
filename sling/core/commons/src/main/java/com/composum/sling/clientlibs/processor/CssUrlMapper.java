@@ -4,6 +4,7 @@ import com.composum.sling.clientlibs.handle.Clientlib;
 import com.composum.sling.clientlibs.service.ClientlibProcessor;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.io.IOUtils;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,9 @@ public class CssUrlMapper implements ClientlibProcessor {
     }
 
     public String map(ProcessorContext context, String url) {
-        return LinkUtil.getUrl(context.getRequest(), url);
+        SlingHttpServletRequest request = context.getRequest();
+        return context.mapClientlibURLs()
+                ? LinkUtil.getUrl(request, url)
+                : LinkUtil.getUnmappedUrl(request, url);
     }
 }

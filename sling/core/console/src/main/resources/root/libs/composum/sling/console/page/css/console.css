@@ -114,6 +114,12 @@ fieldset {
     display: none;
 }
 
+.action-bar label {
+    margin: 0;
+    line-height: 30px;
+    color: #888;
+}
+
 .modal-body > .form-group:last-child {
     margin-bottom: 0;
 }

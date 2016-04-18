@@ -27,4 +27,6 @@ public interface ClientlibService {
 
     void deliverContent(Clientlib clientlib, Writer writer, String encoding)
             throws IOException, RepositoryException;
+
+    boolean mapClientlibURLs();
 }

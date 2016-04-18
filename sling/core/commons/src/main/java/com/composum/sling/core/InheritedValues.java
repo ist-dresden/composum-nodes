@@ -39,7 +39,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
             }
             put(name, value); // cache the found value
         }
-        return value != UNDEFINED ? (T) value : null;
+        return value != UNDEFINED ? type.cast(value) : null;
     }
 
     /**

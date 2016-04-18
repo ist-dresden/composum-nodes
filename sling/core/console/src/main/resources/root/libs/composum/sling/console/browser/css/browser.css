@@ -21,17 +21,21 @@
 #browser #browser-query .query-head .query-actions form {
     padding-left: 29px;
 }
+
 #browser #browser-view .breadcrumbs {
     padding-left: 29px;
     padding-right: 35px;
 }
+
 #browser.left-open #browser-view .breadcrumbs,
 #browser.top-open #browser-view .breadcrumbs {
     padding-left: 8px;
 }
+
 #browser.left-open #browser-query .query-head .query-actions form {
     padding-left: 6px;
 }
+
 #browser.top-open #browser-view .breadcrumbs {
     padding-right: 8px;
 }
@@ -301,7 +305,7 @@
     z-index: 10;
 }
 
-#browser-view .node-view-panel .node-tabs .btn-group-sm>.btn, .btn-sm {
+#browser-view .node-view-panel .node-tabs .btn-group-sm > .btn, .btn-sm {
     font-size: 14px;
     padding: 4px 9px;
 }
@@ -377,7 +381,6 @@
 #browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .search input {
     max-width: 170px;
 }
-
 
 #browser-view .node-view-content .detail-toolbar .input-group-addon {
     font-size: 14px;
@@ -663,7 +666,7 @@
     left: 10px;
     right: 10px;
     margin: 0;
-    width: auto!important;
+    width: auto !important;
 }
 
 #text-edit-dialog .modal-dialog .modal-content {
@@ -759,11 +762,15 @@
 }
 
 @keyframes script-spinner {
-    to {transform: rotate(360deg);}
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @-webkit-keyframes script-spinner {
-    to {-webkit-transform: rotate(360deg);}
+    to {
+        -webkit-transform: rotate(360deg);
+    }
 }
 
 #browser-view .node-view-panel .node-view-content .script.running .editor-toolbar .run-script::after {
@@ -813,10 +820,99 @@
     background-color: #e4e4e4;
 }
 
+#browser-view .node-view-panel .node-view-content .script .detail-content .log-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: scroll;
+}
+
 #browser-view .node-view-panel .node-view-content .script .detail-content .log-output {
-    font-family: monospace;
     font-size: 13px;
     white-space: pre;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .bottom-area.history .log-area {
+    right: 260px;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .bottom-area .history {
+    display: none;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .bottom-area.history .history {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 256px;
+    background: #fff;
+    border-left: 1px solid #888;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .toolbar {
+    margin: 0;
+    background: #eee;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .toolbar .btn {
+    font-size: 14px;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .toolbar .close {
+    margin-left: -5px;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .executions {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: scroll;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .executions li {
+    border-top: 1px solid #eee;
+    padding: 5px 10px;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .executions li a {
+    color: #666;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .executions li.succeeded .state {
+    color: #3c763d;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .executions li.stopped .state {
+    color: #8a6d3b;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .executions li.error .state {
+    color: #a94442;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .executions li span {
+    display: inline-block;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .executions li .time {
+    width: 135px;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .executions li .state {
+    padding-left: 10px;
+}
+
+#browser-view .node-view-panel .node-view-content .script .detail-content .history .executions li .result {
+    display: none;
 }
 
 /*
