@@ -150,7 +150,12 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
         protected void writeItem(Item item) throws IOException {
             if (item.action != null) {
                 writer.append(item.action);
-                writer.append(PLAIN_TEXT_ACTION_INDENT.substring(item.action.length()));
+                int len = item.action.length();
+                if (len < PLAIN_TEXT_ACTION_INDENT.length()) {
+                    writer.append(PLAIN_TEXT_ACTION_INDENT.substring(len));
+                } else {
+                    writer.append(' ');
+                }
             } else {
                 writer.append(PLAIN_TEXT_ACTION_INDENT);
             }

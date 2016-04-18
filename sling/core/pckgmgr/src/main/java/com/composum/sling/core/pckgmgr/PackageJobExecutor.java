@@ -3,10 +3,10 @@ package com.composum.sling.core.pckgmgr;
 import com.composum.sling.core.concurrent.AbstractJobExecutor;
 import com.composum.sling.core.pckgmgr.util.PackageProgressTracker;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.io.ImportOptions;
@@ -16,10 +16,11 @@ import org.apache.jackrabbit.vault.packaging.PackageException;
 import org.apache.jackrabbit.vault.packaging.PackagingService;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
+import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.consumer.JobExecutionContext;
 import org.apache.sling.event.jobs.consumer.JobExecutor;
+import org.osgi.service.component.ComponentContext;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.slf4j.Logger;
@@ -29,6 +30,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Dictionary;
 import java.util.concurrent.Callable;
 
 import static com.composum.sling.core.pckgmgr.util.PackageUtil.IMPORT_DONE;
@@ -50,7 +52,7 @@ import static com.composum.sling.core.pckgmgr.util.PackageUtil.IMPORT_DONE;
                 value = {"org/apache/sling/event/notification/job/*"},
                 propertyPrivate = true)
 })
-public class PackageJobExecutor extends AbstractJobExecutor {
+public class PackageJobExecutor extends AbstractJobExecutor<Object> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageJobExecutor.class);
 
@@ -62,8 +64,20 @@ public class PackageJobExecutor extends AbstractJobExecutor {
 
     public static final String AUDIT_BASE_PATH = AUDIT_ROOT_PATH + PackageJobExecutor.class.getName();
 
-    @Reference
-    protected DynamicClassLoaderManager dynamicClassLoaderManager;
+    public static final String DEFAULT_SAVE_THRESHOLD = "package.save.threshold";
+    @Property(
+            name = DEFAULT_SAVE_THRESHOLD,
+            label = "save threshold",
+            intValue = 1024
+    )
+    protected int defaultSaveThreshold;
+
+    @Override
+    @Activate
+    protected void activate(ComponentContext context) throws Exception {
+        Dictionary<String, Object> properties = context.getProperties();
+        defaultSaveThreshold = PropertiesUtil.toInteger(properties.get(DEFAULT_SAVE_THRESHOLD), 1024);
+    }
 
     @Override
     protected String getJobTopic() {
@@ -97,29 +111,23 @@ public class PackageJobExecutor extends AbstractJobExecutor {
 
         @Override
         public Object call() throws Exception {
-            ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(dynamicClassLoaderManager.getDynamicClassLoader());
-            try {
-                JcrPackageManager manager = PackagingService.getPackageManager(session);
-                JcrPackage jcrPckg = getJcrPackage(job, manager);
-                String operation = (String) job.getProperty("operation");
-                if (StringUtils.isNotBlank(operation)) {
-                    switch (operation.toLowerCase()) {
-                        case "install":
-                            installPackage(jcrPckg);
-                            return null;
-                        case "assemble":
-                            return null;
-                        case "rewrap":
-                            return null;
-                    }
-                } else {
-
+            JcrPackageManager manager = PackagingService.getPackageManager(session);
+            JcrPackage jcrPckg = getJcrPackage(job, manager);
+            String operation = (String) job.getProperty("operation");
+            if (StringUtils.isNotBlank(operation)) {
+                switch (operation.toLowerCase()) {
+                    case "install":
+                        installPackage(jcrPckg);
+                        return null;
+                    case "assemble":
+                        return null;
+                    case "rewrap":
+                        return null;
                 }
-                return null;
-            } finally {
-                Thread.currentThread().setContextClassLoader(tccl);
+            } else {
+
             }
+            return null;
         }
 
         protected void installPackage(JcrPackage jcrPckg)
@@ -142,7 +150,7 @@ public class PackageJobExecutor extends AbstractJobExecutor {
         protected ImportOptions createImportOptions() {
             ImportOptions options = new ImportOptions();
             options.setDryRun(getProperty(job, JOB_PROPERTY_DRY_RUN, false));
-            options.setAutoSaveThreshold(getProperty(job, JOB_PROPERTY_SAVE_THRESHOLD, 1024));
+            options.setAutoSaveThreshold(getProperty(job, JOB_PROPERTY_SAVE_THRESHOLD, defaultSaveThreshold));
             options.setImportMode(getProperty(job, JOB_PROPERTY_IMPORT_MODE, ImportMode.REPLACE));
             options.setHookClassLoader(dynamicClassLoaderManager.getDynamicClassLoader());
             return options;
