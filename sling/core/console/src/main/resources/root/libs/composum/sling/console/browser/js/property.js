@@ -52,9 +52,12 @@
             },
 
             destroy: function (onSuccess, onError) {
-                this.save(onSuccess, onError, {
-                    name: this.get('name')
-                });
+                core.ajaxDelete("/bin/core/property.remove.json" + this.get('path'), {
+                    data: JSON.stringify({
+                        "names": [this.get('name')]
+                    }),
+                    dataType: 'json'
+                }, onSuccess, onError);
             }
         });
 
