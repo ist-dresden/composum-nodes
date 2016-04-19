@@ -86,7 +86,7 @@
                 var type = this.$type.val();
                 if (!this.busy) {
                     this.busy = true;
-                    this.valueWidget.setType(type)
+                    this.valueWidget.setType(type);
                     this.busy = false;
                 }
                 if (type == 'Binary') {
