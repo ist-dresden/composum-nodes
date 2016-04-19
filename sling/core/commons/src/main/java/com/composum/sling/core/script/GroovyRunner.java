@@ -86,7 +86,7 @@ public class GroovyRunner {
         Object result = null;
         try (Reader reader = getScriptResource(path)) {
             if (reader != null) {
-                result = run(reader, variables);
+                result = run(reader, variables, path.substring(path.lastIndexOf('/') +1 ));
             }
         } catch (IOException ioex) {
             LOG.error(ioex.getMessage(), ioex);
@@ -95,7 +95,11 @@ public class GroovyRunner {
     }
 
     public Object run(Reader scriptReader, Map<String, Object> variables) throws InterruptedException {
-        Script script = getScript(scriptReader, variables);
+        return run(scriptReader, variables, null);
+    }
+
+    public Object run(Reader scriptReader, Map<String, Object> variables, String name) throws InterruptedException {
+        Script script = getScript(scriptReader, variables, name);
         Object setupVariables = setup(script);
         extendBinding(script, setupVariables);
         extendBinding(script, generalBindings);
@@ -103,7 +107,7 @@ public class GroovyRunner {
         return result;
     }
 
-    protected Script getScript(Reader scriptReader, Map<String, Object> variables) {
+    protected Script getScript(Reader scriptReader, Map<String, Object> variables, String name) {
         if (variables == null) {
             variables = new HashMap<>();
         }
@@ -113,8 +117,11 @@ public class GroovyRunner {
 
         Binding binding = new Binding(variables);
         GroovyShell shell = new GroovyShell(binding,compilerConfig);
-        Script script = shell.parse(scriptReader);
-        return script;
+        if (name == null) {
+            return shell.parse(scriptReader);
+        } else {
+            return shell.parse(scriptReader, name);
+        }
     }
 
     protected void extendBinding(Script script, Object variables) {
@@ -146,7 +153,7 @@ public class GroovyRunner {
                     variables.put("script", script);
                     variables.put("log", LOG);
                     variables.put("out", out);
-                    Script setupScript = getScript(reader, variables);
+                    Script setupScript = getScript(reader, variables, this.setupScript.substring(this.setupScript.lastIndexOf('/') + 1));
                     extendBinding(setupScript, generalBindings);
                     result = setupScript.run();
                 } finally {

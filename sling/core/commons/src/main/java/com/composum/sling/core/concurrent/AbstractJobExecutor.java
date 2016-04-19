@@ -25,6 +25,7 @@ import javax.jcr.Session;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -134,7 +135,7 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
     }
 
     @Override
-    public JobExecutionResult process(final Job job, final JobExecutionContext context) {
+    public final JobExecutionResult process(final Job job, final JobExecutionContext context) {
 
         final String reference = job.getProperty(JOB_REFRENCE_PROPERTY, String.class);
 
@@ -211,6 +212,7 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
                 }
                 map.put(PROP_RESOURCE_TYPE, "composum/sling/jobcontrol/audit");
                 adminResolver.commit();
+                jobExecutionFinished(job, context, auditResource);
             } catch (Exception e) {
                 LOG.error("Error writing audit of job:" + reference, e);
             }
@@ -218,15 +220,22 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
         }
     }
 
-    private String buildAuditPath(Job job) {
-        String script = job.getProperty(JOB_REFRENCE_PROPERTY, String.class);
-        final Calendar eventJobStartedTime = job.getProperty("event.job.started.time", Calendar.class);
-        return buildAuditPathIntern(script, eventJobStartedTime);
+    /**
+     * Can be overwritten to handle some cleanup or logging when job is finished.
+     */
+    protected void jobExecutionFinished(Job job, JobExecutionContext context, Resource auditResource) throws IOException {
+
     }
 
-    private String buildAuditPathIntern(String script, Calendar eventJobStartetTime) {
+    private String buildAuditPath(Job job) {
+        String reference = job.getProperty(JOB_REFRENCE_PROPERTY, String.class);
+        final Calendar eventJobStartedTime = job.getProperty("event.job.started.time", Calendar.class);
+        return buildAuditPathIntern(reference, eventJobStartedTime);
+    }
+
+    protected String buildAuditPathIntern(String reference, Calendar eventJobStartetTime) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
-        return getAutitBasePath() + script + "/" + sdf.format(eventJobStartetTime.getTime());
+        return getAutitBasePath() + reference + "/" + sdf.format(eventJobStartetTime.getTime());
     }
 
     private synchronized Resource giveParent(ResourceResolver resolver, String path) {
