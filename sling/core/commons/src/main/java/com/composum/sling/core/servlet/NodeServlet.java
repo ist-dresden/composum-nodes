@@ -6,7 +6,6 @@ import com.composum.sling.core.exception.ParameterValidationException;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.mapping.MappingRules;
-import com.composum.sling.core.script.GroovyService;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.RequestUtil;
@@ -164,9 +163,6 @@ public class NodeServlet extends NodeTreeServlet {
         return filter;
     }
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
-    protected GroovyService groovyService;
-
     //
     // Servlet operations
     //
@@ -225,12 +221,6 @@ public class NodeServlet extends NodeTreeServlet {
                 Operation.query, new JsonQueryOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.html,
                 Operation.query, new HtmlQueryOperation());
-        operations.setOperation(ServletOperationSet.Method.GET, Extension.groovy,
-                Operation.startScript, new StartGroovyNodeOperation());
-        operations.setOperation(ServletOperationSet.Method.GET, Extension.groovy,
-                Operation.checkScript, new CheckScriptOperation());
-        operations.setOperation(ServletOperationSet.Method.GET, Extension.groovy,
-                Operation.stopScript, new StopScriptOperation());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
@@ -243,12 +233,6 @@ public class NodeServlet extends NodeTreeServlet {
                 Operation.move, new MoveOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.lock,
                 Operation.toggle, new ToggleLockOperation());
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.groovy,
-                Operation.startScript, new StartGroovyNodeOperation());
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.groovy,
-                Operation.checkScript, new CheckScriptOperation());
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.groovy,
-                Operation.stopScript, new StopScriptOperation());
 
         // PUT
         operations.setOperation(ServletOperationSet.Method.PUT, Extension.json,
@@ -1168,84 +1152,6 @@ public class NodeServlet extends NodeTreeServlet {
 
         protected Reader getReader(SlingHttpServletRequest request) throws IOException {
             return request.getReader();
-        }
-    }
-
-    //
-    // Scripting operations
-    //
-
-    protected class StartGroovyNodeOperation extends ScriptOperation {
-
-        @Override
-        protected GroovyService.Job doScript(
-                SlingHttpServletRequest request, SlingHttpServletResponse response,
-                ResourceHandle resource, String key)
-                throws ServletException, IOException {
-            GroovyService.Job job = null;
-            try {
-                ResourceResolver resolver = request.getResourceResolver();
-                Session session = resolver.adaptTo(Session.class);
-                job = groovyService.startScript(key, session, resource.getPath());
-            } catch (RepositoryException rex) {
-                LOG.error(rex.getMessage(), rex);
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, rex.getMessage());
-            }
-            return job;
-        }
-    }
-
-    protected class CheckScriptOperation extends ScriptOperation {
-
-        @Override
-        protected GroovyService.Job doScript(
-                SlingHttpServletRequest request, SlingHttpServletResponse response,
-                ResourceHandle resource, String key)
-                throws ServletException, IOException {
-            GroovyService.Job job = groovyService.checkScript(key);
-            response.setHeader(SCRIPT_STATUS_HEADER, job != null ? job.getState().name() : "unknown");
-            return job;
-        }
-    }
-
-    protected class StopScriptOperation extends ScriptOperation {
-
-        @Override
-        protected GroovyService.Job doScript(
-                SlingHttpServletRequest request, SlingHttpServletResponse response,
-                ResourceHandle resource, String key)
-                throws ServletException, IOException {
-            GroovyService.Job job = groovyService.stopScript(key);
-            response.setHeader(SCRIPT_STATUS_HEADER, job != null ? job.getState().name() : "unknown");
-            return job;
-        }
-    }
-
-    protected abstract class ScriptOperation implements ServletOperation {
-
-        protected abstract GroovyService.Job doScript(
-                SlingHttpServletRequest request, SlingHttpServletResponse response,
-                ResourceHandle resource, String key)
-                throws ServletException, IOException;
-
-        @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
-                throws ServletException, IOException {
-            response.setContentType("text/plain;charset=UTF-8");
-            response.setHeader("Cache-Control", "no-cache");
-            PrintWriter writer = new PrintWriter(response.getOutputStream());
-            if (groovyService != null) {
-                String key = resource.getPath();
-                GroovyService.Job job = doScript(request, response, resource, key);
-                response.setHeader(SCRIPT_STATUS_HEADER, job != null ? job.getState().name() : "unknown");
-                if (job != null) {
-                    job.flush(writer);
-                }
-            } else {
-                writer.println("no scripting service available");
-            }
-            writer.flush();
         }
     }
 }

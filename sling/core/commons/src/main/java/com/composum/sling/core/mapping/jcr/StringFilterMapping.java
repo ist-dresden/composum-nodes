@@ -64,8 +64,8 @@ public class StringFilterMapping {
                     }
                 }
                 filter = new StringFilter.FilterSet(rule, filters);
-            } catch (Exception iaex) {
-                LOG.error("invalid filter rule: '" + rules + "'");
+            } catch (Exception ex) {
+                LOG.error("invalid filter rule: '" + rules + "' (" + ex.toString() + ")");
             }
         } else {
             matcher = STRING_PATTERN.matcher(rules);
@@ -99,7 +99,9 @@ public class StringFilterMapping {
                     }
                 }
             } else {
-                LOG.error("invalid filter rule: '" + rules + "'");
+                if (StringUtils.isNotBlank(rules)) {
+                    LOG.error("invalid filter rule: '" + rules + "'");
+                }
             }
         }
         return filter;

@@ -11,11 +11,10 @@
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button class="install fa fa-sign-in btn btn-default" title="(Re)Install the package"><span
-                        class="label">(Re)Install</span></button>
-                <button class="build fa fa-folder-open btn btn-default" title="(Re)Build the package"><span
-                        class="label">Unwrap</span>
-                </button>
+                <button class="install fa fa-sign-in btn btn-default" title="Install the package"><span
+                        class="label">Install</span></button>
+                <button class="build fa fa-folder-open btn btn-default" title="Build the package"><span
+                        class="label">Assemble</span></button>
                 <button class="rewrap fa fa-folder btn btn-default" title="Rewrap the package"><span
                         class="label">Rewrap</span></button>
             </div>
