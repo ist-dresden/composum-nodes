@@ -6,11 +6,9 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.consumer.JobExecutionContext;
@@ -50,7 +48,6 @@ public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
 
     private static final Logger LOG = LoggerFactory.getLogger(GroovyJobExecutor.class);
     static final String GROOVY_TOPIC = "com/composum/sling/core/script/GroovyJobExecutor";
-    private static final String SCRIPT_PROPERTY_NAME = "reference";
 
     private static final String AUDIT_BASE_PATH = AUDIT_ROOT_PATH + "com.composum.sling.core.script.GroovyJobExecutor";
 
@@ -62,9 +59,6 @@ public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
             value = ""
     )
     protected String groovySetupScript;
-
-    @Reference
-    protected DynamicClassLoaderManager dynamicClassLoaderManager;
 
     @Override
     @Activate
@@ -115,7 +109,7 @@ public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
             final HashMap<String, Object> variables = new HashMap<>();
             variables.put("jctx", context);
             variables.put("job", job);
-            final String script = job.getProperty(SCRIPT_PROPERTY_NAME, String.class);
+            final String script = job.getProperty(JOB_REFRENCE_PROPERTY, String.class);
             try {
                 return groovyRunner.run(script, variables);
             } finally {
