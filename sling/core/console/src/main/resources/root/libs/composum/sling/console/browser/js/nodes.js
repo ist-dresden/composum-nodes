@@ -161,7 +161,10 @@
                 function mixinValues(arrayOfElements) {
                     var stringValues = [];
                     for (var i = 0; i < arrayOfElements.length; i++) {
-                        stringValues[i] = $(arrayOfElements[i]).val();
+                        var mixinName = $(arrayOfElements[i]).val();
+                        if (mixinName != '') {
+                            stringValues[i] = mixinName;
+                        }
                     }
                     return stringValues;
                 }

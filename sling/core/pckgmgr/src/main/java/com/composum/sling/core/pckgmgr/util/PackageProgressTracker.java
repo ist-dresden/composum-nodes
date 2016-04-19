@@ -20,7 +20,7 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageUtil.class);
 
-    public static final String PLAIN_TEXT_ACTION_INDENT = "     ";
+    public static final String PLAIN_TEXT_SHORT_ACTION_SPACE = "   ";
 
     public static class Item {
 
@@ -149,15 +149,17 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
         @Override
         protected void writeItem(Item item) throws IOException {
             if (item.action != null) {
-                writer.append(item.action);
                 int len = item.action.length();
-                if (len < PLAIN_TEXT_ACTION_INDENT.length()) {
-                    writer.append(PLAIN_TEXT_ACTION_INDENT.substring(len));
+                if (len < PLAIN_TEXT_SHORT_ACTION_SPACE.length()) {
+                    writer.append("  ");
+                    writer.append(item.action);
+                    writer.append(PLAIN_TEXT_SHORT_ACTION_SPACE.substring(len));
                 } else {
+                    writer.append(item.action);
                     writer.append(' ');
                 }
             } else {
-                writer.append(PLAIN_TEXT_ACTION_INDENT);
+                writer.append(PLAIN_TEXT_SHORT_ACTION_SPACE);
             }
             writer.append(item.path != null ? item.path : item.message);
             if (item.errorDetected) {
