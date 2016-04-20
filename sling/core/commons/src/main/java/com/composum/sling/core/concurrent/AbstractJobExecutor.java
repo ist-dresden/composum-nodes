@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.SimpleCredentials;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -127,10 +128,11 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
             this.serviceResolver = serviceResolver;
             this.out = out;
             String userId = job.getProperty(JOB_USERID_PROPERTY, String.class);
+            Session serviceSession = serviceResolver.adaptTo(Session.class);
+            session = serviceSession.impersonate(new SimpleCredentials(userId, new char[0]));
             HashMap<String, Object> authInfo = new HashMap<>();
-            authInfo.put(ResourceResolverFactory.USER, userId);
-            resourceResolver = serviceResolver.clone(authInfo);
-            session = resourceResolver.adaptTo(Session.class);
+            authInfo.put("user.jcr.session", session);
+            resourceResolver = resolverFactory.getResourceResolver(authInfo);
         }
     }
 
