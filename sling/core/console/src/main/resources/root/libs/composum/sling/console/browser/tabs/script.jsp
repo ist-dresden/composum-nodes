@@ -7,7 +7,11 @@
         <div class="widget code-editor-widget">
             <div class="editor-toolbar detail-toolbar">
                 <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="run-script fa fa-play btn btn-default" title="Run Script"><span
+                    <button type="button" class="run-script btn btn-default btn-stack" title="Run Script"><span
+                            class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
+                            class="symbol fa fa-play fa-stack-1x"></i><i
+                            class="running fa fa-stop fa-stack-1x"></i><i
+                            class="error fa fa-stack-2x">!</i></span><span
                             class="label">Run Script</span></button>
                     <button type="button" class="history fa fa-history btn btn-default" title="Toggle History"><span
                             class="label">History</span></button>

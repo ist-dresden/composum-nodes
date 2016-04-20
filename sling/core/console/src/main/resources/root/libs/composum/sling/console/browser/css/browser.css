@@ -305,11 +305,6 @@
     z-index: 10;
 }
 
-#browser-view .node-view-panel .node-tabs .btn-group-sm > .btn, .btn-sm {
-    font-size: 14px;
-    padding: 4px 9px;
-}
-
 #browser-view .node-view-panel .node-view-content {
     position: absolute;
     top: 0;
@@ -340,13 +335,6 @@
     right: 0;
     height: 33px;
     padding: 0 6px 0 0;
-}
-
-#browser-view .node-view-content .detail-toolbar .btn,
-#browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .btn {
-    font-size: 14px;
-    padding: 4px 9px;
-    margin-top: 1px;
 }
 
 #browser-view .node-view-content .detail-toolbar .btn.fa-download {
@@ -738,66 +726,31 @@
  * Script extensions
  */
 
-#browser-view .node-view-panel .action-bar .code.script::after {
-    position: absolute;
-    bottom: 1px;
-    right: 4px;
-    opacity: 0.8;
-    font-size: 80%;
-    content: '\f04b';
-}
-
-#browser-view .node-view-panel .node-view-content .script .editor-toolbar .run-script::before {
+.detail-toolbar .run-script .symbol {
     color: #337ab7; /* info */
-    display: block;
-    width: 12px;
-    height: 21px;
 }
 
-#browser-view .node-view-panel .node-view-content .script.running .editor-toolbar .run-script::before {
-    content: '\f04d';
+.detail-toolbar .run-script .running,
+.detail-toolbar .run-script .error {
     color: #a94442; /* danger */
-    font-size: 10px;
-    line-height: 20px;
 }
 
-@keyframes script-spinner {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-@-webkit-keyframes script-spinner {
-    to {
-        -webkit-transform: rotate(360deg);
-    }
-}
-
-#browser-view .node-view-panel .node-view-content .script.running .editor-toolbar .run-script::after {
-    position: absolute;
-    animation: script-spinner 4s linear infinite;
-    -webkit-animation: script-spinner 4s linear infinite;
-    opacity: 0.5;
-    content: '\f185';
-    font-size: 25px;
-    width: 30px;
-    height: 30px;
-    top: 50%;
-    left: 50%;
-    margin-top: -15.8px;
-    margin-left: -15.3px;
-    line-height: 25px;
-    padding: 3px 1px;
-}
-
-#browser-view .node-view-panel .node-view-content .script.error .editor-toolbar .run-script::after {
-    position: absolute;
-    top: 0;
-    right: 6px;
-    content: '!';
-    font-size: 20px;
+.detail-toolbar .run-script .error {
+    left: 8px;
     font-weight: bold;
-    color: #a94442; /* danger */
+}
+
+.detail-toolbar .run-script .fa-spin,
+.detail-toolbar .run-script .running,
+.detail-toolbar .run-script .error,
+.script.running .detail-toolbar .run-script .symbol {
+    visibility: hidden;
+}
+
+.script.running .detail-toolbar .run-script .fa-spin,
+.script.running .detail-toolbar .run-script .running,
+.script.error .detail-toolbar .run-script .error {
+    visibility: visible;
 }
 
 #browser-view .node-view-panel .node-view-content .script .split-pane .split-pane-component {
