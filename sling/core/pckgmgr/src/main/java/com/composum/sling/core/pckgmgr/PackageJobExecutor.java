@@ -168,7 +168,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
 
             @Override
             protected Object done() throws IOException {
-                out.append("Package assembled.");
+                out.append("Package assembled.\n");
                 return null;
             }
         }
@@ -187,7 +187,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
 
             @Override
             protected Object done() throws IOException {
-                out.append("Package uninstall done.");
+                out.append("Package uninstall done.\n");
                 return null;
             }
         }

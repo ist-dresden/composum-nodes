@@ -79,6 +79,11 @@
                 this.$('.display-toolbar .refresh').click(_.bind(this.refresh, this));
                 this.$feedback.find('.close').click(_.bind(this.closeFeedback, this));
                 this.$logOutput = this.$feedback.find('.feedback-display .log-output');
+                this.$auditLog = this.$('.audit-log');
+                this.$auditList = this.$auditLog.find('.audit-list');
+                this.$auditLog.find('.toolbar .audit-link').click(_.bind(this.selectAuditNode, this));
+                this.$auditLog.find('.toolbar .refresh').click(_.bind(this.loadAuditLog, this));
+                this.$auditLog.find('.toolbar .purge').click(_.bind(this.purgeAuditLog, this));
             },
 
             getCurrentPath: function () {
@@ -140,6 +145,7 @@
                     _.bind(function (data) {
                         this.$summary.html(data);
                     }, this));
+                this.loadAuditLog();
             },
 
             jobStarted: function (job) {
@@ -170,6 +176,11 @@
                 }
                 this.$default.addClass('hidden');
                 this.$feedback.removeClass('hidden');
+            },
+
+            loadAuditLogfile: function (event) {
+                this.openFeedback();
+                core.console.JobControlTab.prototype.loadAuditLogfile.apply(this, [event]);
             }
         });
 

@@ -132,6 +132,7 @@
          * this.jobTopic
          * this.getCurrentPath()
          * this.$logOutput
+         * this.$auditList
          */
         console.JobControlTab = console.DetailTab.extend({
 
@@ -327,6 +328,57 @@
                     this.timeout = setTimeout(_.bind(this.checkJob, this),
                         typeof duration === 'boolean' ? 500 : duration);
                 }
+            },
+
+            loadAuditLog: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                this.$auditList.html('');
+                var path = this.getCurrentPath();
+                core.ajaxGet('/bin/core/jobcontrol.jobs.ALL.json' + path + '?topic=' + this.jobTopic, {},
+                    _.bind(function (data, msg, xhr) {
+                        for (var i = 0; i < data.length; i++) {
+                            var state = data[i].jobState;
+                            this.$auditList.append('<li class="'
+                                + (state ? state.toLowerCase() : 'unknown')
+                                + (data[i]['operation'] ? (' ' + data[i]['operation']) : '') + '">'
+                                + '<a href="#" data-id="' + data[i]['slingevent:eventId'] + '">'
+                                + '<span class="time created">' + data[i]['slingevent:created'] + '</span>'
+                                + '<span class="state">' + state + '</span>'
+                                + '<span class="time finished">' + data[i]['slingevent:finishedDate'] + '</span>'
+                                + (data[i]['operation'] ? ('<span class="operation">' + data[i]['operation'] + '</span>') : '')
+                                + '<span class="result">' + data[i]['slingevent:resultMessage'] + '</span>'
+                                + '</a></li>');
+                        }
+                        this.$auditList.find('a').click(_.bind(this.loadAuditLogfile, this));
+                    }, this),
+                    _.bind(function (xhr) {
+                        this.logAppend('Audit Log load failed: ' + xhr.statusText);
+                    }, this));
+            },
+
+            loadAuditLogfile: function (event) {
+                event.preventDefault();
+                var $link = $(event.currentTarget);
+                this.$logOutput.text('');
+                this.logOffset = 0;
+                this.pollOutput(_.bind(function () {
+                    this.logAppend($link.find('.result').text());
+                }, this), $link.data('id'));
+            },
+
+            purgeAuditLog: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+            },
+
+            selectAuditNode: function (event) {
+                event.preventDefault();
+                var $link = $(event.currentTarget);
+                var path = '/var/audit/jobs/' + this.jobTopic + $link.data('path');
+                window.location = core.getContextUrl('/bin/browser.html' + path);
             }
         });
 

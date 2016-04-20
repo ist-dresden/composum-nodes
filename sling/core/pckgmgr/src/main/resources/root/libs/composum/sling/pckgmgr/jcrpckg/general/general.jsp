@@ -65,7 +65,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="audit-view panel panel-default">
+                <div class="audit-log panel panel-default">
                     <div class="panel-heading">
                         <div class="action-bar btn-toolbar toolbar">
                             <a class="audit-link" href="#" data-path="${pckg.path}">Audit Log</a>
@@ -79,8 +79,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="panel-body audit-list">
-                    </div>
+                    <ul class="panel-body audit-list">
+                    </ul>
                 </div>
             </div>
         </div>

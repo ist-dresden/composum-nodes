@@ -26,7 +26,7 @@
     position: relative;
 }
 
-.detail-panel.jcrpckg .package-detail .audit-view {
+.detail-panel.jcrpckg .package-detail .audit-log {
     width: 269px;
     margin-left: 1px;
     padding-left: 1px;
@@ -218,7 +218,8 @@ body.top-open .detail-toolbar.display-toolbar {
 
 .default-aspect,
 .feedback-aspect,
-.feedback-display {
+.feedback-display,
+.audit-log .audit-list {
     position: absolute;
 }
 
@@ -236,13 +237,18 @@ body.top-open .detail-toolbar.display-toolbar {
     white-space: nowrap;
 }
 
-.feedback-display {
+.feedback-display,
+.audit-log .audit-list {
     top: 44px;
     left: 2px;
     right: 2px;
     bottom: 14px;
     padding: 0;
     overflow: scroll;
+}
+
+.audit-log .audit-list {
+    top: 40px;
 }
 
 .log-output {
@@ -252,11 +258,15 @@ body.top-open .detail-toolbar.display-toolbar {
     color: #444;
 }
 
-.audit-view .panel-heading {
+.audit-log {
+    position: relative;
+}
+
+.audit-log .panel-heading {
     position: relative;
     padding: 5px 13px;
 }
 
-.audit-view .panel-heading .btn-group {
+.audit-log .panel-heading .btn-group {
     top: 5px;
 }

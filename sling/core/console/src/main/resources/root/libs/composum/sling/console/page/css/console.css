@@ -717,3 +717,52 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     right: 0;
     bottom: 44px;
 }
+
+/**
+ * Audit Log (JobControl)
+ */
+
+.audit-log .audit-list {
+    overflow: scroll;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.audit-log .audit-list li {
+    border-top: 1px solid #eee;
+    padding: 5px 10px;
+}
+
+.audit-log .audit-list li a {
+    color: #666;
+}
+
+.audit-log .audit-list li.succeeded .state {
+    color: #3c763d;
+}
+
+.audit-log .audit-list li.stopped .state {
+    color: #8a6d3b;
+}
+
+.audit-log .audit-list li.error .state {
+    color: #a94442;
+}
+
+.audit-log .audit-list li span {
+    display: inline-block;
+}
+
+.audit-log .audit-list li .time {
+    width: 135px;
+}
+
+.audit-log .audit-list li .state,
+.audit-log .audit-list li .operation {
+    padding-left: 10px;
+}
+
+.audit-log .audit-list li .result {
+    display: none;
+}
