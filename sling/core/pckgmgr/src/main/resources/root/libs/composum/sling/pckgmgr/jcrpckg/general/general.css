@@ -1,11 +1,36 @@
 
+.detail-panel.jcrpckg .panel {
+    border: none;
+    border-radius: 0;
+    margin-bottom: 0;
+}
+
 .detail-panel.jcrpckg .package-detail {
     position: absolute;
     top: 40px;
     bottom: 30px;
     left: 0;
     right: 0;
-    overflow: scroll;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-panel.jcrpckg .package-detail .detail-view {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+}
+
+.detail-panel.jcrpckg .package-detail .aspect-view {
+    flex-grow: 1;
+    position: relative;
+}
+
+.detail-panel.jcrpckg .package-detail .audit-view {
+    width: 269px;
+    margin-left: 1px;
+    padding-left: 1px;
+    border-left: 1px solid #aaa;
 }
 
 .detail-toolbar.display-toolbar {
@@ -49,11 +74,6 @@
 
 body.top-open .detail-toolbar.display-toolbar {
     right: 0;
-}
-
-.detail-panel.jcrpckg .panel {
-    border: none;
-    border-radius: 0;
 }
 
 .detail-panel.jcrpckg .panel-heading.header,
@@ -196,36 +216,47 @@ body.top-open .detail-toolbar.display-toolbar {
     padding: 5px 15px;
 }
 
+.default-aspect,
 .feedback-aspect,
-.feedback-aspect .feedback-display {
+.feedback-display {
     position: absolute;
+}
+
+.default-aspect,
+.feedback-aspect {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 10px;
-    margin: 0;
-}
-
-.feedback-aspect .header {
-    height: 95px;
+    bottom: 0;
     overflow: hidden;
 }
 
-.feedback-aspect .status {
-    height: 90px;
-    overflow: hidden;
+.default-aspect .panel-heading,
+.feedback-aspect .panel-heading {
+    white-space: nowrap;
 }
 
-.feedback-aspect .feedback-display {
-    top: 228px;
-    bottom: 4px;
-    overflow: auto;
-    padding: 3px 6px;
+.feedback-display {
+    top: 44px;
+    left: 2px;
+    right: 2px;
+    bottom: 14px;
+    padding: 0;
+    overflow: scroll;
 }
 
-.feedback-aspect .feedback-display .log-output {
+.log-output {
     font-size: 12px;
     font-family: monospace;
     white-space: pre;
     color: #444;
+}
+
+.audit-view .panel-heading {
+    position: relative;
+    padding: 5px 13px;
+}
+
+.audit-view .panel-heading .btn-group {
+    top: 5px;
 }

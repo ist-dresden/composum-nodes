@@ -11,15 +11,15 @@
 
         pckgmgr.getCreatePackageDialog = function () {
             return core.getView('#pckg-create-dialog', pckgmgr.CreatePackageDialog);
-        }
+        };
 
         pckgmgr.getDeletePackageDialog = function () {
             return core.getView('#pckg-delete-dialog', pckgmgr.DeletePackageDialog);
-        }
+        };
 
         pckgmgr.getUploadPackageDialog = function () {
             return core.getView('#pckg-upload-dialog', pckgmgr.UploadPackageDialog);
-        }
+        };
 
         pckgmgr.CreatePackageDialog = core.components.Dialog.extend({
 

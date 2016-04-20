@@ -9,14 +9,65 @@
 
     (function (pckgmgr) {
 
+        pckgmgr.getUpdatePackageDialog = function () {
+            return core.getView('#pckg-update-dialog', pckgmgr.UpdatePackageDialog);
+        };
+
+        pckgmgr.UpdatePackageDialog = core.components.Dialog.extend({
+
+            initialize: function (options) {
+                core.components.Dialog.prototype.initialize.apply(this, [options]);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.$path = this.$('input[name="path"]');
+                this.$group = this.$('input[name="group"]');
+                this.$name = this.$('input[name="name"]');
+                this.$version = this.$('input[name="version"]');
+                this.$('button.save').click(_.bind(this.updatePackage, this));
+            },
+
+            initDialog: function (data) {
+                var path = pckgmgr.getCurrentPath();
+                if (data) {
+                    if (data.path) {
+                        path = data.path;
+                    }
+                    this.$group.val(data.group);
+                    this.$name.val(data.name);
+                    this.$version.val(data.version);
+                } else {
+                    this.$group.val(undefined);
+                    this.$name.val(undefined);
+                    this.$version.val(undefined);
+                }
+                this.$path.val(path);
+                this.form.$el.attr('action', core.getContextUrl(
+                    '/bin/core/package.update.json' + core.encodePath(path)));
+            },
+
+            updatePackage: function (event) {
+                event.preventDefault();
+                var oldPath = this.$path.val();
+                if (this.form.isValid()) {
+                    this.submitForm(function (result) {
+                        var newPath = result.path;
+                        $(document).trigger('path:moved', [oldPath, newPath]);
+                    });
+                } else {
+                    this.alert('danger', 'a name must be specified');
+                }
+                return false;
+            }
+        });
+
         pckgmgr.JcrPackageTab = core.console.JobControlTab.extend({
 
             jobTopic: 'com/composum/sling/core/pckgmgr/PackageJobExecutor',
 
             initialize: function (options) {
                 core.console.JobControlTab.prototype.initialize.apply(this, [options]);
-                this.$default = this.$('.default-aspect');
-                this.$feedback = this.$('.feedback-aspect');
+                this.$summary = this.$('.package-detail .header-view .status');
+                this.$default = this.$('.aspect-view .default-aspect');
+                this.$feedback = this.$('.aspect-view .feedback-aspect');
                 this.$title = this.$feedback.find('.title');
                 this.$('.display-toolbar .edit').click(_.bind(this.editPackage, this));
                 this.$('.display-toolbar .install').click(_.bind(this.installPackage, this));
@@ -38,6 +89,15 @@
                 if (event) {
                     event.preventDefault();
                 }
+                var dialog = pckgmgr.getUpdatePackageDialog();
+                dialog.show(_.bind(function () {
+                    dialog.initDialog({
+                        path: pckgmgr.current.path,
+                        group: pckgmgr.current.group,
+                        name: pckgmgr.current.name,
+                        version: pckgmgr.current.version
+                    });
+                }, this));
             },
 
             installPackage: function (event) {
@@ -74,12 +134,25 @@
                 this.reload();
             },
 
+            reload: function () {
+                core.console.JobControlTab.prototype.reload.apply(this);
+                core.ajaxGet('/bin/packages.summary.html' + pckgmgr.getCurrentPath(), {},
+                    _.bind(function (data) {
+                        this.$summary.html(data);
+                    }, this));
+            },
+
             jobStarted: function (job) {
                 core.console.JobControlTab.prototype.jobStarted.apply(this, [job]);
                 this.openFeedback();
             },
-            
-            jobSucceeded: function() {
+
+            jobStopped: function () {
+                core.console.JobControlTab.prototype.jobStopped.apply(this);
+                this.reload();
+            },
+
+            jobSucceeded: function () {
                 this.jobStopped();
             },
 

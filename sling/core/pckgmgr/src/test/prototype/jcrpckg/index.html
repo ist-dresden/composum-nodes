@@ -1,0 +1,67 @@
+<html>
+<head>
+    <style type="text/css">
+        div {
+            margin: 0;
+            border: 1px solid #aaa;
+            padding: 4px;
+        }
+
+        label {
+            position: absolute;
+        }
+
+        .content {
+            position: absolute;
+            top: 80px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            flex-grow: 0;
+        }
+
+        .header-block {
+            display: inline-block;
+            width: 300px;
+            height: 100px;
+        }
+
+        .aspects {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: row;
+        }
+
+        .aspects .left {
+            flex-grow: 1;
+        }
+
+        .aspects .right {
+            width: 270px;
+        }
+    </style>
+</head>
+<div class="content">
+    <div class="header">
+        <label>header</label>
+        <div class="header-block">block 1</div>
+        <div class="header-block">block 2</div>
+        <div class="header-block">block 3</div>
+        <div class="header-block">block 4</div>
+    </div>
+    <div class="aspects">
+        <label>aspects</label>
+        <div class="left">
+            <label>left</label>
+        </div>
+        <div class="right">
+            <label>right</label>
+        </div>
+    </div>
+</div>
+</html>

@@ -10,20 +10,20 @@
                 <button class="edit fa fa-pencil btn btn-default" title="Edit package properties"><span class="label">Edit</span>
                 </button>
                 <a type="button" class="download fa fa-download btn btn-default" href="${pckg.downloadUrl}"
-                   title="Download selected package"><span class="label">Download</span></a>
+                   title="Download this package"><span class="label">Download</span></a>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button class="install btn btn-default btn-stack" title="Install the package"><span
+                <button class="install btn btn-default btn-stack" title="(Re)Install this package"><span
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                         class="symbol fa fa-sign-in fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
                         class="label">Install</span></button>
-                <button class="assemble btn btn-default btn-stack" title="Build the package"><span
+                <button class="assemble btn btn-default btn-stack" title="(Re)Build this package"><span
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
-                        class="symbol fa fa-shopping-basket fa-stack-1x"></i><i
+                        class="symbol fa fa-archive fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
                         class="label">Assemble</span></button>
-                <button class="uninstall btn btn-default btn-stack" title="Uninstall the package"><span
+                <button class="uninstall btn btn-default btn-stack" title="Uninstall this package"><span
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                         class="symbol fa fa-history fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
@@ -43,22 +43,44 @@
             </div>
         </div>
         <div class="package-detail">
-            <div class="panel panel-default default-aspect">
+            <div class="header-view panel panel-default">
                 <sling:include replaceSelectors="header"/>
-                <div class="panel-heading">Filter List</div>
-                <ul class="list-group">
-                    <c:forEach items="${pckg.filterList}" var="filter">
-                        <li class="list-group-item">${filter.root}</li>
-                    </c:forEach>
-                </ul>
             </div>
-            <div class="panel panel-default feedback-aspect hidden">
-                <sling:include replaceSelectors="header"/>
-                <div class="panel-heading"><span class="title"></span>&nbsp;
-                    <button class="close" title="Close"><span class="fa fa-close"></span></button>
+            <div class="detail-view">
+                <div class="aspect-view">
+                    <div class="default-aspect panel panel-default">
+                        <div class="panel-heading">Filter List</div>
+                        <ul class="list-group">
+                            <c:forEach items="${pckg.filterList}" var="filter">
+                                <li class="list-group-item">${filter.root}</li>
+                            </c:forEach>
+                        </ul>
+                    </div>
+                    <div class="feedback-aspect panel panel-default hidden">
+                        <div class="panel-heading"><span class="title"></span>&nbsp;
+                            <button class="close" title="Close"><span class="fa fa-close"></span></button>
+                        </div>
+                        <div class="panel-body feedback-display">
+                            <div class="log-output"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="panel-body feedback-display">
-                    <div class="log-output"></div>
+                <div class="audit-view panel panel-default">
+                    <div class="panel-heading">
+                        <div class="action-bar btn-toolbar toolbar">
+                            <a class="audit-link" href="#" data-path="${pckg.path}">Audit Log</a>
+                            <div class="btn-group btn-group-sm align-right" role="group">
+                                <button type="button" class="refresh fa fa-refresh btn btn-default"
+                                        title="Refresh Audit Log"><span
+                                        class="label">Refresh</span></button>
+                                <button type="button" class="purge fa fa-trash-o btn btn-default"
+                                        title="Purge Audit Log"><span
+                                        class="label">Purge</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-body audit-list">
+                    </div>
                 </div>
             </div>
         </div>
