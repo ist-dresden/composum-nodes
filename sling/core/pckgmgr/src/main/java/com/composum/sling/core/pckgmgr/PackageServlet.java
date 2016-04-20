@@ -2,6 +2,8 @@ package com.composum.sling.core.pckgmgr;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.concurrent.JobMonitor;
+import com.composum.sling.core.concurrent.JobUtil;
 import com.composum.sling.core.pckgmgr.util.PackageProgressTracker;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
@@ -17,14 +19,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.vault.fs.api.FilterSet;
-import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.api.PathFilter;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
-import org.apache.jackrabbit.vault.fs.io.ImportOptions;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
@@ -34,8 +34,10 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
-import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
+import org.apache.sling.event.jobs.Job;
+import org.apache.sling.event.jobs.JobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,9 +52,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
-
-import static com.composum.sling.core.pckgmgr.util.PackageUtil.IMPORT_DONE;
+import java.util.Map;
 
 /** The servlet to provide download and upload of content packages and package definitions. */
 @SlingServlet(paths = "/bin/core/package", methods = {"GET", "POST", "DELETE"})
@@ -62,9 +64,8 @@ public class PackageServlet extends AbstractServiceServlet {
 
     public static final String PARAM_GROUP = "group";
     public static final String PARAM_FORCE = "force";
-    public static final String PARAM_DRY_RUN = "dryRun";
-    public static final String PARAM_SAVE_THRESHOLD = "saveThreshold";
-    public static final String PARAM_IMPORT_MODE = "importMode";
+
+    public static final long INSTALL_START_TIMEOUT = 30L * 1000L;
 
     public static final String ZIP_CONTENT_TYPE = "application/zip";
 
@@ -76,7 +77,7 @@ public class PackageServlet extends AbstractServiceServlet {
     private CoreConfiguration coreConfig;
 
     @Reference
-    private DynamicClassLoaderManager classLoaderManager;
+    private JobManager jobManager;
 
     //
     // Servlet operations
@@ -87,8 +88,8 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
     public enum Operation {
-        create, delete, download, upload, install, deploy, service, build, coverage, tree, view,
-        filterList, filterChange, filterAdd, filterRemove, filterMoveUp, filterMoveDown
+        create, update, delete, download, upload, install, deploy, service, build, uninstall, tree, view,
+        coverage, filterList, filterChange, filterAdd, filterRemove, filterMoveUp, filterMoveDown
     }
 
     protected PackageOperationSet operations = new PackageOperationSet();
@@ -121,6 +122,8 @@ public class PackageServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.create, new CreateOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
+                Operation.update, new UpdateOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.upload, new UploadOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.install, new InstallOperation());
@@ -128,11 +131,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.deploy, new DeployOperation());
 
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
-                Operation.deploy, new HtmlDeployOperation());
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
                 Operation.service, new CrxServiceOperation());
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
-                Operation.install, new HtmlInstallOperation());
 
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
                 Operation.filterChange, new ChangeFilterOperation());
@@ -213,11 +212,31 @@ public class PackageServlet extends AbstractServiceServlet {
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
-            /*
-             * { "group":"", "name":"", "version":"", "filter":[{ "root":"", "rules:[{ "modifier":"include","pattern:"" },{ "modifier":"exclude","pattern:"" }]
-             * },{ }], "providerName":"provider name", "providerUrl":"http://provider.url/", "providerLink":"http://provider.url/link/to/package.zip ",
-             * "acHandling":"Overwrite" }
-             */
+
+            String group = request.getParameter(PARAM_GROUP);
+            String name = request.getParameter(PARAM_NAME);
+            String version = request.getParameter(PARAM_VERSION);
+
+            try {
+
+                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
+
+                if (jcrPackage != null) {
+
+                    manager.rename(jcrPackage, group, name, version);
+
+                    JsonWriter writer = ResponseUtil.getJsonWriter(response);
+                    jsonAnswer(writer, "update", "successful", manager, jcrPackage);
+
+                } else {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                            "Package not found: " + PackageUtil.getPath(request));
+                }
+            } catch (PackageException pex) {
+                LOG.error(pex.getMessage(), pex);
+                throw new RepositoryException(pex);
+            }
         }
     }
 
@@ -322,50 +341,43 @@ public class PackageServlet extends AbstractServiceServlet {
             JcrPackageManager manager = PackageUtil.createPackageManager(request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
-            installPackage(request, response, jcrPackage);
+            installPackage(request, response, manager, jcrPackage);
         }
 
         protected void installPackage(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                      JcrPackage jcrPackage)
+                                      JcrPackageManager manager, JcrPackage jcrPackage)
                 throws RepositoryException, IOException {
 
-            ImportOptions options = new ImportOptions();
-            options.setDryRun(RequestUtil.getParameter(request, PARAM_DRY_RUN, false));
-            options.setAutoSaveThreshold(RequestUtil.getParameter(request, PARAM_SAVE_THRESHOLD, 1024));
-            options.setImportMode(RequestUtil.getParameter(request, PARAM_IMPORT_MODE, ImportMode.REPLACE));
-            options.setHookClassLoader(classLoaderManager.getDynamicClassLoader());
+            ResourceResolver resolver = request.getResourceResolver();
+            Session session = resolver.adaptTo(Session.class);
+            String path = jcrPackage.getNode().getPath();
+            String root = manager.getPackageRoot().getPath();
+            if (path.startsWith(root)) {
+                path = path.substring(root.length());
+            }
 
-            PackageProgressTracker tracker = createTracker(response);
-            options.setListener(tracker);
-            tracker.writePrologue();
+            Map<String, Object> jobProperties = new HashMap<>();
+            jobProperties.put("reference", path);
+            jobProperties.put("operation", "install");
+            jobProperties.put("userid", session.getUserID());
+            JobUtil.buildOutfileName(jobProperties);
 
-            installPackage(response, jcrPackage, options);
-        }
+            Job job = jobManager.addJob(PackageJobExecutor.TOPIC, jobProperties);
+            if (new JobMonitor.IsStarted(jobManager, resolver, job.getId(), INSTALL_START_TIMEOUT).call()) {
 
-        protected void installPackage(SlingHttpServletResponse response,
-                                      JcrPackage jcrPackage, ImportOptions options)
-                throws RepositoryException, IOException {
+                installationStarted(request, response, manager, jcrPackage);
 
-            try {
-                jcrPackage.install(options);
-            } catch (PackageException pex) {
-                LOG.error(pex.getMessage(), pex);
-                throw new RepositoryException(pex);
+            } else {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Package install not started!");
             }
         }
 
-        protected PackageProgressTracker createTracker(SlingHttpServletResponse response)
-                throws IOException {
-            return new PackageProgressTracker.JsonTracking(response, IMPORT_DONE);
-        }
-    }
+        protected void installationStarted(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                           JcrPackageManager manager, JcrPackage jcrPackage)
+                throws RepositoryException, IOException {
 
-    protected class HtmlInstallOperation extends InstallOperation {
-
-        @Override
-        protected PackageProgressTracker createTracker(SlingHttpServletResponse response)
-                throws IOException {
-            return new PackageProgressTracker.HtmlStreamTracking(response, IMPORT_DONE);
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            jsonAnswer(writer, "installation", "started", manager, jcrPackage);
         }
     }
 
@@ -386,21 +398,12 @@ public class PackageServlet extends AbstractServiceServlet {
                 JcrPackageManager manager = PackageUtil.createPackageManager(request);
                 JcrPackage jcrPackage = manager.upload(input, true, force);
 
-                installPackage(request, response, jcrPackage);
+                installPackage(request, response, manager, jcrPackage);
 
             } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST,
                         "no package file accessible");
             }
-        }
-    }
-
-    protected class HtmlDeployOperation extends DeployOperation {
-
-        @Override
-        protected PackageProgressTracker createTracker(SlingHttpServletResponse response)
-                throws IOException {
-            return new PackageProgressTracker.HtmlTracking(response, IMPORT_DONE);
         }
     }
 
@@ -415,21 +418,17 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class CrxServiceOperation extends DeployOperation {
 
         @Override
-        protected void installPackage(SlingHttpServletResponse response,
-                                      JcrPackage jcrPackage, ImportOptions options)
+        protected void installationStarted(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                           JcrPackageManager manager, JcrPackage jcrPackage)
                 throws RepositoryException, IOException {
-
-            try {
-                jcrPackage.install(options);
-
-                response.setStatus(HttpServletResponse.SC_OK);
-                Writer writer = response.getWriter();
-                writer.append("<repo>");
+            response.setStatus(HttpServletResponse.SC_OK);
+            Writer writer = response.getWriter();
+            writer.append("<repo>");
 //                writer.append("<crx version=\"\" user=\"\" workspace=\"\">");
 //                writer.append("<request>");
 //                writer.append("<param name=\"file\" value=\"\"/>");
 //                writer.append("</request>");
-                writer.append("<response>");
+            writer.append("<response>");
 //                writer.append("<data>");
 //                writer.append("<package>");
 //                writer.append("<group></group>");
@@ -445,21 +444,10 @@ public class PackageServlet extends AbstractServiceServlet {
 //                writer.append("<lastUnpackedBy></lastUnpackedBy>");
 //                writer.append("</package>");
 //                writer.append("</data>");
-                writer.append("<status code=\"200\">ok</status>");
-                writer.append("</response>");
+            writer.append("<status code=\"200\">ok</status>");
+            writer.append("</response>");
 //                writer.append("</crx>");
-                writer.append("</repo>");
-
-            } catch (PackageException pex) {
-                LOG.error(pex.getMessage(), pex);
-                throw new RepositoryException(pex);
-            }
-        }
-
-        @Override
-        protected PackageProgressTracker createTracker(SlingHttpServletResponse response)
-                throws IOException {
-            return new PackageProgressTracker.LogOnlyTracking("CRX.deploy");
+            writer.append("</repo>");
         }
     }
 

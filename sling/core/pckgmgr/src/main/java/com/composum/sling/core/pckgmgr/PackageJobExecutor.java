@@ -77,7 +77,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
     @Property(
             name = PROGRESS_TRACK_IDLE_TIME,
             label = "track idle time",
-            description = "idle time in seconds for the progress tracker to check operation ending",
+            description = "idle time in seconds for the progress tracker to check the operations end",
             intValue = 10
     )
     protected int progressTrackIdleTime;
@@ -141,7 +141,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
             }
         }
 
-        protected class InstallOperation extends Operation {
+        protected class InstallOperation extends TrackedOperation {
 
             public InstallOperation(JcrPackageManager manager, JcrPackage jcrPckg)
                     throws IOException {
@@ -173,7 +173,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
             }
         }
 
-        protected class UninstallOperation extends Operation {
+        protected class UninstallOperation extends TrackedOperation {
 
             public UninstallOperation(JcrPackageManager manager, JcrPackage jcrPckg)
                     throws IOException {
@@ -236,6 +236,9 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
 
             protected abstract void doIt() throws PackageException, IOException, RepositoryException;
 
+            protected void track() {
+            }
+
             protected Object done() throws IOException {
                 return null;
             }
@@ -244,17 +247,29 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
                 tracker.writePrologue();
                 try {
                     doIt();
-                    while (!tracker.isOperationDone()) {
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException iex) {
-                            LOG.info("Operation track interrupted: " + iex.getMessage());
-                        }
-                    }
+                    track();
                     return done();
                 } catch (PackageException pex) {
                     LOG.error(pex.getMessage(), pex);
                     throw new RepositoryException(pex);
+                }
+            }
+        }
+
+        protected abstract class TrackedOperation extends Operation {
+
+            public TrackedOperation(JcrPackageManager manager, JcrPackage jcrPckg)
+                    throws IOException {
+                super(manager, jcrPckg);
+            }
+
+            protected void track() {
+                while (!tracker.isOperationDone()) {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException iex) {
+                        LOG.info("Operation track interrupted: " + iex.getMessage());
+                    }
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.concurrent.JobUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.ResponseUtil;
@@ -16,11 +17,8 @@ import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.ValueMap;
-import org.apache.sling.event.impl.jobs.JobImpl;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
-import org.apache.sling.event.jobs.JobUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,7 +115,7 @@ public class JobControlServlet extends AbstractServiceServlet {
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
             final String jobId = AbstractServiceServlet.getPath(request).substring(1);
-            final Job job = getJobById(jobId, request);
+            final Job job = JobUtil.getJobById(jobManager, request.getResourceResolver(), jobId);
             if (job != null) {
                 final String path = job.getProperty("outfile", String.class);
                 final String range = request.getHeader("Range");
@@ -223,7 +221,7 @@ public class JobControlServlet extends AbstractServiceServlet {
             Collection<Job> jobs = jobManager.findJobs(selector, topic.getString(), 0);
             List<Job> allJobs = new ArrayList<>(jobs);
             if (useAudit) {
-                final Collection<Job> auditJobs = getAuditJobs(selector, request.getResourceResolver());
+                final Collection<Job> auditJobs = JobUtil.getAuditJobs(selector, request.getResourceResolver());
                 for (Job auditJob : auditJobs) {
                     if (!containsJob(jobs, auditJob)) {
                         allJobs.add(auditJob);
@@ -271,21 +269,10 @@ public class JobControlServlet extends AbstractServiceServlet {
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
             final String path = AbstractServiceServlet.getPath(request);
             String jobId = path.substring(1);
-            Job job = jobManager.getJobById(jobId);
+            Job job = JobUtil.getJobById(jobManager, request.getResourceResolver(), jobId);
             if (job != null) {
                 try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
                     job2json(jsonWriter, job);
-                }
-            } else {
-                //fallback: use audit
-                final ResourceResolver resolver = request.getResourceResolver();
-                final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs//*[slingevent:eventId='" + jobId + "']", "xpath");
-                if (resources.hasNext()) {
-                    final Resource audit = resources.next();
-                    final AuditJob auditJob = new AuditJob(audit);
-                    try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
-                        job2json(jsonWriter, auditJob);
-                    }
                 }
             }
         }
@@ -341,29 +328,20 @@ public class JobControlServlet extends AbstractServiceServlet {
         }
 
         private void removeAudits(ResourceResolver resolver, int keep, Iterator<Resource> auditResources) throws PersistenceException {
-            final List<AuditJob> allAuditJobs = new ArrayList<>();
+            final List<JobUtil.AuditJob> allAuditJobs = new ArrayList<>();
             while (auditResources.hasNext()) {
                 final Resource auditResource = auditResources.next();
-                final AuditJob auditJob = new AuditJob(auditResource);
+                final JobUtil.AuditJob auditJob = new JobUtil.AuditJob(auditResource);
                 allAuditJobs.add(auditJob);
             }
-            final Comparator<AuditJob> comparator = new AuditJobComparator();
+            final Comparator<Job> comparator = new JobUtil.JobComparator();
             Collections.sort(allAuditJobs, comparator);
             int size = allAuditJobs.size();
             for (int i = 0; i < size - keep; i++) {
-                final AuditJob x = allAuditJobs.get(i);
+                final JobUtil.AuditJob x = allAuditJobs.get(i);
                 resolver.delete(x.resource);
             }
             resolver.commit();
-        }
-
-        private class AuditJobComparator implements Comparator<AuditJob> {
-            @Override
-            public int compare(AuditJob o1, AuditJob o2) {
-                final Calendar j1s = o1.getProcessingStarted();
-                final Calendar j2s = o2.getProcessingStarted();
-                return j1s.compareTo(j2s);
-            }
         }
     }
 
@@ -439,11 +417,7 @@ public class JobControlServlet extends AbstractServiceServlet {
                 }
             }
             properties.put("userid", session.getUserID());
-            String outfilePrefix = (String) properties.get("outfileprefix");
-            final String tmpdir = System.getProperty("java.io.tmpdir");
-            final boolean endsWithSeparator = (tmpdir.charAt(tmpdir.length() - 1) == File.separatorChar);
-            String outfile = tmpdir + (endsWithSeparator ? "" : File.separator) + (StringUtils.isBlank(outfilePrefix) ? "slingjob" : outfilePrefix) + "_" + System.currentTimeMillis() + ".out";
-            properties.put("outfile", outfile);
+            JobUtil.buildOutfileName(properties);
             Job job = jobManager.addJob(topic, properties);
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
                 job2json(jsonWriter, job);
@@ -486,190 +460,5 @@ public class JobControlServlet extends AbstractServiceServlet {
         }
         jsonWriter.name("jobState").value(job.getJobState().name());
         jsonWriter.endObject();
-    }
-
-    private Job getJobById(String jobId, SlingHttpServletRequest request) {
-        Job job = jobManager.getJobById(jobId);
-        if (job != null) {
-            return job;
-        } else {
-            //fallback: use audit
-            final ResourceResolver resolver = request.getResourceResolver();
-            final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs//*[slingevent:eventId='" + jobId + "']", "xpath");
-            if (resources.hasNext()) {
-                final Resource audit = resources.next();
-                final AuditJob auditJob = new AuditJob(audit);
-                return auditJob;
-            } else {
-                return null;
-            }
-        }
-    }
-
-    private Collection<Job> getAuditJobs(JobManager.QueryType state, final ResourceResolver resolver) {
-        final List<Job> result = new ArrayList<>();
-        final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs//*[@slingevent:eventId]", "xpath");
-        while (resources.hasNext()) {
-            final AuditJob job = new AuditJob(resources.next());
-            final Job.JobState jobState = job.getJobState();
-            if (state == JobManager.QueryType.ALL || state == JobManager.QueryType.HISTORY || state.name().equals(jobState.name())) {
-                result.add(job);
-            }
-        }
-        return result;
-    }
-
-    private static class AuditJob implements Job {
-
-        protected Resource resource;
-
-        AuditJob(Resource resource) {
-            this.resource = resource;
-        }
-
-        private String getStringProperty(String name) {
-            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
-            return valueMap.get(name, "");
-        }
-
-        @Override
-        public String getTopic() {
-            return getStringProperty("event.job.topic");
-        }
-
-        @Override
-        public String getId() {
-            return getStringProperty("slingevent:eventId");
-        }
-
-        @Override
-        public String getName() {
-            return getStringProperty(Job.PROPERTY_JOB_TITLE);
-        }
-
-        @Override
-        public Object getProperty(String name) {
-            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
-            return valueMap.get(name);
-        }
-
-        @Override
-        public Set<String> getPropertyNames() {
-            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
-            return valueMap.keySet();
-        }
-
-        @Override
-        public <T> T getProperty(String name, Class<T> type) {
-            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
-            return valueMap.get(name, type);
-        }
-
-        @Override
-        public <T> T getProperty(String name, T defaultValue) {
-            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
-            return valueMap.get(name, defaultValue);
-        }
-
-        @Override
-        @Deprecated
-        public JobUtil.JobPriority getJobPriority() {
-            return JobUtil.JobPriority.NORM;
-        }
-
-        @Override
-        public int getRetryCount() {
-            return (Integer) this.getProperty(Job.PROPERTY_JOB_RETRY_COUNT);
-        }
-
-        @Override
-        public int getNumberOfRetries() {
-            return (Integer) this.getProperty(Job.PROPERTY_JOB_RETRIES);
-        }
-
-        @Override
-        public String getQueueName() {
-            return (String) this.getProperty(Job.PROPERTY_JOB_QUEUE_NAME);
-        }
-
-        @Override
-        public String getTargetInstance() {
-            return (String) this.getProperty(Job.PROPERTY_JOB_TARGET_INSTANCE);
-        }
-
-        @Override
-        public Calendar getProcessingStarted() {
-            return (Calendar) this.getProperty(Job.PROPERTY_JOB_STARTED_TIME);
-        }
-
-        @Override
-        public Calendar getCreated() {
-            return (Calendar) this.getProperty(Job.PROPERTY_JOB_CREATED);
-        }
-
-        @Override
-        public String getCreatedInstance() {
-            return (String) this.getProperty(Job.PROPERTY_JOB_CREATED_INSTANCE);
-        }
-
-        @Override
-        public JobState getJobState() {
-            final String enumValue = this.getProperty(JobImpl.PROPERTY_FINISHED_STATE, String.class);
-            if (enumValue == null) {
-                if (this.getProcessingStarted() != null) {
-                    return JobState.ACTIVE;
-                }
-                return JobState.QUEUED;
-            }
-            return JobState.valueOf(enumValue);
-        }
-
-        /**
-         * @see org.apache.sling.event.jobs.Job#getFinishedDate()
-         */
-        @Override
-        public Calendar getFinishedDate() {
-            return this.getProperty(Job.PROPERTY_FINISHED_DATE, Calendar.class);
-        }
-
-        /**
-         * @see org.apache.sling.event.jobs.Job#getResultMessage()
-         */
-        @Override
-        public String getResultMessage() {
-            return this.getProperty(Job.PROPERTY_RESULT_MESSAGE, String.class);
-        }
-
-        /**
-         * @see org.apache.sling.event.jobs.Job#getProgressLog()
-         */
-        @Override
-        public String[] getProgressLog() {
-            return this.getProperty(Job.PROPERTY_JOB_PROGRESS_LOG, String[].class);
-        }
-
-        /**
-         * @see org.apache.sling.event.jobs.Job#getProgressStepCount()
-         */
-        @Override
-        public int getProgressStepCount() {
-            return this.getProperty(Job.PROPERTY_JOB_PROGRESS_STEPS, -1);
-        }
-
-        /**
-         * @see org.apache.sling.event.jobs.Job#getFinishedProgressStep()
-         */
-        @Override
-        public int getFinishedProgressStep() {
-            return this.getProperty(Job.PROPERTY_JOB_PROGRESS_STEP, 0);
-        }
-
-        /**
-         * @see org.apache.sling.event.jobs.Job#getProgressETA()
-         */
-        @Override
-        public Calendar getProgressETA() {
-            return this.getProperty(Job.PROPERTY_JOB_PROGRESS_ETA, Calendar.class);
-        }
     }
 }
