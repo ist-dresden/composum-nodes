@@ -20,16 +20,16 @@
                 this.$title = this.$feedback.find('.title');
                 this.$('.display-toolbar .edit').click(_.bind(this.editPackage, this));
                 this.$('.display-toolbar .install').click(_.bind(this.installPackage, this));
-                this.$('.display-toolbar .build').click(_.bind(this.buildPackage, this));
-                this.$('.display-toolbar .rewrap').click(_.bind(this.rewrapPackage, this));
+                this.$('.display-toolbar .assemble').click(_.bind(this.assemblePackage, this));
+                this.$('.display-toolbar .uninstall').click(_.bind(this.uninstallPackage, this));
                 this.$('.display-toolbar .upload').click(_.bind(pckgmgr.treeActions.uploadPackage, pckgmgr.treeActions));
                 this.$('.display-toolbar .create').click(_.bind(pckgmgr.treeActions.createPackage, pckgmgr.treeActions));
                 this.$('.display-toolbar .delete').click(_.bind(pckgmgr.treeActions.deletePackage, pckgmgr.treeActions));
                 this.$('.display-toolbar .refresh').click(_.bind(this.refresh, this));
                 this.$feedback.find('.close').click(_.bind(this.closeFeedback, this));
-                this.$logOutput = this.$feedback.find('.feedback-display table');
+                this.$logOutput = this.$feedback.find('.feedback-display .log-output');
             },
-            
+
             getCurrentPath: function () {
                 return pckgmgr.getCurrentPath();
             },
@@ -49,23 +49,38 @@
                 });
             },
 
-            buildPackage: function (event) {
+            assemblePackage: function (event) {
                 if (event) {
                     event.preventDefault();
                 }
+                this.startJob({
+                    operation: 'assemble'
+                });
             },
 
-            rewrapPackage: function (event) {
+            uninstallPackage: function (event) {
                 if (event) {
                     event.preventDefault();
                 }
+                this.startJob({
+                    operation: 'uninstall'
+                });
             },
 
             refresh: function (event) {
                 if (event) {
                     event.preventDefault();
                 }
-                pckgmgr.detailView.reload();
+                this.reload();
+            },
+
+            jobStarted: function (job) {
+                core.console.JobControlTab.prototype.jobStarted.apply(this, [job]);
+                this.openFeedback();
+            },
+            
+            jobSucceeded: function() {
+                this.jobStopped();
             },
 
             closeFeedback: function (event) {
@@ -82,27 +97,6 @@
                 }
                 this.$default.addClass('hidden');
                 this.$feedback.removeClass('hidden');
-            },
-
-            callAndPoll: function (title, url, onSuccess, onError) {
-                this.openFeedback();
-                this.$title.text(title);
-                this.$logOutput.html('');
-                var path = pckgmgr.getCurrentPath();
-                core.ajaxPoll('POST', url + path,
-                    _.bind(function (xhr, snippet) {
-                        this.logAppend(snippet);
-                    }, this), _.bind(function (xhr, snippet) {
-                        this.logAppend(snippet);
-                        if (_.isFunction(onSuccess)) {
-                            onSuccess(xhr);
-                        }
-                    }, this), _.bind(function (xhr, snippet) {
-                        this.logAppend(snippet);
-                        if (_.isFunction(onError)) {
-                            onError(xhr);
-                        }
-                    }, this))
             }
         });
 

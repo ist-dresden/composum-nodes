@@ -144,20 +144,22 @@
             },
 
             startJob: function (properties) {
-                var path = this.getCurrentPath();
-                this.delay(); // cancel all open timeouts
-                this.logOffset = 0;
-                core.ajaxPost('/bin/core/jobcontrol.job.json', _.extend({
-                        'event.job.topic': this.jobTopic,
-                        'reference': path
-                    }, properties), {},
-                    _.bind(function (data, msg, xhr) {
-                        this.currentJob = data;
-                        this.delay(true);
-                    }, this),
-                    _.bind(function (xhr) {
-                        this.jobError('Job start failed: ', xhr);
-                    }, this));
+                if (!this.currentJob) {
+                    var path = this.getCurrentPath();
+                    this.delay(); // cancel all open timeouts
+                    this.logOffset = 0;
+                    core.ajaxPost('/bin/core/jobcontrol.job.json', _.extend({
+                            'event.job.topic': this.jobTopic,
+                            'reference': path
+                        }, properties), {},
+                        _.bind(function (data, msg, xhr) {
+                            this.jobStarted(data);
+                            this.delay(true);
+                        }, this),
+                        _.bind(function (xhr) {
+                            this.jobError('Job start failed: ', xhr);
+                        }, this));
+                }
             },
 
             cancelJob: function () {
@@ -178,10 +180,10 @@
                 core.ajaxGet('/bin/core/jobcontrol.jobs.ACTIVE.json' + path + '?topic=' + this.jobTopic, {},
                     _.bind(function (data, msg, xhr) {
                         if (data && data.length > 0) {
-                            this.jobStarted();
-                            this.logOffset = 0;
-                            this.currentJob = data[0];
+                            this.jobStarted(data[0]);
                             this.delay(true);
+                        } else {
+                            this.currentJob = undefined;
                         }
                     }, this),
                     _.bind(function (xhr) {
@@ -189,45 +191,49 @@
                     }, this));
             },
 
-            jobStarted: function (data) {
-                if (!this.jobIsRunning) {
-                    this.jobIsRunning = true;
+            jobStarted: function (job) {
+                if (job) {
+                    this.currentJob = job;
+                    var operation = this.currentJob.operation;
+                    this.logOffset = 0;
                     this.$logOutput.text('');
-                    this.$el.removeClass('job-error');
-                    this.$el.addClass('job-running');
-                }
-                if (data) {
-                    this.logAppend(data);
+                    this.removeClasses(/.+-error/);
+                    this.$el.addClass((operation ? operation : 'job') + '-running');
                 }
             },
 
-            jobStopped: function (data) {
-                if (data) {
-                    this.logAppend(data);
+            jobStopped: function (message) {
+                if (message) {
+                    this.logAppend(message);
                 }
-                if (this.jobIsRunning) {
-                    this.$el.removeClass('job-running');
-                    this.jobIsRunning = false;
+                if (this.currentJob) {
+                    this.removeClasses(/.+-running/);
+                    this.currentJob = undefined;
                 }
             },
 
             jobError: function (text, xhr) {
-                this.$el.addClass('job-error');
+                var operation = this.currentJob.operation;
+                this.$el.addClass((operation ? operation : 'job') + '-error');
                 this.jobStopped(text + xhr.statusText + (xhr.status ? (' (' + xhr.status + ')') : '') + '\n');
                 this.delay(true); // probably one last 'pollOutput' after final status reached
             },
 
+            jobSucceeded: function () {
+                this.jobStopped('Job finished successfully.\n');
+            },
+
             checkJob: function () {
-                // pollOutput on each check even if 'jobIsRunning' is set to 'false'
+                // pollOutput on each check even if 'currentJob' is undefined
                 this.pollOutput(_.bind(function () {
-                    if (this.jobIsRunning && this.currentJob) {
+                    if (this.currentJob) {
                         core.ajaxGet('/bin/core/jobcontrol.job.json/' + this.currentJob['slingevent:eventId'], {},
                             _.bind(function (data, msg, xhr) {
                                 this.currentJob = data;
                                 if (this.currentJob['slingevent:finishedState']) {
                                     switch (this.currentJob['slingevent:finishedState']) {
                                         case 'SUCCEEDED':
-                                            this.jobStopped('Job finished successfully.\n');
+                                            this.jobSucceeded(); // extension hook
                                             break;
                                         case 'STOPPED':
                                             this.jobStopped('Job execution stopped.\n');
@@ -265,8 +271,9 @@
                             }
                         },
                         _.bind(function (data, msg, xhr) {
+                            var contentLength = parseInt(xhr.getResponseHeader('Content-Length'));
                             this.logAppend(data);
-                            this.logOffset += parseInt(xhr.getResponseHeader('Content-Length'));
+                            this.logOffset += contentLength;
                             if (_.isFunction(callback)) {
                                 callback.call(this);
                             }
@@ -278,6 +285,18 @@
                                 callback.call(this);
                             }
                         }, this));
+                }
+            },
+
+            removeClasses: function (pattern) {
+                var classes = this.$el.attr("class");
+                if (classes) {
+                    var list = classes.toString().split(' ');
+                    for (var i = 0; i < list.length; i++) {
+                        if (pattern.exec(list[i])) {
+                            this.$el.removeClass(list[i]);
+                        }
+                    }
                 }
             },
 

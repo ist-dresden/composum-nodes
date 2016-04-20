@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Dictionary;
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 
 import static com.composum.sling.core.pckgmgr.util.PackageUtil.IMPORT_DONE;
 
@@ -72,11 +73,21 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
     )
     protected int defaultSaveThreshold;
 
+    public static final String PROGRESS_TRACK_IDLE_TIME = "package.progress.wait";
+    @Property(
+            name = PROGRESS_TRACK_IDLE_TIME,
+            label = "track idle time",
+            description = "idle time in seconds for the progress tracker to check operation ending",
+            intValue = 10
+    )
+    protected int progressTrackIdleTime;
+
     @Override
     @Activate
     protected void activate(ComponentContext context) throws Exception {
         Dictionary<String, Object> properties = context.getProperties();
         defaultSaveThreshold = PropertiesUtil.toInteger(properties.get(DEFAULT_SAVE_THRESHOLD), 1024);
+        progressTrackIdleTime = PropertiesUtil.toInteger(properties.get(PROGRESS_TRACK_IDLE_TIME), 10);
     }
 
     @Override
@@ -117,33 +128,67 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
             if (StringUtils.isNotBlank(operation)) {
                 switch (operation.toLowerCase()) {
                     case "install":
-                        installPackage(jcrPckg);
-                        return null;
+                        return new InstallOperation(manager, jcrPckg).call();
                     case "assemble":
-                        return null;
-                    case "rewrap":
-                        return null;
+                        return new AssmbleOperation(manager, jcrPckg).call();
+                    case "uninstall":
+                        return new UninstallOperation(manager, jcrPckg).call();
+                    default:
+                        throw new Exception("Unsupported operation: " + operation);
                 }
             } else {
-
+                throw new Exception("No operation requested!");
             }
-            return null;
         }
 
-        protected void installPackage(JcrPackage jcrPckg)
-                throws RepositoryException, IOException {
+        protected class InstallOperation extends Operation {
 
-            ImportOptions options = createImportOptions();
+            public InstallOperation(JcrPackageManager manager, JcrPackage jcrPckg)
+                    throws IOException {
+                super(manager, jcrPckg);
+            }
 
-            PackageProgressTracker tracker = createTracker();
-            options.setListener(tracker);
-            tracker.writePrologue();
-
-            try {
+            @Override
+            protected void doIt() throws PackageException, IOException, RepositoryException {
                 jcrPckg.install(options);
-            } catch (PackageException pex) {
-                LOG.error(pex.getMessage(), pex);
-                throw new RepositoryException(pex);
+            }
+        }
+
+        protected class AssmbleOperation extends Operation {
+
+            public AssmbleOperation(JcrPackageManager manager, JcrPackage jcrPckg)
+                    throws IOException {
+                super(manager, jcrPckg);
+            }
+
+            @Override
+            protected void doIt() throws PackageException, IOException, RepositoryException {
+                manager.assemble(jcrPckg, tracker);
+            }
+
+            @Override
+            protected Object done() throws IOException {
+                out.append("Package assembled.");
+                return null;
+            }
+        }
+
+        protected class UninstallOperation extends Operation {
+
+            public UninstallOperation(JcrPackageManager manager, JcrPackage jcrPckg)
+                    throws IOException {
+                super(manager, jcrPckg);
+            }
+
+            @Override
+            protected void doIt() throws PackageException, IOException, RepositoryException {
+                jcrPckg.uninstall(options);
+            }
+
+            @Override
+            protected Object done() throws IOException {
+                out.append("Package uninstall done.");
+                return null;
             }
         }
 
@@ -173,9 +218,72 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
             return jcrPackage;
         }
 
-        protected PackageProgressTracker createTracker()
-                throws IOException {
-            return new PackageProgressTracker.TextWriterTracking(out, IMPORT_DONE);
+        protected abstract class Operation implements Callable<Object> {
+
+            public final JcrPackageManager manager;
+            public final JcrPackage jcrPckg;
+            public final ImportOptions options;
+            public final OperationDoneTracker tracker;
+
+            public Operation(JcrPackageManager manager, JcrPackage jcrPckg)
+                    throws IOException {
+                this.manager = manager;
+                this.jcrPckg = jcrPckg;
+                tracker = new OperationDoneTracker(out, IMPORT_DONE);
+                options = createImportOptions();
+                options.setListener(tracker);
+            }
+
+            protected abstract void doIt() throws PackageException, IOException, RepositoryException;
+
+            protected Object done() throws IOException {
+                return null;
+            }
+
+            public Object call() throws IOException, RepositoryException {
+                tracker.writePrologue();
+                try {
+                    doIt();
+                    while (!tracker.isOperationDone()) {
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException iex) {
+                            LOG.info("Operation track interrupted: " + iex.getMessage());
+                        }
+                    }
+                    return done();
+                } catch (PackageException pex) {
+                    LOG.error(pex.getMessage(), pex);
+                    throw new RepositoryException(pex);
+                }
+            }
+        }
+
+        protected class OperationDoneTracker extends PackageProgressTracker.TextWriterTracking {
+
+            protected boolean operationDone;
+            protected int waitLoopCount = 0;
+
+            public OperationDoneTracker(PrintWriter writer, Pattern finalizedIndicator)
+                    throws IOException {
+                super(writer, finalizedIndicator);
+            }
+
+            public boolean isOperationDone() {
+                return operationDone || ++waitLoopCount > progressTrackIdleTime * 2;
+            }
+
+            @Override
+            public void writeEpilogue() throws IOException {
+                super.writeEpilogue();
+                operationDone = true;
+            }
+
+            @Override
+            protected void writeItem(Item item) throws IOException {
+                super.writeItem(item);
+                waitLoopCount = 0;
+            }
         }
     }
 }

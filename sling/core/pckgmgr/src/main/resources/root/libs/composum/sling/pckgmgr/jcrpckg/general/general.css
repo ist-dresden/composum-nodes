@@ -14,6 +14,39 @@
     right: 20px;
 }
 
+.detail-toolbar .install .fa-spin,
+.detail-toolbar .assemble .fa-spin,
+.detail-toolbar .uninstall .fa-spin {
+    visibility: hidden;
+}
+
+.install-running .detail-toolbar .install .fa-spin,
+.assemble-running .detail-toolbar .assemble .fa-spin,
+.uninstall-running .detail-toolbar .uninstall .fa-spin {
+    visibility: visible;
+}
+
+.install-running .detail-toolbar .install .symbol,
+.assemble-running .detail-toolbar .assemble .symbol,
+.uninstall-running .detail-toolbar .uninstall .symbol {
+    color: #a94442; /* danger */
+}
+
+.detail-toolbar .install .error,
+.detail-toolbar .assemble .error,
+.detail-toolbar .uninstall .error {
+    left: 8px;
+    font-weight: bold;
+    color: #a94442; /* danger */
+    visibility: hidden;
+}
+
+.install-error .detail-toolbar .install .error,
+.assemble-error .detail-toolbar .assemble .error,
+.uninstall-error .detail-toolbar .uninstall .error {
+    visibility: visible;
+}
+
 body.top-open .detail-toolbar.display-toolbar {
     right: 0;
 }
@@ -190,24 +223,9 @@ body.top-open .detail-toolbar.display-toolbar {
     padding: 3px 6px;
 }
 
-.feedback-aspect .feedback-display table,
-.feedback-aspect .feedback-display table * {
-    font-size: 14px;
-}
-
-.feedback-aspect .feedback-display table {
+.feedback-aspect .feedback-display .log-output {
+    font-size: 12px;
+    font-family: monospace;
     white-space: pre;
-}
-
-.feedback-aspect .feedback-display table h1 {
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.feedback-aspect .feedback-display table pre {
-    font-size: 11px;
-}
-
-.feedback-aspect .feedback-display td {
-    padding: 1px 4px;
+    color: #444;
 }

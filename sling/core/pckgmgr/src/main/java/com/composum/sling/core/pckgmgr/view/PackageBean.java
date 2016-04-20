@@ -168,7 +168,7 @@ public class PackageBean extends AbstractSlingBean {
 
     public String getDownloadUrl() {
         if (downloadUrl == null) {
-            downloadUrl = PackageUtil.getDownloadUrl(pckg);
+            downloadUrl = LinkUtil.getUrl(getRequest(), PackageUtil.getDownloadUrl(pckg));
         }
         return downloadUrl;
     }

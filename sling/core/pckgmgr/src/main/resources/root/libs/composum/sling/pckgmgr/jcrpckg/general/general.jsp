@@ -9,25 +9,32 @@
             <div class="btn-group btn-group-sm" role="group">
                 <button class="edit fa fa-pencil btn btn-default" title="Edit package properties"><span class="label">Edit</span>
                 </button>
-            </div>
-            <div class="btn-group btn-group-sm" role="group">
-                <button class="install fa fa-sign-in btn btn-default" title="Install the package"><span
-                        class="label">Install</span></button>
-                <button class="build fa fa-folder-open btn btn-default" title="Build the package"><span
-                        class="label">Assemble</span></button>
-                <button class="rewrap fa fa-folder btn btn-default" title="Rewrap the package"><span
-                        class="label">Rewrap</span></button>
-            </div>
-            <div class="btn-group btn-group-sm" role="group">
-                <button class="upload fa fa-upload btn btn-default" title="Upload a new package"><span class="label">Upload</span>
-                </button>
                 <a type="button" class="download fa fa-download btn btn-default" href="${pckg.downloadUrl}"
                    title="Download selected package"><span class="label">Download</span></a>
             </div>
             <div class="btn-group btn-group-sm" role="group">
+                <button class="install btn btn-default btn-stack" title="Install the package"><span
+                        class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
+                        class="symbol fa fa-sign-in fa-stack-1x"></i><i
+                        class="error fa fa-stack-2x">!</i></span><span
+                        class="label">Install</span></button>
+                <button class="assemble btn btn-default btn-stack" title="Build the package"><span
+                        class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
+                        class="symbol fa fa-shopping-basket fa-stack-1x"></i><i
+                        class="error fa fa-stack-2x">!</i></span><span
+                        class="label">Assemble</span></button>
+                <button class="uninstall btn btn-default btn-stack" title="Uninstall the package"><span
+                        class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
+                        class="symbol fa fa-history fa-stack-1x"></i><i
+                        class="error fa fa-stack-2x">!</i></span><span
+                        class="label">Rewrap</span></button>
+                <button class="delete fa fa-trash btn btn-default" title="Delete this package"><span class="label">Delete</span>
+                </button>
+            </div>
+            <div class="btn-group btn-group-sm" role="group">
                 <button class="create fa fa-plus btn btn-default" title="Create a new package"><span class="label">Create</span>
                 </button>
-                <button class="delete fa fa-minus btn btn-default" title="Delete this package"><span class="label">Delete</span>
+                <button class="upload fa fa-upload btn btn-default" title="Upload a new package"><span class="label">Upload</span>
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
@@ -51,7 +58,7 @@
                     <button class="close" title="Close"><span class="fa fa-close"></span></button>
                 </div>
                 <div class="panel-body feedback-display">
-                    <table></table>
+                    <div class="log-output"></div>
                 </div>
             </div>
         </div>
