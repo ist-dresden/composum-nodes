@@ -162,8 +162,9 @@ public class JobControlServlet extends AbstractServiceServlet {
                     end = range1.end;
                 }
             }
-            while (inputStream.available() > 0 && !(pos > end)) {
-                outputStream.write(inputStream.read());
+            int read;
+            while ((read = inputStream.read()) > 0 && !(pos > end)) {
+                outputStream.write(read);
                 pos++;
             }
         }
