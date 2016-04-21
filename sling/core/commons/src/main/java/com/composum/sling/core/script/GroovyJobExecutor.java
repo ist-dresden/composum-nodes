@@ -8,7 +8,6 @@ import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.osgi.PropertiesUtil;
@@ -23,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -87,7 +85,7 @@ public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
     }
 
     @Override
-    protected String getAutitBasePath() {
+    protected String getAuditBasePath() {
         return AUDIT_BASE_PATH;
     }
 
@@ -98,12 +96,12 @@ public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
     }
 
     @Override
-    protected String buildAuditPathIntern(String reference, Calendar eventJobStartetTime) {
+    protected String buildAuditPathIntern(String reference, Calendar eventJobStartedTime) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
         if (reference.endsWith("/jcr:content")) {
-            return getAutitBasePath() + reference.substring(0, reference.lastIndexOf('/')) + "/" + sdf.format(eventJobStartetTime.getTime());
+            return getAuditBasePath() + reference.substring(0, reference.lastIndexOf('/')) + "/" + sdf.format(eventJobStartedTime.getTime());
         } else {
-            return getAutitBasePath() + reference + "/" + sdf.format(eventJobStartetTime.getTime());
+            return getAuditBasePath() + reference + "/" + sdf.format(eventJobStartedTime.getTime());
         }
     }
 
