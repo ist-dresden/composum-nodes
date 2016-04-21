@@ -82,7 +82,6 @@
                 this.$logOutput = this.$feedback.find('.feedback-display .log-output');
                 this.$auditLog = this.$('.audit-log');
                 this.$auditList = this.$auditLog.find('.audit-list');
-                this.$auditLog.find('.toolbar .audit-link').click(_.bind(this.selectAuditNode, this));
                 this.$auditLog.find('.toolbar .refresh').click(_.bind(this.loadAuditLog, this));
                 this.$auditLog.find('.toolbar .purge').click(_.bind(this.purgeAuditLog, this));
             },

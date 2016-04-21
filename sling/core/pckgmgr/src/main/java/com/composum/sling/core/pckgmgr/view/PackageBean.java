@@ -2,6 +2,7 @@ package com.composum.sling.core.pckgmgr.view;
 
 import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.pckgmgr.PackageJobExecutor;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +27,8 @@ public class PackageBean extends AbstractSlingBean {
 
     public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
+    public static final String AUDIT_LOG_BASE = "/bin/browser.html" + PackageJobExecutor.AUDIT_BASE_PATH;
+
     protected String path;
     protected JcrPackageManager pckgMgr;
     protected JcrPackage pckg;
@@ -38,6 +41,7 @@ public class PackageBean extends AbstractSlingBean {
 
     private transient String filename;
     private transient String downloadUrl;
+    private transient String auditLogUrl;
 
     private transient Calendar created;
     private transient String createdBy;
@@ -281,5 +285,12 @@ public class PackageBean extends AbstractSlingBean {
             thumbnailUrl = builder.toString();
         }
         return thumbnailUrl;
+    }
+
+    public String getAuditLogUrl() {
+        if (auditLogUrl == null) {
+            auditLogUrl = LinkUtil.getUrl(getRequest(), AUDIT_LOG_BASE + getPath());
+        }
+        return auditLogUrl;
     }
 }

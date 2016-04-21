@@ -68,7 +68,7 @@
                 <div class="audit-log panel panel-default">
                     <div class="panel-heading">
                         <div class="action-bar btn-toolbar toolbar">
-                            <a class="audit-link" href="#" data-path="${pckg.path}">Audit Log</a>
+                            <a class="audit-link" href="${pckg.auditLogUrl}">Audit Log</a>
                             <div class="btn-group btn-group-sm align-right" role="group">
                                 <button type="button" class="refresh fa fa-refresh btn btn-default"
                                         title="Refresh Audit Log"><span

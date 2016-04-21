@@ -389,13 +389,6 @@
                 }, this), _.bind(function () {
                     this.loadAuditLog();
                 }, this));
-            },
-
-            selectAuditNode: function (event) {
-                event.preventDefault();
-                var $link = $(event.currentTarget);
-                var path = '/var/audit/jobs/' + this.jobTopic + $link.data('path');
-                window.location.href = core.getContextUrl('/bin/browser.html' + path);
             }
         });
 

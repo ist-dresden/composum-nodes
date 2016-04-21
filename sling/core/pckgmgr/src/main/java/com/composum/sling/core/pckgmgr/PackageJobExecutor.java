@@ -53,7 +53,7 @@ import static com.composum.sling.core.pckgmgr.util.PackageUtil.IMPORT_DONE;
                 value = {"org/apache/sling/event/notification/job/*"},
                 propertyPrivate = true)
 })
-public class PackageJobExecutor extends AbstractJobExecutor<Object> {
+public class PackageJobExecutor extends AbstractJobExecutor<String> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageJobExecutor.class);
 
@@ -96,7 +96,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
     }
 
     @Override
-    protected String getAutitBasePath() {
+    protected String getAuditBasePath() {
         return AUDIT_BASE_PATH;
     }
 
@@ -106,7 +106,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
     }
 
     @Override
-    protected Callable<Object> createCallable(final Job job, final JobExecutionContext context,
+    protected Callable<String> createCallable(final Job job, final JobExecutionContext context,
                                               final ResourceResolver serviceResolver, final PrintWriter out)
             throws Exception {
         return new PackageManagerCallable(job, context, serviceResolver, out);
@@ -121,7 +121,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
         }
 
         @Override
-        public Object call() throws Exception {
+        public String call() throws Exception {
             JcrPackageManager manager = PackagingService.getPackageManager(session);
             JcrPackage jcrPckg = getJcrPackage(job, manager);
             String operation = (String) job.getProperty("operation");
@@ -167,9 +167,8 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
             }
 
             @Override
-            protected Object done() throws IOException {
-                out.append("Package assembled.\n");
-                return null;
+            protected String done() throws IOException {
+                return "Package assembled.";
             }
         }
 
@@ -186,9 +185,8 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
             }
 
             @Override
-            protected Object done() throws IOException {
-                out.append("Package uninstall done.\n");
-                return null;
+            protected String done() throws IOException {
+                return "Package uninstall done.";
             }
         }
 
@@ -218,7 +216,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
             return jcrPackage;
         }
 
-        protected abstract class Operation implements Callable<Object> {
+        protected abstract class Operation implements Callable<String> {
 
             public final JcrPackageManager manager;
             public final JcrPackage jcrPckg;
@@ -239,11 +237,11 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
             protected void track() {
             }
 
-            protected Object done() throws IOException {
-                return null;
+            protected String done() throws IOException {
+                return "done.";
             }
 
-            public Object call() throws IOException, RepositoryException {
+            public String call() throws IOException, RepositoryException {
                 tracker.writePrologue();
                 try {
                     doIt();
@@ -263,6 +261,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<Object> {
                 super(manager, jcrPckg);
             }
 
+            @Override
             protected void track() {
                 while (!tracker.isOperationDone()) {
                     try {
