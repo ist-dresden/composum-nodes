@@ -98,12 +98,12 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
 
     protected abstract String getJobTopic();
 
-    protected abstract String getAutitBasePath();
+    protected abstract String getAuditBasePath();
 
     protected abstract boolean jobExecutionEnabled(Job job);
 
     /**
-     * The Callable does the job wich is prepared by the executor.
+     * The Callable does the job which is prepared by the executor.
      */
     protected abstract Callable<Result> createCallable(final Job job,
                                                        final JobExecutionContext context,
@@ -235,9 +235,9 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
         return buildAuditPathIntern(reference, eventJobStartedTime);
     }
 
-    protected String buildAuditPathIntern(String reference, Calendar eventJobStartetTime) {
+    protected String buildAuditPathIntern(String reference, Calendar eventJobStartedTime) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
-        return getAutitBasePath() + reference + "/" + sdf.format(eventJobStartetTime.getTime());
+        return getAuditBasePath() + reference + "/" + sdf.format(eventJobStartedTime.getTime());
     }
 
     private synchronized Resource giveParent(ResourceResolver resolver, String path) {

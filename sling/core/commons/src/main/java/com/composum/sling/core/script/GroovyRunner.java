@@ -10,7 +10,6 @@ import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
-import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
 import org.osgi.framework.Bundle;
@@ -53,7 +52,7 @@ public class GroovyRunner {
     protected QueryManager queryManager;
     protected PrintWriter out;
 
-    protected Map<String, Object> generalBindings = new HashMap();
+    protected Map<String, Object> generalBindings = new HashMap<>();
 
     protected String setupScript;
 
@@ -149,7 +148,7 @@ public class GroovyRunner {
         if (reader != null) {
             try {
                 try {
-                    Map<String, Object> variables = new HashMap();
+                    Map<String, Object> variables = new HashMap<>();
                     variables.put("script", script);
                     variables.put("log", LOG);
                     variables.put("out", out);
