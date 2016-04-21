@@ -133,6 +133,7 @@
          * this.getCurrentPath()
          * this.$logOutput
          * this.$auditList
+         * this.purgeAuditKeep
          */
         console.JobControlTab = console.DetailTab.extend({
 
@@ -142,6 +143,7 @@
 
             reload: function () {
                 this.setupStatus();
+                this.resetAuditLog();
             },
 
             startJob: function (properties) {
@@ -198,6 +200,7 @@
                     var operation = this.currentJob.operation;
                     this.logOffset = 0;
                     this.$logOutput.text('');
+                    this.resetAuditLog();
                     this.removeClasses(/.+-error/);
                     this.$el.addClass((operation ? operation : 'job') + '-running');
                 }
@@ -330,6 +333,10 @@
                 }
             },
 
+            resetAuditLog: function () {
+                this.$auditList.find('li').removeClass('current');
+            },
+
             loadAuditLog: function (event) {
                 if (event) {
                     event.preventDefault();
@@ -360,7 +367,9 @@
 
             loadAuditLogfile: function (event) {
                 event.preventDefault();
+                this.resetAuditLog();
                 var $link = $(event.currentTarget);
+                $link.closest('li').addClass('current');
                 this.$logOutput.text('');
                 this.logOffset = 0;
                 this.pollOutput(_.bind(function () {
@@ -372,13 +381,21 @@
                 if (event) {
                     event.preventDefault();
                 }
+                var dialog = console.getPurgeAuditDialog();
+                dialog.show(_.bind(function () {
+                    dialog.initDialog(this.jobTopic,
+                        this.getCurrentPath(),
+                        this.purgeAuditKeep ? this.purgeAuditKeep : 3);
+                }, this), _.bind(function () {
+                    this.loadAuditLog();
+                }, this));
             },
 
             selectAuditNode: function (event) {
                 event.preventDefault();
                 var $link = $(event.currentTarget);
                 var path = '/var/audit/jobs/' + this.jobTopic + $link.data('path');
-                window.location = core.getContextUrl('/bin/browser.html' + path);
+                window.location.href = core.getContextUrl('/bin/browser.html' + path);
             }
         });
 

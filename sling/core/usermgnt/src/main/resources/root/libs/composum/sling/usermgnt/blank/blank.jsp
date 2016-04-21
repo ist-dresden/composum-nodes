@@ -6,7 +6,7 @@
 <div class="blank detail-panel">
     <div class="detail-tabs action-bar btn-toolbar" role="toolbar">
         <div class="btn-group btn-group-sm" role="group">
-            <a class="general fa fa-list btn btn-default" href="#general" data-group="general" title="General"><span class="label">General</span></a>
+            <a class="general fa fa-list btn btn-default" href="#general" data-group="general" title="Folder"><div class="title">Folder</div></a>
         </div>
     </div>
 </div>

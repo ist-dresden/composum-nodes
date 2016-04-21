@@ -1,9 +1,4 @@
 
-.detail-panel.group .action-bar .title {
-    height: 30px;
-    padding: 5px 13px;
-}
-
 .detail-panel.group .group-detail {
     position: absolute;
     top: 40px;

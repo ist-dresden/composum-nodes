@@ -44,7 +44,8 @@
                 <div class="split-pane-component right-pane">
                     <div id="split-view-vertical-split" class="split-pane vertical-split fixed-top">
                         <div class="split-pane-component top-pane">
-                            <div id="package-sync-monitor">
+                            <div id="pckgmgr-query">
+                                <sling:call script="query.jsp"/>
                             </div>
                         </div>
                         <div class="split-pane-divider"><span class="fa fa-ellipsis-h"></span></div>

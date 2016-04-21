@@ -107,7 +107,10 @@
         "embed": "composum/sling/commons/components/clientlibs/components"
       },
       "console": {
-        "embed": "composum/sling/console/page/js/console.js"
+        "embed": [
+          "composum/sling/console/page/js/dialogs.js",
+          "composum/sling/console/page/js/console.js"
+        ]
       }
     }
   },

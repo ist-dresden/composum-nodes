@@ -1,9 +1,9 @@
+'use strict';
 /**
  *
  *
  */
 (function (core) {
-    'use strict';
 
     core.pckgmgr = core.pckgmgr || {};
 

@@ -4,3 +4,5 @@
 <sling:call script="/libs/composum/sling/console/page/dialogs/user-status.jsp"/>
 <sling:call script="/libs/composum/sling/commons/components/dialogs.jsp"/>
 <sling:call script="/libs/composum/sling/console/page/dialogs/alert.jsp"/>
+<sling:call script="/libs/composum/sling/console/page/dialogs/approval.jsp"/>
+<sling:call script="/libs/composum/sling/console/page/dialogs/purge-audit.jsp"/>

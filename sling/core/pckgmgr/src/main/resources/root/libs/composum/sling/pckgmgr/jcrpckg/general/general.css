@@ -36,7 +36,6 @@
 .detail-toolbar.display-toolbar {
     min-width: 320px;
     text-align: right;
-    right: 20px;
 }
 
 .detail-toolbar .install .fa-spin,
@@ -70,10 +69,6 @@
 .assemble-error .detail-toolbar .assemble .error,
 .uninstall-error .detail-toolbar .uninstall .error {
     visibility: visible;
-}
-
-body.top-open .detail-toolbar.display-toolbar {
-    right: 0;
 }
 
 .detail-panel.jcrpckg .panel-heading.header,

@@ -62,6 +62,7 @@
         pckgmgr.JcrPackageTab = core.console.JobControlTab.extend({
 
             jobTopic: 'com/composum/sling/core/pckgmgr/PackageJobExecutor',
+            purgeAuditKeep: 6,
 
             initialize: function (options) {
                 core.console.JobControlTab.prototype.initialize.apply(this, [options]);
@@ -105,31 +106,36 @@
                 }, this));
             },
 
-            installPackage: function (event) {
+            startPackageOperation: function (event, title, operation) {
                 if (event) {
                     event.preventDefault();
                 }
-                this.startJob({
-                    operation: 'install'
-                });
+                var dialog = core.console.getApprovalDialog();
+                dialog.show(
+                    _.bind(function () {
+                        dialog.initDialog(
+                            title,
+                            '<div class="">'
+                            + this.getCurrentPath()
+                            + '</div>'
+                        )
+                    }, this), _.bind(function () {
+                        this.startJob({
+                            operation: operation
+                        });
+                    }, this));
+            },
+
+            installPackage: function (event) {
+                this.startPackageOperation(event, 'Install Package', 'install');
             },
 
             assemblePackage: function (event) {
-                if (event) {
-                    event.preventDefault();
-                }
-                this.startJob({
-                    operation: 'assemble'
-                });
+                this.startPackageOperation(event, 'Build Package', 'assemble');
             },
 
             uninstallPackage: function (event) {
-                if (event) {
-                    event.preventDefault();
-                }
-                this.startJob({
-                    operation: 'uninstall'
-                });
+                this.startPackageOperation(event, 'Uninstall Package', 'uninstall');
             },
 
             refresh: function (event) {
@@ -168,6 +174,7 @@
                 }
                 this.$feedback.addClass('hidden');
                 this.$default.removeClass('hidden');
+                this.resetAuditLog();
             },
 
             openFeedback: function (event) {

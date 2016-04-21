@@ -18,6 +18,7 @@
       ]
     },
     "embed": [
+      "composum/sling/pckgmgr/css/query.css",
       "composum/sling/pckgmgr/css/pckgmgr.css"
     ]
   },
@@ -45,6 +46,7 @@
     },
     "pckgmgr": {
       "embed": [
+        "composum/sling/pckgmgr/js/query.js",
         "composum/sling/pckgmgr/js/pckgmgr.js"
       ]
     }

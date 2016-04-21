@@ -45,16 +45,21 @@ import javax.jcr.Binary;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.query.Query;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import static com.composum.sling.core.pckgmgr.util.PackageUtil.DATE_FORMAT;
 
 /** The servlet to provide download and upload of content packages and package definitions. */
 @SlingServlet(paths = "/bin/core/package", methods = {"GET", "POST", "DELETE"})
@@ -88,7 +93,7 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
     public enum Operation {
-        create, update, delete, download, upload, install, deploy, service, build, uninstall, tree, view,
+        create, update, delete, download, upload, install, deploy, service, tree, view, query,
         coverage, filterList, filterChange, filterAdd, filterRemove, filterMoveUp, filterMoveDown
     }
 
@@ -111,6 +116,8 @@ public class PackageServlet extends AbstractServiceServlet {
         // GET
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.tree, new TreeOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.query, new QueryOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.filterList, new ListFiltersOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
@@ -184,6 +191,62 @@ public class PackageServlet extends AbstractServiceServlet {
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             treeNode.sort();
             treeNode.toJson(writer);
+        }
+    }
+
+    protected class QueryOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+
+            String suffix = request.getRequestPathInfo().getSuffix();
+            if (suffix.startsWith("/")) {
+                suffix = suffix.substring(1);
+            }
+            suffix = suffix.replaceAll("[ '\"]", "").trim();
+
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            writer.beginArray();
+
+            if (suffix.length() > 1) {
+
+                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+
+                ResourceResolver resolver = request.getResourceResolver();
+                String rootPath = manager.getPackageRoot().getPath();
+                Iterator<Resource> found = resolver.findResources("/jcr:root" + rootPath
+                                + "//element(*,vlt:PackageDefinition)[jcr:contains(.,'" + suffix + "')]/../..",
+                        Query.XPATH);
+
+                SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+
+                while (found.hasNext()) {
+                    JcrPackage jcrPckg = PackageUtil.getJcrPackage(manager, found.next());
+                    if (jcrPckg != null) {
+
+                        JcrPackageDefinition pckgDef = jcrPckg.getDefinition();
+                        String group = pckgDef.get(JcrPackageDefinition.PN_GROUP);
+                        if (!group.endsWith("/.snapshot")) {
+
+                            writer.beginObject();
+                            writer.name("state").beginObject();
+                            writer.name("installed").value(jcrPckg.isInstalled() ? "on" : "off");
+                            writer.name("sealed").value(jcrPckg.isSealed() ? "on" : "off");
+                            writer.name("valid").value(jcrPckg.isValid() ? "on" : "off");
+                            writer.endObject();
+                            writer.name("group").value(group);
+                            writer.name("name").value(pckgDef.get(JcrPackageDefinition.PN_NAME));
+                            writer.name("version").value(pckgDef.get(JcrPackageDefinition.PN_VERSION));
+                            writer.name("lastModified").value(dateFormat.format(PackageUtil.getLastModified(jcrPckg).getTime()));
+                            writer.name("path").value(PackageUtil.getPackagePath(manager, jcrPckg));
+                            writer.endObject();
+                        }
+                    }
+                }
+            }
+            writer.endArray();
         }
     }
 
@@ -409,7 +472,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
     /**
      * The 'deploy' operation according to the 'content-package-maven-plugin' enables the deployment
-     * during a Maven build usinf the 'install' goal of the content package Maven plugin.
+     * during a Maven build using the 'install' goal of the content package Maven plugin.
      * <dl>
      * <dt>targetURL</dt>
      * <dd>http://${sling.host}:${sling.port}${sling.context}/bin/core/package.service.html</dd>
