@@ -92,7 +92,9 @@ public class ResourceFilterMapping {
                     LOG.error(ex.getMessage(), ex);
                 }
             } else {
-                LOG.error("invalid filter rule: '" + rules + "'");
+                if (StringUtils.isNotBlank(rules)) {
+                    LOG.error("invalid filter rule: '" + rules + "'");
+                }
             }
         }
         return filter;
