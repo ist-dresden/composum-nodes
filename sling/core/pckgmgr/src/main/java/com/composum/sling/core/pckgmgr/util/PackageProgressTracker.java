@@ -34,7 +34,7 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
 
         public Item(Mode mode, String action, String path, Exception ex) {
             this.action = action;
-            if (Mode.TEXT.equals(mode)) {
+            if (mode == Mode.TEXT) {
                 this.message = path;
                 this.path = null;
             } else {
@@ -166,7 +166,8 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
                 writer.append(item.error);
             }
             writer.append('\n');
-            if (finalizedIndicator != null && finalizedIndicator.matcher(item.action).matches()) {
+            if (finalizedIndicator != null && item.action != null &&
+                    finalizedIndicator.matcher(item.action).matches()) {
                 writeEpilogue();
             }
         }
@@ -204,7 +205,8 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
             writer.name("value").value(item.path != null ? item.path : item.message);
             writer.name("error").value(item.error);
             writer.endObject();
-            if (finalizedIndicator != null && finalizedIndicator.matcher(item.action).matches()) {
+            if (finalizedIndicator != null && item.action != null &&
+                    finalizedIndicator.matcher(item.action).matches()) {
                 writeEpilogue();
             }
         }
@@ -287,7 +289,8 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
                 writer.append("<td class=\"errmsg\">").append(item.error).append("</td>");
             }
             writer.append("</tr>\n");
-            if (finalizedIndicator != null && finalizedIndicator.matcher(item.action).matches()) {
+            if (finalizedIndicator != null && item.action != null &&
+                    finalizedIndicator.matcher(item.action).matches()) {
                 writeEpilogue();
             }
         }

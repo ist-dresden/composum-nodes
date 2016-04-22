@@ -19,7 +19,7 @@
                         <div class="alert"></div>
                     </div>
                     <input name="_charset_" type="hidden" value="UTF-8"/>
-                    <input name="path" type="hidden" value="${pckg.path}">
+                    <input name="path" type="hidden">
 
                     <div class="form-group">
                         <label class="control-label">Group</label>

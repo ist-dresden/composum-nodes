@@ -18,11 +18,13 @@
     <div class="query-result">
         <table class="table table-striped table-hover table-condensed">
             <thead>
-            <td class="state">status</td>
-            <td class="group">group</td>
-            <td class="name">name</td>
-            <td class="version">version</td>
-            <td class="last-modified">last modified</td>
+            <tr>
+                <td class="state">status</td>
+                <td class="group">group</td>
+                <td class="name">name</td>
+                <td class="version">version</td>
+                <td class="last-modified">last modified</td>
+            </tr>
             </thead>
             <tbody>
             </tbody>

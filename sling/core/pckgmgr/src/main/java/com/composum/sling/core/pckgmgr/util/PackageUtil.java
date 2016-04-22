@@ -420,7 +420,12 @@ public class PackageUtil {
 
         @Override
         public boolean equals(Object other) {
-            return getName().equals(((TreeItem) other).getName());
+            return other instanceof TreeItem && getName().equals(((TreeItem) other).getName());
+        }
+
+        @Override
+        public int hashCode() {
+            return getName().hashCode();
         }
     }
 
@@ -487,7 +492,12 @@ public class PackageUtil {
 
         @Override
         public boolean equals(Object other) {
-            return getName().equals(((TreeItem) other).getName());
+            return other instanceof TreeItem && getName().equals(((TreeItem) other).getName());
+        }
+
+        @Override
+        public int hashCode() {
+            return getName().hashCode();
         }
     }
 
@@ -591,7 +601,6 @@ public class PackageUtil {
                               Map<String, Object> additionalAttributes)
             throws RepositoryException, IOException {
         writer.beginObject();
-        Node node = jcrPackage.getNode();
         writer.name("definition");
         toJson(writer, jcrPackage.getDefinition());
         JsonUtil.jsonMapEntries(writer, additionalAttributes);
@@ -599,7 +608,7 @@ public class PackageUtil {
     }
 
     public static void toJson(JsonWriter writer, JcrPackageDefinition definition)
-            throws RepositoryException, IOException {
+            throws IOException {
         SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
         String version = definition.get(JcrPackageDefinition.PN_VERSION);
         String description = definition.get(JcrPackageDefinition.PN_DESCRIPTION);

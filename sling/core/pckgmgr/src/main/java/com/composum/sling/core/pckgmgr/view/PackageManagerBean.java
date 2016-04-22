@@ -50,8 +50,8 @@ public class PackageManagerBean extends AbstractSlingBean {
                     }
                 }
             }
-        } catch (RepositoryException e) {
-            e.printStackTrace();
+        } catch (RepositoryException ex) {
+            LOG.error(ex.getMessage(), ex);
         }
         return items;
     }

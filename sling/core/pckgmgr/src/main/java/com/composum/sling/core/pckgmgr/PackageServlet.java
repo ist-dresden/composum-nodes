@@ -339,8 +339,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 Property data;
                 Binary binary;
                 InputStream stream;
-                if (jcrPackage != null &&
-                        (data = jcrPackage.getData()) != null &&
+                if ((data = jcrPackage.getData()) != null &&
                         (binary = data.getBinary()) != null &&
                         (stream = binary.getStream()) != null) {
 
