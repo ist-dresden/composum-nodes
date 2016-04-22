@@ -3,10 +3,8 @@ package com.composum.sling.core.servlet;
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
-import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
@@ -21,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
@@ -30,9 +27,7 @@ import javax.jcr.version.VersionManager;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -321,7 +316,7 @@ public class VersionServlet extends AbstractServiceServlet {
                         while (allVersions.hasNext()) {
                             final Version version = allVersions.nextVersion();
                             final Calendar cal = version.getCreated();
-                            final SimpleDateFormat dateFormat = MappingRules.MAP_DATE_FORMAT;
+                            final SimpleDateFormat dateFormat = new SimpleDateFormat(MappingRules.MAP_DATE_FORMAT);
                             dateFormat.setTimeZone(cal.getTimeZone());
                             final VersionEntry versionEntry = new VersionEntry(version.getName(),
                                     dateFormat.format(cal.getTime()));

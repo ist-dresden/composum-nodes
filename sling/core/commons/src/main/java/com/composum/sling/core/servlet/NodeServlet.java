@@ -1041,7 +1041,7 @@ public class NodeServlet extends NodeTreeServlet {
             }
 
             try {
-                MappingRules rules = new MappingRules(MappingRules.DEFAULT_MAPPING_RULES,
+                MappingRules rules = new MappingRules(MappingRules.getDefaultMappingRules(),
                         null, null, null, new MappingRules.PropertyFormat(
                         RequestUtil.getParameter(request, "format",
                                 RequestUtil.getSelector(request, MappingRules.PropertyFormat.Scope.value)),

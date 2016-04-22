@@ -39,6 +39,13 @@ public class ResourceHandle extends ResourceWrapper {
         return handle;
     }
 
+    /** the universal validation test */
+    public static boolean isValid(Resource resource) {
+        return resource instanceof ResourceHandle
+                ? ((ResourceHandle) resource).isValid()
+                : resource != null;
+    }
+
     // initialized attributes
 
     protected final Resource resource;

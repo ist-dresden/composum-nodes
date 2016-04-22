@@ -282,6 +282,12 @@
             </dependency>
             <dependency>
                 <groupId>com.composum.sling.core</groupId>
+                <artifactId>composum-sling-package-manager</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.composum.sling.core</groupId>
                 <artifactId>composum-sling-core-console</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
@@ -374,7 +380,7 @@
             </dependency>
 
 
-            <!-- JCR API, Jackrabbit -->
+            <!-- JCR API, Jackrabbit, VLT -->
             <dependency>
                 <groupId>javax.jcr</groupId>
                 <artifactId>jcr</artifactId>
@@ -397,6 +403,12 @@
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>jackrabbit-core</artifactId>
                 <version>2.6.5</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jackrabbit.vault</groupId>
+                <artifactId>org.apache.jackrabbit.vault</artifactId>
+                <version>[2.4.0,)</version>
                 <scope>provided</scope>
             </dependency>
 

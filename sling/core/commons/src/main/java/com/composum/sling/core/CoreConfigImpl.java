@@ -4,7 +4,6 @@ import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.NodeServlet;
-import com.composum.sling.core.servlet.PackageServlet;
 import com.composum.sling.core.servlet.PropertyServlet;
 import com.composum.sling.core.servlet.SecurityServlet;
 import com.composum.sling.core.servlet.SystemServlet;
@@ -317,7 +316,7 @@ public class CoreConfigImpl implements CoreConfiguration {
         enabledServlets = new HashMap<>();
         enabledServlets.put(SystemServlet.class.getSimpleName(), systemServletEnabled =
                 (Boolean) properties.get(SYSTEM_SERVLET_ENABLED));
-        enabledServlets.put(PackageServlet.class.getSimpleName(), packageServletEnabled =
+        enabledServlets.put("PackageServlet", packageServletEnabled =
                 (Boolean) properties.get(PACKAGE_SERVLET_ENABLED));
         enabledServlets.put(SecurityServlet.class.getSimpleName(), securityServletEnabled =
                 (Boolean) properties.get(SECURITY_SERVLET_ENABLED));

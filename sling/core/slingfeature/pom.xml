@@ -48,6 +48,10 @@
         </dependency>
         <dependency>
             <groupId>com.composum.sling.core</groupId>
+            <artifactId>composum-sling-package-manager</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.sling.core</groupId>
             <artifactId>composum-sling-user-management</artifactId>
         </dependency>
 

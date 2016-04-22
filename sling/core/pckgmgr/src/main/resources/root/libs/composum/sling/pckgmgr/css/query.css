@@ -1,0 +1,50 @@
+.query-result tbody .state span {
+    display: inline-block;
+    width: 20px;
+    text-align: center;
+    border-left: 1px solid #fff;
+}
+
+.query-result tbody .state span:first-child {
+    border-left: none;
+}
+
+.query-result tbody .state span.installed-on,
+.query-result tbody .state span.sealed-on,
+.query-result tbody .state span.valid-on {
+    background-color: #d9edf7; /* .bg-info */
+}
+
+.query-result tbody .state span.installed-off {
+    background-color: #eee;
+}
+
+.query-result tbody .state span.sealed-off {
+    background-color: #fcf8e3; /* .bg-warning */
+}
+
+.query-result tbody .state span.valid-off {
+    background-color: #f2dede; /* .bg-danger */
+}
+
+.query-result td.state {
+    width: 70px;
+    min-width: 70px;
+}
+
+.query-result td.group {
+    width: 35%;
+}
+
+.query-result td.name {
+    width: 45%;
+}
+
+.query-result td.version {
+    width: 20%;
+}
+
+.query-result td.last-modified {
+    width: 145px;
+    min-width: 145px;
+}

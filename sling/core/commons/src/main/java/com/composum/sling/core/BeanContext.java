@@ -8,6 +8,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.PageContext;
 import java.util.HashMap;
+import java.util.Locale;
 
 /**
  * the interface for the different scripting contexts (JSP, Groovy, ...)
@@ -53,6 +54,11 @@ public interface BeanContext {
      * Returns the response declared in the context.
      */
     SlingHttpServletResponse getResponse();
+
+    /**
+     * Returns the locale declared determined using the context.
+     */
+    Locale getLocale();
 
     /**
      * Returns an attribute value from the context.
@@ -107,6 +113,11 @@ public interface BeanContext {
         @Override
         public SlingHttpServletResponse getResponse() {
             return getAttribute(ATTR_RESPONSE, SlingHttpServletResponse.class);
+        }
+
+        @Override
+        public Locale getLocale() {
+            return Locale.getDefault();
         }
 
         @Override
@@ -195,6 +206,11 @@ public interface BeanContext {
         }
 
         @Override
+        public Locale getLocale() {
+            return Locale.getDefault();
+        }
+
+        @Override
         public <T> T getAttribute(String name, Class<T> T) {
             Object attribute = this.pageContext.findAttribute(name);
             return (T) attribute;
@@ -239,6 +255,11 @@ public interface BeanContext {
         @Override
         public SlingHttpServletResponse getResponse() {
             return this.response;
+        }
+
+        @Override
+        public Locale getLocale() {
+            return Locale.getDefault();
         }
 
         @Override

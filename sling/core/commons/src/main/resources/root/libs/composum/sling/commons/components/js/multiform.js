@@ -40,10 +40,9 @@
      */
     components.MultiFormWidget = Backbone.View.extend({
 
-        itemType: components.MultiFormItem,
-
         initialize: function(options) {
             this.itemList = [];
+            this.itemType = options.itemType || components.MultiFormItem;
             this.name = this.$el.attr('data-name') || 'name';
             var $itemElements = this.$('.multi-form-item');
             for (var i=0; i < $itemElements.length; i++) {
@@ -91,7 +90,7 @@
                 }
                 item.$('.item-select').unbind('click').on('click',_.bind(this.onSelect, this));
                 components.setUp(item.el);
-            }, this));
+            }, this), this.itemType != components.MultiFormItem);
             return item;
         },
 
@@ -166,6 +165,24 @@
                 var tail = index < this.itemList.length - 2 ? _.rest(this.itemList, index + 2) : [];
                 this.itemList = _.union(head, [this.itemList[index + 1]], [this.currentItem], tail);
                 this.currentItem.$el.insertAfter(this.currentItem.$el.next());
+            }
+        },
+
+        getWidgetValue: function (element) {
+            var widget = core.widgetOf(element, this);
+            if (widget && _.isFunction(widget.getValue)) {
+                return widget.getValue();
+            } else {
+                return element.val();
+            }
+        },
+
+        setWidgetValue: function (element, value) {
+            var widget = core.widgetOf(element, this);
+            if (widget && _.isFunction(widget.setValue)) {
+                widget.setValue(value);
+            } else {
+                element.val(value);
             }
         }
     });

@@ -78,6 +78,34 @@
             $.ajax(ajaxConf);
         },
 
+        ajaxPoll: function (method, url, progress, onSuccess, onError) {
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                if (_.isFunction(onSuccess)) {
+                    var snippet = xhr.responseText.substring(xhr.previous_text_length);
+                    onSuccess(xhr, snippet);
+                }
+            };
+            xhr.onerror = function () {
+                if (_.isFunction(onError)) {
+                    var snippet = xhr.responseText.substring(xhr.previous_text_length);
+                    onError(xhr, snippet);
+                }
+            };
+            xhr.previous_text_length = 0;
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState > 2) {
+                    var snippet = xhr.responseText.substring(xhr.previous_text_length);
+                    if (_.isFunction(progress)) {
+                        progress(xhr, snippet);
+                    }
+                    xhr.previous_text_length = xhr.responseText.length;
+                }
+            };
+            xhr.open(method, core.getContextUrl(url), true);
+            xhr.send();
+        },
+
         /** deprecated */
         getRequest: function (dataType, url, onSuccess, onError, onComplete) {
             core.ajaxGet(url, {dataType: dataType}, onSuccess, onError, onComplete);
@@ -142,9 +170,12 @@
          * @param element the DOM element or a selector to retrieve it
          * @param viewClass the generator function to create the View
          * @param initializer an option initializer callback caller after creation
+         * @param force if 'true' the view is (re)created using the 'viewClass' event if a view
+         *        is already available; this is useful if a subclass should be used instead of the
+         *        general 'components' class which is probably bound during the components 'init'
          */
-        getView: function (element, viewClass, initializer) {
-            return window.core.getWidget(document, element, viewClass, initializer);
+        getView: function (element, viewClass, initializer, force) {
+            return window.core.getWidget(document, element, viewClass, initializer, force);
         },
 
         /**
@@ -154,8 +185,11 @@
          * @param viewClass the generator function to create the View
          * @param initializer an optional initializer callback function called after creation
          *        or an options object for the view construction
+         * @param force if 'true' the view is (re)created using the 'viewClass' event if a view
+         *        is already available; this is useful if a subclass should be used instead of the
+         *        general 'components' class which is probably bound during the components 'init'
          */
-        getWidget: function (root, element, viewClass, initializer) {
+        getWidget: function (root, element, viewClass, initializer, force) {
             var $element;
             if (typeof element === 'string') {
                 $element = $(root).find(element);
@@ -164,7 +198,7 @@
             }
             if ($element && $element.length > 0) {
                 element = $element[0];
-                if (!element.view) {
+                if (!element.view || force) {
                     var options = {
                         el: element
                     };
