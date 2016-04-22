@@ -81,13 +81,13 @@
             setFilter: function (index, row) {
                 this.$index.val(index >= 0 ? index : -1);
                 if (row) {
-                    this.form.$el.attr('action', '/bin/core/package.filterChange.html' + pckgmgr.getCurrentPath())
+                    this.form.$el.attr('action', '/bin/core/package.filterChange.html' + pckgmgr.getCurrentPath());
                     this.form.$el.removeClass('create').addClass('change');
                     this.$title.text('Change Package Filter');
                     this.$root.val(row.root);
                     this.filters.setRules(row.rules);
                 } else {
-                    this.form.$el.attr('action', '/bin/core/package.filterAdd.html' + pckgmgr.getCurrentPath())
+                    this.form.$el.attr('action', '/bin/core/package.filterAdd.html' + pckgmgr.getCurrentPath());
                     this.form.$el.removeClass('change').addClass('create');
                     this.$title.text('Create Package Filter');
                     this.$root.val('');
@@ -162,21 +162,21 @@
 
             formatter: function (value, row, index) {
                 row.index = index;
-                var result = '<div class="filter-rule" data-index="' + index + '">'
-                result += '<div class="root-path">'
-                result += value
-                result += '</div>'
+                var result = '<div class="filter-rule" data-index="' + index + '">';
+                result += '<div class="root-path">';
+                result += value;
+                result += '</div>';
                 if (row.rules) {
-                    result += '<ul class="filter-rules">'
+                    result += '<ul class="filter-rules">';
                     for (var i = 0; i < row.rules.length; i++) {
-                        result += '<li class="rule ' + row.rules[i].type + '">'
-                        result += '<span class="type">' + row.rules[i].type + '</span>'
-                        result += '<span class="pattern">' + row.rules[i].pattern + '</span>'
+                        result += '<li class="rule ' + row.rules[i].type + '">';
+                        result += '<span class="type">' + row.rules[i].type + '</span>';
+                        result += '<span class="pattern">' + row.rules[i].pattern + '</span>';
                         result += '</li>'
                     }
                     result += '</ul>'
                 }
-                result += '</div>'
+                result += '</div>';
                 return result;
             },
 

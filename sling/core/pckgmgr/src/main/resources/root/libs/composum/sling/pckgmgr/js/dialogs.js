@@ -25,7 +25,7 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$group = this.$('input[name="group"]');
                 this.$name = this.$('input[name="name"]');
                 this.$version = this.$('input[name="version"]');
@@ -38,7 +38,7 @@
 
             createPackage: function (event) {
                 event.preventDefault();
-                if (this.$form.isValid()) {
+                if (this.form.isValid()) {
                     this.submitForm(function (result) {
                         var path = result.path;
                         var parentPath = core.getParentPath(path);
@@ -57,7 +57,7 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$group = this.$('input[name="group"]');
                 this.$name = this.$('input[name="name"]');
                 this.$version = this.$('input[name="version"]');
@@ -82,7 +82,7 @@
                 var name = this.$name.val();
                 var version = this.$version.val();
                 var path = '/' + (group ? (group + '/') : '') + name + (version ? ('-' + version) : '') + '.zip';
-                if (this.$form.isValid()) {
+                if (this.form.isValid()) {
                     core.ajaxDelete("/bin/core/package.json" + core.encodePath(path), {},
                         _.bind(function (result) {
                             $(document).trigger('path:deleted', [path]);
@@ -103,7 +103,7 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$file = this.$('input[name="file"]');
                 this.$file.on('change.file', _.bind(this.fileChanged, this));
                 this.$('button.upload').click(_.bind(this.uploadPackage, this));
@@ -114,7 +114,7 @@
 
             uploadPackage: function (event) {
                 event.preventDefault();
-                if (this.$form.isValid()) {
+                if (this.form.isValid()) {
                     this.submitForm(function (result) {
                         var path = result.path;
                         var parentPath = core.getParentPath(path);
