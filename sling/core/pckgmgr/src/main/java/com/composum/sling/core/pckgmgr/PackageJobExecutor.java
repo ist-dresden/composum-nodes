@@ -241,6 +241,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
                 return "done.";
             }
 
+            @Override
             public String call() throws IOException, RepositoryException {
                 tracker.writePrologue();
                 try {
@@ -276,7 +277,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
         protected class OperationDoneTracker extends PackageProgressTracker.TextWriterTracking {
 
             protected boolean operationDone;
-            protected int waitLoopCount = 0;
+            protected int waitLoopCount;
 
             public OperationDoneTracker(PrintWriter writer, Pattern finalizedIndicator)
                     throws IOException {

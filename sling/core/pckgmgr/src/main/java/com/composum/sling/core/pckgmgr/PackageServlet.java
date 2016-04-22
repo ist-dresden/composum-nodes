@@ -99,6 +99,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
     protected PackageOperationSet operations = new PackageOperationSet();
 
+    @Override
     protected ServletOperationSet getOperations() {
         return operations;
     }

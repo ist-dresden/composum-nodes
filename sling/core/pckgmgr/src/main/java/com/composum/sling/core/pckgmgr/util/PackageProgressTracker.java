@@ -47,9 +47,9 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
         }
     }
 
-    protected int actionCount = 0;
-    protected int itemCount = 0;
-    protected int errorCount = 0;
+    protected int actionCount;
+    protected int itemCount;
+    protected int errorCount;
 
     public boolean getErrorDetected() {
         return errorCount > 0;
@@ -132,8 +132,7 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
             this(response.getWriter(), finalizedIndicator);
         }
 
-        public TextWriterTracking(PrintWriter writer, Pattern finalizedIndicator)
-                throws IOException {
+        public TextWriterTracking(PrintWriter writer, Pattern finalizedIndicator) {
             this.writer = writer;
             this.finalizedIndicator = finalizedIndicator;
         }
@@ -185,8 +184,7 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
             this(ResponseUtil.getJsonWriter(response), finalizedIndicator);
         }
 
-        public JsonStreamTracking(JsonWriter writer, Pattern finalizedIndicator)
-                throws IOException {
+        public JsonStreamTracking(JsonWriter writer, Pattern finalizedIndicator) {
             this.writer = writer;
             this.finalizedIndicator = finalizedIndicator;
         }
@@ -249,8 +247,7 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
             this(response.getWriter(), finalizedIndicator);
         }
 
-        public HtmlStreamTracking(Writer writer, Pattern finalizedIndicator)
-                throws IOException {
+        public HtmlStreamTracking(Writer writer, Pattern finalizedIndicator) {
             this.writer = writer;
             this.finalizedIndicator = finalizedIndicator;
         }

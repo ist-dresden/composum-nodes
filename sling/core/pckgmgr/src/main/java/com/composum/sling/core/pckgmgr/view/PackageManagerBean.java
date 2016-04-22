@@ -19,6 +19,7 @@ public class PackageManagerBean extends AbstractSlingBean {
     private transient PackageUtil.TreeType type;
     private transient String downloadUrl;
 
+    @Override
     public String getPath() {
         if (path == null) {
             path = PackageUtil.getPath(getRequest());

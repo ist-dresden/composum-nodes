@@ -79,7 +79,7 @@ public class PackageUtil {
     public static Resource getResource(SlingHttpServletRequest request, String path) throws RepositoryException {
         Resource resource = null;
         JcrPackageManager manager = PackageUtil.createPackageManager(request);
-        Node node = null;
+        Node node;
         node = manager.getPackageRoot(true);
         if (node != null) {
             ResourceResolver resolver = request.getResourceResolver();
@@ -188,7 +188,7 @@ public class PackageUtil {
     public static <T> T getDefAttr(JcrPackageDefinition pckgDef, String key, T defaultValue) {
         T value = null;
         if (pckgDef != null) {
-            Class type = defaultValue != null ? defaultValue.getClass() : String.class;
+            Class<?> type = defaultValue != null ? defaultValue.getClass() : String.class;
             if (Calendar.class.isAssignableFrom(type)) {
                 value = (T) pckgDef.getCalendar(key);
             } else {
@@ -349,10 +349,10 @@ public class PackageUtil {
             resolver.commit();
         }
         if (pngStream != null) {
-            HashMap<String, Object> fileProps = new HashMap();
+            HashMap<String, Object> fileProps = new HashMap<>();
             fileProps.put(ResourceUtil.PROP_PRIMARY_TYPE, ResourceUtil.TYPE_FILE);
             Resource fileRes = resolver.create(pckgDefRes, THUMBNAIL_PNG, fileProps);
-            HashMap<String, Object> contentProps = new HashMap();
+            HashMap<String, Object> contentProps = new HashMap<>();
             contentProps.put(ResourceUtil.PROP_PRIMARY_TYPE, ResourceUtil.TYPE_RESOURCE);
             contentProps.put(ResourceUtil.PROP_MIME_TYPE, "image/png");
             contentProps.put(ResourceUtil.PROP_DATA, pngStream);
@@ -495,7 +495,7 @@ public class PackageUtil {
     public static class TreeNode extends ArrayList<TreeItem> {
 
         private final String path;
-        private boolean isLeaf = false;
+        private boolean isLeaf;
 
         public TreeNode(String path) {
             this.path = path;
