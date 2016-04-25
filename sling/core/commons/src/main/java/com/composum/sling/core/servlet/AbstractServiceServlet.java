@@ -4,6 +4,8 @@ import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.JsonUtil;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.InstanceCreator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -136,6 +138,14 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         Gson gson = JsonUtil.GSON_BUILDER.create();
         T object = gson.fromJson(inputReader, type);
         return object;
+    }
+
+    public static <T> T getJsonObject(SlingHttpServletRequest request, Class<T> type, InstanceCreator<T> instanceCreator) throws IOException {
+        InputStream inputStream = request.getInputStream();
+        Reader inputReader = new InputStreamReader(inputStream, MappingRules.CHARSET.name());
+        // parse JSON input into a POJO of the requested type
+        Gson gson = new GsonBuilder().registerTypeAdapter(type, instanceCreator).create();
+        return gson.fromJson(inputReader, type);
     }
 
     public static <T> T getJsonObject(String input, Class<T> type) throws IOException {

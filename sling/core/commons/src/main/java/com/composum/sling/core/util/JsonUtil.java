@@ -56,6 +56,7 @@ public class JsonUtil {
     public static class JsonProperty {
 
         public String name;
+        public String oldname;
         public Object value; // can be a 'String' or a list of 'String' (multi value)
         public String type = PropertyType.nameFromValue(PropertyType.STRING);
         public boolean multi = false;
@@ -1007,6 +1008,10 @@ public class JsonUtil {
                     ? PropertyType.valueFromName(property.type) : PropertyType.STRING;
 
             String name = property.name;
+            String oldname = property.oldname;
+            if (!name.equals(oldname) && node.hasProperty(name)) {
+                throw new RepositoryException("property '" + name + "' already exists");
+            }
 
             if (property.multi || property.value instanceof Object[]) {
                 // make or store a multi value property
@@ -1043,6 +1048,9 @@ public class JsonUtil {
                     node.setProperty(name, (Value) null);
                     PropertyUtil.setProperty(node, name, values, type);
                 }
+                if (!name.equals(oldname)) {
+                    node.setProperty(oldname, (Value) null);
+                }
 
                 return jcrProperty != null;
 
@@ -1072,6 +1080,9 @@ public class JsonUtil {
                     // if this exception occurs the property must be transformed to single value
                     node.setProperty(name, (Value[]) null);
                     PropertyUtil.setProperty(node, name, value, type);
+                }
+                if (!name.equals(oldname)) {
+                    node.setProperty(oldname, (Value) null);
                 }
 
                 return jcrProperty != null;

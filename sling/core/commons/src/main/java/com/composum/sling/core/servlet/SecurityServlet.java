@@ -26,13 +26,25 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
-import javax.jcr.security.*;
+import javax.jcr.security.AccessControlEntry;
+import javax.jcr.security.AccessControlList;
+import javax.jcr.security.AccessControlManager;
+import javax.jcr.security.AccessControlPolicy;
+import javax.jcr.security.AccessControlPolicyIterator;
+import javax.jcr.security.NamedAccessControlPolicy;
+import javax.jcr.security.Privilege;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The service servlet to retrieve all general system settings.
@@ -106,7 +118,10 @@ public class SecurityServlet extends AbstractServiceServlet {
                 Operation.accessPolicy, new RemoveAccessPolicy());
     }
 
-    public class AccessPolicyEntry {
+    public static class AccessPolicyEntry {
+
+        public AccessPolicyEntry() {
+        }
 
         public String principal;
         public String path;
