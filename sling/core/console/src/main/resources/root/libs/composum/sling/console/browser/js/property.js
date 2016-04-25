@@ -28,6 +28,7 @@
             defaults: {
                 path: undefined,
                 name: undefined,
+                oldname: undefined,
                 type: 'String',
                 multi: false,
                 value: undefined
@@ -68,6 +69,7 @@
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$title = this.$('h4.modal-title');
                 this.$path = this.$('input[name="path"]');
+                this.$oldname = this.$('input[name="oldname"]');
                 this.$name = this.$('input[name="name"]');
                 this.$type = this.$('select[name="type"]');
                 this.$multi = this.$('input[name="multi"]');
@@ -136,6 +138,7 @@
                     this.$multi.prop('checked', multi);
                     this.multiChanged();
                     this.$name.val(name);
+                    this.$oldname.val(name);
                     this.$title.empty().html('Change Property');
                     this.$delete.removeClass('hidden');
                 } else {
@@ -156,6 +159,7 @@
                 var property = new browser.Property({
                     path: this.$path.val(),
                     name: this.$name.val(),
+                    oldname: this.$oldname.val(),
                     type: this.$type.val(),
                     multi: this.$multi.prop('checked'),
                     value: this.valueWidget.getValue()

@@ -21,6 +21,7 @@
               <div class="alert"></div>
             </div>
             <input name="path" type="hidden">
+            <input name="oldname" type="hidden">
             <div class="form-group type">
               <label class="control-label">Type</label>
               <select name="type" class="widget property-type-widget form-control">
