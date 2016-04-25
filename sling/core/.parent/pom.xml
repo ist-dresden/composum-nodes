@@ -38,6 +38,9 @@
         <sling.host>localhost</sling.host>
         <sling.port>9090</sling.port>
         <sling.context></sling.context>
+        <package.install>/bin/core/package.service.html</package.install>
+        <sling.user>admin</sling.user>
+        <sling.password>admin</sling.password>
     </properties>
 
     <scm>
@@ -156,8 +159,23 @@
                         <host>${sling.host}</host>
                         <port>${sling.port}</port>
                         <path>${sling.context}/system/console</path>
-                        <username>admin</username>
-                        <password>admin</password>
+                        <username>${sling.user}</username>
+                        <password>${sling.password}</password>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>com.day.jcr.vault</groupId>
+                    <artifactId>content-package-maven-plugin</artifactId>
+                    <version>0.0.24</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <failOnError>true</failOnError>
+                        <targetURL>http://${sling.host}:${sling.port}${sling.context}${package.install}</targetURL>
+                        <userId>${sling.user}</userId>
+                        <password>${sling.password}</password>
+                        <useProxy>false</useProxy>
+                        <failOnMissingEmbed>true</failOnMissingEmbed>
                     </configuration>
                 </plugin>
 

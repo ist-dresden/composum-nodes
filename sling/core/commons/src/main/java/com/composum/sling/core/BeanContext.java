@@ -1,5 +1,6 @@
 package com.composum.sling.core;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
@@ -84,12 +85,12 @@ public interface BeanContext {
         }
 
         public Map(java.util.Map<String, Object> pageScopeMap) {
-            this (pageScopeMap, new HashMap<String, Object>());
+            this(pageScopeMap, new HashMap<String, Object>());
         }
 
         public Map(java.util.Map<String, Object> pageScopeMap,
                    java.util.Map<String, Object> requestScopeMap) {
-            this (pageScopeMap, requestScopeMap, new HashMap<String, Object>());
+            this(pageScopeMap, requestScopeMap, new HashMap<String, Object>());
         }
 
         public Map(java.util.Map<String, Object> pageScopeMap,
@@ -122,27 +123,30 @@ public interface BeanContext {
 
         @Override
         public <T> T getAttribute(String name, Class<T> T) {
-            T attribute = (T) pageScopeMap.get(name);
-            if (attribute == null) {
-                SlingHttpServletRequest request = getRequest();
-                if (request != null) {
-                    attribute = (T) request.getAttribute(name);
-                    if (attribute == null) {
-                        HttpSession session = request.getSession();
-                        if (session != null) {
-                            attribute = (T) session.getAttribute(name);
-                        } else {
-                            attribute = (T) this.sessionScopeMap.get(name);
+            Object attribute = null;
+            if (StringUtils.isNotBlank(name)) {
+                attribute = pageScopeMap.get(name);
+                if (attribute == null) {
+                    SlingHttpServletRequest request = getRequest();
+                    if (request != null) {
+                        attribute = request.getAttribute(name);
+                        if (attribute == null) {
+                            HttpSession session = request.getSession();
+                            if (session != null) {
+                                attribute = session.getAttribute(name);
+                            } else {
+                                attribute = this.sessionScopeMap.get(name);
+                            }
                         }
-                    }
-                } else {
-                    attribute = (T) this.requestScopeMap.get(name);
-                    if (attribute == null) {
-                        attribute = (T) this.sessionScopeMap.get(name);
+                    } else {
+                        attribute = this.requestScopeMap.get(name);
+                        if (attribute == null) {
+                            attribute = this.sessionScopeMap.get(name);
+                        }
                     }
                 }
             }
-            return attribute;
+            return (T) attribute;
         }
 
         @Override
@@ -212,7 +216,10 @@ public interface BeanContext {
 
         @Override
         public <T> T getAttribute(String name, Class<T> T) {
-            Object attribute = this.pageContext.findAttribute(name);
+            Object attribute = null;
+            if (StringUtils.isNotBlank(name)) {
+                attribute = this.pageContext.findAttribute(name);
+            }
             return (T) attribute;
         }
 
@@ -264,15 +271,18 @@ public interface BeanContext {
 
         @Override
         public <T> T getAttribute(String name, Class<T> T) {
-            T attribute = (T) this.request.getAttribute(name);
-            if (attribute == null) {
-                HttpSession session = this.request.getSession();
-                if (session != null) {
-                    attribute = (T) session.getAttribute(name);
-                }
+            T attribute = null;
+            if (StringUtils.isNotBlank(name)) {
+                attribute = (T) this.request.getAttribute(name);
                 if (attribute == null) {
-                    if (this.servletContext != null) {
-                        attribute = (T) this.servletContext.getAttribute(name);
+                    HttpSession session = this.request.getSession();
+                    if (session != null) {
+                        attribute = (T) session.getAttribute(name);
+                    }
+                    if (attribute == null) {
+                        if (this.servletContext != null) {
+                            attribute = (T) this.servletContext.getAttribute(name);
+                        }
                     }
                 }
             }
