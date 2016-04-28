@@ -104,7 +104,7 @@ public abstract class JobMonitor implements Callable<Boolean> {
     }
 
     protected void checkJobState() {
-        Job job = JobUtil.getJobById(jobManager, resolver, jobId);
+        JobFacade job = JobUtil.getJobById(jobManager, resolver, jobId);
         if (job != null) {
             currentState = job.getJobState();
         }

@@ -392,7 +392,7 @@
             <dependency>
                 <groupId>org.apache.sling</groupId>
                 <artifactId>org.apache.sling.event</artifactId>
-                <version>3.3.0</version>
+                <version>[3.3.0,5)</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -407,7 +407,6 @@
                 <version>1.43.0</version>
                 <scope>provided</scope>
             </dependency>
-
 
             <!-- JCR API, Jackrabbit, VLT -->
             <dependency>
