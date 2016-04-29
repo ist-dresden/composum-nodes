@@ -47,7 +47,6 @@ public class MappingRules {
      */
     public static final String[] DATE_PATTERNS = new String[]{
             ECMA_DATE_FORMAT,
-            "ISO8601",
             "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
             "EEE MMM dd yyyy HH:mm:ss z",
             "EEE MMM dd yyyy HH:mm:ss Z",
