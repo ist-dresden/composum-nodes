@@ -29,7 +29,7 @@ public class Browser extends BrowserBean {
     public static final Map<String, String> EDITOR_MODES;
 
     static {
-        EDITOR_MODES = new HashMap<String, String>();
+        EDITOR_MODES = new HashMap<>();
         EDITOR_MODES.put("json", "json");
         EDITOR_MODES.put("xml", "xml");
         EDITOR_MODES.put(HTML, HTML);
@@ -38,6 +38,7 @@ public class Browser extends BrowserBean {
         EDITOR_MODES.put("css", "css");
         EDITOR_MODES.put("less", "less");
         EDITOR_MODES.put("js", "javascript");
+        EDITOR_MODES.put("ecma", "javascript");
         EDITOR_MODES.put("dart", "dart");
         EDITOR_MODES.put("groovy", "groovy");
         EDITOR_MODES.put("java", "java");
