@@ -2,6 +2,7 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.concurrent.JobFacade;
 import com.composum.sling.core.concurrent.JobUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResourceUtil;
@@ -115,7 +116,7 @@ public class JobControlServlet extends AbstractServiceServlet {
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
             final String jobId = AbstractServiceServlet.getPath(request).substring(1);
-            final Job job = JobUtil.getJobById(jobManager, request.getResourceResolver(), jobId);
+            final JobFacade job = JobUtil.getJobById(jobManager, request.getResourceResolver(), jobId);
             if (job != null) {
                 final String path = job.getProperty("outfile", String.class);
                 final String range = request.getHeader("Range");
@@ -220,24 +221,27 @@ public class JobControlServlet extends AbstractServiceServlet {
             JobManager.QueryType selector = RequestUtil.getSelector(request, JobManager.QueryType.ALL);
             boolean useAudit = (selector == JobManager.QueryType.ALL || selector == JobManager.QueryType.HISTORY || selector == JobManager.QueryType.SUCCEEDED);
             Collection<Job> jobs = jobManager.findJobs(selector, topic.getString(), 0);
-            List<Job> allJobs = new ArrayList<>(jobs);
+            List<JobFacade> allJobs = new ArrayList<>();
+            for (Job job : jobs) {
+                allJobs.add(new JobFacade.EventJob(job));
+            }
             if (useAudit) {
-                final Collection<Job> auditJobs = JobUtil.getAuditJobs(selector, request.getResourceResolver());
-                for (Job auditJob : auditJobs) {
+                final Collection<JobFacade> auditJobs = JobUtil.getAuditJobs(selector, request.getResourceResolver());
+                for (JobFacade auditJob : auditJobs) {
                     if (!containsJob(jobs, auditJob)) {
                         allJobs.add(auditJob);
                     }
                 }
             }
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
-                Collections.sort(allJobs, new Comparator<Job>() {
+                Collections.sort(allJobs, new Comparator<JobFacade>() {
                     @Override
-                    public int compare(Job o1, Job o2) {
+                    public int compare(JobFacade o1, JobFacade o2) {
                         return o1.getCreated().compareTo(o2.getCreated());
                     }
                 });
                 jsonWriter.beginArray();
-                for (Job job : allJobs) {
+                for (JobFacade job : allJobs) {
                     if (path.length() > 1) {
                         final String script = job.getProperty("reference", String.class);
                         if (script != null && script.equals(path)) {
@@ -251,7 +255,7 @@ public class JobControlServlet extends AbstractServiceServlet {
             }
         }
 
-        private boolean containsJob(Collection<Job> jobs, Job jobToFind) {
+        private boolean containsJob(Collection<Job> jobs, JobFacade jobToFind) {
             for (Job job : jobs) {
                 if (job.getId().equals(jobToFind.getId())) {
                     return true;
@@ -270,7 +274,7 @@ public class JobControlServlet extends AbstractServiceServlet {
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
             final String path = AbstractServiceServlet.getPath(request);
             String jobId = path.substring(1);
-            Job job = JobUtil.getJobById(jobManager, request.getResourceResolver(), jobId);
+            JobFacade job = JobUtil.getJobById(jobManager, request.getResourceResolver(), jobId);
             if (job != null) {
                 try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
                     job2json(jsonWriter, job);
@@ -329,17 +333,17 @@ public class JobControlServlet extends AbstractServiceServlet {
         }
 
         private void removeAudits(ResourceResolver resolver, int keep, Iterator<Resource> auditResources) throws PersistenceException {
-            final List<JobUtil.AuditJob> allAuditJobs = new ArrayList<>();
+            final List<JobFacade.AuditJob> allAuditJobs = new ArrayList<>();
             while (auditResources.hasNext()) {
                 final Resource auditResource = auditResources.next();
-                final JobUtil.AuditJob auditJob = new JobUtil.AuditJob(auditResource);
+                final JobFacade.AuditJob auditJob = new JobFacade.AuditJob(auditResource);
                 allAuditJobs.add(auditJob);
             }
-            final Comparator<Job> comparator = new JobUtil.JobComparator();
+            final Comparator<JobFacade> comparator = new JobUtil.JobComparator();
             Collections.sort(allAuditJobs, comparator);
             int size = allAuditJobs.size();
             for (int i = 0; i < size - keep; i++) {
-                final JobUtil.AuditJob x = allAuditJobs.get(i);
+                final JobFacade.AuditJob x = allAuditJobs.get(i);
                 resolver.delete(x.resource);
             }
             resolver.commit();
@@ -421,12 +425,12 @@ public class JobControlServlet extends AbstractServiceServlet {
             JobUtil.buildOutfileName(properties);
             Job job = jobManager.addJob(topic, properties);
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
-                job2json(jsonWriter, job);
+                job2json(jsonWriter, new JobFacade.EventJob(job));
             }
         }
     }
 
-    private void job2json(JsonWriter jsonWriter, Job job) throws IOException {
+    private void job2json(JsonWriter jsonWriter, JobFacade job) throws IOException {
         jsonWriter.beginObject();
         Set<String> propertyNames = Collections.unmodifiableSet(job.getPropertyNames());
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
