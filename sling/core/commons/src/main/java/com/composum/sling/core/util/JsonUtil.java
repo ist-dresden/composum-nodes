@@ -1009,7 +1009,7 @@ public class JsonUtil {
 
             String name = property.name;
             String oldname = property.oldname;
-            if (!name.equals(oldname) && node.hasProperty(name)) {
+            if (!StringUtils.isBlank(oldname) && !name.equals(oldname) && node.hasProperty(name)) {
                 throw new RepositoryException("property '" + name + "' already exists");
             }
 
@@ -1048,7 +1048,7 @@ public class JsonUtil {
                     node.setProperty(name, (Value) null);
                     PropertyUtil.setProperty(node, name, values, type);
                 }
-                if (!name.equals(oldname)) {
+                if (!StringUtils.isBlank(oldname) && !name.equals(oldname)) {
                     node.setProperty(oldname, (Value) null);
                 }
 
@@ -1081,7 +1081,7 @@ public class JsonUtil {
                     node.setProperty(name, (Value[]) null);
                     PropertyUtil.setProperty(node, name, value, type);
                 }
-                if (!name.equals(oldname)) {
+                if (!StringUtils.isBlank(oldname) && !name.equals(oldname)) {
                     node.setProperty(oldname, (Value) null);
                 }
 
