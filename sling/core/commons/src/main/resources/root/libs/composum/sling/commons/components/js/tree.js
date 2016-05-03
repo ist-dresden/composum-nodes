@@ -397,6 +397,8 @@
                         this.refreshNodeById(oldParentId);
                     }
                     var parentId = this.nodeId(parentPath);
+                    var p = this.jstree.get_node(parentId, false);
+                    p.state.loaded = false;
                     this.refreshNodeById(parentId, _.bind(function () {
                         if (restoreSelection) {
                             this.selectNode(newPath);
