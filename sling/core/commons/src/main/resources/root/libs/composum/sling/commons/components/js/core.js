@@ -256,10 +256,10 @@
             } else {
                 parentPath = '/';
             }
-            if (name.indexOf('/') == 0) {
-                name = name.substring(1);
+            if (nodeName.indexOf('/') == 0) {
+                nodeName = nodeName.substring(1);
             }
-            return parentPath + name;
+            return parentPath + nodeName;
         },
 
         getNameFromPath: function (nodePath) {
