@@ -239,6 +239,7 @@
                     var property = new browser.Property({
                         path: browser.getCurrentPath(),
                         name: $row.find('td.name').text(),
+                        oldname: $row.find('td.name').text(),
                         type: $row.find('td.type').text(),
                         multi: ('true' == ($row.find('td.multi').text())),
                         value: params.value
