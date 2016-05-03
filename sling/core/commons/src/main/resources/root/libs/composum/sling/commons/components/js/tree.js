@@ -362,6 +362,7 @@
 
             onPathSelected: function (event, path) {
                 var node = this.getSelectedTreeNode();
+                console.log('onPathSelected(' + path + '):' + node);
                 if (!node || node.original.path != path) {
                     if (!this.busy) {
                         // prevent from endless self activation
@@ -377,16 +378,19 @@
 
             onPathInserted: function (event, parentPath, nodeName) {
                 var nodeId = this.nodeId(parentPath);
+                console.log('onPathInserted(' + parentPath + ',' + nodeName + '):' + nodeId);
                 this.refreshNodeById(nodeId);
             },
 
             onPathChanged: function (event, path) {
                 var nodeId = this.nodeId(path);
+                console.log('onPathChanged(' + path + '):' + nodeId);
                 this.refreshNodeById(nodeId);
             },
 
             onPathMoved: function (event, oldPath, newPath) {
                 var oldNode = this.getTreeNodeByPath(oldPath);
+                console.log('onPathMoved(' + oldPath + ',' + newPath + '):' + oldNode);
                 if (oldNode) {
                     var selected = this.getSelectedTreeNode();
                     var restoreSelection = (selected && selected.original.path == oldPath);
@@ -409,6 +413,7 @@
 
             onPathDeleted: function (event, path) {
                 var deleted = this.getTreeNodeByPath(path);
+                console.log('onPathDeleted(' + path + '):' + deleted);
                 if (deleted) {
                     var selected = this.getSelectedTreeNode();
                     var nearestFocus = this.findNearestOfDeletion(path);
@@ -483,6 +488,7 @@
                 // use the URL build by the 'dataUrlForNode' function in th Ajax call
                 var url = this.dataUrlForNode(node);
                 var tree = this; // for later use via closure
+                console.log('nodeData(' + node + '): ' + url);
                 core.getJson(url, function (result) {
                         // transform all ids (node path) into the tree (jQuery) compatible format
                         result.id = tree.nodeId(result.path);
@@ -640,6 +646,7 @@
             },
 
             onNodeSelected: function (path, node, element) {
+                console.log('onNodeSelected(' + path + ',' + node + ',' + element + ')');
                 $(document).trigger("path:select", [path]);
             },
 
@@ -673,6 +680,7 @@
             // jstree helpers
 
             refreshNodeById: function (id, callback) {
+                console.log('refreshNodeById(' + id + ')');
                 if (!id) {
                     var selected = this.jstree.get_selected();
                     if (selected && selected.length > 0) {
