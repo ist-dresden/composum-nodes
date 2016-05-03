@@ -35,6 +35,7 @@
         ajaxPut: function (url, data, config, onSuccess, onError, onComplete) {
             var ajaxConf = _.extend({
                 type: 'PUT',
+                contentType: false,
                 url: core.getContextUrl(url),
                 data: data
             }, config);
@@ -44,6 +45,7 @@
         ajaxDelete: function (url, config, onSuccess, onError, onComplete) {
             var ajaxConf = _.extend({
                 type: 'DELETE',
+                contentType: false,
                 url: core.getContextUrl(url)
             }, config);
             core.ajaxCall(ajaxConf, onSuccess, onError, onComplete);
@@ -245,6 +247,20 @@
         //
         // JCR & helper functions for the client layer
         //
+
+        buildContentPath: function (parentPath, nodeName) {
+            if (parentPath && parentPath.length > 0) {
+                if (parentPath.charAt(parentPath.length - 1) != '/') {
+                    parentPath += '/';
+                }
+            } else {
+                parentPath = '/';
+            }
+            if (nodeName.indexOf('/') == 0) {
+                nodeName = nodeName.substring(1);
+            }
+            return parentPath + nodeName;
+        },
 
         getNameFromPath: function (nodePath) {
             var lastSlash = nodePath.lastIndexOf('/');
