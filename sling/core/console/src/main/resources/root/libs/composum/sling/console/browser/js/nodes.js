@@ -64,7 +64,7 @@
                 event.preventDefault();
                 var parentPath = this.$path.val();
                 var newNodeName = this.$name.val();
-                var newNodePath = parentPath + '/' + newNodeName;
+                var newNodePath = core.buildContentPath(parentPath, newNodeName);
                 if (this.form.isValid()) {
                     this.submitForm(function (result) {
                         $(document).trigger("path:inserted", [parentPath, newNodeName]);
@@ -273,7 +273,7 @@
                     if (!index && index != 0) {
                         index = -1
                     }
-                    var newPath = targetPath + '/' + name;
+                    var newPath = core.buildContentPath(targetPath, name);
                     this.submitPUT(
                         'move node',
                         '/bin/core/node.move.json' + core.encodePath(oldPath), {
@@ -320,8 +320,8 @@
                 var path = this.$path.val();
                 var oldName = this.$name.val();
                 var newName = this.$newname.getValue();
-                var oldPath = path + '/' + oldName;
-                var newPath = path + '/' + newName;
+                var oldPath = core.buildContentPath(path, oldName);
+                var newPath = core.buildContentPath(path, newName);
                 core.ajaxPut("/bin/core/node.move.json" + oldPath,
                     JSON.stringify({
                         name: newName,

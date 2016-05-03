@@ -248,6 +248,20 @@
         // JCR & helper functions for the client layer
         //
 
+        buildContentPath: function (parentPath, nodeName) {
+            if (parentPath && parentPath.length > 0) {
+                if (parentPath.charAt(parentPath.length - 1) != '/') {
+                    parentPath += '/';
+                }
+            } else {
+                parentPath = '/';
+            }
+            if (name.indexOf('/') == 0) {
+                name = name.substring(1);
+            }
+            return parentPath + name;
+        },
+
         getNameFromPath: function (nodePath) {
             var lastSlash = nodePath.lastIndexOf('/');
             var name = lastSlash >= 0 ? nodePath.substring(lastSlash + 1) : nodePath;
