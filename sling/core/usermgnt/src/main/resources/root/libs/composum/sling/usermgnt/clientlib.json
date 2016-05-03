@@ -19,7 +19,7 @@
         "composum/sling/usermgnt/dialogs/adduser/adduserdialog.js",
         "composum/sling/usermgnt/dialogs/addsystemuser/addsystemuserdialog.js",
         "composum/sling/usermgnt/dialogs/addmember/addmemberdialog.js",
-        "composum/sling/usermgnt/dialog/addtogroup/addtogroupdialog.js",
+        "composum/sling/usermgnt/dialogs/addtogroup/addtogroupdialog.js",
         "composum/sling/usermgnt/dialogs/addgroup/addgroupdialog.js",
         "composum/sling/usermgnt/dialogs/deleteauthorizable/deleteauthorizabledialog.js",
         "composum/sling/usermgnt/dialogs/disableuser/disableuserdialog.js",
