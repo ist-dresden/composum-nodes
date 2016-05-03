@@ -182,8 +182,8 @@
             renameNode: function (node, oldName, newName) {
                 var nodePath = node.path;
                 var parentPath = core.getParentPath(nodePath);
-                var oldPath = parentPath + '/' + oldName;
-                var newPath = parentPath + '/' + newName;
+                var oldPath = core.buildContentPath(parentPath, oldName);
+                var newPath = core.buildContentPath(parentPath, newName);
                 core.ajaxPut('/bin/core/node.move.json' + core.encodePath(oldPath),
                     JSON.stringify({
                         path: parentPath,
@@ -205,7 +205,7 @@
                 var parentPath = targetNode.path;
                 var oldPath = draggedNode.path;
                 var nodeName = core.getNameFromPath(oldPath);
-                var newPath = parentPath + '/' + nodeName;
+                var newPath = core.buildContentPath(parentPath, nodeName);
                 core.ajaxPut('/bin/core/node.move.json' + core.encodePath(oldPath),
                     JSON.stringify({
                         path: parentPath,
