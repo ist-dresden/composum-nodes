@@ -35,6 +35,7 @@
         ajaxPut: function (url, data, config, onSuccess, onError, onComplete) {
             var ajaxConf = _.extend({
                 type: 'PUT',
+                contentType: false,
                 url: core.getContextUrl(url),
                 data: data
             }, config);
@@ -44,6 +45,7 @@
         ajaxDelete: function (url, config, onSuccess, onError, onComplete) {
             var ajaxConf = _.extend({
                 type: 'DELETE',
+                contentType: false,
                 url: core.getContextUrl(url)
             }, config);
             core.ajaxCall(ajaxConf, onSuccess, onError, onComplete);
