@@ -61,6 +61,7 @@ public class ResourceHandle extends ResourceWrapper {
 
     private transient ResourceHandle contentResource;
     private transient InheritedValues inheritedValues;
+    protected boolean useNodeInheritance = false;
 
     /**
      * creates a new wrapper instance.
@@ -178,9 +179,14 @@ public class ResourceHandle extends ResourceWrapper {
 
     // inherited property values
 
+    public void setUseNodeInheritance(boolean nodeInheritance) {
+        useNodeInheritance = nodeInheritance;
+        inheritedValues = null;
+    }
+
     protected InheritedValues getInheritedValues() {
         if (inheritedValues == null) {
-            inheritedValues = new InheritedValues(this);
+            inheritedValues = new InheritedValues(this, useNodeInheritance);
         }
         return inheritedValues;
     }
@@ -374,12 +380,29 @@ public class ResourceHandle extends ResourceWrapper {
     /**
      * retrieves all children of a type
      */
+    public List<ResourceHandle> getChildrenByType(final String type) {
+        final ArrayList<ResourceHandle> children = new ArrayList<>();
+        if (this.isValid()) {
+            for (final Resource child : this.resource.getChildren()) {
+                ResourceHandle handle = ResourceHandle.use(child);
+                if (handle.isOfType(type)) {
+                    children.add(handle);
+                }
+            }
+        }
+        return children;
+    }
+
+    /**
+     * retrieves all children of a sling:resourceType
+     */
     public List<ResourceHandle> getChildrenByResourceType(final String resourceType) {
         final ArrayList<ResourceHandle> children = new ArrayList<>();
         if (this.isValid()) {
             for (final Resource child : this.resource.getChildren()) {
-                if (child.isResourceType(resourceType)) {
-                    children.add(child.adaptTo(ResourceHandle.class));
+                ResourceHandle handle = ResourceHandle.use(child);
+                if (handle.isResourceType(resourceType)) {
+                    children.add(handle);
                 }
             }
         }
