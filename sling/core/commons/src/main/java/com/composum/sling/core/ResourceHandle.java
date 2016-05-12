@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * the wrapper to enhance the Sling Resource class
@@ -345,6 +346,16 @@ public class ResourceHandle extends ResourceWrapper {
         }
     }
 
+    public ResourceHandle getParent(int distance) {
+        ResourceHandle parent = this;
+        while (distance > 0 && parent != null && parent.isValid()) {
+            parent = parent.getParent();
+            distance--;
+        }
+        return parent;
+    }
+
+
     /**
      * @return
      */
@@ -352,6 +363,28 @@ public class ResourceHandle extends ResourceWrapper {
         final String parentPath = ResourceUtil.getParent(getPath());
         return parentPath;
     }
+
+
+    /**
+     * Retrieves a child of this resource or a parent specified by its base path, name pattern and type;
+     * for example findUpwards("jcr:content", Pattern.compile("^some.*$"), "sling:Folder").
+     */
+    public ResourceHandle findUpwards(String basePath, Pattern namePattern, String childType) {
+        ResourceHandle current = this;
+        while (current != null && current.isValid()) {
+            ResourceHandle base = ResourceHandle.use(current.getChild(basePath));
+            if (base.isValid()) {
+                for (ResourceHandle child : base.getChildrenByType(childType)) {
+                    if (namePattern.matcher(child.getName()).matches()) {
+                        return child;
+                    }
+                }
+            }
+            current = current.getParent();
+        }
+        return null;
+    }
+
 
     @Override
     public String toString() {

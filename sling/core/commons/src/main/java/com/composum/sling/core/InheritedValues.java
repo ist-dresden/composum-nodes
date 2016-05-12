@@ -91,9 +91,11 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
         String path = relativePath + name;
         for (Resource parent = entryPoint; parent != null; parent = parent.getParent()) {
             ValueMap parentProps = parent.adaptTo(ValueMap.class);
-            value = parentProps.get(path, type);
-            if (value != null) {
-                return value;
+            if (parentProps != null) {
+                value = parentProps.get(path, type);
+                if (value != null) {
+                    return value;
+                }
             }
             if (exitPoint != null && parent.getPath().equals(exitPoint.getPath())) {
                 break;
