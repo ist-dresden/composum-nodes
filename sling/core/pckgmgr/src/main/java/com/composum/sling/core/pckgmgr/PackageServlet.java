@@ -54,6 +54,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -426,9 +427,10 @@ public class PackageServlet extends AbstractServiceServlet {
             JobUtil.buildOutfileName(jobProperties);
 
             Job job = jobManager.addJob(PackageJobExecutor.TOPIC, jobProperties);
-            if (new JobMonitor.IsStarted(jobManager, resolver, job.getId(), INSTALL_START_TIMEOUT).call()) {
+            final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), INSTALL_START_TIMEOUT);
+            if (isDone.call()) {
 
-                installationStarted(request, response, manager, jcrPackage);
+                installationDone(request, response, manager, jcrPackage, isDone);
 
             } else {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Package install not started!");
@@ -437,6 +439,14 @@ public class PackageServlet extends AbstractServiceServlet {
 
         protected void installationStarted(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                            JcrPackageManager manager, JcrPackage jcrPackage)
+                throws RepositoryException, IOException {
+
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            jsonAnswer(writer, "installation", "started", manager, jcrPackage);
+        }
+
+        protected void installationDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                           JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
                 throws RepositoryException, IOException {
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
@@ -481,19 +491,42 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class CrxServiceOperation extends DeployOperation {
 
         @Override
-        protected void installationStarted(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                           JcrPackageManager manager, JcrPackage jcrPackage)
+        protected void installationDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                           JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
                 throws RepositoryException, IOException {
             response.setStatus(HttpServletResponse.SC_OK);
-            Writer writer = response.getWriter();
-            writer.append("<repo>");
+            try (Writer writer = response.getWriter()) {
+                writer.append("<repo>");
 //                writer.append("<crx version=\"\" user=\"\" workspace=\"\">");
 //                writer.append("<request>");
 //                writer.append("<param name=\"file\" value=\"\"/>");
 //                writer.append("</request>");
-            writer.append("<response>");
-//                writer.append("<data>");
-//                writer.append("<package>");
+                writer.append("<response>");
+                writer.append("<data>");
+                writer.append("<package>");
+                final JcrPackageDefinition definition = jcrPackage.getDefinition();
+                final String group = definition.get(JcrPackageDefinition.PN_GROUP);
+                final String name = definition.get(JcrPackageDefinition.PN_NAME);
+                final String version = definition.get(JcrPackageDefinition.PN_VERSION);
+                writer.append("<group>").append(group).append("</group>");
+                writer.append("<name>").append(name).append("</name>");
+                writer.append("<version>").append(version).append("</version>");
+                writer.append("<size>").append(String.valueOf(jcrPackage.getSize())).append("</size>");
+                final String createdBy = definition.getCreatedBy();
+                final Calendar created = definition.getCreated();
+                writer.append("<created>").append(new SimpleDateFormat().format(created.getTime())).append("</created>");
+                writer.append("<createdBy>").append(createdBy).append("</createdBy>");
+                final Calendar lastModified = definition.getLastModified();
+                if (lastModified!= null) {
+                    writer.append("<lastModified>").append(new SimpleDateFormat().format(lastModified.getTime())).append("</lastModified>");
+                }
+                writer.append("<lastModifiedBy>").append(definition.getLastModifiedBy()).append("</lastModifiedBy>");
+                final Calendar lastUnpacked = definition.getLastUnpacked();
+                if(lastUnpacked!=null) {
+                    writer.append("<lastUnpacked>").append(new SimpleDateFormat().format(lastUnpacked.getTime())).append("</lastUnpacked>");
+                }
+                writer.append("<lastUnpackedBy>").append(definition.getLastUnpackedBy()).append("</lastUnpackedBy>");
+
 //                writer.append("<group></group>");
 //                writer.append("<name></name>");
 //                writer.append("<version></version>");
@@ -505,12 +538,18 @@ public class PackageServlet extends AbstractServiceServlet {
 //                writer.append("<lastModifiedBy></lastModifiedBy>");
 //                writer.append("<lastUnpacked></lastUnpacked>");
 //                writer.append("<lastUnpackedBy></lastUnpackedBy>");
-//                writer.append("</package>");
-//                writer.append("</data>");
-            writer.append("<status code=\"200\">ok</status>");
-            writer.append("</response>");
+                writer.append("</package>");
+                writer.append("</data>");
+                if (jobMonitor.succeeded()) {
+                    writer.append("<status code=\"200\">ok</status>");
+                } else {
+                    final String msg = jobMonitor.getJob().getResultMessage();
+                    writer.append("<status code=\"500\">").append(msg).append("</status>");
+                }
+                writer.append("</response>");
 //                writer.append("</crx>");
-            writer.append("</repo>");
+                writer.append("</repo>");
+            }
         }
     }
 
