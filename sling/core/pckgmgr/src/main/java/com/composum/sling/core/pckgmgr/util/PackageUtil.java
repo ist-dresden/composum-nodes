@@ -632,4 +632,35 @@ public class PackageUtil {
         }
         writer.endObject();
     }
+
+    public static String packageToXMLResponse(JcrPackage jcrPackage) throws RepositoryException {
+        final JcrPackageDefinition definition = jcrPackage.getDefinition();
+        final String group = definition.get(JcrPackageDefinition.PN_GROUP);
+        final String name = definition.get(JcrPackageDefinition.PN_NAME);
+        final String version = definition.get(JcrPackageDefinition.PN_VERSION);
+        final String filename = getFilename(jcrPackage);
+        final long size = jcrPackage.getSize();
+        final String createdBy = definition.getCreatedBy();
+        final Calendar created = definition.getCreated();
+        final Calendar lastModified = definition.getLastModified();
+        final String lastModifiedBy = definition.getLastModifiedBy();
+        final Calendar lastUnpacked = definition.getLastUnpacked();
+        final String lastUnpackedBy = definition.getLastUnpackedBy();
+        final SimpleDateFormat dateFormat = new SimpleDateFormat();
+        String response =
+                "<package>" +
+                    "<group>"+group+"</group>"+
+                    "<name>"+name+"</name>"+
+                    "<version>"+version+"</version>"+
+                    "<downloadName>"+filename+"</downloadName>"+
+                    "<size>"+size+"</size>"+
+                    (created!=null?"<created>"+ dateFormat.format(created.getTime())+"</created>":"")+
+                    "<createdBy>"+createdBy+"</createdBy>"+
+                    (lastModified!= null?"<lastModified>"+dateFormat.format(lastModified.getTime())+"</lastModified>":"")+
+                    "<lastModifiedBy>"+ lastModifiedBy +"</lastModifiedBy>"+
+                    (lastUnpacked!=null?"<lastUnpacked>"+dateFormat.format(lastUnpacked.getTime())+"</lastUnpacked>":"")+
+                    "<lastUnpackedBy>"+ lastUnpackedBy +"</lastUnpackedBy>"+
+                "</package>";
+        return response;
+    }
 }

@@ -447,15 +447,26 @@ public class PackageServlet extends AbstractServiceServlet {
             jsonAnswer(writer, "installation", "started", manager, jcrPackage);
         }
 
+        // todo: we need separate classes for all supported commands/operations
         protected void installationDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                            JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
                 throws RepositoryException, IOException {
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
-            jsonAnswer(writer, "installation", "started", manager, jcrPackage);
+            jsonAnswer(writer, "installation", "done", manager, jcrPackage);
+        }
+
+        // todo: we need separate classes for all supported commands/operations
+        protected void lsDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                           JcrPackageManager manager, List<JcrPackage> jcrPackages)
+                throws RepositoryException, IOException {
+
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            writer.beginObject().endObject();
         }
     }
 
+    // todo: this should be renamed. it is neither a Deploy- nor Install-Operation but a more general one
     protected class DeployOperation extends InstallOperation {
 
         @Override
@@ -465,9 +476,12 @@ public class PackageServlet extends AbstractServiceServlet {
 
             RequestParameterMap parameters = request.getRequestParameterMap();
             final RequestParameter cmd = parameters.getValue(AbstractServiceServlet.PARAM_CMD);
-            if (cmd != null && !StringUtils.isEmpty(cmd.getString())) {
-                LOG.warn("unsupported command '{}' received. will ignore it.", cmd);
-                //todo: [ls, rm, build, uninst, replicate]
+            //todo: [ls, rm, build, uninst, replicate]
+            if (cmd != null && !StringUtils.isBlank(cmd.getString())) {
+                if (cmd.getString().equals("ls")) {
+                    JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                    final List<JcrPackage> jcrPackages = manager.listPackages();
+                    lsDone(request, response, manager, jcrPackages);
                 /* ls results in something like:
                 <crx version="2.4.76" user="admin" workspace="crx.default">
                   <request>
@@ -495,6 +509,10 @@ public class PackageServlet extends AbstractServiceServlet {
                   </response>
                 </crx>
                  */
+
+                } else {
+                    LOG.warn("unsupported command '{}' received. will ignore it.", cmd);
+                }
             } else {
 
                 RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
@@ -526,6 +544,29 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class CrxServiceOperation extends DeployOperation {
 
         @Override
+        protected void lsDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                              JcrPackageManager manager, List<JcrPackage> jcrPackages) throws RepositoryException, IOException {
+            response.setStatus(HttpServletResponse.SC_OK);
+            try (Writer writer = response.getWriter()) {
+                writer.append("<repo>");
+                writer.append("<request>");
+                writer.append("<param name=\"cmd\" value=\"ls\"/>");
+                writer.append("</request>");
+                writer.append("<response>");
+                writer.append("<data>");
+                writer.append("<packages>");
+                for (JcrPackage jcrPackage: jcrPackages) {
+                    writer.append(PackageUtil.packageToXMLResponse(jcrPackage));
+                }
+                writer.append("</packages>");
+                writer.append("</data>");
+                writer.append("<status code=\"200\">ok</status>");
+                writer.append("</response>");
+                writer.append("</repo>");
+            }
+        }
+
+        @Override
         protected void installationDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                            JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
                 throws RepositoryException, IOException {
@@ -538,42 +579,8 @@ public class PackageServlet extends AbstractServiceServlet {
 //                writer.append("</request>");
                 writer.append("<response>");
                 writer.append("<data>");
-                writer.append("<package>");
-                final JcrPackageDefinition definition = jcrPackage.getDefinition();
-                final String group = definition.get(JcrPackageDefinition.PN_GROUP);
-                final String name = definition.get(JcrPackageDefinition.PN_NAME);
-                final String version = definition.get(JcrPackageDefinition.PN_VERSION);
-                writer.append("<group>").append(group).append("</group>");
-                writer.append("<name>").append(name).append("</name>");
-                writer.append("<version>").append(version).append("</version>");
-                writer.append("<size>").append(String.valueOf(jcrPackage.getSize())).append("</size>");
-                final String createdBy = definition.getCreatedBy();
-                final Calendar created = definition.getCreated();
-                writer.append("<created>").append(new SimpleDateFormat().format(created.getTime())).append("</created>");
-                writer.append("<createdBy>").append(createdBy).append("</createdBy>");
-                final Calendar lastModified = definition.getLastModified();
-                if (lastModified!= null) {
-                    writer.append("<lastModified>").append(new SimpleDateFormat().format(lastModified.getTime())).append("</lastModified>");
-                }
-                writer.append("<lastModifiedBy>").append(definition.getLastModifiedBy()).append("</lastModifiedBy>");
-                final Calendar lastUnpacked = definition.getLastUnpacked();
-                if(lastUnpacked!=null) {
-                    writer.append("<lastUnpacked>").append(new SimpleDateFormat().format(lastUnpacked.getTime())).append("</lastUnpacked>");
-                }
-                writer.append("<lastUnpackedBy>").append(definition.getLastUnpackedBy()).append("</lastUnpackedBy>");
-
-//                writer.append("<group></group>");
-//                writer.append("<name></name>");
-//                writer.append("<version></version>");
-//                writer.append("<downloadName></downloadName>");
-//                writer.append("<size></size>");
-//                writer.append("<created></created>");
-//                writer.append("<createdBy></createdBy>");
-//                writer.append("<lastModified></lastModified>");
-//                writer.append("<lastModifiedBy></lastModifiedBy>");
-//                writer.append("<lastUnpacked></lastUnpacked>");
-//                writer.append("<lastUnpackedBy></lastUnpackedBy>");
-                writer.append("</package>");
+                writer.append(PackageUtil.packageToXMLResponse(jcrPackage));
+                //writer.append("<log><![CDATA[...]]></log>");
                 writer.append("</data>");
                 if (jobMonitor.succeeded()) {
                     writer.append("<status code=\"200\">ok</status>");
