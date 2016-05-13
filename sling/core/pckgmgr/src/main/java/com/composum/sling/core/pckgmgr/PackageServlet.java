@@ -126,6 +126,8 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.coverage, new CoverageOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.zip,
                 Operation.download, new DownloadOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.html,
+                Operation.download, new DownloadOperation());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
@@ -462,20 +464,53 @@ public class PackageServlet extends AbstractServiceServlet {
                 throws RepositoryException, IOException {
 
             RequestParameterMap parameters = request.getRequestParameterMap();
-
-            RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
-            if (file != null) {
-                InputStream input = file.getInputStream();
-                boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
-
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
-                JcrPackage jcrPackage = manager.upload(input, true, force);
-
-                installPackage(request, response, manager, jcrPackage);
-
+            final RequestParameter cmd = parameters.getValue(AbstractServiceServlet.PARAM_CMD);
+            if (cmd != null && !StringUtils.isEmpty(cmd.getString())) {
+                LOG.warn("unsupported command '{}' received. will ignore it.", cmd);
+                //todo: [ls, rm, build, uninst, replicate]
+                /* ls results in something like:
+                <crx version="2.4.76" user="admin" workspace="crx.default">
+                  <request>
+                    <param name="cmd" value="ls"/>
+                  </request>
+                  <response>
+                    <data>
+                      <packages>
+                        <package>
+                          <group>foo</group>
+                          <name>bar</name>
+                          <version>1.1.1</version>
+                          <downloadName>foobar-1.1.1.zip</downloadName>
+                          <size>666</size>
+                          <created>Do, 10 Jan 1911 11:11:11 +0100</created>
+                          <createdBy>admin</createdBy>
+                          <lastModified>Do, 10 Jan 1911 11:11:11 +0100</lastModified>
+                          <lastModifiedBy>admin</lastModifiedBy>
+                          <lastUnpacked>Mo, 11 Apr 2016 10:45:54 +0200</lastUnpacked>
+                          <lastUnpackedBy>admin</lastUnpackedBy>
+                        </package>
+                      </packages>
+                    </data>
+                    <status code="200">ok</status>
+                  </response>
+                </crx>
+                 */
             } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "no package file accessible");
+
+                RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
+                if (file != null) {
+                    InputStream input = file.getInputStream();
+                    boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
+
+                    JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                    JcrPackage jcrPackage = manager.upload(input, true, force);
+
+                    installPackage(request, response, manager, jcrPackage);
+
+                } else {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                            "no package file accessible");
+                }
             }
         }
     }

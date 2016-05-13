@@ -29,6 +29,7 @@ import java.io.StringReader;
 public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
 
     public static final String PARAM_FILE = "file";
+    public static final String PARAM_CMD = "cmd";
     public static final String PARAM_FILTER = "filter";
     public static final String PARAM_ID = "id";
     public static final String PARAM_INDEX = "index";

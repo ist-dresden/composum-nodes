@@ -67,7 +67,12 @@ public class PackageUtil {
         RequestPathInfo reqPathInfo = request.getRequestPathInfo();
         String path = reqPathInfo.getSuffix();
         if (StringUtils.isBlank(path)) {
-            path = "/";
+            final String pathParam = request.getParameter("path");
+            if (StringUtils.isBlank(pathParam)) {
+                path = "/";
+            } else {
+                path = pathParam;
+            }
         } else {
             while (path.endsWith("/") && !"/".equals(path)) {
                 path = path.substring(0, path.length() - 1);
