@@ -1,7 +1,7 @@
 package com.composum.sling.core.concurrent;
 
 /**
- * Can be used by a JobExecutor to indocate an error during execution of the job.
+ * Can be used by a JobExecutor to indicate an error during execution of the job.
  */
 public class JobFailureException extends RuntimeException {
 
