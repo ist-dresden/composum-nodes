@@ -42,11 +42,11 @@ public abstract class JobMonitor implements Callable<Boolean> {
     }
 
     public boolean succeeded() {
-        return Job.JobState.SUCCEEDED.equals(finalState);
+        return Job.JobState.SUCCEEDED == finalState;
     }
 
     public boolean stopped() {
-        return Job.JobState.STOPPED.equals(finalState);
+        return Job.JobState.STOPPED == finalState;
     }
 
     public boolean error() {
@@ -84,6 +84,7 @@ public abstract class JobMonitor implements Callable<Boolean> {
         }
     }
 
+    @Override
     public Boolean call() {
         running = true;
         while (!goalReached() && !done() && timeout > 0) {
@@ -101,6 +102,10 @@ public abstract class JobMonitor implements Callable<Boolean> {
         running = false;
         done = true;
         return goalReached();
+    }
+
+    public JobFacade getJob() {
+        return JobUtil.getJobById(jobManager, resolver, jobId);
     }
 
     protected void checkJobState() {
