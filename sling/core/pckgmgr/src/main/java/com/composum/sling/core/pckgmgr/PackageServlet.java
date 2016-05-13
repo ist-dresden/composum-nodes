@@ -456,18 +456,24 @@ public class PackageServlet extends AbstractServiceServlet {
             jsonAnswer(writer, "installation", "done", manager, jcrPackage);
         }
 
-        // todo: we need separate classes for all supported commands/operations
-        protected void lsDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                           JcrPackageManager manager, List<JcrPackage> jcrPackages)
-                throws RepositoryException, IOException {
-
-            JsonWriter writer = ResponseUtil.getJsonWriter(response);
-            writer.beginObject().endObject();
-        }
     }
 
     // todo: this should be renamed. it is neither a Deploy- nor Install-Operation but a more general one
     protected class DeployOperation extends InstallOperation {
+
+
+
+    }
+
+    /**
+     * The 'deploy' operation according to the 'content-package-maven-plugin' enables the deployment
+     * during a Maven build using the 'install' goal of the content package Maven plugin.
+     * <dl>
+     * <dt>targetURL</dt>
+     * <dd>http://${sling.host}:${sling.port}${sling.context}/bin/core/package.service.html</dd>
+     * </dl>
+     */
+    protected class CrxServiceOperation extends DeployOperation {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
@@ -479,9 +485,96 @@ public class PackageServlet extends AbstractServiceServlet {
             //todo: [ls, rm, build, uninst, replicate]
             if (cmd != null && !StringUtils.isBlank(cmd.getString())) {
                 if (cmd.getString().equals("ls")) {
+                    doLS(request, response);
+                } else if (cmd.getString().equals("rm")) {
+                    final RequestParameter nameParameter = parameters.getValue("name");
+                    String name = "";
+                    if (nameParameter!=null) {
+                        name = nameParameter.getString("UTF-8");
+                    }
+                    final RequestParameter groupParameter = parameters.getValue("group");
+                    String group = null;
+                    if (groupParameter!=null) {
+                        group = groupParameter.getString("UTF-8");
+                    }
                     JcrPackageManager manager = PackageUtil.createPackageManager(request);
                     final List<JcrPackage> jcrPackages = manager.listPackages();
-                    lsDone(request, response, manager, jcrPackages);
+                    boolean found = false;
+                    for (JcrPackage jcrPackage:jcrPackages) {
+                        String packageName = jcrPackage.getDefinition().get(JcrPackageDefinition.PN_NAME);
+                        String packageGroup = jcrPackage.getDefinition().get(JcrPackageDefinition.PN_GROUP);
+                        if (!StringUtils.isBlank(packageName) && packageName.equals(name)) {
+                            if (!StringUtils.isBlank(group) && group.equals(packageGroup)) {
+                                manager.remove(jcrPackage);
+                                found = true;
+                                break;
+                            } else if (StringUtils.isBlank(group) && StringUtils.isBlank(packageGroup)){
+                                manager.remove(jcrPackage);
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    try (Writer writer = response.getWriter()) {
+                        writer.append("<repo>");
+                        writer.append("<request>");
+                        writer.append("<param name=\"cmd\" value=\"rm\"/>");
+                        writer.append("<param name=\"name\" value=\"").append(name).append("\"/>");
+                        writer.append("<param name=\"group\" value=\"").append(group).append("\"/>");
+                        writer.append("</request>");
+                        writer.append("<response>");
+                        if (found) {
+                            writer.append("<status code=\"200\">ok</status>");
+                        } else {
+                            writer.append("<status code=\"500\">Package '").append(group).append(":").append(name).append("' does not exist.</status>");
+                        }
+                        writer.append("</response>");
+                        writer.append("</repo>");
+                    }
+                } else {
+                    LOG.warn("unsupported command '{}' received. will ignore it.", cmd);
+                }
+            } else {
+
+                RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
+                if (file != null) {
+                    InputStream input = file.getInputStream();
+                    boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
+
+                    JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                    JcrPackage jcrPackage = manager.upload(input, true, force);
+
+                    installPackage(request, response, manager, jcrPackage);
+
+                } else {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                            "no package file accessible");
+                }
+            }
+        }
+
+        private void doLS(SlingHttpServletRequest request, SlingHttpServletResponse response) throws RepositoryException, IOException {
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            final List<JcrPackage> jcrPackages = manager.listPackages();
+            response.setStatus(HttpServletResponse.SC_OK);
+            try (Writer writer = response.getWriter()) {
+                writer.append("<repo>");
+                writer.append("<request>");
+                writer.append("<param name=\"cmd\" value=\"ls\"/>");
+                writer.append("</request>");
+                writer.append("<response>");
+                writer.append("<data>");
+                writer.append("<packages>");
+                for (JcrPackage jcrPackage: jcrPackages) {
+                    writer.append(PackageUtil.packageToXMLResponse(jcrPackage));
+                }
+                writer.append("</packages>");
+                writer.append("</data>");
+                writer.append("<status code=\"200\">ok</status>");
+                writer.append("</response>");
+                writer.append("</repo>");
+            }
                 /* ls results in something like:
                 <crx version="2.4.76" user="admin" workspace="crx.default">
                   <request>
@@ -509,61 +602,6 @@ public class PackageServlet extends AbstractServiceServlet {
                   </response>
                 </crx>
                  */
-
-                } else {
-                    LOG.warn("unsupported command '{}' received. will ignore it.", cmd);
-                }
-            } else {
-
-                RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
-                if (file != null) {
-                    InputStream input = file.getInputStream();
-                    boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
-
-                    JcrPackageManager manager = PackageUtil.createPackageManager(request);
-                    JcrPackage jcrPackage = manager.upload(input, true, force);
-
-                    installPackage(request, response, manager, jcrPackage);
-
-                } else {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            "no package file accessible");
-                }
-            }
-        }
-    }
-
-    /**
-     * The 'deploy' operation according to the 'content-package-maven-plugin' enables the deployment
-     * during a Maven build using the 'install' goal of the content package Maven plugin.
-     * <dl>
-     * <dt>targetURL</dt>
-     * <dd>http://${sling.host}:${sling.port}${sling.context}/bin/core/package.service.html</dd>
-     * </dl>
-     */
-    protected class CrxServiceOperation extends DeployOperation {
-
-        @Override
-        protected void lsDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                              JcrPackageManager manager, List<JcrPackage> jcrPackages) throws RepositoryException, IOException {
-            response.setStatus(HttpServletResponse.SC_OK);
-            try (Writer writer = response.getWriter()) {
-                writer.append("<repo>");
-                writer.append("<request>");
-                writer.append("<param name=\"cmd\" value=\"ls\"/>");
-                writer.append("</request>");
-                writer.append("<response>");
-                writer.append("<data>");
-                writer.append("<packages>");
-                for (JcrPackage jcrPackage: jcrPackages) {
-                    writer.append(PackageUtil.packageToXMLResponse(jcrPackage));
-                }
-                writer.append("</packages>");
-                writer.append("</data>");
-                writer.append("<status code=\"200\">ok</status>");
-                writer.append("</response>");
-                writer.append("</repo>");
-            }
         }
 
         @Override
