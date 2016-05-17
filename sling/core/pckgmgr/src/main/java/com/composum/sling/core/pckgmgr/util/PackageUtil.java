@@ -94,6 +94,17 @@ public class PackageUtil {
         return resource;
     }
 
+    public static JcrPackage getJcrPackage(JcrPackageManager manager, String group, String name) throws RepositoryException {
+        final List<JcrPackage> jcrPackages = manager.listPackages(group, false);
+        for (JcrPackage jcrPackage: jcrPackages) {
+            final String packageName = jcrPackage.getDefinition().get(JcrPackageDefinition.PN_NAME);
+            if (packageName.equals(name)) {
+                return jcrPackage;
+            }
+        }
+        return null;
+    }
+
     public static JcrPackage getJcrPackage(JcrPackageManager manager, Resource resource) throws RepositoryException {
         JcrPackage jcrPackage = null;
         Node node;

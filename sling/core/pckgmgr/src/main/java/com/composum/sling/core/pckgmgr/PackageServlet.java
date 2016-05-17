@@ -54,7 +54,6 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -476,8 +475,7 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class CrxServiceOperation extends DeployOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws RepositoryException, IOException {
 
             RequestParameterMap parameters = request.getRequestParameterMap();
@@ -485,53 +483,13 @@ public class PackageServlet extends AbstractServiceServlet {
             //todo: [ls, rm, build, uninst, replicate]
             if (cmd != null && !StringUtils.isBlank(cmd.getString())) {
                 if (cmd.getString().equals("ls")) {
-                    doLS(request, response);
+                    doLS(request, response, parameters);
                 } else if (cmd.getString().equals("rm")) {
-                    final RequestParameter nameParameter = parameters.getValue("name");
-                    String name = "";
-                    if (nameParameter!=null) {
-                        name = nameParameter.getString("UTF-8");
-                    }
-                    final RequestParameter groupParameter = parameters.getValue("group");
-                    String group = null;
-                    if (groupParameter!=null) {
-                        group = groupParameter.getString("UTF-8");
-                    }
-                    JcrPackageManager manager = PackageUtil.createPackageManager(request);
-                    final List<JcrPackage> jcrPackages = manager.listPackages();
-                    boolean found = false;
-                    for (JcrPackage jcrPackage:jcrPackages) {
-                        String packageName = jcrPackage.getDefinition().get(JcrPackageDefinition.PN_NAME);
-                        String packageGroup = jcrPackage.getDefinition().get(JcrPackageDefinition.PN_GROUP);
-                        if (!StringUtils.isBlank(packageName) && packageName.equals(name)) {
-                            if (!StringUtils.isBlank(group) && group.equals(packageGroup)) {
-                                manager.remove(jcrPackage);
-                                found = true;
-                                break;
-                            } else if (StringUtils.isBlank(group) && StringUtils.isBlank(packageGroup)){
-                                manager.remove(jcrPackage);
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    try (Writer writer = response.getWriter()) {
-                        writer.append("<repo>");
-                        writer.append("<request>");
-                        writer.append("<param name=\"cmd\" value=\"rm\"/>");
-                        writer.append("<param name=\"name\" value=\"").append(name).append("\"/>");
-                        writer.append("<param name=\"group\" value=\"").append(group).append("\"/>");
-                        writer.append("</request>");
-                        writer.append("<response>");
-                        if (found) {
-                            writer.append("<status code=\"200\">ok</status>");
-                        } else {
-                            writer.append("<status code=\"500\">Package '").append(group).append(":").append(name).append("' does not exist.</status>");
-                        }
-                        writer.append("</response>");
-                        writer.append("</repo>");
-                    }
+                    doRM(request, response, parameters);
+                } else if (cmd.getString().equals("build")) {
+                    doBUILD(request, response, parameters);
+                } else if (cmd.getString().equals("uninst")) {
+
                 } else {
                     LOG.warn("unsupported command '{}' received. will ignore it.", cmd);
                 }
@@ -548,21 +506,117 @@ public class PackageServlet extends AbstractServiceServlet {
                     installPackage(request, response, manager, jcrPackage);
 
                 } else {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            "no package file accessible");
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "no package file accessible");
                 }
             }
         }
 
-        private void doLS(SlingHttpServletRequest request, SlingHttpServletResponse response) throws RepositoryException, IOException {
+        private void doBUILD(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException {
+            ResourceResolver resolver = request.getResourceResolver();
+            Session session = resolver.adaptTo(Session.class);
+            final RequestParameter nameParameter = parameters.getValue("name");
+            String name = "";
+            if (nameParameter!=null) {
+                name = nameParameter.getString("UTF-8");
+            }
+            final RequestParameter groupParameter = parameters.getValue("group");
+            String group = null;
+            if (groupParameter!=null) {
+                group = groupParameter.getString("UTF-8");
+            }
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            final JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, group, name);
+            if (jcrPackage != null) {
+                String path = jcrPackage.getNode().getPath();
+                String root = manager.getPackageRoot().getPath();
+                if (path.startsWith(root)) {
+                    path = path.substring(root.length());
+                }
+
+                Map<String, Object> jobProperties = new HashMap<>();
+                jobProperties.put("reference", path);
+                jobProperties.put("operation", "assemble");
+                jobProperties.put("userid", session.getUserID());
+                JobUtil.buildOutfileName(jobProperties);
+                Job job = jobManager.addJob(PackageJobExecutor.TOPIC, jobProperties);
+                final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), INSTALL_START_TIMEOUT);
+                if (isDone.call()) {
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    try (Writer writer = response.getWriter()) {
+                        writer.append("<repo>");
+                        writer.append(createRequestElement("build", name, group));
+                        writer.append(createResponseElement("200", "ok"));
+                        writer.append("</repo>");
+                    }
+                } else {
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    try (Writer writer = response.getWriter()) {
+                        writer.append("<repo>");
+                        writer.append(createRequestElement("build", name, group));
+                        writer.append(createResponseElement("500", "nok"));
+                        writer.append("</repo>");
+                    }
+                }
+            } else {
+                response.setStatus(HttpServletResponse.SC_OK);
+                try (Writer writer = response.getWriter()) {
+                    writer.append("<repo>");
+                    writer.append(createRequestElement("build", name, group));
+                    writer.append(createResponseElement("500", "Package '" + group + ":" + name + "' does not exist"));
+                    writer.append("</repo>");
+                }
+            }
+        }
+
+        private void doRM(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException {
+            final RequestParameter nameParameter = parameters.getValue("name");
+            String name = "";
+            if (nameParameter!=null) {
+                name = nameParameter.getString("UTF-8");
+            }
+            final RequestParameter groupParameter = parameters.getValue("group");
+            String group = null;
+            if (groupParameter!=null) {
+                group = groupParameter.getString("UTF-8");
+            }
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            final List<JcrPackage> jcrPackages = manager.listPackages();
+            boolean found = false;
+            for (JcrPackage jcrPackage:jcrPackages) {
+                String packageName = jcrPackage.getDefinition().get(JcrPackageDefinition.PN_NAME);
+                String packageGroup = jcrPackage.getDefinition().get(JcrPackageDefinition.PN_GROUP);
+                if (!StringUtils.isBlank(packageName) && packageName.equals(name)) {
+                    if (!StringUtils.isBlank(group) && group.equals(packageGroup)) {
+                        manager.remove(jcrPackage);
+                        found = true;
+                        break;
+                    } else if (StringUtils.isBlank(group) && StringUtils.isBlank(packageGroup)){
+                        manager.remove(jcrPackage);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            response.setStatus(HttpServletResponse.SC_OK);
+            try (Writer writer = response.getWriter()) {
+                writer.append("<repo>");
+                writer.append(createRequestElement("rm", name, group));
+                if (found) {
+                    writer.append(createResponseElement("200", "ok"));
+                } else {
+                    writer.append(createResponseElement("500", "Package '" + group + ":" + name + "' does not exist."));
+                }
+                writer.append("</repo>");
+            }
+        }
+
+        private void doLS(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException {
             JcrPackageManager manager = PackageUtil.createPackageManager(request);
             final List<JcrPackage> jcrPackages = manager.listPackages();
             response.setStatus(HttpServletResponse.SC_OK);
             try (Writer writer = response.getWriter()) {
                 writer.append("<repo>");
-                writer.append("<request>");
-                writer.append("<param name=\"cmd\" value=\"ls\"/>");
-                writer.append("</request>");
+                writer.append(createRequestElement("ls", "", ""));
                 writer.append("<response>");
                 writer.append("<data>");
                 writer.append("<packages>");
@@ -571,7 +625,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 }
                 writer.append("</packages>");
                 writer.append("</data>");
-                writer.append("<status code=\"200\">ok</status>");
+                writer.append(createStatusElement("200", "ok"));
                 writer.append("</response>");
                 writer.append("</repo>");
             }
@@ -621,16 +675,38 @@ public class PackageServlet extends AbstractServiceServlet {
                 //writer.append("<log><![CDATA[...]]></log>");
                 writer.append("</data>");
                 if (jobMonitor.succeeded()) {
-                    writer.append("<status code=\"200\">ok</status>");
+                    writer.append(createStatusElement("200", "ok"));
                 } else {
                     final String msg = jobMonitor.getJob().getResultMessage();
-                    writer.append("<status code=\"500\">").append(msg).append("</status>");
+                    writer.append(createStatusElement("500", msg));
                 }
                 writer.append("</response>");
 //                writer.append("</crx>");
                 writer.append("</repo>");
             }
         }
+
+        private String createRequestElement(String cmd, String name, String group) {
+            return "<request>" +
+                    createParameterElement("cmd", cmd) +
+                    (StringUtils.isBlank(name) ? "" : createParameterElement("name", name)) +
+                    (StringUtils.isBlank(group) ? "" : createParameterElement("group", group)) +
+                    "</request>";
+        }
+
+        private String createParameterElement(String name, String value) {
+            return "<param name=\"" + name + "\" value=\"" + value + "\"/>";
+        }
+
+        private String createResponseElement(String code, String message) {
+            return "<response>" + createStatusElement(code, message) + "</response>";
+        }
+
+        private String createStatusElement(String code, String message) {
+            return "<status code=\"" + code + "\">" + message + "</status>";
+        }
+
+
     }
 
     protected class CoverageOperation implements ServletOperation {
