@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * the wrapper to enhance the Sling Resource class
@@ -61,6 +62,7 @@ public class ResourceHandle extends ResourceWrapper {
 
     private transient ResourceHandle contentResource;
     private transient InheritedValues inheritedValues;
+    protected boolean useNodeInheritance = false;
 
     /**
      * creates a new wrapper instance.
@@ -178,9 +180,14 @@ public class ResourceHandle extends ResourceWrapper {
 
     // inherited property values
 
+    public void setUseNodeInheritance(boolean nodeInheritance) {
+        useNodeInheritance = nodeInheritance;
+        inheritedValues = null;
+    }
+
     protected InheritedValues getInheritedValues() {
         if (inheritedValues == null) {
-            inheritedValues = new InheritedValues(this);
+            inheritedValues = new InheritedValues(this, useNodeInheritance);
         }
         return inheritedValues;
     }
@@ -339,6 +346,16 @@ public class ResourceHandle extends ResourceWrapper {
         }
     }
 
+    public ResourceHandle getParent(int distance) {
+        ResourceHandle parent = this;
+        while (distance > 0 && parent != null && parent.isValid()) {
+            parent = parent.getParent();
+            distance--;
+        }
+        return parent;
+    }
+
+
     /**
      * @return
      */
@@ -346,6 +363,28 @@ public class ResourceHandle extends ResourceWrapper {
         final String parentPath = ResourceUtil.getParent(getPath());
         return parentPath;
     }
+
+
+    /**
+     * Retrieves a child of this resource or a parent specified by its base path, name pattern and type;
+     * for example findUpwards("jcr:content", Pattern.compile("^some.*$"), "sling:Folder").
+     */
+    public ResourceHandle findUpwards(String basePath, Pattern namePattern, String childType) {
+        ResourceHandle current = this;
+        while (current != null && current.isValid()) {
+            ResourceHandle base = ResourceHandle.use(current.getChild(basePath));
+            if (base.isValid()) {
+                for (ResourceHandle child : base.getChildrenByType(childType)) {
+                    if (namePattern.matcher(child.getName()).matches()) {
+                        return child;
+                    }
+                }
+            }
+            current = current.getParent();
+        }
+        return null;
+    }
+
 
     @Override
     public String toString() {
@@ -374,12 +413,29 @@ public class ResourceHandle extends ResourceWrapper {
     /**
      * retrieves all children of a type
      */
+    public List<ResourceHandle> getChildrenByType(final String type) {
+        final ArrayList<ResourceHandle> children = new ArrayList<>();
+        if (this.isValid()) {
+            for (final Resource child : this.resource.getChildren()) {
+                ResourceHandle handle = ResourceHandle.use(child);
+                if (handle.isOfType(type)) {
+                    children.add(handle);
+                }
+            }
+        }
+        return children;
+    }
+
+    /**
+     * retrieves all children of a sling:resourceType
+     */
     public List<ResourceHandle> getChildrenByResourceType(final String resourceType) {
         final ArrayList<ResourceHandle> children = new ArrayList<>();
         if (this.isValid()) {
             for (final Resource child : this.resource.getChildren()) {
-                if (child.isResourceType(resourceType)) {
-                    children.add(child.adaptTo(ResourceHandle.class));
+                ResourceHandle handle = ResourceHandle.use(child);
+                if (handle.isResourceType(resourceType)) {
+                    children.add(handle);
                 }
             }
         }
