@@ -107,6 +107,22 @@
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.jcr.resource</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.resourceresolver</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.adapter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>adapter-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.classloader</artifactId>
         </dependency>
         <dependency>
