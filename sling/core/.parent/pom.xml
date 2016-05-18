@@ -162,7 +162,7 @@
                         <path>${sling.context}/system/console</path>
                         <username>${sling.user}</username>
                         <password>${sling.password}</password>
-                        <retryDelay>1000</retryDelay>
+                        <retryDelay>2000</retryDelay>
                         <retryLimit>30</retryLimit>
                     </configuration>
                 </plugin>
