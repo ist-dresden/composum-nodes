@@ -71,7 +71,7 @@ public class PackageServlet extends AbstractServiceServlet {
     public static final String PARAM_GROUP = "group";
     public static final String PARAM_FORCE = "force";
 
-    public static final long INSTALL_START_TIMEOUT = 30L * 1000L;
+    public static final long JOB_IDLE_TIMEOUT = 30L * 1000L;
 
     public static final String ZIP_CONTENT_TYPE = "application/zip";
 
@@ -139,10 +139,10 @@ public class PackageServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.install, new InstallOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
-                Operation.deploy, new CrxServiceOperation());
+                Operation.deploy, new ServiceOperation());
 
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
-                Operation.service, new CrxServiceOperation());
+                Operation.service, new ServiceOperation());
 
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
                 Operation.filterChange, new ChangeFilterOperation());
@@ -429,7 +429,7 @@ public class PackageServlet extends AbstractServiceServlet {
             JobUtil.buildOutfileName(jobProperties);
 
             Job job = jobManager.addJob(PackageJobExecutor.TOPIC, jobProperties);
-            final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), INSTALL_START_TIMEOUT);
+            final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), JOB_IDLE_TIMEOUT);
             if (isDone.call()) {
 
                 installationDone(request, response, manager, jcrPackage, isDone);
@@ -450,16 +450,15 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
     /**
-     * The 'deploy' operation according to the 'content-package-maven-plugin' enables the deployment
-     * during a Maven build using the 'install' goal of the content package Maven plugin.
+     * The 'service' implementation based on the behaviour of the 'service' servlet provided by the CRX Package Manager.
      * <dl>
      * <dt>targetURL</dt>
      * <dd>http://${sling.host}:${sling.port}${sling.context}/bin/core/package.service.html</dd>
      * </dl>
      */
-    protected class CrxServiceOperation extends InstallOperation {
+    protected class ServiceOperation extends InstallOperation {
 
-        abstract class CrxCommand {
+        abstract class ServiceCommand {
 
             abstract void doCommand(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException;
 
@@ -483,7 +482,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
         }
 
-        class LsCommand extends CrxCommand {
+        class LsCommand extends ServiceCommand {
 
             @Override
             void doCommand(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException {
@@ -508,7 +507,7 @@ public class PackageServlet extends AbstractServiceServlet {
             }
         }
 
-        class RmCommand extends CrxCommand {
+        class RmCommand extends ServiceCommand {
 
             @Override
             void doCommand(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException {
@@ -547,7 +546,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
         }
 
-        abstract class BuildUninstCommand extends CrxCommand {
+        abstract class BuildUninstCommand extends ServiceCommand {
             abstract String getCommand();
             abstract String getOperation();
 
@@ -572,7 +571,7 @@ public class PackageServlet extends AbstractServiceServlet {
                     jobProperties.put("userid", session.getUserID());
                     JobUtil.buildOutfileName(jobProperties);
                     Job job = jobManager.addJob(PackageJobExecutor.TOPIC, jobProperties);
-                    final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), INSTALL_START_TIMEOUT);
+                    final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), JOB_IDLE_TIMEOUT);
                     if (isDone.call()) {
                         response.setStatus(HttpServletResponse.SC_OK);
                         try (Writer writer = response.getWriter()) {
