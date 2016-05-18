@@ -26,9 +26,12 @@
                             var pathMatch = pckgmgr.pathPattern.exec(path);
                             pckgmgr.current = {
                                 path: path,
-                                group: pathMatch ? pathMatch[2] : undefined,
-                                name: pathMatch ? pathMatch[3] : undefined,
-                                version: pathMatch ? pathMatch[4] : undefined,
+                                group: result.responseJSON.definition ? result.responseJSON.definition.group : undefined,
+                                // group: pathMatch ? pathMatch[2] : undefined,
+                                name: result.responseJSON.definition ? result.responseJSON.definition.name : undefined,
+                                // name: pathMatch ? pathMatch[3] : undefined,
+                                version: result.responseJSON.definition ? result.responseJSON.definition.version : undefined,
+                                // version: pathMatch ? pathMatch[4] : undefined,
                                 extension: pathMatch ? pathMatch[5] : undefined,
                                 node: result.responseJSON,
                                 viewUrl: core.getContextUrl('/bin/packages.view.html'

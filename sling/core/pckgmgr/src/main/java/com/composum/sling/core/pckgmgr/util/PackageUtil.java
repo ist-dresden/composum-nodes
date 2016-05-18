@@ -497,13 +497,16 @@ public class PackageUtil {
 
         @Override
         public boolean equals(Object other) {
-            return other instanceof TreeItem && getName().equals(((TreeItem) other).getName());
+            return other instanceof PackageItem &&
+                    getName().equals(((PackageItem) other).getName()) &&
+                    definition.get(JcrPackageDefinition.PN_VERSION).equals(((PackageItem) other).definition.get(JcrPackageDefinition.PN_VERSION));
         }
 
         @Override
         public int hashCode() {
-            return getName().hashCode();
+            return 31 * getName().hashCode() + definition.get(JcrPackageDefinition.PN_VERSION).hashCode();
         }
+
     }
 
     /** the tree node implementation for the requested path (folder or package) */
