@@ -139,7 +139,7 @@ public class PackageServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.install, new InstallOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
-                Operation.deploy, new DeployOperation());
+                Operation.deploy, new CrxServiceOperation());
 
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
                 Operation.service, new CrxServiceOperation());
@@ -439,7 +439,6 @@ public class PackageServlet extends AbstractServiceServlet {
             }
         }
 
-        // todo: we need separate classes for all supported commands/operations
         protected void installationDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                            JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
                 throws RepositoryException, IOException {
@@ -447,11 +446,6 @@ public class PackageServlet extends AbstractServiceServlet {
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             jsonAnswer(writer, "installation", "done", manager, jcrPackage);
         }
-
-    }
-
-    // todo: this should be renamed. it is neither a Deploy- nor Install-Operation but a more general one
-    protected class DeployOperation extends InstallOperation {
 
     }
 
@@ -463,7 +457,7 @@ public class PackageServlet extends AbstractServiceServlet {
      * <dd>http://${sling.host}:${sling.port}${sling.context}/bin/core/package.service.html</dd>
      * </dl>
      */
-    protected class CrxServiceOperation extends DeployOperation {
+    protected class CrxServiceOperation extends InstallOperation {
 
         abstract class CrxCommand {
 
