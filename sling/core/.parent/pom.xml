@@ -156,11 +156,14 @@
                     <version>1.3.1</version>
                     <configuration>
                         <skip>true</skip>
+                        <quiet>true</quiet>
                         <host>${sling.host}</host>
                         <port>${sling.port}</port>
                         <path>${sling.context}/system/console</path>
                         <username>${sling.user}</username>
                         <password>${sling.password}</password>
+                        <retryDelay>1000</retryDelay>
+                        <retryLimit>30</retryLimit>
                     </configuration>
                 </plugin>
 
@@ -216,6 +219,7 @@
                         <executions>
                             <execution>
                                 <id>install-bundle</id>
+                                <phase>install</phase>
                                 <goals>
                                     <goal>install</goal>
                                 </goals>
@@ -228,14 +232,11 @@
                         <artifactId>osgi-bundle-status-maven-plugin</artifactId>
                         <configuration>
                             <skip>false</skip>
-                            <retryDelay>2000</retryDelay>
-                            <retryLimit>10</retryLimit>
-                            <quiet>true</quiet>
-                            <username>${sling.user}</username>
-                            <password>${sling.password}</password>
                         </configuration>
                         <executions>
                             <execution>
+                                <id>check-bundle</id>
+                                <phase>install</phase>
                                 <goals>
                                     <goal>status</goal>
                                 </goals>
