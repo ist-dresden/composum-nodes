@@ -35,6 +35,7 @@
 
     <properties>
         <bundle.category>Composum Core</bundle.category>
+        <sling.scheme>http</sling.scheme>
         <sling.host>localhost</sling.host>
         <sling.port>9090</sling.port>
         <sling.context></sling.context>
@@ -174,7 +175,7 @@
                     <extensions>true</extensions>
                     <configuration>
                         <failOnError>true</failOnError>
-                        <targetURL>http://${sling.host}:${sling.port}${sling.context}${package.install}</targetURL>
+                        <targetURL>${sling.scheme}://${sling.host}:${sling.port}${sling.context}${package.install}</targetURL>
                         <userId>${sling.user}</userId>
                         <password>${sling.password}</password>
                         <useProxy>false</useProxy>
@@ -212,7 +213,7 @@
                         <groupId>org.apache.sling</groupId>
                         <artifactId>maven-sling-plugin</artifactId>
                         <configuration>
-                            <slingUrl>http://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
+                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
                             <user>${sling.user}</user>
                             <password>${sling.password}</password>
                         </configuration>
