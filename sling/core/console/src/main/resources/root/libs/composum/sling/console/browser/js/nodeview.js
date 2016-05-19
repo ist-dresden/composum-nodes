@@ -241,6 +241,9 @@
 
         browser.ScriptTab = browser.EditorTab.extend({
 
+            jobTopic: 'com/composum/sling/core/script/GroovyJobExecutor',
+            purgeAuditKeep: 6,
+
             initialize: function (options) {
                 this.profile = core.console.getProfile().get('browser', 'scriptView', {
                     vertical: undefined,
@@ -494,7 +497,9 @@
             },
 
             loadLog: function (event) {
-                event.preventDefault();
+                if (event) {
+                    event.preventDefault();
+                }
                 var $link = $(event.currentTarget);
                 this.$logOutput.text('');
                 this.logOffset = 0;
@@ -507,10 +512,20 @@
                 if (event) {
                     event.preventDefault();
                 }
+                var dialog = core.console.getPurgeAuditDialog();
+                dialog.show(_.bind(function () {
+                    dialog.initDialog(this.jobTopic,
+                        browser.getCurrentPath(),
+                        this.purgeAuditKeep);
+                }, this), _.bind(function () {
+                    this.loadHistory();
+                }, this));
             },
 
             selectAuditNode: function (event) {
+                if (event) {
                     event.preventDefault();
+                }
                 var $link = $(event.currentTarget);
                 var path = '/var/audit/jobs/com.composum.sling.core.script.GroovyJobExecutor' + $link.data('path');
                 $(document).trigger('path:select', [path]);
