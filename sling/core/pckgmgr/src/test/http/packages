@@ -1,0 +1,37 @@
+#!/bin/bash
+
+CREDENTIALS="admin:admin"
+SERVICE_URI="/bin/core/package.service.html"
+
+if [ -z "$1" ]
+   then
+   echo "usage: packages (ls|inst|uninst|build|rm) <group:name-pattern> [<port> [<host> [<context>]]]"
+   exit 1
+   fi
+
+CMD="$1"
+if [ -n "$2" ]; then PATTERN="$2"; else PATTERN=".*"; fi
+if [ -n "$3" ]; then PORT="$3"; else PORT="4502"; fi
+if [ -n "$4" ]; then HOST="$4"; else HOST="localhost"; fi
+if [ -n "$5" ]; then CONTEXT="$5"; else CONTEXT=""; fi
+
+lspckg() {
+    curl -s -u "$CREDENTIALS" -X POST -Fcmd=ls "http://${HOST}:${PORT}${CONTEXT}${SERVICE_URI}" \
+         | grep -E '<(group|name)>' \
+         | sed -e 'N;s/<\/group>\n/<\/group>/' \
+               -e 's/^.*<group>\(.*\)<\/group>.*<name>\(.*\)<\/name>.*$/\1:\2/'
+}
+
+for PCKG in `lspckg`
+    do
+    if [[ "$PCKG" =~ "$PATTERN" ]]
+       then
+       GROUP=`echo "$PCKG" | sed -e 's/^\(.*\)\:.*$/\1/'`
+       NAME=`echo "$PCKG" | sed -e 's/^.*\:\(.*\)$/\1/'`
+       echo "$GROUP:$NAME"
+       if [ -n "$CMD" -a "$CMD" != "ls" ]
+          then
+          curl -s -u "$CREDENTIALS" -X POST -Fcmd="$CMD" -Fgroup="$GROUP" -Fname="$NAME" "http://${HOST}:${PORT}${CONTEXT}${SERVICE_URI}"
+          fi
+       fi
+    done
