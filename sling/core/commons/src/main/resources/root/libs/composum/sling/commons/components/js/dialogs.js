@@ -111,6 +111,29 @@
                 );
             },
 
+            submitFormPut: function (onSuccess, onError, onComplete) {
+                var form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                core.submitFormPut(this.el,
+                    form ? form.getValues.apply(form) : undefined,
+                    _.bind(function (result) {
+                        if (_.isFunction(onSuccess)) {
+                            onSuccess(result);
+                        }
+                        this.hide();
+                    }, this),
+                    _.bind(function (result) {
+                        if (_.isFunction(onError)) {
+                            onError(result);
+                        } else {
+                            if (onError === undefined || onError) {
+                                this.alert('danger', "Error on submit", result);
+                            }
+                        }
+                    }, this),
+                    onComplete
+                );
+            },
+
             submitPUT: function (label, url, data, onSuccess) {
                 core.ajaxPut(url, JSON.stringify(data), {
                     dataType: 'json'

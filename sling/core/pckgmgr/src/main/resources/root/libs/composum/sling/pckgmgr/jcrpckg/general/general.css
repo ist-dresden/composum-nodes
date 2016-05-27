@@ -89,6 +89,7 @@
 .detail-panel.jcrpckg .panel-heading.header .description {
     flex-basis: 200px;
     flex-grow: 1;
+    margin-top: 2px;
     margin-bottom: 10px;
 }
 

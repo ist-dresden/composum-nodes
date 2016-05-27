@@ -22,6 +22,7 @@
                 this.$group = this.$('input[name="group"]');
                 this.$name = this.$('input[name="name"]');
                 this.$version = this.$('input[name="version"]');
+                this.$description = this.$('textarea[name="jcr:description"]');
                 this.$('button.save').click(_.bind(this.updatePackage, this));
             },
 
@@ -34,14 +35,15 @@
                     this.$group.val(data.group);
                     this.$name.val(data.name);
                     this.$version.val(data.version);
+                    this.$description.val(data.description);
                 } else {
                     this.$group.val(undefined);
                     this.$name.val(undefined);
                     this.$version.val(undefined);
+                    this.$description.val(undefined);
                 }
                 this.$path.val(path);
-                this.form.$el.attr('action', core.getContextUrl(
-                    '/bin/core/package.update.json' + core.encodePath(path)));
+                this.form.$el.attr('action', core.getContextUrl('/bin/core/package.update.json' + path));
             },
 
             updatePackage: function (event) {
@@ -51,6 +53,7 @@
                     this.submitForm(function (result) {
                         var newPath = result.path;
                         $(document).trigger('path:moved', [oldPath, newPath]);
+                        $(document).trigger('path:changed', [newPath]);
                     });
                 } else {
                     this.alert('danger', 'a name must be specified');
@@ -66,7 +69,7 @@
 
             initialize: function (options) {
                 core.console.JobControlTab.prototype.initialize.apply(this, [options]);
-                this.$summary = this.$('.package-detail .header-view .status');
+                this.$header = this.$('.package-detail .header-view');
                 this.$default = this.$('.aspect-view .default-aspect');
                 this.$feedback = this.$('.aspect-view .feedback-aspect');
                 this.$title = this.$feedback.find('.title');
@@ -84,6 +87,7 @@
                 this.$auditList = this.$auditLog.find('.audit-list');
                 this.$auditLog.find('.toolbar .refresh').click(_.bind(this.loadAuditLog, this));
                 this.$auditLog.find('.toolbar .purge').click(_.bind(this.purgeAuditLog, this));
+                $(document).on('path:changed', _.bind(this.refresh, this));
             },
 
             getCurrentPath: function () {
@@ -100,7 +104,8 @@
                         path: pckgmgr.current.path,
                         group: pckgmgr.current.group,
                         name: pckgmgr.current.name,
-                        version: pckgmgr.current.version
+                        version: pckgmgr.current.version,
+                        description: this.$('.package-detail .header-view .description').text()
                     });
                 }, this));
             },
@@ -143,12 +148,12 @@
                 }
                 this.reload();
             },
-
+                
             reload: function () {
                 core.console.JobControlTab.prototype.reload.apply(this);
-                core.ajaxGet('/bin/packages.summary.html' + pckgmgr.getCurrentPath(), {},
+                core.ajaxGet(core.getContextUrl('/bin/packages.header.html' + pckgmgr.getCurrentPath()), {},
                     _.bind(function (data) {
-                        this.$summary.html(data);
+                        this.$header.html(data);
                     }, this));
                 this.loadAuditLog();
             },

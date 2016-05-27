@@ -151,6 +151,54 @@
             });
         },
 
+        submitFormPut: function (formElement, data, onSuccess, onError, onComplete) {
+            var $form = $(formElement);
+            if (!$form.is('form')) {
+                $form = $form.find('form');
+            }
+            var action = $form.attr("action");
+            if (!data) {
+                data = {};
+                var formData = new FormData($form[0]);
+                var keys = formData.keys();
+                var key;
+                while (!(key = keys.next()).done) {
+                    var value = formData.getAll(key.value);
+                    data[key.value] = value.length == 1 ? value[0] : value;
+                }
+            }
+            $.ajax({
+                type: 'PUT',
+                url: core.getContextUrl(action),
+                data: JSON.stringify(data),
+                dataType: 'json',
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (result) {
+                    if (_.isFunction(onSuccess)) {
+                        onSuccess(result);
+                    }
+                },
+                error: function (result) {
+                    if (result.status < 200 || result.status > 299) {
+                        if (_.isFunction(onError)) {
+                            onError(result);
+                        }
+                    } else {
+                        if (_.isFunction(onSuccess)) {
+                            onSuccess(result);
+                        }
+                    }
+                },
+                complete: function (result) {
+                    if (_.isFunction(onComplete)) {
+                        onComplete(result);
+                    }
+                }
+            });
+        },
+
         resultMessage: function (result, message) {
             var hintPattern = new RegExp('<title>(.+)</title>', 'im');
             var hint = hintPattern.exec(result.responseText);
@@ -233,6 +281,23 @@
             return undefined;
         },
 
+        getWidgetName: function (widget) {
+            var name;
+            if (_.isFunction(widget.getName)) {
+                name = widget.getName.apply(widget)
+            }
+            if (!name) {
+                name = widget.$el.attr('name');
+            }
+            if (!name) {
+                name = widget.$el.data('name');
+            }
+            if (!name) {
+                name = widget.$el.find('[name]').attr('name');
+            }
+            return name;
+        },
+
         /**
          * the dialog to select a repository path in a tree view
          */
@@ -281,6 +346,18 @@
             path = path.replace(':', '%3A');
             path = path.replace('.', '%2E');
             return path;
+        },
+
+        // general helpers
+
+        isEmptyObject: function (object) {
+            var values = _.values(object);
+            for (var i = 0; i < values.length; i++) {
+                if (values[i]) {
+                    return false;
+                }
+            }
+            return _.isObject(object) || !object;
         }
     };
 

@@ -69,6 +69,7 @@
                 this.$title = this.$('.modal-title');
                 this.$index = this.$('input[name="index"]');
                 this.$root = this.$('input[name="root"]');
+                this.$importMode = this.$('select[name="importMode"]');
                 this.filters = core.getWidget(this.$el, '.widget.filter-rules-widget', pckgmgr.FilterRulesWidget);
                 this.$delete = this.$('button.delete');
                 this.$create = this.$('button.create');
@@ -81,16 +82,18 @@
             setFilter: function (index, row) {
                 this.$index.val(index >= 0 ? index : -1);
                 if (row) {
-                    this.form.$el.attr('action', '/bin/core/package.filterChange.html' + pckgmgr.getCurrentPath());
+                    this.form.$el.attr('action', core.getContextUrl('/bin/core/package.filterChange.html' + pckgmgr.getCurrentPath()));
                     this.form.$el.removeClass('create').addClass('change');
                     this.$title.text('Change Package Filter');
                     this.$root.val(row.root);
+                    this.$importMode.val(row.importMode);
                     this.filters.setRules(row.rules);
                 } else {
-                    this.form.$el.attr('action', '/bin/core/package.filterAdd.html' + pckgmgr.getCurrentPath());
+                    this.form.$el.attr('action', core.getContextUrl('/bin/core/package.filterAdd.html' + pckgmgr.getCurrentPath()));
                     this.form.$el.removeClass('change').addClass('create');
                     this.$title.text('Create Package Filter');
                     this.$root.val('');
+                    this.$importMode.val(undefined);
                     this.filters.setRules();
                 }
             },
