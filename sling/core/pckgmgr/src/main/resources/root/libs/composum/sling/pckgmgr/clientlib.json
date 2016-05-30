@@ -14,7 +14,8 @@
       "embed": [
         "composum/sling/pckgmgr/jcrpckg/general/general.css",
         "composum/sling/pckgmgr/jcrpckg/filter/filter.css",
-        "composum/sling/pckgmgr/jcrpckg/coverage/coverage.css"
+        "composum/sling/pckgmgr/jcrpckg/coverage/coverage.css",
+        "composum/sling/pckgmgr/jcrpckg/options/options.css"
       ]
     },
     "embed": [
@@ -41,7 +42,8 @@
       "embed": [
         "composum/sling/pckgmgr/jcrpckg/general/general.js",
         "composum/sling/pckgmgr/jcrpckg/filter/filter.js",
-        "composum/sling/pckgmgr/jcrpckg/coverage/coverage.js"
+        "composum/sling/pckgmgr/jcrpckg/coverage/coverage.js",
+        "composum/sling/pckgmgr/jcrpckg/options/options.js"
       ]
     },
     "pckgmgr": {

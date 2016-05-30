@@ -7,6 +7,7 @@ import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
+import org.apache.jackrabbit.vault.fs.io.AccessControlHandling;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
@@ -292,5 +293,43 @@ public class PackageBean extends AbstractSlingBean {
             auditLogUrl = LinkUtil.getUrl(getRequest(), AUDIT_LOG_BASE + getPath());
         }
         return auditLogUrl;
+    }
+
+    public String getAcHandling() {
+        AccessControlHandling acHandling = pckgDef.getAccessControlHandling();
+        return acHandling != null ? acHandling.name(): "";
+    }
+
+    public String getAcHandlingLabel() {
+        AccessControlHandling acHandling = pckgDef.getAccessControlHandling();
+        return acHandling != null ? acHandling.name() : "-- -- ";
+    }
+
+    public boolean getRequiresRestart() {
+        return pckgDef.getBoolean(PackageUtil.DEF_REQUIRES_RESTART);
+    }
+
+    public boolean getRequiresRoot() {
+        return pckgDef.getBoolean(PackageUtil.DEF_REQUIRES_ROOT);
+    }
+
+    public String getProviderName() {
+        return pckgDef.get(PackageUtil.DEF_PROVIDER_NAME);
+    }
+
+    public String getProviderUrl() {
+        return pckgDef.get(PackageUtil.DEF_PROVIDER_URL);
+    }
+
+    public String getProviderLink() {
+        return pckgDef.get(PackageUtil.DEF_PROVIDER_LINK);
+    }
+
+    public String[] getDependencies() {
+        return PackageUtil.getMultiProperty(pckgDef, PackageUtil.DEF_DEPENDENCIES);
+    }
+
+    public String[] getReplaces() {
+        return PackageUtil.getMultiProperty(pckgDef, PackageUtil.DEF_REPLACES);
     }
 }

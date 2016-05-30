@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.vault.fs.api.FilterSet;
+import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.api.PathFilter;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
@@ -50,9 +51,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -130,6 +133,9 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.download, new DownloadOperation());
 
         // POST
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
+                Operation.service, new ServiceOperation());
+
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.create, new CreateOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
@@ -142,9 +148,6 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.deploy, new ServiceOperation());
 
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
-                Operation.service, new ServiceOperation());
-
-        operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
                 Operation.filterChange, new ChangeFilterOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
                 Operation.filterAdd, new AddFilterOperation());
@@ -154,6 +157,10 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.filterMoveUp, new MoveFilterOperation(true));
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
                 Operation.filterMoveDown, new MoveFilterOperation(false));
+
+        // PUT
+        operations.setOperation(ServletOperationSet.Method.PUT, Extension.json,
+                Operation.update, new JsonUpdateOperation());
 
         // DELETE
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json,
@@ -273,16 +280,35 @@ public class PackageServlet extends AbstractServiceServlet {
         }
     }
 
+    // updating package properties
+
     protected class UpdateOperation implements ServletOperation {
+
+        protected Map<String, Object> getParameters(SlingHttpServletRequest request) throws IOException {
+            Map<String, Object> result = new HashMap<>();
+            RequestParameterMap parameters = request.getRequestParameterMap();
+            for (Map.Entry<String, RequestParameter[]> parameter : parameters.entrySet()) {
+                String key = parameter.getKey();
+                Object value = null;
+                RequestParameter[] param = parameter.getValue();
+                if (param.length > 1) {
+                    String[] values = new String[param.length];
+                    for (int i = 0; i < param.length; i++) {
+                        values[i] = param[i].getString();
+                    }
+                    value = values;
+                } else {
+                    value = param.length < 1 ? Boolean.TRUE : param[0].getString();
+                }
+                result.put(key, value);
+            }
+            return result;
+        }
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
-
-            String group = request.getParameter(PARAM_GROUP);
-            String name = request.getParameter(PARAM_NAME);
-            String version = request.getParameter(PARAM_VERSION);
 
             try {
 
@@ -290,8 +316,32 @@ public class PackageServlet extends AbstractServiceServlet {
                 JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
                 if (jcrPackage != null) {
+                    JcrPackageDefinition pckgDef = jcrPackage.getDefinition();
 
-                    manager.rename(jcrPackage, group, name, version);
+                    String group = request.getParameter(PARAM_GROUP);
+                    String name = request.getParameter(PARAM_NAME);
+                    String version = request.getParameter(PARAM_VERSION);
+
+                    if (StringUtils.isNotBlank(name) &&
+                            (!PackageUtil.isGroup(pckgDef, group) ||
+                                    !PackageUtil.isName(pckgDef, name) ||
+                                    !PackageUtil.isVersion(pckgDef, version))) {
+                        manager.rename(jcrPackage, group, name, version);
+                    }
+
+                    Map<String, Object> parameters = getParameters(request);
+                    for (Map.Entry<String, Object> parameter : parameters.entrySet()) {
+                        String key = parameter.getKey();
+                        PackageUtil.DefinitionSetter setter = PackageUtil.DEFINITION_SETTERS.get(key);
+                        if (setter != null) {
+                            Object value = parameter.getValue();
+                            try {
+                                setter.set(pckgDef, key, value, true);
+                            } catch (ParseException ex) {
+                                LOG.error("can't parse '" + key + "'='" + value + "' (" + ex.toString() + ")");
+                            }
+                        }
+                    }
 
                     JsonWriter writer = ResponseUtil.getJsonWriter(response);
                     jsonAnswer(writer, "update", "successful", manager, jcrPackage);
@@ -304,6 +354,29 @@ public class PackageServlet extends AbstractServiceServlet {
                 LOG.error(pex.getMessage(), pex);
                 throw new RepositoryException(pex);
             }
+        }
+    }
+
+    protected class JsonUpdateOperation extends UpdateOperation {
+
+        @Override
+        protected Map<String, Object> getParameters(SlingHttpServletRequest request) throws IOException {
+            Map<String, Object> result = new HashMap<>();
+            JsonReader reader = new JsonReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
+            reader.setLenient(true);
+            reader.beginObject();
+            while (reader.peek() != JsonToken.END_OBJECT) {
+                String key = reader.nextName();
+                PackageUtil.DefinitionSetter setter = PackageUtil.DEFINITION_SETTERS.get(key);
+                if (setter != null) {
+                    result.put(key, setter.get(reader));
+                } else {
+                    reader.skipValue();
+                }
+            }
+            reader.endObject();
+            reader.close();
+            return result;
         }
     }
 
@@ -440,7 +513,7 @@ public class PackageServlet extends AbstractServiceServlet {
         }
 
         protected void installationDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                           JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
+                                        JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
                 throws RepositoryException, IOException {
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
@@ -465,7 +538,7 @@ public class PackageServlet extends AbstractServiceServlet {
             String getGroup(RequestParameterMap parameters) throws UnsupportedEncodingException {
                 final RequestParameter groupParameter = parameters.getValue("group");
                 String group = null;
-                if (groupParameter!=null) {
+                if (groupParameter != null) {
                     group = groupParameter.getString("UTF-8");
                 }
                 return group;
@@ -474,7 +547,7 @@ public class PackageServlet extends AbstractServiceServlet {
             String getName(RequestParameterMap parameters) throws UnsupportedEncodingException {
                 final RequestParameter nameParameter = parameters.getValue("name");
                 String name = "";
-                if (nameParameter!=null) {
+                if (nameParameter != null) {
                     name = nameParameter.getString("UTF-8");
                 }
                 return name;
@@ -495,7 +568,7 @@ public class PackageServlet extends AbstractServiceServlet {
                     writer.append("<response>");
                     writer.append("<data>");
                     writer.append("<packages>");
-                    for (JcrPackage jcrPackage: jcrPackages) {
+                    for (JcrPackage jcrPackage : jcrPackages) {
                         writer.append(PackageUtil.packageToXMLResponse(jcrPackage));
                     }
                     writer.append("</packages>");
@@ -516,7 +589,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 JcrPackageManager manager = PackageUtil.createPackageManager(request);
                 final List<JcrPackage> jcrPackages = manager.listPackages();
                 boolean found = false;
-                for (JcrPackage jcrPackage:jcrPackages) {
+                for (JcrPackage jcrPackage : jcrPackages) {
                     String packageName = jcrPackage.getDefinition().get(JcrPackageDefinition.PN_NAME);
                     String packageGroup = jcrPackage.getDefinition().get(JcrPackageDefinition.PN_GROUP);
                     if (!StringUtils.isBlank(packageName) && packageName.equals(name)) {
@@ -524,7 +597,7 @@ public class PackageServlet extends AbstractServiceServlet {
                             manager.remove(jcrPackage);
                             found = true;
                             break;
-                        } else if (StringUtils.isBlank(group) && StringUtils.isBlank(packageGroup)){
+                        } else if (StringUtils.isBlank(group) && StringUtils.isBlank(packageGroup)) {
                             manager.remove(jcrPackage);
                             found = true;
                             break;
@@ -548,6 +621,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
         abstract class BuildUninstCommand extends ServiceCommand {
             abstract String getCommand();
+
             abstract String getOperation();
 
             @Override
@@ -669,7 +743,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
         @Override
         protected void installationDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                           JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
+                                        JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
                 throws RepositoryException, IOException {
             response.setStatus(HttpServletResponse.SC_OK);
             try (Writer writer = response.getWriter()) {
@@ -753,6 +827,10 @@ public class PackageServlet extends AbstractServiceServlet {
             for (PathFilterSet filter : filters) {
                 writer.beginObject();
                 writer.name("root").value(filter.getRoot());
+                ImportMode importMode = filter.getImportMode();
+                if (importMode != null) {
+                    writer.name("importMode").value(importMode.name());
+                }
                 List<FilterSet.Entry<PathFilter>> filterRules = filter.getEntries();
                 if (!filterRules.isEmpty()) {
                     writer.name("rules").beginArray();
@@ -806,6 +884,11 @@ public class PackageServlet extends AbstractServiceServlet {
             if (StringUtils.isNotBlank(root)) {
 
                 filter = new PathFilterSet(root);
+                String importMode = request.getParameter("importMode");
+                if (StringUtils.isNotBlank(importMode)) {
+                    ImportMode mode = ImportMode.valueOf(importMode.toUpperCase());
+                    filter.setImportMode(mode);
+                }
                 String[] ruleTypes = request.getParameterValues("ruleType");
                 String[] ruleExpressions = request.getParameterValues("ruleExpression");
 

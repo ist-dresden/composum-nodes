@@ -3,4 +3,4 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
-<sling:include resourceType="composum/sling/pckgmgr/jcrpckg/general" replaceSelectors="summary"/>
+<sling:include resourceType="composum/sling/pckgmgr/jcrpckg/general" replaceSelectors="header"/>

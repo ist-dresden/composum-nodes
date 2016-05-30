@@ -1,0 +1,77 @@
+
+#pckg-options-change-dialog .form-group.left,
+#pckg-options-change-dialog .form-group.right {
+    width: 50%;
+}
+
+#pckg-options-change-dialog .form-group.right:after {
+    clear: both;
+}
+
+#pckg-options-change-dialog .form-group.left {
+    float: left;
+}
+
+#pckg-options-change-dialog .form-group.right {
+    float: right;
+}
+
+.detail-view.options .options-detail {
+    display: flex;
+}
+
+.detail-view.options .advanced-view {
+    min-width: 290px;
+    padding: 4px 15px 15px;
+}
+
+.detail-view.options .advanced-view .option-field {
+    margin-top: 1.5em;
+}
+
+.detail-view.options .advanced-view .option-icon,
+.detail-view.options .advanced-view .flag-icon {
+    width: 24px;
+}
+
+.detail-view.options .advanced-view .name-line {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.detail-view.options .advanced-view .select-value {
+    margin-left: 1em;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.detail-view.options .advanced-view .flag-icon {
+    font-size: 18px;
+}
+
+.detail-view.options .advanced-view .value-line {
+    margin-top: 2px;
+    border-top: 1px solid #ccc;
+    padding-top: 3px;
+    height: 24px;
+}
+
+.detail-view.options .relations-view {
+    flex-grow: 1;
+    min-width: 280px;
+    padding: 17px 0;
+}
+
+.detail-view.options .relations-view .relations-table .th-inner,
+.detail-view.options .relations-view .relations-table .relation {
+    font-size: 14px;
+}
+
+.detail-view.options .relations-view .relations-table .th-inner {
+    line-height: 20px;
+}
+
+.detail-view.options .relations-view .relations-table .relation {
+    border: none;
+    line-height: 15px;
+}

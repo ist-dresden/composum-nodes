@@ -175,6 +175,9 @@
             selector: '> .coverage',
             tabType: pckgmgr.CoverageTab
         }, {
+            selector: '> .options',
+            tabType: pckgmgr.OptionsTab
+        }, {
             selector: '> .group',
             tabType: pckgmgr.GroupTab
         }, {

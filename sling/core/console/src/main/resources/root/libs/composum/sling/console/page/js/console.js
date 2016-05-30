@@ -125,7 +125,12 @@
         /**
          * the base 'class' for all detail tabs
          */
-        console.DetailTab = Backbone.View.extend({});
+        console.DetailTab = Backbone.View.extend({
+            
+            reload: function() {
+                this.$el.closest('.detail-content');
+            }
+        });
 
         /**
          * necessary initialization:
