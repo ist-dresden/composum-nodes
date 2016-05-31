@@ -20,6 +20,7 @@
         "composum/sling/console/browser/js/nodes.js",
         "composum/sling/console/browser/js/query.js",
         "composum/sling/console/browser/js/browser.js",
+        "composum/sling/console/browser/js/navigation.js",
         "composum/sling/console/browser/components/favorites/favorites.js",
         "composum/sling/console/browser/js/properties.js",
         "composum/sling/console/browser/js/accessPolicyEntryDialog.js",

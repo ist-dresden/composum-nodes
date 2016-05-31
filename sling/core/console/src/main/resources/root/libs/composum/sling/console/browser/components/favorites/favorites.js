@@ -8,37 +8,16 @@
     browser.Favorites = Backbone.View.extend({
 
         initialize: function (options) {
-            this.verticalSplit = core.getWidget(this.$el,
-                '.split-pane.vertical-split', core.components.VerticalSplitPane);
             this.$favorites = this.$('.marked-nodes');
             this.$favoritesList = this.$favorites.find('> ol');
             this.$recently = this.$('.used-recently');
             this.$recentlyList = this.$recently.find('> ol');
             this.$template = this.$('> .template a');
-            this.verticalSplit.$el.on('resize', _.bind(this.onSplitResize, this));
             this.$('button.clear-favorites').on('click', _.bind(this.clearFavorites, this));
             this.$('button.clear-recently').on('click', _.bind(this.clearHistory, this));
-            this.$('button.toggle').on('click', _.bind(this.toggleView, this));
             $(document).on('favorite:toggle', _.bind(this.onToggleFavorite, this));
             $(document).on('path:selected', _.bind(this.onPathSelected, this));
             this.loadProfile();
-        },
-
-        toggleView: function (event) {
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            if (this.$el.hasClass('hidden')) {
-                this.$el.removeClass('hidden');
-                this.verticalSplit.setPosition(
-                    this.verticalSplit.checkPosition(
-                        core.console.getProfile().get('favorites', 'split', 200)));
-                core.console.getProfile().set('browser', 'navigation', 'favorites');
-            } else {
-                this.$el.addClass('hidden');
-                core.console.getProfile().set('browser', 'navigation', undefined);
-            }
         },
 
         onSelect: function (event) {
@@ -166,12 +145,6 @@
             this.saveProfile();
         },
 
-        onSplitResize: function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            core.console.getProfile().set('favorites', 'split', this.verticalSplit.getPosition());
-        },
-
         loadProfile: function () {
             this.loadProfileList('favorites', this.$favoritesList);
             this.loadProfileList('recently', this.$recentlyList);
@@ -203,6 +176,6 @@
         }
     });
 
-    browser.favorites = core.getView('#favorites-overlay', browser.Favorites);
+    browser.favorites = core.getView('#favorites-view', browser.Favorites);
 
 })(window.core.browser);

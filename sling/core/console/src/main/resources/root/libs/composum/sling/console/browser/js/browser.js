@@ -258,7 +258,7 @@
             },
 
             toggleFavorites: function (event) {
-                return browser.favorites.toggleView(event);
+                return browser.navigation.toggleFavorites(event);
             },
 
             setFilter: function (event) {
@@ -459,7 +459,7 @@
             }
         });
 
-        browser.treeActions = core.getView('.tree-actions', browser.TreeActions);
+        browser.treeActions = core.getView('#browser-tree-actions', browser.TreeActions);
 
         browser.Breadcrumbs = Backbone.View.extend({
 
