@@ -27,8 +27,7 @@
         "composum/sling/console/browser/js/policiesTable.js",
         "composum/sling/console/browser/js/policiesTab.js",
         "composum/sling/console/browser/js/version.js",
-        "composum/sling/console/browser/js/nodeview.js",
-        "composum/sling/console/browser/js/startup.js"
+        "composum/sling/console/browser/js/nodeview.js"
       ]
     }
   },

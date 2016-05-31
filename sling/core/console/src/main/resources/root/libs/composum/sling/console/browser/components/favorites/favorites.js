@@ -13,11 +13,33 @@
             this.$recently = this.$('.used-recently');
             this.$recentlyList = this.$recently.find('> ol');
             this.$template = this.$('> .template a');
-            this.$('button.clear-favorites').on('click', _.bind(this.clearFavorites, this));
-            this.$('button.clear-recently').on('click', _.bind(this.clearHistory, this));
+            this.$('.action-bar .favorites').click(_.bind(this.showFavoritesTab, this));
+            this.$('.action-bar .history').click(_.bind(this.showHistoryTab, this));
+            this.$('.action-bar .close').click(_.bind(browser.navigation.toggleFavorites, browser.navigation));
+            this.$('.action-bar .clear-favorites').on('click', _.bind(this.clearFavorites, this));
+            this.$('.action-bar .clear-recently').on('click', _.bind(this.clearHistory, this));
             $(document).on('favorite:toggle', _.bind(this.onToggleFavorite, this));
             $(document).on('path:selected', _.bind(this.onPathSelected, this));
             this.loadProfile();
+            if (core.console.getProfile().get('navigation', 'tab') == 'history') {
+                this.showHistoryTab();
+            }
+        },
+
+        showFavoritesTab: function(event) {
+            if (event) {
+                event.preventDefault();
+            }
+            this.$el.removeClass('history').addClass('favorites');
+            core.console.getProfile().set('navigation', 'tab', 'favorites');
+        },
+
+        showHistoryTab: function(event) {
+            if (event) {
+                event.preventDefault();
+            }
+            this.$el.removeClass('favorites').addClass('history');
+            core.console.getProfile().set('navigation', 'tab', 'history');
         },
 
         onSelect: function (event) {

@@ -13,39 +13,12 @@
         <div id="content-wrapper">
             <div id="split-view-horizontal-split" class="split-pane horizontal-split fixed-left">
                 <div class="split-pane-component left-pane">
-                    <div id="browser-nav-split" class="split-pane vertical-split fixed-top favorites-closed">
+                    <div id="browser-nav-split" class="split-pane vertical-split fixed-bottom favorites-closed">
                         <div class="split-pane-component top-pane">
                             <sling:include resourceType="composum/sling/console/browser/components/favorites"/>
                         </div>
-                        <div class="split-pane-divider action-bar">
-                            <div class="align-left">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button type="button" class="clear-favorites fa fa-stack btn btn-default"
-                                            title="Clear favorites list"><span
-                                            class="fa-trash-o fa-stack-1x text-muted"></span><span
-                                            class="fa-star fa-stack-1x text-primary"></span><span class="label">Clear Favorites</span>
-                                    </button>
-                                    <button type="button" class="clear-recently fa fa-stack btn btn-default"
-                                            title="Clear history"><span
-                                            class="fa-trash-o fa-stack-1x text-muted"></span><span
-                                            class="fa-history fa-stack-1x text-primary"></span><span class="label">Clear History</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <span class="fa fa-ellipsis-h"></span>
-                            <div class="align-right">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button type="button" class="favorites toggle fa fa-star btn btn-default"
-                                            title="Select favorites list"><span
-                                            class="label">Select favorites list</span></button>
-                                    <button type="button" class="history toggle fa fa-history btn btn-default"
-                                            title="Select history list"><span
-                                            class="label">Select history list</span></button>
-                                </div>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button class="close" title="Close"><span class="fa fa-close"></span></button>
-                                </div>
-                            </div>
+                        <div class="split-pane-divider">
+                            <span class="split-handle fa fa-ellipsis-h"></span>
                         </div>
                         <div class="split-pane-component bottom-pane">
                             <div>
@@ -110,7 +83,7 @@
                                             </ul>
                                         </div>
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <button type="button" class="favorites fa fa-star-o btn btn-default"
+                                            <button type="button" class="favorites fa btn btn-default"
                                                     title="Toogle favorites view on/off"><span
                                                     class="label">Favorites</span></button>
                                         </div>

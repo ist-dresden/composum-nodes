@@ -59,14 +59,23 @@
 
 #browser-nav-split.favorites-closed .bottom-pane {
     top: 0;
+    height: auto !important;
 }
 
-#browser-nav-split.favorites-open .tree-panel {
-    top: 40px;
+#browser-nav-split.favorites-open .bottom-pane .tree-panel {
+    top: 2px;
 }
 
 #browser .tree-actions .filter label {
     display: none; /* wee need its place for the favorites button */
+}
+
+#browser-nav-split.favorites-closed .tree-actions .favorites:before {
+    content: "\f006";
+}
+
+#browser-nav-split.favorites-open .tree-actions .favorites:before {
+    content: "\f005";
 }
 
 /**

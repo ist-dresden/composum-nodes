@@ -10,12 +10,17 @@
         initialize: function (options) {
             this.verticalSplit = core.getWidget(this.$el, this.el, core.components.VerticalSplitPane);
             this.verticalSplit.$el.on('resize', _.bind(this.onSplitResize, this));
+            if (core.console.getProfile().get('navigation', 'favorites')) {
+                this.toggleFavorites();
+            }
         },
 
         onSplitResize: function (event) {
             event.preventDefault();
             event.stopPropagation();
-            core.console.getProfile().set('browser', 'navigation', this.verticalSplit.getPosition());
+            if (this.$el.hasClass('favorites-open')) {
+                core.console.getProfile().set('navigation', 'split', this.verticalSplit.getPosition());
+            }
         },
 
         toggleFavorites: function (event) {
@@ -27,11 +32,11 @@
                 this.$el.removeClass('favorites-closed').addClass('favorites-open');
                 this.verticalSplit.setPosition(
                     this.verticalSplit.checkPosition(
-                        core.console.getProfile().get('favorites', 'split', 200)));
-                core.console.getProfile().set('browser', 'navigation', 'favorites');
+                        core.console.getProfile().get('navigation', 'split', 400)));
+                core.console.getProfile().set('navigation', 'favorites', true);
             } else {
                 this.$el.removeClass('favorites-open').addClass('favorites-closed');
-                core.console.getProfile().set('browser', 'navigation', undefined);
+                core.console.getProfile().set('navigation', 'favorites', false);
             }
         }
     });

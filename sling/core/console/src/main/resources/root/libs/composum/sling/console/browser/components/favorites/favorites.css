@@ -1,21 +1,80 @@
 
-#browser-nav-split.split-pane.vertical-split > .split-pane-divider.action-bar {
-    padding: 3px 5px;
-    height: 38px;
+#browser-nav-split.split-pane.vertical-split > .top-pane {
+    overflow: visible;
+}
+
+#browser-nav-split.split-pane.vertical-split > .split-pane-divider {
+    left: 25%;
+    width: 34%;
+    background: none;
+}
+
+#browser-nav-split.split-pane.vertical-split > .split-pane-divider > .split-handle {
+    left: 43%;
+    height: 12px;
+}
+
+#browser-nav-split.split-pane.vertical-split > .split-pane-divider,
+#favorites-view > .action-bar {
+    height: 34px;
+}
+
+#favorites-view > .favorites-panel {
+    bottom: 34px;
+}
+
+#favorites-view {
+    bottom: 0;
+}
+
+#favorites-view > .action-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0px 5px;
     background-color: #e4e4e4;
 }
 
-#browser-nav-split.split-pane.vertical-split > .split-pane-divider.action-bar > span {
-    left: 40%;
-    right: 60%;
+#favorites-view > .action-bar .trash .fa-trash-o {
+    top: 5px;
+    left: 5px;
 }
 
-#browser-nav-split.split-pane.vertical-split > .split-pane-divider.action-bar .toggle {
+.action-bar .tab {
+    position: relative;
+    display: inline-block;
+    height: 34px;
+    width: 49px;
+    margin: 0 -7px;
+    background: none;
+}
+
+.action-bar .tab-bottom {
+    border-top: 26px solid #ccc;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+}
+
+#favorites-view.favorites .action-bar .tab.favorites,
+#favorites-view.history .action-bar .tab.history {
+    border-top-color: #fff;
+    z-index: 4;
+}
+
+#favorites-view > .action-bar .tab-bottom:before {
+    position: absolute;
+    top: -20px;
+    left: -4px;
     width: 40px;
+    text-align: center;
 }
 
-#browser-nav-split.split-pane.vertical-split > .split-pane-divider.action-bar .close {
-    width: 32px;
+#favorites-view > .action-bar .close {
+    width: 26px;
+    margin-top: -5px;
+    margin-left: 9px;
+    font-size: 19px;
 }
 
 /**
@@ -24,8 +83,6 @@
 
 #favorites-view {
     background: #fff;
-    z-index: 5;
-    overflow: hidden;
 }
 
 #favorites-view.history .marked-nodes,
@@ -40,11 +97,16 @@
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
+}
+
+#favorites-view .favorites-panel {
+    top: 9px;
+    bottom: 34px;
 }
 
 #favorites-view .favorites-panel .scrollable {
     overflow: auto;
+    bottom: 2px;
 }
 
 #favorites-view .favorites-panel .list {
@@ -58,13 +120,8 @@
     position: relative;
     display: block;
     margin: 0;
-    padding: 0.25em 0.75em;
+    padding: 0.15em 0.7em;
     color: #333;
-    border-bottom: #e4e4e4 solid 1px;
-}
-
-#favorites-view .favorites-panel .list a:last-child {
-    border-bottom: none;
 }
 
 #favorites-view .favorites-panel .list a i {
@@ -74,15 +131,18 @@
 
 #favorites-view .favorites-panel .list a i,
 #favorites-view .favorites-panel .list a h4 {
-    font-size: 1.1em;
+    font-size: 14px;
+    font-weight: normal;
 }
 
-#favorites-view .favorites-panel .list a h4 {
+#favorites-view .favorites-panel .list a h4,
+#favorites-view .favorites-panel .list a h5 {
     padding: 0 0 0 22px;
 }
 
 #favorites-view .favorites-panel .list a h5 {
-    font-size: 0.9em;
+    font-size: 11px;
+    color: #888;
 }
 
 #favorites-view .favorites-panel .marked-nodes .list a.active {
