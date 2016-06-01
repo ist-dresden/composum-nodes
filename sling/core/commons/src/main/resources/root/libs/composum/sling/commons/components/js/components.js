@@ -56,16 +56,61 @@
             },
 
             /**
+             * returns the current set of values of the entire form
+             */
+            getValues: function () {
+                var values = {};
+                this.$('.widget').each(function () {
+                    if (this.view) {
+                        if (this.view.$el.parent().closest('.multi-form-item').length == 0 &&
+                            _.isFunction(this.view.getValue)) {
+                            var name = core.getWidgetName(this.view);
+                            values[name] = this.view.getValue.apply(this.view);
+                        }
+                    }
+                });
+                return values;
+            },
+
+            /**
+             * presets the values of the entire form
+             */
+            setValues: function (values) {
+                this.$('.widget').each(function () {
+                    if (this.view) {
+                        if (this.view.$el.parent().closest('.multi-form-item').length == 0 &&
+                            _.isFunction(this.view.setValue)) {
+                            var name = core.getWidgetName(this.view);
+                            this.view.setValue.apply(this.view, [values ? values[name] : undefined]);
+                        }
+                    }
+                });
+            },
+
+            /**
              * a reset of a form resets all widgets calling their 'reset' function
              */
             reset: function () {
                 this.$('.widget').each(function () {
                     if (this.view) {
-                        if (_.isFunction(this.view)) {
+                        if (_.isFunction(this.view.reset)) {
                             this.view.reset.apply(this.view);
                         }
                     }
                 });
+            },
+
+
+            /**
+             * Submit the form of the dialog.
+             * @param onSuccess an optional callback function called after a successful request
+             */
+            submitForm: function (onSuccess, onError, onComplete) {
+                core.submitForm(this.el, onSuccess, onError, onComplete);
+            },
+
+            submitFormPut: function (onSuccess, onError, onComplete) {
+                core.submitFormPut(this.el, this.getValues(), onSuccess, onError, onComplete);
             }
         });
 
@@ -102,7 +147,7 @@
              * defines the (initial) value of the input field
              */
             setValue: function (value) {
-                this.$checkkox.prop('checked', value);
+                this.$checkkox.prop('checked', value == 'false' ? false : value);
             },
 
             /**
@@ -260,7 +305,7 @@
             /**
              * selects the complete text of textfield
              */
-            selectAll: function() {
+            selectAll: function () {
                 this.$textField.select();
             },
 

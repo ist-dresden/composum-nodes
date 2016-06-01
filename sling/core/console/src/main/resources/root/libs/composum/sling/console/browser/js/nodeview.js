@@ -241,6 +241,9 @@
 
         browser.ScriptTab = browser.EditorTab.extend({
 
+            jobTopic: 'com/composum/sling/core/script/GroovyJobExecutor',
+            purgeAuditKeep: 6,
+
             initialize: function (options) {
                 this.profile = core.console.getProfile().get('browser', 'scriptView', {
                     vertical: undefined,
@@ -381,8 +384,10 @@
                 this.logOffset = 0;
                 core.ajaxPost('/bin/core/jobcontrol.job.json', {
                         'event.job.topic': 'com/composum/sling/core/script/GroovyJobExecutor',
-                        'reference': path
-                    }, {},
+                        'reference': path,
+                        '_charset_': 'UTF-8'
+                    }, {
+                    },
                     _.bind(function (data, msg, xhr) {
                         this.scriptJob = data;
                         this.delay(true);
@@ -492,7 +497,9 @@
             },
 
             loadLog: function (event) {
-                event.preventDefault();
+                if (event) {
+                    event.preventDefault();
+                }
                 var $link = $(event.currentTarget);
                 this.$logOutput.text('');
                 this.logOffset = 0;
@@ -505,10 +512,20 @@
                 if (event) {
                     event.preventDefault();
                 }
+                var dialog = core.console.getPurgeAuditDialog();
+                dialog.show(_.bind(function () {
+                    dialog.initDialog(this.jobTopic,
+                        browser.getCurrentPath(),
+                        this.purgeAuditKeep);
+                }, this), _.bind(function () {
+                    this.loadHistory();
+                }, this));
             },
 
             selectAuditNode: function (event) {
+                if (event) {
                     event.preventDefault();
+                }
                 var $link = $(event.currentTarget);
                 var path = '/var/audit/jobs/com.composum.sling.core.script.GroovyJobExecutor' + $link.data('path');
                 $(document).trigger('path:select', [path]);

@@ -54,6 +54,7 @@ public class TextTag extends CpnlBodyTagSupport {
     protected Type type = Type.text;
     private Object value;
     private String propertyName;
+    private boolean escape = true;
     private Format format;
     private String output;
     private String tagClass;
@@ -102,7 +103,9 @@ public class TextTag extends CpnlBodyTagSupport {
                 this.output = this.format.format(this.output);
             }
             if (StringUtils.isNotEmpty(output)) {
-                this.output = toString(escape(this.output));
+                this.output = toString(this.escape
+                        ? escape(this.output)
+                        : this.output);
                 JspWriter writer = this.pageContext.getOut();
                 if (StringUtils.isNotBlank(this.tagName) || StringUtils.isNotBlank(this.tagClass)) {
                     if (this.tagName == null) {
@@ -165,6 +168,13 @@ public class TextTag extends CpnlBodyTagSupport {
      */
     public void setProperty(String propertyName) {
         this.propertyName = propertyName;
+    }
+
+    /**
+     * @param escape flag for escaping the text (default: 'true')
+     */
+    public void setEscape(boolean escape) {
+        this.escape = escape;
     }
 
     /**

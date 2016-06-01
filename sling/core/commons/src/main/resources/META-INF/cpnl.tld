@@ -253,6 +253,12 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
+            <name>escape</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Boolean</type>
+        </attribute>
+        <attribute>
             <name>format</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>

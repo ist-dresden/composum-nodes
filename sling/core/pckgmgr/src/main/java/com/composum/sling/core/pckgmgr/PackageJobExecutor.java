@@ -1,6 +1,7 @@
 package com.composum.sling.core.pckgmgr;
 
 import com.composum.sling.core.concurrent.AbstractJobExecutor;
+import com.composum.sling.core.concurrent.JobFailureException;
 import com.composum.sling.core.pckgmgr.util.PackageProgressTracker;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
@@ -151,6 +152,14 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             @Override
             protected void doIt() throws PackageException, IOException, RepositoryException {
                 jcrPckg.install(options);
+            }
+
+            @Override
+            protected String done() throws IOException {
+                if (tracker.getErrorDetected()) {
+                    throw new JobFailureException("install done with errors");
+                }
+                return super.done();
             }
         }
 

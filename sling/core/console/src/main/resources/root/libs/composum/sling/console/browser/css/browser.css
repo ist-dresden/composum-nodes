@@ -44,8 +44,38 @@
  * Browser Tree
  */
 
+#browser-nav-split > .top-pane {
+    min-height: 46px;
+}
+
+#browser-nav-split > .bottom-pane {
+    min-height: 300px;
+}
+
+#browser-nav-split.favorites-closed .top-pane,
+#browser-nav-split.favorites-closed .split-pane-divider {
+    display: none;
+}
+
+#browser-nav-split.favorites-closed .bottom-pane {
+    top: 0;
+    height: auto !important;
+}
+
+#browser-nav-split.favorites-open .bottom-pane .tree-panel {
+    top: 2px;
+}
+
 #browser .tree-actions .filter label {
     display: none; /* wee need its place for the favorites button */
+}
+
+#browser-nav-split.favorites-closed .tree-actions .favorites:before {
+    content: "\f006";
+}
+
+#browser-nav-split.favorites-open .tree-actions .favorites:before {
+    content: "\f005";
 }
 
 /**
@@ -548,7 +578,7 @@
 }
 
 #browser-view .node-view-content .detail-toolbar.display-toolbar {
-    left: 200px;
+    left: 240px;
     height: 29px;
     display: flex;
     flex-wrap: nowrap;

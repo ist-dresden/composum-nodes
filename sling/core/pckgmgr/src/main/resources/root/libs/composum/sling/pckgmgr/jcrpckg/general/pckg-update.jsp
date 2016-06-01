@@ -36,6 +36,10 @@
                         <input name="version" class="widget text-field-widget form-control" type="text"
                                placeholder="enter version key (number)" data-rules="mandatory"/>
                     </div>
+                    <div class="form-group">
+                        <label class="control-label">Description</label>
+                        <textarea name="jcr:description" class="text-area form-control" rows="4"></textarea>
+                    </div>
                 </div>
 
                 <div class="modal-footer buttons">

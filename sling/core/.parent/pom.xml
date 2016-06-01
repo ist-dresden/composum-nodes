@@ -35,6 +35,7 @@
 
     <properties>
         <bundle.category>Composum Core</bundle.category>
+        <sling.scheme>http</sling.scheme>
         <sling.host>localhost</sling.host>
         <sling.port>9090</sling.port>
         <sling.context></sling.context>
@@ -156,11 +157,14 @@
                     <version>1.3.1</version>
                     <configuration>
                         <skip>true</skip>
+                        <quiet>true</quiet>
                         <host>${sling.host}</host>
                         <port>${sling.port}</port>
                         <path>${sling.context}/system/console</path>
                         <username>${sling.user}</username>
                         <password>${sling.password}</password>
+                        <retryDelay>2000</retryDelay>
+                        <retryLimit>30</retryLimit>
                     </configuration>
                 </plugin>
 
@@ -171,7 +175,7 @@
                     <extensions>true</extensions>
                     <configuration>
                         <failOnError>true</failOnError>
-                        <targetURL>http://${sling.host}:${sling.port}${sling.context}${package.install}</targetURL>
+                        <targetURL>${sling.scheme}://${sling.host}:${sling.port}${sling.context}${package.install}</targetURL>
                         <userId>${sling.user}</userId>
                         <password>${sling.password}</password>
                         <useProxy>false</useProxy>
@@ -209,13 +213,14 @@
                         <groupId>org.apache.sling</groupId>
                         <artifactId>maven-sling-plugin</artifactId>
                         <configuration>
-                            <slingUrl>http://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
+                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
                             <user>${sling.user}</user>
                             <password>${sling.password}</password>
                         </configuration>
                         <executions>
                             <execution>
                                 <id>install-bundle</id>
+                                <phase>install</phase>
                                 <goals>
                                     <goal>install</goal>
                                 </goals>
@@ -228,14 +233,11 @@
                         <artifactId>osgi-bundle-status-maven-plugin</artifactId>
                         <configuration>
                             <skip>false</skip>
-                            <retryDelay>2000</retryDelay>
-                            <retryLimit>10</retryLimit>
-                            <quiet>true</quiet>
-                            <username>${sling.user}</username>
-                            <password>${sling.password}</password>
                         </configuration>
                         <executions>
                             <execution>
+                                <id>check-bundle</id>
+                                <phase>install</phase>
                                 <goals>
                                     <goal>status</goal>
                                 </goals>
@@ -369,6 +371,30 @@
                 <groupId>org.apache.sling</groupId>
                 <artifactId>org.apache.sling.jcr.base</artifactId>
                 <version>2.2.2</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.jcr.resource</artifactId>
+                <version>2.2.8</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.resourceresolver</artifactId>
+                <version>1.0.6</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.adapter</artifactId>
+                <version>2.1.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>adapter-annotations</artifactId>
+                <version>1.0.0</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>

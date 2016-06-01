@@ -109,14 +109,21 @@ public class Clientlib {
     }
 
     protected Resource retrieveResource(String path) {
-        Resource resource;
+        Resource resource = null;
         if (!path.startsWith("/")) {
-            resource = resolver.getResource("/apps/" + path);
-            if (resource == null) {
-                resource = resolver.getResource("/libs/" + path);
+            String[] searchPath = resolver.getSearchPath();
+            for (int i=0; resource == null && i < searchPath.length; i++) {
+                String absolutePath = searchPath[i] + path;
+                resource = resolver.getResource(absolutePath);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("retrieveResource.try: '" + absolutePath + "': " + resource);
+                }
             }
         } else {
             resource = resolver.getResource(path);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("retrieveResource.use: '" + path + "': " + resource);
+            }
         }
         return resource;
     }
@@ -212,7 +219,12 @@ public class Clientlib {
 
     protected void logNotAvailable(ResourceHandle resource, String reference, boolean optional) {
         if (!optional) {
-            LOG.warn("Clientlib entry '" + reference + "' of '" + resource.getPath() + "' not available.");
+            String message = "Clientlib entry '" + reference + "' of '" + resource.getPath() + "' not available.";
+            if (LOG.isDebugEnabled()) {
+                LOG.warn(message, new RuntimeException());
+            } else {
+                LOG.warn(message);
+            }
         }
     }
 

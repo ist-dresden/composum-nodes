@@ -6,4 +6,6 @@
 <sling:call script="dialogs/pckg-upload.jsp"/>
 <sling:call script="jcrpckg/general/pckg-update.jsp"/>
 <sling:call script="jcrpckg/filter/filter-change.jsp"/>
+<sling:call script="jcrpckg/options/change-options.jsp"/>
+<sling:call script="jcrpckg/options/change-relations.jsp"/>
 <sling:call script="/libs/composum/sling/console/page/dialogs.jsp"/>

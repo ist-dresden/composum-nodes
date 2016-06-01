@@ -183,9 +183,15 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
                     final Object run = submit.get();
                     return context.result().message(String.valueOf(run)).succeeded();
                 } catch (ExecutionException e) {
-                    LOG.error("Error executing job:" + reference, e);
-                    e.printStackTrace(out);
-                    return context.result().message(e.getMessage()).cancelled();
+                    final Throwable cause = e.getCause();
+                    if (cause instanceof JobFailureException) {
+                        LOG.error("Error executing job:" + reference, cause);
+                        return context.result().message(cause.getMessage()).cancelled();
+                    } else {
+                        LOG.error("Error executing job:" + reference, e);
+                        e.printStackTrace(out);
+                        return context.result().message(e.getMessage()).cancelled();
+                    }
                 }
             }
         } catch (Exception e) {

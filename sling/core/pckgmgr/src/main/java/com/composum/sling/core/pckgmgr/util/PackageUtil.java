@@ -3,6 +3,8 @@ package com.composum.sling.core.pckgmgr.util;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.ResourceUtil;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
@@ -22,12 +24,16 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.el.PropertyNotFoundException;
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -39,6 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import static com.composum.sling.core.pckgmgr.util.PackageUtil.TreeType.group;
+
 /**
  * Helper methods for Package handling (VLT Package Manager)
  */
@@ -49,6 +57,18 @@ public class PackageUtil {
     public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     public static final String THUMBNAIL_PNG = "thumbnail.png";
+
+    public static final String DEF_AC_HANDLING = JcrPackageDefinition.PN_AC_HANDLING;
+    public static final String DEF_DEPENDENCIES = JcrPackageDefinition.PN_DEPENDENCIES;
+    public static final String DEF_DESCRIPTION = JcrPackageDefinition.PN_DESCRIPTION;
+    public static final String DEF_DISABLE_INTERMEDIATE_SAVE = JcrPackageDefinition.PN_DISABLE_INTERMEDIATE_SAVE;
+    public static final String DEF_PROVIDER_LINK = "providerLink";
+    public static final String DEF_PROVIDER_NAME = "providerName";
+    public static final String DEF_PROVIDER_URL = "providerUrl";
+    public static final String DEF_REPLACES = "replaces";
+    public static final String DEF_REQUIRES_RESTART = JcrPackageDefinition.PN_REQUIRES_RESTART;
+    public static final String DEF_REQUIRES_ROOT = JcrPackageDefinition.PN_REQUIRES_ROOT;
+    public static final String DEF_TESTED_WITH = "testedWith";
 
     public static final Pattern IMPORT_DONE = Pattern.compile("^Package imported\\.$");
 
@@ -67,7 +87,12 @@ public class PackageUtil {
         RequestPathInfo reqPathInfo = request.getRequestPathInfo();
         String path = reqPathInfo.getSuffix();
         if (StringUtils.isBlank(path)) {
-            path = "/";
+            final String pathParam = request.getParameter("path");
+            if (StringUtils.isBlank(pathParam)) {
+                path = "/";
+            } else {
+                path = pathParam;
+            }
         } else {
             while (path.endsWith("/") && !"/".equals(path)) {
                 path = path.substring(0, path.length() - 1);
@@ -87,6 +112,17 @@ public class PackageUtil {
             resource = resolver.getResource(resourcePath);
         }
         return resource;
+    }
+
+    public static JcrPackage getJcrPackage(JcrPackageManager manager, String group, String name) throws RepositoryException {
+        final List<JcrPackage> jcrPackages = manager.listPackages(group, false);
+        for (JcrPackage jcrPackage : jcrPackages) {
+            final String packageName = jcrPackage.getDefinition().get(JcrPackageDefinition.PN_NAME);
+            if (packageName.equals(name)) {
+                return jcrPackage;
+            }
+        }
+        return null;
     }
 
     public static JcrPackage getJcrPackage(JcrPackageManager manager, Resource resource) throws RepositoryException {
@@ -117,7 +153,7 @@ public class PackageUtil {
     }
 
     public static TreeType getTreeType(SlingHttpServletRequest request, String path) {
-        TreeType type = TreeType.group;
+        TreeType type = group;
         try {
             Resource resource = getResource(request, path);
             JcrPackageManager manager = createPackageManager(request);
@@ -138,10 +174,30 @@ public class PackageUtil {
     }
 
     public static String getGroupPath(JcrPackage pckg) throws RepositoryException {
-        JcrPackageDefinition definition = pckg.getDefinition();
-        String group = definition.get(JcrPackageDefinition.PN_GROUP);
+        return getGroupPath(pckg.getDefinition());
+    }
+
+    public static String getGroupPath(JcrPackageDefinition pckgDef) {
+        String group = pckgDef.get(JcrPackageDefinition.PN_GROUP);
         group = StringUtils.isNotBlank(group) ? ("/" + group + "/") : "/";
         return group;
+    }
+
+    public static boolean isGroup(JcrPackageDefinition pckgDef, String group) {
+        return equals(pckgDef, JcrPackageDefinition.PN_GROUP, group);
+    }
+
+    public static boolean isName(JcrPackageDefinition pckgDef, String name) {
+        return equals(pckgDef, JcrPackageDefinition.PN_NAME, name);
+    }
+
+    public static boolean isVersion(JcrPackageDefinition pckgDef, String version) {
+        return equals(pckgDef, JcrPackageDefinition.PN_VERSION, version);
+    }
+
+    public static boolean equals(JcrPackageDefinition pckgDef, String key, String value) {
+        String current = pckgDef.get(key);
+        return StringUtils.isNotBlank(current) ? current.equals(value) : StringUtils.isBlank(value);
     }
 
     public static String getFilename(JcrPackage pckg) {
@@ -492,13 +548,16 @@ public class PackageUtil {
 
         @Override
         public boolean equals(Object other) {
-            return other instanceof TreeItem && getName().equals(((TreeItem) other).getName());
+            return other instanceof PackageItem &&
+                    getName().equals(((PackageItem) other).getName()) &&
+                    definition.get(JcrPackageDefinition.PN_VERSION).equals(((PackageItem) other).definition.get(JcrPackageDefinition.PN_VERSION));
         }
 
         @Override
         public int hashCode() {
-            return getName().hashCode();
+            return 31 * getName().hashCode() + definition.get(JcrPackageDefinition.PN_VERSION).hashCode();
         }
+
     }
 
     /** the tree node implementation for the requested path (folder or package) */
@@ -626,5 +685,140 @@ public class PackageUtil {
             writer.name(JcrPackageDefinition.PN_LASTMODIFIED).value(dateFormat.format(lastModified.getTime()));
         }
         writer.endObject();
+    }
+
+    public static String packageToXMLResponse(JcrPackage jcrPackage) throws RepositoryException {
+        final JcrPackageDefinition definition = jcrPackage.getDefinition();
+        final String group = definition.get(JcrPackageDefinition.PN_GROUP);
+        final String name = definition.get(JcrPackageDefinition.PN_NAME);
+        final String version = definition.get(JcrPackageDefinition.PN_VERSION);
+        final String filename = getFilename(jcrPackage);
+        final long size = jcrPackage.getSize();
+        final String createdBy = definition.getCreatedBy();
+        final Calendar created = definition.getCreated();
+        final Calendar lastModified = definition.getLastModified();
+        final String lastModifiedBy = definition.getLastModifiedBy();
+        final Calendar lastUnpacked = definition.getLastUnpacked();
+        final String lastUnpackedBy = definition.getLastUnpackedBy();
+        final SimpleDateFormat dateFormat = new SimpleDateFormat();
+        String response =
+                "<package>" +
+                        "<group>" + group + "</group>" +
+                        "<name>" + name + "</name>" +
+                        "<version>" + version + "</version>" +
+                        "<downloadName>" + filename + "</downloadName>" +
+                        "<size>" + size + "</size>" +
+                        (created != null ? "<created>" + dateFormat.format(created.getTime()) + "</created>" : "") +
+                        "<createdBy>" + createdBy + "</createdBy>" +
+                        (lastModified != null ? "<lastModified>" + dateFormat.format(lastModified.getTime()) + "</lastModified>" : "") +
+                        "<lastModifiedBy>" + lastModifiedBy + "</lastModifiedBy>" +
+                        (lastUnpacked != null ? "<lastUnpacked>" + dateFormat.format(lastUnpacked.getTime()) + "</lastUnpacked>" : "") +
+                        "<lastUnpackedBy>" + lastUnpackedBy + "</lastUnpackedBy>" +
+                        "</package>";
+        return response;
+    }
+
+    // Definition properties
+
+    public static String[] getMultiProperty(JcrPackageDefinition pckgDef, String key) {
+        String[] result = new String[0];
+        try {
+            Property property = pckgDef.getNode().getProperty(key);
+            Value[] values = property.getValues();
+            result = new String[values.length];
+            for (int i = 0; i < values.length; i++) {
+                result[i] = values[i].getString();
+            }
+        } catch (PropertyNotFoundException | PathNotFoundException pnfex) {
+        } catch (RepositoryException rex) {
+            LOG.error(rex.getMessage(), rex);
+        }
+        return result;
+    }
+
+    public interface DefinitionSetter<T> {
+
+        BooleanSetter BOOLEAN = new BooleanSetter();
+        StringSetter STRING = new StringSetter();
+        MultiStringSetter MULTI_STRING = new MultiStringSetter();
+
+        T get(JsonReader reader) throws IOException;
+
+        void set(JcrPackageDefinition pckgDef, String key, Object value, boolean save)
+                throws RepositoryException, ParseException;
+
+        class BooleanSetter implements DefinitionSetter<Boolean> {
+
+            public Boolean get(JsonReader reader) throws IOException {
+                Boolean value = true;
+                try {
+                    value = reader.nextBoolean();
+                } catch (IllegalStateException ex) {
+                    String string = reader.nextString();
+                    if (StringUtils.isNotBlank(string)) {
+                        value = Boolean.valueOf(string);
+                    }
+                }
+                return value;
+            }
+
+            public void set(JcrPackageDefinition pckgDef, String key, Object value, boolean save) {
+                pckgDef.set(key, Boolean.valueOf(value.toString()), save);
+            }
+        }
+
+        class StringSetter implements DefinitionSetter<String> {
+
+            public String get(JsonReader reader) throws IOException {
+                return reader.nextString();
+            }
+
+            public void set(JcrPackageDefinition pckgDef, String key, Object value, boolean save) {
+                pckgDef.set(key, value.toString(), save);
+            }
+        }
+
+        class MultiStringSetter implements DefinitionSetter<String[]> {
+
+            public String[] get(JsonReader reader) throws IOException {
+                List<String> set = new ArrayList<>();
+                if (reader.peek() == JsonToken.BEGIN_ARRAY) {
+                    reader.beginArray();
+                    while (reader.peek() != JsonToken.END_ARRAY) {
+                        set.add(reader.nextString());
+                    }
+                    reader.endArray();
+                } else {
+                    set.add(reader.nextString());
+                }
+                return set.toArray(new String[set.size()]);
+            }
+
+            public void set(JcrPackageDefinition pckgDef, String key, Object value, boolean save)
+                    throws RepositoryException {
+                Node node = pckgDef.getNode();
+                node.setProperty(key, (String[]) value);
+                if (save) {
+                    node.getSession().save();
+                }
+            }
+        }
+    }
+
+    public static final Map<String, DefinitionSetter> DEFINITION_SETTERS;
+
+    static {
+        DEFINITION_SETTERS = new HashMap<>();
+        DEFINITION_SETTERS.put(DEF_AC_HANDLING, DefinitionSetter.STRING);
+        DEFINITION_SETTERS.put(DEF_DEPENDENCIES, DefinitionSetter.MULTI_STRING);
+        DEFINITION_SETTERS.put(DEF_DESCRIPTION, DefinitionSetter.STRING);
+        DEFINITION_SETTERS.put(DEF_DISABLE_INTERMEDIATE_SAVE, DefinitionSetter.BOOLEAN);
+        DEFINITION_SETTERS.put(DEF_PROVIDER_LINK, DefinitionSetter.STRING);
+        DEFINITION_SETTERS.put(DEF_PROVIDER_NAME, DefinitionSetter.STRING);
+        DEFINITION_SETTERS.put(DEF_PROVIDER_URL, DefinitionSetter.STRING);
+        DEFINITION_SETTERS.put(DEF_REPLACES, DefinitionSetter.MULTI_STRING);
+        DEFINITION_SETTERS.put(DEF_REQUIRES_RESTART, DefinitionSetter.BOOLEAN);
+        DEFINITION_SETTERS.put(DEF_REQUIRES_ROOT, DefinitionSetter.BOOLEAN);
+        DEFINITION_SETTERS.put(DEF_TESTED_WITH, DefinitionSetter.STRING);
     }
 }

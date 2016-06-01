@@ -125,7 +125,12 @@
         /**
          * the base 'class' for all detail tabs
          */
-        console.DetailTab = Backbone.View.extend({});
+        console.DetailTab = Backbone.View.extend({
+            
+            reload: function() {
+                this.$el.closest('.detail-content');
+            }
+        });
 
         /**
          * necessary initialization:
@@ -153,7 +158,8 @@
                     this.logOffset = 0;
                     core.ajaxPost('/bin/core/jobcontrol.job.json', _.extend({
                             'event.job.topic': this.jobTopic,
-                            'reference': path
+                            'reference': path,
+                            '_charset_': 'UTF-8'
                         }, properties), {},
                         _.bind(function (data, msg, xhr) {
                             this.jobStarted(data);

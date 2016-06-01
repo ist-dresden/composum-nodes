@@ -34,6 +34,14 @@
                                 </span>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <label class="control-label">Import Mode</label>
+                            <select name="importMode" class="import-mode widget combo-box-widget form-control">
+                                <option value="REPLACE" selected="true">replace (default)</option>
+                                <option value="MERGE">merge (existing content is not modified)</option>
+                                <option value="UPDATE">update (existing content is not deleted)</option>
+                            </select>
+                        </div>
                         <div class="rules form-group widget filter-rules-widget">
                             <label class="control-label">Filter Set</label>
                             <div class="multi-form-content">

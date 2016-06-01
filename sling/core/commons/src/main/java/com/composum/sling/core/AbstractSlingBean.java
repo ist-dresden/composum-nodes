@@ -1,6 +1,7 @@
 package com.composum.sling.core;
 
 import com.composum.sling.core.util.LinkUtil;
+import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -216,7 +217,10 @@ public abstract class AbstractSlingBean {
 
     public String getTitle() {
         if (title == null) {
-            title = resource.getTitle();
+            title = getProperty("title", "");
+            if (StringUtils.isBlank(title)) {
+                title = getProperty(ResourceUtil.PROP_TITLE, "");
+            }
         }
         return title;
     }
