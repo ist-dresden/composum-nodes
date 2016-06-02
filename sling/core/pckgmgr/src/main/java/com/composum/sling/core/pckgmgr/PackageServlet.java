@@ -66,7 +66,7 @@ import java.util.Map;
 import static com.composum.sling.core.pckgmgr.util.PackageUtil.DATE_FORMAT;
 
 /** The servlet to provide download and upload of content packages and package definitions. */
-@SlingServlet(paths = "/bin/core/package", methods = {"GET", "POST", "DELETE"})
+@SlingServlet(paths = "/bin/core/package", methods = {"GET", "POST", "PUT", "DELETE"})
 public class PackageServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageServlet.class);
