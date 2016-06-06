@@ -71,6 +71,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
             throws ServletException, IOException {
 
         if (isEnabled(response)) {
+            setNoCacheHeaders(response);
             getOperations().doGet(request, response);
         }
     }
@@ -100,6 +101,18 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         if (isEnabled(response)) {
             getOperations().doDelete(request, response);
         }
+    }
+
+    //
+    // HTTP control methods
+    //
+
+    protected void setNoCacheHeaders(SlingHttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache");
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Cache-Control", "must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
     }
 
     //
