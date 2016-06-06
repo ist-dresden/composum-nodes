@@ -32,6 +32,10 @@ public class Clientlib {
 
     public enum Type {link, css, js, img}
 
+    public static Type typeOf(String string) {
+        return Type.valueOf(StringUtils.split(string, '/')[0]);
+    }
+
     public static final String PROP_EXPANDED = "expanded";
     public static final String PROP_OPTIONAL = "optional";
     public static final String PROP_DEPENDS = "depends";
@@ -85,11 +89,11 @@ public class Clientlib {
     protected final ResourceHandle definition;
 
     protected final String path;
-    protected final Type type;
+    protected final String type;
 
     private transient Calendar lastModified;
 
-    public Clientlib(SlingHttpServletRequest request, String path, Type type) {
+    public Clientlib(SlingHttpServletRequest request, String path, String type) {
         this.request = request;
         this.resolver = request.getResourceResolver();
         this.path = path;
@@ -112,7 +116,7 @@ public class Clientlib {
         Resource resource = null;
         if (!path.startsWith("/")) {
             String[] searchPath = resolver.getSearchPath();
-            for (int i=0; resource == null && i < searchPath.length; i++) {
+            for (int i = 0; resource == null && i < searchPath.length; i++) {
                 String absolutePath = searchPath[i] + path;
                 resource = resolver.getResource(absolutePath);
                 if (LOG.isDebugEnabled()) {
@@ -142,7 +146,7 @@ public class Clientlib {
     }
 
     public Type getType() {
-        return type;
+        return typeOf(type);
     }
 
     public Calendar getLastModified() {
@@ -195,7 +199,7 @@ public class Clientlib {
         optional = definition.getProperty(PROP_OPTIONAL, optional);
         List<Link> links = new ArrayList<>();
         if (definition.isValid()) {
-            Link link = getLink(context, resource, resource, properties, type);
+            Link link = getLink(context, resource, resource, properties, getType());
             if (context.tryAndRegister(link.getKey())) {
                 if (expanded) {
                     getLinks(definition, properties, context, links, false, optional);
