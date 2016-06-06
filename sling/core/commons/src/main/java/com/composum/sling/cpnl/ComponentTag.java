@@ -1,6 +1,6 @@
 package com.composum.sling.cpnl;
 
-import com.composum.sling.core.AbstractSlingBean;
+import com.composum.sling.core.SlingBean;
 import com.composum.sling.core.BeanContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,12 +26,12 @@ public class ComponentTag extends CpnlBodyTagSupport {
     private int scope = PageContext.PAGE_SCOPE;
     private Boolean replace = null;
 
-    private AbstractSlingBean component = null;
+    private SlingBean component = null;
     private Object replacedValue = null;
 
-    private static Map<Class<? extends AbstractSlingBean>, Field[]> fieldCache = new ConcurrentHashMap<Class<? extends AbstractSlingBean>, Field[]>();
+    private static Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<Class<? extends SlingBean>, Field[]>();
 
-    private transient Class<? extends AbstractSlingBean> componentType;
+    private transient Class<? extends SlingBean> componentType;
 
     public static final Map<String, Integer> SCOPES = new HashMap<>();
 
@@ -112,9 +112,9 @@ public class ComponentTag extends CpnlBodyTagSupport {
     /**
      * get the content type class object
      */
-    protected Class<? extends AbstractSlingBean> getComponentType() throws ClassNotFoundException {
+    protected Class<? extends SlingBean> getComponentType() throws ClassNotFoundException {
         if (componentType == null) {
-            componentType = (Class<? extends AbstractSlingBean>) sling.getType(this.type);
+            componentType = (Class<? extends SlingBean>) sling.getType(this.type);
         }
         return componentType;
     }
@@ -125,7 +125,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
     protected Object available() throws ClassNotFoundException {
         Object result = null;
         Object value = pageContext.getAttribute(this.id, this.scope);
-        if (value instanceof AbstractSlingBean) {
+        if (value instanceof SlingBean) {
             Class<?> type = getComponentType();
             if (type != null && type.isAssignableFrom(value.getClass())) {
                 result = value;
@@ -137,10 +137,10 @@ public class ComponentTag extends CpnlBodyTagSupport {
     /**
      * Create the requested component instance
      */
-    protected AbstractSlingBean createComponent() throws ClassNotFoundException, IllegalAccessException,
+    protected SlingBean createComponent() throws ClassNotFoundException, IllegalAccessException,
             InstantiationException {
-        AbstractSlingBean component = null;
-        Class<? extends AbstractSlingBean> type = getComponentType();
+        SlingBean component = null;
+        Class<? extends SlingBean> type = getComponentType();
         if (type != null) {
             component = type.newInstance();
             component.initialize(new BeanContext.Page(pageContext));
@@ -152,7 +152,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
     /**
      * define attributes marked for injection in a new component instance
      */
-    protected void injectFieldDependecies(AbstractSlingBean component) throws IllegalAccessException {
+    protected void injectFieldDependecies(SlingBean component) throws IllegalAccessException {
         final Field[] declaredFields;
         if (fieldCache.containsKey(component.getClass())) {
             declaredFields = fieldCache.get(component.getClass());

@@ -28,7 +28,7 @@ import java.util.List;
  * Such a 'bean' can be declared as variable in aJSP context using the 'component' tag of the Composum 'nodes'
  * tag library (cpnl).
  */
-public abstract class AbstractSlingBean {
+public abstract class AbstractSlingBean implements SlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractSlingBean.class);
 
