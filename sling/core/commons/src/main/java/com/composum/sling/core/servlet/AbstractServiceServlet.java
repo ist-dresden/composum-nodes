@@ -81,6 +81,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
             throws ServletException, IOException {
 
         if (isEnabled(response)) {
+            setNoCacheHeaders(response);
             getOperations().doPost(request, response);
         }
     }
@@ -90,6 +91,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
             throws ServletException, IOException {
 
         if (isEnabled(response)) {
+            setNoCacheHeaders(response);
             getOperations().doPut(request, response);
         }
     }
@@ -99,6 +101,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
             throws ServletException, IOException {
 
         if (isEnabled(response)) {
+            setNoCacheHeaders(response);
             getOperations().doDelete(request, response);
         }
     }
