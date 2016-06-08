@@ -89,15 +89,17 @@ public class Clientlib {
     protected final ResourceHandle definition;
 
     protected final String path;
-    protected final String type;
+    protected final String typeAndAspect;
+    protected final Type type;
 
     private transient Calendar lastModified;
 
-    public Clientlib(SlingHttpServletRequest request, String path, String type) {
+    public Clientlib(SlingHttpServletRequest request, String path, String typeAndAspect) {
         this.request = request;
         this.resolver = request.getResourceResolver();
         this.path = path;
-        this.type = type;
+        this.typeAndAspect = typeAndAspect;
+        this.type = typeOf(typeAndAspect);
         this.resource = ResourceHandle.use(retrieveResource(path));
         this.definition = retrieveDefinition();
     }
@@ -107,8 +109,15 @@ public class Clientlib {
     }
 
     protected ResourceHandle retrieveDefinition() {
+        String type = typeAndAspect;
         String path = this.path + "/" + type;
         Resource resource = retrieveResource(path);
+        while (resource == null && type.contains("/")) {
+            // fallback to the general rule set if aspect is present and resource not found
+            type = type.substring(0, type.lastIndexOf('/'));
+            path = this.path + "/" + type;
+            resource = retrieveResource(path);
+        }
         return ResourceHandle.use(resource);
     }
 
@@ -142,11 +151,11 @@ public class Clientlib {
     }
 
     public String getPath() {
-        return path + "." + type;
+        return path + "." + typeAndAspect;
     }
 
     public Type getType() {
-        return typeOf(type);
+        return type;
     }
 
     public Calendar getLastModified() {
@@ -166,7 +175,7 @@ public class Clientlib {
                     Resource target = retrieveResource(reference);
                     if (target != null) {
                         if (target.isResourceType(RESOURCE_TYPE)) {
-                            Clientlib embedded = new Clientlib(request, reference, type);
+                            Clientlib embedded = new Clientlib(request, reference, typeAndAspect);
                             lastModified = getLastModified(embedded.getLastModified(), lastModified);
                         } else {
                             lastModified = getLastModified(new FileHandle(target), lastModified);
@@ -199,7 +208,7 @@ public class Clientlib {
         optional = definition.getProperty(PROP_OPTIONAL, optional);
         List<Link> links = new ArrayList<>();
         if (definition.isValid()) {
-            Link link = getLink(context, resource, resource, properties, getType());
+            Link link = getLink(context, resource, resource, properties, typeAndAspect);
             if (context.tryAndRegister(link.getKey())) {
                 if (expanded) {
                     getLinks(definition, properties, context, links, false, optional);
@@ -237,7 +246,7 @@ public class Clientlib {
         if (resource.isValid() && !isFile(resource)) {
             optional = resource.getProperty(PROP_OPTIONAL, optional);
             for (String reference : resource.getProperty(PROP_DEPENDS, new String[0])) {
-                Clientlib dependency = new Clientlib(request, reference, type);
+                Clientlib dependency = new Clientlib(request, reference, typeAndAspect);
                 if (dependency.isValid()) {
                     links.addAll(dependency.getLinks(false, true, optional, properties, context));
                 }
@@ -274,7 +283,7 @@ public class Clientlib {
         Resource target = retrieveResource(reference);
         if (target != null) {
             if (target.isResourceType(RESOURCE_TYPE)) {
-                Clientlib embedded = new Clientlib(request, reference, type);
+                Clientlib embedded = new Clientlib(request, reference, typeAndAspect);
                 embedded.getLinks(embedded.definition, properties, context, links, depends, optional);
             } else {
                 FileHandle file = new FileHandle(target);
@@ -304,10 +313,10 @@ public class Clientlib {
     }
 
     protected Link getLink(RendererContext context, ResourceHandle reference, Resource target,
-                           Map<String, String> properties, Type type) {
+                           Map<String, String> properties, String typeAndAspect) {
         String url = target.getPath();
-        if (type != null) {
-            url += "." + type;
+        if (StringUtils.isNotBlank(typeAndAspect)) {
+            url += "." + typeAndAspect;
         }
         if (context.mapClientlibURLs()) {
             url = LinkUtil.getUrl(request, url);
@@ -336,7 +345,7 @@ public class Clientlib {
                     Resource target = retrieveResource(reference);
                     if (target != null) {
                         if (target.isResourceType(RESOURCE_TYPE)) {
-                            Clientlib embedded = new Clientlib(request, reference, type);
+                            Clientlib embedded = new Clientlib(request, reference, typeAndAspect);
                             embedded.processContent(embedded.definition, output, processor, context, optional);
                         } else {
                             processFile(target, output, processor, context, optional);

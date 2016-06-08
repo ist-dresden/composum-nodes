@@ -150,8 +150,8 @@ public class DefaultClientlibService implements ClientlibService {
     public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
                                      Writer writer, RendererContext context)
             throws IOException {
-        Clientlib.Type type = clientlib.getType();
-        ClientlibRenderer renderer = rendererMap.get(type);
+        final Clientlib.Type type = clientlib.getType();
+        final ClientlibRenderer renderer = rendererMap.get(type);
         if (renderer != null) {
             renderer.renderClientlibLinks(clientlib, properties, writer, context);
         }
