@@ -7,6 +7,7 @@ import org.apache.sling.api.resource.LoginException;
 
 import javax.jcr.RepositoryException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Map;
 
@@ -25,7 +26,7 @@ public interface ClientlibService {
                                        Clientlib clientlib, String encoding)
             throws IOException, RepositoryException, LoginException;
 
-    void deliverContent(Clientlib clientlib, Writer writer, String encoding)
+    void deliverContent(Clientlib clientlib, OutputStream outputStream, String encoding)
             throws IOException, RepositoryException;
 
     boolean mapClientlibURLs();
