@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Calendar;
 import java.util.Dictionary;
@@ -185,7 +186,7 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     @Override
-    public void deliverContent(final Clientlib clientlib, Writer writer, String encoding)
+    public void deliverContent(final Clientlib clientlib, OutputStream outputStream, String encoding)
             throws IOException, RepositoryException {
         encoding = adjustEncoding(encoding);
         String cachePath = getCachePath(clientlib, encoding);
@@ -193,7 +194,11 @@ public class DefaultClientlibService implements ClientlibService {
         if (file != null && file.isValid()) {
             InputStream content = file.getStream();
             if (content != null) {
-                IOUtils.copy(content, writer);
+                try {
+                    IOUtils.copy(content, outputStream);
+                } finally {
+                    IOUtils.closeQuietly(content);
+                }
             }
         }
     }
