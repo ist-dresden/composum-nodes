@@ -257,7 +257,10 @@ public class DefaultClientlibService implements ClientlibService {
                         file.storeContent(inputStream);
 
                         ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
-                        contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
+                        Calendar lastModified = clientlib.getLastModified();
+                        if (lastModified != null) {
+                            contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, lastModified);
+                        }
                         contentValues.putAll(hints);
 
                         resolver.commit();
@@ -306,7 +309,7 @@ public class DefaultClientlibService implements ClientlibService {
             Calendar cacheTimestamp = file.getLastModified();
             if (cacheTimestamp != null) {
                 Calendar libLastModified = clientlib.getLastModified();
-                if (libLastModified.after(cacheTimestamp)) {
+                if (libLastModified != null && libLastModified.after(cacheTimestamp)) {
                     file = null;
                 }
             } else {
