@@ -100,6 +100,6 @@ public class ClientlibServlet extends SlingSafeMethodsServlet {
             response.setDateHeader(HttpUtil.HEADER_LAST_MODIFIED, ((Calendar) value).getTimeInMillis());
         }
 
-        clientlibService.deliverContent(clientlib, response.getWriter(), encoding);
+        clientlibService.deliverContent(clientlib, response.getOutputStream(), encoding);
     }
 }
