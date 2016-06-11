@@ -3,7 +3,7 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects />
-<cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
+<cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
     <ol class="breadcrumbs">
         <c:forEach var="parent" items="${browser.parents}">
             <li><cpn:link href="/bin/browser.html${parent.pathEncoded}">${parent.nameEscaped}</cpn:link></li>

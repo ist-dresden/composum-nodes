@@ -21,7 +21,7 @@
         pckgmgr.setCurrentPath = function (path) {
             if (!pckgmgr.current || pckgmgr.current.path != path) {
                 if (path) {
-                    core.getJson('/bin/core/package.tree.json' + path, undefined, undefined,
+                    core.getJson('/bin/cpm/package.tree.json' + path, undefined, undefined,
                         _.bind(function (result) {
                             var pathMatch = pckgmgr.pathPattern.exec(path);
                             pckgmgr.current = {
@@ -39,7 +39,7 @@
                                 nodeUrl: core.getContextUrl('/bin/packages.html'
                                     + window.core.encodePath(path)),
                                 downloadUrl: pathMatch
-                                    ? core.getContextUrl('/bin/core/package.download.zip' + path)
+                                    ? core.getContextUrl('/bin/cpm/package.download.zip' + path)
                                     : ''
                             };
                             core.console.getProfile().set('pckgmgr', 'current', path);
@@ -93,7 +93,7 @@
             },
 
             dataUrlForPath: function (path) {
-                return '/bin/core/package.tree.json' + path;
+                return '/bin/cpm/package.tree.json' + path;
             },
 
             onNodeSelected: function (path, node, element) {

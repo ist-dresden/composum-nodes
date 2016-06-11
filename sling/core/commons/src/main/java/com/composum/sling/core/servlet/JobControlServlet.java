@@ -49,7 +49,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @SlingServlet(
-        paths = "/bin/core/jobcontrol",
+        paths = "/bin/cpm/core/jobcontrol",
         methods = {"GET", "PUT", "POST", "DELETE"}
 )
 public class JobControlServlet extends AbstractServiceServlet {
@@ -83,27 +83,27 @@ public class JobControlServlet extends AbstractServiceServlet {
         super.init();
 
         // GET
-        // curl -X GET http://localhost:9090/bin/core/jobcontrol.jobs.HISTORY.json/?topic=com/composum/sling/core/script/GroovyJobExecutor
+        // curl -X GET http://localhost:9090/bin/cpm/core/jobcontrol.jobs.HISTORY.json/?topic=com/composum/sling/core/script/GroovyJobExecutor
         // [ALL, ACTIVE, QUEUED, HISTORY, CANCELLED, SUCCEEDED, STOPPED, GIVEN_UP, ERROR, DROPPED]
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.jobs, new GetAllJobs());
 
-        // curl http://localhost:9090/bin/core/jobcontrol.job.json/2016/4/11/13/48/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_0
+        // curl http://localhost:9090/bin/cpm/core/jobcontrol.job.json/2016/4/11/13/48/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_0
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.job, new GetJob());
 
-        // curl -r 100-125 -X GET http://localhost:9090/bin/core/jobcontrol.outfile.txt/2016/4/8/15/21/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_81
+        // curl -r 100-125 -X GET http://localhost:9090/bin/cpm/core/jobcontrol.outfile.txt/2016/4/8/15/21/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_81
         operations.setOperation(ServletOperationSet.Method.GET, Extension.txt, Operation.outfile, new GetOutfile());
 
         // POST
-        // curl -v -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Freference=/hello.groovy -Foutfileprefix=groovyjob -X POST http://localhost:9090/bin/core/jobcontrol.job.json
+        // curl -v -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Freference=/hello.groovy -Foutfileprefix=groovyjob -X POST http://localhost:9090/bin/cpm/core/jobcontrol.job.json
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.job, new CreateJob());
-        // curl -v -u admin:admin -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Freference=/libs/hello.groovy -Fkeep=2 -X POST http://localhost:9090/bin/core/jobcontrol.cleanup.json
-        // curl -v -u admin:admin -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Fkeep=2 -X POST http://localhost:9090/bin/core/jobcontrol.cleanup.json
+        // curl -v -u admin:admin -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Freference=/libs/hello.groovy -Fkeep=2 -X POST http://localhost:9090/bin/cpm/core/jobcontrol.cleanup.json
+        // curl -v -u admin:admin -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Fkeep=2 -X POST http://localhost:9090/bin/cpm/core/jobcontrol.cleanup.json
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.cleanup, new PurgeAudit());
 
         // DELETE
-        // curl -v -X DELETE http://localhost:9090/bin/core/jobcontrol.job.json/2016/4/8/15/21/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_81
+        // curl -v -X DELETE http://localhost:9090/bin/cpm/core/jobcontrol.job.json/2016/4/8/15/21/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_81
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.job, new CancelJob());
-        // curl -u admin:admin -X DELETE http://localhost:9090/bin/core/jobcontrol.cleanup.json/2016/4/12/9/50/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_0
+        // curl -u admin:admin -X DELETE http://localhost:9090/bin/cpm/core/jobcontrol.cleanup.json/2016/4/12/9/50/3d51ae17-ce12-4fa3-a87a-5dbfdd739093_0
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.cleanup, new CleanupJob());
 
     }

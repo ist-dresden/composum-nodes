@@ -20,7 +20,7 @@
                 event.preventDefault();
                 this.$resultTable.html('<tr><td class="pulse" colspan="5"><i class="fa fa-spinner fa-pulse"></i></td></tr>');
                 var query = this.$queryInput.val();
-                core.ajaxGet('/bin/core/package.query.json/' + encodeURIComponent(query), {
+                core.ajaxGet('/bin/cpm/package.query.json/' + encodeURIComponent(query), {
                     dataType: 'json'
                 }, _.bind(function (result) {
                     var queryWidget = this;

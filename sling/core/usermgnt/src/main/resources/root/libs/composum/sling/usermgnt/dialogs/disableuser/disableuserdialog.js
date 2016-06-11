@@ -35,7 +35,7 @@
                 var path = usermanagement.getCurrentPath();
                 var serializedData = this.form.$el.serialize();
                 core.ajaxPost(
-                    "/bin/core/usermanagement.disable.json",
+                    "/bin/cpm/usermanagement.disable.json",
                     serializedData,
                     {
                         dataType: 'post'

@@ -31,7 +31,7 @@
                 var rows = this.table.getSelections();
                 if (rows.length > 0) {
                     core.ajaxPut(
-                        "/bin/core/usermanagement.removefromgroup.json",
+                        "/bin/cpm/usermanagement.removefromgroup.json",
                         JSON.stringify({
                             authorizable: (rows[0].name),
                             group: usermanagement.current.node.name

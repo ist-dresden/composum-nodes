@@ -1,14 +1,14 @@
 <%@page session="false" pageEncoding="utf-8"%>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2"%>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0"%>
-<cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
+<cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
   <div id="browser-view-property-dialog" class="change property dialog modal fade"
        tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content form-panel default">
 
         <cpn:form classes="widget-form default" enctype="multipart/form-data"
-                  action="/bin/core/property.bin${browser.current.pathEncoded}">
+                  action="/bin/cpm/nodes/property.bin${browser.current.pathEncoded}">
 
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

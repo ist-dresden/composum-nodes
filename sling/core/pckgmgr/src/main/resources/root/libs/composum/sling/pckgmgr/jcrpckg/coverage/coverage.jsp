@@ -12,7 +12,7 @@
         </div>
         <div class="table-container">
             <cpn:table classes="coverage-table"
-                       path="/bin/core/package.coverage.json${pckg.path}"
+                       path="/bin/cpm/package.coverage.json${pckg.path}"
                        toolbar=".detail-content .detail-panel.coverage .table-toolbar">
             </cpn:table>
         </div>

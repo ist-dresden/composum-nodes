@@ -1,9 +1,12 @@
-package com.composum.sling.core.servlet;
+package com.composum.sling.nodes.servlet;
 
-import com.composum.sling.core.CoreConfiguration;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.mapping.MappingRules;
+import com.composum.sling.core.servlet.AbstractServiceServlet;
+import com.composum.sling.core.servlet.ServletOperation;
+import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.PropertyUtil;
@@ -45,7 +48,7 @@ import java.util.List;
  * The service servlet handling one single JCR property for one resource.
  */
 @SlingServlet(
-        paths = "/bin/core/property",
+        paths = "/bin/cpm/nodes/property",
         methods = {"GET", "POST", "PUT"}
 )
 public class PropertyServlet extends AbstractServiceServlet {
@@ -56,7 +59,7 @@ public class PropertyServlet extends AbstractServiceServlet {
     public static final StringFilter BINARY_PROPS_FILTER = new StringFilter.BlackList();
 
     @Reference
-    private CoreConfiguration coreConfig;
+    private NodesConfiguration coreConfig;
 
     //
     // Servlet operations

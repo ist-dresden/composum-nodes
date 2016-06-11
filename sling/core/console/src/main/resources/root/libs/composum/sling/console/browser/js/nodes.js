@@ -146,7 +146,7 @@
 
             setNode: function (node) {
                 this.$path.val(node.path);
-                core.getJson("/bin/core/node.mixins.json" + node.path,
+                core.getJson("/bin/cpm/nodes/node.mixins.json" + node.path,
                     _.bind(function (mixins) {
                         this.multi.reset(mixins.length);
                         var values = this.multi.$('input[name="value"]');
@@ -172,7 +172,7 @@
                 var mixinStrings = mixinValues(this.$('input[name="value"]'));
                 var path = this.$path.val();
 
-                core.ajaxPut("/bin/core/property.put.json" + path, JSON.stringify({
+                core.ajaxPut("/bin/cpm/nodes/property.put.json" + path, JSON.stringify({
                     name: 'jcr:mixinTypes',
                     multi: true,
                     value: mixinStrings,
@@ -223,7 +223,7 @@
                 event.preventDefault();
                 var parentPath = this.path.getValue();
                 var newNodeName = this.newname.getValue();
-                core.ajaxPut("/bin/core/node.copy.json" + parentPath, JSON.stringify({
+                core.ajaxPut("/bin/cpm/nodes/node.copy.json" + parentPath, JSON.stringify({
                     path: this.$node.val(),
                     name: newNodeName
                 }), {
@@ -276,7 +276,7 @@
                     var newPath = core.buildContentPath(targetPath, name);
                     this.submitPUT(
                         'move node',
-                        '/bin/core/node.move.json' + core.encodePath(oldPath), {
+                        '/bin/cpm/nodes/node.move.json' + core.encodePath(oldPath), {
                             name: name,
                             path: targetPath,
                             index: index
@@ -322,7 +322,7 @@
                 var newName = this.$newname.getValue();
                 var oldPath = core.buildContentPath(path, oldName);
                 var newPath = core.buildContentPath(path, newName);
-                core.ajaxPut("/bin/core/node.move.json" + oldPath,
+                core.ajaxPut("/bin/cpm/nodes/node.move.json" + oldPath,
                     JSON.stringify({
                         name: newName,
                         path: path
@@ -380,7 +380,7 @@
                 }
                 if (this.form.isValid()) {
                     var path = this.path.getValue();
-                    core.ajaxDelete("/bin/core/node.json" + core.encodePath(path),
+                    core.ajaxDelete("/bin/cpm/nodes/node.json" + core.encodePath(path),
                         {},
                         _.bind(function (result) {
                             $(document).trigger('path:deleted', [path]);

@@ -1,6 +1,6 @@
 package com.composum.sling.core.pckgmgr;
 
-import com.composum.sling.core.CoreConfiguration;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.concurrent.JobMonitor;
 import com.composum.sling.core.concurrent.JobUtil;
@@ -66,7 +66,7 @@ import java.util.Map;
 import static com.composum.sling.core.pckgmgr.util.PackageUtil.DATE_FORMAT;
 
 /** The servlet to provide download and upload of content packages and package definitions. */
-@SlingServlet(paths = "/bin/core/package", methods = {"GET", "POST", "PUT", "DELETE"})
+@SlingServlet(paths = "/bin/cpm/package", methods = {"GET", "POST", "PUT", "DELETE"})
 public class PackageServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageServlet.class);
@@ -83,7 +83,7 @@ public class PackageServlet extends AbstractServiceServlet {
     // service references
 
     @Reference
-    private CoreConfiguration coreConfig;
+    private NodesConfiguration nodesConfig;
 
     @Reference
     private JobManager jobManager;
@@ -110,7 +110,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
     @Override
     protected boolean isEnabled() {
-        return coreConfig.isEnabled(this);
+        return nodesConfig.isEnabled(this);
     }
 
     /** setup of the servlet operation set for this servlet instance */
@@ -526,7 +526,7 @@ public class PackageServlet extends AbstractServiceServlet {
      * The 'service' implementation based on the behaviour of the 'service' servlet provided by the CRX Package Manager.
      * <dl>
      * <dt>targetURL</dt>
-     * <dd>http://${sling.host}:${sling.port}${sling.context}/bin/core/package.service.html</dd>
+     * <dd>http://${sling.host}:${sling.port}${sling.context}/bin/cpm/package.service.html</dd>
      * </dl>
      */
     protected class ServiceOperation extends InstallOperation {

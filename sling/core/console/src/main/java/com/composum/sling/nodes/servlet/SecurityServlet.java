@@ -1,7 +1,10 @@
-package com.composum.sling.core.servlet;
+package com.composum.sling.nodes.servlet;
 
-import com.composum.sling.core.CoreConfiguration;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.servlet.AbstractServiceServlet;
+import com.composum.sling.core.servlet.ServletOperation;
+import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
@@ -50,7 +53,7 @@ import java.util.Map;
  * The service servlet to retrieve all general system settings.
  */
 @SlingServlet(
-        paths = "/bin/core/security",
+        paths = "/bin/cpm/nodes/security",
         methods = {"GET", "POST", "PUT", "DELETE"}
 )
 public class SecurityServlet extends AbstractServiceServlet {
@@ -62,7 +65,7 @@ public class SecurityServlet extends AbstractServiceServlet {
     public enum PolicyScope {local, effective}
 
     @Reference
-    private CoreConfiguration coreConfig;
+    private NodesConfiguration coreConfig;
 
     //
     // Servlet operations

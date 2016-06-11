@@ -1,11 +1,16 @@
-package com.composum.sling.core.servlet;
+package com.composum.sling.nodes.servlet;
 
+import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.config.FilterConfiguration;
 import com.composum.sling.core.exception.ParameterValidationException;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.mapping.MappingRules;
+import com.composum.sling.core.servlet.AbstractServiceServlet;
+import com.composum.sling.core.servlet.NodeTreeServlet;
+import com.composum.sling.core.servlet.ServletOperation;
+import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.RequestUtil;
@@ -52,6 +57,8 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +69,7 @@ import java.util.regex.Pattern;
  * The JCR nodes service servlet to walk though and modify the entire hierarchy.
  */
 @SlingServlet(
-        paths = "/bin/core/node",
+        paths = "/bin/cpm/nodes/node",
         methods = {"GET", "POST", "PUT", "DELETE"}
 )
 public class NodeServlet extends NodeTreeServlet {
@@ -83,6 +90,9 @@ public class NodeServlet extends NodeTreeServlet {
     public static final String KEY_UNFILTERD = "unfiltered";
 
     public static final Pattern NODE_PATH_PATTERN = Pattern.compile("^(/[^/]+)+$");
+
+    @Reference
+    protected NodesConfiguration nodesConfig;
 
     protected Map<String, ResourceFilter> nodeFilters = new LinkedHashMap<>();
 
@@ -135,8 +145,8 @@ public class NodeServlet extends NodeTreeServlet {
                 new ResourceFilter.FilterSet(ResourceFilter.FilterSet.Rule.and,
                         // the combination with the default mapping filter excludes 'rep:...' nodes
                         configuredFilter,
-                        coreConfig.getDefaultNodeFilter()),
-                coreConfig.getTreeIntermediateFilter());
+                        nodesConfig.getDefaultNodeFilter()),
+                nodesConfig.getTreeIntermediateFilter());
     }
 
     /**
@@ -158,7 +168,7 @@ public class NodeServlet extends NodeTreeServlet {
             }
         }
         if (filter == null) {
-            filter = coreConfig.getDefaultNodeFilter();
+            filter = nodesConfig.getDefaultNodeFilter();
         }
         return filter;
     }
@@ -171,8 +181,8 @@ public class NodeServlet extends NodeTreeServlet {
 
     public enum Operation {
         create, copy, move, reorder, delete, toggle,
-        tree, reference, mixins, resolve, typeahead, query, filters, map,
-        startScript, checkScript, stopScript
+        tree, reference, mixins, resolve, typeahead,
+        query, queryTemplates, filters, map
     }
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
@@ -184,7 +194,7 @@ public class NodeServlet extends NodeTreeServlet {
 
     @Override
     protected boolean isEnabled() {
-        return coreConfig.isEnabled(this);
+        return nodesConfig.isEnabled(this);
     }
 
     /**
@@ -195,10 +205,10 @@ public class NodeServlet extends NodeTreeServlet {
         super.init();
 
         // filter configuration
-        nodeFilters.put(KEY_REFERENCEABLE, buildTreeFilter(coreConfig.getReferenceableNodesFilter()));
+        nodeFilters.put(KEY_REFERENCEABLE, buildTreeFilter(nodesConfig.getReferenceableNodesFilter()));
         nodeFilters.put(KEY_UNFILTERD, ResourceFilter.ALL);
-        nodeFilters.put(KEY_PAGE, buildTreeFilter(coreConfig.getPageNodeFilter()));
-        nodeFilters.put(KEY_DEFAULT, coreConfig.getDefaultNodeFilter());
+        nodeFilters.put(KEY_PAGE, buildTreeFilter(nodesConfig.getPageNodeFilter()));
+        nodeFilters.put(KEY_DEFAULT, nodesConfig.getDefaultNodeFilter());
 
         // GET
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
@@ -221,6 +231,8 @@ public class NodeServlet extends NodeTreeServlet {
                 Operation.query, new JsonQueryOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.html,
                 Operation.query, new HtmlQueryOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.queryTemplates, new GetQueryTemplates());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
@@ -350,7 +362,7 @@ public class NodeServlet extends NodeTreeServlet {
                     QueryManager queryManager = workspace.getQueryManager();
 
                     Query query = queryManager.createQuery(queryString, queryLang);
-                    query.setLimit(coreConfig.getQueryResultLimit() + 1);
+                    query.setLimit(nodesConfig.getQueryResultLimit() + 1);
                     QueryResult result = query.execute();
 
                     ResourceFilter filter = getNodeFilter(request);
@@ -415,7 +427,7 @@ public class NodeServlet extends NodeTreeServlet {
             writer.name("summary").beginObject();
             writer.name("query").value(queryString);
             writer.name("count").value(count);
-            writer.name("limit").value(coreConfig.getQueryResultLimit());
+            writer.name("limit").value(nodesConfig.getQueryResultLimit());
             writer.endObject();
 
             writer.endObject();
@@ -442,7 +454,7 @@ public class NodeServlet extends NodeTreeServlet {
             NodeIterator iterator = result.getNodes();
 
             writer.append("<tbody>");
-            long limit = coreConfig.getQueryResultLimit();
+            long limit = nodesConfig.getQueryResultLimit();
             int count = 0;
             while (count < limit && iterator.hasNext()) {
                 Node node = iterator.nextNode();
@@ -519,8 +531,42 @@ public class NodeServlet extends NodeTreeServlet {
     }
 
     //
+    // Query templates
+    //
+
+    public class GetQueryTemplates implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws ServletException, IOException {
+
+            JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+            response.setStatus(HttpServletResponse.SC_OK);
+            JsonUtil.writeJsonArray(jsonWriter, nodesConfig.getQueryTemplates());
+        }
+    }
+
+    //
     // node retrieval
     //
+
+    /**
+     * extension hook for additional filters or sorting
+     *
+     * @param resource
+     * @param items
+     */
+    protected List<Resource> prepareTreeItems(ResourceHandle resource, List<Resource> items) {
+        if (!nodesConfig.getOrderableNodesFilter().accept(resource)) {
+            Collections.sort(items, new Comparator<Resource>() {
+                @Override
+                public int compare(Resource r1, Resource r2) {
+                    return getSortName(r1).compareTo(getSortName(r2));
+                }
+            });
+        }
+        return items;
+    }
 
     /**
      * similar to the 'tree' operation creates this operation a JSON object for the requested
@@ -531,9 +577,9 @@ public class NodeServlet extends NodeTreeServlet {
      * - 'label': 'name' or 'title' - selects the value to use for the nodes 'text' attribute
      * ' 'id': a parameter with the reference used instead of the id from the suffix
      * URL examples:
-     * - http://host/bin/core/node.reference.json/node-id
-     * - http://host/bin/core/node.reference.title.json/node-id
-     * - http://host/bin/core/node.reference.json?id=node-id
+     * - http://host/bin/cpm/nodes/node.reference.json/node-id
+     * - http://host/bin/cpm/nodes/node.reference.title.json/node-id
+     * - http://host/bin/cpm/nodes/node.reference.json?id=node-id
      */
     protected class ReferenceOperation implements ServletOperation {
 
@@ -566,7 +612,7 @@ public class NodeServlet extends NodeTreeServlet {
 
                         JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
                         response.setStatus(HttpServletResponse.SC_OK);
-                        writeJsonNode(jsonWriter, filter, resource, labelType, coreConfig, false);
+                        writeJsonNode(jsonWriter, filter, resource, labelType, false);
 
                     } else {
                         response.sendError(HttpServletResponse.SC_NOT_FOUND,
@@ -607,7 +653,7 @@ public class NodeServlet extends NodeTreeServlet {
 
                     JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
                     response.setStatus(HttpServletResponse.SC_OK);
-                    writeJsonNode(jsonWriter, filter, handle, labelType, coreConfig, false);
+                    writeJsonNode(jsonWriter, filter, handle, labelType, false);
 
                 } else {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND,
@@ -817,7 +863,7 @@ public class NodeServlet extends NodeTreeServlet {
                             session.save();
                             response.setStatus(HttpServletResponse.SC_OK);
                             writeJsonNode(jsonWriter, MappingRules.DEFAULT_NODE_FILTER,
-                                    newResource, LabelType.name, coreConfig, false);
+                                    newResource, LabelType.name, false);
 
                         } else {
 
@@ -896,7 +942,7 @@ public class NodeServlet extends NodeTreeServlet {
                         ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newNode.getPath()));
                         JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
                         writeJsonNode(jsonWriter, MappingRules.DEFAULT_NODE_FILTER,
-                                newResource, LabelType.name, coreConfig, false);
+                                newResource, LabelType.name, false);
 
                     } else {
                         response.sendError(HttpServletResponse.SC_BAD_REQUEST,
@@ -965,7 +1011,7 @@ public class NodeServlet extends NodeTreeServlet {
                     ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newNodePath));
                     JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
                     writeJsonNode(jsonWriter, MappingRules.DEFAULT_NODE_FILTER,
-                            newResource, LabelType.name, coreConfig, false);
+                            newResource, LabelType.name, false);
 
                 } else {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST,

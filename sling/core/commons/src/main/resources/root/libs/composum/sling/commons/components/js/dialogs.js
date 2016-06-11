@@ -209,7 +209,7 @@
                     this.busy = true;
                     var path = this.getValue();
                     if (path.indexOf('/') === 0) {
-                        core.getJson('/bin/core/node.tree.json' + path, _.bind(function (data) {
+                        core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (data) {
                             this.tree.selectNode.apply(this.tree, [data.path]);
                         }, this));
                     }

@@ -3,7 +3,7 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects />
-<cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
+<cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
   <div class="node-view-panel detail-panel image">
     <a class="favorite-toggle fa fa-star-o" href="#" title="Tooggle favorite state"><span class="label">Favorite</span></a>
     <div class="node-tabs detail-tabs action-bar btn-toolbar" role="toolbar">

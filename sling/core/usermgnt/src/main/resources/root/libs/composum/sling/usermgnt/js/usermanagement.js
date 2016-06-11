@@ -18,7 +18,7 @@
     usermanagement.setCurrentPath = function(path) {
         if (! usermanagement.current || usermanagement.current.path != path) {
             if (path) {
-                core.getJson ('/bin/core/usermanagement.tree.json' + path, undefined, undefined,
+                core.getJson ('/bin/cpm/usermanagement.tree.json' + path, undefined, undefined,
                     _.bind (function(result) {
                         usermanagement.current = {
                             path: path,
@@ -77,7 +77,7 @@
         },
 
         dataUrlForPath: function(path) {
-            return '/bin/core/usermanagement.tree.json' + path;
+            return '/bin/cpm/usermanagement.tree.json' + path;
         },
 
         onNodeSelected: function(path, node, element) {

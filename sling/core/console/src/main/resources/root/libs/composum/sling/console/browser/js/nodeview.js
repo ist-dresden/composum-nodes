@@ -176,7 +176,7 @@
                 if (!this.busy) {
                     this.busy = true;
                     var url = event.currentTarget.contentDocument.URL;
-                    core.ajaxGet('/bin/core/node.resolve.json', {
+                    core.ajaxGet('/bin/cpm/nodes/node.resolve.json', {
                             data: {
                                 url: url
                             }
@@ -329,7 +329,7 @@
 
             setupStatus: function () {
                 var path = browser.getCurrentPath();
-                core.ajaxGet('/bin/core/jobcontrol.jobs.ACTIVE.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
+                core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ACTIVE.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
                     _.bind(function (data, msg, xhr) {
                         if (data && data.length > 0) {
                             this.scriptStarted();
@@ -347,7 +347,7 @@
                 // pollOutput on each check even if 'scriptIsRunning' is set to 'false'
                 this.pollOutput(_.bind(function () {
                     if (this.scriptIsRunning && this.scriptJob) {
-                        core.ajaxGet('/bin/core/jobcontrol.job.json/' + this.scriptJob['slingevent:eventId'], {},
+                        core.ajaxGet('/bin/cpm/core/jobcontrol.job.json/' + this.scriptJob['slingevent:eventId'], {},
                             _.bind(function (data, msg, xhr) {
                                 this.scriptJob = data;
                                 if (this.scriptJob['slingevent:finishedState']) {
@@ -382,7 +382,7 @@
                 var path = browser.getCurrentPath();
                 this.delay(); // cancel all open timeouts
                 this.logOffset = 0;
-                core.ajaxPost('/bin/core/jobcontrol.job.json', {
+                core.ajaxPost('/bin/cpm/core/jobcontrol.job.json', {
                         'event.job.topic': 'com/composum/sling/core/script/GroovyJobExecutor',
                         'reference': path,
                         '_charset_': 'UTF-8'
@@ -399,7 +399,7 @@
 
             cancelJob: function () {
                 if (this.scriptJob) {
-                    core.ajaxDelete('/bin/core/jobcontrol.job.json/' + this.scriptJob['slingevent:eventId'], {},
+                    core.ajaxDelete('/bin/cpm/core/jobcontrol.job.json/' + this.scriptJob['slingevent:eventId'], {},
                         _.bind(function (data, msg, xhr) {
                             this.logAppend('Script cancellation requested...\n');
                             this.delay(true);
@@ -417,7 +417,7 @@
                     }
                 }
                 if (jobId) {
-                    core.ajaxGet('/bin/core/jobcontrol.outfile.txt/' + jobId, {
+                    core.ajaxGet('/bin/cpm/core/jobcontrol.outfile.txt/' + jobId, {
                             headers: {
                                 Range: 'bytes=' + this.logOffset + '-' // get all output from last offset
                             }
@@ -470,7 +470,7 @@
                 this.$historyList.html('');
                 if (this.$bottomArea.hasClass('history')) {
                     var path = browser.getCurrentPath();
-                    core.ajaxGet('/bin/core/jobcontrol.jobs.ALL.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
+                    core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ALL.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
                         _.bind(function (data, msg, xhr) {
                             for (var i = 0; i < data.length; i++) {
                                 var state = data[i].jobState;
@@ -587,7 +587,7 @@
                     binary = this.binary.getValue();
                 }
                 var path = browser.getCurrentPath();
-                var url = '/bin/core/node.' + (download ? 'download.' : '') + binary + '.' + depth + '.json' + path;
+                var url = '/bin/cpm/nodes/node.' + (download ? 'download.' : '') + binary + '.' + depth + '.json' + path;
                 if (indent > 0) {
                     url += '?indent=' + indent;
                 }

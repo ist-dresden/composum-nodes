@@ -55,7 +55,7 @@
             enableUser: function () {
                 var path = usermanagement.current.node.name;
                 core.ajaxPost(
-                    "/bin/core/usermanagement.enable.json/" + path,
+                    "/bin/cpm/usermanagement.enable.json/" + path,
                     {
 
                     },

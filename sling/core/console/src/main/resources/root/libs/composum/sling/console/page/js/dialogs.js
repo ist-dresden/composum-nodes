@@ -57,7 +57,7 @@
             purgeAuditLog: function (event) {
                 event.preventDefault();
                 if (this.form.isValid()) {
-                    this.form.$el.attr('action', core.getContextUrl('/bin/core/jobcontrol.cleanup.json'));
+                    this.form.$el.attr('action', core.getContextUrl('/bin/cpm/core/jobcontrol.cleanup.json'));
                     this.submitForm(function (result) {
                     });
                 } else {

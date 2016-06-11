@@ -1,7 +1,7 @@
-package com.composum.sling.core.console;
+package com.composum.sling.nodes.console;
 
 import com.composum.sling.core.BeanContext;
-import com.composum.sling.core.CoreConfiguration;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.SlingHandle;
 import com.composum.sling.core.filter.ResourceFilter;
@@ -162,7 +162,7 @@ public class Consoles extends ConsolePage {
         Iterator<Resource> consoleContentResources = resolver.findResources(query, Query.XPATH);
         if (consoleContentResources != null) {
 
-            CoreConfiguration configuration = getSling().getService(CoreConfiguration.class);
+            NodesConfiguration configuration = getSling().getService(NodesConfiguration.class);
             String[] categories = configuration.getConsoleCategories();
             ResourceFilter consoleFilter = new ConsoleFilter(categories);
 

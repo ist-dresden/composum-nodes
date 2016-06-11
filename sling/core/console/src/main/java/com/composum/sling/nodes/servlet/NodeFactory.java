@@ -1,6 +1,7 @@
-package com.composum.sling.core.servlet;
+package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.exception.ParameterValidationException;
+import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.PropertyUtil;
 import com.composum.sling.core.util.ResourceUtil;

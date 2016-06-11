@@ -8,7 +8,7 @@
         <div class="modal-dialog">
             <div class="modal-content form-panel default">
 
-                <cpn:form classes="widget-form" action="/bin/core/package.create.json">
+                <cpn:form classes="widget-form" action="/bin/cpm/package.create.json">
 
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

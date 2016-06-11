@@ -2,7 +2,7 @@
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2"%>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0"%>
 <sling:defineObjects/>
-<cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
+<cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
   <div id="text-edit-dialog" class="dialog modal fade" role="dialog" aria-labelledby="Edit Text"
        aria-hidden="true">
     <div class="text-editor detail-panel">

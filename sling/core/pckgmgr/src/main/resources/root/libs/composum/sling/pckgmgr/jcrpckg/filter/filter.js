@@ -82,14 +82,14 @@
             setFilter: function (index, row) {
                 this.$index.val(index >= 0 ? index : -1);
                 if (row) {
-                    this.form.$el.attr('action', core.getContextUrl('/bin/core/package.filterChange.html' + pckgmgr.getCurrentPath()));
+                    this.form.$el.attr('action', core.getContextUrl('/bin/cpm/package.filterChange.html' + pckgmgr.getCurrentPath()));
                     this.form.$el.removeClass('create').addClass('change');
                     this.$title.text('Change Package Filter');
                     this.$root.val(row.root);
                     this.$importMode.val(row.importMode);
                     this.filters.setRules(row.rules);
                 } else {
-                    this.form.$el.attr('action', core.getContextUrl('/bin/core/package.filterAdd.html' + pckgmgr.getCurrentPath()));
+                    this.form.$el.attr('action', core.getContextUrl('/bin/cpm/package.filterAdd.html' + pckgmgr.getCurrentPath()));
                     this.form.$el.removeClass('change').addClass('create');
                     this.$title.text('Create Package Filter');
                     this.$root.val('');
@@ -110,7 +110,7 @@
 
             deleteFilter: function (event) {
                 event.preventDefault();
-                core.ajaxPost('/bin/core/package.filterRemove.html' + pckgmgr.getCurrentPath(), {
+                core.ajaxPost('/bin/cpm/package.filterRemove.html' + pckgmgr.getCurrentPath(), {
                     index: this.$index.val()
                 }, {}, _.bind(function () {
                     this.hide();
@@ -242,7 +242,7 @@
                 event.preventDefault();
                 var row = this.getSelectedRow();
                 if (row) {
-                    core.ajaxPost('/bin/core/package.filterRemove.html' + pckgmgr.getCurrentPath(), {
+                    core.ajaxPost('/bin/cpm/package.filterRemove.html' + pckgmgr.getCurrentPath(), {
                         index: row.index
                     }, {}, _.bind(function () {
                         this.refresh();
@@ -264,7 +264,7 @@
                 event.preventDefault();
                 var row = this.getSelectedRow();
                 if (row) {
-                    core.ajaxPost('/bin/core/package.filterMove' + dir + '.html' + pckgmgr.getCurrentPath(), {
+                    core.ajaxPost('/bin/cpm/package.filterMove' + dir + '.html' + pckgmgr.getCurrentPath(), {
                         index: row.index
                     }, {}, _.bind(function () {
                         this.currentIndex += indexInc;

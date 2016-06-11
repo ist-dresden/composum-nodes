@@ -837,7 +837,7 @@ public class JsonUtil {
             case PropertyType.BINARY:
                 if (node != null && jcrValue != null) {
                     if (mapping.propertyFormat.binary == MappingRules.PropertyFormat.Binary.link) {
-                        String uri = "/bin/core/property.bin"
+                        String uri = "/bin/cpm/nodes/property.bin"
                                 + LinkUtil.encodePath(node.getPath())
                                 + "?name=" + LinkUtil.encodePath(name);
                         boolean htmlSafe = writer.isHtmlSafe();

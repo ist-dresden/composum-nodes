@@ -34,7 +34,7 @@
                 var path = usermanagement.getCurrentPath();
 
                 core.ajaxDelete(
-                    "/bin/core/usermanagement.authorizable.json" + path,
+                    "/bin/cpm/usermanagement.authorizable.json" + path,
                     {
                         dataType: 'json'
                     },

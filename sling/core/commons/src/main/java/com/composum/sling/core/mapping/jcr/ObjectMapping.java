@@ -2,7 +2,6 @@ package com.composum.sling.core.mapping.jcr;
 
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
-import com.composum.sling.core.mapping.Package;
 import org.apache.sling.api.resource.Resource;
 
 import javax.jcr.RepositoryException;
@@ -81,28 +80,6 @@ public class ObjectMapping {
     }
 
     //
-    // packages
-    //
-
-    protected static final ResourceFilter PACKAGE_FILTER = new ResourceFilter.ResourceTypeFilter(
-            new StringFilter.WhiteList(
-                    "^" + Package.RESOURCE_TYPE_PACKAGE + "(/.*)?$"
-            ));
-
-    public static class PackageStrategy implements MappingStrategy<Package> {
-
-        @Override
-        public Package fromResource(Resource resource) throws Exception {
-            return Package.fromResource(resource);
-        }
-
-        @Override
-        public void toResource(Resource resource, Package pkg) throws RepositoryException {
-            Package.toResource(resource, pkg);
-        }
-    }
-
-    //
     // filters
     //
 
@@ -153,7 +130,6 @@ public class ObjectMapping {
         void toResource(Resource resource, T object) throws RepositoryException;
     }
 
-    protected static final PackageStrategy PACKAGE_STRATEGY = new PackageStrategy();
     protected static final ResourceFilterStrategy RESOURCE_FILTER_STRATEGY = new ResourceFilterStrategy();
     protected static final StringFilterStrategy STRING_FILTER_STRATEGY = new StringFilterStrategy();
 
@@ -164,7 +140,6 @@ public class ObjectMapping {
 
     static {
         TO_RESOURCE_STRATEGIES = new HashMap<>();
-        TO_RESOURCE_STRATEGIES.put(Package.class, PACKAGE_STRATEGY);
         TO_RESOURCE_STRATEGIES.put(ResourceFilter.FilterSet.class, RESOURCE_FILTER_STRATEGY);
         TO_RESOURCE_STRATEGIES.put(ResourceFilter.ResourceTypeFilter.class, RESOURCE_FILTER_STRATEGY);
         TO_RESOURCE_STRATEGIES.put(ResourceFilter.MixinTypeFilter.class, RESOURCE_FILTER_STRATEGY);
@@ -179,8 +154,6 @@ public class ObjectMapping {
         TO_RESOURCE_STRATEGIES.put(StringFilter.All.class, STRING_FILTER_STRATEGY);
         FROM_RESOURCE_FILTERS = new ArrayList<>();
         FROM_RESOURCE_STRATEGIES = new ArrayList<>();
-        FROM_RESOURCE_FILTERS.add(PACKAGE_FILTER);
-        FROM_RESOURCE_STRATEGIES.add(PACKAGE_STRATEGY);
         FROM_RESOURCE_FILTERS.add(RESOURCE_FILTER_FILTER);
         FROM_RESOURCE_STRATEGIES.add(RESOURCE_FILTER_STRATEGY);
         FROM_RESOURCE_FILTERS.add(STRING_FILTER_FILTER);

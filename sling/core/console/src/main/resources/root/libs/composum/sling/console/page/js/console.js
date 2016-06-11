@@ -156,7 +156,7 @@
                     var path = this.getCurrentPath();
                     this.delay(); // cancel all open timeouts
                     this.logOffset = 0;
-                    core.ajaxPost('/bin/core/jobcontrol.job.json', _.extend({
+                    core.ajaxPost('/bin/cpm/core/jobcontrol.job.json', _.extend({
                             'event.job.topic': this.jobTopic,
                             'reference': path,
                             '_charset_': 'UTF-8'
@@ -173,7 +173,7 @@
 
             cancelJob: function () {
                 if (this.currentJob) {
-                    core.ajaxDelete('/bin/core/jobcontrol.job.json/' + this.currentJob['slingevent:eventId'], {},
+                    core.ajaxDelete('/bin/cpm/core/jobcontrol.job.json/' + this.currentJob['slingevent:eventId'], {},
                         _.bind(function (data, msg, xhr) {
                             this.logAppend('Job cancellation requested...\n');
                             this.delay(true);
@@ -186,7 +186,7 @@
 
             setupStatus: function () {
                 var path = this.getCurrentPath();
-                core.ajaxGet('/bin/core/jobcontrol.jobs.ACTIVE.json' + path + '?topic=' + this.jobTopic, {},
+                core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ACTIVE.json' + path + '?topic=' + this.jobTopic, {},
                     _.bind(function (data, msg, xhr) {
                         if (data && data.length > 0) {
                             this.jobStarted(data[0]);
@@ -237,7 +237,7 @@
                 // pollOutput on each check even if 'currentJob' is undefined
                 this.pollOutput(_.bind(function () {
                     if (this.currentJob) {
-                        core.ajaxGet('/bin/core/jobcontrol.job.json/' + this.currentJob['slingevent:eventId'], {},
+                        core.ajaxGet('/bin/cpm/core/jobcontrol.job.json/' + this.currentJob['slingevent:eventId'], {},
                             _.bind(function (data, msg, xhr) {
                                 this.currentJob = data;
                                 if (this.currentJob['slingevent:finishedState']) {
@@ -275,7 +275,7 @@
                     }
                 }
                 if (jobId) {
-                    core.ajaxGet('/bin/core/jobcontrol.outfile.txt/' + jobId, {
+                    core.ajaxGet('/bin/cpm/core/jobcontrol.outfile.txt/' + jobId, {
                             headers: {
                                 Range: 'bytes=' + this.logOffset + '-' // get all output from last offset
                             }
@@ -349,7 +349,7 @@
                 }
                 this.$auditList.html('');
                 var path = this.getCurrentPath();
-                core.ajaxGet('/bin/core/jobcontrol.jobs.ALL.json' + path + '?topic=' + this.jobTopic, {},
+                core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ALL.json' + path + '?topic=' + this.jobTopic, {},
                     _.bind(function (data, msg, xhr) {
                         for (var i = 0; i < data.length; i++) {
                             var state = data[i].jobState;

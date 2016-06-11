@@ -1,6 +1,6 @@
 package com.composum.sling.core.usermanagement.core;
 
-import com.composum.sling.core.CoreConfiguration;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
@@ -50,7 +50,7 @@ import java.util.Set;
  * @since 26.10.2015
  */
 @SlingServlet(
-        paths = "/bin/core/usermanagement",
+        paths = "/bin/cpm/usermanagement",
         methods = {"GET", "PUT", "POST", "DELETE"}
 )
 public class UserManagementServlet extends AbstractServiceServlet {
@@ -64,7 +64,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
     @Reference
-    private CoreConfiguration coreConfig;
+    private NodesConfiguration coreConfig;
 
     @Override protected boolean isEnabled() {
         return coreConfig.isEnabled(this);
@@ -77,14 +77,14 @@ public class UserManagementServlet extends AbstractServiceServlet {
         // GET
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.authorizables, new GetAllAuthorizables());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.users, new GetUsers());
-        // curl -u admin:admin http://localhost:9090/bin/core/usermanagement.user.json/eeee
+        // curl -u admin:admin http://localhost:9090/bin/cpm/usermanagement.user.json/eeee
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.user, new GetUser());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.groups, new GetGroups());
-        // curl -u admin:admin http://localhost:9090/bin/core/usermanagement.group.json/mygroup
+        // curl -u admin:admin http://localhost:9090/bin/cpm/usermanagement.group.json/mygroup
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.group, new GetGroup());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.tree, new GetTree());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.properties, new GetProperties());
-        // curl -u admin:admin http://localhost:9090/bin/core/usermanagement.groupsofauthorizable.json/eeee
+        // curl -u admin:admin http://localhost:9090/bin/cpm/usermanagement.groupsofauthorizable.json/eeee
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.groupsofauthorizable, new GetGroupsOfAuthorizable());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.query, new QueryAuthorizables());
 

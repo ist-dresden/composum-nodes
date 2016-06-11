@@ -37,7 +37,7 @@
                 event.preventDefault();
                 this.$resultTable.html('<tbody><tr><td class="pulse"><i class="fa fa-spinner fa-pulse"></i></td></tr></tbody>');
                 var query = this.$queryInput.val();
-                core.ajaxGet('/bin/core/node.query.html', {
+                core.ajaxGet('/bin/cpm/nodes/node.query.html', {
                     data: {
                         query: this.prepareQuery(query),
                         filter: this.isFiltered() ? browser.tree.filter : ''
@@ -181,7 +181,7 @@
             },
 
             loadTemplates: function () {
-                core.getJson("/bin/core/system.queryTemplates.json", _.bind(function (templates) {
+                core.getJson("/bin/cpm/core/system.queryTemplates.json", _.bind(function (templates) {
                     this.queryTemplates = templates;
                 }, this));
             }

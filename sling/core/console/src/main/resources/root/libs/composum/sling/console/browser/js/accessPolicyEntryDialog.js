@@ -26,7 +26,7 @@
                 this.$principal.typeahead({
                     minLength: 1,
                     source: function (query, callback) {
-                        core.getJson('/bin/core/security.principals.json/' + query, function (data) {
+                        core.getJson('/bin/cpm/nodes/security.principals.json/' + query, function (data) {
                             callback(data);
                         });
                     }
@@ -45,7 +45,7 @@
 
             loadSupportedPrivileges: function () {
                 this.privilegeCombobox.$el.html('');
-                core.getJson("/bin/core/security.supportedPrivileges.json" + browser.getCurrentPath(),
+                core.getJson("/bin/cpm/nodes/security.supportedPrivileges.json" + browser.getCurrentPath(),
                     _.bind(function (privileges) {
                         for (var i = 0; i < privileges.length; i++) {
                             this.$privilege.append('<option value="' + privileges[i] + '">' + privileges[i] + '</option>');
@@ -56,7 +56,7 @@
             loadRestrictionNames: function () {
                 this.restrictionCombobox.$el.html('');
                 this.$restriction.append('<option value=""></option>');
-                core.getJson("/bin/core/security.restrictionNames.json" + browser.getCurrentPath(),
+                core.getJson("/bin/cpm/nodes/security.restrictionNames.json" + browser.getCurrentPath(),
                     _.bind(function (restrictionNames) {
                         for (var i = 0; i < restrictionNames.length; i++) {
                             this.$restriction.append('<option value="' + restrictionNames[i] + '">' + restrictionNames[i] + '</option>');
@@ -91,7 +91,7 @@
                 var privilegeStrings = privilegeValues($('select[name="privilege"]'));
                 var restrictionStrings = restrictionValues($('select[name="restrictionKey"]'));
 
-                core.ajaxPut("/bin/core/security.accessPolicy.json" + path,
+                core.ajaxPut("/bin/cpm/nodes/security.accessPolicy.json" + path,
                     JSON.stringify({
                         principal: $(".form-control[name='principal']")[0].value,
                         allow: $(".form-control>div.allow input")[0].checked,

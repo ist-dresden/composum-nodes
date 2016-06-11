@@ -1,4 +1,4 @@
-package com.composum.sling.core.browser;
+package com.composum.sling.nodes.browser;
 
 import com.composum.sling.core.AbstractServletBean;
 import com.composum.sling.core.BeanContext;

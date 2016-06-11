@@ -47,13 +47,13 @@
                 if (!data) {
                     data = this.toJSON();
                 }
-                core.ajaxPut("/bin/core/property.json" + this.get('path'), JSON.stringify(data), {
+                core.ajaxPut("/bin/cpm/nodes/property.json" + this.get('path'), JSON.stringify(data), {
                     dataType: 'json'
                 }, onSuccess, onError);
             },
 
             destroy: function (onSuccess, onError) {
-                core.ajaxDelete("/bin/core/property.remove.json" + this.get('path'), {
+                core.ajaxDelete("/bin/cpm/nodes/property.remove.json" + this.get('path'), {
                     data: JSON.stringify({
                         "names": [this.get('name')]
                     }),
@@ -200,7 +200,7 @@
             },
 
             loadTypes: function () {
-                core.getJson("/bin/core/system.propertyTypes.json", _.bind(function (propertyTypes) {
+                core.getJson("/bin/cpm/core/system.propertyTypes.json", _.bind(function (propertyTypes) {
                     for (var i = 0; i < propertyTypes.length; i++) {
                         this.$type.append('<option value="' + propertyTypes[i] + '">' + propertyTypes[i] + '</option>');
                     }

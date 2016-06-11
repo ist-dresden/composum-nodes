@@ -1,4 +1,4 @@
-package com.composum.sling.core.browser;
+package com.composum.sling.nodes.browser;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.sling.SlingServlet;

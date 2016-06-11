@@ -40,7 +40,7 @@
                 var path = usermanagement.current.node.name;
                 this.state.load = true;
                 core.ajaxGet(
-                    "/bin/core/usermanagement.groupsofauthorizable.json/" + path,
+                    "/bin/cpm/usermanagement.groupsofauthorizable.json/" + path,
                     {dataType: 'json'},
                     _.bind (function (result) {
                         var formattedResult = [];

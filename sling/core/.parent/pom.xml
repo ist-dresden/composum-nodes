@@ -39,7 +39,7 @@
         <sling.host>localhost</sling.host>
         <sling.port>9090</sling.port>
         <sling.context></sling.context>
-        <package.install>/bin/core/package.service.html</package.install>
+        <package.install>/bin/cpm/package.service.html</package.install>
         <sling.user>admin</sling.user>
         <sling.password>admin</sling.password>
     </properties>

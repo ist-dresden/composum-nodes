@@ -1,8 +1,11 @@
-package com.composum.sling.core.servlet;
+package com.composum.sling.nodes.servlet;
 
-import com.composum.sling.core.CoreConfiguration;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
+import com.composum.sling.core.servlet.AbstractServiceServlet;
+import com.composum.sling.core.servlet.ServletOperation;
+import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
@@ -39,7 +42,7 @@ import java.util.List;
  * @since 28.09.2015
  */
 @SlingServlet(
-        paths = "/bin/core/version",
+        paths = "/bin/cpm/nodes/version",
         methods = {"GET", "PUT", "POST"}
 )
 public class VersionServlet extends AbstractServiceServlet {
@@ -53,7 +56,7 @@ public class VersionServlet extends AbstractServiceServlet {
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
     @Reference
-    private CoreConfiguration coreConfig;
+    private NodesConfiguration coreConfig;
 
     @Override protected boolean isEnabled() {
         return coreConfig.isEnabled(this);
