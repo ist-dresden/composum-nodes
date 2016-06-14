@@ -181,7 +181,7 @@
             },
 
             loadTemplates: function () {
-                core.getJson("/bin/cpm/core/system.queryTemplates.json", _.bind(function (templates) {
+                core.getJson("/bin/cpm/nodes/node.queryTemplates.json", _.bind(function (templates) {
                     this.queryTemplates = templates;
                 }, this));
             }
