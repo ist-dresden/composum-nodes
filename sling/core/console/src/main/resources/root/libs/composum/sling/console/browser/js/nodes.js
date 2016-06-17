@@ -45,6 +45,7 @@
                 this.$panel = this.$('.form-panel');
                 this.$path = this.$('input[name="path"]');
                 this.$type = this.$('input[name="type"]');
+                this.$indexType = this.$('input[name="indexType"]');
                 this.$name = this.$('input[name="name"]');
                 this.$file = this.$('input[name="file"]');
                 this.$type.on('change.type', _.bind(this.typeChanged, this));
@@ -80,6 +81,8 @@
                 var value = this.$type.val();
                 if (value && value.match(/(file|[Rr]esource)$/)) {
                     this.setTypeView('binary');
+                } else if (value && value.match(/^oak:QueryIndexDefinition/)) {
+                    this.setTypeView('index');
                 } else if (value && !value.match(/^(nt|rep):/)) {
                     this.setTypeView('sling');
                 } else if (value && value.match(/^(nt|sling):linked.*/)) {
@@ -93,7 +96,7 @@
              * selects the type class of the form panel to switch to the appropriate dialog variation
              */
             setTypeView: function (type) {
-                this.$panel.removeClass('default binary sling linked'); // remove all type classes
+                this.$panel.removeClass('default binary sling linked index'); // remove all type classes
                 this.$panel.addClass(type); // set the specified type class at the form panel
             },
 

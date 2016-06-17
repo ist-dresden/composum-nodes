@@ -51,6 +51,11 @@
               <input name="resourceType" class="widget text-field-widget form-control" type="text"
                      placeholder="enter the Sling resource type if useful" />
             </div>
+            <div class="form-group index">
+              <label class="control-label">Index Type (property | ordered)</label>
+              <input name="indexType" class="widget text-field-widget form-control" type="text"
+                     placeholder="enter the type of index" />
+            </div>
             <div class="form-group linked">
               <label class="control-label">Linked File Path</label>
               <div class="path input-group widget path-widget" data-filter="referenceable">

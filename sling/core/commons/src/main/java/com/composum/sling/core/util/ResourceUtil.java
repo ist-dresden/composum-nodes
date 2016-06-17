@@ -30,6 +30,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
             SlingConstants.NAMESPACE_PREFIX + ":" + SlingConstants.PROPERTY_RESOURCE_SUPER_TYPE;
     public static final String CONTENT_NODE = "jcr:content";
 
+    public static final String TYPE_OAKINDEX = "oak:QueryIndexDefinition";
     public static final String TYPE_FILE = "nt:file";
     public static final String TYPE_LINKED_FILE = "nt:linkedFile";
     public static final String TYPE_RESOURCE = "nt:resource";

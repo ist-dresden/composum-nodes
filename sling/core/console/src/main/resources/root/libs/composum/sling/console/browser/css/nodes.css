@@ -1,24 +1,35 @@
 
 #node-create-dialog .form-panel.default .binary,
 #node-create-dialog .form-panel.default .linked,
+#node-create-dialog .form-panel.default .index,
 #node-create-dialog .form-panel.default .sling {
     display: none;
 }
 
 #node-create-dialog .form-panel.binary .default,
 #node-create-dialog .form-panel.binary .linked,
+#node-create-dialog .form-panel.binary .index,
 #node-create-dialog .form-panel.binary .sling {
     display: none;
 }
 
 #node-create-dialog .form-panel.linked .default,
+#node-create-dialog .form-panel.linked .index,
 #node-create-dialog .form-panel.linked .binary,
 #node-create-dialog .form-panel.linked .sling {
     display: none;
 }
 
 #node-create-dialog .form-panel.sling .default,
+#node-create-dialog .form-panel.sling .index,
 #node-create-dialog .form-panel.sling .linked,
 #node-create-dialog .form-panel.sling .binary {
+    display: none;
+}
+
+#node-create-dialog .form-panel.index .default,
+#node-create-dialog .form-panel.index .sling,
+#node-create-dialog .form-panel.index .linked,
+#node-create-dialog .form-panel.index .binary {
     display: none;
 }
