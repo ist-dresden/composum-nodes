@@ -1,6 +1,6 @@
 package com.composum.sling.core.pckgmgr.view;
 
-import com.composum.sling.core.AbstractSlingBean;
+import com.composum.sling.core.console.ConsoleSlingBean;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -11,7 +11,7 @@ import javax.jcr.RepositoryException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PackageManagerBean extends AbstractSlingBean {
+public class PackageManagerBean extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageManagerBean.class);
 

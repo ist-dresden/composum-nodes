@@ -97,6 +97,12 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
+            <name>map</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Boolean</type>
+        </attribute>
+        <attribute>
             <name>role</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
@@ -134,6 +140,12 @@
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>map</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Boolean</type>
         </attribute>
         <attribute>
             <name>role</name>
@@ -287,14 +299,21 @@
 
     <function>
         <name>url</name>
-        <description>transforms a string value for URL (complete) rendering</description>
+        <description>Builds the URL for a repository path using the LinkUtil.getURL() method</description>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String url(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
     </function>
 
     <function>
+        <name>mappedUrl</name>
+        <description>Builds the URL for a repository path using the LinkUtil.getMappedURL() method</description>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String unmappedUrl(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
+    </function>
+
+    <function>
         <name>unmappedUrl</name>
-        <description>transforms a string value for URL (complete) rendering</description>
+        <description>Builds the URL for a repository path using the LinkUtil.getUNappedURL() method</description>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String unmappedUrl(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
     </function>
