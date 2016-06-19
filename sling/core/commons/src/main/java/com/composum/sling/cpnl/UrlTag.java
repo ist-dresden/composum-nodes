@@ -20,6 +20,7 @@ public abstract class UrlTag extends CpnlBodyTagSupport {
     private String tagName;
     private String urlAttr;
     private String url;
+    private Boolean map;
     private String role;
     private String classes;
 
@@ -47,6 +48,10 @@ public abstract class UrlTag extends CpnlBodyTagSupport {
         return StringUtils.isNotBlank(urlAttr) ? urlAttr : getDefaultUrlAttr();
     }
 
+    public void setMap(Boolean mapIt) {
+        this.map = mapIt;
+    }
+
     public void setRole(String role) {
         this.role = role;
     }
@@ -60,6 +65,7 @@ public abstract class UrlTag extends CpnlBodyTagSupport {
         tagName = null;
         urlAttr = null;
         url = null;
+        map = null;
         role = null;
         classes = null;
     }
@@ -69,9 +75,15 @@ public abstract class UrlTag extends CpnlBodyTagSupport {
         writer.write(" ");
         writer.write(getUrlAttr());
         writer.write("=\"");
-        writer.write(rendererContext.mapClientlibURLs()
-                ? CpnlElFunctions.url(request, url)
-                : CpnlElFunctions.unmappedUrl(request, url));
+        String urlValue = null;
+        if (map != null) {
+            urlValue = map
+                    ? CpnlElFunctions.mappedUrl(request, url)
+                    : CpnlElFunctions.unmappedUrl(request, url);
+        } else {
+            urlValue = CpnlElFunctions.url(request, url);
+        }
+        writer.write(urlValue);
         writer.write("\"");
         if (StringUtils.isNotBlank(role)) {
             writer.write(" role=\"");

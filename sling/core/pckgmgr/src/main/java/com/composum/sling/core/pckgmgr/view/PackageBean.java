@@ -1,7 +1,7 @@
 package com.composum.sling.core.pckgmgr.view;
 
-import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.console.ConsoleSlingBean;
 import com.composum.sling.core.pckgmgr.PackageJobExecutor;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import com.composum.sling.core.util.LinkUtil;
@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-public class PackageBean extends AbstractSlingBean {
+public class PackageBean extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageBean.class);
 

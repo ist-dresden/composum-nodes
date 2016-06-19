@@ -1,8 +1,8 @@
 package com.composum.sling.core.browser;
 
-import com.composum.sling.core.AbstractServletBean;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.console.ConsoleServletBean;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BrowserBean extends AbstractServletBean {
+public class BrowserBean extends ConsoleServletBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(BrowserBean.class);
 
@@ -51,6 +51,7 @@ public class BrowserBean extends AbstractServletBean {
         protected String path;
 
         protected String pathUrl;
+        protected String mappedUrl;
         protected String url;
 
         protected String mimeType;
@@ -106,6 +107,16 @@ public class BrowserBean extends AbstractServletBean {
         /**
          * Returns a URL to the nodes View with resolver mapping.
          */
+        public String getMappedUrl() {
+            if (mappedUrl == null) {
+                mappedUrl = LinkUtil.getMappedUrl(getRequest(), getPath());
+            }
+            return mappedUrl;
+        }
+
+        /**
+         * Returns a URL to the nodes View probably with resolver mapping.
+         */
         public String getUrl() {
             if (url == null) {
                 url = LinkUtil.getUrl(getRequest(), getPath());
@@ -143,6 +154,13 @@ public class BrowserBean extends AbstractServletBean {
 
     /**
      * Returns a URL to the current nodes View with resolver mapping.
+     */
+    public String getMappedUrl() {
+        return getCurrent().getMappedUrl();
+    }
+
+    /**
+     * Returns a URL to the current nodes View with mapping according to the configuration.
      */
     public String getCurrentUrl() {
         return getCurrent().getUrl();

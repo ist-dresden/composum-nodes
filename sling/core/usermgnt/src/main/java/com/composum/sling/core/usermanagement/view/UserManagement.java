@@ -1,6 +1,6 @@
 package com.composum.sling.core.usermanagement.view;
 
-import com.composum.sling.core.AbstractSlingBean;
+import com.composum.sling.core.console.ConsoleSlingBean;
 import com.composum.sling.core.filter.StringFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
@@ -12,7 +12,7 @@ import javax.jcr.RepositoryException;
 /**
  * Created by Mirko Zeibig on 16.11.15.
  */
-public class UserManagement extends AbstractSlingBean {
+public class UserManagement extends ConsoleSlingBean {
 
     public String getViewType() {
         try {

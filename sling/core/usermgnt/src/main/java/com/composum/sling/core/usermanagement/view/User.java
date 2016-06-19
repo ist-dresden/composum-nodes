@@ -1,9 +1,10 @@
 package com.composum.sling.core.usermanagement.view;
 
-import com.composum.sling.core.AbstractSlingBean;
+import com.composum.sling.core.console.ConsoleSlingBean;
 import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.user.*;
+import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.security.user.UserManager;
 
 import javax.jcr.RepositoryException;
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.List;
 /**
  * Created by mzeibig on 16.11.15.
  */
-public class User extends AbstractSlingBean {
+public class User extends ConsoleSlingBean {
     private org.apache.jackrabbit.api.security.user.User user;
 
     public org.apache.jackrabbit.api.security.user.User getUser() throws RepositoryException {
