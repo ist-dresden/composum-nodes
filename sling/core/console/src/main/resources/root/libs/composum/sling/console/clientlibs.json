@@ -95,7 +95,7 @@
         "embed": "jslibs/bootstrap-datetimepicker/4.14.30/js/bootstrap-datetimepicker.min.js"
       },
       "fileinput": {
-        "embed": "jslibs/bootstrap-fileinput/4.1.8/js/fileinput.min.js"
+        "embed": "jslibs/bootstrap-fileinput/4.3.2/js/fileinput.min.js"
       },
       "split-pane": {
         "embed": "jslibs/jquery/split-pane/snapshot/split-pane.js"
