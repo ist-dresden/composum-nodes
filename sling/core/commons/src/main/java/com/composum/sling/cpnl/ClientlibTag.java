@@ -23,12 +23,12 @@ public class ClientlibTag extends CpnlBodyTagSupport {
 
     public static final String ALREADY_EMBEDDED = "clientlib.alreadyEmbedded";
 
-    protected Clientlib.Type type;
+    protected String type;
     protected String path;
     protected Map<String, String> properties = new LinkedHashMap<>();
 
     public void setType(String type) {
-        this.type = Clientlib.Type.valueOf(type);
+        this.type = type;
     }
 
     public void setPath(String path) {
@@ -47,14 +47,14 @@ public class ClientlibTag extends CpnlBodyTagSupport {
         properties.clear();
     }
 
-    protected Clientlib.Type getType() {
+    protected String getType() {
         if (type == null) {
             String ext = StringUtils.substringAfterLast(path, ".").toLowerCase();
             try {
                 ext = ext.replaceAll("(png|jpg)", "img");
-                type = Clientlib.Type.valueOf(ext);
+                type = Clientlib.typeOf(ext).name();
             } catch (Exception ex) {
-                type = Clientlib.Type.link;
+                type = Clientlib.Type.link.name();
             }
         }
         return type;
@@ -65,7 +65,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
         try {
             RendererContext rendererContext = RendererContext.instance(new BeanContext.Page(pageContext), request);
 
-            Clientlib.Type type = getType();
+            String type = getType();
             Clientlib clientlib = new Clientlib(request, path, type);
 
             if (clientlib.isValid()) {
@@ -79,7 +79,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
                 if (StringUtils.isNotBlank(path)) {
                     if (rendererContext.tryAndRegister(path)) {
                         JspWriter writer = this.pageContext.getOut();
-                        switch (type) {
+                        switch (Clientlib.typeOf(type)) {
                             case link:
                             case css:
                                 String rel = properties.get(Clientlib.PROP_REL);
