@@ -34,6 +34,17 @@ public class CpnlElFunctions {
     }
 
     /**
+     * Builds the URL for a repository path using the LinkUtil.getMappedURL() method.
+     *
+     * @param request the current request (domain host hint)
+     * @param path    the repository path
+     * @return the URL built in the context of the requested domain host
+     */
+    public static String mappedUrl(SlingHttpServletRequest request, String path) {
+        return LinkUtil.getMappedUrl(request, path);
+    }
+
+    /**
      * Builds the URL for a repository path using the LinkUtil.getUnmappedURL() method.
      *
      * @param request the current request (domain host hint)

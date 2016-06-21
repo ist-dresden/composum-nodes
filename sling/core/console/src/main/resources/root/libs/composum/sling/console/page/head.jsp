@@ -20,5 +20,5 @@
   <cpn:clientlib path="jslibs/bootstrap/3.3.2/css/bootstrap.min.css"/>
   <cpn:clientlib path="jslibs/jstree/3.3.0/themes/proton/style.min.css"/>
   <cpn:clientlib path="jslibs/x-editable/1.5.1/bootstrap3-editable/css/bootstrap-editable.css"/>
-  <cpn:clientlib path="jslibs/bootstrap-fileinput/4.1.8/css/fileinput.min.css"/>
+  <cpn:clientlib path="jslibs/bootstrap-fileinput/4.3.2/css/fileinput.min.css"/>
 <cpn:clientlib type="css" path="composum/sling/console/clientlibs/console"/>

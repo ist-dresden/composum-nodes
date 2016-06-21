@@ -19,7 +19,7 @@
     <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
       <ul class="nav navbar-nav">
         <c:forEach items="${status.consoles}" var="console">
-          <li class="nav-item ${console.name} link"><cpn:link href="${console.path}">${console.label}</cpn:link></li>
+          <li class="nav-item ${console.name} link"><a href="${console.url}">${console.label}</a></li>
         </c:forEach>
       </ul>
       <ul class="system nav navbar-nav navbar-right">

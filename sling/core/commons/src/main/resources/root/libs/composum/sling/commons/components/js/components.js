@@ -633,16 +633,17 @@
 
             initialize: function (options) {
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
-                var dataOptions = this.$el.attr('data-options');
+                var dataOptions = this.$el.data('options');
                 if (dataOptions) {
                     if (dataOptions.indexOf('hidePreview') >= 0) {
-                        options.showUpload = false;
+                        options.showPreview = false;
+                        options.showUploadedThumbs = false;
                     }
                     if (dataOptions.indexOf('showUpload') >= 0) {
                         options.showUpload = true;
                     }
                 }
-                var dataType = this.$el.attr('data-type');
+                var dataType = this.$el.data('type');
                 if (dataType) {
                     options.fileType = dataType;
                 }

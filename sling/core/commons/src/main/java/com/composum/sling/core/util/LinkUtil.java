@@ -21,6 +21,8 @@ public class LinkUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(LinkUtil.class);
 
+    public static final String LINK_MAPPER = "localLinkMapper";
+
     public static final String EXT_HTML = ".html";
 
     public static final String PROP_TARGET = "sling:target";
@@ -35,10 +37,21 @@ public class LinkUtil {
      *
      * @param request the request context for path mapping (the result is always mapped)
      * @param url     the URL to use (complete) or the path to an addressed resource (without any extension)
-     * @return the mapped url for the referenced resource
+     * @return the probably mapped (depends on the configuration) url for the referenced resource
      */
     public static String getUrl(SlingHttpServletRequest request, String url) {
         return getUrl(request, url, null, null);
+    }
+
+    /**
+     * Builds a mapped link to a path (resource path) without selectors and a determined extension.
+     *
+     * @param request the request context for path mapping (the result is always mapped)
+     * @param url     the URL to use (complete) or the path to an addressed resource (without any extension)
+     * @return the mapped url for the referenced resource
+     */
+    public static String getMappedUrl(SlingHttpServletRequest request, String url) {
+        return getUrl(request, url, null, null, LinkMapper.RESOLVER);
     }
 
     /**
@@ -46,14 +59,14 @@ public class LinkUtil {
      *
      * @param request the request context for path mapping (the result is always mapped)
      * @param url     the URL to use (complete) or the path to an addressed resource (without any extension)
-     * @return the mapped url for the referenced resource
+     * @return the unmapped url for the referenced resource
      */
     public static String getUnmappedUrl(SlingHttpServletRequest request, String url) {
-        return getUrl(request, url, null, null, false);
+        return getUrl(request, url, null, null, LinkMapper.CONTEXT);
     }
 
     /**
-     * Builds a mapped link to a path (resource path) without selectors and with the given extension.
+     * Builds a (mapped) link to a path (resource path) without selectors and with the given extension.
      *
      * @param request   the request context for path mapping (the result is always mapped)
      * @param url       the URL to use (complete) or the path to an addressed resource (without any extension)
@@ -75,7 +88,8 @@ public class LinkUtil {
      */
     public static String getUrl(SlingHttpServletRequest request, String url,
                                 String selectors, String extension) {
-        return getUrl(request, url, selectors, extension, true);
+        LinkMapper mapper = (LinkMapper) request.getAttribute(LINK_MAPPER);
+        return getUrl(request, url, selectors, extension, mapper != null ? mapper : LinkMapper.RESOLVER);
     }
 
     /**
@@ -85,11 +99,11 @@ public class LinkUtil {
      * @param url       the URL to use (complete) or the path to an addressed resource (without any extension)
      * @param selectors an optional selector string with all necessary selectors (can be 'null')
      * @param extension an optional extension (can be 'null' for extension determination)
-     * @param mapUrl    if 'true': use Resolver for a final URL mapping
+     * @param mapper    the mapping strategy for the final link mapping
      * @return the mapped url for the referenced resource
      */
     public static String getUrl(SlingHttpServletRequest request, String url,
-                                String selectors, String extension, boolean mapUrl) {
+                                String selectors, String extension, LinkMapper mapper) {
 
         // skip blank urls
         if (StringUtils.isBlank(url)) {
@@ -110,7 +124,7 @@ public class LinkUtil {
                 try {
                     String redirect = getFinalTarget(resource);
                     if (StringUtils.isNotBlank(redirect)) {
-                        return getUrl(request, redirect, selectors, extension);
+                        return getUrl(request, redirect, selectors, extension, mapper);
                     }
                 } catch (RedirectLoopException rlex) {
                     LOG.error(rlex.toString());
@@ -121,10 +135,8 @@ public class LinkUtil {
             }
 
             // map the path (the url) with the resource resolver (encodes the url)
-            if (mapUrl) {
-                url = resolver.map(request, url);
-            } else {
-                url = request.getContextPath() + url;
+            if (mapper != null) {
+                url = mapper.mapUri(request, url);
             }
 
             if (StringUtils.isNotBlank(extension)) {

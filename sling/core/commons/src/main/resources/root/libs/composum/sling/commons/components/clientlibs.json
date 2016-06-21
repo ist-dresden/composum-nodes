@@ -47,7 +47,7 @@
         "embed": "jslibs/typeahead/3.1.0/bootstrap3-typeahead.min.js"
       },
       "fileinput": {
-        "embed": "jslibs/bootstrap-fileinput/4.1.8/js/fileinput.min.js"
+        "embed": "jslibs/bootstrap-fileinput/4.3.2/js/fileinput.min.js"
       },
       "components": {
         "embed": "composum/sling/commons/components/clientlibs/components"

@@ -5,6 +5,7 @@ import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.SlingHandle;
 import com.composum.sling.core.filter.ResourceFilter;
+import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -110,6 +111,10 @@ public class Consoles extends ConsolePage {
 
         public String getPath() {
             return path;
+        }
+
+        public String getUrl() {
+            return LinkUtil.getUnmappedUrl(getRequest(), getPath());
         }
 
         @Override

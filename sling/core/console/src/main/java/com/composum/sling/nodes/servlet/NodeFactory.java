@@ -17,6 +17,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,6 +34,7 @@ public class NodeFactory {
 
     public NodeFactory() {
         strategyMap = new HashMap<>();
+        strategyMap.put(ResourceUtil.TYPE_OAKINDEX, new OakIndexStrategy());
         strategyMap.put(ResourceUtil.TYPE_FILE, new NtFileStrategy());
         strategyMap.put(ResourceUtil.TYPE_LINKED_FILE, new NtLinkedFileStrategy());
         strategyMap.put(ResourceUtil.TYPE_RESOURCE, new NtResourceStrategy());
@@ -71,6 +73,28 @@ public class NodeFactory {
 
             if (StringUtils.isNotBlank(parameters.resourceType)) {
                 node.setProperty(ResourceUtil.PROP_RESOURCE_TYPE, parameters.resourceType);
+            }
+
+            return node;
+        }
+    }
+
+    public static class OakIndexStrategy implements TypeStrategy {
+
+        public Node createNode(SlingHttpServletRequest request, Node parentNode,
+                               String name, NodeServlet.NodeParameters params)
+                throws RepositoryException, IOException, ParameterValidationException {
+
+            Node node = parentNode.addNode(name, params.type);
+
+            RequestParameterMap parameters = request.getRequestParameterMap();
+
+            Property property = null;
+
+            RequestParameter idxType = parameters.getValue("indexType");
+            if (idxType != null) {
+                property = PropertyUtil.setProperty(node, "type", idxType.getString(), PropertyType.STRING);
+                property = PropertyUtil.setProperty(node, "propertyNames", new ArrayList<String>(), PropertyType.NAME);
             }
 
             return node;
