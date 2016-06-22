@@ -285,13 +285,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
     }
 
     private boolean isVersionable(Node node) throws RepositoryException {
-        final NodeType[] mixinNodeTypes = node.getMixinNodeTypes();
-        for (final NodeType mixinNodeType : mixinNodeTypes) {
-            if (mixinNodeType.isNodeType(NodeType.MIX_VERSIONABLE) || mixinNodeType.isNodeType(NodeType.MIX_SIMPLE_VERSIONABLE)) {
-                return true;
-            }
-        }
-        return false;
+        return (node.isNodeType(NodeType.MIX_VERSIONABLE) || node.isNodeType(NodeType.MIX_SIMPLE_VERSIONABLE));
     }
     // receiving JSON ...
 
