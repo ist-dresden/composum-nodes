@@ -2,7 +2,7 @@ package com.composum.sling.nodes.browser;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
-import com.composum.sling.core.console.ConsoleServletBean;
+import com.composum.sling.nodes.console.ConsoleServletBean;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
 import org.apache.commons.lang3.StringEscapeUtils;

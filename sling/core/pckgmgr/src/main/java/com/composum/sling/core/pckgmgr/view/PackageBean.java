@@ -1,7 +1,7 @@
 package com.composum.sling.core.pckgmgr.view;
 
 import com.composum.sling.core.BeanContext;
-import com.composum.sling.core.console.ConsoleSlingBean;
+import com.composum.sling.nodes.console.ConsoleSlingBean;
 import com.composum.sling.core.pckgmgr.PackageJobExecutor;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import com.composum.sling.core.util.LinkUtil;

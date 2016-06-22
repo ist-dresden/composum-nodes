@@ -1,4 +1,4 @@
-package com.composum.sling.core.console;
+package com.composum.sling.nodes.console;
 
 import com.composum.sling.core.AbstractServletBean;
 import com.composum.sling.core.BeanContext;

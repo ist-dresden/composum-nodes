@@ -1,6 +1,6 @@
 package com.composum.sling.core.usermanagement.view;
 
-import com.composum.sling.core.console.ConsoleSlingBean;
+import com.composum.sling.nodes.console.ConsoleSlingBean;
 import com.composum.sling.core.filter.StringFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
