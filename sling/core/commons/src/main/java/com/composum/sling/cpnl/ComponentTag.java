@@ -21,13 +21,13 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     private static final Logger log = LoggerFactory.getLogger(ComponentTag.class);
 
-    private String id;
-    private String type;
-    private int scope = PageContext.PAGE_SCOPE;
-    private Boolean replace = null;
+    protected String var;
+    protected String type;
+    protected int scope = PageContext.PAGE_SCOPE;
+    protected Boolean replace = null;
 
-    private SlingBean component = null;
-    private Object replacedValue = null;
+    protected SlingBean component = null;
+    protected Object replacedValue = null;
 
     private static Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<Class<? extends SlingBean>, Field[]>();
 
@@ -50,7 +50,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
         try {
             if ((replacedValue = available()) == null || replace) {
                 component = createComponent();
-                pageContext.setAttribute(this.id, component, this.scope);
+                pageContext.setAttribute(this.var, component, this.scope);
             }
         } catch (ClassNotFoundException ex) {
             log.error("Class not found: " + this.type, ex);
@@ -66,20 +66,31 @@ public class ComponentTag extends CpnlBodyTagSupport {
     public int doEndTag() throws JspException {
         if (replacedValue != null) {
             if (component != null) {
-                pageContext.setAttribute(this.id, replacedValue, this.scope);
+                pageContext.setAttribute(this.var, replacedValue, this.scope);
             }
         } else {
-            pageContext.removeAttribute(this.id, this.scope);
+            pageContext.removeAttribute(this.var, this.scope);
         }
         super.doEndTag();
         return EVAL_PAGE;
     }
 
     /**
-     * Configure an id / variable name to store the component in the context
+     * Configure an var / variable name to store the component in the context
      */
     public void setId(String id) {
-        this.id = id;
+        setVar(id);
+    }
+
+    /**
+     * Configure an var / variable name to store the component in the context
+     */
+    public String getVar() {
+        return this.var;
+    }
+
+    public void setVar(String id) {
+        this.var = id;
     }
 
     /**
@@ -120,11 +131,11 @@ public class ComponentTag extends CpnlBodyTagSupport {
     }
 
     /**
-     * Check for an existing instance of the same id and assignable type
+     * Check for an existing instance of the same var and assignable type
      */
     protected Object available() throws ClassNotFoundException {
         Object result = null;
-        Object value = pageContext.getAttribute(this.id, this.scope);
+        Object value = pageContext.getAttribute(this.var, this.scope);
         if (value instanceof SlingBean) {
             Class<?> type = getComponentType();
             if (type != null && type.isAssignableFrom(value.getClass())) {
