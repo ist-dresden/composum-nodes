@@ -11,10 +11,10 @@
     <uri>http://sling.composum.com/cpnl/1.0</uri>
 
     <tag>
-        <name>component</name>
         <description>
             Creates a component model from a given className
         </description>
+        <name>component</name>
         <tag-class>com.composum.sling.cpnl.ComponentTag</tag-class>
         <tei-class>com.composum.sling.cpnl.ComponentTagTEI</tei-class>
         <body-content>JSP</body-content>
