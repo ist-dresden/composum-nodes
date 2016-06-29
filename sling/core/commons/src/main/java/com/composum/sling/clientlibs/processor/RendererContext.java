@@ -7,8 +7,9 @@ import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletRequest;
 import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The context implementation for the clientlib ink rendering.
@@ -44,12 +45,25 @@ public class RendererContext {
     }
 
     public boolean tryAndRegister(String key) {
-        if (!alreadyRendered.contains(key)) {
+        if (!isRendered(key)) {
             LOG.debug("registered: " + key);
             alreadyRendered.add(key);
             return true;
         }
         LOG.debug("rejected: " + key);
+        return false;
+    }
+
+    public boolean isRendered(String key) {
+        String rule = key.replaceAll("\\.", "\\\\.");
+        rule = rule.replaceAll(":[^)]+]","");
+        Pattern pattern = Pattern.compile(rule);
+        for (String value : alreadyRendered) {
+            Matcher matcher = pattern.matcher(value);
+            if (matcher.matches()) {
+                return true;
+            }
+        }
         return false;
     }
 
