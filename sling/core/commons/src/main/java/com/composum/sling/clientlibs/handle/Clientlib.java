@@ -123,6 +123,7 @@ public class Clientlib {
 
     protected Resource retrieveResource(String path) {
         Resource resource = null;
+        path = path.replaceAll("\\([^:]+:([^)]+)\\)","$1");
         if (!path.startsWith("/")) {
             String[] searchPath = resolver.getSearchPath();
             for (int i = 0; resource == null && i < searchPath.length; i++) {
