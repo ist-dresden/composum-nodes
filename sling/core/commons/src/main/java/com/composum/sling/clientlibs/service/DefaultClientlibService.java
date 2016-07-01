@@ -37,9 +37,9 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Calendar;
 import java.util.Dictionary;
@@ -113,6 +113,7 @@ public class DefaultClientlibService implements ClientlibService {
     protected int threadPoolMax;
 
     public static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
+
 
     static {
         CRUD_CACHE_FOLDER_PROPS = new HashMap<>();

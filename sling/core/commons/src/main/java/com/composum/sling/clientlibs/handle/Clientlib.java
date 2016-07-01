@@ -4,10 +4,8 @@ import com.composum.sling.clientlibs.processor.ProcessorContext;
 import com.composum.sling.clientlibs.processor.RendererContext;
 import com.composum.sling.clientlibs.service.ClientlibProcessor;
 import com.composum.sling.core.ResourceHandle;
-import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -18,9 +16,10 @@ import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,75 +31,27 @@ public class Clientlib {
 
     public enum Type {link, css, js, img}
 
-    public static Type typeOf(String string) {
-        return Type.valueOf(StringUtils.split(string, '/')[0]);
-    }
-
     public static final String PROP_EXPANDED = "expanded";
     public static final String PROP_OPTIONAL = "optional";
     public static final String PROP_DEPENDS = "depends";
     public static final String PROP_EMBED = "embed";
-    public static final String PROP_REL = "rel";
 
-    public class Link {
-
-        public final String url;
-        public final Map<String, String> properties;
-        private transient String key;
-
-        public Link(String url, String... props) {
-            this.url = url;
-            properties = new LinkedHashMap<>();
-            for (int i = 0; i + 1 < props.length; i += 2) {
-                if (props[i + 1] != null) {
-                    properties.put(props[i], props[i + 1]);
-                }
-            }
-        }
-
-        public String getKey() {
-            if (key == null) {
-                StringBuilder builder = new StringBuilder();
-                builder.append(url);
-                for (Map.Entry<String, String> entry : properties.entrySet()) {
-                    builder.append(";").append(entry.getKey()).append("=").append(entry.getValue());
-                }
-                key = builder.toString();
-            }
-            return key;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other instanceof Link
-                    && url.equals(((Link) other).url)
-                    && properties.equals(((Link) other).properties);
-        }
-
-        @Override
-        public int hashCode() {
-            return url.hashCode() | properties.hashCode();
-        }
-    }
+    public static final String[] LINK_PROPERTIES = new String[]{ClientlibKey.PROP_REL};
 
     protected final SlingHttpServletRequest request;
     protected final ResourceResolver resolver;
     protected final ResourceHandle resource;
     protected final ResourceHandle definition;
 
-    protected final String path;
-    protected final String typeAndAspect;
-    protected final Type type;
+    protected final ClientlibRef clientlibRef;
 
     private transient Calendar lastModified;
 
-    public Clientlib(SlingHttpServletRequest request, String path, String typeAndAspect) {
+    public Clientlib(SlingHttpServletRequest request, String path, Type type) {
         this.request = request;
         this.resolver = request.getResourceResolver();
-        this.path = path;
-        this.typeAndAspect = typeAndAspect;
-        this.type = typeOf(typeAndAspect);
-        this.resource = ResourceHandle.use(retrieveResource(path));
+        clientlibRef = new ClientlibRef(type, path, false, false);
+        this.resource = ResourceHandle.use(retrieveResource(clientlibRef.path));
         this.definition = retrieveDefinition();
     }
 
@@ -109,34 +60,27 @@ public class Clientlib {
     }
 
     protected ResourceHandle retrieveDefinition() {
-        String type = typeAndAspect;
-        String path = this.path + "/" + type;
+        String path = clientlibRef.path + "/" + clientlibRef.type;
         Resource resource = retrieveResource(path);
-        while (resource == null && type.contains("/")) {
-            // fallback to the general rule set if aspect is present and resource not found
-            type = type.substring(0, type.lastIndexOf('/'));
-            path = this.path + "/" + type;
-            resource = retrieveResource(path);
-        }
         return ResourceHandle.use(resource);
     }
 
     protected Resource retrieveResource(String path) {
         Resource resource = null;
-        path = path.replaceAll("\\([^:]+:([^)]+)\\)","$1");
         if (!path.startsWith("/")) {
             String[] searchPath = resolver.getSearchPath();
             for (int i = 0; resource == null && i < searchPath.length; i++) {
                 String absolutePath = searchPath[i] + path;
                 resource = resolver.getResource(absolutePath);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("retrieveResource.try: '" + absolutePath + "': " + resource);
-                }
             }
         } else {
             resource = resolver.getResource(path);
-            if (LOG.isDebugEnabled()) {
+        }
+        if (LOG.isDebugEnabled()) {
+            if (resource != null) {
                 LOG.debug("retrieveResource.use: '" + path + "': " + resource);
+            } else {
+                LOG.debug("retrieveResource.failed: '" + path + "'");
             }
         }
         return resource;
@@ -152,11 +96,11 @@ public class Clientlib {
     }
 
     public String getPath() {
-        return path + "." + typeAndAspect;
+        return clientlibRef.path + "." + clientlibRef.type.name();
     }
 
     public Type getType() {
-        return type;
+        return clientlibRef.type;
     }
 
     public Calendar getLastModified() {
@@ -166,27 +110,35 @@ public class Clientlib {
         return lastModified;
     }
 
+    //
+    // Clientlib modification date
+    //
+
     protected Calendar getLastModified(ResourceHandle resource, Calendar lastModified) {
         if (resource.isValid()) {
             if (isFile(resource)) {
                 lastModified = getLastModified(new FileHandle(resource), lastModified);
             } else {
-                String reference = resource.getProperty(PROP_EMBED, "");
-                if (StringUtils.isNotBlank(reference)) {
-                    Resource target = retrieveResource(reference);
+                for (String embedRule : resource.getProperty(PROP_EMBED, new String[0])) {
+                    ClientlibRef reference = new ClientlibRef(this.clientlibRef, embedRule, false, false);
+                    Resource target = retrieveResource(reference.path);
                     if (target != null) {
                         if (target.isResourceType(RESOURCE_TYPE)) {
-                            Clientlib embedded = new Clientlib(request, reference, typeAndAspect);
+                            Clientlib embedded = new Clientlib(request, reference.path, reference.type);
                             lastModified = getLastModified(embedded.getLastModified(), lastModified);
                         } else {
                             lastModified = getLastModified(new FileHandle(target), lastModified);
                         }
                     }
-                } else {
-                    for (Resource child : resource.getChildren()) {
-                        lastModified = getLastModified(ResourceHandle.use(child), lastModified);
-                    }
                 }
+                for (Resource child : resource.getChildren()) {
+                    lastModified = getLastModified(ResourceHandle.use(child), lastModified);
+                }
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(resource.getPath() + ".lastModified: " + (lastModified != null
+                        ? new SimpleDateFormat("yyyy-mm-dd.HH:MM:ss").format(lastModified.getTime())
+                        : "<null>"));
             }
         }
         return lastModified;
@@ -203,167 +155,166 @@ public class Clientlib {
         return lastModified;
     }
 
-    public List<Link> getLinks(boolean expanded, boolean depends, boolean optional,
-                               Map<String, String> properties, RendererContext context) {
-        expanded = definition.getProperty(PROP_EXPANDED, expanded);
-        optional = definition.getProperty(PROP_OPTIONAL, optional);
-        List<Link> links = new ArrayList<>();
-        if (definition.isValid()) {
-            Link link = getLink(context, resource, resource, properties, typeAndAspect);
-            if (context.tryAndRegister(link.getKey())) {
-                if (expanded) {
-                    getLinks(definition, properties, context, links, false, optional);
-                } else {
-                    getDependencyLinks(resource, properties, context, links, optional);
-                    links.add(link);
-                }
-            } else {
-                if (!depends) {
-                    logDuplicate(link);
-                }
-            }
-        }
+    //
+    // retrieve Clientlib links
+    //
+
+    public List<ClientlibLink> getLinks(RendererContext context, boolean expanded) {
+        List<ClientlibLink> links = new ArrayList<>();
+        getLinks(links, context, expanded, true, false);
         return links;
     }
 
-    protected void logDuplicate(Link link) {
-        LOG.warn("Clientlib entry '" + link.url + "' of '"
-                + getPath() + "' already embedded - ignored here.");
-    }
-
-    protected void logNotAvailable(ResourceHandle resource, String reference, boolean optional) {
-        if (!optional) {
-            String message = "Clientlib entry '" + reference + "' of '" + resource.getPath() + "' not available.";
-            if (LOG.isDebugEnabled()) {
-                LOG.warn(message, new RuntimeException());
-            } else {
-                LOG.warn(message);
-            }
-        }
-    }
-
-    protected void getDependencyLinks(ResourceHandle resource, Map<String, String> properties,
-                                      RendererContext context, List<Link> links, boolean optional) {
-        if (resource.isValid() && !isFile(resource)) {
-            optional = resource.getProperty(PROP_OPTIONAL, optional);
-            for (String reference : resource.getProperty(PROP_DEPENDS, new String[0])) {
-                Clientlib dependency = new Clientlib(request, reference, typeAndAspect);
-                if (dependency.isValid()) {
-                    links.addAll(dependency.getLinks(false, true, optional, properties, context));
+    public boolean getLinks(List<ClientlibLink> links, RendererContext context,
+                         boolean expanded, boolean depends, boolean optional) {
+        boolean hasEmbeddedContent = false;
+        if (definition.isValid()) {
+            expanded = definition.getProperty(PROP_EXPANDED, expanded);
+            optional = definition.getProperty(PROP_OPTIONAL, optional);
+            ClientlibRef reference = new ClientlibRef(clientlibRef, depends, optional);
+             hasEmbeddedContent = getLinks(links, context, expanded, depends, reference, definition);
+            if (!expanded && depends && hasEmbeddedContent) {
+                if (!context.isClientlibRendered(clientlibRef)) {
+                    ClientlibLink link = new ClientlibLink(clientlibRef, resource);
+                    context.registerClientlibLink(link);
+                    links.add(link);
+                } else {
+                    if (!depends) {
+                        logDuplicate(clientlibRef);
+                    }
                 }
             }
-            for (Resource child : resource.getChildren()) {
-                getDependencyLinks(ResourceHandle.use(child), properties, context, links, optional);
-            }
         }
+        return hasEmbeddedContent;
     }
 
-    protected void getLinks(ResourceHandle resource, Map<String, String> properties,
-                            RendererContext context, List<Link> links, boolean depends, boolean optional) {
+    protected boolean getLinks(List<ClientlibLink> links, RendererContext context,
+                               boolean expanded, boolean depends,
+                               ClientlibRef reference, ResourceHandle resource) {
+        boolean hasEmbeddedContent = false;
         if (resource.isValid()) {
+            Map<String, String> properties = new HashMap<>();
+            for (String key : LINK_PROPERTIES) {
+                String value = resource.getProperty(key, (String) null);
+                if (value != null) properties.put(key, value);
+            }
             if (isFile(resource)) {
-                FileHandle file = new FileHandle(resource);
-                addFileToList(resource, file, properties, links, context, depends, optional);
+                addFileToList(links, context, true, reference, properties, resource);
             } else {
-                optional = resource.getProperty(PROP_OPTIONAL, optional);
-                for (String reference : resource.getProperty(PROP_DEPENDS, new String[0])) {
-                    embedClientlib(resource, reference, properties, context, links, true, optional);
+                boolean optional = resource.getProperty(PROP_OPTIONAL, reference.optional);
+                for (String embedRule : resource.getProperty(PROP_DEPENDS, new String[0])) {
+                    ClientlibRef clientlibRef = new ClientlibRef(reference, embedRule, true, optional);
+                    getClientlibLink(links, context, expanded, true, clientlibRef, properties);
                 }
-                for (String reference : resource.getProperty(PROP_EMBED, new String[0])) {
-                    embedClientlib(resource, reference, properties, context, links, depends, optional);
-                }
-                for (Resource child : resource.getChildren()) {
-                    getLinks(ResourceHandle.use(child), properties, context, links, depends, optional);
-                }
-            }
-        }
-    }
-
-    protected void embedClientlib(ResourceHandle resource, String reference, Map<String, String> properties,
-                                  RendererContext context, List<Link> links, boolean depends, boolean optional) {
-        Resource target = retrieveResource(reference);
-        if (target != null) {
-            if (target.isResourceType(RESOURCE_TYPE)) {
-                Clientlib embedded = new Clientlib(request, reference, typeAndAspect);
-                embedded.getLinks(embedded.definition, properties, context, links, depends, optional);
-            } else {
-                FileHandle file = new FileHandle(target);
-                addFileToList(resource, file, properties, links, context, depends, optional);
-            }
-        } else {
-            logNotAvailable(resource, reference, optional);
-        }
-    }
-
-    protected void addFileToList(ResourceHandle reference, FileHandle file,
-                                 Map<String, String> properties, List<Link> links,
-                                 RendererContext context, boolean depends, boolean optional) {
-        if (file.isValid()) {
-            ResourceHandle fileRes = file.getResource();
-            Link link = getLink(context, reference, fileRes, properties, null);
-            if (context.tryAndRegister(link.getKey())) {
-                links.add(link);
-            } else {
-                if (!depends) {
-                    logDuplicate(link);
-                }
-            }
-        } else {
-            logNotAvailable(reference, file.getResource().getPath(), optional);
-        }
-    }
-
-    protected Link getLink(RendererContext context, ResourceHandle reference, Resource target,
-                           Map<String, String> properties, String typeAndAspect) {
-        String url = target.getPath();
-        if (StringUtils.isNotBlank(typeAndAspect)) {
-            url += "." + typeAndAspect;
-        }
-        if (context.mapClientlibURLs()) {
-            url = LinkUtil.getUrl(request, url);
-        } else {
-            url = LinkUtil.getUnmappedUrl(request, url);
-        }
-        String rel = reference.getProperty(PROP_REL, properties.get(PROP_REL));
-        return new Link(url, PROP_REL, rel);
-    }
-
-    public void processContent(OutputStream output, ClientlibProcessor processor, ProcessorContext context)
-            throws IOException, RepositoryException {
-        processContent(definition, output, processor, context, false);
-        output.close();
-    }
-
-    protected void processContent(ResourceHandle resource, OutputStream output,
-                                  ClientlibProcessor processor, ProcessorContext context, boolean optional)
-            throws RepositoryException, IOException {
-        if (resource.isValid()) {
-            if (isFile(resource)) {
-                processFile(resource, output, processor, context, optional);
-            } else {
-                optional = resource.getProperty(PROP_OPTIONAL, optional);
-                for (String reference : resource.getProperty(PROP_EMBED, new String[0])) {
-                    Resource target = retrieveResource(reference);
-                    if (target != null) {
-                        if (target.isResourceType(RESOURCE_TYPE)) {
-                            Clientlib embedded = new Clientlib(request, reference, typeAndAspect);
-                            embedded.processContent(embedded.definition, output, processor, context, optional);
-                        } else {
-                            processFile(target, output, processor, context, optional);
-                        }
-                    } else {
-                        logNotAvailable(resource, reference, optional);
+                for (String embedRule : resource.getProperty(PROP_EMBED, new String[0])) {
+                    ClientlibRef clientlibRef = new ClientlibRef(reference, embedRule, optional);
+                    if (getClientlibLink(links, context, expanded, false, clientlibRef, properties)) {
+                        hasEmbeddedContent = true;
                     }
                 }
                 for (Resource child : resource.getChildren()) {
-                    processContent(ResourceHandle.use(child), output, processor, context, optional);
+                    hasEmbeddedContent =
+                            getLinks(links, context, expanded, depends, reference, ResourceHandle.use(child))
+                                    || hasEmbeddedContent;
                 }
+            }
+        }
+        return hasEmbeddedContent;
+    }
+
+    protected boolean getClientlibLink(List<ClientlibLink> links, RendererContext context,
+                                       boolean expanded, boolean depends,
+                                       ClientlibRef reference, Map<String, String> properties) {
+        String path = reference.path;
+        Resource target = retrieveResource(path);
+        if (target != null) {
+            if (target.isResourceType(RESOURCE_TYPE)) {
+                Clientlib embedded = new Clientlib(request, path, clientlibRef.type);
+                return embedded.getLinks(links, context, expanded, depends, reference.optional);
+            } else {
+                addFileToList(links, context, expanded || depends, reference, properties, target);
+                return true;
+            }
+        } else {
+            logNotAvailable(resource, path, reference.optional);
+        }
+        return false;
+    }
+
+    protected void addFileToList(List<ClientlibLink> links, RendererContext context, boolean depends,
+                                 ClientlibRef reference, Map<String, String> properties, Resource target) {
+        if (!context.isClientlibRendered(reference)) {
+            FileHandle file = new FileHandle(target);
+            if (file.isValid()) {
+                ClientlibLink link = new ClientlibLink(reference, target, properties);
+                context.registerClientlibLink(link);
+                if (depends) {
+                    links.add(link);
+                }
+            } else {
+                logNotAvailable(resource, file.getPath(), reference.optional);
+            }
+        } else {
+            if (!depends) {
+                logDuplicate(reference);
             }
         }
     }
 
-    protected void processFile(Resource resource, OutputStream output,
-                               ClientlibProcessor processor, ProcessorContext context, boolean optional)
+    //
+    // generate Clientlib content
+    //
+
+    public List<ClientlibLink> processContent(OutputStream output,
+                                              ClientlibProcessor processor, ProcessorContext context)
+            throws IOException, RepositoryException {
+        List<ClientlibLink> contentSet = new ArrayList<>();
+        processContent(output, processor, context, definition, false, contentSet);
+        output.close();
+        return contentSet;
+    }
+
+    protected void processContent(OutputStream output,
+                                  ClientlibProcessor processor, ProcessorContext context,
+                                  ResourceHandle resource, boolean optional, List<ClientlibLink> contentSet)
+            throws RepositoryException, IOException {
+        if (resource.isValid()) {
+            if (!resource.getProperty(PROP_EXPANDED, false)) {
+                if (!optional) {
+                    optional = resource.getProperty(PROP_OPTIONAL, false);
+                }
+                for (String refRule : resource.getProperty(PROP_EMBED, new String[0])) {
+                    ClientlibRef ref = new ClientlibRef(clientlibRef.type, refRule, false, optional);
+                    Resource target = retrieveResource(ref.path);
+                    if (target != null) {
+                        if (target.isResourceType(RESOURCE_TYPE)) {
+                            ResourceHandle handle = ResourceHandle.use(target);
+                            Clientlib embedded = new Clientlib(request, ref.path, ref.type);
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("embedded clientlib: " + handle.getPath());
+                            }
+                            embedded.processContent(output,
+                                    processor, context, embedded.definition, optional, contentSet);
+                        } else {
+                            processFile(output, processor, context, target, optional, contentSet);
+                        }
+                    } else {
+                        logNotAvailable(resource, ref.path, optional);
+                    }
+                }
+            }
+            for (Resource child : resource.getChildren()) {
+                ResourceHandle handle = ResourceHandle.use(child);
+                processContent(output, processor, context, handle, optional, contentSet);
+            }
+        } else {
+            logNotAvailable(resource, "[clientlib]", optional);
+        }
+    }
+
+    protected void processFile(OutputStream output,
+                               ClientlibProcessor processor, ProcessorContext context,
+                               Resource resource, boolean optional, List<ClientlibLink> contentSet)
             throws RepositoryException, IOException {
         FileHandle file = new FileHandle(resource);
         InputStream content = file.getStream();
@@ -375,11 +326,46 @@ public class Clientlib {
                 IOUtils.copy(content, output);
                 output.write('\n');
                 output.flush();
+                ClientlibLink link = new ClientlibLink(clientlibRef.type, resource);
+                contentSet.add(link);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("embedded file: " + resource.getPath());
+                }
             } finally {
                 content.close();
             }
         } else {
-            logNotAvailable(file.getResource(), "[content]", optional);
+            logNotAvailable(resource, "[content]", optional);
+        }
+    }
+
+    //
+    //
+    //
+
+    protected void logDuplicate(ClientlibRef reference) {
+        String message = "Clientlib entry '" + reference + "' of '"
+                + getPath() + "' already embedded - ignored here.";
+        if (LOG.isDebugEnabled()) {
+            LOG.warn(message, new RuntimeException());
+        } else {
+            LOG.warn(message);
+        }
+    }
+
+    protected void logNotAvailable(Resource resource, String reference, boolean optional) {
+        if (!optional) {
+            String message = "Clientlib entry '" + reference + "' of '" + resource.getPath() + "' not available.";
+            if (LOG.isDebugEnabled()) {
+                LOG.warn(message, new RuntimeException());
+            } else {
+                LOG.warn(message);
+            }
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Clientlib entry '" + reference + "' of '"
+                        + resource.getPath() + "' not available but optional.");
+            }
         }
     }
 

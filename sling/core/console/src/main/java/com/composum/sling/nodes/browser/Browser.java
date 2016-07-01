@@ -19,6 +19,7 @@ public class Browser extends BrowserBean {
 
     public static final String TYPE_FILE = "nt:file";
     public static final String TYPE_RESOURCE = "nt:resource";
+    public static final String TYPE_UNSTRUCTURED = "nt:unstructured";
 
     public static final String HTML = "html";
     public static final String JSP = "jsp";
@@ -39,6 +40,7 @@ public class Browser extends BrowserBean {
         EDITOR_MODES.put("less", "less");
         EDITOR_MODES.put("js", "javascript");
         EDITOR_MODES.put("ecma", "javascript");
+        EDITOR_MODES.put("javascript", "javascript");
         EDITOR_MODES.put("dart", "dart");
         EDITOR_MODES.put("groovy", "groovy");
         EDITOR_MODES.put("java", "java");
@@ -150,7 +152,9 @@ public class Browser extends BrowserBean {
                     if (node != null) {
                         NodeType type = node.getPrimaryNodeType();
                         String typeName = type.getName();
-                        if (TYPE_RESOURCE.equals(typeName) || TYPE_FILE.equals(typeName)) {
+                        if (TYPE_RESOURCE.equals(typeName)
+                                || TYPE_FILE.equals(typeName)
+                                || TYPE_UNSTRUCTURED.equals(typeName)) {
                             if (getData() != null) {
                                 isFile = true;
                             } else {
