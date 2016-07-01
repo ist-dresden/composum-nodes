@@ -59,6 +59,10 @@ public class FileHandle {
         return resource.isValid() && content.isValid();
     }
 
+    public String getPath() {
+        return resource.getPath();
+    }
+
     public String getName() {
         if (name == null) {
             retrieveNameAndExt();

@@ -43,7 +43,7 @@ public class ClientlibServlet extends SlingSafeMethodsServlet {
             RequestPathInfo pathInfo = request.getRequestPathInfo();
             String path = pathInfo.getResourcePath();
 
-            String type = pathInfo.getExtension().toLowerCase();
+            Clientlib.Type type = Clientlib.Type.valueOf(pathInfo.getExtension().toLowerCase());
 
             Clientlib clientlib = new Clientlib(request, path, type);
 

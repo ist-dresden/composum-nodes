@@ -1,6 +1,9 @@
 package com.composum.sling.cpnl;
 
 import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.handle.ClientlibKey;
+import com.composum.sling.clientlibs.handle.ClientlibLink;
+import com.composum.sling.clientlibs.handle.ClientlibRef;
 import com.composum.sling.clientlibs.processor.RendererContext;
 import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.core.BeanContext;
@@ -23,12 +26,12 @@ public class ClientlibTag extends CpnlBodyTagSupport {
 
     public static final String ALREADY_EMBEDDED = "clientlib.alreadyEmbedded";
 
-    protected String type;
+    protected Clientlib.Type type;
     protected String path;
     protected Map<String, String> properties = new LinkedHashMap<>();
 
     public void setType(String type) {
-        this.type = type;
+        this.type = Clientlib.Type.valueOf(type);
     }
 
     public void setPath(String path) {
@@ -36,7 +39,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
     }
 
     public void setRel(String rel) {
-        properties.put(Clientlib.PROP_REL, rel);
+        properties.put(ClientlibKey.PROP_REL, rel);
     }
 
     @Override
@@ -47,14 +50,14 @@ public class ClientlibTag extends CpnlBodyTagSupport {
         properties.clear();
     }
 
-    protected String getType() {
+    protected Clientlib.Type getType() {
         if (type == null) {
             String ext = StringUtils.substringAfterLast(path, ".").toLowerCase();
             try {
                 ext = ext.replaceAll("(png|jpg)", "img");
-                type = Clientlib.typeOf(ext).name();
+                type = Clientlib.Type.valueOf(ext);
             } catch (Exception ex) {
-                type = Clientlib.Type.link.name();
+                type = Clientlib.Type.link;
             }
         }
         return type;
@@ -65,7 +68,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
         try {
             RendererContext rendererContext = RendererContext.instance(new BeanContext.Page(pageContext), request);
 
-            String type = getType();
+            Clientlib.Type type = getType();
             Clientlib clientlib = new Clientlib(request, path, type);
 
             if (clientlib.isValid()) {
@@ -77,39 +80,36 @@ public class ClientlibTag extends CpnlBodyTagSupport {
             } else {
                 String path = clientlib.getPath(this.path);
                 if (StringUtils.isNotBlank(path)) {
-                    if (rendererContext.tryAndRegister(path)) {
+                    ClientlibRef reference = new ClientlibRef(type, path, true, false);
+                    if (!rendererContext.isClientlibRendered(reference)) {
+                        ClientlibLink link = new ClientlibLink(clientlib);
+                        rendererContext.registerClientlibLink(link);
                         JspWriter writer = this.pageContext.getOut();
-                        switch (Clientlib.typeOf(type)) {
+                        switch (type) {
                             case link:
                             case css:
-                                String rel = properties.get(Clientlib.PROP_REL);
+                                String rel = properties.get(ClientlibKey.PROP_REL);
                                 writer.write("<link rel=\"");
                                 writer.write(StringUtils.isNotBlank(rel) ? rel : "stylesheet");
                                 writer.write("\" href=\"");
-                                writer.write(rendererContext.mapClientlibURLs()
-                                        ? CpnlElFunctions.url(request, path)
-                                        : CpnlElFunctions.unmappedUrl(request, path));
+                                writer.write(link.getUrl(rendererContext));
                                 writer.write("\" />");
                                 break;
                             case js:
                                 writer.write("<script type=\"text/javascript\" src=\"");
-                                writer.write(rendererContext.mapClientlibURLs()
-                                        ? CpnlElFunctions.url(request, path)
-                                        : CpnlElFunctions.unmappedUrl(request, path));
+                                writer.write(link.getUrl(rendererContext));
                                 writer.write("\"></script>");
                                 break;
                             case img:
                                 writer.write("<img src=\"");
-                                writer.write(rendererContext.mapClientlibURLs()
-                                        ? CpnlElFunctions.url(request, path)
-                                        : CpnlElFunctions.unmappedUrl(request, path));
+                                writer.write(link.getUrl(rendererContext));
                                 writer.write("\"/>");
                                 break;
                             default:
                                 break;
                         }
                     } else {
-                        LOG.warn("Clientlib (file) '" + path + "' already embedded - igenored here.");
+                        LOG.warn("Clientlib (file) '" + path + "' already embedded - ignored here.");
                     }
                 } else {
                     LOG.warn("Clientlib (file) '" + this.path + "' not found or not accessible!");

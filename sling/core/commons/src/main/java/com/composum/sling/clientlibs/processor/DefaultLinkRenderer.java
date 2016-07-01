@@ -1,6 +1,8 @@
 package com.composum.sling.clientlibs.processor;
 
 import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.handle.ClientlibKey;
+import com.composum.sling.clientlibs.handle.ClientlibLink;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Modified;
@@ -46,11 +48,11 @@ public class DefaultLinkRenderer implements LinkRenderer {
                                      Writer writer, RendererContext context,
                                      String template)
             throws IOException {
-        List<Clientlib.Link> links = clientlib.getLinks(true, false, false, properties, context);
+        List<ClientlibLink> links = clientlib.getLinks(context, true);
         for (int i = 0; i < links.size(); ) {
-            Clientlib.Link link = links.get(i);
-            String rel = link.properties.get(Clientlib.PROP_REL);;
-            writer.append(MessageFormat.format(template, link.url, rel != null ? rel : ""));
+            ClientlibLink link = links.get(i);
+            String rel = link.properties.get(ClientlibKey.PROP_REL);;
+            writer.append(MessageFormat.format(template, link.getUrl(context), rel != null ? rel : ""));
             if (++i < links.size()) {
                 writer.append('\n');
             }
