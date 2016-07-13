@@ -169,7 +169,7 @@
                 });
                 browser.DisplayTab.prototype.initialize.apply(this, [options]);
                 this.$iframe = this.$('.embedded iframe');
-                this.$iframe.load(_.bind(this.onFrameLoad, this));
+                this.$iframe.on('load.preview',_.bind(this.onFrameLoad, this));
             },
 
             onFrameLoad: function (event) {
