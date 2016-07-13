@@ -16,7 +16,7 @@
     "js": {
       "jcr:primaryType": "sling:OrderedFolder",
       "jquery": {
-        "embed": "jslibs/jquery/1.11.0/jquery.min.js"
+        "embed": "jslibs/jquery/3.0.0/jquery.min.js"
       },
       "jquery.base64": {
         "embed": "jslibs/jquery/base64/jquery.base64.js"
