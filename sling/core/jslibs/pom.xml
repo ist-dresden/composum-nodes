@@ -43,6 +43,8 @@
                             root/libs/jslibs/bootstrap-datetimepicker/4.14.30;path:=/libs/jslibs/bootstrap-datetimepicker/4.14.30;overwrite:=true,
                             root/libs/jslibs/bootstrap-fileinput/4.3.2;path:=/libs/jslibs/bootstrap-fileinput/4.3.2;overwrite:=true,
                             root/libs/jslibs/bootstrap-table/1.7.0;path:=/libs/jslibs/bootstrap-table/1.7.0;overwrite:=true,
+                            root/libs/jslibs/jquery/1.12.4;path:=/libs/jslibs/jquery/1.12.4;overwrite:=true,
+                            root/libs/jslibs/jquery/2.2.4;path:=/libs/jslibs/jquery/2.2.4;overwrite:=true,
                             root/libs/jslibs/jquery/3.0.0;path:=/libs/jslibs/jquery/3.0.0;overwrite:=true,
                             root/libs/jslibs/jquery/base64;path:=/libs/jslibs/jquery/base64;overwrite:=true,
                             root/libs/jslibs/jquery/split-pane;path:=/libs/jslibs/jquery/split-pane;overwrite:=true,
