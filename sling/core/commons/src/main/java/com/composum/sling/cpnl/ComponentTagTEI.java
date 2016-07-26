@@ -15,21 +15,29 @@ import org.apache.commons.lang3.StringUtils;
 import javax.servlet.jsp.tagext.TagData;
 import javax.servlet.jsp.tagext.TagExtraInfo;
 import javax.servlet.jsp.tagext.VariableInfo;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ComponentTagTEI extends TagExtraInfo {
 
-    public ComponentTagTEI() {
-    }
-
     @Override
     public VariableInfo[] getVariableInfo(TagData data) {
+        List<VariableInfo> variables = new ArrayList<>();
+        createVariables(data, variables);
+        return variables.toArray(new VariableInfo[variables.size()]);
+    }
+
+    protected void createVariables(TagData data, List<VariableInfo> variables) {
+        String var = getVar(data);
+        String type = data.getAttributeString("type");
+        variables.add(new VariableInfo(var, type, true, VariableInfo.NESTED));
+    }
+
+    protected String getVar(TagData data) {
         String varname = data.getAttributeString("var");
         if (StringUtils.isBlank(varname)) {
             varname = data.getId();
         }
-        String type = data.getAttributeString("type");
-        VariableInfo variableInfo = new VariableInfo(varname, type, true, VariableInfo.NESTED);
-        return new VariableInfo[]{variableInfo};
+        return varname;
     }
-
 }

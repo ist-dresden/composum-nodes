@@ -40,6 +40,9 @@
       "bootstrap": {
         "embed": "jslibs/bootstrap/3.3.2/js/bootstrap.min.js"
       },
+      "bootstrap3-datetimepicker": {
+        "embed": "jslibs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.js"
+      },
       "bootstrap3-editable": {
         "embed": "jslibs/x-editable/1.5.1/bootstrap3-editable/js/bootstrap-editable.min.js"
       },

@@ -23,11 +23,11 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     protected String var;
     protected String type;
-    protected int scope = PageContext.PAGE_SCOPE;
-    protected Boolean replace = null;
+    protected Integer scope;
+    protected Boolean replace;
 
-    protected SlingBean component = null;
-    protected Object replacedValue = null;
+    protected SlingBean component;
+    protected Object replacedValue;
 
     private static Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<Class<? extends SlingBean>, Field[]>();
 
@@ -42,8 +42,22 @@ public class ComponentTag extends CpnlBodyTagSupport {
     }
 
     @Override
+    protected void clear() {
+        var = null;
+        type = null;
+        scope = null;
+        replace = null;
+        component = null;
+        replacedValue = null;
+        super.clear();
+    }
+
+    @Override
     public int doStartTag() throws JspException {
         super.doStartTag();
+        if (scope == null) {
+            scope = PageContext.PAGE_SCOPE;
+        }
         if (replace == null) {
             replace = (scope == PageContext.PAGE_SCOPE);
         }
