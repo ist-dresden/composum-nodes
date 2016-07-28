@@ -13,21 +13,12 @@ package com.composum.sling.cpnl;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.jsp.tagext.TagData;
-import javax.servlet.jsp.tagext.TagExtraInfo;
 import javax.servlet.jsp.tagext.VariableInfo;
-import java.util.ArrayList;
 import java.util.List;
 
-public class ComponentTagTEI extends TagExtraInfo {
+public class ComponentTagTEI extends AbstractTagTEI {
 
-    @Override
-    public VariableInfo[] getVariableInfo(TagData data) {
-        List<VariableInfo> variables = new ArrayList<>();
-        createVariables(data, variables);
-        return variables.toArray(new VariableInfo[variables.size()]);
-    }
-
-    protected void createVariables(TagData data, List<VariableInfo> variables) {
+    protected void collectVariables(TagData data, List<VariableInfo> variables) {
         String var = getVar(data);
         String type = data.getAttributeString("type");
         variables.add(new VariableInfo(var, type, true, VariableInfo.NESTED));

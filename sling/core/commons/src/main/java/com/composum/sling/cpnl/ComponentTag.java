@@ -55,35 +55,39 @@ public class ComponentTag extends CpnlBodyTagSupport {
     @Override
     public int doStartTag() throws JspException {
         super.doStartTag();
-        if (scope == null) {
-            scope = PageContext.PAGE_SCOPE;
-        }
-        if (replace == null) {
-            replace = (scope == PageContext.PAGE_SCOPE);
-        }
-        try {
-            if ((replacedValue = available()) == null || replace) {
-                component = createComponent();
-                pageContext.setAttribute(this.var, component, this.scope);
+        if (var != null) {
+            if (scope == null) {
+                scope = PageContext.PAGE_SCOPE;
             }
-        } catch (ClassNotFoundException ex) {
-            log.error("Class not found: " + this.type, ex);
-        } catch (IllegalAccessException ex) {
-            log.error("Could not access: " + this.type, ex);
-        } catch (InstantiationException ex) {
-            log.error("Could not instantiate: " + this.type, ex);
+            if (replace == null) {
+                replace = (scope == PageContext.PAGE_SCOPE);
+            }
+            try {
+                if ((replacedValue = available()) == null || replace) {
+                    component = createComponent();
+                    pageContext.setAttribute(this.var, component, this.scope);
+                }
+            } catch (ClassNotFoundException ex) {
+                log.error("Class not found: " + this.type, ex);
+            } catch (IllegalAccessException ex) {
+                log.error("Could not access: " + this.type, ex);
+            } catch (InstantiationException ex) {
+                log.error("Could not instantiate: " + this.type, ex);
+            }
         }
         return EVAL_BODY_INCLUDE;
     }
 
     @Override
     public int doEndTag() throws JspException {
-        if (replacedValue != null) {
-            if (component != null) {
-                pageContext.setAttribute(this.var, replacedValue, this.scope);
+        if (var != null) {
+            if (replacedValue != null) {
+                if (component != null) {
+                    pageContext.setAttribute(this.var, replacedValue, this.scope);
+                }
+            } else {
+                pageContext.removeAttribute(this.var, this.scope);
             }
-        } else {
-            pageContext.removeAttribute(this.var, this.scope);
         }
         super.doEndTag();
         return EVAL_PAGE;
@@ -149,11 +153,13 @@ public class ComponentTag extends CpnlBodyTagSupport {
      */
     protected Object available() throws ClassNotFoundException {
         Object result = null;
-        Object value = pageContext.getAttribute(this.var, this.scope);
-        if (value instanceof SlingBean) {
-            Class<?> type = getComponentType();
-            if (type != null && type.isAssignableFrom(value.getClass())) {
-                result = value;
+        if (var != null) {
+            Object value = pageContext.getAttribute(this.var, this.scope);
+            if (value instanceof SlingBean) {
+                Class<?> type = getComponentType();
+                if (type != null && type.isAssignableFrom(value.getClass())) {
+                    result = value;
+                }
             }
         }
         return result;
