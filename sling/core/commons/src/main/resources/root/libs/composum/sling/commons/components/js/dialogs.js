@@ -34,10 +34,14 @@
             },
 
             onShown: function () {
-                this.reset();
+                this.resetOnShown();
                 if (_.isFunction(this.initView)) {
                     this.initView();
                 }
+            },
+
+            resetOnShown: function() {
+                this.reset();
             },
 
             hide: function () {
