@@ -20,8 +20,10 @@ public class ComponentTagTEI extends AbstractTagTEI {
 
     protected void collectVariables(TagData data, List<VariableInfo> variables) {
         String var = getVar(data);
-        String type = data.getAttributeString("type");
-        variables.add(new VariableInfo(var, type, true, VariableInfo.NESTED));
+        String type = getType(data);
+        if (StringUtils.isNotBlank(var) && StringUtils.isNotBlank(type)) {
+            variables.add(new VariableInfo(var, type, true, VariableInfo.NESTED));
+        }
     }
 
     protected String getVar(TagData data) {
@@ -30,5 +32,9 @@ public class ComponentTagTEI extends AbstractTagTEI {
             varname = data.getId();
         }
         return varname;
+    }
+
+    protected String getType(TagData data) {
+        return data.getAttributeString("type");
     }
 }
