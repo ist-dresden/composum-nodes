@@ -26,6 +26,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
     private Integer varScope;
     private Boolean replace;
 
+    protected BeanContext context;
     protected SlingBean component;
     protected Object replacedValue;
 
@@ -56,6 +57,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
     @Override
     public int doStartTag() throws JspException {
         super.doStartTag();
+        context = new BeanContext.Page(pageContext);
         if (getVar() != null) {
             try {
                 if ((replacedValue = available()) == null || getReplace()) {
