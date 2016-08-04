@@ -3,7 +3,6 @@ package com.composum.sling.nodes.console;
 import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.util.LinkMapper;
-import com.composum.sling.core.util.LinkUtil;
 import org.apache.sling.api.resource.Resource;
 
 public class ConsoleSlingBean extends AbstractSlingBean {
@@ -23,6 +22,6 @@ public class ConsoleSlingBean extends AbstractSlingBean {
     @Override
     public void initialize(BeanContext context, Resource resource) {
         super.initialize(context, resource);
-        context.getRequest().setAttribute(LinkUtil.LINK_MAPPER, LinkMapper.CONTEXT);
+        context.getRequest().setAttribute(LinkMapper.LINK_MAPPER_REQUEST_ATTRIBUTE, LinkMapper.CONTEXT);
     }
 }

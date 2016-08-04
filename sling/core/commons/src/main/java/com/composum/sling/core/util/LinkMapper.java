@@ -5,6 +5,8 @@ import org.apache.sling.api.resource.ResourceResolver;
 
 public interface LinkMapper {
 
+    String LINK_MAPPER_REQUEST_ATTRIBUTE = LinkMapper.class.getName() + "_linkMapper";
+
     String mapUri(SlingHttpServletRequest request, String uri);
 
     ContextMapper CONTEXT = new ContextMapper();
