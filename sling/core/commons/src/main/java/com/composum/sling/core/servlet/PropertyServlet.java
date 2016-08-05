@@ -201,13 +201,12 @@ public class PropertyServlet extends AbstractServiceServlet {
 
                 if (node != null) {
                     Session session = node.getSession();
-                    ValueFactory valueFactory = session.getValueFactory();
 
                     // parse property from JSON into a POJO of type JsonProperty
                     JsonUtil.JsonProperty property = getJsonObject(request, JsonUtil.JsonProperty.class);
 
                     // update the property
-                    boolean available = JsonUtil.setJsonProperty(valueFactory, node, property,
+                    boolean available = JsonUtil.setJsonProperty(node, property,
                             ResponseUtil.getDefaultJsonMapping());
                     session.save();
 
