@@ -216,7 +216,7 @@
             typeMap: {
                 'String': {selector: 'name'}, // with name detection for a better usability
                 'Name': {selector: 'name'},
-                'URI ': {selector: 'default'},
+                'URI': {selector: 'default'},
                 'Boolean': {selector: 'boolean'},
                 'Long': {selector: 'number'},
                 'Date': {selector: 'datetime'},
