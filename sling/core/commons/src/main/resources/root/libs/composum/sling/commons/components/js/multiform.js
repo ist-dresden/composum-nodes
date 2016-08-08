@@ -30,7 +30,9 @@
                     if (this.view) {
                         if (_.isFunction(this.view.getValue)) {
                             var name = core.getWidgetName(this.view);
-                            value[name] = this.view.getValue.apply(this.view);
+                            if (name) {
+                                value[name] = this.view.getValue.apply(this.view);
+                            }
                         }
                     }
                 });

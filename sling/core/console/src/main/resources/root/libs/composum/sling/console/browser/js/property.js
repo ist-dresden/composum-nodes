@@ -216,7 +216,7 @@
             typeMap: {
                 'String': {selector: 'name'}, // with name detection for a better usability
                 'Name': {selector: 'name'},
-                'URI ': {selector: 'default'},
+                'URI': {selector: 'default'},
                 'Boolean': {selector: 'boolean'},
                 'Long': {selector: 'number'},
                 'Date': {selector: 'datetime'},
@@ -307,13 +307,7 @@
             getValue: function () {
                 var value = this.multiValue ? [] : this.getWidgetValue('input[name="value"]');
                 if (this.multiValue) {
-                    var values = this.$('input[name="value"]');
-                    for (var i = 0; i < values.length; i++) {
-                        var v = this.getWidgetValue($(values[i]));
-                        if (i < values.length - 1 || (v !== undefined)) {
-                            value[i] = v;
-                        }
-                    }
+                    value = core.components.MultiFormWidget.prototype.getValue.apply(this);
                 }
                 return value;
             },

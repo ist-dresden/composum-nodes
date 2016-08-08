@@ -8,7 +8,7 @@
       <div class="modal-content form-panel default">
 
         <cpn:form classes="widget-form default" enctype="multipart/form-data"
-                  action="/bin/cpm/nodes/property.bin${browser.current.pathEncoded}">
+                  action="/bin/cpm/nodes/property.bin">
 
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
