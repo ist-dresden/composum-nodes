@@ -1,5 +1,7 @@
 package com.composum.sling.clientlibs.processor;
 
+import com.composum.sling.clientlibs.handle.ClientlibLink;
+import com.composum.sling.clientlibs.handle.ClientlibRef;
 import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.core.BeanContext;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -7,7 +9,6 @@ import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletRequest;
 import java.util.HashSet;
 
 /**
@@ -32,7 +33,7 @@ public class RendererContext {
     public final BeanContext context;
     public final SlingHttpServletRequest request;
 
-    protected final HashSet<String> alreadyRendered;
+    protected final HashSet<ClientlibLink> renderedClientlibs;
 
     private transient SlingScriptHelper scriptHelper;
     private transient ClientlibService clientlibService;
@@ -40,17 +41,30 @@ public class RendererContext {
     protected RendererContext(BeanContext context, SlingHttpServletRequest request) {
         this.context = context;
         this.request = request;
-        this.alreadyRendered = new HashSet<>();
+        this.renderedClientlibs = new HashSet<>();
     }
 
-    public boolean tryAndRegister(String key) {
-        if (!alreadyRendered.contains(key)) {
-            LOG.debug("registered: " + key);
-            alreadyRendered.add(key);
-            return true;
+    public boolean isClientlibRendered(ClientlibRef reference) {
+        for (ClientlibLink link : renderedClientlibs) {
+            if (reference.use(link)) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("rendered: " + reference.path + " - using: " + reference.getUsedAlternative());
+                }
+                return true;
+            }
         }
-        LOG.debug("rejected: " + key);
         return false;
+    }
+
+    public void registerClientlibLink(ClientlibLink link) {
+        if (true || !renderedClientlibs.contains(link)) {
+            renderedClientlibs.add(link);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("registered: " + link);
+            }
+        } else {
+            LOG.error("duplicate clientlib link: " + link);
+        }
     }
 
     public boolean mapClientlibURLs() {

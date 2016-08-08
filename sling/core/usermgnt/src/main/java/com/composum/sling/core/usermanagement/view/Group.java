@@ -1,6 +1,6 @@
 package com.composum.sling.core.usermanagement.view;
 
-import com.composum.sling.core.console.ConsoleSlingBean;
+import com.composum.sling.nodes.console.ConsoleSlingBean;
 
 /**
  * Created by mzeibig on 17.11.15.

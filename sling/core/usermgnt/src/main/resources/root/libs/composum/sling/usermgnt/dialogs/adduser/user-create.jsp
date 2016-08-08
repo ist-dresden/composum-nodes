@@ -8,7 +8,7 @@
         <div class="modal-dialog">
             <div class="modal-content form-panel default">
                 <cpn:form classes="widget-form" enctype="multipart/form-data"
-                          action="/bin/core/usermanagement.user.json">
+                          action="/bin/cpm/usermanagement.user.json">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                                 aria-hidden="true">&times;</span></button>

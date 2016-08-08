@@ -37,9 +37,9 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Calendar;
 import java.util.Dictionary;
@@ -114,6 +114,7 @@ public class DefaultClientlibService implements ClientlibService {
 
     public static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
 
+
     static {
         CRUD_CACHE_FOLDER_PROPS = new HashMap<>();
         CRUD_CACHE_FOLDER_PROPS.put(ResourceUtil.PROP_PRIMARY_TYPE, "sling:Folder");
@@ -151,8 +152,8 @@ public class DefaultClientlibService implements ClientlibService {
     public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
                                      Writer writer, RendererContext context)
             throws IOException {
-        Clientlib.Type type = clientlib.getType();
-        ClientlibRenderer renderer = rendererMap.get(type);
+        final Clientlib.Type type = clientlib.getType();
+        final ClientlibRenderer renderer = rendererMap.get(type);
         if (renderer != null) {
             renderer.renderClientlibLinks(clientlib, properties, writer, context);
         }
@@ -262,7 +263,10 @@ public class DefaultClientlibService implements ClientlibService {
                         file.storeContent(inputStream);
 
                         ModifiableValueMap contentValues = file.getContent().adaptTo(ModifiableValueMap.class);
-                        contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, clientlib.getLastModified());
+                        Calendar lastModified = clientlib.getLastModified();
+                        if (lastModified != null) {
+                            contentValues.put(ResourceUtil.PROP_LAST_MODIFIED, lastModified);
+                        }
                         contentValues.putAll(hints);
 
                         resolver.commit();
@@ -311,7 +315,7 @@ public class DefaultClientlibService implements ClientlibService {
             Calendar cacheTimestamp = file.getLastModified();
             if (cacheTimestamp != null) {
                 Calendar libLastModified = clientlib.getLastModified();
-                if (libLastModified.after(cacheTimestamp)) {
+                if (libLastModified != null && libLastModified.after(cacheTimestamp)) {
                     file = null;
                 }
             } else {

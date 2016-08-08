@@ -21,8 +21,6 @@ public class LinkUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(LinkUtil.class);
 
-    public static final String LINK_MAPPER = "localLinkMapper";
-
     public static final String EXT_HTML = ".html";
 
     public static final String PROP_TARGET = "sling:target";
@@ -88,7 +86,7 @@ public class LinkUtil {
      */
     public static String getUrl(SlingHttpServletRequest request, String url,
                                 String selectors, String extension) {
-        LinkMapper mapper = (LinkMapper) request.getAttribute(LINK_MAPPER);
+        LinkMapper mapper = (LinkMapper) request.getAttribute(LinkMapper.LINK_MAPPER_REQUEST_ATTRIBUTE);
         return getUrl(request, url, selectors, extension, mapper != null ? mapper : LinkMapper.RESOLVER);
     }
 

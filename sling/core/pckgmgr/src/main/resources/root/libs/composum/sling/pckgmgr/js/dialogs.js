@@ -83,7 +83,7 @@
                 var version = this.$version.val();
                 var path = '/' + (group ? (group + '/') : '') + name + (version ? ('-' + version) : '') + '.zip';
                 if (this.form.isValid()) {
-                    core.ajaxDelete("/bin/core/package.json" + core.encodePath(path), {},
+                    core.ajaxDelete("/bin/cpm/package.json" + core.encodePath(path), {},
                         _.bind(function (result) {
                             $(document).trigger('path:deleted', [path]);
                             this.hide();

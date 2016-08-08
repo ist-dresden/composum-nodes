@@ -41,7 +41,7 @@
                 path = browser.current.path;
             }
             if (path) {
-                core.getJson('/bin/core/node.tree.json' + path, undefined, undefined,
+                core.getJson('/bin/cpm/nodes/node.tree.json' + path, undefined, undefined,
                     _.bind(function (result) {
                         browser.current = {
                             path: path,
@@ -184,7 +184,7 @@
                 var parentPath = core.getParentPath(nodePath);
                 var oldPath = core.buildContentPath(parentPath, oldName);
                 var newPath = core.buildContentPath(parentPath, newName);
-                core.ajaxPut('/bin/core/node.move.json' + core.encodePath(oldPath),
+                core.ajaxPut('/bin/cpm/nodes/node.move.json' + core.encodePath(oldPath),
                     JSON.stringify({
                         path: parentPath,
                         name: newName
@@ -206,7 +206,7 @@
                 var oldPath = draggedNode.path;
                 var nodeName = core.getNameFromPath(oldPath);
                 var newPath = core.buildContentPath(parentPath, nodeName);
-                core.ajaxPut('/bin/core/node.move.json' + core.encodePath(oldPath),
+                core.ajaxPut('/bin/cpm/nodes/node.move.json' + core.encodePath(oldPath),
                     JSON.stringify({
                         path: parentPath,
                         name: nodeName,
@@ -226,7 +226,7 @@
 
             dataUrlForPath: function (path) {
                 var params = this.filter && 'default' != this.filter ? '?filter=' + this.filter : '';
-                return '/bin/core/node.tree.json' + path + params;
+                return '/bin/cpm/nodes/node.tree.json' + path + params;
             }
         });
 
@@ -249,7 +249,7 @@
                 this.$('button.copy').on('click', _.bind(this.clipboardCopy, this));
                 this.$('button.paste').on('click', _.bind(this.clipboardPaste, this));
                 this.$filters = this.$('.filter .dropdown-menu');
-                core.getHtml('/bin/core/node.filters.html', _.bind(function (data) {
+                core.getHtml('/bin/cpm/nodes/node.filters.html', _.bind(function (data) {
                     this.$filters.html(data);
                     this.$filters.find('li>a').click(_.bind(this.setFilter, this));
                     this.setFilterLabel(core.console.getProfile().get('browser', 'filter'));
@@ -317,7 +317,7 @@
                 var clipboard = core.console.getProfile().get('nodes', 'clipboard');
                 if (path && clipboard && clipboard.path) {
                     var name = core.getNameFromPath(clipboard.path);
-                    core.ajaxPut("/bin/core/node.copy.json" + path, JSON.stringify({
+                    core.ajaxPut("/bin/cpm/nodes/node.copy.json" + path, JSON.stringify({
                         path: clipboard.path,
                         name: name
                     }), {
@@ -376,7 +376,7 @@
                 var node = this.tree.current();
                 if (node) {
                     //node.jcrState.checkedOut
-                    core.ajaxPost('/bin/core/version.' + (node.jcrState.checkedOut ? 'checkin' : 'checkout') + '.json' + node.path,
+                    core.ajaxPost('/bin/cpm/nodes/version.' + (node.jcrState.checkedOut ? 'checkin' : 'checkout') + '.json' + node.path,
                         {}, {}, _.bind(function (result) {
                             $(document).trigger('path:changed', [node.path]);
                         }, this), _.bind(function (result) {
@@ -391,7 +391,7 @@
                 }
                 var node = this.tree.current();
                 if (node) {
-                    core.ajaxPost('/bin/core/node.toggle.lock' + node.path,
+                    core.ajaxPost('/bin/cpm/nodes/node.toggle.lock' + node.path,
                         {}, {}, undefined, undefined, _.bind(function (result) {
                             if (result.status == 200) {
                                 $(document).trigger('path:changed', [node.path]);

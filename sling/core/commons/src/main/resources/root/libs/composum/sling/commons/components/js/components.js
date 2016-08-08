@@ -395,7 +395,7 @@
                     source: function (query, callback) {
                         // ensure that query is of a valid path pattern
                         if (query.indexOf('/') === 0) {
-                            core.getJson('/bin/core/node.typeahead.json' + query, function (data) {
+                            core.getJson('/bin/cpm/nodes/node.typeahead.json' + query, function (data) {
                                 callback(data);
                             });
                         }
@@ -488,7 +488,7 @@
              * retrieves the referenc for the path and stores this reference as value
              */
             retrieveReference: function (path) {
-                core.getJson('/bin/core/node.tree.json' + path, _.bind(function (data) {
+                core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (data) {
                     this.path = path;
                     this.setValue(data.uuid ? data.uuid : data.id);
                 }, this));
@@ -500,7 +500,7 @@
             retrievePath: function (callback) {
                 var reference = this.getValue();
                 if (reference) {
-                    core.getJson('/bin/core/node.reference.json/' + reference, function (data) {
+                    core.getJson('/bin/cpm/nodes/node.reference.json/' + reference, function (data) {
                         callback(data.path);
                     });
                 }
@@ -719,7 +719,7 @@
                 this.$textField.typeahead({
                     minLength: 1,
                     source: function (query, callback) {
-                        core.ajaxGet('/bin/core/system.primaryTypes.json', {
+                        core.ajaxGet('/bin/cpm/core/system.primaryTypes.json', {
                             query: query
                         }, function (data) {
                             callback(data);
@@ -742,7 +742,7 @@
                 this.$textField.typeahead({
                     minLength: 1,
                     source: function (query, callback) {
-                        core.ajaxGet('/bin/core/system.mixinTypes.json', {
+                        core.ajaxGet('/bin/cpm/core/system.mixinTypes.json', {
                             query: query
                         }, function (data) {
                             callback(data);

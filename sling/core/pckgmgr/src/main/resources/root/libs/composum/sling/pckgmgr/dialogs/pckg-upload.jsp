@@ -3,12 +3,12 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects/>
-<cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
+<cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
   <div id="pckg-upload-dialog" class="dialog modal fade" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content form-panel default">
 
-        <cpn:form classes="widget-form" enctype="multipart/form-data" action="/bin/core/package.upload.json">
+        <cpn:form classes="widget-form" enctype="multipart/form-data" action="/bin/cpm/package.upload.json">
 
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

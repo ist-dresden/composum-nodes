@@ -134,7 +134,7 @@
             if (path == browser.getCurrentPath()) {
                 this.setNodeState($item, browser.current.node);
             } else {
-                core.getJson('/bin/core/node.tree.json' + path, _.bind(function (result) {
+                core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (result) {
                     this.setNodeState($item, result);
                 }, this), _.bind(function (result) {
                     $item.remove();

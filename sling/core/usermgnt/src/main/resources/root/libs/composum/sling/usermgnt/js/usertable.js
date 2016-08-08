@@ -40,7 +40,7 @@
                 var nodetype = usermanagement.current.node.type;
                 this.state.load = true;
                 core.ajaxGet(
-                    "/bin/core/usermanagement." + nodetype + ".json/" + path,
+                    "/bin/cpm/usermanagement." + nodetype + ".json/" + path,
                     {dataType: 'json'},
                     _.bind (function (result) {
                         var formattedResult = [

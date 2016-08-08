@@ -18,7 +18,7 @@
             },
 
             initDialog: function (options) {
-                this.form.$el.attr('action', core.getContextUrl('/bin/core/package.update.json' + pckgmgr.getCurrentPath()));
+                this.form.$el.attr('action', core.getContextUrl('/bin/cpm/package.update.json' + pckgmgr.getCurrentPath()));
                 this.form.setValues(options);
             },
 
@@ -42,7 +42,7 @@
             },
 
             initDialog: function (name, title, values) {
-                this.form.$el.attr('action', core.getContextUrl('/bin/core/package.update.json' + pckgmgr.getCurrentPath()));
+                this.form.$el.attr('action', core.getContextUrl('/bin/cpm/package.update.json' + pckgmgr.getCurrentPath()));
                 this.$('.modal-title').text(title);
                 this.relations.$el.data('name', name);
                 this.form.setValues(values);

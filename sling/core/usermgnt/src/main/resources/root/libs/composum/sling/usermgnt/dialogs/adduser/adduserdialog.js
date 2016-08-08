@@ -30,7 +30,7 @@
                 event.preventDefault();
                 var serializedData = this.form.$el.serialize();
                 core.ajaxPost(
-                    "/bin/core/usermanagement.user.json",
+                    "/bin/cpm/usermanagement.user.json",
                     serializedData,
                     {
                         dataType: 'post'

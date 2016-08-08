@@ -45,10 +45,10 @@
     </tag>
 
     <tag>
-        <name>clientlib</name>
         <description>
             Includes a clientlib reference (JS, CSS)
         </description>
+        <name>clientlib</name>
         <tag-class>com.composum.sling.cpnl.ClientlibTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -72,10 +72,10 @@
     </tag>
 
     <tag>
-        <name>image</name>
         <description>
             Generates image elements with mapped source URLs
         </description>
+        <name>image</name>
         <tag-class>com.composum.sling.cpnl.ImageTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -117,10 +117,10 @@
     </tag>
 
     <tag>
-        <name>link</name>
         <description>
             Generates link elements with mapped URLs
         </description>
+        <name>link</name>
         <tag-class>com.composum.sling.cpnl.LinkTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -162,10 +162,10 @@
     </tag>
 
     <tag>
-        <name>form</name>
         <description>
             Generates form elements with mapped action URLs
         </description>
+        <name>form</name>
         <tag-class>com.composum.sling.cpnl.FormTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -207,10 +207,10 @@
     </tag>
 
     <tag>
-        <name>table</name>
         <description>
             Generates a bootstrap table element with mapped AJAX URLs
         </description>
+        <name>table</name>
         <tag-class>com.composum.sling.cpnl.TableTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -240,10 +240,10 @@
     </tag>
 
     <tag>
-        <name>text</name>
         <description>
             renders text values with optional tag and class, formatting and with escaping (XSS prevention)
         </description>
+        <name>text</name>
         <tag-class>com.composum.sling.cpnl.TextTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -291,64 +291,64 @@
     </tag>
 
     <function>
-        <name>child</name>
         <description>returns the absolute path for a child of a resource</description>
+        <name>child</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String child(org.apache.sling.api.resource.Resource,java.lang.String)</function-signature>
     </function>
 
     <function>
-        <name>url</name>
         <description>Builds the URL for a repository path using the LinkUtil.getURL() method</description>
+        <name>url</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String url(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
     </function>
 
     <function>
-        <name>mappedUrl</name>
         <description>Builds the URL for a repository path using the LinkUtil.getMappedURL() method</description>
+        <name>mappedUrl</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String unmappedUrl(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
     </function>
 
     <function>
-        <name>unmappedUrl</name>
         <description>Builds the URL for a repository path using the LinkUtil.getUNappedURL() method</description>
+        <name>unmappedUrl</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String unmappedUrl(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
     </function>
 
     <function>
-        <name>value</name>
         <description>transforms a string value for rendering (does nothing)</description>
+        <name>value</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.Object value(java.lang.Object)</function-signature>
     </function>
 
     <function>
-        <name>text</name>
         <description>transforms a string value for HTML text rendering</description>
+        <name>text</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String text(java.lang.String)</function-signature>
     </function>
 
     <function>
-        <name>rich</name>
         <description>transforms a string value for rich text (HTML) rendering</description>
+        <name>rich</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String rich(java.lang.String)</function-signature>
     </function>
 
     <function>
-        <name>path</name>
         <description>transforms a string value for URL path rendering</description>
+        <name>path</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String path(java.lang.String)</function-signature>
     </function>
 
     <function>
-        <name>script</name>
         <description>transforms a string value for script rendering</description>
+        <name>script</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String script(java.lang.String)</function-signature>
     </function>

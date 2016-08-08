@@ -40,7 +40,7 @@
                 this.state.load = true;
 
                 core.ajaxGet(
-                    "/bin/core/usermanagement.properties.json/" + path + "/" + propertypath,
+                    "/bin/cpm/usermanagement.properties.json/" + path + "/" + propertypath,
                     {dataType: 'json'},
                     _.bind (function (result) {
                         this.$table.bootstrapTable('load', result);

@@ -43,7 +43,7 @@
                     this.$description.val(undefined);
                 }
                 this.$path.val(path);
-                this.form.$el.attr('action', core.getContextUrl('/bin/core/package.update.json' + path));
+                this.form.$el.attr('action', core.getContextUrl('/bin/cpm/package.update.json' + path));
             },
 
             updatePackage: function (event) {

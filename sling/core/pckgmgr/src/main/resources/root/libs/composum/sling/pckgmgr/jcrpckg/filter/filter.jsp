@@ -28,7 +28,7 @@
         </div>
         <div class="table-container">
             <cpn:table classes="filters-table"
-                       path="/bin/core/package.filterList.json${pckg.path}"
+                       path="/bin/cpm/package.filterList.json${pckg.path}"
                        toolbar=".detail-content .detail-panel.filters .table-toolbar">
             </cpn:table>
         </div>

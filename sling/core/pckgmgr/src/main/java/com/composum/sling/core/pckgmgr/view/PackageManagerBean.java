@@ -1,6 +1,6 @@
 package com.composum.sling.core.pckgmgr.view;
 
-import com.composum.sling.core.console.ConsoleSlingBean;
+import com.composum.sling.nodes.console.ConsoleSlingBean;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import org.apache.commons.lang3.StringUtils;

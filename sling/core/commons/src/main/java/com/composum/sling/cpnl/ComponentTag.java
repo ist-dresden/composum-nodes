@@ -21,17 +21,18 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     private static final Logger log = LoggerFactory.getLogger(ComponentTag.class);
 
-    protected String var;
-    protected String type;
-    protected int scope = PageContext.PAGE_SCOPE;
-    protected Boolean replace = null;
+    private String var;
+    private String type;
+    private Integer varScope;
+    private Boolean replace;
 
-    protected SlingBean component = null;
-    protected Object replacedValue = null;
-
-    private static Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<Class<? extends SlingBean>, Field[]>();
+    protected BeanContext context;
+    protected SlingBean component;
+    protected Object replacedValue;
 
     private transient Class<? extends SlingBean> componentType;
+
+    private static Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<Class<? extends SlingBean>, Field[]>();
 
     public static final Map<String, Integer> SCOPES = new HashMap<>();
 
@@ -42,35 +43,50 @@ public class ComponentTag extends CpnlBodyTagSupport {
     }
 
     @Override
+    protected void clear() {
+        var = null;
+        type = null;
+        varScope = null;
+        replace = null;
+        component = null;
+        replacedValue = null;
+        componentType = null;
+        super.clear();
+    }
+
+    @Override
     public int doStartTag() throws JspException {
         super.doStartTag();
-        if (replace == null) {
-            replace = (scope == PageContext.PAGE_SCOPE);
-        }
-        try {
-            if ((replacedValue = available()) == null || replace) {
-                component = createComponent();
-                pageContext.setAttribute(this.var, component, this.scope);
+        context = new BeanContext.Page(pageContext);
+        if (getVar() != null) {
+            try {
+                if ((replacedValue = available()) == null || getReplace()) {
+                    component = createComponent();
+                    pageContext.setAttribute(getVar(), component, getVarScope());
+                }
+            } catch (ClassNotFoundException ex) {
+                log.error("Class not found: " + this.type, ex);
+            } catch (IllegalAccessException ex) {
+                log.error("Could not access: " + this.type, ex);
+            } catch (InstantiationException ex) {
+                log.error("Could not instantiate: " + this.type, ex);
             }
-        } catch (ClassNotFoundException ex) {
-            log.error("Class not found: " + this.type, ex);
-        } catch (IllegalAccessException ex) {
-            log.error("Could not access: " + this.type, ex);
-        } catch (InstantiationException ex) {
-            log.error("Could not instantiate: " + this.type, ex);
         }
         return EVAL_BODY_INCLUDE;
     }
 
     @Override
     public int doEndTag() throws JspException {
-        if (replacedValue != null) {
-            if (component != null) {
-                pageContext.setAttribute(this.var, replacedValue, this.scope);
+        if (getVar() != null) {
+            if (replacedValue != null) {
+                if (component != null) {
+                    pageContext.setAttribute(getVar(), replacedValue, getVarScope());
+                }
+            } else {
+                pageContext.removeAttribute(getVar(), getVarScope());
             }
-        } else {
-            pageContext.removeAttribute(this.var, this.scope);
         }
+        clear();
         super.doEndTag();
         return EVAL_PAGE;
     }
@@ -85,12 +101,12 @@ public class ComponentTag extends CpnlBodyTagSupport {
     /**
      * Configure an var / variable name to store the component in the context
      */
-    public String getVar() {
-        return this.var;
-    }
-
     public void setVar(String id) {
         this.var = id;
+    }
+
+    public String getVar() {
+        return this.var;
     }
 
     /**
@@ -100,13 +116,25 @@ public class ComponentTag extends CpnlBodyTagSupport {
         this.type = type;
     }
 
+    public String getType() {
+        return type;
+    }
+
     /**
-     * Determine the scope (<code>page</code>, <code>request</code> or <code>session</code>)
+     * Determine the varScope (<code>page</code>, <code>request</code> or <code>session</code>)
      * for the component instance attribute
      */
     public void setScope(String key) {
         Integer value = key != null ? SCOPES.get(key.toLowerCase()) : null;
-        this.scope = value != null ? value : PageContext.PAGE_SCOPE;
+        varScope = value != null ? value : null;
+    }
+
+    public void setVarScope(Integer value) {
+        varScope = value;
+    }
+
+    public Integer getVarScope() {
+        return varScope != null ? varScope : PageContext.PAGE_SCOPE;
     }
 
     /**
@@ -120,12 +148,16 @@ public class ComponentTag extends CpnlBodyTagSupport {
         this.replace = flag;
     }
 
+    public Boolean getReplace() {
+        return replace != null ? replace : (getVarScope() == PageContext.PAGE_SCOPE);
+    }
+
     /**
      * get the content type class object
      */
     protected Class<? extends SlingBean> getComponentType() throws ClassNotFoundException {
         if (componentType == null) {
-            componentType = (Class<? extends SlingBean>) sling.getType(this.type);
+            componentType = (Class<? extends SlingBean>) sling.getType(getType());
         }
         return componentType;
     }
@@ -135,11 +167,13 @@ public class ComponentTag extends CpnlBodyTagSupport {
      */
     protected Object available() throws ClassNotFoundException {
         Object result = null;
-        Object value = pageContext.getAttribute(this.var, this.scope);
-        if (value instanceof SlingBean) {
-            Class<?> type = getComponentType();
-            if (type != null && type.isAssignableFrom(value.getClass())) {
-                result = value;
+        if (getVar() != null) {
+            Object value = pageContext.getAttribute(getVar(), getVarScope());
+            if (value instanceof SlingBean) {
+                Class<?> type = getComponentType();
+                if (type != null && type.isAssignableFrom(value.getClass())) {
+                    result = value;
+                }
             }
         }
         return result;
@@ -154,10 +188,14 @@ public class ComponentTag extends CpnlBodyTagSupport {
         Class<? extends SlingBean> type = getComponentType();
         if (type != null) {
             component = type.newInstance();
-            component.initialize(new BeanContext.Page(pageContext));
+            initialize(component);
             injectFieldDependecies(component);
         }
         return component;
+    }
+
+    protected void initialize(SlingBean component) {
+        component.initialize(new BeanContext.Page(pageContext));
     }
 
     /**

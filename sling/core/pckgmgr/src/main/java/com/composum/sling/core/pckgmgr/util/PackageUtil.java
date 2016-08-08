@@ -229,7 +229,7 @@ public class PackageUtil {
             try {
                 JcrPackageDefinition pckgDef = pckg.getDefinition();
                 if (pckgDef != null) {
-                    downloadUrl.append("/bin/core/package.download.zip/")
+                    downloadUrl.append("/bin/cpm/package.download.zip/")
                             .append(pckgDef.get(JcrPackageDefinition.PN_GROUP))
                             .append("/")
                             .append(getFilename(pckg));

@@ -1,6 +1,5 @@
 package com.composum.sling.core.servlet;
 
-import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.util.JsonUtil;
@@ -11,7 +10,6 @@ import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
@@ -32,8 +30,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 @Component(componentAbstract = true)
@@ -47,12 +43,6 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
     public enum LabelType {
         name, title
     }
-
-    /**
-     * injection of the configuration for the Composum core layer
-     */
-    @Reference
-    protected CoreConfiguration coreConfig;
 
     /**
      * Determines the filter to use for node retrieval; scans the request for filter parameter or selector.
@@ -72,11 +62,11 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
      * selectors / parameters:
      * - 'label': 'name' or 'title' - selects the value to use for the nodes 'text' attribute
      * URL examples:
-     * - http://host/bin/core/node.tree.json/path/to/the/node
-     * - http://host/bin/core/node.tree.title.json/path/to/the/node
-     * - http://host/bin/core/node.tree.json/path/to/the/node?label=title
+     * - http://host/bin/cpm/nodes/node.tree.json/path/to/the/node
+     * - http://host/bin/cpm/nodes/node.tree.title.json/path/to/the/node
+     * - http://host/bin/cpm/nodes/node.tree.json/path/to/the/node?label=title
      */
-    protected class TreeOperation implements ServletOperation {
+    public class TreeOperation implements ServletOperation {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
@@ -96,17 +86,26 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
 
             response.setStatus(HttpServletResponse.SC_OK);
 
-            writeJsonNode(jsonWriter, filter, resource, labelType, coreConfig, false);
+            writeJsonNode(jsonWriter, filter, resource, labelType, false);
         }
+    }
+
+    /**
+     * extension hook for additional filters or sorting
+     *
+     * @param resource
+     * @param items
+     */
+    protected List<Resource> prepareTreeItems(ResourceHandle resource, List<Resource> items) {
+        return items;
     }
 
     //
     // JSON helpers
     //
 
-    public static void writeJsonNode(JsonWriter writer, ResourceFilter filter,
-                                     ResourceHandle resource, LabelType labelType,
-                                     CoreConfiguration coreConfig, boolean isVirtual)
+    public void writeJsonNode(JsonWriter writer, ResourceFilter filter,
+                              ResourceHandle resource, LabelType labelType, boolean isVirtual)
             throws IOException {
         writer.beginObject();
         String type = writeNodeIdentifiers(writer, resource, labelType, isVirtual);
@@ -124,17 +123,10 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         }
         if (!hasChildren) {
             if (!isVirtual) {
-                addVirtualContent(writer, filter, resource, labelType, coreConfig);
+                addVirtualContent(writer, filter, resource, labelType);
             }
         } else {
-            if (!coreConfig.getOrderableNodesFilter().accept(resource)) {
-                Collections.sort(children, new Comparator<Resource>() {
-                    @Override
-                    public int compare(Resource r1, Resource r2) {
-                        return getSortName(r1).compareTo(getSortName(r2));
-                    }
-                });
-            }
+            children = prepareTreeItems(resource, children);
             writer.name("children").beginArray();
             for (Resource child : children) {
                 ResourceHandle handle = ResourceHandle.use(child);
@@ -152,8 +144,8 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         writer.endObject();
     }
 
-    public static void writeNodeTreeType(JsonWriter writer, ResourceFilter filter,
-                                         ResourceHandle resource, boolean isVirtual)
+    public void writeNodeTreeType(JsonWriter writer, ResourceFilter filter,
+                                  ResourceHandle resource, boolean isVirtual)
             throws IOException {
         String treeType = isVirtual ? "virtual" : "";
         if (StringUtils.isBlank(treeType) &&
@@ -166,9 +158,8 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         }
     }
 
-    public static void addVirtualContent(JsonWriter writer, ResourceFilter filter,
-                                         ResourceHandle resource, LabelType labelType,
-                                         CoreConfiguration coreConfig)
+    public void addVirtualContent(JsonWriter writer, ResourceFilter filter,
+                                  ResourceHandle resource, LabelType labelType)
             throws IOException {
         Node node = resource.adaptTo(Node.class);
         if (node != null) {
@@ -186,7 +177,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
                                     "/" + ResourceUtil.CONTENT_NODE)) != null) {
                         writer.name("children").beginArray();
                         writeJsonNode(writer, filter, ResourceHandle.use(targetResource),
-                                labelType, coreConfig, true);
+                                labelType, true);
                         writer.endArray();
                     }
                 }
@@ -195,7 +186,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         }
     }
 
-    public static String getSortName(Resource resource) {
+    public String getSortName(Resource resource) {
         String name = resource.getName().toLowerCase();
         if (name.startsWith("rep:")) {
             name = "a" + name;
@@ -207,7 +198,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         return name;
     }
 
-    public static String getNodeLabel(ResourceHandle resource, LabelType labelType) {
+    public String getNodeLabel(ResourceHandle resource, LabelType labelType) {
         String text = resource.getName();
         if (labelType == LabelType.title) {
             String title = resource.getProperty(ResourceUtil.PROP_TITLE, "");
@@ -227,8 +218,8 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         return text;
     }
 
-    public static String writeNodeIdentifiers(JsonWriter writer, ResourceHandle resource,
-                                              LabelType labelType, boolean isVirtual)
+    public String writeNodeIdentifiers(JsonWriter writer, ResourceHandle resource,
+                                       LabelType labelType, boolean isVirtual)
             throws IOException {
         String text = getNodeLabel(resource, labelType);
         String type = getTypeKey(resource);
@@ -254,8 +245,8 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         return type;
     }
 
-    public static void writeNodeJcrState(JsonWriter writer,
-                                         ResourceHandle resource)
+    public void writeNodeJcrState(JsonWriter writer,
+                                  ResourceHandle resource)
             throws IOException {
         writer.name("jcrState").beginObject();
         try {
@@ -293,7 +284,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         }
     }
 
-    private static boolean isVersionable(Node node) throws RepositoryException {
+    private boolean isVersionable(Node node) throws RepositoryException {
         return (node.isNodeType(NodeType.MIX_VERSIONABLE) || node.isNodeType(NodeType.MIX_SIMPLE_VERSIONABLE));
     }
     // receiving JSON ...
@@ -313,7 +304,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         public String jcrContent;
     }
 
-    public static NodeParameters getFormParameters(SlingHttpServletRequest request) {
+    public NodeParameters getFormParameters(SlingHttpServletRequest request) {
         // copy parameters from request
         NodeParameters params = new NodeParameters();
         params.name = request.getParameter(PARAM_NAME);

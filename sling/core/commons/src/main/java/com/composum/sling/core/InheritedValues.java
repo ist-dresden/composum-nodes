@@ -88,7 +88,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
      */
     protected <T> T scanNodeHierarchy(String name, Class<T> type) {
         T value;
-        String path = relativePath + name;
+        String path = getRelativePath(name);
         for (Resource parent = entryPoint; parent != null; parent = parent.getParent()) {
             ValueMap parentProps = parent.adaptTo(ValueMap.class);
             if (parentProps != null) {
@@ -104,6 +104,18 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
         return null;
     }
 
+    protected String getRelativePath(String name) {
+        String path = relativePath;
+        if (!path.endsWith("/")) {
+            path += "/";
+        }
+        path += name;
+        path = path.replaceAll("^\\./", "");
+        path = path.replaceAll("/\\./", "/");
+        path = path.replaceAll("/[^/]+/\\.\\./", "/");
+        return path;
+    }
+
     /**
      * Retrieves the first parent node for inheritance traversal
      * and defines the relativePath of the property.
@@ -111,7 +123,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
     protected void findEntryPoint() {
         if (entryPoint == null) {
             StringBuilder path = new StringBuilder();
-            Resource parent = resource.getParent();
+            Resource parent = resource;
             String name = null;
             while (parent != null && !ResourceUtil.CONTENT_NODE.equals(name = parent.getName())) {
                 if (path.length() > 0) {

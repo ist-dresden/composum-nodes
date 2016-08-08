@@ -40,7 +40,7 @@
                 var path = usermanagement.current.node.name;
                 this.state.load = true;
                 core.ajaxGet(
-                    "/bin/core/usermanagement.group.json/" + path,
+                    "/bin/cpm/usermanagement.group.json/" + path,
                     {dataType: 'json'},
                     _.bind (function (result) {
                         var formattedResult = [];

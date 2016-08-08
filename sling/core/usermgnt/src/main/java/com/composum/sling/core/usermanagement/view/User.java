@@ -1,6 +1,6 @@
 package com.composum.sling.core.usermanagement.view;
 
-import com.composum.sling.core.console.ConsoleSlingBean;
+import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;

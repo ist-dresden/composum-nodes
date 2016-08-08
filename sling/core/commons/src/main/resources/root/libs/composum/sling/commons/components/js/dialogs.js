@@ -34,10 +34,14 @@
             },
 
             onShown: function () {
-                this.reset();
+                this.resetOnShown();
                 if (_.isFunction(this.initView)) {
                     this.initView();
                 }
+            },
+
+            resetOnShown: function() {
+                this.reset();
             },
 
             hide: function () {
@@ -209,7 +213,7 @@
                     this.busy = true;
                     var path = this.getValue();
                     if (path.indexOf('/') === 0) {
-                        core.getJson('/bin/core/node.tree.json' + path, _.bind(function (data) {
+                        core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (data) {
                             this.tree.selectNode.apply(this.tree, [data.path]);
                         }, this));
                     }

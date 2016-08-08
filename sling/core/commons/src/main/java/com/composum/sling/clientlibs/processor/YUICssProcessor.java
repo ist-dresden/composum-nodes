@@ -1,6 +1,7 @@
 package com.composum.sling.clientlibs.processor;
 
 import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.handle.ClientlibLink;
 import com.composum.sling.core.util.ResourceUtil;
 import com.yahoo.platform.yui.compressor.CssCompressor;
 import org.apache.felix.scr.annotations.Activate;
@@ -84,10 +85,10 @@ public class YUICssProcessor implements CssProcessor {
                                      Writer writer, RendererContext context,
                                      String template)
             throws IOException {
-        List<Clientlib.Link> links = clientlib.getLinks(debug, false, false, properties, context);
+        List<ClientlibLink> links = clientlib.getLinks(context, debug);
         for (int i = 0; i < links.size(); ) {
-            Clientlib.Link link = links.get(i);
-            writer.append(MessageFormat.format(template, link.url));
+            ClientlibLink link = links.get(i);
+            writer.append(MessageFormat.format(template, link.getUrl(context)));
             if (++i < links.size()) {
                 writer.append('\n');
             }

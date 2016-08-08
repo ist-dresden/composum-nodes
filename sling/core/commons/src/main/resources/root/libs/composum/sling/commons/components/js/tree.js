@@ -90,7 +90,7 @@
      *        el: $('.tree')[0], // the element to use
      *
      *        dataUrlForPath: function(path) {
-     *            return '/bin/core/node.page.title.json' + path;
+     *            return '/bin/cpm/nodes/node.page.title.json' + path;
      *        },
      *
      *        onNodeSelected: function(path) {
@@ -518,7 +518,7 @@
                     return this.dataUrlForPath(path);
                 }
                 var params = this.filter && 'default' != this.filter ? '?filter=' + this.filter : '';
-                return '/bin/core/node.tree.json' + path + params;
+                return '/bin/cpm/nodes/node.tree.json' + path + params;
             },
 
             /**

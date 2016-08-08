@@ -2,7 +2,7 @@
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2"%>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0"%>
 <sling:defineObjects/>
-<cpn:component id="browser" type="com.composum.sling.core.browser.Browser" scope="request">
+<cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
   <div class="video detail-panel" data-type="${browser.current.mimeType}" data-path="${browser.current.pathUrl}" data-mapped="${browser.current.url}">
     <div class="video-toolbar detail-toolbar">
       <div class="btn-group btn-group-sm" role="group">

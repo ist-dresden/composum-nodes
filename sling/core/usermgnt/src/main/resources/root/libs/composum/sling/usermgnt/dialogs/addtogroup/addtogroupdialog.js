@@ -24,7 +24,7 @@
                 this.$group.typeahead({
                     minLength: 1,
                     source: function (query, callback) {
-                        core.getJson('/bin/core/usermanagement.groups.json/' + query, function (data) {
+                        core.getJson('/bin/cpm/usermanagement.groups.json/' + query, function (data) {
                             var list = [];
                             for (var i = 0; i < data.length; i++) {
                                 list.push(data[i].id);
@@ -47,7 +47,7 @@
                 event.preventDefault();
                 var serializedData = this.form.$el.serialize();
                 core.ajaxPost(
-                    "/bin/core/usermanagement.addtogroup.json",
+                    "/bin/cpm/usermanagement.addtogroup.json",
                     serializedData,
                     {
                         dataType: 'post'

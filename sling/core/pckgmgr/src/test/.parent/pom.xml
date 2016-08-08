@@ -55,7 +55,7 @@
                     <extensions>true</extensions>
                     <configuration>
                         <failOnError>true</failOnError>
-                        <targetURL>http://${sling.host}:${sling.port}${sling.context}/bin/core/package.service.html</targetURL>
+                        <targetURL>http://${sling.host}:${sling.port}${sling.context}/bin/cpm/package.service.html</targetURL>
                         <userId>admin</userId>
                         <password>admin</password>
                         <useProxy>false</useProxy>
