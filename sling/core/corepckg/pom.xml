@@ -61,6 +61,10 @@
                                 <include>.*/composum-sling-user-management.*\.jar</include>
                             </includes>
                         </filter>
+                        <filter>
+                            <!-- removes all 'old' composum core content -->
+                            <root>/libs/composum/sling</root>
+                        </filter>
                     </filters>
 
                     <embeddeds>
