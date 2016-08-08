@@ -41,7 +41,7 @@ public class GroovyRunner {
     private static final Logger LOG = LoggerFactory.getLogger(GroovyRunner.class);
 
     public static final String DEFAULT_SETUP_SCRIPT = "script/setup.groovy";
-    public static final String JAVA_RESOURCE_BASE = "/com/composum/nodes/core/";
+    public static final String JAVA_RESOURCE_BASE = "/com/composum/sling/core/";
     public static final String ENCODING = "UTF-8";
 
     protected BundleContext bundleContext;
