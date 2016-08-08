@@ -56,7 +56,7 @@
                             *;scope=compile|runtime
                         </Embed-Dependency>
                         <Sling-Initial-Content>
-                            root/libs/composum/sling/commons;path:=/libs/composum/sling/commons;overwrite:=true,
+                            root/libs/composum/nodes/commons;path:=/libs/composum/nodes/commons;overwrite:=true,
                             root/libs/fonts/composum;path:=/libs/fonts/composum;overwrite:=true
                         </Sling-Initial-Content>
                     </instructions>

@@ -43,7 +43,7 @@ public class Consoles extends ConsolePage {
     }
 
     public static final String CONTENT_QUERY_BASE = "/jcr:root";
-    public static final String CONTENT_QUERY_RULE = "//content[@sling:resourceType='composum/sling/console/page']";
+    public static final String CONTENT_QUERY_RULE = "//content[@sling:resourceType='composum/nodes/console/page']";
     public static final String CONTENT_QUERY_LIBS = CONTENT_QUERY_BASE + "/libs" + CONTENT_QUERY_RULE;
     public static final String CONTENT_QUERY_APPS = CONTENT_QUERY_BASE + "/apps" + CONTENT_QUERY_RULE;
 

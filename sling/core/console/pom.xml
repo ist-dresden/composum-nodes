@@ -43,7 +43,7 @@
                             com.composum.sling.nodes.*
                         </Export-Package>
                         <Sling-Initial-Content>
-                            root/libs/composum/sling/console;path:=/libs/composum/sling/console;overwrite:=true
+                            root/libs/composum/nodes/console;path:=/libs/composum/nodes/console;overwrite:=true
                         </Sling-Initial-Content>
                     </instructions>
                 </configuration>

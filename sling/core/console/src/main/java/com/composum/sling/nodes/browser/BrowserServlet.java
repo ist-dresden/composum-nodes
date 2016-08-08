@@ -46,7 +46,7 @@ public class BrowserServlet extends SlingSafeMethodsServlet {
             }
 
             // set the browsers component resource type for each request received by this servlet
-            String resourceType = "composum/sling/console/browser";
+            String resourceType = "composum/nodes/console/browser";
             options.setForceResourceType(resourceType);
 
             RequestDispatcher dispatcher = request.getRequestDispatcher(request.getResource(), options);

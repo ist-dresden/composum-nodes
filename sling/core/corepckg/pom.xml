@@ -16,7 +16,7 @@
     <description>Composum Core Console Bundles Package - the Composum Nodes tools collection</description>
 
     <properties>
-        <package.group>com/composum</package.group>
+        <package.group>com/composum/nodes</package.group>
         <package.company>IST GmbH Dresden</package.company>
     </properties>
 
@@ -54,7 +54,7 @@
 
                     <filters>
                         <filter>
-                            <root>/libs/composum/sling/install</root>
+                            <root>/libs/composum/nodes/install</root>
                             <includes>
                                 <include>.*/composum-sling-core-.*\.jar</include>
                                 <include>.*/composum-sling-package-manager.*\.jar</include>
@@ -67,27 +67,27 @@
                         <embedded>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>composum-sling-core-jslibs</artifactId>
-                            <target>/libs/composum/sling/install</target>
+                            <target>/libs/composum/nodes/install</target>
                         </embedded>
                         <embedded>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>composum-sling-core-commons</artifactId>
-                            <target>/libs/composum/sling/install</target>
+                            <target>/libs/composum/nodes/install</target>
                         </embedded>
                         <embedded>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>composum-sling-core-console</artifactId>
-                            <target>/libs/composum/sling/install</target>
+                            <target>/libs/composum/nodes/install</target>
                         </embedded>
                         <embedded>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>composum-sling-package-manager</artifactId>
-                            <target>/libs/composum/sling/install</target>
+                            <target>/libs/composum/nodes/install</target>
                         </embedded>
                         <embedded>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>composum-sling-user-management</artifactId>
-                            <target>/libs/composum/sling/install</target>
+                            <target>/libs/composum/nodes/install</target>
                         </embedded>
                     </embeddeds>
 

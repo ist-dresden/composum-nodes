@@ -48,7 +48,7 @@ public class PackagesServlet extends SlingSafeMethodsServlet {
             }
 
             // set the browsers component resource type for each request received by this servlet
-            String resourceType = "composum/sling/pckgmgr";
+            String resourceType = "composum/nodes/pckgmgr";
             options.setForceResourceType(resourceType);
 
             RequestDispatcher dispatcher = request.getRequestDispatcher(request.getResource(), options);

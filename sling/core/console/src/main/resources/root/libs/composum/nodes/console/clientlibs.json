@@ -1,0 +1,143 @@
+{
+  "browser": {
+    "sling:resourceType": "composum/nodes/commons/clientlib",
+    "css": {
+      "jcr:primaryType": "nt:unstructured",
+      "embed": [
+        "composum/nodes/console/browser/css/nodes.css",
+        "composum/nodes/console/browser/css/browser.css",
+        "composum/nodes/console/browser/components/favorites/favorites.css"
+      ]
+    },
+    "js": {
+      "jcr:primaryType": "nt:unstructured",
+      "depends": [
+        "composum/nodes/console/clientlibs/console",
+        "composum/nodes/console/clientlibs/ace"
+      ],
+      "embed": [
+        "composum/nodes/console/browser/js/property.js",
+        "composum/nodes/console/browser/js/nodes.js",
+        "composum/nodes/console/browser/js/query.js",
+        "composum/nodes/console/browser/js/browser.js",
+        "composum/nodes/console/browser/js/navigation.js",
+        "composum/nodes/console/browser/components/favorites/favorites.js",
+        "composum/nodes/console/browser/js/properties.js",
+        "composum/nodes/console/browser/js/accessPolicyEntryDialog.js",
+        "composum/nodes/console/browser/js/policiesTable.js",
+        "composum/nodes/console/browser/js/policiesTab.js",
+        "composum/nodes/console/browser/js/version.js",
+        "composum/nodes/console/browser/js/nodeview.js"
+      ]
+    }
+  },
+  "console": {
+    "sling:resourceType": "composum/nodes/commons/clientlib",
+    "link": {
+      "jcr:primaryType": "nt:unstructured",
+      "cpn-64": {
+        "rel": "shortcut icon",
+        "embed": "composum/nodes/commons/components/images/cpn-64.png"
+      },
+      "cpn-128": {
+        "rel": "apple-touch-icon",
+        "embed": "composum/nodes/commons/components/images/cpn-128.png"
+      }
+    },
+    "css": {
+      "jcr:primaryType": "nt:unstructured",
+      "embed": [
+        "jslibs/bootstrap/3.3.2/css/bootstrap-theme.min.css",
+        "jslibs/bootstrap-table/1.7.0/bootstrap-table.min.css",
+        "jslibs/bootstrap-datetimepicker/4.14.30/css/bootstrap-datetimepicker.min.css",
+        "jslibs/jquery/split-pane/snapshot/split-pane.css",
+        "composum/nodes/commons/components/clientlibs/components",
+        "composum/nodes/console/page/css/console.css"
+      ]
+    },
+    "js": {
+      "jcr:primaryType": "nt:unstructured",
+      "jquery": {
+        "embed": [
+          "jslibs/jquery/2.2.4/jquery.min.js"
+        ]
+      },
+      "jquery.base64": {
+        "embed": "jslibs/jquery/base64/jquery.base64.js"
+      },
+      "aem-6.1": {
+        "optional": true,
+        "embed": [
+          "/etc/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js",
+          "/etc/clientlibs/granite/jquery/granite/csrf/source/csrf.js"
+        ]
+      },
+      "underscore": {
+        "embed": "jslibs/underscore/1.8.3/underscore-min.js"
+      },
+      "moment": {
+        "embed": "jslibs/moment/2.10.3/moment-with-locales.min.js"
+      },
+      "backbone": {
+        "embed": "jslibs/backbone/1.2.0/backbone-min.js"
+      },
+      "bootstrap": {
+        "embed": "jslibs/bootstrap/3.3.2/js/bootstrap.min.js"
+      },
+      "bootstrap-table": {
+        "embed": "jslibs/bootstrap-table/1.7.0/bootstrap-table.js"
+      },
+      "bootstrap-datetimepicker": {
+        "embed": "jslibs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"
+      },
+      "bootstrap3-editable": {
+        "embed": "jslibs/x-editable/1.5.1/bootstrap3-editable/js/bootstrap-editable.min.js"
+      },
+      "bootstrap3-typeahead": {
+        "embed": "jslibs/typeahead/3.1.0/bootstrap3-typeahead.min.js"
+      },
+      "fileinput": {
+        "embed": "jslibs/bootstrap-fileinput/4.3.2/js/fileinput.min.js"
+      },
+      "split-pane": {
+        "embed": "jslibs/jquery/split-pane/snapshot/split-pane.js"
+      },
+      "jstree": {
+        "embed": "jslibs/jstree/3.3.0/jstree.js"
+      },
+      "components": {
+        "embed": "composum/nodes/commons/components/clientlibs/components"
+      },
+      "console": {
+        "embed": [
+          "composum/nodes/console/page/js/dialogs.js",
+          "composum/nodes/console/page/js/console.js"
+        ]
+      }
+    }
+  },
+  "ace": {
+    "sling:resourceType": "composum/nodes/commons/clientlib",
+    "js": {
+      "expanded": true,
+      "jcr:primaryType": "nt:unstructured",
+      "embed": [
+        "jslibs/ace/1.1.8/ace.js",
+        "jslibs/ace/1.1.8/mode-json.js",
+        "jslibs/ace/1.1.8/mode-xml.js",
+        "jslibs/ace/1.1.8/mode-html.js",
+        "jslibs/ace/1.1.8/mode-jsp.js",
+        "jslibs/ace/1.1.8/mode-css.js",
+        "jslibs/ace/1.1.8/mode-less.js",
+        "jslibs/ace/1.1.8/mode-javascript.js",
+        "jslibs/ace/1.1.8/mode-dart.js",
+        "jslibs/ace/1.1.8/mode-groovy.js",
+        "jslibs/ace/1.1.8/mode-java.js",
+        "jslibs/ace/1.1.8/mode-scala.js",
+        "jslibs/ace/1.1.8/mode-markdown.js",
+        "jslibs/ace/1.1.8/mode-text.js",
+        "jslibs/ace/1.1.8/theme-clouds.js"
+      ]
+    }
+  }
+}

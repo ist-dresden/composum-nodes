@@ -28,7 +28,7 @@ public class ResourceFilterMapping {
     public static final String PROPERTY_RULE = "rule";
     public static final String NODE_NAME_FILTER = "filter";
     public static final String NODE_NAME_ENTRY = "entry";
-    public static final String RESOURCE_FILTER_TYPE = "composum/sling/core/filter/resources";
+    public static final String RESOURCE_FILTER_TYPE = "composum/nodes/core/filter/resources";
 
     //
     // String mapping (useful for OSGi configuration properties)

@@ -218,7 +218,7 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
                         map.put(propertyName, property);
                     }
                 }
-                map.put(PROP_RESOURCE_TYPE, "composum/sling/jobcontrol/audit");
+                map.put(PROP_RESOURCE_TYPE, "composum/nodes/jobcontrol/audit");
                 adminResolver.commit();
                 jobExecutionFinished(job, context, auditResource);
             } catch (Exception e) {

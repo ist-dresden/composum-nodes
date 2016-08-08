@@ -27,7 +27,7 @@ public class StringFilterMapping {
     public static final String PROPERTY_RULE = "rule";
     public static final String PROPERTY_PATTERNS = "patterns";
     public static final String NODE_NAME_ENTRY = "entry";
-    public static final String STRING_FILTER_TYPE = "composum/sling/core/filter/strings";
+    public static final String STRING_FILTER_TYPE = "composum/nodes/core/filter/strings";
 
     //
     // String mapping (useful for OSGi configuration properties)

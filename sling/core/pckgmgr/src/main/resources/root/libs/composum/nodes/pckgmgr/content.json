@@ -1,0 +1,20 @@
+{
+  "jcr:primaryType": "sling:OrderedFolder",
+  "sling:resourceType": "composum/nodes/console/page",
+  "pckgmgr": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:mixinTypes": [
+      "sling:Redirect"
+    ],
+    "jcr:title": "Packages",
+    "sling:resourceType": "composum/nodes/pckgmgr",
+    "sling:redirect": "/bin/packages.html",
+    "categories": [
+      "core",
+      "nodes",
+      "packages"
+    ],
+    "order": 30,
+    "precondition": "class:org.apache.jackrabbit.vault.packaging.JcrPackageManager"
+  }
+}
