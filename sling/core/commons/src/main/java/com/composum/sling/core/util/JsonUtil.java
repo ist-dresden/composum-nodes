@@ -627,7 +627,7 @@ public class JsonUtil {
                     || node.getProperty(property.name) == null)
                     && mapping.importPropertyFilter.accept(property.name)) {
                 try {
-                    setJsonProperty(factory, node, property, mapping);
+                    setJsonProperty(node, property, mapping);
                     return true;
                 } catch (ConstraintViolationException cvex) {
                     LOG.info(cvex.toString() + " (" + node.getPath() + "@" + property.name + ")");
@@ -992,13 +992,12 @@ public class JsonUtil {
     /**
      * Creates or updates one property at a JCR node.
      *
-     * @param factory  the value factory to create the properties value
      * @param node     the node which holds the property
      * @param property the property object transformed from JSON
      * @return <code>true</code> if the property is set and available
      * @throws RepositoryException if storing was not possible (some reasons)
      */
-    public static boolean setJsonProperty(ValueFactory factory, Node node,
+    public static boolean setJsonProperty(Node node,
                                           JsonProperty property, MappingRules mapping)
             throws RepositoryException {
 
@@ -1033,7 +1032,7 @@ public class JsonUtil {
                 Value[] values = new Value[jsonValues.length];
                 try {
                     for (int i = 0; i < jsonValues.length; i++) {
-                        values[i] = makeJcrValue(factory, type, jsonValues[i], mapping);
+                        values[i] = makeJcrValue(node, type, jsonValues[i], mapping);
                     }
                 } catch (PropertyValueFormatException pfex) {
                     return false;
@@ -1067,7 +1066,7 @@ public class JsonUtil {
 
                 Value value = null;
                 try {
-                    value = makeJcrValue(factory, type, stringValue, mapping);
+                    value = makeJcrValue(node, type, stringValue, mapping);
                 } catch (PropertyValueFormatException pfex) {
                     return false;
                 }
@@ -1095,16 +1094,19 @@ public class JsonUtil {
     /**
      * Create a JCR value from string value for the designated JCR type.
      *
-     * @param factory the value factory to create the properties value
+     * @param node    the node of the property
      * @param type    the JCR type according to the types declared in PropertyType
      * @param object  the value in the right type or a string representation of the value,
      *                for binary values a input stream can be used as parameter or a string
      *                with the base64 encoded data for the binary property
      * @return
      */
-    public static Value makeJcrValue(ValueFactory factory, int type, Object object,
+    public static Value makeJcrValue(Node node, int type, Object object,
                                      MappingRules mapping)
             throws PropertyValueFormatException, RepositoryException {
+        Session session = node.getSession();
+        ValueFactory factory = session.getValueFactory();
+
         Value value = null;
         if (object != null) {
             switch (type) {
@@ -1155,12 +1157,16 @@ public class JsonUtil {
                     value = factory.createValue(object instanceof Long
                             ? (Long) object : Long.parseLong(object.toString()));
                     break;
+                case PropertyType.REFERENCE:
+                case PropertyType.WEAKREFERENCE:
+                    final Node refNode = session.getNode(object.toString());
+                    final String identifier = refNode.getIdentifier();
+                    value = factory.createValue(identifier, type);
+                    break;
                 case PropertyType.NAME:
                 case PropertyType.PATH:
-                case PropertyType.REFERENCE:
                 case PropertyType.STRING:
                 case PropertyType.URI:
-                case PropertyType.WEAKREFERENCE:
                     value = factory.createValue(object.toString(), type);
                     break;
                 case PropertyType.UNDEFINED:
