@@ -17,7 +17,7 @@
     <url>https://docs.adobe.com/content/docs/en/cq/5-6-1/core/how_to/how_to_use_the_vlttool/vlt-mavenplugin.html</url>
 
     <properties>
-        <package.group>test/packages</package.group>
+        <package.group>test/composum/nodes</package.group>
         <package.company>IST GmbH Dresden</package.company>
     </properties>
 
@@ -57,6 +57,12 @@
                             <root>/apps/composum/test/pckgmgr</root>
                         </filter>
                         <filter>
+                            <root>/apps/composum/test/install</root>
+                            <includes>
+                                <include>.*/maven-package-test-bundle.*\.jar</include>
+                            </includes>
+                        </filter>
+                        <filter>
                             <root>/content/test/composum/pckgmgr</root>
                         </filter>
                     </filters>
@@ -65,7 +71,7 @@
                         <embedded>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>maven-package-test-bundle</artifactId>
-                            <target>/apps/composum/test/pckgmgr/install</target>
+                            <target>/apps/composum/test/install</target>
                         </embedded>
                     </embeddeds>
 
