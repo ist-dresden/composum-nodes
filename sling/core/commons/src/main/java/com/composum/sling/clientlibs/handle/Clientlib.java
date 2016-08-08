@@ -27,7 +27,7 @@ public class Clientlib {
 
     private static final Logger LOG = LoggerFactory.getLogger(Clientlib.class);
 
-    public static final String RESOURCE_TYPE = "composum/sling/commons/clientlib";
+    public static final String RESOURCE_TYPE = "composum/nodes/commons/clientlib";
 
     public enum Type {link, css, js, img}
 

@@ -46,7 +46,7 @@ public class UserManagerServlet extends SlingSafeMethodsServlet {
             }
 
             // set the browsers component resource type for each request received by this servlet
-            String resourceType = "composum/sling/usermgnt";
+            String resourceType = "composum/nodes/usermgnt";
             options.setForceResourceType(resourceType);
 
             RequestDispatcher dispatcher = request.getRequestDispatcher(request.getResource(), options);

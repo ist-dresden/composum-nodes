@@ -48,7 +48,7 @@
                             com.composum.sling.core.pckgmgr.*
                         </Export-Package>
                         <Sling-Initial-Content>
-                            root/libs/composum/sling/pckgmgr;path:=/libs/composum/sling/pckgmgr;overwrite:=true
+                            root/libs/composum/nodes/pckgmgr;path:=/libs/composum/nodes/pckgmgr;overwrite:=true
                         </Sling-Initial-Content>
                     </instructions>
                 </configuration>

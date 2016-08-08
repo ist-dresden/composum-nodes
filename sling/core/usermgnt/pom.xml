@@ -40,7 +40,7 @@
                             {maven-resources}
                         </Include-Resource>
                         <Sling-Initial-Content>
-                            root/libs/composum/sling/usermgnt;path:=/libs/composum/sling/usermgnt;overwrite:=true
+                            root/libs/composum/nodes/usermgnt;path:=/libs/composum/nodes/usermgnt;overwrite:=true
                         </Sling-Initial-Content>
                     </instructions>
                 </configuration>

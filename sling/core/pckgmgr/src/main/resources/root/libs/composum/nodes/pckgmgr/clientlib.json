@@ -1,0 +1,56 @@
+{
+  "sling:resourceType": "composum/nodes/commons/clientlib",
+  "css": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "depends": [
+      "composum/nodes/console/clientlibs/console"
+    ],
+    "group": {
+      "embed": [
+        "composum/nodes/pckgmgr/group/general/general.css"
+      ]
+    },
+    "jcrpckg": {
+      "embed": [
+        "composum/nodes/pckgmgr/jcrpckg/general/general.css",
+        "composum/nodes/pckgmgr/jcrpckg/filter/filter.css",
+        "composum/nodes/pckgmgr/jcrpckg/coverage/coverage.css",
+        "composum/nodes/pckgmgr/jcrpckg/options/options.css"
+      ]
+    },
+    "embed": [
+      "composum/nodes/pckgmgr/css/query.css",
+      "composum/nodes/pckgmgr/css/pckgmgr.css"
+    ]
+  },
+  "js": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "depends": [
+      "composum/nodes/console/clientlibs/console"
+    ],
+    "dialogs": {
+      "embed": [
+        "composum/nodes/pckgmgr/js/dialogs.js"
+      ]
+    },
+    "group": {
+      "embed": [
+        "composum/nodes/pckgmgr/group/js/group.js"
+      ]
+    },
+    "jcrpckg": {
+      "embed": [
+        "composum/nodes/pckgmgr/jcrpckg/general/general.js",
+        "composum/nodes/pckgmgr/jcrpckg/filter/filter.js",
+        "composum/nodes/pckgmgr/jcrpckg/coverage/coverage.js",
+        "composum/nodes/pckgmgr/jcrpckg/options/options.js"
+      ]
+    },
+    "pckgmgr": {
+      "embed": [
+        "composum/nodes/pckgmgr/js/query.js",
+        "composum/nodes/pckgmgr/js/pckgmgr.js"
+      ]
+    }
+  }
+}
