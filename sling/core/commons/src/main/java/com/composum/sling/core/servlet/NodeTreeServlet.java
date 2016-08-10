@@ -68,6 +68,10 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
      */
     public class TreeOperation implements ServletOperation {
 
+        protected ResourceFilter getNodeFilter(SlingHttpServletRequest request) {
+            return NodeTreeServlet.this.getNodeFilter(request);
+        }
+
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
                          ResourceHandle resource)
