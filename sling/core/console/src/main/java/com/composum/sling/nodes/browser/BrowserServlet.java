@@ -1,56 +1,30 @@
 package com.composum.sling.nodes.browser;
 
-import org.apache.commons.lang3.StringUtils;
+import com.composum.sling.core.servlet.AbstractConsoleServlet;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.request.RequestDispatcherOptions;
-import org.apache.sling.api.request.RequestPathInfo;
-import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import java.io.IOException;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * The general hook (servlet) for the Browser feature provides the path '/bin/browser.html/...'.
- * This is the analogous absolute path implementation for the '.browser' selector feature.
  */
 @SlingServlet(
         paths = "/bin/browser",
         methods = {"GET"}
 )
-public class BrowserServlet extends SlingSafeMethodsServlet {
+public class BrowserServlet extends AbstractConsoleServlet {
+
+    public static final String SERVLET_PATH = "/bin/browser.html";
+
+    public static final String RESOURCE_TYPE = "composum/nodes/console/browser";
 
     public static final Pattern PATH_PATTERN = Pattern.compile("^(/bin/browser(\\.[^/]+)?\\.html)(/.*)?$");
 
-    @Override
-    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
-            throws ServletException, IOException {
+    protected Pattern getPathPattern() {
+        return PATH_PATTERN;
+    }
 
-        // the pattern matching is not necessary but it prevents from errors thrown during unwanted requests
-        final String pathInfo = request.getPathInfo();
-        final Matcher matcher = PATH_PATTERN.matcher(pathInfo);
-
-        if (matcher.matches()) {
-            RequestPathInfo reqPathInfo = request.getRequestPathInfo();
-
-            // the options for the delegation to the browser component implementation
-            RequestDispatcherOptions options = new RequestDispatcherOptions();
-            String suffix = reqPathInfo.getSuffix();
-            if (StringUtils.isBlank(suffix)) {
-                // ensure the a target resource is always used
-                options.setReplaceSuffix("/");
-            }
-
-            // set the browsers component resource type for each request received by this servlet
-            String resourceType = "composum/nodes/console/browser";
-            options.setForceResourceType(resourceType);
-
-            RequestDispatcher dispatcher = request.getRequestDispatcher(request.getResource(), options);
-            dispatcher.include(request, response);
-        }
+    protected String getResourceType() {
+        return RESOURCE_TYPE;
     }
 }
