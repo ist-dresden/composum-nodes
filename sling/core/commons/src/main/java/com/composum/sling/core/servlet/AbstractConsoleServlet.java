@@ -1,5 +1,6 @@
 package com.composum.sling.core.servlet;
 
+import com.composum.sling.core.BeanContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -18,9 +19,9 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
 
-    protected abstract Pattern getPathPattern();
+    protected abstract Pattern getPathPattern(BeanContext context);
 
-    protected abstract String getResourceType();
+    protected abstract String getResourceType(BeanContext context);
 
     protected String getRequestPath(SlingHttpServletRequest request) {
         RequestPathInfo reqPathInfo = request.getRequestPathInfo();
@@ -34,10 +35,11 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
+        BeanContext context = new BeanContext.Servlet(getServletContext(), request, response);
 
         // the pattern matching is not necessary but it prevents from errors thrown during unwanted requests
         final String pathInfo = request.getPathInfo();
-        final Matcher matcher = getPathPattern().matcher(pathInfo);
+        final Matcher matcher = getPathPattern(context).matcher(pathInfo);
 
         if (matcher.matches()) {
 
@@ -49,7 +51,7 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
             }
 
             // set the viewa component resource type for each request received by this servlet
-            String resourceType = getResourceType();
+            String resourceType = getResourceType(context);
             options.setForceResourceType(resourceType);
 
             RequestDispatcher dispatcher = request.getRequestDispatcher(request.getResource(), options);
