@@ -38,6 +38,7 @@
                             root/libs/fonts/roboto/2014;path:=/libs/fonts/roboto/2014;overwrite:=true,
                             root/libs/jslibs/ace/1.1.8;path:=/libs/jslibs/ace/1.1.8;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/backbone/1.2.0;path:=/libs/jslibs/backbone/1.2.0;overwrite:=true,
+                            root/libs/jslibs/backbone/1.3.3;path:=/libs/jslibs/backbone/1.3.3;overwrite:=true,
                             root/libs/jslibs/bootstrap/3.3.2;path:=/libs/jslibs/bootstrap/3.3.2;overwrite:=true,
                             root/libs/jslibs/bootstrap/3.3.5;path:=/libs/jslibs/bootstrap/3.3.5;overwrite:=true,
                             root/libs/jslibs/bootstrap-datetimepicker/4.17.37;path:=/libs/jslibs/bootstrap-datetimepicker/4.17.37;overwrite:=true,
