@@ -97,7 +97,7 @@
                         copy: false,
                         check_while_dragging: false,
                         drag_selection: false,
-                        touch: 'selection',
+                        touch: false, //'selection',
                         large_drag_target: true,
                         large_drop_target: true,
                         use_html5: false
