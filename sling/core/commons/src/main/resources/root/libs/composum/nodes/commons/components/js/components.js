@@ -195,6 +195,14 @@
          */
         components.RadioGroupWidget = Backbone.View.extend({
 
+            getCount: function () {
+                return this.$('input[type="radio"]').length;
+            },
+
+            getOnlyOne: function () {
+                return this.getCount() == 1 ? this.$('input[type="radio"]').val() : undefined;
+            },
+
             getValue: function () {
                 this.value = this.$('input[type="radio"]:checked').val();
                 return this.value;
