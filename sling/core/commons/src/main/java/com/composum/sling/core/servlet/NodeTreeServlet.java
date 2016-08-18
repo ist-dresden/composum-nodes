@@ -242,6 +242,10 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         writer.name("name").value(resource.getName());
         writer.name("text").value(text);
         writer.name("path").value(path);
+        String resourceType = resource.getResourceType();
+        if (StringUtils.isNotBlank(resourceType)) {
+            writer.name("resourceType").value(resourceType);
+        }
         String uuid = resource.getProperty(ResourceUtil.PROP_UUID);
         if (StringUtils.isNotBlank(uuid)) {
             writer.name("uuid").value(uuid);

@@ -366,7 +366,7 @@
 
             onPathSelected: function (event, path) {
                 var node = this.getSelectedTreeNode();
-                console.log('onPathSelected(' + path + '):' + node);
+                console.log(this.nodeIdPrefix +'tree.onPathSelected(' + path + '):' + node);
                 if (!node || node.original.path != path) {
                     if (!this.busy) {
                         // prevent from endless self activation
@@ -375,8 +375,8 @@
                             this.selectNode(path, _.bind(function (path) {
                                 var node = this.getSelectedTreeNode();
                                 if (!node) {
-                                    if (_.isFunction(this.onSelectNodeFailed)) {
-                                        this.onSelectNodeFailed(path);
+                                    if (_.isFunction(this.onPathSelectedFailed)) {
+                                        this.onPathSelectedFailed(path);
                                     }
                                 }
                             }, this));
@@ -389,19 +389,19 @@
 
             onPathInserted: function (event, parentPath, nodeName) {
                 var nodeId = this.nodeId(parentPath);
-                console.log('onPathInserted(' + parentPath + ',' + nodeName + '):' + nodeId);
+                console.log(this.nodeIdPrefix +'tree.onPathInserted(' + parentPath + ',' + nodeName + '):' + nodeId);
                 this.refreshNodeById(nodeId);
             },
 
             onPathChanged: function (event, path) {
                 var nodeId = this.nodeId(path);
-                console.log('onPathChanged(' + path + '):' + nodeId);
+                console.log(this.nodeIdPrefix +'tree.onPathChanged(' + path + '):' + nodeId);
                 this.refreshNodeById(nodeId);
             },
 
             onPathMoved: function (event, oldPath, newPath) {
                 var oldNode = this.getTreeNodeByPath(oldPath);
-                console.log('onPathMoved(' + oldPath + ',' + newPath + '):' + oldNode);
+                console.log(this.nodeIdPrefix +'tree.onPathMoved(' + oldPath + ',' + newPath + '):' + oldNode);
                 if (oldNode) {
                     var selected = this.getSelectedTreeNode();
                     var restoreSelection = (selected && selected.original.path == oldPath);
@@ -424,7 +424,7 @@
 
             onPathDeleted: function (event, path) {
                 var deleted = this.getTreeNodeByPath(path);
-                console.log('onPathDeleted(' + path + '):' + deleted);
+                console.log(this.nodeIdPrefix +'tree.onPathDeleted(' + path + '):' + deleted);
                 if (deleted) {
                     var selected = this.getSelectedTreeNode();
                     var nearestFocus = this.findNearestOfDeletion(path);
@@ -499,7 +499,7 @@
                 // use the URL build by the 'dataUrlForNode' function in th Ajax call
                 var url = this.dataUrlForNode(node);
                 var tree = this; // for later use via closure
-                console.log('nodeData(' + node + '): ' + url);
+                console.log(this.nodeIdPrefix +'tree.nodeData(' + node + '): ' + url);
                 core.getJson(url, function (result) {
                         // transform all ids (node path) into the tree (jQuery) compatible format
                         result.id = tree.nodeId(result.path);
@@ -657,8 +657,10 @@
             },
 
             onNodeSelected: function (path, node, element) {
-                console.log('onNodeSelected(' + path + ',' + node + ',' + element + ')');
-                $(document).trigger("path:select", [path, node, element]);
+                if (!this.busy) {
+                    console.log(this.nodeIdPrefix +'tree.onNodeSelected(' + path + ',' + node + ',' + element + ')');
+                    $(document).trigger("path:select", [path, node, element]);
+                }
             },
 
             /**
@@ -691,7 +693,7 @@
             // jstree helpers
 
             refreshNodeById: function (id, callback) {
-                console.log('refreshNodeById(' + id + ')');
+                console.log(this.nodeIdPrefix +'tree.refreshNodeById(' + id + ')');
                 if (!id) {
                     var selected = this.jstree.get_selected();
                     if (selected && selected.length > 0) {
