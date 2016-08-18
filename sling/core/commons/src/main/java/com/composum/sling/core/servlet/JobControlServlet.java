@@ -83,7 +83,7 @@ public class JobControlServlet extends AbstractServiceServlet {
         super.init();
 
         // GET
-        // curl -X GET http://localhost:9090/bin/cpm/core/jobcontrol.jobs.HISTORY.json/?topic=com/composum/nodes/core/script/GroovyJobExecutor
+        // curl -X GET http://localhost:9090/bin/cpm/core/jobcontrol.jobs.HISTORY.json/?topic=com/composum/sling/core/script/GroovyJobExecutor
         // [ALL, ACTIVE, QUEUED, HISTORY, CANCELLED, SUCCEEDED, STOPPED, GIVEN_UP, ERROR, DROPPED]
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.jobs, new GetAllJobs());
 
@@ -94,10 +94,10 @@ public class JobControlServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.txt, Operation.outfile, new GetOutfile());
 
         // POST
-        // curl -v -Fevent.job.topic=com/composum/nodes/core/script/GroovyJobExecutor -Freference=/hello.groovy -Foutfileprefix=groovyjob -X POST http://localhost:9090/bin/cpm/core/jobcontrol.job.json
+        // curl -v -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Freference=/hello.groovy -Foutfileprefix=groovyjob -X POST http://localhost:9090/bin/cpm/core/jobcontrol.job.json
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.job, new CreateJob());
-        // curl -v -u admin:admin -Fevent.job.topic=com/composum/nodes/core/script/GroovyJobExecutor -Freference=/libs/hello.groovy -Fkeep=2 -X POST http://localhost:9090/bin/cpm/core/jobcontrol.cleanup.json
-        // curl -v -u admin:admin -Fevent.job.topic=com/composum/nodes/core/script/GroovyJobExecutor -Fkeep=2 -X POST http://localhost:9090/bin/cpm/core/jobcontrol.cleanup.json
+        // curl -v -u admin:admin -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Freference=/libs/hello.groovy -Fkeep=2 -X POST http://localhost:9090/bin/cpm/core/jobcontrol.cleanup.json
+        // curl -v -u admin:admin -Fevent.job.topic=com/composum/sling/core/script/GroovyJobExecutor -Fkeep=2 -X POST http://localhost:9090/bin/cpm/core/jobcontrol.cleanup.json
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.cleanup, new PurgeAudit());
 
         // DELETE
