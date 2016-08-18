@@ -27,6 +27,10 @@
             'package': {'icon': 'fa fa-file-archive-o'},
             'resource-package': {'icon': 'fa fa-file-archive-o'},
             'component': {'icon': 'fa fa-puzzle-piece text-info'},
+            'container': {'icon': 'fa fa-cubes text-info'},
+            'element': {'icon': 'fa fa-cube text-info'},
+            'site': {'icon': 'fa fa-sitemap text-info'},
+            'siteconfiguration': {'icon': 'fa fa-ellipsis-h text-muted'},
             'page': {'icon': 'fa fa-globe text-info'},
             'pagecontent': {'icon': 'fa fa-ellipsis-h text-muted'},
             'page-designer': {'icon': 'fa fa-cube text-info'},
@@ -86,17 +90,17 @@
          * Instance example:
          *
          *    core.pckgmgr.tree = new core.components.Tree({
-     *
-     *        el: $('.tree')[0], // the element to use
-     *
-     *        dataUrlForPath: function(path) {
-     *            return '/bin/cpm/nodes/node.page.title.json' + path;
-     *        },
-     *
-     *        onNodeSelected: function(path) {
-     *            alert('onNodeSelected: ' + path);
-     *        }
-     *    });
+         *
+         *        el: $('.tree')[0], // the element to use
+         *
+         *        dataUrlForPath: function(path) {
+         *            return '/bin/cpm/nodes/node.page.title.json' + path;
+         *        },
+         *
+         *        onNodeSelected: function(path) {
+         *            alert('onNodeSelected: ' + path);
+         *        }
+         *    });
          */
         components.Tree = Backbone.View.extend({
 
@@ -334,11 +338,11 @@
                 });
 
                 $(document)
-                    .on('path:selected.Tree', _.bind(this.onPathSelected, this))
-                    .on('path:inserted.Tree', _.bind(this.onPathInserted, this))
-                    .on('path:changed.Tree', _.bind(this.onPathChanged, this))
-                    .on('path:moved.Tree', _.bind(this.onPathMoved, this))
-                    .on('path:deleted.Tree', _.bind(this.onPathDeleted, this))
+                    .on('path:selected.' + this.nodeIdPrefix + 'Tree', _.bind(this.onPathSelected, this))
+                    .on('path:inserted.' + this.nodeIdPrefix + 'Tree', _.bind(this.onPathInserted, this))
+                    .on('path:changed.' + this.nodeIdPrefix + 'Tree', _.bind(this.onPathChanged, this))
+                    .on('path:moved.' + this.nodeIdPrefix + 'Tree', _.bind(this.onPathMoved, this))
+                    .on('path:deleted.' + this.nodeIdPrefix + 'Tree', _.bind(this.onPathDeleted, this))
             },
 
             /**
@@ -368,7 +372,14 @@
                         // prevent from endless self activation
                         this.busy = true;
                         try {
-                            this.selectNode(path);
+                            this.selectNode(path, _.bind(function (path) {
+                                var node = this.getSelectedTreeNode();
+                                if (!node) {
+                                    if (_.isFunction(this.onSelectNodeFailed)) {
+                                        this.onSelectNodeFailed(path);
+                                    }
+                                }
+                            }, this));
                         } finally {
                             this.busy = false;
                         }
@@ -647,7 +658,7 @@
 
             onNodeSelected: function (path, node, element) {
                 console.log('onNodeSelected(' + path + ',' + node + ',' + element + ')');
-                $(document).trigger("path:select", [path]);
+                $(document).trigger("path:select", [path, node, element]);
             },
 
             /**
