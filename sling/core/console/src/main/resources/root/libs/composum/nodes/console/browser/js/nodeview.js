@@ -241,7 +241,7 @@
 
         browser.ScriptTab = browser.EditorTab.extend({
 
-            jobTopic: 'com/composum/nodes/core/script/GroovyJobExecutor',
+            jobTopic: 'com/composum/sling/core/script/GroovyJobExecutor',
             purgeAuditKeep: 6,
 
             initialize: function (options) {
@@ -329,7 +329,7 @@
 
             setupStatus: function () {
                 var path = browser.getCurrentPath();
-                core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ACTIVE.json' + path + '?topic=com/composum/nodes/core/script/GroovyJobExecutor', {},
+                core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ACTIVE.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
                     _.bind(function (data, msg, xhr) {
                         if (data && data.length > 0) {
                             this.scriptStarted();
@@ -383,7 +383,7 @@
                 this.delay(); // cancel all open timeouts
                 this.logOffset = 0;
                 core.ajaxPost('/bin/cpm/core/jobcontrol.job.json', {
-                        'event.job.topic': 'com/composum/nodes/core/script/GroovyJobExecutor',
+                        'event.job.topic': 'com/composum/sling/core/script/GroovyJobExecutor',
                         'reference': path,
                         '_charset_': 'UTF-8'
                     }, {
@@ -470,7 +470,7 @@
                 this.$historyList.html('');
                 if (this.$bottomArea.hasClass('history')) {
                     var path = browser.getCurrentPath();
-                    core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ALL.json' + path + '?topic=com/composum/nodes/core/script/GroovyJobExecutor', {},
+                    core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ALL.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
                         _.bind(function (data, msg, xhr) {
                             for (var i = 0; i < data.length; i++) {
                                 var state = data[i].jobState;

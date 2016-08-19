@@ -58,7 +58,7 @@ import static com.composum.sling.core.util.ResourceUtil.PROP_MIME_TYPE;
 public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
 
     private static final Logger LOG = LoggerFactory.getLogger(GroovyJobExecutor.class);
-    static final String GROOVY_TOPIC = "com/composum/nodes/core/script/GroovyJobExecutor";
+    static final String GROOVY_TOPIC = "com/composum/sling/core/script/GroovyJobExecutor";
     private static final String SCRIPT_PROPERTY_NAME = "reference";
 
     private static final String AUDIT_BASE_PATH = AUDIT_ROOT_PATH + "com.composum.sling.core.script.GroovyJobExecutor";
