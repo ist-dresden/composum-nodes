@@ -62,7 +62,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
     public static final String JOB_PROPERTY_SAVE_THRESHOLD = "saveThreshold";
     public static final String JOB_PROPERTY_IMPORT_MODE = "importMode";
 
-    public static final String TOPIC = "com/composum/nodes/core/pckgmgr/PackageJobExecutor";
+    public static final String TOPIC = "com/composum/sling/core/pckgmgr/PackageJobExecutor";
 
     public static final String AUDIT_BASE_PATH = AUDIT_ROOT_PATH + PackageJobExecutor.class.getName();
 

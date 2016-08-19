@@ -64,7 +64,7 @@
 
         pckgmgr.JcrPackageTab = core.console.JobControlTab.extend({
 
-            jobTopic: 'com/composum/nodes/core/pckgmgr/PackageJobExecutor',
+            jobTopic: 'com/composum/sling/core/pckgmgr/PackageJobExecutor',
             purgeAuditKeep: 6,
 
             initialize: function (options) {
