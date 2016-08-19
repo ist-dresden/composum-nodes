@@ -551,11 +551,9 @@ public class NodeServlet extends NodeTreeServlet {
     //
 
     /**
-     * extension hook for additional filters or sorting
-     *
-     * @param resource
-     * @param items
+     * sort children of orderable nodes
      */
+    @Override
     protected List<Resource> prepareTreeItems(ResourceHandle resource, List<Resource> items) {
         if (!nodesConfig.getOrderableNodesFilter().accept(resource)) {
             Collections.sort(items, new Comparator<Resource>() {
