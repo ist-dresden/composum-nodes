@@ -69,6 +69,7 @@ public class PackageUtil {
     public static final String DEF_REQUIRES_RESTART = JcrPackageDefinition.PN_REQUIRES_RESTART;
     public static final String DEF_REQUIRES_ROOT = JcrPackageDefinition.PN_REQUIRES_ROOT;
     public static final String DEF_TESTED_WITH = "testedWith";
+    public static final String DEF_INCLUDE_VERSIONS = "includeVersions";
 
     public static final Pattern IMPORT_DONE = Pattern.compile("^Package imported\\.$");
 
@@ -672,6 +673,7 @@ public class PackageUtil {
         String version = definition.get(JcrPackageDefinition.PN_VERSION);
         String description = definition.get(JcrPackageDefinition.PN_DESCRIPTION);
         Calendar lastModified = definition.getCalendar(JcrPackageDefinition.PN_LASTMODIFIED);
+        boolean includeVersions = definition.getBoolean("includeVersions");
         writer.beginObject();
         writer.name(JcrPackageDefinition.PN_GROUP).value(definition.get(JcrPackageDefinition.PN_GROUP));
         writer.name(JcrPackageDefinition.PN_NAME).value(definition.get(JcrPackageDefinition.PN_NAME));
@@ -684,6 +686,7 @@ public class PackageUtil {
         if (lastModified != null) {
             writer.name(JcrPackageDefinition.PN_LASTMODIFIED).value(dateFormat.format(lastModified.getTime()));
         }
+        writer.name("includeVersions").value(includeVersions);
         writer.endObject();
     }
 
@@ -820,5 +823,6 @@ public class PackageUtil {
         DEFINITION_SETTERS.put(DEF_REQUIRES_RESTART, DefinitionSetter.BOOLEAN);
         DEFINITION_SETTERS.put(DEF_REQUIRES_ROOT, DefinitionSetter.BOOLEAN);
         DEFINITION_SETTERS.put(DEF_TESTED_WITH, DefinitionSetter.STRING);
+        DEFINITION_SETTERS.put(DEF_INCLUDE_VERSIONS, DefinitionSetter.BOOLEAN);
     }
 }

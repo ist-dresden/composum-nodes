@@ -328,8 +328,8 @@ public class PackageServlet extends AbstractServiceServlet {
                                     !PackageUtil.isVersion(pckgDef, version))) {
                         manager.rename(jcrPackage, group, name, version);
                     }
-
                     Map<String, Object> parameters = getParameters(request);
+                    parameters.put("includeVersions", parameters.containsKey("includeVersions"));
                     for (Map.Entry<String, Object> parameter : parameters.entrySet()) {
                         String key = parameter.getKey();
                         PackageUtil.DefinitionSetter setter = PackageUtil.DEFINITION_SETTERS.get(key);

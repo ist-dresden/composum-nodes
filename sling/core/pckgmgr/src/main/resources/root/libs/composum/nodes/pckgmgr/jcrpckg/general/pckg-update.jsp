@@ -40,6 +40,11 @@
                         <label class="control-label">Description</label>
                         <textarea name="jcr:description" class="text-area form-control" rows="4"></textarea>
                     </div>
+                    <div class="form-group">
+                        <label class="control-label">Include Versions</label>
+                        <input name="includeVersions" class="widget checkbox-widget form-control" type="checkbox"/>
+                    </div>
+
                 </div>
 
                 <div class="modal-footer buttons">

@@ -23,6 +23,7 @@
                 this.$name = this.$('input[name="name"]');
                 this.$version = this.$('input[name="version"]');
                 this.$description = this.$('textarea[name="jcr:description"]');
+                this.includeVersions = core.getWidget(this.el, 'input[name="includeVersions"]', core.components.CheckboxWidget);
                 this.$('button.save').click(_.bind(this.updatePackage, this));
             },
 
@@ -35,11 +36,13 @@
                     this.$group.val(data.group);
                     this.$name.val(data.name);
                     this.$version.val(data.version);
+                    this.includeVersions.setValue(data.includeVersions);
                     this.$description.val(data.description);
                 } else {
                     this.$group.val(undefined);
                     this.$name.val(undefined);
                     this.$version.val(undefined);
+                    this.includeVersions.setValue(false);
                     this.$description.val(undefined);
                 }
                 this.$path.val(path);
@@ -51,6 +54,7 @@
                 var oldPath = this.$path.val();
                 if (this.form.isValid()) {
                     this.submitForm(function (result) {
+                        pckgmgr.current.includeVersions = result.package.definition.includeVersions;
                         var newPath = result.path;
                         $(document).trigger('path:moved', [oldPath, newPath]);
                         $(document).trigger('path:changed', [newPath]);
@@ -105,6 +109,7 @@
                         group: pckgmgr.current.group,
                         name: pckgmgr.current.name,
                         version: pckgmgr.current.version,
+                        includeVersions: pckgmgr.current.includeVersions,
                         description: this.$('.package-detail .header-view .description').text()
                     });
                 }, this));
