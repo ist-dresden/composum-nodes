@@ -112,7 +112,14 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
                               ResourceHandle resource, LabelType labelType, boolean isVirtual)
             throws IOException {
         writer.beginObject();
-        String type = writeNodeIdentifiers(writer, resource, labelType, isVirtual);
+        writeJsonNodeData(writer, filter, resource, labelType, isVirtual);
+        writer.endObject();
+    }
+
+    public void writeJsonNodeData(JsonWriter writer, ResourceFilter filter,
+                                  ResourceHandle resource, LabelType labelType, boolean isVirtual)
+            throws IOException {
+        writeNodeIdentifiers(writer, resource, labelType, isVirtual);
         writeNodeTreeType(writer, filter, resource, isVirtual);
         writeNodeJcrState(writer, resource);
         List<Resource> children = new ArrayList<>();
@@ -145,7 +152,6 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
             }
             writer.endArray();
         }
-        writer.endObject();
     }
 
     public void writeNodeTreeType(JsonWriter writer, ResourceFilter filter,
