@@ -31,6 +31,7 @@ public class ResourceFilterTypeAdapter {
 
     public static GsonBuilder registerTypeAdapters(GsonBuilder builder) {
         builder.registerTypeAdapter(ResourceFilter.FilterSet.class, new FilterSetAdapter());
+        builder.registerTypeAdapter(ResourceFilter.TypeFilter.class, new TypeFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.NameFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.PathFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.PrimaryTypeFilter.class, new PatternFilterAdapter());
@@ -144,6 +145,46 @@ public class ResourceFilterTypeAdapter {
         @Override
         protected ResourceFilter createInstance(Class<? extends ResourceFilter> type) throws Exception {
             return this.instance;
+        }
+    }
+
+    public static class TypeFilterAdapter extends GeneralAdapter {
+
+        enum JsonValues {type, filter}
+
+        protected transient String filter = null;
+
+        // write
+
+        @Override
+        protected void writeValues(JsonWriter writer, ResourceFilter value) throws IOException {
+            super.writeValues(writer, value);
+            writer.name(JsonValues.filter.name());
+            writer.value(value.toString());
+        }
+
+        // read
+
+        @Override
+        protected ResourceFilter createInstance(Class<? extends ResourceFilter> type) throws Exception {
+            ResourceFilter result;
+            if (this.filter != null) {
+                result = type.getConstructor(String.class).newInstance(this.filter);
+            } else {
+                result = super.createInstance(type);
+            }
+            return result;
+        }
+
+        @Override
+        protected Object parseValue(JsonReader reader, String name) throws IOException {
+            switch (JsonValues.valueOf(name)) {
+                case filter:
+                    this.filter = reader.nextString();
+                    return this.filter;
+                default:
+                    return super.parseValue(reader, name);
+            }
         }
     }
 

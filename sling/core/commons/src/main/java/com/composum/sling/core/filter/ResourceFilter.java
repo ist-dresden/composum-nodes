@@ -11,8 +11,13 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.composum.sling.core.filter.NodeTypeFilters.NODE_TYPE_PREFIX;
 
 /**
  * A ResourceFilter is useful to describe a general way to define scopes in resource hierarchy.
@@ -22,6 +27,8 @@ import java.util.List;
 public interface ResourceFilter {
 
     Logger LOG = LoggerFactory.getLogger(ResourceFilter.class);
+
+    Pattern SIMPLE_ARRAY_PATTERN = Pattern.compile("^([+-])\\[(.*)\\]$");
 
     /**
      * the core function of a filters says: this resource is appropriate or not
@@ -85,6 +92,62 @@ public interface ResourceFilter {
         @Override
         public void toString(StringBuilder builder) {
             builder.append("Folder()");
+        }
+    }
+
+    /**
+     * a general type checking filter
+     */
+    class TypeFilter implements ResourceFilter {
+
+        protected List<String> typeNames;
+        protected boolean restriction = false;
+
+        public List<String> getTypeNames() {
+            return typeNames;
+        }
+
+        public TypeFilter(String names) {
+            Matcher matcher = SIMPLE_ARRAY_PATTERN.matcher(names);
+            if (matcher.matches()) {
+                restriction = "-".equalsIgnoreCase(matcher.group(1));
+                names = matcher.group(2);
+            }
+            typeNames = Arrays.asList(StringUtils.split(names, ","));
+        }
+
+        public TypeFilter(List<String> names, boolean restriction) {
+            typeNames = names;
+            this.restriction = restriction;
+        }
+
+        @Override
+        public boolean accept(Resource resource) {
+            for (String type : typeNames) {
+                if (type.startsWith(NODE_TYPE_PREFIX)) {
+                    if (NodeTypeFilters.accept(resource, type)) {
+                        return !restriction;
+                    }
+                } else {
+                    if (resource.isResourceType(type)) {
+                        return !restriction;
+                    }
+                }
+            }
+            return restriction;
+        }
+
+        @Override
+        public boolean isRestriction() {
+            return restriction;
+        }
+
+        @Override
+        public void toString(StringBuilder builder) {
+            builder.append(restriction ? '-' : '+');
+            builder.append('[');
+            builder.append(StringUtils.join(typeNames, ","));
+            builder.append(']');
         }
     }
 

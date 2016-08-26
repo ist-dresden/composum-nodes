@@ -74,7 +74,7 @@ public class NodesConfigImpl implements NodesConfiguration {
             name = PAGE_NODE_FILTER_KEY,
             label = "Content Page Filter",
             description = "the filter configuration to set the scope to the content pages",
-            value = "or{ResourceType(+'^[a-z]+:.*[Pp]age$'),and{PrimaryType(+'^nt:file$'),MimeType(+'^text/html$')}}"
+            value = "or{ResourceType(+'^[a-z]+:.*([Ss]ite|[Pp]age)$'),and{PrimaryType(+'^nt:file$'),MimeType(+'^text/html$')}}"
     )
     private ResourceFilter pageNodeFilter;
 
@@ -98,7 +98,7 @@ public class NodesConfigImpl implements NodesConfiguration {
             name = REFERENCEABLE_NODES_FILTER_KEY,
             label = "Referenceable Nodes Filter",
             description = "the filter configuration to select reference target nodes",
-            value = "MixinType(+'^mix:referenceable$')"
+            value = "Type(mix:referenceable)"
     )
     private ResourceFilter referenceableNodesFilter;
 
@@ -106,7 +106,7 @@ public class NodesConfigImpl implements NodesConfiguration {
             name = ORDERABLE_NODES_FILTER_KEY,
             label = "Orderable Nodes Filter",
             description = "the filter configuration to detect ordered nodes (prevent from sorting in the tree)",
-            value = "or{MixinType(+'^mix:orderable$'),PrimaryType(+'^.*([Oo]rdered|[Pp]age).*$,^sling:(Mapping)$,^nt:(unstructured|frozenNode)$,^rep:(ACL|Members|system)$')}"
+            value = "or{Type(node:orderable),PrimaryType(+'^.*([Oo]rdered|[Pp]age).*$,^sling:(Mapping)$,^nt:(unstructured|frozenNode)$,^rep:(ACL|Members|system)$')}"
     )
     private ResourceFilter orderableNodesFilter;
 

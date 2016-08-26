@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +39,7 @@ public class ResourceFilterMapping {
             "^(and|or|first|last|tree)\\{(.+)\\}$"
     );
     public static final Pattern STRING_PATTERN = Pattern.compile(
-            "^(Name|Path|PrimaryType|MixinType|ResourceType|MimeType|All|Folder)\\((.*)\\)$"
+            "^(Name|Path|Type|PrimaryType|MixinType|ResourceType|MimeType|All|Folder)\\((.*)\\)$"
     );
     public static final String DEFAULT_FILTER_TYPE = "Path";
 
@@ -76,7 +77,6 @@ public class ResourceFilterMapping {
                 }
                 String values = matcher.group(2);
                 try {
-                    StringFilter stringFilter = StringFilterMapping.fromString(values);
                     Class<?> filterClass = Class.forName(
                             ResourceFilter.class.getName() + "$" + type + "Filter");
                     if (ResourceFilter.AllFilter.class.equals(filterClass)) {
@@ -84,11 +84,17 @@ public class ResourceFilterMapping {
                     } else if (ResourceFilter.FolderFilter.class.equals(filterClass)) {
                         filter = ResourceFilter.FOLDER;
                     } else {
-                        filter = (ResourceFilter) filterClass
-                                .getConstructor(StringFilter.class)
-                                .newInstance(stringFilter);
+                        Constructor constructor = null;
+                        try {
+                            constructor = filterClass.getConstructor(StringFilter.class);
+                            StringFilter stringFilter = StringFilterMapping.fromString(values);
+                            filter = (ResourceFilter) constructor.newInstance(stringFilter);
+                        } catch (NoSuchMethodException nsmex) {
+                            constructor = filterClass.getConstructor(String.class);
+                            filter = (ResourceFilter) constructor.newInstance(values);
+                        }
                     }
-                } catch (Exception ex) {
+                 } catch (Exception ex) {
                     LOG.error(ex.getMessage(), ex);
                 }
             } else {
