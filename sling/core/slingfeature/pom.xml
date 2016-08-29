@@ -65,4 +65,14 @@
         </dependency>
 
     </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installPackage</id>
+        </profile>
+        <profile>
+            <id>installBundle</id>
+        </profile>
+
+    </profiles>
 </project>

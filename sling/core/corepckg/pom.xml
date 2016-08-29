@@ -154,5 +154,9 @@
             </build>
         </profile>
 
+        <profile>
+            <id>installBundle</id>
+        </profile>
+
     </profiles>
 </project>

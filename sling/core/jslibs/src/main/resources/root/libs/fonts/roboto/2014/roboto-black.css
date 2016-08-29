@@ -1,24 +1,24 @@
 
 @font-face {
     font-family: 'robotoblack';
-    src: url('/libs/fonts/roboto/2014/roboto-black-webfont.eot');
-    src: url('/libs/fonts/roboto/2014/roboto-black-webfont.eot?#iefix') format('embedded-opentype'),
-         url('/libs/fonts/roboto/2014/roboto-black-webfont.woff2') format('woff2'),
-         url('/libs/fonts/roboto/2014/roboto-black-webfont.woff') format('woff'),
-         url('/libs/fonts/roboto/2014/roboto-black-webfont.ttf') format('truetype'),
-         url('/libs/fonts/roboto/2014/roboto-black-webfont.svg#robotoblack') format('svg');
+    src: url('roboto-black-webfont.eot');
+    src: url('roboto-black-webfont.eot?#iefix') format('embedded-opentype'),
+         url('roboto-black-webfont.woff2') format('woff2'),
+         url('roboto-black-webfont.woff') format('woff'),
+         url('roboto-black-webfont.ttf') format('truetype'),
+         url('roboto-black-webfont.svg#robotoblack') format('svg');
     font-weight: normal;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'robotoblack_italic';
-    src: url('/libs/fonts/roboto/2014/roboto-blackitalic-webfont.eot');
-    src: url('/libs/fonts/roboto/2014/roboto-blackitalic-webfont.eot?#iefix') format('embedded-opentype'),
-         url('/libs/fonts/roboto/2014/roboto-blackitalic-webfont.woff2') format('woff2'),
-         url('/libs/fonts/roboto/2014/roboto-blackitalic-webfont.woff') format('woff'),
-         url('/libs/fonts/roboto/2014/roboto-blackitalic-webfont.ttf') format('truetype'),
-         url('/libs/fonts/roboto/2014/roboto-blackitalic-webfont.svg#robotoblack_italic') format('svg');
+    src: url('roboto-blackitalic-webfont.eot');
+    src: url('roboto-blackitalic-webfont.eot?#iefix') format('embedded-opentype'),
+         url('roboto-blackitalic-webfont.woff2') format('woff2'),
+         url('roboto-blackitalic-webfont.woff') format('woff'),
+         url('roboto-blackitalic-webfont.ttf') format('truetype'),
+         url('roboto-blackitalic-webfont.svg#robotoblack_italic') format('svg');
     font-weight: normal;
     font-style: normal;
 }
