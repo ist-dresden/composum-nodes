@@ -1,0 +1,6 @@
+#
+language: java
+jdk: oraclejdk8
+script:
+  - cd sling/core
+  - mvn -s ../../settings.xml -P${TRAVIS_BRANCH} clean install

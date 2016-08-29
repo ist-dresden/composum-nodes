@@ -252,7 +252,10 @@
         <profile>
             <id>installBundle</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>deploy.bundle</name>
+                    <value>true</value>
+                </property>
             </activation>
             <build>
                 <plugins>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd"
+        xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <mirrors>
+        <!-- -->
+        <mirror>
+            <id>archiva</id>
+            <name>archiva</name>
+            <mirrorOf>*</mirrorOf>
+            <url>https://build.ist-software.com/archiva/repository/mirror</url>
+        </mirror>
+        <!-- -->
+    </mirrors>
+
+    <profiles>
+
+        <!--
+         * deployment profiles for each branch
+         * starts the deployment for a branch if deployment configuration is present
+         * only one branch should have a working deployment configuration for one target
+        -->
+        <profile>
+            <id>master</id>
+            <properties>
+                <deploy.package>true</deploy.package>
+                <sling.scheme>https</sling.scheme>
+                <sling.secure>true</sling.secure>
+                <sling.host>istdev.ist-software.com</sling.host>
+                <sling.port>443</sling.port>
+                <sling.context>/composum</sling.context>
+                <sling.password>${deploy_password}</sling.password>
+                <bundle.status.skip>true</bundle.status.skip>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>develop</id>
+        </profile>
+
+        <profile>
+            <id>feature/clientlibs</id>
+        </profile>
+
+        <profile>
+            <id>feature/export-versions</id>
+        </profile>
+
+        <profile>
+            <id>change/module-structure</id>
+        </profile>
+
+        <!--
+         * default repository profiles
+        -->
+        <profile>
+            <id>archiva</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>archiva</id>
+                    <name>archiva</name>
+                    <url>https://build.ist-software.com/archiva/repository/internal</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+                <repository>
+                    <id>archiva</id>
+                    <name>archiva</name>
+                    <url>https://build.ist-software.com/archiva/repository/snapshots</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>archiva</id>
+                    <name>archiva</name>
+                    <url>https://build.ist-software.com/archiva/repository/internal</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </pluginRepository>
+                <pluginRepository>
+                    <id>archiva</id>
+                    <name>archiva</name>
+                    <url>https://build.ist-software.com/archiva/repository/snapshots</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+
+        <profile>
+            <id>adobe</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <releaseRepository-Id>adobe-public-releases</releaseRepository-Id>
+                <releaseRepository-Name>Adobe Public Releases</releaseRepository-Name>
+                <releaseRepository-URL>https://repo.adobe.com/nexus/content/groups/public</releaseRepository-URL>
+            </properties>
+            <repositories>
+                <repository>
+                    <id>adobe-public-releases</id>
+                    <name>Adobe Basel Public Repository</name>
+                    <url>https://repo.adobe.com/nexus/content/groups/public</url>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>adobe-public-releases</id>
+                    <name>Adobe Basel Public Repository</name>
+                    <url>https://repo.adobe.com/nexus/content/groups/public</url>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+
+    </profiles>
+</settings>
