@@ -3,6 +3,14 @@
         xmlns="http://maven.apache.org/SETTINGS/1.1.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
+    <servers>
+        <server>
+            <id>archiva</id>
+            <username>buildmgr</username>
+            <password>${deploy_password}</password>
+        </server>
+    </servers>
+
     <mirrors>
         <!-- -->
         <mirror>

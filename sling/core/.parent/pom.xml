@@ -61,7 +61,7 @@
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
         <snapshotRepository>
-            <id>snapshots</id>
+            <id>archiva</id>
             <url>https://build.ist-software.com/archiva/repository/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
