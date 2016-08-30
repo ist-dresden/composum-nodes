@@ -32,7 +32,7 @@
         <profile>
             <id>master</id>
             <properties>
-                <deploy.package>true</deploy.package>
+                <!--deploy.package>true</deploy.package-->
                 <sling.scheme>https</sling.scheme>
                 <sling.secure>true</sling.secure>
                 <sling.host>istdev.ist-software.com</sling.host>
