@@ -46,7 +46,6 @@
         <package.failOnError>true</package.failOnError>
         <bundle.failOnError>true</bundle.failOnError>
         <bundle.status.skip>true</bundle.status.skip>
-        <bundle.wait.skip>true</bundle.wait.skip>
         <source.encoding>UTF-8</source.encoding>
         <java.source>1.7</java.source>
         <java.target>1.7</java.target>

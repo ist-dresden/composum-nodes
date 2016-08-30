@@ -39,7 +39,6 @@
                 <sling.port>443</sling.port>
                 <sling.context>/composum</sling.context>
                 <sling.password>${deploy_password}</sling.password>
-                <bundle.wait.skip>false</bundle.wait.skip>
                 <bundle.status.skip>true</bundle.status.skip>
             </properties>
         </profile>
