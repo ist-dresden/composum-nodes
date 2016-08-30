@@ -63,6 +63,28 @@
                 </configuration>
             </plugin>
 
+            <!-- use wait for bundle restart to prevent from authentication errors ->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <configuration>
+                    <skip>${bundle.wait.skip}</skip>
+                    <tasks>
+                        <echo message="wait 20 seconds..." />
+                        <sleep seconds="20" />
+                    </tasks>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>wait</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin-->
+
         </plugins>
     </build>
 

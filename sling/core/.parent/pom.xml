@@ -40,10 +40,13 @@
         <sling.host>localhost</sling.host>
         <sling.port>9090</sling.port>
         <sling.context></sling.context>
-        <package.install>/bin/cpm/package.service.html</package.install>
         <sling.user>admin</sling.user>
         <sling.password>admin</sling.password>
+        <package.install>/bin/cpm/package.service.html</package.install>
+        <package.failOnError>true</package.failOnError>
+        <bundle.failOnError>true</bundle.failOnError>
         <bundle.status.skip>true</bundle.status.skip>
+        <bundle.wait.skip>true</bundle.wait.skip>
         <source.encoding>UTF-8</source.encoding>
         <java.source>1.7</java.source>
         <java.target>1.7</java.target>
@@ -165,7 +168,7 @@
                         <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
                         <user>${sling.user}</user>
                         <password>${sling.password}</password>
-                        <failOnError>true</failOnError>
+                        <failOnError>${bundle.failOnError}</failOnError>
                     </configuration>
                 </plugin>
 
@@ -209,7 +212,7 @@
                     <version>0.0.24</version>
                     <extensions>true</extensions>
                     <configuration>
-                        <failOnError>true</failOnError>
+                        <failOnError>${package.failOnError}</failOnError>
                         <targetURL>${sling.scheme}://${sling.host}:${sling.port}${sling.context}${package.install}</targetURL>
                         <userId>${sling.user}</userId>
                         <password>${sling.password}</password>
