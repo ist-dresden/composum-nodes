@@ -325,6 +325,7 @@ public class Clientlib {
                 }
                 IOUtils.copy(content, output);
                 output.write('\n');
+                output.write('\n');
                 output.flush();
                 ClientlibLink link = new ClientlibLink(clientlibRef.type, resource);
                 contentSet.add(link);
