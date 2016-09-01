@@ -20,6 +20,7 @@
 		<module>jslibs</module>
 		<module>commons</module>
 		<module>console</module>
+		<module>pckginstall</module>
 		<module>pckgmgr</module>
 		<module>usermgnt</module>
 		<module>slingfeature</module>
