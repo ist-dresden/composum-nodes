@@ -405,6 +405,12 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.installer.core</artifactId>
+                <version>3.6.6</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
                 <groupId>biz.aQute</groupId>
                 <artifactId>bndlib</artifactId>
                 <version>1.43.0</version>
