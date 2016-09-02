@@ -630,7 +630,6 @@
 
 #browser-view .image.detail-panel .detail-content .image-frame .image-background {
     display: inline-block;
-    background: url(/libs/composum/nodes/console/browser/images/image-background.png);
 }
 
 #browser-view .image.detail-panel .detail-content .image-frame img {

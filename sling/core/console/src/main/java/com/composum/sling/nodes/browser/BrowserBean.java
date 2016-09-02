@@ -99,7 +99,7 @@ public class BrowserBean extends ConsoleServletBean {
         public String getPathUrl() {
             if (pathUrl == null) {
                 pathUrl = getPathEncoded();
-                pathUrl += LinkUtil.getExtension(resource, "");
+                pathUrl += LinkUtil.getExtension(resource, null);
             }
             return pathUrl;
         }

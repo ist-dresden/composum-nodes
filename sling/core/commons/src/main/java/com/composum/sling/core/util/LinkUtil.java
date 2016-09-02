@@ -281,6 +281,12 @@ public class LinkUtil {
                 MimeType mimeType = MimeTypeUtil.getMimeType(resource);
                 if (mimeType != null) {
                     extension = mimeType.getExtension();
+                } else {
+                    String name = resource.getName();
+                    int lastDot = name.lastIndexOf('.');
+                    if (lastDot > 0) {
+                        extension = name.substring(lastDot + 1);
+                    }
                 }
             }
         }
@@ -290,13 +296,17 @@ public class LinkUtil {
                 extension = ""; // no extension necessary to add
             }
         }
-        if (StringUtils.isBlank(extension)) {
-            if (!resource.getResourceType().equals(resource.getPrimaryType())) {
+        if (extension == null) {
+            String resourceType = resource.getResourceType();
+            if (resourceType != null && !resource.getPrimaryType().equals(resourceType)) {
                 extension = EXT_HTML; // use '.html' by default if a real resource type is present
             } else {
                 ResourceHandle content = resource.getContentResource();
-                if (content.isValid() && !content.getResourceType().equals(content.getPrimaryType())) {
-                    extension = EXT_HTML; // use '.html' by default if a content resource exists with a real resource type
+                if (content.isValid()) {
+                    resourceType = content.getResourceType();
+                    if (resourceType != null && !content.getPrimaryType().equals(resourceType)) {
+                        extension = EXT_HTML; // use '.html' by default if a content resource exists with a real resource type
+                    }
                 }
             }
         }
