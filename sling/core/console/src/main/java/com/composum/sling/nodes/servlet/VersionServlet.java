@@ -252,14 +252,8 @@ public class VersionServlet extends AbstractServiceServlet {
                 if (node == null) {
                     ResponseUtil.writeEmptyArray(response);
                 } else {
-                    final NodeType[] mixinNodeTypes = node.getMixinNodeTypes();
-                    boolean isVersionable = false;
-                    for (final NodeType mixinNodeType : mixinNodeTypes) {
-                        if (mixinNodeType.isNodeType(NodeType.MIX_VERSIONABLE) || mixinNodeType.isNodeType( NodeType.MIX_SIMPLE_VERSIONABLE)) {
-                            isVersionable = true;
-                            break;
-                        }
-                    }
+                    boolean isVersionable = (node.isNodeType(NodeType.MIX_VERSIONABLE)
+                            || node.isNodeType(NodeType.MIX_SIMPLE_VERSIONABLE));
                     if (!isVersionable) {
                         ResponseUtil.writeEmptyArray(response);
                     } else {
