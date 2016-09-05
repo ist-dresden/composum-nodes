@@ -188,7 +188,6 @@
                         <host>${sling.host}</host>
                         <port>${sling.port}</port>
                         <contextPath>${sling.context}</contextPath>
-                        <path>${sling.context}/system/console</path>
                         <username>${sling.user}</username>
                         <password>${sling.password}</password>
                         <retryDelay>2000</retryDelay>
