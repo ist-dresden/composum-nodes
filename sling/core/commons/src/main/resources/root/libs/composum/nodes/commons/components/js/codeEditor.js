@@ -69,6 +69,17 @@
                 this.loadText(onSuccess);
             },
 
+            getValue: function () {
+                return this.ace.getValue();
+            },
+
+            setValue: function (value, triggerChange) {
+                this.ace.setValue(value);
+                if (triggerChange) {
+                    this.$el.trigger('change');
+                }
+            },
+
             openEditDialog: function () {
                 this.dialog = core.getView('#text-edit-dialog', components.CodeEditorDialog);
                 this.dialog.editSource(this);

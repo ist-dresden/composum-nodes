@@ -16,8 +16,12 @@
 
             initialize: function (options) {
                 this.$alert = this.$('.alert');
-                components.setUp(this.el);
+                this.setUpWidgets(this.el);
                 this.$el.on('shown.bs.modal', _.bind(this.onShown, this));
+            },
+
+            setUpWidgets: function(root) {
+                components.setUp(root);
             },
 
             /**
