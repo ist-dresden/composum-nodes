@@ -82,7 +82,7 @@ public class CpnlElFunctions {
      * @return the escaped HTML code of the value
      */
     public static String rich(String value) {
-        return StringEscapeUtils.escapeHtml4(value);
+        return value;
     }
 
     /**
