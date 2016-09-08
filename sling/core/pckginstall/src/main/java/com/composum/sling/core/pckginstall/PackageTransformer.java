@@ -8,6 +8,7 @@ import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.PackagingService;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
+import org.apache.sling.installer.api.InstallableResource;
 import org.apache.sling.installer.api.tasks.InstallTask;
 import org.apache.sling.installer.api.tasks.InstallTaskFactory;
 import org.apache.sling.installer.api.tasks.InstallationContext;
@@ -18,7 +19,6 @@ import org.apache.sling.installer.api.tasks.TaskResource;
 import org.apache.sling.installer.api.tasks.TaskResourceGroup;
 import org.apache.sling.installer.api.tasks.TransformationResult;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.Version;
 
@@ -57,6 +57,7 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
                     final String version = m.getMainAttributes().getValue("Implementation-Version");
                     if (version != null) {
                         final String title = m.getMainAttributes().getValue("Implementation-Title");
+                        logger.info("transforming of package '{}' with installation.hint '{}'", title, resource.getDictionary().get(InstallableResource.INSTALLATION_HINT));
                         TransformationResult tr = new TransformationResult();
                         tr.setResourceType("package");
                         final Map<String, Object> attr = new HashMap<>();
@@ -79,6 +80,7 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
         if ( !toActivate.getActiveResource().getType().equals("package") ) {
             return null;
         }
+        logger.info("create PackageInstallTask for task resource with entityId '{}'", toActivate.getActiveResource().getEntityId());
         return new PackageInstallTask(toActivate);
     }
 
@@ -91,30 +93,36 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
         @Override
         public void execute(InstallationContext ctx) {
             try {
-                final ServiceReference<Repository> serviceReference = bundleContext.getServiceReference(Repository.class);
-                final Repository repository = bundleContext.getService(serviceReference);
+                final ServiceReference<Repository> repositoryReference = bundleContext.getServiceReference(Repository.class);
+                final Repository repository = bundleContext.getService(repositoryReference);
                 final Method loginAdministrative = repository.getClass().getMethod("loginAdministrative", String.class);
                 final Object invoke = loginAdministrative.invoke(repository, (Object) null);
-                Session session = (Session) invoke;
+                final Session session = (Session) invoke;
                 final JcrPackageManager packageManager = PackagingService.getPackageManager(session);
                 final TaskResource resource = getResource();
                 final InputStream inputStream = resource.getInputStream();
+                logger.info("package upload");
                 final JcrPackage jcrPackage = packageManager.upload(inputStream, true, true);
 
                 final ServiceReference<JobManager> jmRef = bundleContext.getServiceReference(JobManager.class);
                 final JobManager jm = bundleContext.getService(jmRef);
                 String path = jcrPackage.getNode().getPath();
-                String root = packageManager.getPackageRoot().getPath();
+                final String root = packageManager.getPackageRoot().getPath();
                 if (path.startsWith(root)) {
                     path = path.substring(root.length());
                 }
 
-                Map<String, Object> jobProperties = new HashMap<>();
+                final Map<String, Object> jobProperties = new HashMap<>();
                 jobProperties.put("reference", path);
                 jobProperties.put("operation", "install");
                 jobProperties.put("userid", session.getUserID());
                 buildOutfileName(jobProperties);
-                Job job = jm.addJob("com/composum/sling/core/pckgmgr/PackageJobExecutor", jobProperties);
+                logger.info("add package install job with path '{}' and sort key ‘{}‘", path, getSortKey());
+                final Job job = jm.addJob("com/composum/sling/core/pckgmgr/PackageJobExecutor", jobProperties);
+                session.save();
+                session.logout();
+                bundleContext.ungetService(jmRef);
+                bundleContext.ungetService(repositoryReference);
                 this.setFinishedState(ResourceState.INSTALLED);
             } catch (Exception e) {
                 logger.warn("Exception executing PackageInstallTask: " + e.toString());
@@ -123,7 +131,33 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
 
         @Override
         public String getSortKey() {
-            return "60-" + getResource().getAttribute(Constants.SERVICE_PID);
+            return "60-" + getSortableStartLevel() + "-" + getResource().getEntityId();
+        }
+
+        /**
+         * Get sortable start level - low levels before high levels
+         */
+        private String getSortableStartLevel() {
+            final Object hint = getResource().getDictionary().get(InstallableResource.INSTALLATION_HINT);
+            int startLevel;
+            if (hint ==  null) {
+                startLevel = 0;
+            } else {
+                try {
+                    startLevel = Integer.parseInt(String.valueOf(hint));
+                } catch (NumberFormatException e) {
+                    startLevel = 0;
+                }
+            }
+
+            if ( startLevel == 0 ) {
+                return "999";
+            } else if ( startLevel < 10 ) {
+                return "00" + String.valueOf(startLevel);
+            } else if ( startLevel < 100 ) {
+                return "0" + String.valueOf(startLevel);
+            }
+            return String.valueOf(startLevel);
         }
 
     }
@@ -131,36 +165,16 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
     /**
      * Read the manifest from supplied input stream, which is closed before return.
      */
-    private static Manifest getManifest(final RegisteredResource rsrc)
-            throws IOException {
-        final InputStream ins = rsrc.getInputStream();
-
-        Manifest result = null;
-
-        if ( ins != null ) {
-            JarInputStream jis = null;
-            try {
-                jis = new JarInputStream(ins);
-                result= jis.getManifest();
-            } finally {
-
-                // close the jar stream or the inputstream, if the jar
-                // stream is set, we don't need to close the input stream
-                // since closing the jar stream closes the input stream
-                if (jis != null) {
-                    try {
-                        jis.close();
-                    } catch (IOException ignore) {
-                    }
-                } else {
-                    try {
-                        ins.close();
-                    } catch (IOException ignore) {
-                    }
+    private static Manifest getManifest(final RegisteredResource rsrc) throws IOException {
+        try (final InputStream ins = rsrc.getInputStream()) {
+            if (ins != null) {
+                try (JarInputStream jis = new JarInputStream(ins)) {
+                    return jis.getManifest();
                 }
+            } else {
+                return null;
             }
         }
-        return result;
     }
 
     private static String buildOutfileName(Map<String, Object> properties) {
