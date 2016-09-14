@@ -32,6 +32,8 @@ public class Consoles extends ConsolePage {
     public static final String ORDER = "order";
     public static final int ORDER_DEFAULT = 50;
 
+    public static final String PROP_TARGET = "target";
+
     public static final String PROP_PRECONDITION = "precondition";
     public static final String PRECONDITION_CLASS_AVAILABILITY = "class";
 
@@ -89,32 +91,39 @@ public class Consoles extends ConsolePage {
 
     public class Console implements Comparable<Console> {
 
-        private final String label;
-        private final String name;
-        private final String path;
+        private final ResourceHandle handle;
         private final int order;
 
-        public Console(String label, String name, String path, int order) {
-            this.label = label;
-            this.name = name;
-            this.path = path;
-            this.order = order;
+        public Console(ResourceHandle handle) {
+            this.handle = handle;
+            order = handle.getProperty(ORDER, ORDER_DEFAULT);
         }
 
         public String getLabel() {
-            return label;
+            return handle.getTitle();
         }
 
         public String getName() {
-            return name;
+            return handle.getName();
         }
 
         public String getPath() {
-            return path;
+            return handle.getPath();
         }
 
         public String getUrl() {
-            return LinkUtil.getUnmappedUrl(getRequest(), getPath());
+            String suffix = getRequest().getRequestPathInfo().getSuffix();
+            return LinkUtil.getUnmappedUrl(getRequest(), getPath())
+                    .replaceAll("\\$\\{path\\}", StringUtils.isNotBlank(suffix) ? suffix : "");
+        }
+
+        public String getLinkAttributes() {
+            StringBuilder builder = new StringBuilder();
+            String value;
+            if (StringUtils.isNotBlank(value = handle.getProperty(PROP_TARGET, ""))) {
+                builder.append(" target=\"").append(value).append("\"");
+            }
+            return builder.toString();
         }
 
         @Override
@@ -176,9 +185,7 @@ public class Consoles extends ConsolePage {
                 Resource consoleContent = consoleContentResources.next();
                 for (Resource console : consoleContent.getChildren()) {
                     if (consoleFilter.accept(console)) {
-                        ResourceHandle handle = ResourceHandle.use(console);
-                        consoles.add(new Console(handle.getTitle(), handle.getName(),
-                                handle.getPath(), handle.getProperty(ORDER, ORDER_DEFAULT)));
+                        consoles.add(new Console(ResourceHandle.use(console)));
                     }
                 }
             }
