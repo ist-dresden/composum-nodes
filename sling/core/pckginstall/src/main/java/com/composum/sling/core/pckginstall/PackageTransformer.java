@@ -90,10 +90,31 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
             super(r);
         }
 
+        private <S> ServiceReference<S> getServiceReference(Class<S> clazz) {
+            ServiceReference<S> reference = null;
+            int waits = 0;
+            while (reference == null) {
+                reference = bundleContext.getServiceReference(clazz);
+                if (reference == null && waits < 60) {
+                    logger.warn("unable to get ServiceReference of {} - will retry in 5 sec.", clazz.getName());
+                    waits++;
+                    try {
+                        Thread.sleep(5000L);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
+                } else if (waits >= 60) {
+                    logger.error("unable to get ServiceReference of {} - giving up", clazz.getName());
+                    logger.error("installation will not be valid");
+                }
+            }
+            return reference;
+        }
+
         @Override
         public void execute(InstallationContext ctx) {
             try {
-                final ServiceReference<Repository> repositoryReference = bundleContext.getServiceReference(Repository.class);
+                final ServiceReference<Repository> repositoryReference = getServiceReference(Repository.class);
                 final Repository repository = bundleContext.getService(repositoryReference);
                 final Method loginAdministrative = repository.getClass().getMethod("loginAdministrative", String.class);
                 final Object invoke = loginAdministrative.invoke(repository, (Object) null);
@@ -101,10 +122,10 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
                 final JcrPackageManager packageManager = PackagingService.getPackageManager(session);
                 final TaskResource resource = getResource();
                 final InputStream inputStream = resource.getInputStream();
-                logger.info("package upload");
+                logger.info("package upload - {}", resource.getEntityId());
                 final JcrPackage jcrPackage = packageManager.upload(inputStream, true, true);
 
-                final ServiceReference<JobManager> jmRef = bundleContext.getServiceReference(JobManager.class);
+                final ServiceReference<JobManager> jmRef = getServiceReference(JobManager.class);
                 final JobManager jm = bundleContext.getService(jmRef);
                 String path = jcrPackage.getNode().getPath();
                 final String root = packageManager.getPackageRoot().getPath();
