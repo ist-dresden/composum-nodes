@@ -52,6 +52,23 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String PROP_LAST_MODIFIED = "jcr:lastModified";
     public static final String PROP_FILE_REFERENCE = "fileReference";
 
+    public static boolean isResourceType(Resource resource, String resourceType) {
+            if (resource != null) {
+                if (resource.isResourceType(resourceType)) {
+                    return true;
+                } else {
+                    try {
+                        final Node node = resource.adaptTo(Node.class);
+                        return node != null && node.isNodeType(resourceType);
+                    } catch (RepositoryException e) {
+                        return false;
+                    }
+                }
+            } else {
+                return false;
+            }
+    }
+
     public static Resource getResourceType(Resource resource) {
         return resource != null ? getResourceType(resource.getResourceResolver(),
                 resource.getResourceType()) : null;
@@ -63,9 +80,12 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
             if (resourceTypeName.startsWith("/")) {
                 resourceType = resolver.getResource(resourceTypeName);
             } else {
-                resourceType = resolver.getResource("/apps/" + resourceTypeName);
-                if (resourceType == null) {
-                    resourceType = resolver.getResource("/libs/" + resourceTypeName);
+                final String[] searchPath = resolver.getSearchPath();
+                for (String path : searchPath) {
+                    resourceType = resolver.getResource(path + resourceTypeName);
+                    if (resourceType != null) {
+                        return resourceType;
+                    }
                 }
             }
         }
@@ -73,20 +93,22 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     }
 
     public static boolean isResourceType(Resource resource, Pattern pattern) {
-        return resource != null ? isResourceType(resource.getResourceResolver(),
-                resource.getResourceType(), pattern) : null;
+        return resource != null && isResourceType(resource.getResourceResolver(), resource.getResourceType(), pattern);
     }
 
-    public static boolean isResourceType(ResourceResolver resolver, String resourceTypeName,
-                                         Pattern pattern) {
-        Resource resourceType = null;
+    public static boolean isResourceType(ResourceResolver resolver, String resourceTypeName, Pattern pattern) {
         if (StringUtils.isNotBlank(resourceTypeName)) {
             if (pattern.matcher(resourceTypeName).find()) {
                 return true;
             } else {
-                ValueMap values = resourceType.adaptTo(ValueMap.class);
-                String resourceSuperTypeName = values.get(PROP_RESOURCE_SUPER_TYPE, "");
-                return isResourceType(resolver, resourceSuperTypeName, pattern);
+                Resource resourceType = getResourceType(resolver, resourceTypeName);
+                if (resourceType == null) {
+                    return false;
+                } else {
+                    ValueMap values = resourceType.adaptTo(ValueMap.class);
+                    String resourceSuperTypeName = values.get(PROP_RESOURCE_SUPER_TYPE, "");
+                    return isResourceType(resolver, resourceSuperTypeName, pattern);
+                }
             }
         }
         return false;
