@@ -510,8 +510,10 @@
             initialize: function (options) {
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
                 // retrieve element attributes
-                this.rootPath = this.$el.attr('data-root') || '/';
-                this.filter = this.$el.attr('data-filter');
+                this.dialogTitle = this.$el.attr('title');
+                this.dialogLabel = this.$el.data('label');
+                this.rootPath = this.$el.data('root') || '/';
+                this.filter = this.$el.data('filter');
                 // switch off the browsers autocomplete function (!)
                 this.$textField.attr('autocomplete', 'off');
                 // add typeahead function to the input field
@@ -549,6 +551,9 @@
              */
             selectPath: function (event) {
                 var selectDialog = core.getView('#path-select-dialog', components.SelectPathDialog);
+                selectDialog.setTitle(this.dialogTitle);
+                selectDialog.setLabel(this.dialogLabel);
+                selectDialog.setRootPath(this.rootPath);
                 selectDialog.setFilter(this.filter);
                 selectDialog.show(_.bind(function () {
                         this.getPath(_.bind(selectDialog.setValue, selectDialog));

@@ -168,6 +168,8 @@
                 this.busy = false;
                 this.tree = core.getView(this.$('.path-select-tree'), components.Tree);
                 this.tree.onNodeSelected = _.bind(this.onNodeSelected, this);
+                this.$title = this.$('.modal-title');
+                this.$label = this.$('.path-input-label');
                 this.$input = this.$('input.path-input');
                 this.$input.on('change', _.bind(this.inputChanged, this));
                 this.$('button.select').click(_.bind(function () {
@@ -184,6 +186,27 @@
             onShown: function () {
                 core.components.Dialog.prototype.onShown.apply(this);
                 this.inputChanged(); // simulate a change after shown to initialize the tree
+            },
+
+            /**
+             * defines the dialog title (default: 'default' data attribute of the title element)
+             */
+            setTitle: function (title) {
+                this.$title.text(title ? title : this.$title.data('default'));
+            },
+
+            /**
+             * defines the input field label (default: 'default' data attribute of the label element)
+             */
+            setLabel: function (label) {
+                this.$label.text(label ? label : this.$label.data('default'));
+            },
+
+            /**
+             * defines the root path for the tree (default: '/')
+             */
+            setRootPath: function (rootPath) {
+                this.tree.setRootPath(rootPath);
             },
 
             /**

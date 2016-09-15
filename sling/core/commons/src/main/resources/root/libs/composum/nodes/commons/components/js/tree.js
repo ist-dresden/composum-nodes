@@ -221,7 +221,7 @@
                         }
                     };
                     this.delegate('after_open.jstree', undefined, _.bind(drilldown, this));
-                    $node = this.$('#' + this.nodeId('/'));
+                    $node = this.$('#' + this.nodeId(this.getRootPath()));
                     if ($node) {
                         if (this.jstree.is_open($node)) {
                             drilldown.apply(this);
@@ -267,6 +267,20 @@
             },
 
             // tree initialization
+
+            /**
+             * sets the root path for the tree
+             */
+            setRootPath: function (rootPath, refresh) {
+                this.rootPath = rootPath;
+                if (refresh === undefined || refresh) {
+                    this.refresh();
+                }
+            },
+
+            getRootPath: function () {
+                return this.rootPath ? this.rootPath : '/';
+            },
 
             /**
              * sets the filter key for the tree; the key is the 'name' in the filter OSGi configuration)
@@ -496,7 +510,7 @@
              * @param callback the function to assign the data loaded
              */
             nodeData: function (node, callback) {
-                // use the URL build by the 'dataUrlForNode' function in th Ajax call
+                // use the URL build by the 'dataUrlForNode' function in the Ajax call
                 var url = this.dataUrlForNode(node);
                 var tree = this; // for later use via closure
                 console.log(this.nodeIdPrefix +'tree.nodeData(' + node + '): ' + url);
