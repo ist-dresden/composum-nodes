@@ -78,7 +78,7 @@ public class ResourceHandle extends ResourceWrapper {
      */
     public boolean isValid() {
         if (valid == null) {
-            valid = (this.resource != null);
+            valid = (this.resource != null && !ResourceUtil.isNonExistingResource(this.resource));
             if (valid) {
                 valid = (getResourceResolver().getResource(getPath()) != null);
             }
