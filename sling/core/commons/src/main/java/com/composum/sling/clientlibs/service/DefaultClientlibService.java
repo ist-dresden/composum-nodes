@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -236,6 +237,11 @@ public class DefaultClientlibService implements ClientlibService {
 
                     String[] separated = Clientlib.splitPathAndName(cachePath);
                     Resource parent = giveParent(resolver, separated[0]);
+                    try {
+                        resolver.adaptTo(Session.class).refresh(true);
+                    } catch (RepositoryException rex) {
+                        // ignore exceptions here
+                    }
                     cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
                     resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
 
@@ -341,6 +347,11 @@ public class DefaultClientlibService implements ClientlibService {
         Resource resource = null;
         SequencerService.Token token = sequencer.acquire(path);
         try {
+            try {
+                resolver.adaptTo(Session.class).refresh(true);
+            } catch (RepositoryException rex) {
+                // ignore exceptions here
+            }
             resource = resolver.getResource(path);
             if (resource == null) {
                 String[] separated = Clientlib.splitPathAndName(path);
