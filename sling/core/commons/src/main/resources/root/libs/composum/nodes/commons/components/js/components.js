@@ -410,7 +410,7 @@
              * returns the current value from the input field
              */
             getValue: function () {
-                return this.$textArea.text();
+                return this.$textArea[0].value;
             },
 
             /**
@@ -419,7 +419,7 @@
             setValue: function (value, triggerChange) {
                 var currentValue = this.$textArea.text();
                 if ('' + currentValue != '' + value) {
-                    this.$textArea.text(value);
+                    this.$textArea[0].value = value;
                     if (triggerChange) {
                         this.$textArea.trigger('change');
                     }
@@ -829,9 +829,6 @@
                     contextWidget.setWidgetType.apply(contextWidget, ['jcr-primaryType']);
                 } else if ('jcr:mixinTypes' == name) {
                     contextWidget.setWidgetType.apply(contextWidget, ['jcr-mixinTypes']);
-                } else {
-                    // reset to default type if no useful subtype is available
-                    contextWidget.setType.apply(contextWidget);
                 }
             }
         });

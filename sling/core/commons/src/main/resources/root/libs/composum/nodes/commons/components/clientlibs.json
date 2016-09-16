@@ -8,9 +8,6 @@
       },
       "bootstrap-theme": {
         "embed": "jslibs/bootstrap/3.3.2/css/bootstrap-theme.min.css"
-      },
-      "components": {
-        "embed": "composum/nodes/commons/components/clientlibs/components"
       }
     },
     "js": {
@@ -51,9 +48,6 @@
       },
       "fileinput": {
         "embed": "jslibs/bootstrap-fileinput/4.3.2/js/fileinput.min.js"
-      },
-      "components": {
-        "embed": "composum/nodes/commons/components/clientlibs/components"
       }
     }
   },
@@ -62,11 +56,16 @@
     "css": {
       "jcr:primaryType": "sling:OrderedFolder",
       "embed": [
-        "composum/nodes/commons/components/css/components.css"
+        "composum/nodes/commons/components/css/components.css",
+        "jslibs/trumbowyg/2.3.0/ui/trumbowyg.min.css",
+        "composum/nodes/commons/components/richtext/richtext.css"
       ]
     },
     "js": {
       "jcr:primaryType": "sling:OrderedFolder",
+      "depends":[
+        "jslibs/trumbowyg/2.3.0/trumbowyg.min.js"
+      ],
       "embed": [
         "composum/nodes/commons/components/js/core.js",
         "composum/nodes/commons/components/js/x-editable.js",
@@ -76,6 +75,7 @@
         "composum/nodes/commons/components/js/components.js",
         "composum/nodes/commons/components/js/init.js",
         "composum/nodes/commons/components/js/dialogs.js",
+        "composum/nodes/commons/components/richtext/richtext.js",
         "composum/nodes/commons/components/js/codeEditor.js"
       ]
     }

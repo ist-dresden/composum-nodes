@@ -532,16 +532,6 @@
     bottom: 0;
 }
 
-#browser-view-property-dialog .form-group.type {
-    width: 80%;
-    float: left;
-}
-
-#browser-view-property-dialog .form-group.multi {
-    width: 15%;
-    float: right;
-}
-
 #browser-view-property-dialog form.default button.upload {
     display: none;
 }

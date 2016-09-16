@@ -3,6 +3,9 @@
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "css": {
       "jcr:primaryType": "nt:unstructured",
+      "depends": [
+        "composum/nodes/console/clientlibs/console"
+      ],
       "embed": [
         "composum/nodes/console/browser/css/nodes.css",
         "composum/nodes/console/browser/css/browser.css",
@@ -46,24 +49,50 @@
     },
     "css": {
       "jcr:primaryType": "nt:unstructured",
+      "depends": [
+        "composum/nodes/console/clientlibs/base"
+      ],
       "embed": [
-        "jslibs/bootstrap/3.3.2/css/bootstrap-theme.min.css",
-        "jslibs/bootstrap-table/1.7.0/bootstrap-table.min.css",
-        "jslibs/bootstrap-datetimepicker/4.14.30/css/bootstrap-datetimepicker.min.css",
-        "jslibs/jquery/split-pane/snapshot/split-pane.css",
+        "jslibs/trumbowyg/2.3.0/ui/trumbowyg.min.css",
         "composum/nodes/commons/components/clientlibs/components",
         "composum/nodes/console/page/css/console.css"
       ]
     },
     "js": {
       "jcr:primaryType": "nt:unstructured",
+      "depends": [
+        "composum/nodes/console/clientlibs/base",
+        "jslibs/trumbowyg/2.3.0/trumbowyg.min.js"
+      ],
+      "components": {
+        "embed": "composum/nodes/commons/components/clientlibs/components"
+      },
+      "console": {
+        "embed": [
+          "composum/nodes/console/page/js/dialogs.js",
+          "composum/nodes/console/page/js/console.js"
+        ]
+      }
+    }
+  },
+  "base": {
+    "sling:resourceType": "composum/nodes/commons/clientlib",
+    "css": {
+      "jcr:primaryType": "nt:unstructured",
+      "embed": [
+        "jslibs/bootstrap/3.3.2/css/bootstrap-theme.min.css",
+        "jslibs/bootstrap-table/1.7.0/bootstrap-table.min.css",
+        "jslibs/bootstrap-datetimepicker/4.14.30/css/bootstrap-datetimepicker.min.css",
+        "jslibs/jquery/split-pane/snapshot/split-pane.css"
+      ]
+    },
+    "js": {
+      "jcr:primaryType": "nt:unstructured",
       "jquery": {
         "embed": [
-          "jslibs/jquery/2.2.4/jquery.min.js"
+          "jslibs/jquery/2.2.4/jquery.min.js",
+          "jslibs/jquery/base64/jquery.base64.js"
         ]
-      },
-      "jquery.base64": {
-        "embed": "jslibs/jquery/base64/jquery.base64.js"
       },
       "aem-6.1": {
         "optional": true,
@@ -104,23 +133,14 @@
       },
       "jstree": {
         "embed": "jslibs/jstree/3.3.0/jstree.js"
-      },
-      "components": {
-        "embed": "composum/nodes/commons/components/clientlibs/components"
-      },
-      "console": {
-        "embed": [
-          "composum/nodes/console/page/js/dialogs.js",
-          "composum/nodes/console/page/js/console.js"
-        ]
       }
     }
   },
   "ace": {
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "js": {
-      "expanded": true,
       "jcr:primaryType": "nt:unstructured",
+      "expanded": true,
       "embed": [
         "jslibs/ace/1.1.8/ace.js",
         "jslibs/ace/1.1.8/mode-json.js",

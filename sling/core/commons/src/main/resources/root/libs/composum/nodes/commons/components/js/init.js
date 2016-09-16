@@ -58,6 +58,9 @@
         $root.find('.widget.reference-widget').each(function() {
             core.getView(this, components.ReferenceWidget);
         });
+        $root.find('.widget.richtext-widget').each(function () {
+            core.getView(this, components.RichTextWidget);
+        });
         $root.find('.widget.code-editor-widget').each(function() {
             core.getView(this, components.CodeEditorWidget);
         });

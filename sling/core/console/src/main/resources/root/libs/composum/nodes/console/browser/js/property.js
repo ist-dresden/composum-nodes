@@ -72,12 +72,15 @@
                 this.$oldname = this.$('input[name="oldname"]');
                 this.$name = this.$('input[name="name"]');
                 this.$type = this.$('select[name="type"]');
+                this.$subtype = this.$('.subtype');
+                this.subtype = core.getWidget(this.$subtype, '.widget.combo-box-widget', core.components.ComboBoxWidget);
                 this.$multi = this.$('input[name="multi"]');
                 this.valueWidget = core.getWidget(this.$el,
                     '.widget.property-value-widget', browser.PropertyValueWidget);
 
                 this.loadTypes();
                 this.$type.on('change', _.bind(this.typeChanged, this));
+                this.subtype.$el.on('change', _.bind(this.typeChanged, this));
                 this.$multi.on('change', _.bind(this.multiChanged, this));
                 this.$name.on('change', _.bind(this.nameChanged, this));
 
@@ -88,10 +91,12 @@
             },
 
             typeChanged: function () {
+                var currentValue = this.valueWidget.getValue();
                 var type = this.$type.val();
+                this.$subtype.css('visibility', type == 'String' ? 'visible' : 'hidden');
                 if (!this.busy) {
                     this.busy = true;
-                    this.valueWidget.setType(type);
+                    this.valueWidget.setType(type, type == 'String' ? this.subtype.getValue() : undefined);
                     this.busy = false;
                 }
                 if (type == 'Binary') {
@@ -106,6 +111,9 @@
                     this.form.$el.removeClass('binary');
                     this.form.$el.addClass('default');
                     this.$multi.closest('.form-group').removeClass('invisible');
+                }
+                if (currentValue) {
+                    this.valueWidget.setValue(currentValue);
                 }
             },
 
@@ -131,6 +139,20 @@
                 this.reset();
                 this.$path.val(property.get('path'));
                 var name = property.get('name');
+                var value = undefined;
+                if (name) {
+                    value = property.get('value');
+                }
+                var subtype = 'string';
+                if (value) {
+                    if (value.indexOf('\n') >= 0) {
+                        subtype = 'plaintext';
+                    }
+                    if (value.indexOf('</') >= 0) {
+                        subtype = 'richtext';
+                    }
+                }
+                this.subtype.setValue(subtype);
                 if (name) {
                     this.$type.val(property.get('type'));
                     this.typeChanged();
@@ -150,9 +172,7 @@
                     this.$delete.addClass('hidden');
                 }
                 this.nameChanged();
-                if (name) {
-                    this.valueWidget.setValue(property.get('value'));
-                }
+                this.valueWidget.setValue(value);
             },
 
             getProperty: function () {
@@ -214,7 +234,14 @@
         browser.PropertyValueWidget = core.components.MultiFormWidget.extend({
 
             typeMap: {
-                'String': {selector: 'name'}, // with name detection for a better usability
+                'String': {
+                    selector: 'default',
+                    subtype: {
+                        'string': 'default',
+                        'plaintext': 'plaintext',
+                        'richtext': 'richtext'
+                    }
+                },
                 'Name': {selector: 'name'},
                 'URI': {selector: 'default'},
                 'Boolean': {selector: 'boolean'},
@@ -250,12 +277,20 @@
              * Set / Change the JCR property type - reset to the current type if no new type is given here
              * (this is useful to reset 'subtypes' (widget types) to the default type).
              */
-            setType: function (type) {
-                if (!this.type || this.type != type) {
+            setType: function (type, subtype) {
+                if (!this.type || this.type != type || this.subtype != subtype) {
                     // use new type or let it unchanged or fallback to 'String'
                     this.type = type || this.type || 'String';
+                    this.subtype = subtype;
                     var typeRule = this.typeMap[this.type];
-                    this.setWidgetType(typeRule.selector);
+                    var typeSelector = undefined;
+                    if (subtype && typeRule.subtype) {
+                        typeSelector = typeRule.subtype[subtype];
+                    }
+                    if (!typeSelector) {
+                        typeSelector = typeRule.selector;
+                    }
+                    this.setWidgetType(typeSelector);
                 }
             },
 
@@ -269,7 +304,7 @@
                     this.$('.widget').each(function () {
                         var $widget = $(this);
                         $widget.addClass('hidden');
-                        var $input = $widget.is('input') ? $widget : $widget.find('input');
+                        var $input = $widget.is('input,textarea') ? $widget : $widget.find('input,textarea');
                         $input.removeAttr('name');
                         $input.removeAttr('data-rules');
                         if (_.isFunction($widget.reset)) {
@@ -280,7 +315,7 @@
                     this.$('.widget.' + typeSelector).each(function () {
                         var $widget = $(this);
                         $widget.removeClass('hidden');
-                        var $input = $widget.is('input') ? $widget : $widget.find('input');
+                        var $input = $widget.is('input,textarea') ? $widget : $widget.find('input,textarea');
                         $input.attr('name', propertyWidget.$el.attr('data-name') || 'value');
                         var rules = propertyWidget.$el.attr('data-rules');
                         if (rules) {
@@ -305,7 +340,7 @@
             },
 
             getValue: function () {
-                var value = this.multiValue ? [] : this.getWidgetValue('input[name="value"]');
+                var value = this.multiValue ? [] : this.getWidgetValue('[name="value"]');
                 if (this.multiValue) {
                     value = core.components.MultiFormWidget.prototype.getValue.apply(this);
                 }
@@ -315,13 +350,13 @@
             setValue: function (value) {
                 if (this.multiValue && _.isArray(value)) {
                     this.reset(value.length);
-                    var values = this.$('input[name="value"]');
+                    var values = this.$('[name="value"]');
                     for (var i = 0; i < values.length; i++) {
                         this.setWidgetValue($(values[i]), value[i]);
                     }
                 } else {
                     this.reset();
-                    this.setWidgetValue('input[name="value"]', value);
+                    this.setWidgetValue('[name="value"]', value);
                 }
             }
         });

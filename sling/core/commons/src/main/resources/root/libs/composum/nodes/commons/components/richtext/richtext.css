@@ -1,0 +1,102 @@
+@charset "UTF-8";
+
+.composum-widgets-richtext_link-dialog {
+    height: 335px !important;
+}
+
+.composum-widgets-richtext_link-dialog_title {
+    width: 70%;
+    float: left;
+}
+
+.composum-widgets-richtext_link-dialog_target {
+    width: 26%;
+    float: right;
+}
+
+.composum-widgets-richtext {
+    height: auto !important;
+    padding: 0 !important;
+}
+
+.composum-widgets-richtext .trumbowyg-box {
+    margin: 0;
+    border: none;
+    min-height: 0;
+}
+
+.composum-widgets-richtext .trumbowyg-box .trumbowyg-editor {
+    padding: 10px;
+    min-height: 100px;
+}
+
+.composum-widgets-richtext .trumbowyg-button-pane {
+    background: #eee;
+    border-bottom: 1px solid #ccc;
+}
+
+.composum-widgets-richtext .trumbowyg-modal-box {
+    padding-bottom: 7px;
+    text-align: left;
+    background: #eee;
+}
+
+.composum-widgets-richtext .trumbowyg-modal-box .trumbowyg-modal-title {
+    display: none;
+}
+
+.composum-widgets-richtext .trumbowyg-modal-box form {
+    margin: 0;
+    padding: 10px;
+}
+
+.composum-widgets-richtext .trumbowyg-modal-box label {
+    margin: 0;
+    height: auto;
+    line-height: inherit;
+}
+
+.composum-widgets-richtext .trumbowyg-modal-box .trumbowyg-modal-button {
+    position: relative;
+    right: inherit;
+    float: right;
+    display: inline-block;
+    margin: 10px 0 0 10px;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-image: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 1px rgba(0, 0, 0, 0.075);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 1px rgba(0, 0, 0, 0.075);
+    color: #333;
+    background-color: #fff;
+    background-image: -webkit-linear-gradient(top, #fff 0, #e0e0e0 100%);
+    background-image: -o-linear-gradient(top, #fff 0, #e0e0e0 100%);
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#fff), to(#e0e0e0));
+    background-image: linear-gradient(to bottom, #fff 0, #e0e0e0 100%);
+    background-repeat: repeat-x;
+}
+
+.composum-widgets-richtext .trumbowyg-modal-box .trumbowyg-modal-button.trumbowyg-modal-submit {
+    background-image: -webkit-linear-gradient(top, #337ab7 0, #265a88 100%);
+    background-image: -o-linear-gradient(top, #337ab7 0, #265a88 100%);
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#337ab7), to(#265a88));
+    background-image: linear-gradient(to bottom, #337ab7 0, #265a88 100%);
+    background-repeat: repeat-x;
+    border-color: #245580;
+    color: #fff;
+    background-color: #337ab7;
+}
