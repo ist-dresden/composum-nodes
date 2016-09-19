@@ -7,7 +7,6 @@
 
         components.const = _.extend(components.const || {}, {
             richtext: {
-                cssBase: 'richtext-widget',
                 editorSelector: '.rich-editor',
                 defaultOptions: {
                     btns: [
@@ -31,17 +30,14 @@
                     this.$('.trumbowyg-editor').attr('style', style);
                 }
                 this.$editor.on('tbwchange', _.bind(this.onChange, this));
-                //this.$editor.on('summernote.change', _.bind(this.onChange, this));
             },
 
             getValue: function () {
                 return this.$editor.trumbowyg('html');
-                //return this.$editor.summernote('code');
             },
 
             setValue: function (value, triggerChange) {
                 this.$editor.trumbowyg('html', value);
-                //this.$editor.summernote('code', value);
                 if (triggerChange) {
                     this.$el.trigger('change');
                 }
@@ -49,7 +45,6 @@
 
             reset: function () {
                 this.$editor.trumbowyg('empty');
-                //this.setValue('');
             },
 
             onChange: function () {
@@ -62,6 +57,16 @@
                     : this.$(components.const.richtext.editorSelector);
             }
         });
+
+        components.richTextWidget = {
+
+            afterClone: function ($el) {
+                var $wrapper = $(document.createElement('div'));
+                var $content = $el.find('.composum-widgets-richtext_value').clone();
+                $wrapper.append($content);
+                $el.html($wrapper.html());
+            }
+        };
 
         /**
          * trumbowyg editor customizing

@@ -556,6 +556,11 @@
     padding-left: 0;
 }
 
+
+.property-value-widget.single-value textarea.form-control {
+    min-height: 239px;
+}
+
 /*
  * Display View
  */

@@ -96,7 +96,8 @@
                 this.$subtype.css('visibility', type == 'String' ? 'visible' : 'hidden');
                 if (!this.busy) {
                     this.busy = true;
-                    this.valueWidget.setType(type, type == 'String' ? this.subtype.getValue() : undefined);
+                    var subtype = (type == 'String' ? this.subtype.getValue() : undefined);
+                    this.valueWidget.setType(type, subtype);
                     this.busy = false;
                 }
                 if (type == 'Binary') {

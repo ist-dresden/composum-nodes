@@ -30,6 +30,15 @@
     min-height: 100px;
 }
 
+.property-value-widget .composum-widgets-richtext .trumbowyg-box .trumbowyg-editor {
+    height: 100px !important;
+}
+
+.property-value-widget.single-value .composum-widgets-richtext .trumbowyg-box .trumbowyg-editor {
+    min-height: 200px;
+    height: 200px !important;
+}
+
 .composum-widgets-richtext .trumbowyg-button-pane {
     background: #eee;
     border-bottom: 1px solid #ccc;

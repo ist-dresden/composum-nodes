@@ -5,9 +5,8 @@
     <div class="multi-form-item">
       <input class="default widget text-field-widget form-control" type="text" />
       <textarea class="plaintext widget text-area-widget form-control hidden" rows="4"></textarea>
-      <textarea class=" widget richtext-widget form-control hidden"></textarea>
-      <div class="richtext composum-widgets-richtext widget richtext-widget form-control">
-        <textarea class="composum-widgets-richtext_value richtext-widget widget rich-editor"></textarea>
+      <div class="richtext composum-widgets-richtext richtext-widget widget form-control hidden">
+        <textarea class="composum-widgets-richtext_value rich-editor"></textarea>
       </div>
       <input class="name widget repository-name-widget form-control hidden" type="text" />
       <input class="boolean widget checkbox-widget form-control hidden" type="checkbox" />
