@@ -161,25 +161,25 @@ public class Clientlib {
 
     public List<ClientlibLink> getLinks(RendererContext context, boolean expanded) {
         List<ClientlibLink> links = new ArrayList<>();
-        getLinks(links, context, expanded, true, false);
+        getLinks(links, context, expanded, null, false);
         return links;
     }
 
     public boolean getLinks(List<ClientlibLink> links, RendererContext context,
-                         boolean expanded, boolean depends, boolean optional) {
+                            boolean expanded, Boolean depends, boolean optional) {
         boolean hasEmbeddedContent = false;
         if (definition.isValid()) {
             expanded = definition.getProperty(PROP_EXPANDED, expanded);
             optional = definition.getProperty(PROP_OPTIONAL, optional);
             ClientlibRef reference = new ClientlibRef(clientlibRef, depends, optional);
-             hasEmbeddedContent = getLinks(links, context, expanded, depends, reference, definition);
-            if (!expanded && depends && hasEmbeddedContent) {
+            hasEmbeddedContent = getLinks(links, context, expanded, depends, reference, definition);
+            if (!expanded && (depends == null || depends) && hasEmbeddedContent) {
                 if (!context.isClientlibRendered(clientlibRef)) {
                     ClientlibLink link = new ClientlibLink(clientlibRef, resource);
                     context.registerClientlibLink(link);
                     links.add(link);
                 } else {
-                    if (!depends) {
+                    if (depends == null || !depends) {
                         logDuplicate(clientlibRef);
                     }
                 }
@@ -189,7 +189,7 @@ public class Clientlib {
     }
 
     protected boolean getLinks(List<ClientlibLink> links, RendererContext context,
-                               boolean expanded, boolean depends,
+                               boolean expanded, Boolean depends,
                                ClientlibRef reference, ResourceHandle resource) {
         boolean hasEmbeddedContent = false;
         if (resource.isValid()) {
@@ -199,7 +199,7 @@ public class Clientlib {
                 if (value != null) properties.put(key, value);
             }
             if (isFile(resource)) {
-                addFileToList(links, context, true, reference, properties, resource);
+                addFileToList(links, context, depends, reference, properties, resource);
             } else {
                 boolean optional = resource.getProperty(PROP_OPTIONAL, reference.optional);
                 for (String embedRule : resource.getProperty(PROP_DEPENDS, new String[0])) {
@@ -223,7 +223,7 @@ public class Clientlib {
     }
 
     protected boolean getClientlibLink(List<ClientlibLink> links, RendererContext context,
-                                       boolean expanded, boolean depends,
+                                       boolean expanded, Boolean depends,
                                        ClientlibRef reference, Map<String, String> properties) {
         String path = reference.path;
         Resource target = retrieveResource(path);
@@ -232,7 +232,7 @@ public class Clientlib {
                 Clientlib embedded = new Clientlib(request, path, clientlibRef.type);
                 return embedded.getLinks(links, context, expanded, depends, reference.optional);
             } else {
-                addFileToList(links, context, expanded || depends, reference, properties, target);
+                addFileToList(links, context, expanded || (depends != null && depends), reference, properties, target);
                 return true;
             }
         } else {
@@ -241,21 +241,21 @@ public class Clientlib {
         return false;
     }
 
-    protected void addFileToList(List<ClientlibLink> links, RendererContext context, boolean depends,
+    protected void addFileToList(List<ClientlibLink> links, RendererContext context, Boolean depends,
                                  ClientlibRef reference, Map<String, String> properties, Resource target) {
         if (!context.isClientlibRendered(reference)) {
             FileHandle file = new FileHandle(target);
             if (file.isValid()) {
                 ClientlibLink link = new ClientlibLink(reference, target, properties);
                 context.registerClientlibLink(link);
-                if (depends) {
+                if (depends != null && depends) {
                     links.add(link);
                 }
             } else {
                 logNotAvailable(resource, file.getPath(), reference.optional);
             }
         } else {
-            if (!depends) {
+            if (depends == null || !depends) {
                 logDuplicate(reference);
             }
         }
@@ -301,6 +301,9 @@ public class Clientlib {
                     } else {
                         logNotAvailable(resource, ref.path, optional);
                     }
+                }
+                if (isFile(resource)) {
+                    processFile(output, processor, context, resource, optional, contentSet);
                 }
             }
             for (Resource child : resource.getChildren()) {
@@ -350,7 +353,9 @@ public class Clientlib {
         if (LOG.isDebugEnabled()) {
             LOG.warn(message, new RuntimeException());
         } else {
-            LOG.warn(message);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(message);
+            }
         }
     }
 
