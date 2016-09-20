@@ -69,6 +69,17 @@
                 this.loadText(onSuccess);
             },
 
+            setSaveCommand: function (save) {
+                this.ace.commands.addCommand({
+                    name: 'save',
+                    bindKey: {
+                        win: 'Ctrl-S',
+                        mac: 'Command-S'
+                    },
+                    exec: save
+                });
+            },
+
             getValue: function () {
                 return this.ace.getValue();
             },
@@ -203,18 +214,28 @@
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.editor = core.getWidget(this.el, '.widget.code-editor-widget', components.CodeEditorWidget);
-                // initialize the dialogs toolbar and buttons
-                this.$('button.save').click(_.bind(function (event) {
-                    this.cursor = this.editor.ace.getCursorPosition();
-                    this.editor.saveText(_.bind(function (result) {
-                        if (this.source) {
-                            this.source.loadText(_.bind(function (data) {
-                                this.source.ace.navigateTo(this.cursor.row, this.cursor.column);
-                                this.source.ace.scrollToRow(Math.max(this.cursor.row - 2, 0));
-                            }, this));
-                        }
-                        this.hide();
-                    }, this));
+                this.$('button.save').click(_.bind(this.saveAndContinue, this));
+                this.$('button.save-and-close').click(_.bind(this.saveAndClose, this));
+            },
+
+            saveAndContinue: function (event, onSuccess) {
+                this.cursor = this.editor.ace.getCursorPosition();
+                this.editor.saveText(_.bind(function (result) {
+                    if (this.source) {
+                        this.source.loadText(_.bind(function (data) {
+                            this.source.ace.navigateTo(this.cursor.row, this.cursor.column);
+                            this.source.ace.scrollToRow(Math.max(this.cursor.row - 2, 0));
+                        }, this));
+                    }
+                    if (_.isFunction(onSuccess)) {
+                        onSuccess();
+                    }
+                }, this));
+            },
+
+            saveAndClose: function (event) {
+                this.saveAndContinue(event, _.bind(function () {
+                    this.hide();
                 }, this));
             },
 
@@ -227,25 +248,38 @@
                 this.source = source;
                 // initialize the dialog with the templates data
                 var path = this.source.getPath();
+                this.selection = this.source.ace.getSelectionRange();
+                this.cursor = this.source.ace.getCursorPosition();
+                this.doEdit(path, _.bind(function () {
+                    this.editor.ace.setReadOnly(false);
+                    this.editor.ace.scrollToRow(Math.max(this.cursor.row - 2, 0));
+                    this.editor.ace.navigateTo(this.cursor.row, this.cursor.column);
+                    this.editor.ace.focus();
+                }, this));
+            },
+
+            /**
+             * Open dialog to edit a file referenced by its path without a source view.
+             */
+            editFile: function (path) {
+                this.source = undefined;
+                // display the editor in the modal dialog
+                this.doEdit(path, _.bind(function () {
+                    this.editor.ace.setReadOnly(false);
+                    this.editor.ace.focus();
+                }, this));
+            },
+
+            doEdit: function (path, initAfterLoad) {
                 this.$('.modal-title').text(path);
                 this.editor.$editor.attr('data-path', path);
                 this.editor.$editor.attr('data-type', this.source.$editor.attr('data-type'));
-                this.selection = this.source.ace.getSelectionRange();
-                this.cursor = this.source.ace.getCursorPosition();
                 // display the editor in the modal dialog
                 this.show(_.bind(function () {
                     // initialize the editor instance
-                    this.editor.initEditor(_.bind(function () {
-                        this.editor.ace.setReadOnly(false);
-                        /*
-                         if (this.selection) {
-                         this.editor.ace.addSelectionMarker(this.selection);
-                         this.editor.ace.updateSelectionMarkers();
-                         }
-                         */
-                        this.editor.ace.scrollToRow(Math.max(this.cursor.row - 2, 0));
-                        this.editor.ace.navigateTo(this.cursor.row, this.cursor.column);
-                        this.editor.ace.focus();
+                    this.editor.initEditor(initAfterLoad);
+                    this.editor.setSaveCommand( _.bind(function (editor) {
+                        this.saveAndContinue();
                     }, this));
                 }, this));
             },
@@ -255,6 +289,31 @@
                 this.editor.reset();
             }
         });
+
+        components.CodeEditorPage = Backbone.View.extend({
+
+            initialize: function (options) {
+                this.path = this.$el.data('path');
+                this.type = this.$el.data('type');
+                this.editor = core.getWidget(this.el, '.widget.code-editor-widget', components.CodeEditorWidget);
+
+                this.$('button.save').click(_.bind(this.save, this));
+                this.$('.code-editor-widget_title').text(this.path);
+
+                this.editor.$editor.attr('data-path', this.path);
+                this.editor.$editor.attr('data-type', this.type);
+                this.editor.initEditor();
+                this.editor.setSaveCommand( _.bind(function (editor) {
+                    this.save();
+                }, this));
+            },
+
+            save: function (event, onSuccess) {
+                this.editor.saveText();
+            }
+        });
+
+        core.getView('body.composum-nodes-components-codeeditor_page', components.CodeEditorPage);
 
     })(core.components);
 
