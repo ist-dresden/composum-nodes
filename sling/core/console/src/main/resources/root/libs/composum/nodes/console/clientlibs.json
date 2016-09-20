@@ -80,7 +80,7 @@
     "css": {
       "jcr:primaryType": "nt:unstructured",
       "embed": [
-        "jslibs/bootstrap/3.3.2/css/bootstrap-theme.min.css",
+        "jslibs/bootstrap/3.3.7/css/bootstrap-theme.min.css",
         "jslibs/bootstrap-table/1.7.0/bootstrap-table.min.css",
         "jslibs/bootstrap-datetimepicker/4.14.30/css/bootstrap-datetimepicker.min.css",
         "jslibs/jquery/split-pane/snapshot/split-pane.css"
@@ -108,10 +108,10 @@
         "embed": "jslibs/moment/2.10.3/moment-with-locales.min.js"
       },
       "backbone": {
-        "embed": "jslibs/backbone/1.2.0/backbone-min.js"
+        "embed": "jslibs/backbone/1.3.3/backbone-min.js"
       },
       "bootstrap": {
-        "embed": "jslibs/bootstrap/3.3.2/js/bootstrap.min.js"
+        "embed": "jslibs/bootstrap/3.3.7/js/bootstrap.min.js"
       },
       "bootstrap-table": {
         "embed": "jslibs/bootstrap-table/1.7.0/bootstrap-table.js"
@@ -142,21 +142,21 @@
       "jcr:primaryType": "nt:unstructured",
       "expanded": true,
       "embed": [
-        "jslibs/ace/1.1.8/ace.js",
-        "jslibs/ace/1.1.8/mode-json.js",
-        "jslibs/ace/1.1.8/mode-xml.js",
-        "jslibs/ace/1.1.8/mode-html.js",
-        "jslibs/ace/1.1.8/mode-jsp.js",
-        "jslibs/ace/1.1.8/mode-css.js",
-        "jslibs/ace/1.1.8/mode-less.js",
-        "jslibs/ace/1.1.8/mode-javascript.js",
-        "jslibs/ace/1.1.8/mode-dart.js",
-        "jslibs/ace/1.1.8/mode-groovy.js",
-        "jslibs/ace/1.1.8/mode-java.js",
-        "jslibs/ace/1.1.8/mode-scala.js",
-        "jslibs/ace/1.1.8/mode-markdown.js",
-        "jslibs/ace/1.1.8/mode-text.js",
-        "jslibs/ace/1.1.8/theme-clouds.js"
+        "jslibs/ace/1.2.5/ace.js",
+        "jslibs/ace/1.2.5/mode-json.js",
+        "jslibs/ace/1.2.5/mode-xml.js",
+        "jslibs/ace/1.2.5/mode-html.js",
+        "jslibs/ace/1.2.5/mode-jsp.js",
+        "jslibs/ace/1.2.5/mode-css.js",
+        "jslibs/ace/1.2.5/mode-less.js",
+        "jslibs/ace/1.2.5/mode-javascript.js",
+        "jslibs/ace/1.2.5/mode-dart.js",
+        "jslibs/ace/1.2.5/mode-groovy.js",
+        "jslibs/ace/1.2.5/mode-java.js",
+        "jslibs/ace/1.2.5/mode-scala.js",
+        "jslibs/ace/1.2.5/mode-markdown.js",
+        "jslibs/ace/1.2.5/mode-text.js",
+        "jslibs/ace/1.2.5/theme-clouds.js"
       ]
     }
   }
