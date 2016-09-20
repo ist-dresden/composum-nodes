@@ -61,6 +61,15 @@
                     }
                 },
                 error: function (result) {
+                    if (core.isNotAuthorized(result)) {
+                        if (_.isFunction(core.unauthorizedDelegate)) {
+                            core.unauthorizedDelegate(function(){
+                                // try it once more after delegation to authorize
+                                core.ajaxCall(config, onSuccess, onError, onComplete);
+                            });
+                            return;
+                        }
+                    }
                     if (result.status < 200 || result.status > 299) {
                         if (_.isFunction(onError)) {
                             onError(result);
@@ -72,6 +81,11 @@
                     }
                 },
                 complete: function (result) {
+                    if (core.isNotAuthorized(result)) {
+                        if (_.isFunction(core.unauthorizedDelegate)) {
+                            return; // prevent from completion concurrent to authorize and retry
+                        }
+                    }
                     if (_.isFunction(onComplete)) {
                         onComplete(result);
                     }
@@ -133,6 +147,15 @@
                     }
                 },
                 error: function (result) {
+                    if (core.isNotAuthorized(result)) {
+                        if (_.isFunction(core.unauthorizedDelegate)) {
+                            core.unauthorizedDelegate(function(){
+                                // try it once more after delegation to authorize
+                                core.submitForm(formElement, onSuccess, onError, onComplete);
+                            });
+                            return;
+                        }
+                    }
                     if (result.status < 200 || result.status > 299) {
                         if (_.isFunction(onError)) {
                             onError(result);
@@ -144,6 +167,11 @@
                     }
                 },
                 complete: function (result) {
+                    if (core.isNotAuthorized(result)) {
+                        if (_.isFunction(core.unauthorizedDelegate)) {
+                            return; // prevent from completion concurrent to authorize and retry
+                        }
+                    }
                     if (_.isFunction(onComplete)) {
                         onComplete(result);
                     }
@@ -181,6 +209,15 @@
                     }
                 },
                 error: function (result) {
+                    if (core.isNotAuthorized(result)) {
+                        if (_.isFunction(core.unauthorizedDelegate)) {
+                            core.unauthorizedDelegate(function () {
+                                // try it once more after delegation to authorize
+                                core.submitFormPut(formElement, data, onSuccess, onError, onComplete);
+                            });
+                            return;
+                        }
+                    }
                     if (result.status < 200 || result.status > 299) {
                         if (_.isFunction(onError)) {
                             onError(result);
@@ -192,11 +229,20 @@
                     }
                 },
                 complete: function (result) {
+                    if (core.isNotAuthorized(result)) {
+                        if (_.isFunction(core.unauthorizedDelegate)) {
+                            return; // prevent from completion concurrent to authorize and retry
+                        }
+                    }
                     if (_.isFunction(onComplete)) {
                         onComplete(result);
                     }
                 }
             });
+        },
+
+        isNotAuthorized: function(result) {
+            return result.status == 401 || result.status == 403;
         },
 
         resultMessage: function (result, message) {

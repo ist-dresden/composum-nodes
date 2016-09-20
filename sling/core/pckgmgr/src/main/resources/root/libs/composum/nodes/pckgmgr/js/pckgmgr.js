@@ -55,12 +55,13 @@
             }
         };
 
-        pckgmgr.pckgmgr = core.components.SplitView.extend({
+        pckgmgr.Pckgmgr = core.components.SplitView.extend({
 
             initialize: function (options) {
                 core.components.SplitView.prototype.initialize.apply(this, [options]);
                 $(document).on('path:select', _.bind(this.onPathSelect, this));
                 $(document).on('path:selected', _.bind(this.onPathSelected, this));
+                core.unauthorizedDelegate = core.console.authorize;
             },
 
             onPathSelect: function (event, path) {
@@ -77,7 +78,7 @@
             }
         });
 
-        pckgmgr.pckgmgr = core.getView('#pckgmgr', pckgmgr.pckgmgr);
+        pckgmgr.pckgmgr = core.getView('#pckgmgr', pckgmgr.Pckgmgr);
 
         pckgmgr.Tree = core.components.Tree.extend({
 

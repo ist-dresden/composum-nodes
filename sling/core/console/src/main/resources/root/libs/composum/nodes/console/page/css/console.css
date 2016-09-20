@@ -570,6 +570,18 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     max-width: 25em;
 }
 
+#user-status-dialog .modal-dialog .needs-authorization {
+    display: none;
+}
+
+#user-status-dialog .modal-dialog .authorization .needs-authorization {
+    display: block;
+}
+
+#user-status-dialog .modal-dialog .authorization .current-user {
+    display: none;
+}
+
 #user-status-dialog button.logout {
     float: left;
 }

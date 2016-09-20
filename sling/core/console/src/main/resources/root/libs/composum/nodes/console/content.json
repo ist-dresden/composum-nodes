@@ -23,14 +23,5 @@
       "core"
     ],
     "order": 80
-  },
-  "edit": {
-    "jcr:primaryType": "nt:unstructured",
-    "jcr:title": "Editor",
-    "sling:resourceType": "composum/nodes/console/components/codeeditor/editpage",
-    "categories": [
-      "core"
-    ],
-    "order": 90
   }
 }

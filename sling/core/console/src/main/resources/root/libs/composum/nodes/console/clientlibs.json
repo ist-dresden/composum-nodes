@@ -148,6 +148,7 @@
       "embed": [
         "jslibs/bootstrap/3.3.7/css/bootstrap.min.css",
         "jslibs/bootstrap/3.3.7/css/bootstrap-theme.min.css",
+        "composum/nodes/console/page/css/console.css",
         "composum/nodes/console/components/codeeditor/codeeditor.css"
       ]
     },
@@ -166,7 +167,9 @@
         "composum/nodes/commons/components/js/components.js",
         "composum/nodes/commons/components/js/codeEditor.js",
         "composum/nodes/commons/components/js/multiform.js",
-        "composum/nodes/commons/components/js/init.js"
+        "composum/nodes/commons/components/js/init.js",
+        "composum/nodes/console/page/js/console.js",
+        "composum/nodes/console/components/codeeditor/codeeditor.js"
       ]
     }
   },

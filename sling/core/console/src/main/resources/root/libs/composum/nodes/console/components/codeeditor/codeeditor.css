@@ -69,9 +69,9 @@
     bottom: 32px;
 }
 
-.composum-nodes-components-codeeditor_page button.close,
-.composum-nodes-components-codeeditor_page button.cancel,
-.composum-nodes-components-codeeditor_page button.save-and-close {
+.composum-nodes-components-codeeditor_page .code-editor-widget button.close,
+.composum-nodes-components-codeeditor_page .code-editor-widget button.cancel,
+.composum-nodes-components-codeeditor_page .code-editor-widget button.save-and-close {
     display: none;
 }
 
