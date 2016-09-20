@@ -5,7 +5,7 @@
 <sling:defineObjects />
 <div class="query-panel">
     <div class="query-head">
-        <div class="query-actions action-bar btn-toolbar" role="toolbar">
+        <div class="query-actions action-bar" role="toolbar">
             <cpn:form role="search" action="/bin/cpm/nodes/node.query.html" method="GET">
                 <div class="input-group">
                     <input type="text" class="form-control" placeholder="Search">

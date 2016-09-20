@@ -80,6 +80,13 @@
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "css": {
       "jcr:primaryType": "nt:unstructured",
+      "depends": [
+        "fonts/awesome/4.6.3/css/font-awesome.css",
+        "jslibs/bootstrap/3.3.7/css/bootstrap.min.css",
+        "jslibs/jstree/3.3.0/themes/proton/style.min.css",
+        "jslibs/x-editable/1.5.1/bootstrap3-editable/css/bootstrap-editable.css",
+        "jslibs/bootstrap-fileinput/4.3.2/css/fileinput.min.css"
+      ],
       "embed": [
         "jslibs/bootstrap/3.3.7/css/bootstrap-theme.min.css",
         "jslibs/bootstrap-table/1.7.0/bootstrap-table.min.css",
