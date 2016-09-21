@@ -199,7 +199,8 @@ public class Clientlib {
                 if (value != null) properties.put(key, value);
             }
             if (isFile(resource)) {
-                addFileToList(links, context, depends, reference, properties, resource);
+                addFileToList(links, context, expanded || (depends != null && depends),
+                        reference, properties, resource);
             } else {
                 boolean optional = resource.getProperty(PROP_OPTIONAL, reference.optional);
                 for (String embedRule : resource.getProperty(PROP_DEPENDS, new String[0])) {
@@ -241,21 +242,21 @@ public class Clientlib {
         return false;
     }
 
-    protected void addFileToList(List<ClientlibLink> links, RendererContext context, Boolean depends,
+    protected void addFileToList(List<ClientlibLink> links, RendererContext context, boolean depends,
                                  ClientlibRef reference, Map<String, String> properties, Resource target) {
         if (!context.isClientlibRendered(reference)) {
             FileHandle file = new FileHandle(target);
             if (file.isValid()) {
                 ClientlibLink link = new ClientlibLink(reference, target, properties);
                 context.registerClientlibLink(link);
-                if (depends != null && depends) {
+                if (depends) {
                     links.add(link);
                 }
             } else {
                 logNotAvailable(resource, file.getPath(), reference.optional);
             }
         } else {
-            if (depends == null || !depends) {
+            if (!depends) {
                 logDuplicate(reference);
             }
         }

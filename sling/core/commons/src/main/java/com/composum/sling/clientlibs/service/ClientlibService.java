@@ -15,6 +15,8 @@ public interface ClientlibService {
 
     String ENCODING_GZIP = "gzip";
 
+    // Clientlib composition and delivery
+
     void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
                               Writer writer, RendererContext context)
             throws IOException;
