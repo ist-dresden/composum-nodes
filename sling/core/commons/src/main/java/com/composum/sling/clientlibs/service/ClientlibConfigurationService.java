@@ -157,7 +157,7 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     public static final String MAP_CLIENTLIB_URLS = "clientlibs.url.map";
     @Property(
             name = MAP_CLIENTLIB_URLS,
-            label = "Map Clientlib URLs",
+            label = "General - Map Clientlib URLs",
             description = "if 'on' all clientlib URLs are mapped by the Resource Resolver; default: 'off'",
             boolValue = DEFAULT_MAP_CLIENTLIB_URLS
     )
