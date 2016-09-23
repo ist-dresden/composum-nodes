@@ -11,7 +11,7 @@
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
               aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title">Select Repository Path</h4>
+          <h4 class="modal-title" data-default="Select Repository Path">Select Repository Path</h4>
         </div>
         <div class="modal-body">
           <div class="messages">
@@ -19,7 +19,7 @@
           </div>
 
           <div class="form-group">
-            <label class="control-label">Select(ed) Path</label>
+            <label class="-: control-label" data-default="Select(ed) Path">Select(ed) Path</label>
             <input type="text" class="path-input form-control widget path-widget" name="path" />
           </div>
           <div class="form-group">

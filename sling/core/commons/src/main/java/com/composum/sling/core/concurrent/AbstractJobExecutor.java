@@ -43,6 +43,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.composum.sling.core.util.ResourceUtil.CONTENT_NODE;
 import static com.composum.sling.core.util.ResourceUtil.PROP_DATA;
@@ -67,6 +69,8 @@ import static org.apache.sling.event.jobs.NotificationConstants.TOPIC_JOB_FINISH
 public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractJobExecutor.class);
+
+    private final Lock lock = new ReentrantLock(true);
 
     public static final String JOB_REFRENCE_PROPERTY = "reference";
     public static final String JOB_OUTFILE_PROPERTY = "outfile";
@@ -155,12 +159,21 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
         } catch (LoginException e) {
             return context.result().message(e.getMessage()).cancelled();
         }
-        Resource auditResource = giveParent(adminResolver, auditPath);
+
+        Resource auditResource;
+        lock.lock();
         try {
-            adminResolver.commit();
-        } catch (PersistenceException e) {
-            LOG.error("Error creating audit of groovy script Job.", e);
-            return context.result().message(e.getMessage()).cancelled();
+            try {
+                adminResolver.adaptTo(Session.class).refresh(true);
+                auditResource = giveParent(adminResolver, auditPath);
+                adminResolver.commit();
+            } catch (PersistenceException|RepositoryException e) {
+                LOG.error("Error creating audit of Job.", e);
+                adminResolver.close();
+                return context.result().message(e.getMessage()).cancelled();
+            }
+        } finally {
+            lock.unlock();
         }
 
         try {

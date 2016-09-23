@@ -1,19 +1,20 @@
 package com.composum.sling.cpnl;
 
-import com.composum.sling.clientlibs.processor.RendererContext;
-import com.composum.sling.core.BeanContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.tagext.DynamicAttributes;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * an abstract base tag implementation to generate URL based elements
  */
-public abstract class UrlTag extends CpnlBodyTagSupport {
+public abstract class UrlTag extends CpnlBodyTagSupport implements DynamicAttributes {
 
     private static final Logger LOG = LoggerFactory.getLogger(UrlTag.class);
 
@@ -23,6 +24,19 @@ public abstract class UrlTag extends CpnlBodyTagSupport {
     private Boolean map;
     private String role;
     private String classes;
+
+    protected Map<String, Object> dynamicAttributes = new LinkedHashMap<>();
+
+    protected void clear() {
+        super.clear();
+        dynamicAttributes = new LinkedHashMap<>();
+        tagName = null;
+        urlAttr = null;
+        url = null;
+        map = null;
+        role = null;
+        classes = null;
+    }
 
     protected abstract String getDefaultTagName();
 
@@ -60,18 +74,28 @@ public abstract class UrlTag extends CpnlBodyTagSupport {
         this.classes = classes;
     }
 
-    protected void clear() {
-        super.clear();
-        tagName = null;
-        urlAttr = null;
-        url = null;
-        map = null;
-        role = null;
-        classes = null;
+    //
+    // dynamic tag attributes
+    //
+
+    /**
+     * extension hook to check and filter dynamic attributes
+     */
+    protected boolean acceptDynamicAttribute(String key, Object value) throws JspException {
+        return value != null;
+    }
+
+    public void setDynamicAttribute(String namespace, String name, Object value) throws JspException {
+        String key = name;
+        if (StringUtils.isNotBlank(namespace)) {
+            key = namespace + ":" + key;
+        }
+        if (acceptDynamicAttribute(key, value)) {
+            dynamicAttributes.put(key, value);
+        }
     }
 
     protected void writeAttributes(JspWriter writer) throws IOException {
-        RendererContext rendererContext = RendererContext.instance(new BeanContext.Page(pageContext), request);
         writer.write(" ");
         writer.write(getUrlAttr());
         writer.write("=\"");
@@ -93,6 +117,14 @@ public abstract class UrlTag extends CpnlBodyTagSupport {
         if (StringUtils.isNotBlank(classes)) {
             writer.write(" class=\"");
             writer.write(classes);
+            writer.write("\"");
+        }
+        for (Map.Entry<String, Object> entry : dynamicAttributes.entrySet()) {
+            String string = entry.getValue().toString();
+            writer.write(" ");
+            writer.write(entry.getKey());
+            writer.write("=\"");
+            writer.write(eval(string, string));
             writer.write("\"");
         }
     }

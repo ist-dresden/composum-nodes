@@ -1,0 +1,115 @@
+@charset "UTF-8";
+
+.code-editor-widget_footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+}
+
+.code-editor-widget_footer .toolbar .btn-group {
+    float: left;
+    margin-left: 10px;
+}
+
+.code-editor-widget_footer .toolbar .btn-group button span {
+    display: none;
+}
+
+.code-editor-widget_footer .toolbar .input-group {
+    float: left;
+}
+
+.code-editor-widget_footer .toolbar .text-group {
+    width: 30%;
+}
+
+.code-editor-widget_footer .toolbar .text-group.replace {
+    margin-left: 6px;
+}
+
+.code-editor-widget_footer .toolbar input[type='checkbox'] {
+    float: left;
+    width: auto;
+    margin: 0 2px 0 7px;
+    box-shadow: none;
+    height: 32px;
+}
+
+.code-editor-widget_footer .toolbar .checkbox-label {
+    float: left;
+    line-height: 32px;
+    margin: 0 2px;
+}
+
+/**
+ * Editor Page
+ */
+
+.composum-nodes-components-codeeditor_page {
+    margin: 0;
+    padding: 0;
+}
+
+.composum-nodes-components-codeeditor_page .code-editor-widget {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+}
+
+.composum-nodes-components-codeeditor_page .code-editor-widget_body,
+.composum-nodes-components-codeeditor_page .code-editor-widget_editor {
+    position: absolute;
+    top: 28px;
+    left: 0;
+    right: 0;
+    bottom: 32px;
+}
+
+.composum-nodes-components-codeeditor_page .code-editor-widget button.close,
+.composum-nodes-components-codeeditor_page .code-editor-widget button.cancel,
+.composum-nodes-components-codeeditor_page .code-editor-widget button.save-and-close {
+    display: none;
+}
+
+/**
+ * Editor Dialog
+ */
+
+#browser-view .node-view-panel .node-view-content .detail-content .code-editor,
+#text-edit-dialog .detail-panel .code-editor-widget .code-editor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#text-edit-dialog .modal-dialog {
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    margin: 0;
+    width: auto !important;
+}
+
+#text-edit-dialog .modal-dialog .modal-content {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+#text-edit-dialog .modal-dialog .modal-body {
+    position: absolute;
+    top: 56px;
+    bottom: 65px;
+    left: 0;
+    right: 0;
+}

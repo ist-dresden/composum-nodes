@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Dictionary;
 import java.util.concurrent.Callable;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.core.pckgmgr.util.PackageUtil.IMPORT_DONE;
@@ -83,6 +85,9 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
     )
     protected int progressTrackIdleTime;
 
+    protected final Lock lock = new ReentrantLock(true);
+
+
     @Override
     @Activate
     protected void activate(ComponentContext context) throws Exception {
@@ -123,22 +128,31 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
 
         @Override
         public String call() throws Exception {
-            JcrPackageManager manager = PackagingService.getPackageManager(session);
-            JcrPackage jcrPckg = getJcrPackage(job, manager);
-            String operation = (String) job.getProperty("operation");
-            if (StringUtils.isNotBlank(operation)) {
-                switch (operation.toLowerCase()) {
-                    case "install":
-                        return new InstallOperation(manager, jcrPckg).call();
-                    case "assemble":
-                        return new AssmbleOperation(manager, jcrPckg).call();
-                    case "uninstall":
-                        return new UninstallOperation(manager, jcrPckg).call();
-                    default:
-                        throw new Exception("Unsupported operation: " + operation);
+            lock.lock();
+            try {
+                JcrPackageManager manager = PackagingService.getPackageManager(session);
+                JcrPackage jcrPckg = getJcrPackage(job, manager);
+                String operation = (String) job.getProperty("operation");
+                if (StringUtils.isNotBlank(operation)) {
+                    switch (operation.toLowerCase()) {
+                        case "install":
+                            final String name = jcrPckg.getPackage().getId().getName();
+                            LOG.info("start of installation of package '{}'", name);
+                            final String call = new InstallOperation(manager, jcrPckg).call();
+                            LOG.info("installation of package '{}' done", name);
+                            return call;
+                        case "assemble":
+                            return new AssembleOperation(manager, jcrPckg).call();
+                        case "uninstall":
+                            return new UninstallOperation(manager, jcrPckg).call();
+                        default:
+                            throw new Exception("Unsupported operation: " + operation);
+                    }
+                } else {
+                    throw new Exception("No operation requested!");
                 }
-            } else {
-                throw new Exception("No operation requested!");
+            } finally {
+                lock.unlock();
             }
         }
 
@@ -163,9 +177,9 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             }
         }
 
-        protected class AssmbleOperation extends Operation {
+        protected class AssembleOperation extends Operation {
 
-            public AssmbleOperation(JcrPackageManager manager, JcrPackage jcrPckg)
+            public AssembleOperation(JcrPackageManager manager, JcrPackage jcrPckg)
                     throws IOException {
                 super(manager, jcrPckg);
             }
@@ -288,8 +302,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             protected boolean operationDone;
             protected int waitLoopCount;
 
-            public OperationDoneTracker(PrintWriter writer, Pattern finalizedIndicator)
-                    throws IOException {
+            public OperationDoneTracker(PrintWriter writer, Pattern finalizedIndicator) {
                 super(writer, finalizedIndicator);
             }
 

@@ -68,6 +68,14 @@
                 } else {
                     this.$('input').val(undefined);
                 }
+            },
+
+            clone: function () {
+                var $clone = this.$el.clone();
+                $clone.find('.richtext-widget').each(function () {
+                    components.richTextWidget.afterClone.apply(this, [$(this)]);
+                });
+                return $clone;
             }
         });
 
@@ -184,9 +192,9 @@
             add: function () {
                 var currentState = this.currentItem;
                 var template = this.itemList[this.itemList.length - 1];
-                var clone = template.$el.clone();
-                template.$el.parent().append(clone);
-                var newItem = this.newItem(clone);
+                var $clone = (_.isFunction(template.clone) ? template.clone() : template.$el.clone());
+                template.$el.parent().append($clone);
+                var newItem = this.newItem($clone);
                 newItem.reset();
                 this.itemList[this.itemList.length] = newItem;
                 this.current(currentState);

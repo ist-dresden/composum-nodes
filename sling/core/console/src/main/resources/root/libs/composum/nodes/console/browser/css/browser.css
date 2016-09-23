@@ -532,16 +532,6 @@
     bottom: 0;
 }
 
-#browser-view-property-dialog .form-group.type {
-    width: 80%;
-    float: left;
-}
-
-#browser-view-property-dialog .form-group.multi {
-    width: 15%;
-    float: right;
-}
-
 #browser-view-property-dialog form.default button.upload {
     display: none;
 }
@@ -564,6 +554,11 @@
 
 .property-value-widget.single-value .multi-form-item {
     padding-left: 0;
+}
+
+
+.property-value-widget.single-value textarea.form-control {
+    min-height: 239px;
 }
 
 /*
@@ -630,7 +625,6 @@
 
 #browser-view .image.detail-panel .detail-content .image-frame .image-background {
     display: inline-block;
-    background: url(/libs/composum/nodes/console/browser/images/image-background.png);
 }
 
 #browser-view .image.detail-panel .detail-content .image-frame img {
@@ -662,94 +656,6 @@
 
 #browser-view .video.detail-panel .detail-content .video-frame video {
     width: 100%;
-}
-
-/**
- * Text Editor
- */
-
-#browser-view .node-view-panel .node-view-content .detail-content .code-editor,
-#text-edit-dialog .detail-panel .code-editor-widget .code-editor {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-}
-
-#text-edit-dialog .modal-dialog {
-    position: absolute;
-    top: 10px;
-    bottom: 10px;
-    left: 10px;
-    right: 10px;
-    margin: 0;
-    width: auto !important;
-}
-
-#text-edit-dialog .modal-dialog .modal-content {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-}
-
-#text-edit-dialog .modal-dialog .modal-body {
-    position: absolute;
-    top: 56px;
-    bottom: 65px;
-    left: 0;
-    right: 0;
-}
-
-#text-edit-dialog .modal-dialog .modal-footer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-}
-
-#text-edit-dialog .modal-dialog .modal-footer .toolbar {
-    float: left;
-    max-width: 80%;
-    padding-top: 3px;
-    height: 32px;
-}
-
-#text-edit-dialog .modal-dialog .modal-footer .toolbar .btn-group {
-    float: left;
-    margin-left: 10px;
-}
-
-#text-edit-dialog .modal-dialog .modal-footer .toolbar .btn-group button span {
-    display: none;
-}
-
-#text-edit-dialog .modal-dialog .modal-footer .toolbar .input-group {
-    float: left;
-}
-
-#text-edit-dialog .modal-dialog .modal-footer .toolbar .text-group {
-    width: 28%;
-}
-
-#text-edit-dialog .modal-dialog .modal-footer .toolbar .text-group.replace {
-    margin-left: 6px;
-}
-
-#text-edit-dialog .modal-dialog .modal-footer .toolbar input[type='checkbox'] {
-    float: left;
-    width: auto;
-    margin: 0 2px 0 7px;
-    box-shadow: none;
-    height: 32px;
-}
-
-#text-edit-dialog .modal-dialog .modal-footer .toolbar .checkbox-label {
-    float: left;
-    line-height: 32px;
-    margin: 0 2px;
 }
 
 /*

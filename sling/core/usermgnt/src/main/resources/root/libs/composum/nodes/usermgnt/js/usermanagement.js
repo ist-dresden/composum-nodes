@@ -46,6 +46,7 @@
             core.components.SplitView.prototype.initialize.apply(this, [options]);
             $(document).on('path:select', _.bind(this.onPathSelect, this));
             $(document).on('path:selected', _.bind(this.onPathSelected, this));
+            core.unauthorizedDelegate = core.console.authorize;
         },
 
         onPathSelect: function(event, path) {

@@ -114,6 +114,7 @@
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
+        <dynamic-attributes>true</dynamic-attributes>
     </tag>
 
     <tag>
@@ -159,6 +160,7 @@
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
+        <dynamic-attributes>true</dynamic-attributes>
     </tag>
 
     <tag>
@@ -204,6 +206,7 @@
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
+        <dynamic-attributes>true</dynamic-attributes>
     </tag>
 
     <tag>
@@ -237,6 +240,7 @@
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
+        <dynamic-attributes>true</dynamic-attributes>
     </tag>
 
     <tag>

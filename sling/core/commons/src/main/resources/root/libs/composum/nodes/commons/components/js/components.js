@@ -351,7 +351,7 @@
                         }
                     }
                     if (this.valid && this.$textField.pattern) {
-                        // check pattern only if not blank (blank is aöways valid if not mandatory)
+                        // check pattern only if not blank (blank is always valid if not mandatory)
                         if (value && value.trim().length > 0) {
                             this.valid = this.$textField.pattern.test(value);
                         }
@@ -380,6 +380,123 @@
         });
 
         /**
+         * the 'text-field-widget' (window.core.components.TextFieldWidget)
+         *
+         * this is the basic class ('superclass') of all text input field based widgets; it is also usable
+         * as is for normal text input fields; it implements the general validation and reset functions
+         * possible attributes:
+         * - data-rules: 'mandatory'
+         * - data-pattern: a regexp pattern (javascript) as string or in pattern notation (/.../; with flags)
+         */
+        components.TextAreaWidget = Backbone.View.extend({
+
+            initialize: function (options) {
+                this.$textArea = this.textArea();
+                // scan 'data-rules' attribute
+                var rules = this.$textArea.attr('data-rules');
+                if (rules) {
+                    this.$textArea.rules = {
+                        mandatory: rules.indexOf('mandatory' >= 0)
+                    }
+                }
+                // bind change events if any validation option has been found
+                if (this.$textArea.rules) {
+                    this.$textArea.on('keyup.validate', _.bind(this.validate, this));
+                    this.$textArea.on('change.validate', _.bind(this.validate, this));
+                }
+            },
+
+            /**
+             * returns the current value from the input field
+             */
+            getValue: function () {
+                return this.$textArea[0].value;
+            },
+
+            /**
+             * defines the (initial) value of the input field
+             */
+            setValue: function (value, triggerChange) {
+                var currentValue = this.$textArea.text();
+                if ('' + currentValue != '' + value) {
+                    this.$textArea[0].value = value;
+                    if (triggerChange) {
+                        this.$textArea.trigger('change');
+                    }
+                }
+            },
+
+            /**
+             * sets the focus on the textfield
+             */
+            focus: function () {
+                this.$textArea.focus();
+            },
+
+            /**
+             * selects the complete text of textfield
+             */
+            selectAll: function () {
+                this.$textArea.select();
+            },
+
+            /**
+             * retrieves the input field to use (for redefinition in more complex widgets)
+             */
+            textArea: function () {
+                return this.$el.is('textarea') ? this.$el : this.$('textarea');
+            },
+
+            /**
+             * returns the current validation state, calls 'validate' if not state is present
+             */
+            isValid: function () {
+                if (this.valid === undefined) {
+                    this.validate();
+                }
+                return this.valid;
+            },
+
+            /**
+             * validates the current value using the 'rules' and the 'pattern' if present
+             */
+            validate: function () {
+                this.valid = true;
+                // check only if this field has a 'name' (included in a form) and is visible
+                // prevent from validation check if the 'name' is removed or the class contains 'hidden'
+                if (!this.$el.hasClass('hidden') && this.$textArea.prop('name')) {
+                    var value = this.getValue();
+                    if (this.$textArea.rules) {
+                        var rules = this.$textArea.rules;
+                        if (rules.mandatory) {
+                            // check for a defined and not blank value
+                            this.valid = (value !== undefined && value.trim().length > 0);
+                        }
+                    }
+                    // the extension hook for further validation in 'subclasses'
+                    if (this.valid && _.isFunction(this.extValidate)) {
+                        this.valid = this.extValidate(value);
+                    }
+                    if (this.valid) {
+                        this.$textArea.closest('.form-group').removeClass('has-error');
+                    } else {
+                        this.$textArea.closest('.form-group').addClass('has-error');
+                    }
+                }
+                return this.valid;
+            },
+
+            /**
+             * resets the validation state and the input field value
+             */
+            reset: function () {
+                this.valid = undefined;
+                this.$textArea.closest('.form-group').removeClass('has-error');
+                this.$textArea.text('');
+            }
+        });
+
+        /**
          * the 'path-widget' (window.core.components.PathWidget)
          *
          * the widget behaviour to extend an input or an input group to select repository path values
@@ -393,8 +510,10 @@
             initialize: function (options) {
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
                 // retrieve element attributes
-                this.rootPath = this.$el.attr('data-root') || '/';
-                this.filter = this.$el.attr('data-filter');
+                this.dialogTitle = this.$el.attr('title');
+                this.dialogLabel = this.$el.data('label');
+                this.rootPath = this.$el.data('root') || '/';
+                this.filter = this.$el.data('filter');
                 // switch off the browsers autocomplete function (!)
                 this.$textField.attr('autocomplete', 'off');
                 // add typeahead function to the input field
@@ -432,6 +551,9 @@
              */
             selectPath: function (event) {
                 var selectDialog = core.getView('#path-select-dialog', components.SelectPathDialog);
+                selectDialog.setTitle(this.dialogTitle);
+                selectDialog.setLabel(this.dialogLabel);
+                selectDialog.setRootPath(this.rootPath);
                 selectDialog.setFilter(this.filter);
                 selectDialog.show(_.bind(function () {
                         this.getPath(_.bind(selectDialog.setValue, selectDialog));
@@ -707,9 +829,6 @@
                     contextWidget.setWidgetType.apply(contextWidget, ['jcr-primaryType']);
                 } else if ('jcr:mixinTypes' == name) {
                     contextWidget.setWidgetType.apply(contextWidget, ['jcr-mixinTypes']);
-                } else {
-                    // reset to default type if no useful subtype is available
-                    contextWidget.setType.apply(contextWidget);
                 }
             }
         });

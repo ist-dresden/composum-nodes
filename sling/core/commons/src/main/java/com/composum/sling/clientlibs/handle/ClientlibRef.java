@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
  */
 public class ClientlibRef extends ClientlibKey {
 
-    public final boolean depends;   // a dependency reference must have its own link
+    public final Boolean depends;   // a dependency reference must have its own link
     public final boolean optional;
 
     protected final String rule;
@@ -23,7 +23,7 @@ public class ClientlibRef extends ClientlibKey {
      * derive from another reference and change the flags
      */
     public ClientlibRef(final ClientlibRef referrer,
-                        final boolean depends, final boolean optional) {
+                        final Boolean depends, final boolean optional) {
         this(referrer.type, referrer.rule, depends, optional, new HashMap<String, String>());
     }
 
@@ -31,7 +31,7 @@ public class ClientlibRef extends ClientlibKey {
      * derive from another reference with a different rule
      */
     public ClientlibRef(final ClientlibRef referrer, final String rule,
-                        final boolean depends, final boolean optional) {
+                        final Boolean depends, final boolean optional) {
         this(referrer.type, rule, depends, optional, referrer.properties);
     }
 
@@ -43,12 +43,12 @@ public class ClientlibRef extends ClientlibKey {
     }
 
     public ClientlibRef(final Clientlib.Type type, final String rule,
-                        final boolean depends, final boolean optional) {
+                        final Boolean depends, final boolean optional) {
         this(type, rule, depends, optional, new HashMap<String, String>());
     }
 
     public ClientlibRef(final Clientlib.Type type, final String rule,
-                        final boolean depends, final boolean optional,
+                        final Boolean depends, final boolean optional,
                         Map<String, String> properties) {
         super(type, ruleToPath(rule), properties);
         this.rule = rule;

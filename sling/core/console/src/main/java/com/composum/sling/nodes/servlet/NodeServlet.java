@@ -640,9 +640,18 @@ public class NodeServlet extends NodeTreeServlet {
             if (StringUtils.isNotBlank(paramUrl)) {
 
                 URL url = new URL(paramUrl);
-                Resource target = resolver.resolve(request, url.getPath());
+                String path = url.getPath();
+                Resource target = resolver.resolve(request, path);
 
-                if (target != null) {
+                if (ResourceUtil.isNonExistingResource(target)) {
+                    String contextPath = request.getContextPath();
+                    if (path.startsWith(contextPath)) {
+                        path = path.substring(contextPath.length());
+                        target = resolver.resolve(request, path);
+                    }
+                }
+
+                if (!ResourceUtil.isNonExistingResource(target)) {
                     ResourceHandle handle = ResourceHandle.use(target);
 
                     ResourceFilter filter = getNodeFilter(request);

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -60,16 +60,6 @@
                             root/libs/fonts/composum;path:=/libs/fonts/composum;overwrite:=true
                         </Sling-Initial-Content>
                     </instructions>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>com.citytechinc.maven.plugins</groupId>
-                <artifactId>osgi-bundle-status-maven-plugin</artifactId>
-                <configuration>
-                    <bundleNames>
-                        <bundleName>${bundle.name}</bundleName>
-                    </bundleNames>
                 </configuration>
             </plugin>
 
@@ -261,6 +251,51 @@
         </dependency>
 
     </dependencies>
+    <profiles>
 
+        <profile>
+            <id>installBundle</id>
+            <activation>
+                <property>
+                    <name>deploy.bundle</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>maven-sling-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-bundle</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>com.citytechinc.maven.plugins</groupId>
+                        <artifactId>osgi-bundle-status-maven-plugin</artifactId>
+                        <configuration>
+                            <skip>${bundle.status.skip}</skip>
+                            <bundleNames>
+                                <bundleName>${bundle.name}</bundleName>
+                            </bundleNames>
+                        </configuration>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>installPackage</id>
+        </profile>
+
+    </profiles>
 </project>
 

@@ -131,7 +131,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     public static ResourceHandle getResource(SlingHttpServletRequest request) {
         ResourceResolver resolver = request.getResourceResolver();
         String path = getPath(request);
-        ResourceHandle resource = ResourceHandle.use(resolver.getResource(path));
+        ResourceHandle resource = ResourceHandle.use(resolver.resolve(path));
         return resource;
     }
 

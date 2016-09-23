@@ -2,6 +2,7 @@ package com.composum.sling.nodes.browser;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.nodes.components.codeeditor.CodeEditorServlet;
 import com.composum.sling.nodes.console.ConsoleServletBean;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
@@ -72,7 +73,7 @@ public class BrowserBean extends ConsoleServletBean {
             if (name == null) {
                 name = resource.getName();
                 if (StringUtils.isBlank(name)) {
-                    name =  "jcr:root";
+                    name = "jcr:root";
                 }
             }
             return name;
@@ -99,7 +100,7 @@ public class BrowserBean extends ConsoleServletBean {
         public String getPathUrl() {
             if (pathUrl == null) {
                 pathUrl = getPathEncoded();
-                pathUrl += LinkUtil.getExtension(resource, "");
+                pathUrl += LinkUtil.getExtension(resource, null);
             }
             return pathUrl;
         }
@@ -164,6 +165,13 @@ public class BrowserBean extends ConsoleServletBean {
      */
     public String getCurrentUrl() {
         return getCurrent().getUrl();
+    }
+
+    /**
+     * Returns a URL to the current nodes View with mapping according to the configuration.
+     */
+    public String getEditCodeUrl() {
+        return LinkUtil.getUnmappedUrl(getRequest(), CodeEditorServlet.SERVLET_PATH + ".html" + getCurrent().getPath());
     }
 
     /**

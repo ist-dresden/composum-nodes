@@ -119,7 +119,7 @@ public class CpnlBodyTagSupport extends BodyTagSupport {
         if (value instanceof String) {
             String expression = (String) value;
             if (StringUtils.isNotBlank(expression)) {
-                expression = expression.replaceAll("@\\{(.+)\\}", "\\${$1}");
+                expression = expression.replaceAll("@\\{([^\\}]+)\\}", "\\${$1}");
                 Class type = defaultValue != null ? defaultValue.getClass() : String.class;
                 ELContext elContext = getELContext();
                 ValueExpression valueExpression = createValueExpression(elContext, expression, type);

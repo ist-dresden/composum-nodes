@@ -63,6 +63,7 @@
                 $(document).on('path:select.Browser', _.bind(this.onPathSelect, this));
                 $(document).on('path:selected.Browser', _.bind(this.onPathSelected, this));
                 $(document).on('path:changed.Browser', _.bind(this.onPathChanged, this));
+                core.unauthorizedDelegate = core.console.authorize;
             },
 
             onPathSelect: function (event, path) {

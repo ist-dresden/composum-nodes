@@ -36,12 +36,19 @@
     <properties>
         <bundle.category>composum,core</bundle.category>
         <sling.scheme>http</sling.scheme>
+        <sling.secure>false</sling.secure>
         <sling.host>localhost</sling.host>
         <sling.port>9090</sling.port>
         <sling.context></sling.context>
-        <package.install>/bin/cpm/package.service.html</package.install>
         <sling.user>admin</sling.user>
         <sling.password>admin</sling.password>
+        <package.install>/bin/cpm/package.service.html</package.install>
+        <package.failOnError>true</package.failOnError>
+        <bundle.failOnError>true</bundle.failOnError>
+        <bundle.status.skip>true</bundle.status.skip>
+        <source.encoding>UTF-8</source.encoding>
+        <java.source>1.7</java.source>
+        <java.target>1.7</java.target>
     </properties>
 
     <scm>
@@ -55,6 +62,10 @@
             <id>ossrh</id>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
+        <snapshotRepository>
+            <id>archiva</id>
+            <url>https://build.ist-software.com/archiva/repository/snapshots/</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <build>
@@ -63,11 +74,20 @@
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.0.1</version>
+                    <configuration>
+                        <encoding>${source.encoding}</encoding>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.2</version>
                     <configuration>
-                        <source>1.7</source>
-                        <target>1.7</target>
+                        <source>${java.source}</source>
+                        <target>${java.target}</target>
                     </configuration>
                 </plugin>
 
@@ -98,8 +118,8 @@
                         </execution>
                     </executions>
                     <configuration>
-                        <charset>UTF-8</charset>
-                        <encoding>UTF-8</encoding>
+                        <charset>${source.encoding}</charset>
+                        <encoding>${source.encoding}</encoding>
                         <failOnError>false</failOnError>
                         <quiet>true</quiet>
                     </configuration>
@@ -143,6 +163,12 @@
                     <groupId>org.apache.sling</groupId>
                     <artifactId>maven-sling-plugin</artifactId>
                     <version>2.1.0</version>
+                    <configuration>
+                        <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
+                        <user>${sling.user}</user>
+                        <password>${sling.password}</password>
+                        <failOnError>${bundle.failOnError}</failOnError>
+                    </configuration>
                 </plugin>
 
                 <plugin>
@@ -157,15 +183,25 @@
                     <version>1.3.1</version>
                     <configuration>
                         <skip>true</skip>
-                        <quiet>true</quiet>
+                        <quiet>false</quiet>
+                        <secure>${sling.secure}</secure>
                         <host>${sling.host}</host>
                         <port>${sling.port}</port>
-                        <path>${sling.context}/system/console</path>
+                        <contextPath>${sling.context}</contextPath>
                         <username>${sling.user}</username>
                         <password>${sling.password}</password>
                         <retryDelay>2000</retryDelay>
                         <retryLimit>30</retryLimit>
                     </configuration>
+                    <executions>
+                        <execution>
+                            <id>install-bundle</id>
+                            <phase>install</phase>
+                            <goals>
+                                <goal>status</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <plugin>
@@ -174,7 +210,7 @@
                     <version>0.0.24</version>
                     <extensions>true</extensions>
                     <configuration>
-                        <failOnError>true</failOnError>
+                        <failOnError>${package.failOnError}</failOnError>
                         <targetURL>${sling.scheme}://${sling.host}:${sling.port}${sling.context}${package.install}</targetURL>
                         <userId>${sling.user}</userId>
                         <password>${sling.password}</password>
@@ -185,69 +221,9 @@
 
             </plugins>
         </pluginManagement>
-        <plugins>
-
-            <plugin>
-                <groupId>com.citytechinc.maven.plugins</groupId>
-                <artifactId>osgi-bundle-status-maven-plugin</artifactId>
-                <configuration>
-                    <bundleNames></bundleNames><!-- prevent from errors in reactor build -->
-                </configuration>
-            </plugin>
-
-        </plugins>
     </build>
 
     <profiles>
-
-        <profile>
-            <!-- profile to install the OSGi bundle automatically -->
-            <id>installBundle</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-
-                    <plugin>
-                        <groupId>org.apache.sling</groupId>
-                        <artifactId>maven-sling-plugin</artifactId>
-                        <configuration>
-                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
-                            <user>${sling.user}</user>
-                            <password>${sling.password}</password>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>install-bundle</id>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>install</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>com.citytechinc.maven.plugins</groupId>
-                        <artifactId>osgi-bundle-status-maven-plugin</artifactId>
-                        <configuration>
-                            <skip>false</skip>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>check-bundle</id>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>status</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                </plugins>
-            </build>
-        </profile>
 
         <profile>
             <!-- profile to release the artifacts for the public repository -->
@@ -431,6 +407,12 @@
                 <groupId>org.apache.sling</groupId>
                 <artifactId>org.apache.sling.discovery.api</artifactId>
                 <version>1.0.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.installer.core</artifactId>
+                <version>3.6.6</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
