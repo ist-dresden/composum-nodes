@@ -34,7 +34,7 @@ public class Browser extends BrowserBean {
         EDITOR_MODES.put("json", "json");
         EDITOR_MODES.put("xml", "xml");
         EDITOR_MODES.put(HTML, HTML);
-        EDITOR_MODES.put("jsp", "jsp");
+        EDITOR_MODES.put(JSP, JSP);
         EDITOR_MODES.put("esp", "jsp");
         EDITOR_MODES.put("css", "css");
         EDITOR_MODES.put("less", "less");
@@ -210,51 +210,54 @@ public class Browser extends BrowserBean {
 
     public String getNameExtension() {
         if (nameExtension == null) {
-            String name = getName();
-            if (ResourceUtil.CONTENT_NODE.equals(name)) {
-                name = resource.getParent().getName();
-            }
-            int dot = name.lastIndexOf('.');
-            nameExtension = (dot >= 0 ? name.substring(dot + 1).toLowerCase() : "");
+            nameExtension = ResourceUtil.getNameExtension(getResource());
         }
         return nameExtension;
     }
 
     /**
      * Determines the text type for the current node using the mimeType (if present) and the extension.
-     *
-     * @return the type of the text file (script language) or <code>null</code>: no text, not editable
      */
     public String getTextType() {
         if (textType == null) {
             String mimeType = getMimeType();
             String extension = getNameExtension();
-            if (StringUtils.isNotBlank(mimeType)) {
-                textType = EDITOR_MODES.get(mimeType);
+            textType = getTextType(mimeType, extension);
+        }
+        return textType;
+    }
+
+    /**
+     * Determines the text type for the current node using the mimeType (if present) and the extension.
+     *
+     * @return the type of the text file (script language) or ""
+     */
+    public static String getTextType(String mimeType, String extension) {
+        String textType = null;
+        if (StringUtils.isNotBlank(mimeType)) {
+            textType = EDITOR_MODES.get(mimeType);
+            if (StringUtils.isBlank(textType)) {
+                String[] parts = StringUtils.split(mimeType, '/');
+                if (parts.length > 1) {
+                    textType = EDITOR_MODES.get(parts[1]);
+                }
                 if (StringUtils.isBlank(textType)) {
-                    String[] parts = StringUtils.split(mimeType, '/');
-                    if (parts.length > 1) {
-                        textType = EDITOR_MODES.get(parts[1]);
+                    if (StringUtils.isNotBlank(extension)) {
+                        textType = EDITOR_MODES.get(extension);
                     }
                     if (StringUtils.isBlank(textType)) {
-                        if (StringUtils.isNotBlank(extension)) {
-                            textType = EDITOR_MODES.get(extension);
-                        }
-                        if (StringUtils.isBlank(textType)) {
-                            textType = EDITOR_MODES.get(parts[0]);
-                        }
+                        textType = EDITOR_MODES.get(parts[0]);
                     }
                 }
             }
-            if (StringUtils.isBlank(textType)) {
-                if (StringUtils.isNotBlank(extension)) {
-                    textType = EDITOR_MODES.get(extension);
-                }
+        }
+        if (StringUtils.isBlank(textType)) {
+            if (StringUtils.isNotBlank(extension)) {
+                textType = EDITOR_MODES.get(extension);
             }
-
-            if (textType == null) {
-                textType = "";
-            }
+        }
+        if (textType == null) {
+            textType = "";
         }
         return textType;
     }

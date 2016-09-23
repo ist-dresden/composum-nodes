@@ -52,21 +52,32 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String PROP_LAST_MODIFIED = "jcr:lastModified";
     public static final String PROP_FILE_REFERENCE = "fileReference";
 
+    public static String getNameExtension(Resource resource) {
+        String extension = null;
+        String name = resource.getName();
+        if (ResourceUtil.CONTENT_NODE.equals(name)) {
+            name = resource.getParent().getName();
+        }
+        int dot = name.lastIndexOf('.');
+        extension = (dot >= 0 ? name.substring(dot + 1).toLowerCase() : "");
+        return extension;
+    }
+
     public static boolean isResourceType(Resource resource, String resourceType) {
-            if (resource != null) {
-                if (resource.isResourceType(resourceType)) {
-                    return true;
-                } else {
-                    try {
-                        final Node node = resource.adaptTo(Node.class);
-                        return node != null && node.isNodeType(resourceType);
-                    } catch (RepositoryException e) {
-                        return false;
-                    }
-                }
+        if (resource != null) {
+            if (resource.isResourceType(resourceType)) {
+                return true;
             } else {
-                return false;
+                try {
+                    final Node node = resource.adaptTo(Node.class);
+                    return node != null && node.isNodeType(resourceType);
+                } catch (RepositoryException e) {
+                    return false;
+                }
             }
+        } else {
+            return false;
+        }
     }
 
     public static Resource getResourceType(Resource resource) {

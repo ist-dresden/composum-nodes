@@ -28,6 +28,9 @@
         $root.find('.widget.text-field-widget').each(function() {
             core.getView(this, components.TextFieldWidget);
         });
+        $root.find('.widget.text-area-widget').each(function() {
+            core.getView(this, components.TextAreaWidget);
+        });
         $root.find('.widget.path-widget').each(function() {
             core.getView(this, components.PathWidget);
         });
@@ -54,6 +57,9 @@
         });
         $root.find('.widget.reference-widget').each(function() {
             core.getView(this, components.ReferenceWidget);
+        });
+        $root.find('.widget.richtext-widget').each(function () {
+            core.getView(this, components.RichTextWidget);
         });
         $root.find('.widget.code-editor-widget').each(function() {
             core.getView(this, components.CodeEditorWidget);

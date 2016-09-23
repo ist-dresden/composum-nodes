@@ -45,17 +45,20 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
 
             // the options for the delegation to the browser component implementation
             RequestDispatcherOptions options = new RequestDispatcherOptions();
-            String path = getRequestPath(request);
-            if (StringUtils.isNotBlank(path)) {
-                options.setReplaceSuffix(path);
-            }
-
-            // set the viewa component resource type for each request received by this servlet
-            String resourceType = getResourceType(context);
-            options.setForceResourceType(resourceType);
+            prepareForward(context, options);
 
             RequestDispatcher dispatcher = request.getRequestDispatcher(request.getResource(), options);
-            dispatcher.include(request, response);
+            dispatcher.forward(request, response);
         }
+    }
+
+    protected void prepareForward(BeanContext context, RequestDispatcherOptions options) {
+        String path = getRequestPath(context.getRequest());
+        if (StringUtils.isNotBlank(path)) {
+            options.setReplaceSuffix(path);
+        }
+        // set the view component resource type for each request received by this servlet
+        String resourceType = getResourceType(context);
+        options.setForceResourceType(resourceType);
     }
 }

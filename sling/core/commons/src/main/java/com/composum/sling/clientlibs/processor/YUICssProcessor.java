@@ -2,15 +2,12 @@ package com.composum.sling.clientlibs.processor;
 
 import com.composum.sling.clientlibs.handle.Clientlib;
 import com.composum.sling.clientlibs.handle.ClientlibLink;
+import com.composum.sling.clientlibs.service.ClientlibConfiguration;
 import com.composum.sling.core.util.ResourceUtil;
 import com.yahoo.platform.yui.compressor.CssCompressor;
-import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Modified;
-import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.sling.commons.osgi.PropertiesUtil;
-import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,70 +19,34 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.Writer;
 import java.text.MessageFormat;
-import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 
 @Component(
         label = "Clientlib CSS Processor (YUI)",
         description = "Delivers CSS content bundled and minimized.",
-        immediate = true,
-        metatype = true
+        immediate = true
 )
 @Service
 public class YUICssProcessor implements CssProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(YUICssProcessor.class);
 
-    public static final String DEBUG = "css.debug";
-    @Property(
-            name = DEBUG,
-            label = "Debug",
-            description = "let files unchanged and unbundled if set to 'true'",
-            boolValue = false
-    )
-    protected boolean debug;
-
-    public static final String MINIMIZE = "javascript.minimize";
-    @Property(
-            name = MINIMIZE,
-            label = "Minimize",
-            description = "compress with VUI compressor (if not 'debug' set)",
-            boolValue = true
-    )
-    protected boolean minimize;
-
-    public static final String LINEBREAK = "css.lineBreak";
-    @Property(
-            name = LINEBREAK,
-            label = "Line Break",
-            description = "length of compressed source lines (if not 'debug' set)",
-            intValue = 0
-    )
-    protected int lineBreak;
-
-    public static final String DEFAULT_TEMPLATE = "  <link rel=\"stylesheet\" href=\"{0}\" />";
-    public static final String TEMPLATE = "css.template";
-    @Property(
-            name = TEMPLATE,
-            label = "Template",
-            description = "the HTML template for clientlib rendering",
-            value = DEFAULT_TEMPLATE
-    )
-    protected String template;
+    @Reference
+    private ClientlibConfiguration clientlibConfig;
 
     @Override
     public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
                                      Writer writer, RendererContext context)
             throws IOException {
-        renderClientlibLinks(clientlib, properties, writer, context, template);
+        renderClientlibLinks(clientlib, properties, writer, context, clientlibConfig.getCssTemplate());
     }
 
     public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
                                      Writer writer, RendererContext context,
                                      String template)
             throws IOException {
-        List<ClientlibLink> links = clientlib.getLinks(context, debug);
+        List<ClientlibLink> links = clientlib.getLinks(context, clientlibConfig.getCssDebug());
         for (int i = 0; i < links.size(); ) {
             ClientlibLink link = links.get(i);
             writer.append(MessageFormat.format(template, link.getUrl(context)));
@@ -101,7 +62,7 @@ public class YUICssProcessor implements CssProcessor {
         InputStream result = source;
         if (source != null) {
             context.hint(ResourceUtil.PROP_MIME_TYPE, "text/css");
-            if (minimize) {
+            if (clientlibConfig.getCssMinimize()) {
                 final PipedOutputStream outputStream = new PipedOutputStream();
                 result = new PipedInputStream(outputStream);
                 context.execute(new Runnable() {
@@ -110,7 +71,7 @@ public class YUICssProcessor implements CssProcessor {
                         try (OutputStreamWriter writer = new OutputStreamWriter(outputStream);
                              InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET)) {
                             final CssCompressor compressor = new CssCompressor(sourceReader);
-                            compressor.compress(writer, lineBreak);
+                            compressor.compress(writer, clientlibConfig.getCssLineBreak());
                             writer.flush();
                         } catch (IOException ex) {
                             LOG.error(ex.getMessage(), ex);
@@ -120,15 +81,5 @@ public class YUICssProcessor implements CssProcessor {
             }
         }
         return result;
-    }
-
-    @Modified
-    @Activate
-    protected void activate(ComponentContext context) {
-        Dictionary<String, Object> properties = context.getProperties();
-        debug = PropertiesUtil.toBoolean(properties.get(DEBUG), false);
-        minimize = PropertiesUtil.toBoolean(properties.get(MINIMIZE), true);
-        lineBreak = PropertiesUtil.toInteger(properties.get(LINEBREAK), 0);
-        template = PropertiesUtil.toString(properties.get(TEMPLATE), DEFAULT_TEMPLATE);
     }
 }

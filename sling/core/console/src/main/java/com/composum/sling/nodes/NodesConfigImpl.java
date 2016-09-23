@@ -24,7 +24,7 @@ import java.util.Map;
  * The configuration service for all servlets in the core bundle.
  */
 @Component(
-        label = "Composum Nodes Configuration",
+        label = "Composum Nodes (Console) Configuration",
         description = "the configuration service for all servlets in the nodes bundles",
         immediate = true,
         metatype = true

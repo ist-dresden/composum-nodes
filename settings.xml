@@ -56,6 +56,10 @@
         </profile>
 
         <profile>
+            <id>feature/widgets</id>
+        </profile>
+
+        <profile>
             <id>change/module-structure</id>
         </profile>
 

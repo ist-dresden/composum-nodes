@@ -21,6 +21,11 @@
             return core.getView('#user-status-dialog', console.UserLoginDialog);
         };
 
+        console.authorize = function (retryThisFailedCall) {
+            var loginDialog = console.getUserLoginDialog();
+            loginDialog.show(undefined, retryThisFailedCall, 'authorization');
+        };
+
         //
         // login and profile
         //
@@ -68,12 +73,22 @@
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
+                this.$content = this.$('.modal-content');
                 var $form = this.$('form');
                 var $login = this.$('button.login');
                 $form.on('submit', _.bind(this.login, this));
                 $login.click(_.bind(this.login, this));
                 this.$('button.logout').click(_.bind(this.logout, this));
                 this.$el.on('shown.bs.modal', _.bind(this.onShown, this));
+            },
+
+            show: function (initView, callback, type) {
+                this.$content.removeClass();
+                this.$content.addClass('modal-content');
+                if (type) {
+                    this.$content.addClass(type);
+                }
+                core.components.Dialog.prototype.show.apply(this, [initView, callback]);
             },
 
             /**
@@ -94,7 +109,11 @@
             login: function (event) {
                 event.preventDefault();
                 this.submitForm(undefined, false, _.bind(function () {
-                    core.initPermissions();
+                    if (_.isFunction(this.callback)) {
+                        this.hide();
+                    } else {
+                        core.initPermissions();
+                    }
                 }, this));
                 return false;
             }
@@ -126,8 +145,8 @@
          * the base 'class' for all detail tabs
          */
         console.DetailTab = Backbone.View.extend({
-            
-            reload: function() {
+
+            reload: function () {
                 this.$el.closest('.detail-content');
             }
         });

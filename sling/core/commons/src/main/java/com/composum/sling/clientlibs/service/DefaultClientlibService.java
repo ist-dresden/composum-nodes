@@ -18,7 +18,6 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Modified;
-import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -29,12 +28,12 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.resource.ValueMap;
-import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -51,66 +50,14 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 @Component(
-        label = "Clientlib Service",
-        description = "Delivers clienlib content bundled and compressed.",
-        immediate = true,
-        metatype = true
+        label = "Composum Core Clientlib Service",
+        description = "Delivers the composed clienlib content bundled and compressed.",
+        immediate = true
 )
 @Service
 public class DefaultClientlibService implements ClientlibService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultClientlibService.class);
-
-    public static final boolean DEFAULT_GZIP_ENABLED = false;
-    public static final String GZIP_ENABLED = "gzip.enabled";
-    @Property(
-            name = GZIP_ENABLED,
-            label = "GZip enabled",
-            description = "if 'true' the content is zippend if possible",
-            boolValue = DEFAULT_GZIP_ENABLED
-    )
-    protected boolean gzipEnabled;
-
-    public static final String DEFAULT_CACHE_ROOT = "/var/cache/clientlibs";
-    public static final String CACHE_ROOT = "clientlibs.cache.root";
-    @Property(
-            name = CACHE_ROOT,
-            label = "Cache Root",
-            description = "the root folder for the Javascript clientlib cache",
-            value = DEFAULT_CACHE_ROOT
-    )
-    protected String cacheRoot;
-
-    public static final boolean DEFAULT_MAP_CLIENTLIB_URLS = false;
-    public static final String MAP_CLIENTLIB_URLS = "clientlib.url.map";
-    @Property(
-            name = MAP_CLIENTLIB_URLS,
-            label = "Map Clientlib URLs",
-            description = "if 'on' all clientlib URLs are mapped by the Resource Resolver; default: 'off'",
-            boolValue = DEFAULT_MAP_CLIENTLIB_URLS
-    )
-    private boolean mapClientlibURLs;
-
-    public static final int DEFAULT_THREAD_POOL_MIN = 5;
-    public static final String MIN_THREAD_POOL_SIZE = "clientlibs.threadpool.min";
-    @Property(
-            name = MIN_THREAD_POOL_SIZE,
-            label = "Threadpool min",
-            description = "the minimum size of the thread pool for clientlib processing (must be "
-                    + DEFAULT_THREAD_POOL_MIN + " or greater)",
-            intValue = DEFAULT_THREAD_POOL_MIN
-    )
-    protected int threadPoolMin;
-
-    public static final int DEFAULT_THREAD_POOL_MAX = 20;
-    public static final String MAX_THREAD_POOL_SIZE = "clientlibs.threadpool.max";
-    @Property(
-            name = MAX_THREAD_POOL_SIZE,
-            label = "Threadpool max",
-            description = "the size (maximum) of the thread pool for clientlib processing (must be equal or greater tahn the minimum)",
-            intValue = DEFAULT_THREAD_POOL_MAX
-    )
-    protected int threadPoolMax;
 
     public static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
 
@@ -119,6 +66,9 @@ public class DefaultClientlibService implements ClientlibService {
         CRUD_CACHE_FOLDER_PROPS = new HashMap<>();
         CRUD_CACHE_FOLDER_PROPS.put(ResourceUtil.PROP_PRIMARY_TYPE, "sling:Folder");
     }
+
+    @Reference
+    private ClientlibConfiguration clientlibConfig;
 
     @Reference
     protected ResourceResolverFactory resolverFactory;
@@ -145,7 +95,7 @@ public class DefaultClientlibService implements ClientlibService {
 
     @Override
     public boolean mapClientlibURLs() {
-        return mapClientlibURLs;
+        return clientlibConfig.getMapClientlibURLs();
     }
 
     @Override
@@ -160,7 +110,7 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     protected String adjustEncoding(String encoding) {
-        if (ENCODING_GZIP.equals(encoding) && !gzipEnabled) {
+        if (ENCODING_GZIP.equals(encoding) && !clientlibConfig.getGzipEnabled()) {
             encoding = null;
         }
         return encoding;
@@ -236,6 +186,11 @@ public class DefaultClientlibService implements ClientlibService {
 
                     String[] separated = Clientlib.splitPathAndName(cachePath);
                     Resource parent = giveParent(resolver, separated[0]);
+                    try {
+                        resolver.adaptTo(Session.class).refresh(true);
+                    } catch (RepositoryException rex) {
+                        // ignore exceptions here
+                    }
                     cacheEntry = resolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
                     resolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS);
 
@@ -330,7 +285,7 @@ public class DefaultClientlibService implements ClientlibService {
         if (!path.startsWith("/")) {
             path = "/" + path;
         }
-        path = cacheRoot + path;
+        path = clientlibConfig.getCacheRoot() + path;
         if (StringUtils.isNotBlank(encoding)) {
             path += '.' + encoding;
         }
@@ -341,6 +296,11 @@ public class DefaultClientlibService implements ClientlibService {
         Resource resource = null;
         SequencerService.Token token = sequencer.acquire(path);
         try {
+            try {
+                resolver.adaptTo(Session.class).refresh(true);
+            } catch (RepositoryException rex) {
+                // ignore exceptions here
+            }
             resource = resolver.getResource(path);
             if (resource == null) {
                 String[] separated = Clientlib.splitPathAndName(path);
@@ -364,14 +324,8 @@ public class DefaultClientlibService implements ClientlibService {
     @Activate
     protected void activate(ComponentContext context) {
         Dictionary<String, Object> properties = context.getProperties();
-        mapClientlibURLs = PropertiesUtil.toBoolean(properties.get(MAP_CLIENTLIB_URLS), DEFAULT_MAP_CLIENTLIB_URLS);
-        gzipEnabled = PropertiesUtil.toBoolean(properties.get(GZIP_ENABLED), DEFAULT_GZIP_ENABLED);
-        cacheRoot = PropertiesUtil.toString(properties.get(CACHE_ROOT), DEFAULT_CACHE_ROOT);
-        threadPoolMin = PropertiesUtil.toInteger(properties.get(MIN_THREAD_POOL_SIZE), DEFAULT_THREAD_POOL_MIN);
-        threadPoolMax = PropertiesUtil.toInteger(properties.get(MAX_THREAD_POOL_SIZE), DEFAULT_THREAD_POOL_MAX);
-        if (threadPoolMin < DEFAULT_THREAD_POOL_MIN) threadPoolMin = DEFAULT_THREAD_POOL_MIN;
-        if (threadPoolMax < threadPoolMin) threadPoolMax = threadPoolMin;
-        executorService = new ThreadPoolExecutor(threadPoolMin, threadPoolMax,
+        executorService = new ThreadPoolExecutor(
+                clientlibConfig.getThreadPoolMin(), clientlibConfig.getThreadPoolMax(),
                 200L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
         rendererMap = new EnumMap<>(Clientlib.Type.class);
         rendererMap.put(Clientlib.Type.js, javascriptProcessor);
