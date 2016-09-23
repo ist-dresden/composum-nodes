@@ -12,6 +12,6 @@
 <sling:call script="dialogs/version-add-label.jsp"/>
 <sling:call script="dialogs/version-delete-label.jsp"/>
 <sling:call script="dialogs/version-delete.jsp"/>
-<sling:call script="dialogs/editor-dialog.jsp"/>
+<sling:include resourceType="composum/nodes/console/components/codeeditor/editdialog"/>
 <sling:call script="dialogs/property.jsp"/>
 <sling:call script="/libs/composum/nodes/console/page/dialogs.jsp"/>

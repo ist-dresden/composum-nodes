@@ -248,9 +248,10 @@
                 this.source = source;
                 // initialize the dialog with the templates data
                 var path = this.source.getPath();
+                var type = this.source.$editor.attr('data-type');
                 this.selection = this.source.ace.getSelectionRange();
                 this.cursor = this.source.ace.getCursorPosition();
-                this.doEdit(path, _.bind(function () {
+                this.doEdit(path, type, _.bind(function () {
                     this.editor.ace.setReadOnly(false);
                     this.editor.ace.scrollToRow(Math.max(this.cursor.row - 2, 0));
                     this.editor.ace.navigateTo(this.cursor.row, this.cursor.column);
@@ -261,19 +262,19 @@
             /**
              * Open dialog to edit a file referenced by its path without a source view.
              */
-            editFile: function (path) {
+            editFile: function (path, type) {
                 this.source = undefined;
                 // display the editor in the modal dialog
-                this.doEdit(path, _.bind(function () {
+                this.doEdit(path, type, _.bind(function () {
                     this.editor.ace.setReadOnly(false);
                     this.editor.ace.focus();
                 }, this));
             },
 
-            doEdit: function (path, initAfterLoad) {
+            doEdit: function (path, type, initAfterLoad) {
                 this.$('.modal-title').text(path);
                 this.editor.$editor.attr('data-path', path);
-                this.editor.$editor.attr('data-type', this.source.$editor.attr('data-type'));
+                this.editor.$editor.attr('data-type', type);
                 // display the editor in the modal dialog
                 this.show(_.bind(function () {
                     // initialize the editor instance
