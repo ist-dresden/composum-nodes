@@ -2,6 +2,7 @@ package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.util.ISO9075;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -422,7 +423,7 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public String escapeXmlName(String name) {
-        return name
+        return ISO9075.encode(name)
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")
                 .replaceAll(">", "&gt;")
