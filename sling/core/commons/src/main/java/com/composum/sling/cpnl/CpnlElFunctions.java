@@ -56,6 +56,39 @@ public class CpnlElFunctions {
     }
 
     /**
+     * Builds an external (full qualified) URL for a repository path using the LinkUtil.getURL() method.
+     *
+     * @param request the current request (domain host hint)
+     * @param path    the repository path
+     * @return the URL built in the context of the requested domain host
+     */
+    public static String externalUrl(SlingHttpServletRequest request, String path) {
+        return LinkUtil.getAbsoluteUrl(request, LinkUtil.getUrl(request, path));
+    }
+
+    /**
+     * Builds an external (full qualified) URL for a repository path using the LinkUtil.getMappedURL() method.
+     *
+     * @param request the current request (domain host hint)
+     * @param path    the repository path
+     * @return the URL built in the context of the requested domain host
+     */
+    public static String mappedExternalUrl(SlingHttpServletRequest request, String path) {
+        return LinkUtil.getAbsoluteUrl(request, LinkUtil.getMappedUrl(request, path));
+    }
+
+    /**
+     * Builds an external (full qualified) URL for a repository path using the LinkUtil.getUnmappedURL() method.
+     *
+     * @param request the current request (domain host hint)
+     * @param path    the repository path
+     * @return the URL built in the context of the requested domain host
+     */
+    public static String unmappedExternalUrl(SlingHttpServletRequest request, String path) {
+        return LinkUtil.getAbsoluteUrl(request, LinkUtil.getUnmappedUrl(request, path));
+    }
+
+    /**
      * A 'placeholder' to signal 'avoid escaping' during text rendering.
      *
      * @param value the value to render

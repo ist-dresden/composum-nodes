@@ -323,6 +323,27 @@
     </function>
 
     <function>
+        <description>Builds the URL for a repository path using the LinkUtil.getURL() method</description>
+        <name>ExternalUrl</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String externalUrl(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
+    </function>
+
+    <function>
+        <description>Builds the URL for a repository path using the LinkUtil.getMappedURL() method</description>
+        <name>mappedExternalUrl</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String unmappedExternalUrl(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
+    </function>
+
+    <function>
+        <description>Builds the URL for a repository path using the LinkUtil.getUNappedURL() method</description>
+        <name>unmappedExternalUrl</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String unmappedExternalUrl(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
+    </function>
+
+    <function>
         <description>transforms a string value for rendering (does nothing)</description>
         <name>value</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
