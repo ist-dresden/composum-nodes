@@ -32,10 +32,14 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
         return suffix;
     }
 
+    protected BeanContext createContext(SlingHttpServletRequest request, SlingHttpServletResponse response) {
+        return new BeanContext.Servlet(getServletContext(), request, response);
+    }
+
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
-        BeanContext context = new BeanContext.Servlet(getServletContext(), request, response);
+        BeanContext context = createContext(request, response);
 
         // the pattern matching is not necessary but it prevents from errors thrown during unwanted requests
         final String pathInfo = request.getPathInfo();
