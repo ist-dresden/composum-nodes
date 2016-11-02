@@ -1,6 +1,11 @@
 #
 language: java
 jdk: oraclejdk8
+branches:
+  only:
+  - master
+  - develop
 script:
   - cd sling/core
-  - mvn -s ../../settings.xml -P${TRAVIS_BRANCH} clean install deploy
+  - mvn -s ../../settings.xml -f pom-api.xml -P${TRAVIS_BRANCH} clean install deploy
+  - mvn -s ../../settings.xml -f pom-ui.xml -P${TRAVIS_BRANCH} clean install deploy
