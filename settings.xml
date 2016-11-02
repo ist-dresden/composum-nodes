@@ -46,7 +46,7 @@
         <profile>
             <id>develop</id>
             <properties>
-                <deploy.package>true</deploy.package>
+                <deploy.bundle>true</deploy.bundle>
                 <sling.scheme>https</sling.scheme>
                 <sling.secure>true</sling.secure>
                 <sling.host>test.ist-software.com</sling.host>
