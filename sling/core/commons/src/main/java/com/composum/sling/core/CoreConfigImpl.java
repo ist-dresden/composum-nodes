@@ -15,6 +15,7 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.osgi.service.component.ComponentContext;
 
 import javax.servlet.RequestDispatcher;
@@ -35,6 +36,15 @@ import java.util.Map;
 )
 @Service
 public class CoreConfigImpl implements CoreConfiguration {
+
+    public static final int DEFAULT_FORWARDED_SSL_PORT = 80; // cerrently delivered by the Felix HTTP module
+    @Property(
+            name = FORWARDED_SSL_PORT,
+            label = "Forwarded SSL Port",
+            description = "the port number which has to be used to determin the default port nnumber",
+            intValue = DEFAULT_FORWARDED_SSL_PORT
+    )
+    private int forwardedSslPort;
 
     @Property(
             name = ERRORPAGES_PATH,
@@ -62,6 +72,11 @@ public class CoreConfigImpl implements CoreConfiguration {
     private boolean systemServletEnabled;
 
     private Map<String, Boolean> enabledServlets;
+
+
+    public int getForwardedSslPort() {
+        return forwardedSslPort;
+    }
 
     @Override
     public boolean isEnabled(AbstractServiceServlet servlet) {
@@ -131,6 +146,7 @@ public class CoreConfigImpl implements CoreConfiguration {
     @Modified
     protected void activate(ComponentContext context) {
         this.properties = context.getProperties();
+        forwardedSslPort = PropertiesUtil.toInteger(properties.get(FORWARDED_SSL_PORT), DEFAULT_FORWARDED_SSL_PORT);
         errorpagesPath = (String) properties.get(ERRORPAGES_PATH);
         if (errorpagesPath.endsWith("/") && errorpagesPath.length() > 1) {
             errorpagesPath = errorpagesPath.substring(errorpagesPath.length() - 1);

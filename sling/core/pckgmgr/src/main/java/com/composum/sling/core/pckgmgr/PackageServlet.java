@@ -16,6 +16,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.vault.fs.api.FilterSet;
@@ -37,8 +38,10 @@ import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
+import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +61,7 @@ import java.io.Writer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -66,15 +70,25 @@ import java.util.Map;
 import static com.composum.sling.core.pckgmgr.util.PackageUtil.DATE_FORMAT;
 
 /** The servlet to provide download and upload of content packages and package definitions. */
-@SlingServlet(paths = "/bin/cpm/package", methods = {"GET", "POST", "PUT", "DELETE"})
+@SlingServlet(
+        paths = "/bin/cpm/package",
+        methods = {"GET", "POST", "PUT", "DELETE"},
+        metatype = true,
+        label = "Composum PackageServlet")
 public class PackageServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageServlet.class);
 
     public static final String PARAM_GROUP = "group";
     public static final String PARAM_FORCE = "force";
+    private static final String PACKAGE_JOB_TIMEOUT = "package.job.timeout";
 
-    public static final long JOB_IDLE_TIMEOUT = 30L * 1000L;
+    @org.apache.felix.scr.annotations.Property(
+            name = PACKAGE_JOB_TIMEOUT,
+            label = "package job timeout",
+            longValue = 60L * 1000L
+    )
+    private long jobIdleTimeout;
 
     public static final String ZIP_CONTENT_TYPE = "application/zip";
 
@@ -112,6 +126,13 @@ public class PackageServlet extends AbstractServiceServlet {
     protected boolean isEnabled() {
         return nodesConfig.isEnabled(this);
     }
+
+    @Activate
+    protected void activate(ComponentContext context) throws Exception {
+        Dictionary<String, Object> properties = context.getProperties();
+        jobIdleTimeout = PropertiesUtil.toLong(properties.get(PACKAGE_JOB_TIMEOUT), 60L * 1000L);
+    }
+
 
     /** setup of the servlet operation set for this servlet instance */
     @Override
@@ -328,8 +349,8 @@ public class PackageServlet extends AbstractServiceServlet {
                                     !PackageUtil.isVersion(pckgDef, version))) {
                         manager.rename(jcrPackage, group, name, version);
                     }
-
                     Map<String, Object> parameters = getParameters(request);
+                    parameters.put("includeVersions", parameters.containsKey("includeVersions"));
                     for (Map.Entry<String, Object> parameter : parameters.entrySet()) {
                         String key = parameter.getKey();
                         PackageUtil.DefinitionSetter setter = PackageUtil.DEFINITION_SETTERS.get(key);
@@ -502,7 +523,7 @@ public class PackageServlet extends AbstractServiceServlet {
             JobUtil.buildOutfileName(jobProperties);
 
             Job job = jobManager.addJob(PackageJobExecutor.TOPIC, jobProperties);
-            final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), JOB_IDLE_TIMEOUT);
+            final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), jobIdleTimeout);
             if (isDone.call()) {
 
                 installationDone(request, response, manager, jcrPackage, isDone);
@@ -645,7 +666,7 @@ public class PackageServlet extends AbstractServiceServlet {
                     jobProperties.put("userid", session.getUserID());
                     JobUtil.buildOutfileName(jobProperties);
                     Job job = jobManager.addJob(PackageJobExecutor.TOPIC, jobProperties);
-                    final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), JOB_IDLE_TIMEOUT);
+                    final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), jobIdleTimeout);
                     if (isDone.call()) {
                         response.setStatus(HttpServletResponse.SC_OK);
                         try (Writer writer = response.getWriter()) {

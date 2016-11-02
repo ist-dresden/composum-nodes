@@ -33,6 +33,7 @@
                                 version: result.responseJSON.definition ? result.responseJSON.definition.version : undefined,
                                 // version: pathMatch ? pathMatch[4] : undefined,
                                 extension: pathMatch ? pathMatch[5] : undefined,
+                                includeVersions: result.responseJSON.definition ? result.responseJSON.definition.includeVersions : undefined,
                                 node: result.responseJSON,
                                 viewUrl: core.getContextUrl('/bin/packages.view.html'
                                     + window.core.encodePath(path)),

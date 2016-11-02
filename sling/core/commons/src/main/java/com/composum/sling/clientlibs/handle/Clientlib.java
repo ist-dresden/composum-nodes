@@ -120,6 +120,7 @@ public class Clientlib {
                 lastModified = getLastModified(new FileHandle(resource), lastModified);
             } else {
                 for (String embedRule : resource.getProperty(PROP_EMBED, new String[0])) {
+                    embedRule = embedRule.trim();
                     ClientlibRef reference = new ClientlibRef(this.clientlibRef, embedRule, false, false);
                     Resource target = retrieveResource(reference.path);
                     if (target != null) {
@@ -203,11 +204,13 @@ public class Clientlib {
                         reference, properties, resource);
             } else {
                 boolean optional = resource.getProperty(PROP_OPTIONAL, reference.optional);
-                for (String embedRule : resource.getProperty(PROP_DEPENDS, new String[0])) {
-                    ClientlibRef clientlibRef = new ClientlibRef(reference, embedRule, true, optional);
+                for (String dependsRule : resource.getProperty(PROP_DEPENDS, new String[0])) {
+                    dependsRule = dependsRule.trim();
+                    ClientlibRef clientlibRef = new ClientlibRef(reference, dependsRule, true, optional);
                     getClientlibLink(links, context, expanded, true, clientlibRef, properties);
                 }
                 for (String embedRule : resource.getProperty(PROP_EMBED, new String[0])) {
+                    embedRule = embedRule.trim();
                     ClientlibRef clientlibRef = new ClientlibRef(reference, embedRule, optional);
                     if (getClientlibLink(links, context, expanded, false, clientlibRef, properties)) {
                         hasEmbeddedContent = true;
@@ -285,6 +288,7 @@ public class Clientlib {
                     optional = resource.getProperty(PROP_OPTIONAL, false);
                 }
                 for (String refRule : resource.getProperty(PROP_EMBED, new String[0])) {
+                    refRule = refRule.trim();
                     ClientlibRef ref = new ClientlibRef(clientlibRef.type, refRule, false, optional);
                     Resource target = retrieveResource(ref.path);
                     if (target != null) {
