@@ -21,6 +21,10 @@ public interface CoreConfiguration {
 
     String SYSTEM_SERVLET_ENABLED = "system.servlet.enabled";
 
+    String FORWARDED_SSL_PORT = "network.forward.ssl.port";
+
+    int getForwardedSslPort();
+
     boolean isEnabled(AbstractServiceServlet servlet);
 
     Resource getErrorpage(SlingHttpServletRequest request, int status);

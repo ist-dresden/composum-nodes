@@ -29,7 +29,8 @@ public class LinkUtil {
     public static final String FORWARDED_SSL_HEADER = "X-Forwarded-SSL";
     public static final String FORWARDED_SSL_ON = "on";
 
-    public static final Pattern URL_PATTERN = Pattern.compile("^(https?)://([^/]+)(:\\d+)?(/.*)?$");
+    public static final String URL_PATTERN_STRING = "^(https?)://([^/]+)(:\\d+)?(/.*)?$";
+    public static final Pattern URL_PATTERN = Pattern.compile(URL_PATTERN_STRING);
 
     public static final Pattern SELECTOR_PATTERN = Pattern.compile("^(.*/[^/]+)(\\.[^.]+)$");
 
@@ -138,6 +139,7 @@ public class LinkUtil {
             // map the path (the url) with the resource resolver (encodes the url)
             if (mapper != null) {
                 url = mapper.mapUri(request, url);
+                url = adjustMappedUrl(request, url);
             }
 
             if (StringUtils.isNotBlank(extension)) {
@@ -187,10 +189,33 @@ public class LinkUtil {
     }
 
     public static int getDefaultPort(SlingHttpServletRequest request) {
-        if (request.isSecure()) {
+        if (!request.isSecure()) {
             return 80;
         }
         return FORWARDED_SSL_ON.equalsIgnoreCase(request.getHeader(FORWARDED_SSL_HEADER)) ? 80 : 443;
+    }
+
+    /**
+     * in the case of a forwarded SSL request the resource resolver mapping rules must contain the
+     * false port (80) to ensure a proper resolving - but in the result this bad port is included in the
+     * mapped URL and must be removed - done here
+     */
+    protected static String adjustMappedUrl(SlingHttpServletRequest request, String url) {
+        // build a pattern with the (false) default port
+        Pattern defaultPortPattern = Pattern.compile(
+                URL_PATTERN_STRING.replaceFirst("\\(:\\\\d\\+\\)\\?", ":" + getDefaultPort(request)));
+        Matcher matcher = defaultPortPattern.matcher(url);
+        // remove the port if the URL matches (contains the port nnumber)
+        if (matcher.matches()) {
+            url = matcher.group(1) + "://" + matcher.group(2);
+            String uri = matcher.group(3);
+            if (StringUtils.isNotBlank(uri)) {
+                url += uri;
+            } else {
+                url += "/";
+            }
+        }
+        return url;
     }
 
     /**
