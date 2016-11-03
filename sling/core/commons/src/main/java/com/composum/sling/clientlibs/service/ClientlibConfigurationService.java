@@ -163,7 +163,7 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     )
     private boolean mapClientlibURLs;
 
-    public static final int DEFAULT_THREAD_POOL_MIN = 5;
+    public static final int DEFAULT_THREAD_POOL_MIN = 10;
     public static final String MIN_THREAD_POOL_SIZE = "clientlibs.threadpool.min";
     @Property(
             name = MIN_THREAD_POOL_SIZE,

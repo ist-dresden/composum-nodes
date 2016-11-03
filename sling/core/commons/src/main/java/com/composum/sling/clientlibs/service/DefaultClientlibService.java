@@ -299,13 +299,18 @@ public class DefaultClientlibService implements ClientlibService {
             try {
                 resolver.adaptTo(Session.class).refresh(true);
             } catch (RepositoryException rex) {
-                // ignore exceptions here
+                LOG.warn(rex.getMessage(), rex);
             }
             resource = resolver.getResource(path);
             if (resource == null) {
                 String[] separated = Clientlib.splitPathAndName(path);
                 Resource parent = giveParent(resolver, separated[0]);
                 try {
+                    try {
+                        resolver.adaptTo(Session.class).refresh(true);
+                    } catch (RepositoryException rex) {
+                        LOG.warn(rex.getMessage(), rex);
+                    }
                     resource = resolver.create(parent, separated[1], CRUD_CACHE_FOLDER_PROPS);
                     resolver.commit();
                 } catch (PersistenceException pex) {
