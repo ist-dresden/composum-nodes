@@ -52,6 +52,55 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String PROP_LAST_MODIFIED = "jcr:lastModified";
     public static final String PROP_FILE_REFERENCE = "fileReference";
 
+    public static int getIndexOfSameType(Resource resource) {
+        if (resource != null) {
+            String name = resource.getName();
+            String type = resource.getResourceType();
+            Resource parent = resource.getParent();
+            if (parent != null) {
+                int index = 0;
+                for (Resource child : parent.getChildren()) {
+                    if (type == null || child.isResourceType(type)) {
+                        if (name.equals(child.getName())) {
+                            return index;
+                        }
+                        index++;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+    public static Resource getNextOfSameType(Resource resource, boolean wrapAround) {
+        if (resource != null) {
+            String name = resource.getName();
+            String type = resource.getResourceType();
+            Resource parent = resource.getParent();
+            if (parent != null) {
+                boolean returnNext = false;
+                for (Resource child : parent.getChildren()) {
+                    if (type == null || child.isResourceType(type)) {
+                        if (returnNext) {
+                            return child;
+                        }
+                        if (name.equals(child.getName())) {
+                            returnNext = true;
+                        }
+                    }
+                }
+                if (returnNext && wrapAround) {
+                    for (Resource child : parent.getChildren()) {
+                        if (type == null || child.isResourceType(type)) {
+                            return child;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     public static String getNameExtension(Resource resource) {
         String extension = null;
         String name = resource.getName();
