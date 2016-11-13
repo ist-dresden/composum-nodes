@@ -110,7 +110,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     // HTTP control methods
     //
 
-    protected void setNoCacheHeaders(SlingHttpServletResponse response) {
+    public static void setNoCacheHeaders(SlingHttpServletResponse response) {
         response.setHeader("Cache-Control", "no-cache");
         response.addHeader("Cache-Control", "no-store");
         response.addHeader("Cache-Control", "must-revalidate");
