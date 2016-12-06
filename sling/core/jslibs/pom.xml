@@ -49,7 +49,7 @@
                             root/libs/jslibs/jquery/2.2.4;path:=/libs/jslibs/jquery/2.2.4;overwrite:=true,
                             root/libs/jslibs/jquery/3.0.0;path:=/libs/jslibs/jquery/3.0.0;overwrite:=true,
                             root/libs/jslibs/jquery/base64;path:=/libs/jslibs/jquery/base64;overwrite:=true,
-                            root/libs/jslibs/jquery/split-pane;path:=/libs/jslibs/jquery/split-pane;overwrite:=true,
+                            root/libs/jslibs/split-pane/0.9.3;path:=/libs/jslibs/split-pane/0.9.3;overwrite:=true,
                             root/libs/jslibs/jstree/3.3.0;path:=/libs/jslibs/jstree/3.3.0;overwrite:=true,
                             root/libs/jslibs/moment/2.10.3;path:=/libs/jslibs/moment/2.10.3;overwrite:=true,
                             root/libs/jslibs/trumbowyg/2.3.0;path:=/libs/jslibs/trumbowyg/2.3.0;overwrite:=true,

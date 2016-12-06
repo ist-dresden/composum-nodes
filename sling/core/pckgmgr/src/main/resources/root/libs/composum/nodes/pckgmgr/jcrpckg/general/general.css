@@ -159,7 +159,7 @@
 }
 
 .indicator-block {
-    width: 126px;
+    width: 136px;
     margin-bottom: 0;
     list-style: square inside;
     -webkit-padding-start: 0;
@@ -194,6 +194,15 @@
 }
 
 .indicator-block .is-installed,
+.indicator-block .not-installed,
+.indicator-block .is-sealed,
+.indicator-block .not-sealed,
+.indicator-block .is-valid,
+.indicator-block .not-valid {
+    display: inline-block;
+}
+
+.indicator-block .is-installed,
 .indicator-block.installed .not-installed,
 .indicator-block .is-sealed,
 .indicator-block.sealed .not-sealed,
@@ -205,7 +214,7 @@
 .indicator-block.installed .is-installed,
 .indicator-block.sealed .is-sealed,
 .indicator-block.valid .is-valid {
-    display: block;
+    display: inline-block;
 }
 
 .detail-panel.jcrpckg .package-detail .list-group-item {

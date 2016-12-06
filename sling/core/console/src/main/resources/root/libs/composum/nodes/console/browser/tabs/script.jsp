@@ -43,7 +43,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="split-pane-divider"><span class="fa fa-ellipsis-h"></span></div>
+                    <div class="split-pane-divider"></div>
                     <div class="split-pane-component bottom-pane">
                         <div class="bottom-area">
                             <div class="log-area">
