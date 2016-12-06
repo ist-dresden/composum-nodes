@@ -153,17 +153,17 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     )
     protected String cacheRoot;
 
-    public static final boolean DEFAULT_MAP_CLIENTLIB_URLS = false;
+    public static final boolean DEFAULT_MAP_CLIENTLIB_URLS = true;
     public static final String MAP_CLIENTLIB_URLS = "clientlibs.url.map";
     @Property(
             name = MAP_CLIENTLIB_URLS,
             label = "General - Map Clientlib URLs",
-            description = "if 'on' all clientlib URLs are mapped by the Resource Resolver; default: 'off'",
+            description = "if 'on' all clientlib URLs are mapped by the Resource Resolver; default: 'on'",
             boolValue = DEFAULT_MAP_CLIENTLIB_URLS
     )
     private boolean mapClientlibURLs;
 
-    public static final int DEFAULT_THREAD_POOL_MIN = 5;
+    public static final int DEFAULT_THREAD_POOL_MIN = 10;
     public static final String MIN_THREAD_POOL_SIZE = "clientlibs.threadpool.min";
     @Property(
             name = MIN_THREAD_POOL_SIZE,

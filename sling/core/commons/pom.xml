@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.sling.core</groupId>
         <artifactId>composum-sling-core-parent</artifactId>
-        <version>1.7.0-SNAPSHOT</version>
+        <version>1.7.0</version>
         <relativePath>../.parent</relativePath>
     </parent>
 
@@ -130,6 +130,10 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.discovery.api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.servlets.post</artifactId>
         </dependency>
         <dependency>
             <groupId>biz.aQute</groupId>

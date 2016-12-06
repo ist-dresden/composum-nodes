@@ -5,20 +5,18 @@
 	<parent>
 		<groupId>com.composum.sling.core</groupId>
 		<artifactId>composum-sling-core-parent</artifactId>
-		<version>1.7.0</version>
+		<version>1.7.0-SNAPSHOT</version>
 		<relativePath>.parent</relativePath>
 	</parent>
 
 	<groupId>com.composum.sling.parent</groupId>
-	<artifactId>composum-sling-core-reactor</artifactId>
+	<artifactId>composum-sling-core-reactor-ui</artifactId>
 	<packaging>pom</packaging>
 
-	<name>Composum Sling Core Reactor</name>
+	<name>Composum Sling Core Reactor (UI)</name>
 
 	<modules>
-		<module>.parent</module>
 		<module>jslibs</module>
-		<module>commons</module>
 		<module>console</module>
 		<module>pckginstall</module>
 		<module>pckgmgr</module>

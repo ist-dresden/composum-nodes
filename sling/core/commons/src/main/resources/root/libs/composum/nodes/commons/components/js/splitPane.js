@@ -33,8 +33,8 @@
             } else {
                 this.closeTop(false);
             }
-            this.horizontalSplit.$el.on('resize', _.bind (this.onResize, this));
-            this.verticalSplit.$el.on('resize', _.bind (this.onResize, this));
+            this.horizontalSplit.$el.on('splitpaneresize', _.bind (this.onResize, this));
+            this.verticalSplit.$el.on('splitpaneresize', _.bind (this.onResize, this));
             this.$openLeft = this.$('#split-view-horizontal-split > .open-left a');
             this.$closeLeft = this.$('#split-view-horizontal-split > .split-pane-component.right-pane > .close-left a');
             this.$openTop = this.$('#split-view-vertical-split > .open-top a');

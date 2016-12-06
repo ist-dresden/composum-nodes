@@ -49,7 +49,7 @@
             </div>
           </div>
         </div>
-        <div class="split-pane-divider"><span class="fa fa-ellipsis-v"></span></div>
+        <div class="split-pane-divider"></div>
         <div class="split-pane-component right-pane">
           <div id="split-view-vertical-split" class="split-pane vertical-split fixed-top">
             <div class="split-pane-component top-pane">
@@ -57,7 +57,7 @@
                  <sling:call script="query.jsp"/>
               </div>
             </div>
-            <div class="split-pane-divider"><span class="fa fa-ellipsis-h"></span></div>
+            <div class="split-pane-divider"></div>
             <div class="split-pane-component bottom-pane">
               <div id="usermanagement-view">
                 <sling:call script="view.jsp"/>

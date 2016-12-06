@@ -9,6 +9,16 @@
             <username>buildmgr</username>
             <password>${deploy_password}</password>
         </server>
+        <server>
+            <id>archiva-internal</id>
+            <username>buildmgr</username>
+            <password>${deploy_password}</password>
+        </server>
+        <server>
+            <id>archiva-snapshots</id>
+            <username>buildmgr</username>
+            <password>${deploy_password}</password>
+        </server>
     </servers>
 
     <mirrors>
@@ -31,20 +41,20 @@
         -->
         <profile>
             <id>master</id>
-            <properties>
-                <!--deploy.package>true</deploy.package-->
-                <sling.scheme>https</sling.scheme>
-                <sling.secure>true</sling.secure>
-                <sling.host>istdev.ist-software.com</sling.host>
-                <sling.port>443</sling.port>
-                <sling.context>/composum</sling.context>
-                <sling.password>${deploy_password}</sling.password>
-                <bundle.status.skip>true</bundle.status.skip>
-            </properties>
         </profile>
 
         <profile>
             <id>develop</id>
+            <properties>
+                <deploy.bundle>true</deploy.bundle>
+                <sling.scheme>https</sling.scheme>
+                <sling.secure>true</sling.secure>
+                <sling.host>test.ist-software.com</sling.host>
+                <sling.port>443</sling.port>
+                <sling.context></sling.context>
+                <sling.password>${deploy_password}</sling.password>
+                <bundle.status.skip>true</bundle.status.skip>
+            </properties>
         </profile>
 
         <profile>
@@ -73,7 +83,7 @@
             </activation>
             <repositories>
                 <repository>
-                    <id>archiva</id>
+                    <id>archiva-internal</id>
                     <name>archiva</name>
                     <url>https://build.ist-software.com/archiva/repository/internal</url>
                     <snapshots>
@@ -81,7 +91,7 @@
                     </snapshots>
                 </repository>
                 <repository>
-                    <id>archiva</id>
+                    <id>archiva-snapshots</id>
                     <name>archiva</name>
                     <url>https://build.ist-software.com/archiva/repository/snapshots</url>
                     <snapshots>
@@ -91,7 +101,7 @@
             </repositories>
             <pluginRepositories>
                 <pluginRepository>
-                    <id>archiva</id>
+                    <id>archiva-internal</id>
                     <name>archiva</name>
                     <url>https://build.ist-software.com/archiva/repository/internal</url>
                     <snapshots>
@@ -99,7 +109,7 @@
                     </snapshots>
                 </pluginRepository>
                 <pluginRepository>
-                    <id>archiva</id>
+                    <id>archiva-snapshots</id>
                     <name>archiva</name>
                     <url>https://build.ist-software.com/archiva/repository/snapshots</url>
                     <snapshots>

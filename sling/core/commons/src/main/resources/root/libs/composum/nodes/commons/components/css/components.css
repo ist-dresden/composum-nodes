@@ -86,6 +86,31 @@
 }
 
 /**
+ * SplitPane
+ */
+
+.split-pane > .split-pane-divider:after {
+    font-family: FontAwesome;
+    position: absolute;
+    background: none;
+    font-size: 120%;
+    opacity: 0.4;
+}
+
+.split-pane.vertical-split > .split-pane-divider:after {
+    content: '\f141';
+    left: 50%;
+    top: 2px;
+    line-height: 15px;
+}
+
+.split-pane.horizontal-split > .split-pane-divider:after {
+    content: '\f142';
+    top: 50%;
+    left: 6px;
+}
+
+/**
  * Tree
  */
 

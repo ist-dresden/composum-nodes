@@ -108,12 +108,12 @@ ResourceResolver.metaClass.findResources << { Map predicates ->
 
 script.metaClass.getService << { Class serviceClass ->
     def serviceRef = bundleContext.getServiceReference(serviceClass)
-    bundleContext.getService(serviceRef)
+    serviceRef ? bundleContext.getService(serviceRef) : null
 }
 
 script.metaClass.getService << { String serviceClass ->
     def serviceRef = bundleContext.getServiceReference(serviceClass)
-    bundleContext.getService(serviceRef)
+    serviceRef ? bundleContext.getService(serviceRef) : null
 }
 
 script.metaClass.getServices << { Class serviceClass, String filter ->
@@ -127,19 +127,19 @@ script.metaClass.getServices << { String serviceClass, String filter ->
 }
 
 script.metaClass.error << { ... args ->
-    log.error(args.join(''))
+    log.error(args ? args.join('') : '')
 }
 
 script.metaClass.warn << { ... args ->
-    log.warn(args.join(''))
+    log.warn(args ? args.join('') : '')
 }
 
 script.metaClass.info << { ... args ->
-    log.info(args.join(''))
+    log.info(args ? args.join('') : '')
 }
 
 script.metaClass.debug << { ... args ->
-    log.debug(args.join(''))
+    log.debug(args ? args.join('') : '')
 }
 
 [:]

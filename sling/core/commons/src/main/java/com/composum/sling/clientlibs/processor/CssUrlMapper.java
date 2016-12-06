@@ -50,6 +50,7 @@ public class CssUrlMapper implements ClientlibProcessor {
 
         try {
             Matcher matcher = URL_PATTERN.matcher(css);
+            int len = css.length();
             int pos = 0;
             while (matcher.find(pos)) {
                 String unmapped = matcher.group(2);
@@ -60,7 +61,9 @@ public class CssUrlMapper implements ClientlibProcessor {
                 writer.write(matcher.group(3));
                 pos = matcher.end();
             }
-            writer.write(css, pos, css.length() - pos);
+            if (pos >= 0 && pos < len) {
+                writer.write(css, pos, len - pos);
+            }
 
         } catch (IOException e) {
             e.printStackTrace();

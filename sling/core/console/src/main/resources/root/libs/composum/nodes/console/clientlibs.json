@@ -91,7 +91,7 @@
         "jslibs/bootstrap/3.3.7/css/bootstrap-theme.min.css",
         "jslibs/bootstrap-table/1.7.0/bootstrap-table.min.css",
         "jslibs/bootstrap-datetimepicker/4.14.30/css/bootstrap-datetimepicker.min.css",
-        "jslibs/jquery/split-pane/snapshot/split-pane.css"
+        "jslibs/split-pane/0.9.3/split-pane.css"
       ]
     },
     "js": {
@@ -137,7 +137,7 @@
         "embed": "jslibs/bootstrap-fileinput/4.3.2/js/fileinput.min.js"
       },
       "split-pane": {
-        "embed": "jslibs/jquery/split-pane/snapshot/split-pane.js"
+        "embed": "jslibs/split-pane/0.9.3/split-pane.js"
       },
       "jstree": {
         "embed": "jslibs/jstree/3.3.0/jstree.js"

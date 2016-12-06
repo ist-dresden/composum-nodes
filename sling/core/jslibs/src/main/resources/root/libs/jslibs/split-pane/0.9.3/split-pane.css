@@ -1,8 +1,8 @@
 /*!
 
-Split Pane v0.3
+Split Pane v0.9.3
 
-Copyright (c) 2012 Simon Hagström
+Copyright (c) 2014 - 2016 Simon Hagström
 
 Released under the MIT license
 https://raw.github.com/shagstrom/split-pane/master/LICENSE
@@ -13,6 +13,7 @@ https://raw.github.com/shagstrom/split-pane/master/LICENSE
 	height: 100%;
 	width: 100%;
 	overflow: hidden;
+	z-index: 0;
 }
 
 .split-pane.fixed-top > .split-pane-component,
@@ -40,9 +41,20 @@ https://raw.github.com/shagstrom/split-pane/master/LICENSE
 	position: absolute;
 	width: 100%;
 	left: 0;
-	cursor: ns-resize;
-	cursor: n-resize\9;
+	cursor: row-resize;
 	z-index: 2;
+}
+
+.split-pane.fixed-top > .split-pane-divider > .split-pane-divider-inner,
+.split-pane.fixed-bottom > .split-pane-divider > .split-pane-divider-inner,
+.split-pane.horizontal-percent > .split-pane-divider > .split-pane-divider-inner {
+	position: absolute;
+	top: -5px;
+	left: 0;
+	box-sizing: content-box;
+	width: 100%;
+	height: 100%;
+	padding: 5px 0;
 }
 
 .split-pane.fixed-left > .split-pane-component,
@@ -70,9 +82,20 @@ https://raw.github.com/shagstrom/split-pane/master/LICENSE
 	position: absolute;
 	height: 100%;
 	top: 0;
-	cursor: ew-resize;
-	cursor: w-resize\9;
+	cursor: col-resize;
 	z-index: 2;
+}
+
+.split-pane.fixed-left > .split-pane-divider > .split-pane-divider-inner,
+.split-pane.fixed-right > .split-pane-divider > .split-pane-divider-inner,
+.split-pane.vertical-percent > .split-pane-divider > .split-pane-divider-inner {
+	position: absolute;
+	top: 0;
+	left: -5px;
+	box-sizing: content-box;
+	width: 100%;
+	height: 100%;
+	padding: 0 5px;
 }
 
 .split-pane-resize-shim {
@@ -88,13 +111,11 @@ https://raw.github.com/shagstrom/split-pane/master/LICENSE
 .split-pane.fixed-left > .split-pane-resize-shim,
 .split-pane.fixed-right > .split-pane-resize-shim,
 .split-pane.vertical-percent > .split-pane-resize-shim {
-	cursor: ew-resize;
-	cursor: w-resize\9;
+	cursor: col-resize;
 }
 
 .split-pane.fixed-top > .split-pane-resize-shim,
 .split-pane.fixed-bottom > .split-pane-resize-shim,
 .split-pane.horizontal-percent > .split-pane-resize-shim {
-	cursor: ns-resize;
-	cursor: n-resize\9;
+	cursor: row-resize;
 }
