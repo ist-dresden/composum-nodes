@@ -6,12 +6,12 @@
 #browser-nav-split.split-pane.vertical-split > .split-pane-divider {
     left: 25%;
     width: 34%;
-    background: none;
+    background: #e4e4e4;
 }
 
-#browser-nav-split.split-pane.vertical-split > .split-pane-divider > .split-handle {
+#browser-nav-split.split-pane.vertical-split > .split-pane-divider:after {
     left: 43%;
-    height: 12px;
+    line-height: 30px;
 }
 
 #browser-nav-split.split-pane.vertical-split > .split-pane-divider,

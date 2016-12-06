@@ -22,7 +22,7 @@
             </table>
           </div>
         </div>
-        <div class="split-pane-divider"><h4>Effective Policies</h4><span class="fa fa-ellipsis-h"></span></div>
+        <div class="split-pane-divider"></div>
         <div class="split-pane-component bottom-pane">
           <div class="table-container effective-policies">
             <table class="table table-striped table-condensed" data-path="${browser.current.pathEncoded}">

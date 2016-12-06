@@ -9,7 +9,7 @@
 
         initialize: function (options) {
             this.verticalSplit = core.getWidget(this.$el, this.el, core.components.VerticalSplitPane);
-            this.verticalSplit.$el.on('resize', _.bind(this.onSplitResize, this));
+            this.verticalSplit.$el.on('splitpaneresize', _.bind(this.onSplitResize, this));
             if (core.console.getProfile().get('navigation', 'favorites')) {
                 this.toggleFavorites();
             }
