@@ -42,8 +42,9 @@ public class ServletOperationSet<E extends Enum, O extends Enum> {
     /**
      * Retrieves the servlet operation requested for the used HTTP method.
      * Looks in the selectors for a operation and gives their implementation in the extensions context.
+     *
      * @param request the servlet request
-     * @param method the requested HTTP method
+     * @param method  the requested HTTP method
      * @return the operation or 'null', if the requested combination of selector
      * and extension has no implementation for the given HTTP method
      */
@@ -122,6 +123,7 @@ public class ServletOperationSet<E extends Enum, O extends Enum> {
 
     /**
      * the extension hook if the resource is not simply build by the suffix
+     *
      * @param request
      * @return
      */
@@ -181,7 +183,7 @@ public class ServletOperationSet<E extends Enum, O extends Enum> {
             }
 
         } else {
-            sendInvalidOperation(request, response, Method.PUT);
+            sendInvalidOperation(request, response, Method.POST);
         }
     }
 
@@ -249,9 +251,13 @@ public class ServletOperationSet<E extends Enum, O extends Enum> {
                                      SlingHttpServletResponse response,
                                      Method method) throws IOException {
         RequestPathInfo pathInfo = request.getRequestPathInfo();
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                "invalid operation '" + method.name()
-                        + pathInfo.getSelectorString()
-                        + pathInfo.getExtension() + "'");
+        String message = "invalid operation '" + method.name() + ":"
+                + pathInfo.getSelectorString() + "." + pathInfo.getExtension() + "'";
+        try {
+            throw new Exception(message);
+        } catch (Exception ex) {
+            LOG.error(message, ex);
+        }
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, message);
     }
 }

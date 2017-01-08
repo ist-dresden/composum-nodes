@@ -392,13 +392,17 @@ public interface ResourceFilter {
             if (resource != null) {
                 String type = resource.getResourceType();
                 if (StringUtils.isNotBlank(type)) {
-                    return filter.accept(type);
+                    return accept(type);
                 } else {
                     Resource content = resource.getChild(ResourceUtil.CONTENT_NODE);
                     return accept(content);
                 }
             }
             return false;
+        }
+
+        protected boolean accept(String resourceType) {
+            return StringUtils.isNotBlank(resourceType) && filter.accept(resourceType);
         }
 
         /**

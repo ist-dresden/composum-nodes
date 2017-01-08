@@ -12,6 +12,21 @@
 
     <tag>
         <description>
+            the tag to declare a resource bundle (I18N)
+        </description>
+        <name>bundle</name>
+        <tag-class>com.composum.sling.cpnl.BundleTag</tag-class>
+        <body-content>JSP</body-content>
+        <attribute>
+            <name>basename</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+    </tag>
+
+    <tag>
+        <description>
             Creates a component model from a given className
         </description>
         <name>component</name>
@@ -275,6 +290,12 @@
             <type>java.lang.Boolean</type>
         </attribute>
         <attribute>
+            <name>i18n</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Boolean</type>
+        </attribute>
+        <attribute>
             <name>format</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
@@ -293,6 +314,13 @@
             <type>java.lang.String</type>
         </attribute>
     </tag>
+
+    <function>
+        <description>retrieves the translation for a string</description>
+        <name>i18n</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String i18n(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
+    </function>
 
     <function>
         <description>returns the absolute path for a child of a resource</description>
