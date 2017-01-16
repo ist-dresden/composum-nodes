@@ -37,15 +37,21 @@ public class SourceModel extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceModel.class);
 
+    // TODO move to configuration
     public static final Map<String, String> NAMESPACES;
 
     static {
         NAMESPACES = new HashMap<>();
-        NAMESPACES.put("sling", "http://sling.apache.org/jcr/sling/1.0");
         NAMESPACES.put("jcr", "http://www.jcp.org/jcr/1.0");
+        NAMESPACES.put("nt", "http://www.jcp.org/jcr/nt/1.0");
+        NAMESPACES.put("mix", "http://www.jcp.org/jcr/mix/1.0");
+        NAMESPACES.put("sling", "http://sling.apache.org/jcr/sling/1.0");
+        NAMESPACES.put("cpp", "http://sling.composum.com/pages/1.0");
+        NAMESPACES.put("cpa", "http://sling.composum.com/assets/1.0");
         NAMESPACES.put("cq", "http://www.day.com/jcr/cq/1.0");
     }
 
+    // TODO move to configuration
     public static final List<Pattern> EXCLUDED_PROPS;
 
     static {
@@ -212,24 +218,41 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public void determineNamespaces(List<String> keys, boolean contentOnly) {
-        for (Property property : getPropertyList()) {
+        String primaryType = getPrimaryType();
+        addNameNamespace(keys, primaryType);
+        List<Property> properties = getPropertyList();
+        for (Property property : properties) {
             String ns = property.getNs();
-            if (StringUtils.isNotBlank(ns) && !keys.contains(ns)) {
-                keys.add(ns);
-            }
+            addNamespace(keys, ns);
         }
-        Resource contentResource;
-        if ((contentResource = resource.getChild("jcr:content")) != null) {
-            SourceModel subnodeModel = new SourceModel(config, context, contentResource);
-            subnodeModel.determineNamespaces(keys, false);
+        if (contentOnly) {
+            Resource contentResource;
+            if ((contentResource = resource.getChild("jcr:content")) != null) {
+                SourceModel subnodeModel = new SourceModel(config, context, contentResource);
+                subnodeModel.determineNamespaces(keys, false);
+            }
         } else {
-            if (!contentOnly) {
-                for (Resource subnode : getSubnodeList()) {
-                    SourceModel subnodeModel = new SourceModel(config, context, subnode);
-                    subnodeModel.determineNamespaces(keys, contentOnly);
-                }
+            for (Resource subnode : getSubnodeList()) {
+                SourceModel subnodeModel = new SourceModel(config, context, subnode);
+                subnodeModel.determineNamespaces(keys, false);
             }
         }
+    }
+
+    public void addNameNamespace(List<String> keys, String name) {
+        String ns = getNamespace(name);
+        addNamespace(keys, ns);
+    }
+
+    public void addNamespace(List<String> keys, String ns) {
+        if (StringUtils.isNotBlank(ns) && !keys.contains(ns)) {
+            keys.add(ns);
+        }
+    }
+
+    public String getNamespace(String name) {
+        int delim = name.indexOf(':');
+        return delim < 0 ? "" : name.substring(0, delim);
     }
 
     // Package output
@@ -337,7 +360,7 @@ public class SourceModel extends ConsoleSlingBean {
                         writeFile(zipStream, root, subnode);
                     } else {
                         SourceModel subnodeModel = new SourceModel(config, context, subnode);
-                        subnodeModel.writeZip(zipStream, root, writeDeep);
+                        subnodeModel.writeZip(zipStream, root, true);
                     }
                 }
             }
