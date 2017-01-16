@@ -1,6 +1,10 @@
 package com.composum.sling.nodes.servlet;
 
+import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.util.ISO9075;
 import org.apache.sling.api.resource.Resource;
@@ -11,6 +15,7 @@ import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -120,7 +125,6 @@ public class SourceModel extends ConsoleSlingBean {
             } else if (value instanceof Double || value instanceof Double[]) {
                 return "{" + PropertyType.TYPENAME_DOUBLE + "}";
             } else if (value instanceof Calendar || value instanceof Calendar[]) {
-                DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
                 return "{" + PropertyType.TYPENAME_DATE + "}";
             }
             return "";
@@ -143,11 +147,15 @@ public class SourceModel extends ConsoleSlingBean {
         }
     }
 
-    private transient String indent;
-    private transient String nameIndent;
+    protected final NodesConfiguration config;
 
     private transient List<Property> propertyList;
     private transient List<Resource> subnodeList;
+
+    public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
+        this.config = config;
+        initialize(context, resource);
+    }
 
     public String getName() {
         return resource.getName();
@@ -165,9 +173,7 @@ public class SourceModel extends ConsoleSlingBean {
     public List<Property> getPropertyList() {
         if (propertyList == null) {
             propertyList = new ArrayList<>();
-            Iterator<Map.Entry<String, Object>> iterator = resource.getProperties().entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<String, Object> entry = iterator.next();
+            for (Map.Entry<String, Object> entry : resource.getProperties().entrySet()) {
                 Property property = new Property(entry.getKey(), entry.getValue());
                 if (!isExcluded(property)) {
                     propertyList.add(property);
@@ -197,7 +203,9 @@ public class SourceModel extends ConsoleSlingBean {
             Iterator<Resource> iterator = resource.listChildren();
             while (iterator.hasNext()) {
                 Resource subnode = iterator.next();
-                subnodeList.add(subnode);
+                if (config.getSourceNodesFilter().accept(subnode)) {
+                    subnodeList.add(subnode);
+                }
             }
         }
         return subnodeList;
@@ -212,14 +220,12 @@ public class SourceModel extends ConsoleSlingBean {
         }
         Resource contentResource;
         if ((contentResource = resource.getChild("jcr:content")) != null) {
-            SourceModel subnodeModel = new SourceModel();
-            subnodeModel.initialize(context, contentResource);
+            SourceModel subnodeModel = new SourceModel(config, context, contentResource);
             subnodeModel.determineNamespaces(keys, false);
         } else {
             if (!contentOnly) {
                 for (Resource subnode : getSubnodeList()) {
-                    SourceModel subnodeModel = new SourceModel();
-                    subnodeModel.initialize(context, subnode);
+                    SourceModel subnodeModel = new SourceModel(config, context, subnode);
                     subnodeModel.determineNamespaces(keys, contentOnly);
                 }
             }
@@ -229,7 +235,7 @@ public class SourceModel extends ConsoleSlingBean {
     // Package output
 
     public void writePackage(OutputStream output, String group, String name, String version)
-            throws IOException {
+            throws IOException, RepositoryException {
 
         String root = "jcr_root";
         ZipOutputStream zipStream = new ZipOutputStream(output);
@@ -243,8 +249,6 @@ public class SourceModel extends ConsoleSlingBean {
 
     public void writeProperties(ZipOutputStream zipStream, String group, String name, String version)
             throws IOException {
-
-        String path = resource.getPath();
 
         ZipEntry entry;
         entry = new ZipEntry("META-INF/vault/properties.xml");
@@ -294,18 +298,18 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public void writeParents(ZipOutputStream zipStream, String root, Resource parent)
-            throws IOException {
+            throws IOException, RepositoryException {
         if (parent != null && !"/".equals(parent.getPath())) {
             writeParents(zipStream, root, parent.getParent());
-            SourceModel parentModel = new SourceModel();
-            parentModel.initialize(context, parent);
+            SourceModel parentModel = new SourceModel(config, context, parent);
             parentModel.writeZip(zipStream, root, false);
         }
     }
 
     // ZIP output
 
-    public void writeArchive(OutputStream output) throws IOException {
+    public void writeArchive(OutputStream output)
+            throws IOException, RepositoryException {
 
         ZipOutputStream zipStream = new ZipOutputStream(output);
         writeZip(zipStream, resource.getPath(), true);
@@ -314,7 +318,7 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public void writeZip(ZipOutputStream zipStream, String root, boolean writeDeep)
-            throws IOException {
+            throws IOException, RepositoryException {
 
         ZipEntry entry;
         String path = resource.getPath();
@@ -329,12 +333,27 @@ public class SourceModel extends ConsoleSlingBean {
         if (writeDeep) {
             for (Resource subnode : getSubnodeList()) {
                 if (!"jcr:content".equals(subnode.getName())) {
-                    SourceModel subnodeModel = new SourceModel();
-                    subnodeModel.initialize(context, subnode);
-                    subnodeModel.writeZip(zipStream, root, writeDeep);
+                    if (ResourceUtil.isFile(subnode)) {
+                        writeFile(zipStream, root, subnode);
+                    } else {
+                        SourceModel subnodeModel = new SourceModel(config, context, subnode);
+                        subnodeModel.writeZip(zipStream, root, writeDeep);
+                    }
                 }
             }
         }
+    }
+
+    public void writeFile(ZipOutputStream zipStream, String root, Resource file)
+            throws IOException, RepositoryException {
+        ZipEntry entry;
+        String path = file.getPath();
+        entry = new ZipEntry(getZipName(root, path));
+        zipStream.putNextEntry(entry);
+        try (InputStream fileContent = ResourceUtil.getBinaryData(file).getStream()) {
+            IOUtils.copy(fileContent, zipStream);
+        }
+        zipStream.closeEntry();
     }
 
     public String getZipName(String root, String path) {
@@ -373,8 +392,7 @@ public class SourceModel extends ConsoleSlingBean {
         writer.append(">\n");
         Resource contentResource;
         if ((contentResource = resource.getChild("jcr:content")) != null) {
-            SourceModel subnodeModel = new SourceModel();
-            subnodeModel.initialize(context, contentResource);
+            SourceModel subnodeModel = new SourceModel(config, context, contentResource);
             subnodeModel.writeXml(writer, "    ");
         } else {
             if (!contentOnly) {
@@ -400,8 +418,7 @@ public class SourceModel extends ConsoleSlingBean {
 
     public void writeSubnodes(Writer writer, String indent) throws IOException {
         for (Resource subnode : getSubnodeList()) {
-            SourceModel subnodeModel = new SourceModel();
-            subnodeModel.initialize(context, subnode);
+            SourceModel subnodeModel = new SourceModel(config, context, subnode);
             subnodeModel.writeXml(writer, indent);
         }
     }

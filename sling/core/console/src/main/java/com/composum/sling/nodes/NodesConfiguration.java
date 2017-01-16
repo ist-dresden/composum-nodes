@@ -24,6 +24,7 @@ public interface NodesConfiguration {
     String TREE_INTERMEDIATE_FILTER_KEY = "tree.intermediate.filter";
     String REFERENCEABLE_NODES_FILTER_KEY = "node.referenceable.filter";
     String ORDERABLE_NODES_FILTER_KEY = "node.orderable.filter";
+    String SOURCE_NODES_FILTER_KEY = "node.source.filter";
 
     String SOURCE_SERVLET_ENABLED = "source.servlet.enabled";
     String PACKAGE_SERVLET_ENABLED = "package.servlet.enabled";
@@ -50,6 +51,8 @@ public interface NodesConfiguration {
     ResourceFilter getReferenceableNodesFilter();
 
     ResourceFilter getOrderableNodesFilter();
+
+    ResourceFilter getSourceNodesFilter();
 
     Dictionary getProperties();
 }

@@ -112,6 +112,14 @@ public class NodesConfigImpl implements NodesConfiguration {
     private ResourceFilter orderableNodesFilter;
 
     @Property(
+            name = SOURCE_NODES_FILTER_KEY,
+            label = "XML Source Nodes Filter",
+            description = "the filter configuration for the source export of the repository content (Source Servlet)",
+            value = "PrimaryType(-'^cpp:(Statistics)$,^rep:(.+)$')"
+    )
+    private ResourceFilter sourceNodesFilter;
+
+    @Property(
             name = PACKAGE_SERVLET_ENABLED,
             label = "Package Servlet",
             description = "the general on/off switch for the services of the Package Servlet",
@@ -215,6 +223,11 @@ public class NodesConfigImpl implements NodesConfiguration {
         return orderableNodesFilter;
     }
 
+    @Override
+    public ResourceFilter getSourceNodesFilter() {
+        return sourceNodesFilter;
+    }
+
     public Dictionary getProperties() {
         return properties;
     }
@@ -242,6 +255,8 @@ public class NodesConfigImpl implements NodesConfiguration {
                 (String) properties.get(REFERENCEABLE_NODES_FILTER_KEY));
         orderableNodesFilter = ResourceFilterMapping.fromString(
                 (String) properties.get(ORDERABLE_NODES_FILTER_KEY));
+        sourceNodesFilter = ResourceFilterMapping.fromString(
+                (String) properties.get(SOURCE_NODES_FILTER_KEY));
         enabledServlets = new HashMap<>();
         enabledServlets.put("PackageServlet", packageServletEnabled =
                 (Boolean) properties.get(PACKAGE_SERVLET_ENABLED));
