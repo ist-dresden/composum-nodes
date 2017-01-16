@@ -110,7 +110,7 @@ public interface ResourceFilter {
         public TypeFilter(String names) {
             Matcher matcher = SIMPLE_ARRAY_PATTERN.matcher(names);
             if (matcher.matches()) {
-                restriction = "-".equalsIgnoreCase(matcher.group(1));
+                restriction = "-".equals(matcher.group(1));
                 names = matcher.group(2);
             }
             typeNames = Arrays.asList(StringUtils.split(names, ","));

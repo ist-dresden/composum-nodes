@@ -210,20 +210,13 @@ public class TextTag extends CpnlBodyTagSupport {
         if (matcher.matches()) {
             switch (matcher.group(1)) {
                 case "Message":
-                    setFormat(new MessageFormat(matcher.group(2)));
+                    this.format = new MessageFormat(matcher.group(2));
                     break;
                 case "Date":
-                    setFormat(new SimpleDateFormat(matcher.group(2)));
+                    this.format = new SimpleDateFormat(matcher.group(2));
                     break;
             }
         }
-    }
-
-    /**
-     * @param format the fmt to set
-     */
-    public void setFormat(Format format) {
-        this.format = format;
     }
 
     /**
