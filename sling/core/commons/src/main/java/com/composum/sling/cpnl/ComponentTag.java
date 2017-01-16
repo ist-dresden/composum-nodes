@@ -1,7 +1,7 @@
 package com.composum.sling.cpnl;
 
 import com.composum.sling.core.SlingBean;
-import com.composum.sling.core.BeanContext;
+import org.osgi.framework.InvalidSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,14 +19,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ComponentTag extends CpnlBodyTagSupport {
 
-    private static final Logger log = LoggerFactory.getLogger(ComponentTag.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ComponentTag.class);
 
     private String var;
     private String type;
     private Integer varScope;
     private Boolean replace;
 
-    protected BeanContext context;
     protected SlingBean component;
     protected Object replacedValue;
 
@@ -57,7 +56,6 @@ public class ComponentTag extends CpnlBodyTagSupport {
     @Override
     public int doStartTag() throws JspException {
         super.doStartTag();
-        context = new BeanContext.Page(pageContext);
         if (getVar() != null) {
             try {
                 if ((replacedValue = available()) == null || getReplace()) {
@@ -65,11 +63,11 @@ public class ComponentTag extends CpnlBodyTagSupport {
                     pageContext.setAttribute(getVar(), component, getVarScope());
                 }
             } catch (ClassNotFoundException ex) {
-                log.error("Class not found: " + this.type, ex);
+                LOG.error("Class not found: " + this.type, ex);
             } catch (IllegalAccessException ex) {
-                log.error("Could not access: " + this.type, ex);
+                LOG.error("Could not access: " + this.type, ex);
             } catch (InstantiationException ex) {
-                log.error("Could not instantiate: " + this.type, ex);
+                LOG.error("Could not instantiate: " + this.type, ex);
             }
         }
         return EVAL_BODY_INCLUDE;
@@ -157,7 +155,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
      */
     protected Class<? extends SlingBean> getComponentType() throws ClassNotFoundException {
         if (componentType == null) {
-            componentType = (Class<? extends SlingBean>) sling.getType(getType());
+            componentType = (Class<? extends SlingBean>) context.getType(getType());
         }
         return componentType;
     }
@@ -195,7 +193,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
     }
 
     protected void initialize(SlingBean component) {
-        component.initialize(new BeanContext.Page(pageContext));
+        component.initialize(context);
     }
 
     /**
@@ -230,7 +228,12 @@ public class ComponentTag extends CpnlBodyTagSupport {
      *
      */
     protected <T> T retrieveFirstServiceOfType(Class<T> serviceType, String filter) {
-        T[] services = sling.getScriptHelper().getServices(serviceType, filter);
+        T[] services = null;
+        try {
+            services = context.getServices(serviceType, filter);
+        } catch (InvalidSyntaxException ex) {
+            LOG.error(ex.getMessage(), ex);
+        }
         return services == null ? null : services[0];
     }
 }

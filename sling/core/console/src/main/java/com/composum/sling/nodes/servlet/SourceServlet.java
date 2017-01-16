@@ -4,6 +4,7 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.NodesConfiguration;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -12,6 +13,7 @@ import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.osgi.framework.BundleContext;
 
 import javax.jcr.RepositoryException;
 import javax.servlet.ServletException;
@@ -27,6 +29,13 @@ public class SourceServlet extends SlingSafeMethodsServlet {
 
     @Reference
     protected NodesConfiguration nodesConfig;
+
+    protected BundleContext bundleContext;
+
+    @Activate
+    private void activate(final BundleContext bundleContext) {
+        this.bundleContext = bundleContext;
+    }
 
     protected boolean isEnabled() {
         return nodesConfig.isEnabled(this);
@@ -53,7 +62,7 @@ public class SourceServlet extends SlingSafeMethodsServlet {
 
             try {
                 SourceModel sourceModel = new SourceModel(nodesConfig,
-                        new BeanContext.Servlet(getServletContext(), request, response),
+                        new BeanContext.Servlet(getServletContext(), bundleContext, request, response),
                         resource);
 
                 String name = resource.getName();

@@ -1,7 +1,6 @@
 package com.composum.sling.cpnl;
 
 import com.composum.sling.core.BeanContext;
-import com.composum.sling.core.SlingHandle;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
@@ -24,7 +23,7 @@ import javax.servlet.jsp.tagext.BodyTagSupport;
 public class CpnlBodyTagSupport extends BodyTagSupport {
 
     protected SlingHttpServletRequest request;
-    protected SlingHandle sling;
+    protected BeanContext context;
     protected JspWriter out;
 
     protected Resource resource;
@@ -41,7 +40,7 @@ public class CpnlBodyTagSupport extends BodyTagSupport {
     protected void clear() {
         resource = null;
         resourceResolver = null;
-        sling = null;
+        context = null;
         out = null;
         request = null;
         elContext = null;
@@ -51,14 +50,17 @@ public class CpnlBodyTagSupport extends BodyTagSupport {
 
     @Override
     public int doStartTag() throws JspException {
-        sling = new SlingHandle(new BeanContext.Page(pageContext));
+        context = createContext(pageContext);
         out = pageContext.getOut();
-
         request = TagUtil.getRequest(pageContext);
         resourceResolver = request.getResourceResolver();
         resource = request.getResource();
 
         return super.doStartTag();
+    }
+
+    protected BeanContext createContext(PageContext pageContext) {
+        return new BeanContext.Page(pageContext);
     }
 
     /*
