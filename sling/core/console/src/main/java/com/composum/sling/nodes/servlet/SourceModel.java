@@ -6,6 +6,7 @@ import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.util.ISO9075;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
@@ -227,7 +228,7 @@ public class SourceModel extends ConsoleSlingBean {
         }
         if (contentOnly) {
             Resource contentResource;
-            if ((contentResource = resource.getChild("jcr:content")) != null) {
+            if ((contentResource = resource.getChild(JcrConstants.JCR_CONTENT)) != null) {
                 SourceModel subnodeModel = new SourceModel(config, context, contentResource);
                 subnodeModel.determineNamespaces(keys, false);
             }
@@ -355,7 +356,7 @@ public class SourceModel extends ConsoleSlingBean {
 
         if (writeDeep) {
             for (Resource subnode : getSubnodeList()) {
-                if (!"jcr:content".equals(subnode.getName())) {
+                if (!JcrConstants.JCR_CONTENT.equals(subnode.getName())) {
                     if (ResourceUtil.isFile(subnode)) {
                         writeFile(zipStream, root, subnode);
                     } else {
@@ -414,9 +415,15 @@ public class SourceModel extends ConsoleSlingBean {
         writeProperties(writer, "        ");
         writer.append(">\n");
         Resource contentResource;
-        if ((contentResource = resource.getChild("jcr:content")) != null) {
+        if ((contentResource = resource.getChild(JcrConstants.JCR_CONTENT)) != null) {
             SourceModel subnodeModel = new SourceModel(config, context, contentResource);
             subnodeModel.writeXml(writer, "    ");
+            for (Resource subnode : getSubnodeList()) {
+                String name = subnode.getName();
+                if (!JcrConstants.JCR_CONTENT.equals(name)) {
+                    writer.append("    <").append(name).append("/>\n");
+                }
+            }
         } else {
             if (!contentOnly) {
                 writeSubnodes(writer, "    ");
