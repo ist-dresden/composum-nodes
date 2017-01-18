@@ -64,8 +64,17 @@
                     if (this.view) {
                         if (this.view.$el.parent().closest('.multi-form-item').length == 0 &&
                             _.isFunction(this.view.getValue)) {
-                            var name = core.getWidgetName(this.view);
-                            values[name] = this.view.getValue.apply(this.view);
+                            var name = core.getWidgetName(this.view).split('.');
+                            // store 'structured names' in a complex object...
+                            var object = values;
+                            for (var i = 0; i < name.length; i++) {
+                                if (i < name.length-1) {
+                                    object[name[i]] = object[name[i]] || {};
+                                    object = object[name[i]];
+                                } else {
+                                    object[name[i]] = this.view.getValue.apply(this.view);
+                                }
+                            }
                         }
                     }
                 });
@@ -80,8 +89,18 @@
                     if (this.view) {
                         if (this.view.$el.parent().closest('.multi-form-item').length == 0 &&
                             _.isFunction(this.view.setValue)) {
-                            var name = core.getWidgetName(this.view);
-                            this.view.setValue.apply(this.view, [values ? values[name] : undefined]);
+                            var name = core.getWidgetName(this.view).split('.');
+                            // map complex object to 'structured names'...
+                            var object = values;
+                            for (var i = 0; i < name.length; i++) {
+                                if (i < name.length-1) {
+                                    if (object) {
+                                        object = object[name[i]];
+                                    }
+                                } else {
+                                    this.view.setValue.apply(this.view, [object ? object[name[i]] : undefined]);
+                                }
+                            }
                         }
                     }
                 });
