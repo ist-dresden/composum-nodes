@@ -62,8 +62,8 @@
                         sortable: false,
                         width: '50px'
                     });
-                    options.singleSelect= true;
-                    options.clickToSelect=true;
+                    options.singleSelect = true;
+                    options.clickToSelect = true;
                 }
 
                 this.$el.bootstrapTable(_.extend({
@@ -88,18 +88,18 @@
                 return rows;
             },
 
-            getData: function(idx) {
+            getData: function (idx) {
                 var rows = this.$el.bootstrapTable('getData');
-                return _.find(rows, function(row) {
+                return _.find(rows, function (row) {
                     return (row.index == idx);
                 })
             },
 
-            check: function(idx) {
+            check: function (idx) {
                 this.$el.bootstrapTable('check', idx);
             },
 
-            numberOfRows: function() {
+            numberOfRows: function () {
                 return this.$el.bootstrapTable('getData').length;
             }
         });

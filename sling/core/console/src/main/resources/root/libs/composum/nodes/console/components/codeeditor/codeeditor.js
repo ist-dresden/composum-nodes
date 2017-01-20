@@ -22,7 +22,7 @@
                 this.editor.$editor.attr('data-path', this.path);
                 this.editor.$editor.attr('data-type', this.type);
                 this.editor.initEditor();
-                this.editor.setSaveCommand( _.bind(function (editor) {
+                this.editor.setSaveCommand(_.bind(function (editor) {
                     this.save();
                 }, this));
 

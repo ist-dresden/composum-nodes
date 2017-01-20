@@ -133,5 +133,5 @@
         });
 
     })(core.pckgmgr);
-
+    
 })(window.core);

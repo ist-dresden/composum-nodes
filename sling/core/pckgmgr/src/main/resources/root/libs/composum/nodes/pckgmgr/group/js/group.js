@@ -2,16 +2,16 @@
  *
  *
  */
-(function(core) {
+(function (core) {
     'use strict';
 
     core.pckgmgr = core.pckgmgr || {};
 
-    (function(pckgmgr) {
+    (function (pckgmgr) {
 
         pckgmgr.GroupTab = core.console.DetailTab.extend({
 
-            initialize: function(options) {
+            initialize: function (options) {
             }
         });
 

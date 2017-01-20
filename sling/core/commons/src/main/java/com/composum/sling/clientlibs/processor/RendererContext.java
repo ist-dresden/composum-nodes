@@ -48,7 +48,7 @@ public class RendererContext {
         for (ClientlibLink link : renderedClientlibs) {
             if (reference.use(link)) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("rendered: " + reference.path + " - using: " + reference.getUsedAlternative());
+                    LOG.debug("rendered: " + reference.keyPath + " - using: " + reference.getUsedAlternative());
                 }
                 return true;
             }
@@ -69,6 +69,10 @@ public class RendererContext {
 
     public boolean mapClientlibURLs() {
         return getClientlibService().mapClientlibURLs();
+    }
+
+    public boolean useMinifiedFiles() {
+        return getClientlibService().useMinifiedFiles();
     }
 
     public ClientlibService getClientlibService() {

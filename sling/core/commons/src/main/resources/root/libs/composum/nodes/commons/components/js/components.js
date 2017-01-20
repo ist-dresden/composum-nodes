@@ -68,7 +68,7 @@
                             // store 'structured names' in a complex object...
                             var object = values;
                             for (var i = 0; i < name.length; i++) {
-                                if (i < name.length-1) {
+                                if (i < name.length - 1) {
                                     object[name[i]] = object[name[i]] || {};
                                     object = object[name[i]];
                                 } else {
@@ -93,7 +93,7 @@
                             // map complex object to 'structured names'...
                             var object = values;
                             for (var i = 0; i < name.length; i++) {
-                                if (i < name.length-1) {
+                                if (i < name.length - 1) {
                                     if (object) {
                                         object = object[name[i]];
                                     }

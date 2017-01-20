@@ -99,6 +99,11 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     @Override
+    public boolean useMinifiedFiles() {
+        return clientlibConfig.getUseMinifiedFiles();
+    }
+
+    @Override
     public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
                                      Writer writer, RendererContext context)
             throws IOException {
@@ -174,7 +179,8 @@ public class DefaultClientlibService implements ClientlibService {
                 ResourceResolver resolver = createResolverForChanges();
                 try {
                     final ProcessorContext context = new ProcessorContext(
-                            request, resolver, executorService, hints, mapClientlibURLs());
+                            request, resolver, executorService, hints, mapClientlibURLs(),
+                            cachePath.matches(".*/[^/]+\\.min\\.[^./]+$"));
 
                     final Clientlib.Type type = clientlib.getType();
 
@@ -184,7 +190,7 @@ public class DefaultClientlibService implements ClientlibService {
                         resolver.commit();
                     }
 
-                    String[] separated = Clientlib.splitPathAndName(cachePath);
+                    String[] separated = ResourceUtil.splitPathAndName(cachePath);
                     Resource parent = giveParent(resolver, separated[0]);
                     try {
                         resolver.adaptTo(Session.class).refresh(true);
@@ -303,7 +309,7 @@ public class DefaultClientlibService implements ClientlibService {
             }
             resource = resolver.getResource(path);
             if (resource == null) {
-                String[] separated = Clientlib.splitPathAndName(path);
+                String[] separated = ResourceUtil.splitPathAndName(path);
                 Resource parent = giveParent(resolver, separated[0]);
                 try {
                     try {

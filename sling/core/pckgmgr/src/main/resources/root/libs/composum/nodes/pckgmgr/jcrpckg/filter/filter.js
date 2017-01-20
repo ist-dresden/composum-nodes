@@ -305,5 +305,5 @@
         });
 
     })(core.pckgmgr);
-
+    
 })(window.core);

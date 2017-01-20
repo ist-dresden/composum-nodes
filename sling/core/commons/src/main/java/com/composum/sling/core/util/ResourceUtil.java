@@ -254,6 +254,14 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
         return false;
     }
 
+    public static String[] splitPathAndName(String path) {
+        String[] result = new String[2];
+        int nameSeparator = path.lastIndexOf('/');
+        result[0] = path.substring(0, nameSeparator);
+        result[1] = path.substring(nameSeparator + 1);
+        return result;
+    }
+
     /**
      * Retrieves the resources child resource, creates this child if not existing.
      *

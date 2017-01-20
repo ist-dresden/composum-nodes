@@ -11,7 +11,6 @@
 
         /**
          * the 'code-editor-widget'
-         *
          */
         components.CodeEditorWidget = Backbone.View.extend({
 

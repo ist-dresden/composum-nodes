@@ -42,7 +42,7 @@
                     _.bind(function (result) {
                         core.alert('danger', 'Error', 'Error on loading policies', result);
                     }, this),
-                    _.bind(function(result) {
+                    _.bind(function (result) {
                         if (_.isFunction(callback)) {
                             callback(result);
                         }
@@ -50,11 +50,11 @@
                 );
             },
 
-            addAcl: function(event) {
+            addAcl: function (event) {
                 browser.openAccessPolicyEntryDialog(_.bind(this.reload, this));
             },
 
-            up: function(event) {
+            up: function (event) {
                 var path = browser.getCurrentPath();
                 var selected = this.localTable.getSelections();
                 //var entries = [];
@@ -82,7 +82,7 @@
                 }
             },
 
-            down: function(event) {
+            down: function (event) {
                 var path = browser.getCurrentPath();
                 var selected = this.localTable.getSelections();
                 //var entries = [];

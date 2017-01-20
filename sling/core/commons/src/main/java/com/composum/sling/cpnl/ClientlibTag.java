@@ -81,7 +81,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
                 if (StringUtils.isNotBlank(path)) {
                     ClientlibRef reference = new ClientlibRef(type, path, true, false);
                     if (!rendererContext.isClientlibRendered(reference)) {
-                        ClientlibLink link = new ClientlibLink(clientlib);
+                        ClientlibLink link = new ClientlibLink(clientlib, true);
                         rendererContext.registerClientlibLink(link);
                         JspWriter writer = this.pageContext.getOut();
                         switch (type) {

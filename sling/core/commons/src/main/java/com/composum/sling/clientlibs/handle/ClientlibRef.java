@@ -69,7 +69,7 @@ public class ClientlibRef extends ClientlibKey {
      * check an already present link for compatibility and use this link if possible
      */
     public boolean use(ClientlibLink link) {
-        if (type == link.type && pattern.matcher(link.path).matches()) {
+        if (type == link.type && pattern.matcher(link.keyPath).matches()) {
             usedAlternative = link;
             return true;
         }
@@ -86,7 +86,7 @@ public class ClientlibRef extends ClientlibKey {
         // (xxxx:yyy) -> xxxx
         rule = rule.replaceAll("\\(([^:]+):[^)]+\\)", "$1");
         // make '.min' optional
-        rule = rule.replaceAll("([\\.-]min)\\.", "($1)?.");
+        rule = rule.replaceAll("([\\.-]min)(\\.[^./]+)?$", "($1)?$2");
         // check dots as dots
         rule = rule.replaceAll("\\.", "\\\\.");
         // allow code paths at start

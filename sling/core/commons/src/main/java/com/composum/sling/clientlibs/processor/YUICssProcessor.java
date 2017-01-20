@@ -46,7 +46,7 @@ public class YUICssProcessor implements CssProcessor {
                                      Writer writer, RendererContext context,
                                      String template)
             throws IOException {
-        List<ClientlibLink> links = clientlib.getLinks(context, clientlibConfig.getCssDebug());
+        List<ClientlibLink> links = clientlib.getLinks(context, clientlibConfig.getDebug());
         for (int i = 0; i < links.size(); ) {
             ClientlibLink link = links.get(i);
             writer.append(MessageFormat.format(template, link.getUrl(context)));
@@ -62,7 +62,7 @@ public class YUICssProcessor implements CssProcessor {
         InputStream result = source;
         if (source != null) {
             context.hint(ResourceUtil.PROP_MIME_TYPE, "text/css");
-            if (clientlibConfig.getCssMinimize()) {
+            if (context.useMinifiedFiles() && clientlibConfig.getCssMinimize()) {
                 final PipedOutputStream outputStream = new PipedOutputStream();
                 result = new PipedInputStream(outputStream);
                 context.execute(new Runnable() {
