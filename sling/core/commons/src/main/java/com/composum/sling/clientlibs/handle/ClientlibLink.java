@@ -36,7 +36,7 @@ public class ClientlibLink extends ClientlibKey {
                          Map<String, String> properties, boolean minified) {
         super(type, resource.getPath(), properties);
         this.libPath = resource.getPath();
-        this.minified = minified;
+        this.minified = minified && Clientlib.getMinifiedSibling(resource) != resource;
     }
 
     public String getUrl(RendererContext context) {
