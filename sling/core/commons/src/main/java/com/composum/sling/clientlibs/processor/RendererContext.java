@@ -77,19 +77,8 @@ public class RendererContext {
 
     public ClientlibService getClientlibService() {
         if (clientlibService == null) {
-            clientlibService = getService(ClientlibService.class);
+            clientlibService = context.getService(ClientlibService.class);
         }
         return clientlibService;
-    }
-
-    public SlingScriptHelper getScriptHelper() {
-        if (scriptHelper == null) {
-            scriptHelper = context.getAttribute("sling", SlingScriptHelper.class);
-        }
-        return scriptHelper;
-    }
-
-    public <ServiceType> ServiceType getService(Class<ServiceType> type) {
-        return getScriptHelper().getService(type);
     }
 }
