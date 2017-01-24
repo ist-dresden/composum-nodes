@@ -441,7 +441,7 @@
 }
 
 #browser-view .bootstrap-table table th .th-inner {
-    line-height: normal;
+    line-height: 23px;
     padding: 0;
 }
 
@@ -450,12 +450,12 @@
     font-size: 14px;
     font-weight: normal;
     line-height: 25px;
-    padding: 2px 5px;
+    padding: 2px 5px !important;
 }
 
 #browser-view .bootstrap-table table th.bs-checkbox,
 #browser-view .bootstrap-table table td.bs-checkbox {
-    padding: 8px 5px 8px 6px;
+    padding: 8px 5px 8px 6px !important;
 }
 
 #browser-view .bootstrap-table thead tr {
