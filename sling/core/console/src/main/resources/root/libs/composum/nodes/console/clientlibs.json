@@ -186,21 +186,21 @@
       "jcr:primaryType": "nt:unstructured",
       "expanded": true,
       "embed": [
-        "jslibs/ace/1.2.5/ace.js",
-        "jslibs/ace/1.2.5/mode-json.js",
-        "jslibs/ace/1.2.5/mode-xml.js",
-        "jslibs/ace/1.2.5/mode-html.js",
-        "jslibs/ace/1.2.5/mode-jsp.js",
-        "jslibs/ace/1.2.5/mode-css.js",
-        "jslibs/ace/1.2.5/mode-less.js",
-        "jslibs/ace/1.2.5/mode-javascript.js",
-        "jslibs/ace/1.2.5/mode-dart.js",
-        "jslibs/ace/1.2.5/mode-groovy.js",
-        "jslibs/ace/1.2.5/mode-java.js",
-        "jslibs/ace/1.2.5/mode-scala.js",
-        "jslibs/ace/1.2.5/mode-markdown.js",
-        "jslibs/ace/1.2.5/mode-text.js",
-        "jslibs/ace/1.2.5/theme-clouds.js"
+        "jslibs/ace/1.2.6/ace.js",
+        "jslibs/ace/1.2.6/mode-json.js",
+        "jslibs/ace/1.2.6/mode-xml.js",
+        "jslibs/ace/1.2.6/mode-html.js",
+        "jslibs/ace/1.2.6/mode-jsp.js",
+        "jslibs/ace/1.2.6/mode-css.js",
+        "jslibs/ace/1.2.6/mode-less.js",
+        "jslibs/ace/1.2.6/mode-javascript.js",
+        "jslibs/ace/1.2.6/mode-dart.js",
+        "jslibs/ace/1.2.6/mode-groovy.js",
+        "jslibs/ace/1.2.6/mode-java.js",
+        "jslibs/ace/1.2.6/mode-scala.js",
+        "jslibs/ace/1.2.6/mode-markdown.js",
+        "jslibs/ace/1.2.6/mode-text.js",
+        "jslibs/ace/1.2.6/theme-clouds.js"
       ]
     }
   }
