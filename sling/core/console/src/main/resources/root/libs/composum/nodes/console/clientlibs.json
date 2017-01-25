@@ -83,7 +83,7 @@
       "depends": [
         "fonts/awesome/4.6.3/css/font-awesome.css",
         "jslibs/bootstrap/3.3.7/css/bootstrap.min.css",
-        "jslibs/jstree/3.3.0/themes/proton/style.min.css",
+        "jslibs/jstree/3.3.3/themes/proton/style.min.css",
         "jslibs/x-editable/1.5.1/bootstrap3-editable/css/bootstrap-editable.css",
         "jslibs/bootstrap-fileinput/4.3.6/css/fileinput.min.css"
       ],
@@ -140,7 +140,7 @@
         "embed": "jslibs/split-pane/0.9.3/split-pane.js"
       },
       "jstree": {
-        "embed": "jslibs/jstree/3.3.0/jstree.js"
+        "embed": "jslibs/jstree/3.3.3/jstree.js"
       }
     }
   },
