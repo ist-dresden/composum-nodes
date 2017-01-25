@@ -76,9 +76,9 @@ public class ClientlibRef extends ClientlibKey {
         return false;
     }
 
-    // transform version rules like "jslibs/jquery/([1-3]*:3.1.1)/jquery.min.js"
-    // to a regex pattern (e.g. "^.*/jslibs/jquery/[1-3][^/]*/jquery([\\.-]min)?.js$")
-    // and to a path to the preferred artifact (e.g. "jslibs/jquery/3.1.1)/jquery.min.js")
+    // transform version rules like "jslibs/jquery/([1-3]*:3.1.1)/jquery.js"
+    // to a regex pattern (e.g. "^.*/jslibs/jquery/[1-3][^/]*/jquery.js$")
+    // and to a path to the preferred artifact (e.g. "jslibs/jquery/3.1.1)/jquery.js")
 
     protected Pattern ruleToPattern(String rule) {
         // (xxx*:yyy) -> (xxx[^/]*:yyy)
