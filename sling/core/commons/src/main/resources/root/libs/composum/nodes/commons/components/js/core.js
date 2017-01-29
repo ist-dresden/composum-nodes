@@ -7,13 +7,29 @@
 
     window.widgets = {
 
+        const: {
+            css: {
+                base: 'widget',
+                selector: {
+                    general: '.widget',
+                    prefix: '.widget.'
+                }
+            }
+        },
+
         registered: {},
 
         /**
          * Register a widget type by a DOM selector as key for this type.
+         * @param selector    the jQuery selector to find the widgets instances
+         * @param widgetClass the widget implementation class (required)
+         * @param options     additional options (see richtext-widget for example)
          */
-        register: function (selector, widgetClass) {
-            widgets.registered[selector] = widgetClass;
+        register: function (selector, widgetClass, options) {
+            widgets.registered[selector] = _.extend({
+                selector: selector,
+                widgetClass: widgetClass
+            }, options);
         },
 
         /**
@@ -25,8 +41,32 @@
             var $root = $(root);
             _.keys(widgets.registered).forEach(function (selector) {
                 $root.find(selector).each(function () {
-                    core.getView(this, widgets.registered[selector]);
+                    var widget = widgets.registered[selector];
+                    core.getView(this, widget.widgetClass);
                 });
+            });
+        },
+
+        /**
+         * applies the abstract 'option' (must be a function) to all widgets which have such
+         * an option registered and are matching to the widgets selector in the 'root's context
+         * used for example
+         *  - by the multi-form-widget to apply the 'afterClone' option after item creation (cloning)
+         */
+        apply: function (root, option) {
+            _.keys(widgets.registered).forEach(function (selector) {
+                var widget = widgets.registered[selector];
+                var method = widget[option];
+                if (_.isFunction(method)) {
+                    var $root = $(root);
+                    if ($root.is(widget.selector)) {
+                        method.apply(root);
+                    } else {
+                        $root.find(widget.selector).each(function () {
+                            method.apply(this);
+                        });
+                    }
+                }
             });
         }
     };

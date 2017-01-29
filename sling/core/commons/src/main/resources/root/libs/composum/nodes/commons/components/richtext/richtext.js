@@ -58,17 +58,19 @@
             }
         });
 
-        widgets.register('.widget.richtext-widget', components.RichTextWidget);
+        widgets.register('.widget.richtext-widget', components.RichTextWidget, {
 
-        components.richTextWidget = {
-
-            afterClone: function ($el) {
+            /**
+             * reset a cloned instance to the 'original' DOM element only
+             */
+            afterClone: function () {
+                var $el = $(this);
                 var $wrapper = $(document.createElement('div'));
                 var $content = $el.find('.composum-widgets-richtext_value').clone();
                 $wrapper.append($content);
                 $el.html($wrapper.html());
             }
-        };
+        });
 
         /**
          * trumbowyg editor customizing
