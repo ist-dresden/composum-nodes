@@ -5,6 +5,32 @@
 (function (window) {
     'use strict';
 
+    window.widgets = {
+
+        registered: {},
+
+        /**
+         * Register a widget type by a DOM selector as key for this type.
+         */
+        register: function (selector, widgetClass) {
+            widgets.registered[selector] = widgetClass;
+        },
+
+        /**
+         * Set up all components of a DOM element; add a view at each element marked with
+         * a widget css class. Uses the 'core.getView()' function to add the View to the
+         * DOM element itself to avoid multiple View instances for one DOM element.
+         */
+        setUp: function (root) {
+            var $root = $(root);
+            _.keys(widgets.registered).forEach(function (selector) {
+                $root.find(selector).each(function () {
+                    core.getView(this, widgets.registered[selector]);
+                });
+            });
+        }
+    };
+
     window.core = {
 
         getHtml: function (url, onSuccess, onError, onComplete) {
@@ -63,7 +89,7 @@
                 error: function (result) {
                     if (core.isNotAuthorized(result)) {
                         if (_.isFunction(core.unauthorizedDelegate)) {
-                            core.unauthorizedDelegate(function(){
+                            core.unauthorizedDelegate(function () {
                                 // try it once more after delegation to authorize
                                 core.ajaxCall(config, onSuccess, onError, onComplete);
                             });
@@ -149,7 +175,7 @@
                 error: function (result) {
                     if (core.isNotAuthorized(result)) {
                         if (_.isFunction(core.unauthorizedDelegate)) {
-                            core.unauthorizedDelegate(function(){
+                            core.unauthorizedDelegate(function () {
                                 // try it once more after delegation to authorize
                                 core.submitForm(formElement, onSuccess, onError, onComplete);
                             });
@@ -241,7 +267,7 @@
             });
         },
 
-        isNotAuthorized: function(result) {
+        isNotAuthorized: function (result) {
             return result.status == 401 || result.status == 403;
         },
 

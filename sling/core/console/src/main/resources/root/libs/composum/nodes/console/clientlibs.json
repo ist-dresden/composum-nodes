@@ -54,7 +54,7 @@
         "composum/nodes/console/clientlibs/base"
       ],
       "embed": [
-        "jslibs/trumbowyg/2.3.0/ui/trumbowyg.min.css",
+        "jslibs/trumbowyg/2.3.0/ui/trumbowyg.css",
         "composum/nodes/commons/components/clientlibs/components",
         "composum/nodes/console/page/css/console.css"
       ]
@@ -82,15 +82,15 @@
       "jcr:primaryType": "nt:unstructured",
       "depends": [
         "fonts/awesome/4.6.3/css/font-awesome.css",
-        "jslibs/bootstrap/3.3.7/css/bootstrap.min.css",
-        "jslibs/jstree/3.3.0/themes/proton/style.min.css",
+        "jslibs/bootstrap/3.3.7/css/bootstrap.css",
+        "jslibs/jstree/3.3.3/themes/proton/style.css",
         "jslibs/x-editable/1.5.1/bootstrap3-editable/css/bootstrap-editable.css",
-        "jslibs/bootstrap-fileinput/4.3.6/css/fileinput.min.css"
+        "jslibs/bootstrap-fileinput/4.3.6/css/fileinput.css"
       ],
       "embed": [
-        "jslibs/bootstrap/3.3.7/css/bootstrap-theme.min.css",
-        "jslibs/bootstrap-table/1.7.0/bootstrap-table.min.css",
-        "jslibs/bootstrap-datetimepicker/4.14.30/css/bootstrap-datetimepicker.min.css",
+        "jslibs/bootstrap/3.3.7/css/bootstrap-theme.css",
+        "jslibs/bootstrap-table/1.7.0/bootstrap-table.css",
+        "jslibs/bootstrap-datetimepicker/4.14.30/css/bootstrap-datetimepicker.css",
         "jslibs/split-pane/0.9.3/split-pane.css"
       ]
     },
@@ -140,7 +140,7 @@
         "embed": "jslibs/split-pane/0.9.3/split-pane.js"
       },
       "jstree": {
-        "embed": "jslibs/jstree/3.3.0/jstree.js"
+        "embed": "jslibs/jstree/3.3.3/jstree.js"
       }
     }
   },
@@ -149,12 +149,12 @@
     "css": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "fonts/awesome/4.6.3/css/font-awesome.min.css",
+        "fonts/awesome/4.6.3/css/font-awesome.css",
         "composum/nodes/console/clientlibs/ace"
       ],
       "embed": [
-        "jslibs/bootstrap/3.3.7/css/bootstrap.min.css",
-        "jslibs/bootstrap/3.3.7/css/bootstrap-theme.min.css",
+        "jslibs/bootstrap/3.3.7/css/bootstrap.css",
+        "jslibs/bootstrap/3.3.7/css/bootstrap-theme.css",
         "composum/nodes/console/page/css/console.css",
         "composum/nodes/console/components/codeeditor/codeeditor.css"
       ]
@@ -174,7 +174,6 @@
         "composum/nodes/commons/components/js/components.js",
         "composum/nodes/commons/components/js/codeEditor.js",
         "composum/nodes/commons/components/js/multiform.js",
-        "composum/nodes/commons/components/js/init.js",
         "composum/nodes/console/page/js/console.js",
         "composum/nodes/console/components/codeeditor/codeeditor.js"
       ]

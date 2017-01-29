@@ -21,7 +21,7 @@
             },
 
             setUpWidgets: function(root) {
-                components.setUp(root);
+                window.widgets.setUp(root);
             },
 
             /**

@@ -4,10 +4,10 @@
     "css": {
       "jcr:primaryType": "sling:OrderedFolder",
       "bootstrap": {
-        "embed": "jslibs/bootstrap/3.3.7/css/bootstrap.min.css"
+        "embed": "jslibs/bootstrap/3.3.7/css/bootstrap.css"
       },
       "bootstrap-theme": {
-        "embed": "jslibs/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+        "embed": "jslibs/bootstrap/3.3.7/css/bootstrap-theme.css"
       }
     },
     "js": {
@@ -57,7 +57,7 @@
       "jcr:primaryType": "sling:OrderedFolder",
       "embed": [
         "composum/nodes/commons/components/css/components.css",
-        "jslibs/trumbowyg/2.3.0/ui/trumbowyg.min.css",
+        "jslibs/trumbowyg/2.3.0/ui/trumbowyg.css",
         "composum/nodes/commons/components/richtext/richtext.css"
       ]
     },
@@ -73,7 +73,6 @@
         "composum/nodes/commons/components/js/tree.js",
         "composum/nodes/commons/components/js/multiform.js",
         "composum/nodes/commons/components/js/components.js",
-        "composum/nodes/commons/components/js/init.js",
         "composum/nodes/commons/components/js/dialogs.js",
         "composum/nodes/commons/components/richtext/richtext.js",
         "composum/nodes/commons/components/js/codeEditor.js"

@@ -7,7 +7,7 @@
 
     core.components = core.components || {};
 
-    (function (components) {
+    (function (components, widgets) {
 
         //
         // Multi 'Form'
@@ -155,7 +155,7 @@
                         item.$el.prepend('<input class="item-select form-control" type="radio" name="item-select-' + this.name + '">');
                     }
                     item.$('.item-select').unbind('click').on('click', _.bind(this.onSelect, this));
-                    components.setUp(item.el);
+                    window.widgets.setUp(item.el);
                 }, this), this.itemType != components.MultiFormItem);
                 return item;
             },
@@ -253,6 +253,8 @@
             }
         });
 
-    })(core.components);
+        widgets.register('.widget.multi-form-widget', components.MultiFormWidget);
+
+    })(core.components, window.widgets);
 
 })(window.core);
