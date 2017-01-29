@@ -21,10 +21,10 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(ComponentTag.class);
 
-    private String var;
-    private String type;
-    private Integer varScope;
-    private Boolean replace;
+    protected String var;
+    protected String type;
+    protected Integer varScope;
+    protected Boolean replace;
 
     protected SlingBean component;
     protected Object replacedValue;
