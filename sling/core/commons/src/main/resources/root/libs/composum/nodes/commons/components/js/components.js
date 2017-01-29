@@ -7,7 +7,7 @@
 
     core.components = core.components || {};
 
-    (function (components) {
+    (function (components, widgets) {
 
         //
         // Form
@@ -133,6 +133,8 @@
             }
         });
 
+        widgets.register('form.widget-form', components.FormWidget);
+
         //
         // Field Types
         //
@@ -176,6 +178,8 @@
                 this.$checkkox.prop('checked', false);
             }
         });
+
+        widgets.register('.widget.checkbox-widget', components.CheckboxWidget);
 
         /**
          * the 'select-buttons-widget' (window.core.components.SelectButtonsWidget)
@@ -241,6 +245,8 @@
             }
         });
 
+        widgets.register('.widget.radio-group-widget', components.RadioGroupWidget);
+
         /**
          * the 'combo-box-widget' (window.core.components.ComboBoxWidget)
          * possible attributes:
@@ -265,6 +271,8 @@
                 this.$el.selectedIndex = -1;
             }
         });
+
+        widgets.register('.widget.combo-box-widget', components.ComboBoxWidget);
 
         /**
          * the 'text-field-widget' (window.core.components.TextFieldWidget)
@@ -398,6 +406,8 @@
             }
         });
 
+        widgets.register('.widget.text-field-widget', components.TextFieldWidget);
+
         /**
          * the 'text-field-widget' (window.core.components.TextFieldWidget)
          *
@@ -515,6 +525,8 @@
             }
         });
 
+        widgets.register('.widget.text-area-widget', components.TextAreaWidget);
+
         /**
          * the 'path-widget' (window.core.components.PathWidget)
          *
@@ -598,6 +610,8 @@
             }
         });
 
+        widgets.register('.widget.path-widget', components.PathWidget);
+
         /**
          * the 'reference-widget' (window.core.components.ReferenceWidget)
          */
@@ -655,6 +669,8 @@
                 }
             }
         });
+
+        widgets.register('.widget.reference-widget', components.ReferenceWidget);
 
         /**
          * the 'number-field-widget' (window.core.components.NumberFieldWidget)
@@ -720,6 +736,8 @@
             }
         });
 
+        widgets.register('.widget.number-field-widget', components.NumberFieldWidget);
+
         /**
          * the 'date-time-widget' (window.core.components.DateTimeWidget)
          * possible attributes:
@@ -773,6 +791,8 @@
             }
         });
 
+        widgets.register('.widget.date-time-widget', components.DateTimeWidget);
+
         /**
          * the 'file-upload-widget' (window.core.components.FileUploadWidget)
          * possible attributes:
@@ -810,6 +830,8 @@
             }
         });
 
+        widgets.register('.widget.file-upload-widget', components.FileUploadWidget);
+
         /**
          * the 'property-name-widget' (window.core.components.RepositoryNameWidget)
          */
@@ -837,6 +859,8 @@
             }
         });
 
+        widgets.register('.widget.property-name-widget', components.PropertyNameWidget);
+
         /**
          * the 'repository-name-widget' (window.core.components.RepositoryNameWidget)
          */
@@ -851,6 +875,8 @@
                 }
             }
         });
+
+        widgets.register('.widget.repository-name-widget', components.RepositoryNameWidget);
 
         /**
          * the 'primary-type-widget' (window.core.components.PrimaryTypeWidget)
@@ -875,6 +901,8 @@
             }
         });
 
+        widgets.register('.widget.primary-type-widget', components.PrimaryTypeWidget);
+
         /**
          * the 'mixin-type-widget' (window.core.components.MixinTypeWidget)
          */
@@ -898,6 +926,8 @@
             }
         });
 
-    })(core.components);
+        widgets.register('.widget.mixin-type-widget', components.MixinTypeWidget);
+
+    })(core.components, window.widgets);
 
 })(window.core);

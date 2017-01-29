@@ -58,6 +58,8 @@
             }
         });
 
+        widgets.register('.widget.richtext-widget', components.RichTextWidget);
+
         components.richTextWidget = {
 
             afterClone: function ($el) {
@@ -81,7 +83,7 @@
                         form = core.getWidget($dialog[0], 'form', core.components.FormWidget),
                         formWidgets = {};
                     $dialog.addClass('composum-widgets-richtext_link-dialog');
-                    components.setUp(form.el);
+                    window.widgets.setUp(form.el);
 
                     form.$('[name]').each(function () {
                         var name = $(this).attr('name');

@@ -73,7 +73,6 @@
         "composum/nodes/commons/components/js/tree.js",
         "composum/nodes/commons/components/js/multiform.js",
         "composum/nodes/commons/components/js/components.js",
-        "composum/nodes/commons/components/js/init.js",
         "composum/nodes/commons/components/js/dialogs.js",
         "composum/nodes/commons/components/richtext/richtext.js",
         "composum/nodes/commons/components/js/codeEditor.js"

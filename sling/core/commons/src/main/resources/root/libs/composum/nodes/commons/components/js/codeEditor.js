@@ -208,6 +208,8 @@
             }
         });
 
+        widgets.register('.widget.code-editor-widget', components.CodeEditorWidget);
+
         components.CodeEditorDialog = components.Dialog.extend({
 
             initialize: function (options) {
