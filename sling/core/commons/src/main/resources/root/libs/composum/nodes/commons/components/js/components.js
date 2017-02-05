@@ -13,6 +13,24 @@
         // Form
         //
 
+        components.const = _.extend(components.const || {}, {
+            form: {
+                css: {
+                    base: 'form-widget',
+                    action: {
+                        slingPost: 'form-action_Sling-POST'
+                    },
+                    status: {
+                        valid: 'valid-form',
+                        invalid: 'invalid-form'
+                    },
+                    selector: {
+                        item: '.multi-form-item'
+                    }
+                }
+            }
+        });
+
         /**
          * the 'widget-form'
          *
@@ -24,33 +42,47 @@
          */
         components.FormWidget = Backbone.View.extend({
 
+            initialize: function (options) {
+                var c = components.const.form;
+                this.isSlingPost = this.$el.hasClass(c.css.action.slingPost);
+            },
+
             /**
              * the widgets 'isValid' always performs a 'validation' of the form
              */
-            isValid: function () {
-                return this.validate();
+            isValid: function (alertMethod) {
+                return this.validate(alertMethod);
+            },
+
+            validationReset: function () {
+                this.$(widgets.const.css.selector.general).each(function () {
+                    if (this.view && _.isFunction(this.view.validationReset)) {
+                        this.view.validationReset.apply(this.view);
+                    }
+                });
             },
 
             /**
              * the validation calls the 'isValid' function of each widget in the form;
              * the class of the form signals the result ('valid-form / 'invalid-form')
              */
-            validate: function () {
+            validate: function (alertMethod) {
+                var c = components.const.form;
                 var valid = true;
-                this.$('.widget').each(function () {
+                this.$(widgets.const.css.selector.general).each(function () {
                     if (this.view) {
                         if (_.isFunction(this.view.isValid)) {
                             // check each widget independent from the current result
-                            valid = (this.view.isValid.apply(this.view) && valid);
+                            valid = (this.view.isValid.apply(this.view, [alertMethod]) && valid);
                         }
                     }
                 });
                 if (valid) {
-                    this.$el.removeClass('invalid-form');
-                    this.$el.addClass('valid-form');
+                    this.$el.removeClass(c.css.status.invalid);
+                    this.$el.addClass(c.css.status.valid);
                 } else {
-                    this.$el.removeClass('valid-form');
-                    this.$el.addClass('invalid-form');
+                    this.$el.removeClass(c.css.status.valid);
+                    this.$el.addClass(c.css.status.invalid);
                 }
                 return valid;
             },
@@ -59,12 +91,13 @@
              * returns the current set of values of the entire form
              */
             getValues: function () {
+                var c = components.const.form;
                 var values = {};
                 this.$('.widget').each(function () {
                     if (this.view) {
-                        if (this.view.$el.parent().closest('.multi-form-item').length == 0 &&
+                        if (this.view.$el.parent().closest(c.css.selector.item).length == 0 &&
                             _.isFunction(this.view.getValue)) {
-                            var name = core.getWidgetName(this.view).split('.');
+                            var name = core.getWidgetNames(this.view);
                             // store 'structured names' in a complex object...
                             var object = values;
                             for (var i = 0; i < name.length; i++) {
@@ -85,11 +118,12 @@
              * presets the values of the entire form
              */
             setValues: function (values) {
+                var c = components.const.form;
                 this.$('.widget').each(function () {
                     if (this.view) {
-                        if (this.view.$el.parent().closest('.multi-form-item').length == 0 &&
+                        if (this.view.$el.parent().closest(c.css.selector.item).length == 0 &&
                             _.isFunction(this.view.setValue)) {
-                            var name = core.getWidgetName(this.view).split('.');
+                            var name = core.getWidgetNames(this.view);
                             // map complex object to 'structured names'...
                             var object = values;
                             for (var i = 0; i < name.length; i++) {
@@ -119,15 +153,31 @@
                 });
             },
 
+            /**
+             * prepare the validation and a following submit (adjust names and values is useful)
+             */
+            prepare: function () {
+                var c = components.const.form;
+                this.$(widgets.const.css.selector.general).each(function () {
+                    if (this.view) {
+                        if (_.isFunction(this.view.prepare)) {
+                            // prepare each widget independent
+                            this.view.prepare.apply(this.view);
+                        }
+                    }
+                });
+            },
 
             /**
              * Submit the form of the dialog.
-             * @param onSuccess an optional callback function called after a successful request
              */
             submitForm: function (onSuccess, onError, onComplete) {
                 core.submitForm(this.el, onSuccess, onError, onComplete);
             },
 
+            /**
+             * Submit the form data using the 'PUT' method instead of 'POST'.
+             */
             submitFormPut: function (onSuccess, onError, onComplete) {
                 core.submitFormPut(this.el, this.getValues(), onSuccess, onError, onComplete);
             }
@@ -143,11 +193,29 @@
          * the 'checkbox-widget' (window.core.components.CheckboxWidget)
          * possible attributes:
          */
-        components.CheckboxWidget = Backbone.View.extend({
+        components.CheckboxWidget = widgets.Widget.extend({
 
             initialize: function (options) {
-                this.$checkkox = this.$el.is('input[type="checkbox"]')
+                widgets.Widget.prototype.initialize.apply(this, [options]);
+                this.$typeHint = this.$('sling-post-type-hint');
+                this.$deleteHint = this.$('sling-post-delete-hint');
+            },
+
+            retrieveInput: function () {
+                return this.$el.is('input[type="checkbox"]')
                     ? this.$el : this.$('input[type="checkbox"]');
+            },
+
+            declareName: function (name) {
+                if (name) {
+                    this.$input.attr(widgets.const.attr.name, name);
+                    this.$typeHint.attr(widgets.const.attr.name, name + '@TypeHint');
+                    this.$deleteHint.attr(widgets.const.attr.name, name + '@Delete');
+                } else {
+                    this.$input.removeAttr(widgets.const.attr.name);
+                    this.$typeHint.removeAttr(widgets.const.attr.name);
+                    this.$deleteHint.removeAttr(widgets.const.attr.name);
+                }
             },
 
             /**
@@ -161,21 +229,21 @@
              * returns the current value from the input field
              */
             getValue: function () {
-                return this.$checkkox.prop('checked');
+                return this.$input.prop('checked');
             },
 
             /**
              * defines the (initial) value of the input field
              */
             setValue: function (value) {
-                this.$checkkox.prop('checked', value == 'false' ? false : value);
+                this.$input.prop('checked', value == 'false' ? false : value);
             },
 
             /**
              * resets the validation state and the input field value
              */
             reset: function () {
-                this.$checkkox.prop('checked', false);
+                this.$input.prop('checked', false);
             }
         });
 
@@ -185,9 +253,10 @@
          * the 'select-buttons-widget' (window.core.components.SelectButtonsWidget)
          * possible attributes:
          */
-        components.SelectButtonsWidget = Backbone.View.extend({
+        components.SelectButtonsWidget = widgets.Widget.extend({
 
             initialize: function (options) {
+                widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.$('.btn').click(_.bind(this.onSelect, this));
             },
 
@@ -216,7 +285,7 @@
          * the 'radio-group-widget' (window.core.components.RadioGroupWidget)
          * possible attributes:
          */
-        components.RadioGroupWidget = Backbone.View.extend({
+        components.RadioGroupWidget = widgets.Widget.extend({
 
             getCount: function () {
                 return this.$('input[type="radio"]').length;
@@ -251,9 +320,10 @@
          * the 'combo-box-widget' (window.core.components.ComboBoxWidget)
          * possible attributes:
          */
-        components.ComboBoxWidget = Backbone.View.extend({
+        components.ComboBoxWidget = widgets.Widget.extend({
 
-            initialize: function (options) {
+            retrieveInput: function () {
+                return this.$el.is('select') ? this.$el : this.$('select');
             },
 
             getValue: function () {
@@ -280,31 +350,18 @@
          * this is the basic class ('superclass') of all text input field based widgets; it is also usable
          * as is for normal text input fields; it implements the general validation and reset functions
          * possible attributes:
-         * - data-rules: 'mandatory'
+         * - data-rules: 'mandatory,unique'
          * - data-pattern: a regexp pattern (javascript) as string or in pattern notation (/.../; with flags)
          */
-        components.TextFieldWidget = Backbone.View.extend({
+        components.TextFieldWidget = widgets.Widget.extend({
 
             initialize: function (options) {
+                widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.$textField = this.textField();
-                // scan 'data-pattern' attribute
-                var pattern = this.$textField.attr('data-pattern');
-                if (pattern) {
-                    if (pattern.indexOf('/') === 0) { // use this to specify flags
-                        this.$textField.pattern = eval(pattern);
-                    } else { // pure strings can not have additional flags...
-                        this.$textField.pattern = new RegExp(pattern);
-                    }
-                }
-                // scan 'data-rules' attribute
-                var rules = this.$textField.attr('data-rules');
-                if (rules) {
-                    this.$textField.rules = {
-                        mandatory: rules.indexOf('mandatory' >= 0)
-                    }
-                }
+                // scan 'rules / pattern' attributes
+                this.initRules(this.$textField);
                 // bind change events if any validation option has been found
-                if (this.$textField.pattern || this.$textField.rules) {
+                if (this.rules) {
                     this.$textField.on('keyup.validate', _.bind(this.validate, this));
                     this.$textField.on('change.validate', _.bind(this.validate, this));
                 }
@@ -352,35 +409,31 @@
             },
 
             /**
-             * returns the current validation state, calls 'validate' if not state is present
-             */
-            isValid: function () {
-                if (this.valid === undefined) {
-                    this.validate();
-                }
-                return this.valid;
-            },
-
-            /**
              * validates the current value using the 'rules' and the 'pattern' if present
              */
-            validate: function () {
+            validate: function (alertMethod) {
                 this.valid = true;
                 // check only if this field has a 'name' (included in a form) and is visible
                 // prevent from validation check if the 'name' is removed or the class contains 'hidden'
                 if (!this.$el.hasClass('hidden') && this.$textField.prop('name')) {
                     var value = this.getValue();
-                    if (this.$textField.rules) {
-                        var rules = this.$textField.rules;
-                        if (rules.mandatory) {
+                    if (this.rules) {
+                        if (this.rules.mandatory) {
                             // check for a defined and not blank value
-                            this.valid = (value !== undefined && value.trim().length > 0);
+                            var valid = this.valid = (value !== undefined &&
+                            (this.rules.blank || value.trim().length > 0));
+                            if (!valid) {
+                                this.alert(alertMethod, 'danger', '', 'value is mandatory');
+                            }
                         }
-                    }
-                    if (this.valid && this.$textField.pattern) {
-                        // check pattern only if not blank (blank is always valid if not mandatory)
-                        if (value && value.trim().length > 0) {
-                            this.valid = this.$textField.pattern.test(value);
+                        if (this.valid && this.rules.pattern) {
+                            // check pattern only if not blank (blank is valid if allowed explicitly)
+                            var valid = this.valid = (this.rules.blank && (!value || value.trim().length < 1))
+                                || this.rules.pattern.test(value);
+                            if (!valid) {
+                                this.alert(alertMethod, 'danger', '',
+                                    this.rules.patternHint || "value doesn't match pattern", this.rules.pattern);
+                            }
                         }
                     }
                     // the extension hook for further validation in 'subclasses'
@@ -417,40 +470,39 @@
          * - data-rules: 'mandatory'
          * - data-pattern: a regexp pattern (javascript) as string or in pattern notation (/.../; with flags)
          */
-        components.TextAreaWidget = Backbone.View.extend({
+        components.TextAreaWidget = widgets.Widget.extend({
 
             initialize: function (options) {
-                this.$textArea = this.textArea();
-                // scan 'data-rules' attribute
-                var rules = this.$textArea.attr('data-rules');
-                if (rules) {
-                    this.$textArea.rules = {
-                        mandatory: rules.indexOf('mandatory' >= 0)
-                    }
-                }
+                widgets.Widget.prototype.initialize.apply(this, [options]);
+                // scan 'rules / pattern' attributes
+                this.initRules(this.$input);
                 // bind change events if any validation option has been found
-                if (this.$textArea.rules) {
-                    this.$textArea.on('keyup.validate', _.bind(this.validate, this));
-                    this.$textArea.on('change.validate', _.bind(this.validate, this));
+                if (this.rules) {
+                    this.$input.on('keyup.validate', _.bind(this.validate, this));
+                    this.$input.on('change.validate', _.bind(this.validate, this));
                 }
+            },
+
+            retrieveInput: function () {
+                return this.$el.is('textarea') ? this.$el : this.$('textarea');
             },
 
             /**
              * returns the current value from the input field
              */
             getValue: function () {
-                return this.$textArea[0].value;
+                return this.$input[0].value;
             },
 
             /**
              * defines the (initial) value of the input field
              */
             setValue: function (value, triggerChange) {
-                var currentValue = this.$textArea.text();
+                var currentValue = this.$input.text();
                 if ('' + currentValue != '' + value) {
-                    this.$textArea[0].value = value;
+                    this.$input[0].value = value;
                     if (triggerChange) {
-                        this.$textArea.trigger('change');
+                        this.$input.trigger('change');
                     }
                 }
             },
@@ -459,31 +511,14 @@
              * sets the focus on the textfield
              */
             focus: function () {
-                this.$textArea.focus();
+                this.$input.focus();
             },
 
             /**
              * selects the complete text of textfield
              */
             selectAll: function () {
-                this.$textArea.select();
-            },
-
-            /**
-             * retrieves the input field to use (for redefinition in more complex widgets)
-             */
-            textArea: function () {
-                return this.$el.is('textarea') ? this.$el : this.$('textarea');
-            },
-
-            /**
-             * returns the current validation state, calls 'validate' if not state is present
-             */
-            isValid: function () {
-                if (this.valid === undefined) {
-                    this.validate();
-                }
-                return this.valid;
+                this.$input.select();
             },
 
             /**
@@ -493,13 +528,14 @@
                 this.valid = true;
                 // check only if this field has a 'name' (included in a form) and is visible
                 // prevent from validation check if the 'name' is removed or the class contains 'hidden'
-                if (!this.$el.hasClass('hidden') && this.$textArea.prop('name')) {
+                if (!this.$el.hasClass('hidden') && this.$input.prop('name')) {
                     var value = this.getValue();
-                    if (this.$textArea.rules) {
-                        var rules = this.$textArea.rules;
+                    if (this.rules) {
+                        var rules = this.rules;
                         if (rules.mandatory) {
                             // check for a defined and not blank value
-                            this.valid = (value !== undefined && value.trim().length > 0);
+                            this.valid = (value !== undefined &&
+                            (this.rules.blank || value.trim().length > 0));
                         }
                     }
                     // the extension hook for further validation in 'subclasses'
@@ -507,9 +543,9 @@
                         this.valid = this.extValidate(value);
                     }
                     if (this.valid) {
-                        this.$textArea.closest('.form-group').removeClass('has-error');
+                        this.$input.closest('.form-group').removeClass('has-error');
                     } else {
-                        this.$textArea.closest('.form-group').addClass('has-error');
+                        this.$input.closest('.form-group').addClass('has-error');
                     }
                 }
                 return this.valid;
@@ -520,8 +556,8 @@
              */
             reset: function () {
                 this.valid = undefined;
-                this.$textArea.closest('.form-group').removeClass('has-error');
-                this.$textArea.text('');
+                this.$input.closest('.form-group').removeClass('has-error');
+                this.$input.text('');
             }
         });
 

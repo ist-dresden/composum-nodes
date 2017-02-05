@@ -81,7 +81,7 @@
     "css": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "fonts/awesome/4.6.3/css/font-awesome.css",
+        "fonts/awesome/4.7.0/css/font-awesome.css",
         "jslibs/bootstrap/3.3.7/css/bootstrap.css",
         "jslibs/jstree/3.3.3/themes/proton/style.css",
         "jslibs/x-editable/1.5.1/bootstrap3-editable/css/bootstrap-editable.css",
@@ -149,7 +149,7 @@
     "css": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "fonts/awesome/4.6.3/css/font-awesome.css",
+        "fonts/awesome/4.7.0/css/font-awesome.css",
         "composum/nodes/console/clientlibs/ace"
       ],
       "embed": [
