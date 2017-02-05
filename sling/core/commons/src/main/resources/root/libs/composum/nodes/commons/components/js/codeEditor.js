@@ -7,14 +7,15 @@
 
     core.components = core.components || {};
 
-    (function (components) {
+    (function (components, widgets) {
 
         /**
          * the 'code-editor-widget'
          */
-        components.CodeEditorWidget = Backbone.View.extend({
+        components.CodeEditorWidget = widgets.Widget.extend({
 
             initialize: function (options) {
+                widgets.Widget.prototype.initialize.apply(this, [options]);
 
                 this.$editor = this.$('.code-editor');
                 this.$findText = this.$('.search .find-text');
@@ -292,6 +293,6 @@
             }
         });
 
-    })(core.components);
+    })(core.components, window.widgets);
 
 })(window.core);

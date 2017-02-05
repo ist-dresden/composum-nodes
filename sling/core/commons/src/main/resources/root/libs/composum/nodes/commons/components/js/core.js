@@ -12,8 +12,12 @@
                 base: 'widget',
                 selector: {
                     general: '.widget',
-                    prefix: '.widget.'
+                    prefix: '.widget.',
+                    form: 'form.form-widget'
                 }
+            },
+            attr: {
+                name: 'name'
             }
         },
 
@@ -68,8 +72,113 @@
                     }
                 }
             });
-        }
+        },
+
+        Widget: Backbone.View.extend({
+
+            initialize: function (options) {
+                this.$input = this.retrieveInput();
+                this.name = this.retrieveName();
+                this.form = this.retrieveForm();
+            },
+
+            retrieveInput: function () {
+                return this.$el.is('input') ? this.$el : this.$('input');
+            },
+
+            retrieveName: function () {
+                return this.$input.attr(widgets.const.attr.name);
+            },
+
+            declareName: function (name) {
+                if (name) {
+                    this.$input.attr(widgets.const.attr.name, name);
+                } else {
+                    this.$input.removeAttr(widgets.const.attr.name);
+                }
+            },
+
+            retrieveForm: function () {
+                var $form = this.$el.closest(widgets.const.css.selector.form);
+                return $form.length > 0 ? $form[0].view : undefined;
+            },
+
+            initRules: function ($element) {
+                this.label = $element.data('label');
+                // scan 'data-pattern' attribute
+                var pattern = $element.data('pattern');
+                if (pattern) {
+                    this.rules = _.extend(this.rules || {}, {
+                        pattern: pattern.indexOf('/') === 0
+                            // use '/.../ig' to specify pattern and flags
+                            ? eval(pattern)
+                            // pure strings can not have additional flags...
+                            : new RegExp(pattern)
+                    });
+                    var patternHint = $element.data('pattern-hint');
+                    if (patternHint) {
+                        this.rules.patternHint = patternHint;
+                    }
+                }
+                // scan 'data-rules' attribute
+                var rules = $element.data('rules');
+                if (rules) {
+                    this.rules = _.extend(this.rules || {}, {
+                        mandatory: rules.indexOf('mandatory' >= 0),
+                        blank: rules.indexOf('blank' >= 0),
+                        unique: rules.indexOf('unique' >= 0)
+                    });
+                }
+            },
+
+            /**
+             * returns the current validation state, calls 'validate' if no state is present
+             */
+            isValid: function (alertMethod) {
+                if (this.valid === undefined) {
+                    this.valid = _.isFunction(this.validate)
+                        ? this.validate(alertMethod)
+                        : true;
+                }
+                this.alertFlush(alertMethod);
+                return this.valid;
+            },
+
+            validationReset: function () {
+                this.valid = undefined;
+                this.alertMessage = undefined;
+            },
+
+            alert: function (alertMethod, type, label, message, hint) {
+                if (_.isFunction(alertMethod)) {
+                    alertMethod(type, label || this.label, message, hint);
+                } else {
+                    this.alertMessage = {
+                        type: type,
+                        label: label,
+                        message: message,
+                        hint: hint
+                    }
+                }
+            },
+
+            /**
+             * print out a probably delayed message
+             */
+            alertFlush: function (alertMethod) {
+                if (_.isFunction(alertMethod) && this.alertMessage) {
+                    alertMethod(this.alertMessage.type, this.alertMessage.label || this.label,
+                        this.alertMessage.message, this.alertMessage.hint);
+                    this.alertMessage = undefined;
+                }
+            }
+        })
     };
+
+    /**
+     * register the 'hidden' input as a widget to add the widgets behaviour to such hidden values
+     */
+    window.widgets.register('.widget.hidden-widget', window.widgets.Widget);
 
     window.core = {
 
@@ -337,7 +446,7 @@
          *        general 'components' class which is probably bound during the components 'init'
          */
         getView: function (element, viewClass, initializer, force) {
-            return window.core.getWidget(document, element, viewClass, initializer, force);
+            return core.getWidget(document, element, viewClass, initializer, force);
         },
 
         /**
@@ -410,6 +519,17 @@
             return name;
         },
 
+        getWidgetNames: function (widget, separator) {
+            return core.splitWidgetName(core.getWidgetName(widget));
+        },
+
+        splitWidgetName: function (name, separator) {
+            if (!separator) {
+                separator = name.indexOf('/') >= 0 ? '/' : '.';
+            }
+            return name.split(separator);
+        },
+
         /**
          * the dialog to select a repository path in a tree view
          */
@@ -470,6 +590,23 @@
                 }
             }
             return _.isObject(object) || !object;
+        },
+
+        addPathSegment: function (path, segment) {
+            if (segment) {
+                if (path.length > 0 && !path.endsWith('/') && segment.indexOf('/') != 0) {
+                    path += '/';
+                }
+                path += segment;
+                if (!core.endsWith(path, '/')) {
+                    path += '/';
+                }
+            }
+            return path;
+        },
+
+        endsWith: function (string, snippet) {
+            return string.lastIndexOf(snippet) == string.length - snippet.length;
         }
     };
 

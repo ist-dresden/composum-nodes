@@ -20,9 +20,10 @@
             }
         });
 
-        components.RichTextWidget = Backbone.View.extend({
+        components.RichTextWidget = widgets.Widget.extend({
 
             initialize: function (options) {
+                widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.$editor = this.richText();
                 this.$editor.trumbowyg(components.const.richtext.defaultOptions);
                 var style = this.$el.data('style');

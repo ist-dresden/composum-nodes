@@ -58,6 +58,11 @@
  * Multi Form Widget
  */
 
+.multi-form-content {
+    overflow: scroll;
+    max-height: 360px;
+}
+
 .multi-form-item {
     position: relative;
     display: inline-block;
