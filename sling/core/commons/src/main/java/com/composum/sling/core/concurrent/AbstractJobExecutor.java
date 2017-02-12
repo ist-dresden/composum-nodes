@@ -123,7 +123,6 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
         protected final ResourceResolver serviceResolver;
         protected final PrintWriter out;
         protected final Session session;
-        protected final ResourceResolver resourceResolver;
 
         public UserContextCallable(final Job job, final JobExecutionContext context,
                                    final ResourceResolver serviceResolver, final PrintWriter out)
@@ -137,7 +136,6 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
             session = serviceSession.impersonate(new SimpleCredentials(userId, new char[0]));
             HashMap<String, Object> authInfo = new HashMap<>();
             authInfo.put("user.jcr.session", session);
-            resourceResolver = resolverFactory.getResourceResolver(authInfo);
         }
     }
 

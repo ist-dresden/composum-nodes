@@ -31,10 +31,15 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String CONTENT_NODE = "jcr:content";
 
     public static final String TYPE_OAKINDEX = "oak:QueryIndexDefinition";
+    public static final String TYPE_FOLDER = "nt:folder";
     public static final String TYPE_FILE = "nt:file";
     public static final String TYPE_LINKED_FILE = "nt:linkedFile";
     public static final String TYPE_RESOURCE = "nt:resource";
     public static final String TYPE_UNSTRUCTURED = "nt:unstructured";
+
+    public static final String TYPE_SLING_RESOURCE = "sling:Resource";
+    public static final String TYPE_SLING_FOLDER = "sling:Folder";
+    public static final String TYPE_SLING_ORDERED_FOLDER = "sling:OrderedFolder";
 
     public static final String TYPE_LOCKABLE = "mix:lockable";
     public static final String TYPE_ORDERABLE = "mix:orderable";
