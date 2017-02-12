@@ -42,7 +42,7 @@
          * DOM element itself to avoid multiple View instances for one DOM element.
          */
         setUp: function (root) {
-            var $root = $(root);
+            var $root = root ? $(root) : $(document);
             _.keys(widgets.registered).forEach(function (selector) {
                 $root.find(selector).each(function () {
                     var widget = widgets.registered[selector];

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
@@ -30,6 +31,7 @@ public interface BeanContext {
     // the attribute names of the main context attributes
     //
     String ATTR_RESOURCE = "resource";
+    String ATTR_RESOLVER = "resourceResolver";
     String ATTR_REQUEST = "request";
     String ATTR_RESPONSE = "response";
 
@@ -54,6 +56,11 @@ public interface BeanContext {
      * Returns the resource declared in the context.
      */
     Resource getResource();
+
+    /**
+     * Returns the resolver declared in the context.
+     */
+    ResourceResolver getResolver();
 
     /**
      * Returns the request declared in the context.
@@ -167,6 +174,10 @@ public interface BeanContext {
         private java.util.Map<String, Object> requestScopeMap;
         private java.util.Map<String, Object> sessionScopeMap;
 
+        private transient SlingHttpServletRequest request;
+        private transient Resource resource;
+        protected transient ResourceResolver resolver;
+
         public Map() {
             this(new HashMap<String, Object>());
         }
@@ -180,6 +191,11 @@ public interface BeanContext {
             this(pageScopeMap, requestScopeMap, new HashMap<String, Object>());
         }
 
+        public Map(java.util.Map<String, Object> pageScopeMap, SlingHttpServletRequest request) {
+            this(pageScopeMap, null, new HashMap<String, Object>());
+            this.request = request;
+        }
+
         public Map(java.util.Map<String, Object> pageScopeMap,
                    java.util.Map<String, Object> requestScopeMap,
                    java.util.Map<String, Object> sessionScopeMap) {
@@ -190,7 +206,18 @@ public interface BeanContext {
 
         @Override
         public Resource getResource() {
-            return getAttribute(ATTR_RESOURCE, Resource.class);
+            if (resource == null) {
+                resource = getAttribute(ATTR_RESOURCE, Resource.class);
+            }
+            return resource;
+        }
+
+        @Override
+        public ResourceResolver getResolver() {
+            if (resolver == null) {
+                resolver = getAttribute(ATTR_RESOLVER, ResourceResolver.class);
+            }
+            return resolver;
         }
 
         @Override
@@ -214,21 +241,23 @@ public interface BeanContext {
             if (StringUtils.isNotBlank(name)) {
                 attribute = pageScopeMap.get(name);
                 if (attribute == null) {
-                    SlingHttpServletRequest request = getRequest();
-                    if (request != null) {
-                        attribute = request.getAttribute(name);
-                        if (attribute == null) {
-                            HttpSession session = request.getSession();
-                            if (session != null) {
-                                attribute = session.getAttribute(name);
-                            } else {
-                                attribute = this.sessionScopeMap.get(name);
-                            }
-                        }
-                    } else {
+                    if (requestScopeMap != null) {
                         attribute = this.requestScopeMap.get(name);
                         if (attribute == null) {
                             attribute = this.sessionScopeMap.get(name);
+                        }
+                    } else {
+                        SlingHttpServletRequest request = getRequest();
+                        if (request != null) {
+                            attribute = request.getAttribute(name);
+                            if (attribute == null) {
+                                HttpSession session = request.getSession();
+                                if (session != null) {
+                                    attribute = session.getAttribute(name);
+                                } else {
+                                    attribute = this.sessionScopeMap.get(name);
+                                }
+                            }
                         }
                     }
                 }
@@ -267,11 +296,24 @@ public interface BeanContext {
     }
 
     /**
+     * a Map based implementation for a background service or a job execution
+     */
+    class Service extends Map {
+
+        public Service(ResourceResolver resolver) {
+            setAttribute(ATTR_RESOLVER, this.resolver = resolver, Scope.request);
+        }
+    }
+
+    /**
      * a JSP PageContext based implementation of the context interface
      */
     class Page extends AbstractScriptContext {
 
         private PageContext pageContext;
+
+        private transient Resource resource;
+        private transient ResourceResolver resolver;
 
         public Page(PageContext pageContext) {
             this.pageContext = pageContext;
@@ -283,7 +325,18 @@ public interface BeanContext {
 
         @Override
         public Resource getResource() {
-            return getAttribute(ATTR_RESOURCE, Resource.class);
+            if (resource == null) {
+                resource = getAttribute(ATTR_RESOURCE, Resource.class);
+            }
+            return resource;
+        }
+
+        @Override
+        public ResourceResolver getResolver() {
+            if (resolver == null) {
+                resolver = getRequest().getResourceResolver();
+            }
+            return resolver;
         }
 
         @Override
@@ -326,6 +379,9 @@ public interface BeanContext {
         private SlingHttpServletRequest request;
         private SlingHttpServletResponse response;
 
+        private transient Resource resource;
+        private transient ResourceResolver resolver;
+
         public Servlet(ServletContext servletContext, BundleContext bundleContext,
                        SlingHttpServletRequest request, SlingHttpServletResponse response) {
             this.servletContext = servletContext;
@@ -336,7 +392,18 @@ public interface BeanContext {
 
         @Override
         public Resource getResource() {
-            return this.request.getResource();
+            if (resource == null) {
+                resource = this.request.getResource();
+            }
+            return resource;
+        }
+
+        @Override
+        public ResourceResolver getResolver() {
+            if (resolver == null) {
+                resolver = getRequest().getResourceResolver();
+            }
+            return resolver;
         }
 
         @Override
