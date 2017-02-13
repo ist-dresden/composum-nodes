@@ -77,8 +77,8 @@
             'resource-zip': {'icon': 'fa fa-file-archive-o text-muted'},
             'file-java-archive': {'icon': 'fa fa-file-archive-o text-info'},
             'resource-java-archive': {'icon': 'fa fa-file-archive-o text-muted'},
-            'asset': {'icon': 'fa fa-file-o text-info'},
-            'assetcontent': {'icon': 'fa fa-file-o text-muted'},
+            'asset': {'icon': 'fa fa-picture-o text-info'},
+            'assetcontent': {'icon': 'fa fa-picture-o text-muted'},
             'file-binary': {'icon': 'fa fa-file-o text-info'},
             'resource-binary': {'icon': 'fa fa-file-o text-muted'},
             'resource-syntheticresourceproviderresource': {'icon': 'fa fa-code text-muted'}

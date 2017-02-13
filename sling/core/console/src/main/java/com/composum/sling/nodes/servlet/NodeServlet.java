@@ -604,13 +604,13 @@ public class NodeServlet extends NodeTreeServlet {
 
                         resource = ResourceHandle.use(nodeResource);
 
-                        ResourceFilter filter = getNodeFilter(request);
+                        TreeNodeStrategy strategy = new DefaultTreeNodeStrategy(getNodeFilter(request));
                         LabelType labelType = RequestUtil.getParameter(request, PARAM_LABEL,
                                 RequestUtil.getSelector(request, LabelType.name));
 
                         JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
                         response.setStatus(HttpServletResponse.SC_OK);
-                        writeJsonNode(jsonWriter, filter, resource, labelType, false);
+                        writeJsonNode(jsonWriter, strategy, resource, labelType, false);
 
                     } else {
                         response.sendError(HttpServletResponse.SC_NOT_FOUND,
@@ -654,13 +654,13 @@ public class NodeServlet extends NodeTreeServlet {
                 if (!ResourceUtil.isNonExistingResource(target)) {
                     ResourceHandle handle = ResourceHandle.use(target);
 
-                    ResourceFilter filter = getNodeFilter(request);
+                    TreeNodeStrategy strategy = new DefaultTreeNodeStrategy(getNodeFilter(request));
                     LabelType labelType = RequestUtil.getParameter(request, PARAM_LABEL,
                             RequestUtil.getSelector(request, LabelType.name));
 
                     JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
                     response.setStatus(HttpServletResponse.SC_OK);
-                    writeJsonNode(jsonWriter, filter, handle, labelType, false);
+                    writeJsonNode(jsonWriter, strategy, handle, labelType, false);
 
                 } else {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND,
@@ -869,7 +869,7 @@ public class NodeServlet extends NodeTreeServlet {
 
                             session.save();
                             response.setStatus(HttpServletResponse.SC_OK);
-                            writeJsonNode(jsonWriter, MappingRules.DEFAULT_NODE_FILTER,
+                            writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY,
                                     newResource, LabelType.name, false);
 
                         } else {
@@ -948,7 +948,7 @@ public class NodeServlet extends NodeTreeServlet {
 
                         ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newNode.getPath()));
                         JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                        writeJsonNode(jsonWriter, MappingRules.DEFAULT_NODE_FILTER,
+                        writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY,
                                 newResource, LabelType.name, false);
 
                     } else {
@@ -1017,7 +1017,7 @@ public class NodeServlet extends NodeTreeServlet {
 
                     ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newNodePath));
                     JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                    writeJsonNode(jsonWriter, MappingRules.DEFAULT_NODE_FILTER,
+                    writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY,
                             newResource, LabelType.name, false);
 
                 } else {
