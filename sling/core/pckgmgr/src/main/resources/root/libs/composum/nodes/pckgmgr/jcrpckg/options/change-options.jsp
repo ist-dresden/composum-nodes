@@ -23,7 +23,7 @@
 
                         <div class="form-group">
                             <label class="control-label">AC Handling</label>
-                            <select name="acHandling" class="ac-handling widget combo-box-widget form-control">
+                            <select name="acHandling" class="ac-handling widget select-widget form-control">
                                 <option value="" selected="true">-- --</option>
                                 <option value="IGNORE">ignore</option>
                                 <option value="OVERWRITE">overwrite</option>

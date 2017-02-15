@@ -32,7 +32,7 @@
               </div>
               <div class="col-lg-3 col-md-3 col-sm-3 col-xs-8 subtype">
                 <label class="control-label">Subtype</label>
-                <select name="subtype" class="subtype-select widget combo-box-widget form-control">
+                <select name="subtype" class="subtype-select widget select-widget form-control">
                   <option value="string">string value</option>
                   <option value="plaintext">plain text</option>
                   <option value="richtext">rich text</option>

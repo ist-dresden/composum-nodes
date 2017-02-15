@@ -317,10 +317,10 @@
         widgets.register('.widget.radio-group-widget', components.RadioGroupWidget);
 
         /**
-         * the 'combo-box-widget' (window.core.components.ComboBoxWidget)
+         * the 'select-widget' (window.core.components.SelectWidget)
          * possible attributes:
          */
-        components.ComboBoxWidget = widgets.Widget.extend({
+        components.SelectWidget = widgets.Widget.extend({
 
             retrieveInput: function () {
                 return this.$el.is('select') ? this.$el : this.$('select');
@@ -339,10 +339,23 @@
 
             reset: function () {
                 this.$el.selectedIndex = -1;
+            },
+
+            setOptions: function (options) {
+                this.$el.html('');
+                if (_.isArray(options)) {
+                    options.forEach(function (option) {
+                        if (_.isObject(option)) {
+                            this.$input.append('<option value="' + (option.value || option.key) + '">' + (option.label || option.name) + '</option>');
+                        } else {
+                            this.$input.append('<option>' + option + '</option>');
+                        }
+                    }, this);
+                }
             }
         });
 
-        widgets.register('.widget.combo-box-widget', components.ComboBoxWidget);
+        widgets.register('.widget.select-widget', components.SelectWidget);
 
         /**
          * the 'text-field-widget' (window.core.components.TextFieldWidget)

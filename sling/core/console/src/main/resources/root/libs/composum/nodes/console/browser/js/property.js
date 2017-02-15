@@ -73,7 +73,7 @@
                 this.$name = this.$('input[name="name"]');
                 this.$type = this.$('select[name="type"]');
                 this.$subtype = this.$('.subtype');
-                this.subtype = core.getWidget(this.$subtype, '.widget.combo-box-widget', core.components.ComboBoxWidget);
+                this.subtype = core.getWidget(this.$subtype, '.widget.select-widget', core.components.SelectWidget);
                 this.$multi = this.$('input[name="multi"]');
                 this.valueWidget = core.getWidget(this.$el,
                     '.widget.property-value-widget', browser.PropertyValueWidget);
