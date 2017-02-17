@@ -635,6 +635,14 @@
     min-width: 100px;
 }
 
+#browser-view .image.detail-panel .detail-toolbar .assetmgr {
+    display: none;
+}
+
+#browser-view .image.detail-panel.asset .detail-toolbar .assetmgr {
+    display: inherit;
+}
+
 /**
  * Video view
  */

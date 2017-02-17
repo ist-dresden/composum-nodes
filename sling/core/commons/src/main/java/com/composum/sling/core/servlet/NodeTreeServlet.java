@@ -203,7 +203,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         if (node != null) {
             try {
                 Property property = node.getProperty(ResourceUtil.CONTENT_NODE);
-                if (property != null && PropertyType.REFERENCE == property.getType()) {
+                if (PropertyType.REFERENCE == property.getType()) {
                     ResourceResolver resolver = resource.getResourceResolver();
                     String reference = property.getString();
                     Session session = node.getSession();
@@ -219,8 +219,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
                         writer.endArray();
                     }
                 }
-            } catch (RepositoryException ex) {
-                LOG.error(ex.getMessage(), ex);
+            } catch (RepositoryException ignored) {
             }
         }
     }

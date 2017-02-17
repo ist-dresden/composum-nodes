@@ -98,6 +98,10 @@
                 return false;
             },
 
+            getSelectors: function () {
+                return this.$selectors.val();
+            },
+
             getUrl: function () {
                 var url = this.$el.attr(this.isMapped() ? 'data-mapped' : 'data-path');
                 var pathPrefix = this.$pathPrefix.val();
@@ -116,7 +120,7 @@
                 if (urlMatch) {
                     url = urlMatch[1];
                 }
-                var selectors = this.$selectors.val();
+                var selectors = this.getSelectors();
                 if (selectors) {
                     while (selectors.indexOf('.') === 0) {
                         selectors = selectors.substring(1);
@@ -195,6 +199,7 @@
         browser.ImageTab = browser.DisplayTab.extend({
 
             initialize: function (options) {
+                this.isAsset = !!this.$el.data('asset');
                 options = _.extend(options, {
                     displayKey: 'imageView',
                     loadContent: function (url) {
@@ -203,6 +208,11 @@
                 });
                 browser.DisplayTab.prototype.initialize.apply(this, [options]);
                 this.$image = this.$('.image-frame img');
+            },
+
+            getSelectors: function () {
+                var selectors = this.$selectors.val();
+                return this.isAsset ? selectors || 'asset' : selectors;
             }
         });
 
