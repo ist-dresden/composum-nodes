@@ -58,6 +58,10 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         Iterable<Resource> getChildren(Resource nodeResource);
 
         ResourceFilter getFilter();
+
+        String getTypeKey(ResourceHandle resource);
+
+        String getContentTypeKey(ResourceHandle resource, String prefix);
     }
 
     public static class DefaultTreeNodeStrategy implements TreeNodeStrategy {
@@ -76,6 +80,24 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         @Override
         public ResourceFilter getFilter() {
             return filter;
+        }
+
+        @Override
+        public String getTypeKey(ResourceHandle resource) {
+            String type = getPrimaryTypeKey(resource);
+            if ("file".equals(type)) {
+                type = getFileTypeKey(resource, "file-");
+            } else if ("resource".equals(type)) {
+                type = getMimeTypeKey(resource, "resource-");
+            } else if (StringUtils.isBlank(type) || "unstructured".equals(type)) {
+                type = getResourceTypeKey(resource, "resource-");
+            }
+            return type;
+        }
+
+        @Override
+        public String getContentTypeKey(ResourceHandle resource, String prefix) {
+            return getResourceTypeKey(resource, prefix);
         }
     }
 
@@ -147,7 +169,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
                                   ResourceHandle resource, LabelType labelType, boolean isVirtual)
             throws IOException {
         ResourceFilter filter = nodeStrategy.getFilter();
-        writeNodeIdentifiers(writer, resource, labelType, isVirtual);
+        writeNodeIdentifiers(writer, nodeStrategy, resource, labelType, isVirtual);
         writeNodeTreeType(writer, filter, resource, isVirtual);
         writeNodeJcrState(writer, resource);
         List<Resource> children = new ArrayList<>();
@@ -170,7 +192,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
             for (Resource child : children) {
                 ResourceHandle handle = ResourceHandle.use(child);
                 writer.beginObject();
-                writeNodeIdentifiers(writer, ResourceHandle.use(child), labelType, isVirtual);
+                writeNodeIdentifiers(writer, nodeStrategy, ResourceHandle.use(child), labelType, isVirtual);
                 writeNodeTreeType(writer, filter, handle, isVirtual);
                 writeNodeJcrState(writer, handle);
                 writer.name("state").beginObject(); // that's the 'jstree' state object
@@ -256,12 +278,12 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         return text;
     }
 
-    public String writeNodeIdentifiers(JsonWriter writer, ResourceHandle resource,
-                                       LabelType labelType, boolean isVirtual)
+    public String writeNodeIdentifiers(JsonWriter writer, TreeNodeStrategy nodeStrategy,
+                                       ResourceHandle resource, LabelType labelType, boolean isVirtual)
             throws IOException {
         String text = getNodeLabel(resource, labelType);
-        String type = getTypeKey(resource);
-        String contentType = getContentTypeKey(resource, null);
+        String type = nodeStrategy.getTypeKey(resource);
+        String contentType = getContentTypeKey(nodeStrategy, resource, null);
         if (StringUtils.isNotBlank(contentType)) {
             writer.name("contentType").value(contentType);
             if ("designer".equals(contentType)) {
@@ -364,25 +386,13 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
     // node type key generation
     //
 
-    public static String getTypeKey(ResourceHandle resource) {
-        String type = getPrimaryTypeKey(resource);
-        if ("file".equals(type)) {
-            type = getFileTypeKey(resource, "file-");
-        } else if ("resource".equals(type)) {
-            type = getMimeTypeKey(resource, "resource-");
-        } else if (StringUtils.isBlank(type) || "unstructured".equals(type)) {
-            type = getResourceTypeKey(resource, "resource-");
-        }
-        return type;
-    }
-
-    public static String getContentTypeKey(ResourceHandle resource, String prefix) {
+    public static String getContentTypeKey(TreeNodeStrategy strategy, ResourceHandle resource, String prefix) {
         String contentType = null;
         if (!ResourceUtil.CONTENT_NODE.equals(resource.getName())) {
             resource = ResourceHandle.use(resource.getChild(ResourceUtil.CONTENT_NODE));
         }
         if (resource.isValid()) {
-            contentType = getResourceTypeKey(resource, prefix);
+            contentType = strategy.getContentTypeKey(resource, prefix);
         }
         return contentType;
     }

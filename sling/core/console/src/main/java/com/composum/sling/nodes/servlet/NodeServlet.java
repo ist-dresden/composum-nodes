@@ -366,7 +366,7 @@ public class NodeServlet extends NodeTreeServlet {
                     QueryResult result = query.execute();
 
                     ResourceFilter filter = getNodeFilter(request);
-                    writeQueryResult(response, queryString, result, filter, resolver);
+                    writeQueryResult(request, response, queryString, result, filter, resolver);
 
                 } catch (RepositoryException rex) {
                     LOG.error(rex.getMessage(), rex);
@@ -398,13 +398,15 @@ public class NodeServlet extends NodeTreeServlet {
             }
         }
 
-        protected void writeQueryResult(SlingHttpServletResponse response, String queryString, QueryResult result,
+        protected void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                        String queryString, QueryResult result,
                                         ResourceFilter filter, ResourceResolver resolver)
                 throws RepositoryException, IOException {
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             response.setStatus(HttpServletResponse.SC_OK);
 
+            TreeNodeStrategy nodeStrategy = new DefaultTreeNodeStrategy(getNodeFilter(request));
             NodeIterator iterator = result.getNodes();
 
             writer.beginArray();
@@ -416,7 +418,7 @@ public class NodeServlet extends NodeTreeServlet {
                 ResourceHandle resource = ResourceHandle.use(resolver.getResource(node.getPath()));
                 if (resource.isValid() && accept(filter, resource)) {
                     writer.beginObject();
-                    String type = writeNodeIdentifiers(writer, resource, LabelType.name, false);
+                    String type = writeNodeIdentifiers(writer, nodeStrategy, resource, LabelType.name, false);
                     writeNodeJcrState(writer, resource);
                     writer.endObject();
                     count++;
@@ -444,13 +446,15 @@ public class NodeServlet extends NodeTreeServlet {
     protected class HtmlQueryOperation extends JsonQueryOperation {
 
         @Override
-        protected void writeQueryResult(SlingHttpServletResponse response, String queryString, QueryResult result,
+        protected void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                        String queryString, QueryResult result,
                                         ResourceFilter filter, ResourceResolver resolver)
                 throws RepositoryException, IOException {
 
             PrintWriter writer = response.getWriter();
             response.setStatus(HttpServletResponse.SC_OK);
 
+            TreeNodeStrategy nodeStrategy = new DefaultTreeNodeStrategy(getNodeFilter(request));
             NodeIterator iterator = result.getNodes();
 
             writer.append("<tbody>");
@@ -484,7 +488,7 @@ public class NodeServlet extends NodeTreeServlet {
                     writer.append("<tr class=\"").append(classes.toString().trim())
                             .append("\" data-path=\"").append(path)
                             .append("\">");
-                    writer.append("<td class=\"icon\" data-type=\"").append(getTypeKey(resource))
+                    writer.append("<td class=\"icon\" data-type=\"").append(nodeStrategy.getTypeKey(resource))
                             .append("\"><span></span></td>");
                     writer.append("<td class=\"id\">").append(resource.getId()).append("</td>");
                     writer.append("<td class=\"name\">")
