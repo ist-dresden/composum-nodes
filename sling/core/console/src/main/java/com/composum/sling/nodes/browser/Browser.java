@@ -3,7 +3,12 @@ package com.composum.sling.nodes.browser;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.StringFilter;
+import com.composum.sling.core.util.LinkUtil;
+import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.nodes.components.codeeditor.CodeEditorServlet;
+import com.composum.sling.nodes.console.ConsoleServletBean;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 
@@ -12,10 +17,12 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class Browser extends BrowserBean {
+public class Browser extends ConsoleServletBean {
 
     public static final String TYPE_FILE = "nt:file";
     public static final String TYPE_RESOURCE = "nt:resource";
@@ -26,6 +33,7 @@ public class Browser extends BrowserBean {
 
     public static final String PROP_DATA = "jcr:data";
     public static final String PROP_MIME_TYPE = "jcr:mimeType";
+    public static final String DEFAULT_MIME_TYPE = "text/html";
 
     public static final Map<String, String> EDITOR_MODES;
 
@@ -59,10 +67,15 @@ public class Browser extends BrowserBean {
     private transient String textType;
 
     private transient Boolean isFile;
+    private transient Boolean isAsset;
     private transient Boolean isImage;
     private transient Boolean isVideo;
     private transient Boolean isText;
     private transient Boolean isRenderable;
+
+    private transient NodeHandle current;
+    private transient NodeHandle parent;
+    private transient List<NodeHandle> parents;
 
     public Browser(BeanContext context, Resource resource) {
         super(context, resource);
@@ -173,9 +186,16 @@ public class Browser extends BrowserBean {
         return isFile;
     }
 
+    public boolean isAsset() {
+        if (isAsset == null) {
+            isAsset = ResourceUtil.isResourceType(resource, "cpa:Asset");
+        }
+        return isAsset;
+    }
+
     public boolean isImage() {
         if (isImage == null) {
-            isImage = isFile() && getMimeType().startsWith("image/");
+            isImage = isFile() && getMimeType().startsWith("image/") || isAsset();
         }
         return isImage;
     }
@@ -309,9 +329,13 @@ public class Browser extends BrowserBean {
                     viewType = "binary";
                 }
             } else {
-                String resourceType = getResourceType();
-                if (StringUtils.isNotBlank(resourceType)) {
-                    viewType = "typed";
+                if (isAsset()) {
+                    viewType = "image";
+                } else {
+                    String resourceType = getResourceType();
+                    if (StringUtils.isNotBlank(resourceType)) {
+                        viewType = "typed";
+                    }
                 }
             }
         }
@@ -321,5 +345,171 @@ public class Browser extends BrowserBean {
     public String getTabType() {
         String selector = getRequest().getSelectors(new StringFilter.BlackList("^tab$"));
         return StringUtils.isNotBlank(selector) ? selector.substring(1) : "properties";
+    }
+
+    public String getName() {
+        return getResource().getResourceName();
+    }
+
+    /**
+     * a JSP bean for a node (for the current node)
+     */
+    public class NodeHandle {
+
+        protected ResourceHandle resource;
+
+        protected String name;
+        protected String path;
+
+        protected String pathUrl;
+        protected String mappedUrl;
+        protected String url;
+
+        protected String mimeType;
+
+        public NodeHandle(Resource resource) {
+            this.resource = ResourceHandle.use(resource);
+        }
+
+        public ResourceHandle getResource() {
+            return resource;
+        }
+
+        public String getId() {
+            return resource.getId();
+        }
+
+        public String getName() {
+            if (name == null) {
+                name = resource.getName();
+                if (StringUtils.isBlank(name)) {
+                    name = "jcr:root";
+                }
+            }
+            return name;
+        }
+
+        public String getNameEscaped() {
+            return StringEscapeUtils.escapeHtml4(getName());
+        }
+
+        public String getPath() {
+            if (path == null) {
+                path = resource.getPath();
+            }
+            return path;
+        }
+
+        public String getPathEncoded() {
+            return LinkUtil.encodePath(getPath());
+        }
+
+        /**
+         * Returns a URL to the nodes View based on the nodes path (without mapping).
+         */
+        public String getPathUrl() {
+            if (pathUrl == null) {
+                pathUrl = getPathEncoded();
+                pathUrl += LinkUtil.getExtension(resource, Browser.this.isAsset() ? "" : null);
+            }
+            return pathUrl;
+        }
+
+        /**
+         * Returns a URL to the nodes View with resolver mapping.
+         */
+        public String getMappedUrl() {
+            if (mappedUrl == null) {
+                mappedUrl = LinkUtil.getMappedUrl(getRequest(), getPath());
+            }
+            return mappedUrl;
+        }
+
+        /**
+         * Returns a URL to the nodes View probably with resolver mapping.
+         */
+        public String getUrl() {
+            if (url == null) {
+                url = LinkUtil.getUrl(getRequest(), getPath(), Browser.this.isAsset() ? "" : null);
+            }
+            return url;
+        }
+
+        /**
+         * the content mime type declared for the current resource
+         */
+        public String getMimeType() {
+            if (mimeType == null) {
+                mimeType = MimeTypeUtil.getMimeType(resource, DEFAULT_MIME_TYPE);
+            }
+            return mimeType;
+        }
+    }
+
+    /**
+     * Returns a JSP handle of the node displayed currently by the browser.
+     */
+    public NodeHandle getCurrent() {
+        if (current == null) {
+            current = new NodeHandle(resource);
+        }
+        return current;
+    }
+
+    /**
+     * Returns a URL to the current nodes View based on the nodes path (without mapping).
+     */
+    public String getCurrentPathUrl() {
+        return getCurrent().getPathUrl();
+    }
+
+    /**
+     * Returns a URL to the current nodes View with resolver mapping.
+     */
+    public String getMappedUrl() {
+        return getCurrent().getMappedUrl();
+    }
+
+    /**
+     * Returns a URL to the current nodes View with mapping according to the configuration.
+     */
+    public String getCurrentUrl() {
+        return getCurrent().getUrl();
+    }
+
+    /**
+     * Returns a URL to the current nodes View with mapping according to the configuration.
+     */
+    public String getEditCodeUrl() {
+        return LinkUtil.getUnmappedUrl(getRequest(), CodeEditorServlet.SERVLET_PATH + ".html" + getCurrent().getPath());
+    }
+
+    /**
+     * the content mime type declared for the current resource
+     */
+    public String getMimeType() {
+        return getCurrent().getMimeType();
+    }
+
+    public NodeHandle getParent() {
+        if (parent == null) {
+            parent = new NodeHandle(resource.getParent());
+        }
+        return parent;
+    }
+
+    public List<NodeHandle> getParents() {
+        if (parents == null) {
+            parents = new ArrayList<NodeHandle>();
+            ResourceHandle resource = getResource();
+            String parentPath;
+            NodeHandle parent;
+            while (StringUtils.isNotBlank(parentPath = resource.getParentPath())) {
+                parent = new NodeHandle(getResolver().resolve(parentPath));
+                parents.add(0, parent);
+                resource = parent.getResource();
+            }
+        }
+        return parents;
     }
 }

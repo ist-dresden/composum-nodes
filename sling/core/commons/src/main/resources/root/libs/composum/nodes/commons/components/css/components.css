@@ -1,3 +1,6 @@
+.form-group.checkbox {
+    margin-top: 32px;
+}
 
 .radio-group-widget.form-control {
     border: none;
@@ -224,6 +227,9 @@
 
 .modal-dialog .form-group .checkbox-widget {
     box-shadow: none;
+}
+
+.modal-dialog .form-group > .form-control.checkbox-widget {
     margin-top: 0;
 }
 
