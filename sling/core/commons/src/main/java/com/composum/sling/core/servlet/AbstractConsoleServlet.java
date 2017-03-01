@@ -7,6 +7,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestDispatcherOptions;
 import org.apache.sling.api.request.RequestPathInfo;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
 import org.osgi.framework.BundleContext;
 
@@ -60,7 +61,8 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
             RequestDispatcherOptions options = new RequestDispatcherOptions();
             prepareForward(context, options);
 
-            RequestDispatcher dispatcher = request.getRequestDispatcher(request.getResource(), options);
+            Resource resource = request.getResource();
+            RequestDispatcher dispatcher = request.getRequestDispatcher(resource, options);
             dispatcher.forward(request, response);
         }
     }

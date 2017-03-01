@@ -1,13 +1,14 @@
 package com.composum.sling.core;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.request.RequestPathInfo;
+import com.composum.sling.core.util.ConsoleUtil;
 import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * the abstract model base class for Composum Console components addressed by a forward from
+ * a console servlet with the models resource path in the requests suffix
+ */
 public class AbstractServletBean extends AbstractSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractServletBean.class);
@@ -29,29 +30,7 @@ public class AbstractServletBean extends AbstractSlingBean {
      */
     @Override
     public void initialize(BeanContext context) {
-        SlingHttpServletRequest request = context.getAttribute("slingRequest", SlingHttpServletRequest.class);
-        if (request == null) {
-            request = context.getAttribute("request", SlingHttpServletRequest.class);
-        }
-        String path = null;
-        Resource resource = context.getAttribute("resource", Resource.class);
-        if (resource != null) {
-            path = resource.getPath();
-        }
-        if (StringUtils.isBlank(path) || path.startsWith("/bin/")) {
-            RequestPathInfo requestPathInfo = request.getRequestPathInfo();
-            path = requestPathInfo.getSuffix();
-        }
-        if (StringUtils.isNotBlank(path)) {
-            if (!path.startsWith("/")) {
-                path = "/" + path;
-            }
-            ResourceResolver resolver = request.getResourceResolver();
-            resource = resolver.getResource(path);
-        }
-        if (resource == null) {
-            resource = resolver.getResource("/");
-        }
+        Resource resource = ConsoleUtil.getConsoleResource(context);
         initialize(context, ResourceHandle.use(resource));
     }
 }

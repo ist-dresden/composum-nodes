@@ -62,8 +62,8 @@
  */
 
 .multi-form-content {
-    overflow: scroll;
-    max-height: 360px;
+    overflow: visible; /* scroll; is truncating a possible typeahead (!) */
+/*  max-height: 360px; */
 }
 
 .multi-form-item {
