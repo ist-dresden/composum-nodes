@@ -214,6 +214,9 @@
         <profile>
             <id>installPackage</id>
         </profile>
+        <profile>
+            <id>installTestContent</id>
+        </profile>
 
     </profiles>
 </project>

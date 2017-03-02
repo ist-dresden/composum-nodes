@@ -158,7 +158,7 @@ public class ResourceHandle extends ResourceWrapper {
      */
     public ResourceHandle getContentResource() {
         if (contentResource == null) {
-            if (ResourceUtil.CONTENT_NODE.equals(getName())) {
+            if (ResourceUtil.CONTENT_NODE.equals(getName()) || !this.isValid()) {
                 contentResource = this;
             } else {
                 contentResource = ResourceHandle.use(this.getChild(ResourceUtil.CONTENT_NODE));

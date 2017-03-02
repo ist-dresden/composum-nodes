@@ -55,15 +55,15 @@ public abstract class AbstractChangeObserver implements EventListener {
                 throws RepositoryException {
             Node contentNode = getContentNode(session, path);
             if (contentNode != null) {
-                if (LOG.isDebugEnabled()) {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat(LOG_DATE_FORMAT);
-                    LOG.debug("registered: " + path + ", " + dateFormat.format(time.getTime()) + ", " + user);
-                }
                 path = contentNode.getPath();
                 ChangedContent change = get(path);
                 if (change != null) {
                     change.mergeChange(time, user);
                 } else {
+                    if (LOG.isDebugEnabled()) {
+                        SimpleDateFormat dateFormat = new SimpleDateFormat(LOG_DATE_FORMAT);
+                        LOG.debug("registered: " + path + ", " + dateFormat.format(time.getTime()) + ", " + user);
+                    }
                     put(path, new ChangedContent(contentNode, time, user));
                 }
             }
@@ -102,6 +102,8 @@ public abstract class AbstractChangeObserver implements EventListener {
         }
     }
 
+    protected abstract String getServiceUserId();
+
     protected abstract String getObservedPath();
 
     protected abstract void doOnChange(ResourceResolver resolver, ChangedContent change)
@@ -113,6 +115,7 @@ public abstract class AbstractChangeObserver implements EventListener {
 
     protected abstract Session getSession() throws RepositoryException;
 
+
     /**
      * collects the changed nodes and calls the observers strategy (doOnChange) for each node found
      */
@@ -123,37 +126,41 @@ public abstract class AbstractChangeObserver implements EventListener {
             if (resolver != null) {
                 try {
                     Session session = resolver.adaptTo(Session.class);
+                    String serviceUserId = getServiceUserId();
                     // collect changed nodes
-                    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-                    ChangeCollection changedPages = new ChangeCollection();
+                    ChangeCollection changedNodes = new ChangeCollection();
                     while (events.hasNext()) {
                         Event event = events.nextEvent();
                         try {
                             String path = event.getPath();
                             String user = event.getUserID();
-                            Calendar time = Calendar.getInstance();
-                            time.setTime(new Date(event.getDate()));
-                            int type = event.getType();
-                            if (isPropertyEvent(type)) {
-                                if (PROPERTY_PATH_FILTER.accept(path)) {
-                                    changedPages.registerChange(session, path, time, user);
+                            // if the service user is the initiator this is a self initiated event - ignore it
+                            if (!serviceUserId.equals(user)) {
+                                Calendar time = Calendar.getInstance();
+                                time.setTime(new Date(event.getDate()));
+                                int type = event.getType();
+                                if (isPropertyEvent(type)) {
+                                    if (PROPERTY_PATH_FILTER.accept(path)) {
+                                        changedNodes.registerChange(session, path, time, user);
+                                    }
+                                } else {
+                                    changedNodes.registerChange(session, path, time, user);
                                 }
-                            } else {
-                                changedPages.registerChange(session, path, time, user);
                             }
                         } catch (RepositoryException rex) {
                             LOG.error(rex.getMessage(), rex);
                         }
                     }
-                    // adjust the last modified properties
-                    if (changedPages.size() > 0) {
-                        for (ChangedContent change : changedPages.values()) {
+                    // handle change actions on the detected nodes
+                    if (changedNodes.size() > 0) {
+                        for (ChangedContent change : changedNodes.values()) {
                             try {
                                 doOnChange(resolver, change);
                             } catch (RepositoryException ex) {
                                 LOG.error(ex.getMessage(), ex);
                             }
                         }
+                        changedNodes.clear();
                         resolver.commit();
                     }
                 } catch (PersistenceException ex) {
