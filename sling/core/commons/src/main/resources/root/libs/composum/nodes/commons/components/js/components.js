@@ -281,6 +281,8 @@
             }
         });
 
+        widgets.register('.widget.select-buttons-widget', components.SelectButtonsWidget);
+
         /**
          * the 'radio-group-widget' (window.core.components.RadioGroupWidget)
          * possible attributes:
