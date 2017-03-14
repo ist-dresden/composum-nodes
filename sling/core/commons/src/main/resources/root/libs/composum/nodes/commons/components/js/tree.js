@@ -55,6 +55,8 @@
             'resource-file': {'icon': 'fa fa-file-o text-muted'},
             'file-image': {'icon': 'fa fa-file-image-o text-info'},
             'resource-image': {'icon': 'fa fa-file-image-o text-muted'},
+            'file-video': {'icon': 'fa fa-file-video-o text-info'},
+            'resource-video': {'icon': 'fa fa-file-video-o text-muted'},
             'file-text': {'icon': 'fa fa-file-text-o text-info'},
             'resource-text': {'icon': 'fa fa-file-text-o text-muted'},
             'file-text-plain': {'icon': 'fa fa-file-text-o text-info'},
