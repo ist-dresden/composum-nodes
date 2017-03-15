@@ -73,6 +73,9 @@
         <profile>
             <id>installBundle</id>
         </profile>
+        <profile>
+            <id>installTestContent</id>
+        </profile>
 
     </profiles>
 </project>
