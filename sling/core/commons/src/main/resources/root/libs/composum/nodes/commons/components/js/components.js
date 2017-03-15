@@ -867,17 +867,30 @@
                 if (dataType) {
                     options.fileType = dataType;
                 }
-                this.$textField.fileinput({
+                this.whatever = this.$textField.fileinput({
                     showPreview: options.showPreview === undefined ? true : options.showPreview,
                     showUpload: options.showUpload || false,
                     fileType: options.fileType || "any"
                 });
+                this.$widget = this.$el.closest('.file-input-new');
+                this.$inputCaption = this.$widget.find('.kv-fileinput-caption');
             },
 
             /**
              * defines the (initial) value of the input field
              */
             setValue: function (value) {
+            },
+
+            grabFocus: function () {
+                this.$inputCaption.focus();
+            },
+
+            /**
+             * resets the validation state and the input field value
+             */
+            reset: function () {
+                this.$textField.fileinput('clear');
             }
         });
 

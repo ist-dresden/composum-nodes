@@ -149,6 +149,10 @@
                 this.alertMessage = undefined;
             },
 
+            grabFocus: function () {
+                this.$input.focus();
+            },
+
             alert: function (alertMethod, type, label, message, hint) {
                 if (_.isFunction(alertMethod)) {
                     alertMethod(type, label || this.label, message, hint);

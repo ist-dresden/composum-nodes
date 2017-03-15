@@ -58,6 +58,14 @@
 }
 
 /**
+ * File Input
+ */
+
+.file-input .fileinput-remove-button .glyphicon {
+    line-height: 20px;
+}
+
+/**
  * Multi Form Widget
  */
 
@@ -219,6 +227,10 @@
 .modal-dialog .form-group.cl,
 .modal-dialog .modal-footer {
     clear: both;
+}
+
+.modal-dialog .modal-header .close span {
+    font-size: 21px;
 }
 
 .modal-dialog .modal-footer button.delete {
