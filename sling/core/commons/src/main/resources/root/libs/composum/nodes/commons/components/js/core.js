@@ -194,6 +194,14 @@
             core.ajaxGet(url, {dataType: 'json'}, onSuccess, onError, onComplete);
         },
 
+        ajaxHead: function (url, config, onSuccess, onError, onComplete) {
+            var ajaxConf = _.extend({
+                type: 'HEAD',
+                url: core.getContextUrl(url)
+            }, config);
+            core.ajaxCall(ajaxConf, onSuccess, onError, onComplete);
+        },
+
         ajaxGet: function (url, config, onSuccess, onError, onComplete) {
             var ajaxConf = _.extend({
                 type: 'GET',
