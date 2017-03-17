@@ -21,7 +21,7 @@
             },
 
             setUpWidgets: function(root) {
-                components.setUp(root);
+                window.widgets.setUp(root);
             },
 
             /**
@@ -63,7 +63,7 @@
                 this.alert();
                 // reset all default HTML component elements
                 this.$('input,textarea,select').each(function () {
-                    if (this.type != 'radio') {
+                    if (this.type !== 'radio' && this.type !== 'hidden') {
                         $(this).val(undefined);
                     }
                 });

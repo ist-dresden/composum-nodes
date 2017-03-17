@@ -35,7 +35,7 @@
               <label class="control-label">Privileges</label>
               <div class="multi-form-content">
                 <div class="multi-form-item">
-                  <select name="privilege" class="widget combo-box-widget form-control">
+                  <select name="privilege" class="widget select-widget form-control">
                   </select>
                 </div>
               </div>
@@ -44,7 +44,7 @@
               <label class="control-label">Restrictions</label>
               <div class="multi-form-content">
                 <div class="multi-form-item">
-                  <select name="restrictionKey" class="key widget combo-box-widget form-control">
+                  <select name="restrictionKey" class="key widget select-widget form-control">
                     <%--<option value="rep:glob">rep:glob</option>--%>
                     <%--<option value="rep:ntNames">rep:ntNames</option>--%>
                     <%--<option value="rep:prefixes">rep:prefixes</option>--%>

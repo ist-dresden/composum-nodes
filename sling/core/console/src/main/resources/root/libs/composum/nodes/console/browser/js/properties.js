@@ -184,7 +184,7 @@
                     if (columnKey == 'value') {
                         var $editable = $element.find('a.editable');
                         if ($editable && $editable.length > 0
-                                // if not initialized already - is the case if the editing was canceled
+                            // if not initialized already - is the case if the editing was canceled
                             && !$editable.hasClass('editable-click')) {
                             var editableType = this.editableTypes[type];
                             var editableOptions = {

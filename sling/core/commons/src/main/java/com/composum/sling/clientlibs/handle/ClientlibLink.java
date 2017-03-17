@@ -12,38 +12,48 @@ import static com.composum.sling.clientlibs.handle.Clientlib.Type.link;
 
 public class ClientlibLink extends ClientlibKey {
 
-    public ClientlibLink(final Clientlib clientlib) {
-        this(clientlib.clientlibRef, clientlib.resource);
+    protected final String libPath;
+    protected final boolean minified;
+
+    public ClientlibLink(final Clientlib clientlib, boolean minified) {
+        this(clientlib.clientlibRef, clientlib.resource, minified);
     }
 
-    public ClientlibLink(final ClientlibRef reference, final Resource resource) {
-        this(reference.type, resource, reference.properties);
+    public ClientlibLink(final ClientlibRef reference, final Resource resource, boolean minified) {
+        this(reference.type, resource, reference.properties, minified);
     }
 
     public ClientlibLink(final ClientlibRef reference, final Resource resource,
-                         final Map<String,String> properties) {
-        this(reference.type, resource, properties);
+                         final Map<String, String> properties, boolean minified) {
+        this(reference.type, resource, properties, minified);
     }
 
-    public ClientlibLink(final Clientlib.Type type, final Resource resource) {
-        this(type, resource, new HashMap<String, String>());
+    public ClientlibLink(final Clientlib.Type type, final Resource resource, boolean minified) {
+        this(type, resource, new HashMap<String, String>(), minified);
     }
 
     public ClientlibLink(final Clientlib.Type type, final Resource resource,
-                         Map<String, String> properties) {
+                         Map<String, String> properties, boolean minified) {
         super(type, resource.getPath(), properties);
+        this.libPath = resource.getPath();
+        this.minified = minified &&
+                (!Clientlib.isFile(resource) || Clientlib.getMinifiedSibling(resource) != resource);
     }
 
     public String getUrl(RendererContext context) {
-        StringBuilder builder = new StringBuilder(path);
-        if (!path.endsWith("." + type.name()) && type != img && type != link) {
+        StringBuilder builder = new StringBuilder(libPath);
+        if (!libPath.endsWith("." + type.name()) && type != img && type != link) {
             builder.append('.').append(type.name());
+        }
+        String uri = builder.toString();
+        if (minified && context.useMinifiedFiles()) {
+            uri = Clientlib.getMinifiedSibling(uri);
         }
         String url;
         if (context.mapClientlibURLs()) {
-            url = LinkUtil.getUrl(context.request, builder.toString());
+            url = LinkUtil.getUrl(context.request, uri);
         } else {
-            url = LinkUtil.getUnmappedUrl(context.request, builder.toString());
+            url = LinkUtil.getUnmappedUrl(context.request, uri);
         }
         return url;
     }

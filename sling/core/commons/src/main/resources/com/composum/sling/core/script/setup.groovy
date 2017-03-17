@@ -26,6 +26,10 @@ script.metaClass.getResource << { path ->
     resourceResolver.getResource(path)
 }
 
+script.metaClass.commit << { ->
+    resourceResolver.commit()
+}
+
 // Query (similar to CQ Groovyconsole)
 
 Query.metaClass.setHitsPerPage << { value -> delegate.limit = value }

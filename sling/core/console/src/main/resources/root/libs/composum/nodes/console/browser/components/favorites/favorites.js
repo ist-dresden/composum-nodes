@@ -26,7 +26,7 @@
             }
         },
 
-        showFavoritesTab: function(event) {
+        showFavoritesTab: function (event) {
             if (event) {
                 event.preventDefault();
             }
@@ -34,7 +34,7 @@
             core.console.getProfile().set('navigation', 'tab', 'favorites');
         },
 
-        showHistoryTab: function(event) {
+        showHistoryTab: function (event) {
             if (event) {
                 event.preventDefault();
             }

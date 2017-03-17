@@ -1,3 +1,6 @@
+.form-group.checkbox {
+    margin-top: 32px;
+}
 
 .radio-group-widget.form-control {
     border: none;
@@ -55,8 +58,21 @@
 }
 
 /**
+ * File Input
+ */
+
+.file-input .fileinput-remove-button .glyphicon {
+    line-height: 20px;
+}
+
+/**
  * Multi Form Widget
  */
+
+.multi-form-content {
+    overflow: visible; /* scroll; is truncating a possible typeahead (!) */
+/*  max-height: 360px; */
+}
 
 .multi-form-item {
     position: relative;
@@ -213,12 +229,19 @@
     clear: both;
 }
 
+.modal-dialog .modal-header .close span {
+    font-size: 21px;
+}
+
 .modal-dialog .modal-footer button.delete {
     float: left;
 }
 
 .modal-dialog .form-group .checkbox-widget {
     box-shadow: none;
+}
+
+.modal-dialog .form-group > .form-control.checkbox-widget {
     margin-top: 0;
 }
 

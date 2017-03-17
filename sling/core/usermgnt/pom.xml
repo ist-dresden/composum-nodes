@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.sling.core</groupId>
         <artifactId>composum-sling-core-parent</artifactId>
-        <version>1.7.0</version>
+        <version>1.8.0-SNAPSHOT</version>
         <relativePath>../.parent</relativePath>
     </parent>
 
@@ -179,6 +179,9 @@
         </profile>
         <profile>
             <id>installPackage</id>
+        </profile>
+        <profile>
+            <id>installTestContent</id>
         </profile>
 
     </profiles>

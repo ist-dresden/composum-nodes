@@ -20,8 +20,8 @@
                 this.$privilege = this.$('select[name="privilege"]');
                 this.$restriction = this.$('select[name="restrictionKey"]');
                 this.$('button.save').click(_.bind(this.saveACL, this));
-                this.privilegeCombobox = core.getWidget(this.el, this.$privilege, core.components.ComboBoxWidget);
-                this.restrictionCombobox = core.getWidget(this.el, this.$restriction, core.components.ComboBoxWidget);
+                this.privilegeCombobox = core.getWidget(this.el, this.$privilege, core.components.SelectWidget);
+                this.restrictionCombobox = core.getWidget(this.el, this.$restriction, core.components.SelectWidget);
                 this.$principal.attr('autocomplete', 'off');
                 this.$principal.typeahead({
                     minLength: 1,

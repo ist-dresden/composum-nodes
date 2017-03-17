@@ -2,9 +2,9 @@ package com.composum.sling.clientlibs.service;
 
 public interface ClientlibConfiguration {
 
-    // CSS configuration
+    boolean getDebug();
 
-    boolean getCssDebug();
+    // CSS configuration
 
     boolean getCssMinimize();
 
@@ -13,8 +13,6 @@ public interface ClientlibConfiguration {
     String getCssTemplate();
 
     // JS configuration
-
-    boolean getJavascriptDebug();
 
     boolean getJavascriptMinimize();
 
@@ -33,6 +31,8 @@ public interface ClientlibConfiguration {
     // general configuration
 
     boolean getMapClientlibURLs();
+
+    boolean getUseMinifiedFiles();
 
     boolean getGzipEnabled();
 

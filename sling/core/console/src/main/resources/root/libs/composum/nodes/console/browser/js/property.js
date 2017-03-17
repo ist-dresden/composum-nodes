@@ -73,7 +73,7 @@
                 this.$name = this.$('input[name="name"]');
                 this.$type = this.$('select[name="type"]');
                 this.$subtype = this.$('.subtype');
-                this.subtype = core.getWidget(this.$subtype, '.widget.combo-box-widget', core.components.ComboBoxWidget);
+                this.subtype = core.getWidget(this.$subtype, '.widget.select-widget', core.components.SelectWidget);
                 this.$multi = this.$('input[name="multi"]');
                 this.valueWidget = core.getWidget(this.$el,
                     '.widget.property-value-widget', browser.PropertyValueWidget);
@@ -138,24 +138,28 @@
 
             setProperty: function (property) {
                 this.reset();
-                this.$path.val(property.get('path'));
+                var path = property.get('path');
+                var type = property.get('type');
                 var name = property.get('name');
                 var value = undefined;
                 if (name) {
                     value = property.get('value');
                 }
                 var subtype = 'string';
-                if (value) {
-                    if (value.indexOf('\n') >= 0) {
-                        subtype = 'plaintext';
-                    }
-                    if (value.indexOf('</') >= 0) {
-                        subtype = 'richtext';
+                if (type === 'String') {
+                    if (value) {
+                        if (value.indexOf('\n') >= 0) {
+                            subtype = 'plaintext';
+                        }
+                        if (value.indexOf('</') >= 0) {
+                            subtype = 'richtext';
+                        }
                     }
                 }
+                this.$path.val(path);
                 this.subtype.setValue(subtype);
                 if (name) {
-                    this.$type.val(property.get('type'));
+                    this.$type.val(type);
                     this.typeChanged();
                     var multi = property.get('multi');
                     this.$multi.prop('checked', multi);

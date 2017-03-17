@@ -21,7 +21,7 @@
 
                     columns: [
                         {
-                            class: 'selection',
+                            class: 'selection bs-checkbox',
                             checkbox: true,
                             sortable: false
                         }, {

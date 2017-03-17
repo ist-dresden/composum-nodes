@@ -110,7 +110,7 @@ public interface ResourceFilter {
         public TypeFilter(String names) {
             Matcher matcher = SIMPLE_ARRAY_PATTERN.matcher(names);
             if (matcher.matches()) {
-                restriction = "-".equalsIgnoreCase(matcher.group(1));
+                restriction = "-".equals(matcher.group(1));
                 names = matcher.group(2);
             }
             typeNames = Arrays.asList(StringUtils.split(names, ","));
@@ -392,13 +392,17 @@ public interface ResourceFilter {
             if (resource != null) {
                 String type = resource.getResourceType();
                 if (StringUtils.isNotBlank(type)) {
-                    return filter.accept(type);
+                    return accept(type);
                 } else {
                     Resource content = resource.getChild(ResourceUtil.CONTENT_NODE);
                     return accept(content);
                 }
             }
             return false;
+        }
+
+        protected boolean accept(String resourceType) {
+            return StringUtils.isNotBlank(resourceType) && filter.accept(resourceType);
         }
 
         /**

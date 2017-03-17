@@ -1,7 +1,8 @@
 package com.composum.sling.cpnl;
 
 import com.composum.sling.core.SlingBean;
-import com.composum.sling.core.BeanContext;
+import org.apache.commons.lang3.StringUtils;
+import org.osgi.framework.InvalidSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,6 +11,7 @@ import javax.inject.Named;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.PageContext;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,21 +21,18 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ComponentTag extends CpnlBodyTagSupport {
 
-    private static final Logger log = LoggerFactory.getLogger(ComponentTag.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ComponentTag.class);
 
-    private String var;
-    private String type;
-    private Integer varScope;
-    private Boolean replace;
+    protected String var;
+    protected String type;
+    protected Integer varScope;
+    protected Boolean replace;
 
-    protected BeanContext context;
     protected SlingBean component;
-    protected Object replacedValue;
-
     private transient Class<? extends SlingBean> componentType;
-
     private static Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<Class<? extends SlingBean>, Field[]>();
 
+    protected ArrayList<Map<String, Object>> replacedAttributes;
     public static final Map<String, Integer> SCOPES = new HashMap<>();
 
     static {
@@ -49,7 +48,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
         varScope = null;
         replace = null;
         component = null;
-        replacedValue = null;
+        replacedAttributes = null;
         componentType = null;
         super.clear();
     }
@@ -57,19 +56,18 @@ public class ComponentTag extends CpnlBodyTagSupport {
     @Override
     public int doStartTag() throws JspException {
         super.doStartTag();
-        context = new BeanContext.Page(pageContext);
         if (getVar() != null) {
             try {
-                if ((replacedValue = available()) == null || getReplace()) {
+                if (available() == null || getReplace()) {
                     component = createComponent();
-                    pageContext.setAttribute(getVar(), component, getVarScope());
+                    setAttribute(getVar(), component, getVarScope());
                 }
             } catch (ClassNotFoundException ex) {
-                log.error("Class not found: " + this.type, ex);
+                LOG.error("Class not found: " + this.type, ex);
             } catch (IllegalAccessException ex) {
-                log.error("Could not access: " + this.type, ex);
+                LOG.error("Could not access: " + this.type, ex);
             } catch (InstantiationException ex) {
-                log.error("Could not instantiate: " + this.type, ex);
+                LOG.error("Could not instantiate: " + this.type, ex);
             }
         }
         return EVAL_BODY_INCLUDE;
@@ -77,15 +75,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     @Override
     public int doEndTag() throws JspException {
-        if (getVar() != null) {
-            if (replacedValue != null) {
-                if (component != null) {
-                    pageContext.setAttribute(getVar(), replacedValue, getVarScope());
-                }
-            } else {
-                pageContext.removeAttribute(getVar(), getVarScope());
-            }
-        }
+        restoreAttributes();
         clear();
         super.doEndTag();
         return EVAL_PAGE;
@@ -144,7 +134,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
      *             <code>true</code> - replace each potentially existing instance
      *             (default in 'page' context).
      */
-    public void setReplace(boolean flag) {
+    public void setReplace(Boolean flag) {
         this.replace = flag;
     }
 
@@ -157,7 +147,10 @@ public class ComponentTag extends CpnlBodyTagSupport {
      */
     protected Class<? extends SlingBean> getComponentType() throws ClassNotFoundException {
         if (componentType == null) {
-            componentType = (Class<? extends SlingBean>) sling.getType(getType());
+            String type = getType();
+            if (StringUtils.isNotBlank(type)) {
+                componentType = (Class<? extends SlingBean>) context.getType(type);
+            }
         }
         return componentType;
     }
@@ -195,7 +188,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
     }
 
     protected void initialize(SlingBean component) {
-        component.initialize(new BeanContext.Page(pageContext));
+        component.initialize(context);
     }
 
     /**
@@ -230,7 +223,60 @@ public class ComponentTag extends CpnlBodyTagSupport {
      *
      */
     protected <T> T retrieveFirstServiceOfType(Class<T> serviceType, String filter) {
-        T[] services = sling.getScriptHelper().getServices(serviceType, filter);
+        T[] services = null;
+        try {
+            services = context.getServices(serviceType, filter);
+        } catch (InvalidSyntaxException ex) {
+            LOG.error(ex.getMessage(), ex);
+        }
         return services == null ? null : services[0];
+    }
+
+    // attribute replacement registry...
+
+    /**
+     * retrieves the registry for one scope
+     */
+    protected Map<String, Object> getReplacedAttributes(int scope) {
+        if (replacedAttributes == null) {
+            replacedAttributes = new ArrayList<>();
+        }
+        while (replacedAttributes.size() <= scope) {
+            replacedAttributes.add(new HashMap<String, Object>());
+        }
+        return replacedAttributes.get(scope);
+    }
+
+    /**
+     * each attribute set by a tag should use this method for attribute declaration;
+     * an existing value with the same key is registered and restored if the tag rendering ends
+     */
+    protected void setAttribute(String key, Object value, int scope) {
+        Map<String, Object> replacedInScope = getReplacedAttributes(scope);
+        if (!replacedInScope.containsKey(key)) {
+            Object current = pageContext.getAttribute(key, scope);
+            replacedInScope.put(key, current);
+        }
+        pageContext.setAttribute(key, value, scope);
+    }
+
+    /**
+     * restores all replaced values and removes all attributes declared in this tag
+     */
+    protected void restoreAttributes() {
+        if (replacedAttributes != null) {
+            for (int scope = 0; scope < replacedAttributes.size(); scope++) {
+                Map<String, Object> replaced = replacedAttributes.get(scope);
+                for (Map.Entry<String, Object> entry : replaced.entrySet()) {
+                    String key = entry.getKey();
+                    Object value = entry.getValue();
+                    if (value != null) {
+                        pageContext.setAttribute(key, value, scope);
+                    } else {
+                        pageContext.removeAttribute(key, scope);
+                    }
+                }
+            }
+        }
     }
 }

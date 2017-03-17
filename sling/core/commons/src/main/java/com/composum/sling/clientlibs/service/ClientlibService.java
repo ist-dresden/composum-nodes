@@ -32,4 +32,6 @@ public interface ClientlibService {
             throws IOException, RepositoryException;
 
     boolean mapClientlibURLs();
+
+    boolean useMinifiedFiles();
 }

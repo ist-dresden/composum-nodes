@@ -2,6 +2,7 @@ package com.composum.sling.core.mapping;
 
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
+import com.composum.sling.core.servlet.NodeTreeServlet;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,6 +97,12 @@ public class MappingRules {
                     new ResourceFilter.PathFilter(new StringFilter.BlackList(
                             "^/system(/.*)$", "^/services(/.*)$", "^/bin(/.*)$"))
             );
+
+    /**
+     * the default strategy for node traversal
+     */
+    public static final NodeTreeServlet.TreeNodeStrategy DEFAULT_TREE_NODE_STRATEGY =
+            new NodeTreeServlet.DefaultTreeNodeStrategy(DEFAULT_NODE_FILTER);
 
     /**
      * the default filter for export and import - system nodes and servlet paths are disabled

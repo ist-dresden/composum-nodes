@@ -106,11 +106,19 @@
                 });
                 this.initialSelect = this.$el.attr('data-selected');
                 if (!this.initialSelect || this.initialSelect == '/') {
-                    this.initialSelect = core.console.getProfile().get('browser', 'current', "/");
+                    this.initialSelect = core.console.getProfile().get(this.getProfileId(), 'current', "/");
                 }
-                this.filter = core.console.getProfile().get('browser', 'filter');
+                this.initializeFilter();
                 core.components.Tree.prototype.initialize.apply(this, [options]);
                 this.$jstree.on('keydown.BrowserTree', '.jstree-anchor', _.bind(this.customKeys, this));
+            },
+
+            getProfileId: function () {
+                return 'browser'
+            },
+
+            initializeFilter: function () {
+                this.filter = core.console.getProfile().get(this.getProfileId(), 'filter');
             },
 
             customKeys: function (event) {
@@ -258,6 +266,14 @@
                 this.$('button.favorites').on('click', _.bind(this.toggleFavorites, this));
             },
 
+            getCurrent: function () {
+                return browser.current;
+            },
+
+            getCurrentPath: function () {
+                return browser.getCurrentPath();
+            },
+
             toggleFavorites: function (event) {
                 return browser.navigation.toggleFavorites(event);
             },
@@ -279,8 +295,9 @@
             },
 
             refreshNodeState: function () {
-                if (browser.current) {
-                    var node = browser.current.node;
+                var current = this.getCurrent();
+                if (current) {
+                    var node = current.node;
                     if (node && node.jcrState) {
                         this.$toggleLock.text(node.jcrState.locked ? 'Unlock' : 'Lock');
                         this.$toggleCheckout.text(node.jcrState.checkedOut ? 'Checkin' : 'Checkout');
@@ -298,7 +315,7 @@
                     event.preventDefault();
                 }
                 if (!path) {
-                    path = browser.getCurrentPath();
+                    path = this.getCurrentPath();
                 }
                 core.console.getProfile().set('nodes', 'clipboard', {
                     path: path
@@ -313,7 +330,7 @@
                     event.preventDefault();
                 }
                 if (!path) {
-                    path = browser.getCurrentPath();
+                    path = this.getCurrentPath();
                 }
                 var clipboard = core.console.getProfile().get('nodes', 'clipboard');
                 if (path && clipboard && clipboard.path) {

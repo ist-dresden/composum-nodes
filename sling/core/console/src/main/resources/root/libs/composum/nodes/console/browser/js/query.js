@@ -16,7 +16,7 @@
 
             initialize: function (options) {
                 this.loadTemplates();
-                window.setTimeout(_.bind (this.setupQueriesMenu, this), 500);
+                window.setTimeout(_.bind(this.setupQueriesMenu, this), 500);
                 this.$form = this.$('.query-actions form');
                 this.$selectMenu = this.$('.query-actions ul.select');
                 this.$queryInput = this.$('.query-actions form input');

@@ -53,6 +53,7 @@ import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
 import static com.composum.sling.core.util.ResourceUtil.PROP_RESOURCE_TYPE;
 import static com.composum.sling.core.util.ResourceUtil.TYPE_FILE;
 import static com.composum.sling.core.util.ResourceUtil.TYPE_RESOURCE;
+import static com.composum.sling.core.util.ResourceUtil.splitPathAndName;
 import static org.apache.sling.event.jobs.Job.JobState.ERROR;
 import static org.apache.sling.event.jobs.Job.JobState.GIVEN_UP;
 import static org.apache.sling.event.jobs.Job.JobState.STOPPED;
@@ -122,7 +123,6 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
         protected final ResourceResolver serviceResolver;
         protected final PrintWriter out;
         protected final Session session;
-        protected final ResourceResolver resourceResolver;
 
         public UserContextCallable(final Job job, final JobExecutionContext context,
                                    final ResourceResolver serviceResolver, final PrintWriter out)
@@ -136,7 +136,6 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
             session = serviceSession.impersonate(new SimpleCredentials(userId, new char[0]));
             HashMap<String, Object> authInfo = new HashMap<>();
             authInfo.put("user.jcr.session", session);
-            resourceResolver = resolverFactory.getResourceResolver(authInfo);
         }
     }
 
@@ -280,14 +279,6 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
             sequencer.release(token);
         }
         return resource;
-    }
-
-    private static String[] splitPathAndName(String path) {
-        String[] result = new String[2];
-        int nameSeparator = path.lastIndexOf('/');
-        result[0] = path.substring(0, nameSeparator);
-        result[1] = path.substring(nameSeparator + 1);
-        return result;
     }
 
     @Override

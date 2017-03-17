@@ -1,9 +1,9 @@
 package com.composum.sling.clientlibs.handle;
 
 import com.composum.sling.core.ResourceHandle;
-import com.composum.sling.core.util.PropertyUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -128,8 +128,8 @@ public class FileHandle {
 
     public void storeContent(InputStream stream) throws RepositoryException {
         if (content.isValid()) {
-            Node node = content.adaptTo(Node.class);
-            PropertyUtil.setProperty(node, ResourceUtil.PROP_DATA, stream);
+            ModifiableValueMap values = content.adaptTo(ModifiableValueMap.class);
+            values.put(ResourceUtil.PROP_DATA, stream);
         }
     }
 

@@ -14,6 +14,7 @@ import com.composum.sling.core.util.PropertyUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceWrapper;
 import org.apache.sling.api.resource.ValueMap;
@@ -158,7 +159,7 @@ public class ResourceHandle extends ResourceWrapper {
      */
     public ResourceHandle getContentResource() {
         if (contentResource == null) {
-            if (ResourceUtil.CONTENT_NODE.equals(getName())) {
+            if (ResourceUtil.CONTENT_NODE.equals(getName()) || !this.isValid()) {
                 contentResource = this;
             } else {
                 contentResource = ResourceHandle.use(this.getChild(ResourceUtil.CONTENT_NODE));
@@ -233,8 +234,11 @@ public class ResourceHandle extends ResourceWrapper {
                     result = type.getName();
                 }
             } catch (RepositoryException e) {
-                // ok, no type (null)
+                // ok, no node type accessible, use properties
             }
+        }
+        if (result == null) {
+            result = getProperties().get (JcrConstants.JCR_PRIMARYTYPE, (String) null);
         }
         return result;
     }

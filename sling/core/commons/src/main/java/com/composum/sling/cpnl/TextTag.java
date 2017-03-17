@@ -10,8 +10,12 @@ import javax.servlet.jsp.JspTagException;
 import javax.servlet.jsp.JspWriter;
 import java.io.IOException;
 import java.text.Format;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TextTag extends CpnlBodyTagSupport {
 
@@ -55,6 +59,7 @@ public class TextTag extends CpnlBodyTagSupport {
     private Object value;
     private String propertyName;
     private boolean escape = true;
+    private boolean i18n = false;
     private Format format;
     private String output;
     private String tagClass;
@@ -69,6 +74,8 @@ public class TextTag extends CpnlBodyTagSupport {
         this.value = null;
         this.propertyName = null;
         this.format = null;
+        this.i18n = false;
+        this.escape = true;
         this.output = null;
         this.tagName = null;
         this.tagClass = null;
@@ -80,14 +87,27 @@ public class TextTag extends CpnlBodyTagSupport {
     }
 
     public int doStartTag() throws JspException {
+        super.doStartTag();
         this.bodyContent = null;
         this.output = null;
-        if (this.value != null) {
-            this.output = String.valueOf(this.value);
+        if (this.value == null) {
+            if (this.propertyName != null) {
+                Resource resource = TagUtil.getRequest(this.pageContext).getResource();
+                this.value = ResourceUtil.getValueMap(resource).get(this.propertyName, Object.class);
+            }
         }
-        if ((this.output == null) && (this.propertyName != null)) {
-            Resource resource = TagUtil.getRequest(this.pageContext).getResource();
-            this.output = ((String) ResourceUtil.getValueMap(resource).get(this.propertyName, String.class));
+        if (this.value != null) {
+            if (this.format != null) {
+                this.output = this.format.format(
+                        this.format instanceof MessageFormat
+                                ? new String[]{String.valueOf(this.value)}
+                                : this.value);
+            } else {
+                this.output = String.valueOf(this.value);
+            }
+        }
+        if (StringUtils.isNotBlank(this.output) && this.i18n) {
+            this.output = CpnlElFunctions.i18n(this.request, this.output);
         }
         return this.output != null ? SKIP_BODY : EVAL_BODY_BUFFERED;
     }
@@ -99,10 +119,7 @@ public class TextTag extends CpnlBodyTagSupport {
 
     public int doEndTag() throws JspException {
         try {
-            if ((this.output != null) && (this.format != null)) {
-                this.output = this.format.format(this.output);
-            }
-            if (StringUtils.isNotEmpty(output)) {
+            if (StringUtils.isNotEmpty(this.output)) {
                 this.output = toString(this.escape
                         ? escape(this.output)
                         : this.output);
@@ -178,10 +195,28 @@ public class TextTag extends CpnlBodyTagSupport {
     }
 
     /**
+     * @param i18n flag for translating the text (default: 'false')
+     */
+    public void setI18n(boolean i18n) {
+        this.i18n = i18n;
+    }
+
+    /**
      * @param format the fmt to set
      */
-    public void setFormat(Format format) {
-        this.format = format;
+    public void setFormat(String format) {
+        Pattern TEXT_FORMAT_STRING = Pattern.compile("\\{([^\\}]+)\\}(.+)$");
+        Matcher matcher = TEXT_FORMAT_STRING.matcher(format);
+        if (matcher.matches()) {
+            switch (matcher.group(1)) {
+                case "Message":
+                    this.format = new MessageFormat(matcher.group(2));
+                    break;
+                case "Date":
+                    this.format = new SimpleDateFormat(matcher.group(2));
+                    break;
+            }
+        }
     }
 
     /**

@@ -7,8 +7,6 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.osgi.service.component.ComponentContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Dictionary;
 
@@ -21,18 +19,16 @@ import java.util.Dictionary;
 @Service
 public class ClientlibConfigurationService implements ClientlibConfiguration {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientlibConfigurationService.class);
-
     // CSS configuration
 
-    public static final String CSS_DEBUG = "css.debug";
+    public static final String DEBUG = "debug";
     @Property(
-            name = CSS_DEBUG,
-            label = "CSS - Debug",
-            description = "let CSS files unchanged and unbundled if set to 'true'",
+            name = DEBUG,
+            label = "Debug",
+            description = "let files unchanged and unbundled if set to 'true'",
             boolValue = false
     )
-    protected boolean cssDebug;
+    protected boolean debug;
 
     public static final String CSS_MINIMIZE = "css.minimize";
     @Property(
@@ -63,15 +59,6 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     protected String cssTemplate;
 
     // JS configuration
-
-    public static final String JS_DEBUG = "javascript.debug";
-    @Property(
-            name = JS_DEBUG,
-            label = "JS - Debug",
-            description = "let Javascript files unchanged and unbundled if set to 'true'",
-            boolValue = false
-    )
-    protected boolean jsDebug;
 
     public static final String JS_MINIMIZE = "javascript.minimize";
     @Property(
@@ -153,6 +140,16 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     )
     protected String cacheRoot;
 
+    public static final boolean DEFAULT_USE_MINIFIED_FILES = true;
+    public static final String USE_MINIFIED_FILES = "clientlibs.files.minified";
+    @Property(
+            name = USE_MINIFIED_FILES,
+            label = "General - Use minified CSS/JS",
+            description = "if 'on' for all clientlib files which have a '.min' sibling the '.min' files is used; default: 'on'",
+            boolValue = DEFAULT_USE_MINIFIED_FILES
+    )
+    private boolean useMinifiedFiles;
+
     public static final boolean DEFAULT_MAP_CLIENTLIB_URLS = true;
     public static final String MAP_CLIENTLIB_URLS = "clientlibs.url.map";
     @Property(
@@ -186,10 +183,6 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
 
     // CSS configuration
 
-    public boolean getCssDebug() {
-        return cssDebug;
-    }
-
     public boolean getCssMinimize() {
         return cssMinimize;
     }
@@ -203,10 +196,6 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     }
 
     // JS configuration
-
-    public boolean getJavascriptDebug() {
-        return jsDebug;
-    }
 
     public boolean getJavascriptMinimize() {
         return jsMinimize;
@@ -236,8 +225,16 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
 
     // general configuration
 
+    public boolean getDebug() {
+        return debug;
+    }
+
     public boolean getMapClientlibURLs() {
         return mapClientlibURLs;
+    }
+
+    public boolean getUseMinifiedFiles() {
+        return useMinifiedFiles;
     }
 
     public boolean getGzipEnabled() {
@@ -261,12 +258,11 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     protected void activate(ComponentContext context) {
         Dictionary<String, Object> properties = context.getProperties();
         // CSS configuration
-        cssDebug = PropertiesUtil.toBoolean(properties.get(CSS_DEBUG), false);
+        debug = PropertiesUtil.toBoolean(properties.get(DEBUG), false);
         cssMinimize = PropertiesUtil.toBoolean(properties.get(CSS_MINIMIZE), true);
         cssLineBreak = PropertiesUtil.toInteger(properties.get(CSS_LINEBREAK), 0);
         cssTemplate = PropertiesUtil.toString(properties.get(CSS_TEMPLATE), CSS_DEFAULT_TEMPLATE);
         // JS configuration
-        jsDebug = PropertiesUtil.toBoolean(properties.get(JS_DEBUG), false);
         jsMinimize = PropertiesUtil.toBoolean(properties.get(JS_MINIMIZE), false);
         jsMunge = PropertiesUtil.toBoolean(properties.get(JS_MUNGE), false);
         jsOptimize = PropertiesUtil.toBoolean(properties.get(JS_OPTIMIZE), false);
@@ -276,6 +272,7 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
         linkTemplate = PropertiesUtil.toString(properties.get(LINK_TEMPLATE), LINK_DEFAULT_TEMPLATE);
         // general configuration
         mapClientlibURLs = PropertiesUtil.toBoolean(properties.get(MAP_CLIENTLIB_URLS), DEFAULT_MAP_CLIENTLIB_URLS);
+        useMinifiedFiles = !debug && PropertiesUtil.toBoolean(properties.get(USE_MINIFIED_FILES), DEFAULT_USE_MINIFIED_FILES);
         gzipEnabled = PropertiesUtil.toBoolean(properties.get(GZIP_ENABLED), DEFAULT_GZIP_ENABLED);
         cacheRoot = PropertiesUtil.toString(properties.get(CACHE_ROOT), DEFAULT_CACHE_ROOT);
         threadPoolMin = PropertiesUtil.toInteger(properties.get(MIN_THREAD_POOL_SIZE), DEFAULT_THREAD_POOL_MIN);

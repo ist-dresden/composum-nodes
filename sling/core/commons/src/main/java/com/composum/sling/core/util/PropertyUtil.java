@@ -37,6 +37,66 @@ public class PropertyUtil {
         return type;
     }
 
+    public static String getProperty(Node node, String name, String defaultValue)
+            throws RepositoryException {
+        String value = null;
+        if (node.hasProperty(name)) {
+            Property property = node.getProperty(name);
+            value = property.getString();
+        }
+        return value != null ? value : defaultValue;
+    }
+
+    public static Boolean getProperty(Node node, String name, Boolean defaultValue)
+            throws RepositoryException {
+        Boolean value = null;
+        if (node.hasProperty(name)) {
+            Property property = node.getProperty(name);
+            value = property.getBoolean();
+        }
+        return value != null ? value : defaultValue;
+    }
+
+    public static Long getProperty(Node node, String name, Long defaultValue)
+            throws RepositoryException {
+        Long value = null;
+        if (node.hasProperty(name)) {
+            Property property = node.getProperty(name);
+            value = property.getLong();
+        }
+        return value != null ? value : defaultValue;
+    }
+
+    public static Calendar getProperty(Node node, String name, Calendar defaultValue)
+            throws RepositoryException {
+        Calendar value = null;
+        if (node.hasProperty(name)) {
+            Property property = node.getProperty(name);
+            value = property.getDate();
+        }
+        return value != null ? value : defaultValue;
+    }
+
+    public static BigDecimal getProperty(Node node, String name, BigDecimal defaultValue)
+            throws RepositoryException {
+        BigDecimal value = null;
+        if (node.hasProperty(name)) {
+            Property property = node.getProperty(name);
+            value = property.getDecimal();
+        }
+        return value != null ? value : defaultValue;
+    }
+
+    public static Double getProperty(Node node, String name, Double defaultValue)
+            throws RepositoryException {
+        Double value = null;
+        if (node.hasProperty(name)) {
+            Property property = node.getProperty(name);
+            value = property.getDouble();
+        }
+        return value != null ? value : defaultValue;
+    }
+
     /**
      * FIXME(rw,2015-04-22) not useful in the core layer
      *

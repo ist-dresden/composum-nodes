@@ -16,7 +16,7 @@
 
             initialize: function (options) {
                 core.components.MultiFormItem.prototype.initialize.apply(this, [options]);
-                this.type = core.getWidget(this.$el, '.type', core.components.ComboBoxWidget);
+                this.type = core.getWidget(this.$el, '.type', core.components.SelectWidget);
                 this.pattern = core.getWidget(this.$el, '.pattern', core.components.TextFieldWidget);
             },
 
@@ -305,5 +305,5 @@
         });
 
     })(core.pckgmgr);
-
+    
 })(window.core);

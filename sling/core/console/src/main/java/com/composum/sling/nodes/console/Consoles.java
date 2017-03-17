@@ -3,7 +3,6 @@ package com.composum.sling.nodes.console;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
-import com.composum.sling.core.SlingHandle;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -216,8 +215,7 @@ public class Consoles extends ConsolePage {
         public boolean accept(BeanContext context, Resource resource, String className) {
             boolean classAvailable = false;
             try {
-                SlingHandle slingHandle = new SlingHandle(context);
-                slingHandle.getType(className);
+                context.getType(className);
                 classAvailable = true;
             } catch (Exception ex) {
                 LOG.warn("precondition check failed: " + ex.getMessage());

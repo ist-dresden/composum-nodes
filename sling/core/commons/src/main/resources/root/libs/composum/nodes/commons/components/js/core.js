@@ -5,6 +5,185 @@
 (function (window) {
     'use strict';
 
+    window.widgets = {
+
+        const: {
+            css: {
+                base: 'widget',
+                selector: {
+                    general: '.widget',
+                    prefix: '.widget.',
+                    form: 'form.form-widget'
+                }
+            },
+            attr: {
+                name: 'name'
+            }
+        },
+
+        registered: {},
+
+        /**
+         * Register a widget type by a DOM selector as key for this type.
+         * @param selector    the jQuery selector to find the widgets instances
+         * @param widgetClass the widget implementation class (required)
+         * @param options     additional options (see richtext-widget for example)
+         */
+        register: function (selector, widgetClass, options) {
+            widgets.registered[selector] = _.extend({
+                selector: selector,
+                widgetClass: widgetClass
+            }, options);
+        },
+
+        /**
+         * Set up all components of a DOM element; add a view at each element marked with
+         * a widget css class. Uses the 'core.getView()' function to add the View to the
+         * DOM element itself to avoid multiple View instances for one DOM element.
+         */
+        setUp: function (root) {
+            var $root = root ? $(root) : $(document);
+            _.keys(widgets.registered).forEach(function (selector) {
+                $root.find(selector).each(function () {
+                    var widget = widgets.registered[selector];
+                    core.getView(this, widget.widgetClass);
+                });
+            });
+        },
+
+        /**
+         * applies the abstract 'option' (must be a function) to all widgets which have such
+         * an option registered and are matching to the widgets selector in the 'root's context
+         * used for example
+         *  - by the multi-form-widget to apply the 'afterClone' option after item creation (cloning)
+         */
+        apply: function (root, option) {
+            _.keys(widgets.registered).forEach(function (selector) {
+                var widget = widgets.registered[selector];
+                var method = widget[option];
+                if (_.isFunction(method)) {
+                    var $root = $(root);
+                    if ($root.is(widget.selector)) {
+                        method.apply(root);
+                    } else {
+                        $root.find(widget.selector).each(function () {
+                            method.apply(this);
+                        });
+                    }
+                }
+            });
+        },
+
+        Widget: Backbone.View.extend({
+
+            initialize: function (options) {
+                this.$input = this.retrieveInput();
+                this.name = this.retrieveName();
+                this.form = this.retrieveForm();
+            },
+
+            retrieveInput: function () {
+                return this.$el.is('input') ? this.$el : this.$('input');
+            },
+
+            retrieveName: function () {
+                return this.$input.attr(widgets.const.attr.name);
+            },
+
+            declareName: function (name) {
+                if (name) {
+                    this.$input.attr(widgets.const.attr.name, name);
+                } else {
+                    this.$input.removeAttr(widgets.const.attr.name);
+                }
+            },
+
+            retrieveForm: function () {
+                var $form = this.$el.closest(widgets.const.css.selector.form);
+                return $form.length > 0 ? $form[0].view : undefined;
+            },
+
+            initRules: function ($element) {
+                this.label = $element.data('label');
+                // scan 'data-pattern' attribute
+                var pattern = $element.data('pattern');
+                if (pattern) {
+                    this.rules = _.extend(this.rules || {}, {
+                        pattern: pattern.indexOf('/') === 0
+                            // use '/.../ig' to specify pattern and flags
+                            ? eval(pattern)
+                            // pure strings can not have additional flags...
+                            : new RegExp(pattern)
+                    });
+                    var patternHint = $element.data('pattern-hint');
+                    if (patternHint) {
+                        this.rules.patternHint = patternHint;
+                    }
+                }
+                // scan 'data-rules' attribute
+                var rules = $element.data('rules');
+                if (rules) {
+                    this.rules = _.extend(this.rules || {}, {
+                        mandatory: rules.indexOf('mandatory' >= 0),
+                        blank: rules.indexOf('blank' >= 0),
+                        unique: rules.indexOf('unique' >= 0)
+                    });
+                }
+            },
+
+            /**
+             * returns the current validation state, calls 'validate' if no state is present
+             */
+            isValid: function (alertMethod) {
+                if (this.valid === undefined) {
+                    this.valid = _.isFunction(this.validate)
+                        ? this.validate(alertMethod)
+                        : true;
+                }
+                this.alertFlush(alertMethod);
+                return this.valid;
+            },
+
+            validationReset: function () {
+                this.valid = undefined;
+                this.alertMessage = undefined;
+            },
+
+            grabFocus: function () {
+                this.$input.focus();
+            },
+
+            alert: function (alertMethod, type, label, message, hint) {
+                if (_.isFunction(alertMethod)) {
+                    alertMethod(type, label || this.label, message, hint);
+                } else {
+                    this.alertMessage = {
+                        type: type,
+                        label: label,
+                        message: message,
+                        hint: hint
+                    }
+                }
+            },
+
+            /**
+             * print out a probably delayed message
+             */
+            alertFlush: function (alertMethod) {
+                if (_.isFunction(alertMethod) && this.alertMessage) {
+                    alertMethod(this.alertMessage.type, this.alertMessage.label || this.label,
+                        this.alertMessage.message, this.alertMessage.hint);
+                    this.alertMessage = undefined;
+                }
+            }
+        })
+    };
+
+    /**
+     * register the 'hidden' input as a widget to add the widgets behaviour to such hidden values
+     */
+    window.widgets.register('.widget.hidden-widget', window.widgets.Widget);
+
     window.core = {
 
         getHtml: function (url, onSuccess, onError, onComplete) {
@@ -13,6 +192,14 @@
 
         getJson: function (url, onSuccess, onError, onComplete) {
             core.ajaxGet(url, {dataType: 'json'}, onSuccess, onError, onComplete);
+        },
+
+        ajaxHead: function (url, config, onSuccess, onError, onComplete) {
+            var ajaxConf = _.extend({
+                type: 'HEAD',
+                url: core.getContextUrl(url)
+            }, config);
+            core.ajaxCall(ajaxConf, onSuccess, onError, onComplete);
         },
 
         ajaxGet: function (url, config, onSuccess, onError, onComplete) {
@@ -63,7 +250,7 @@
                 error: function (result) {
                     if (core.isNotAuthorized(result)) {
                         if (_.isFunction(core.unauthorizedDelegate)) {
-                            core.unauthorizedDelegate(function(){
+                            core.unauthorizedDelegate(function () {
                                 // try it once more after delegation to authorize
                                 core.ajaxCall(config, onSuccess, onError, onComplete);
                             });
@@ -149,7 +336,7 @@
                 error: function (result) {
                     if (core.isNotAuthorized(result)) {
                         if (_.isFunction(core.unauthorizedDelegate)) {
-                            core.unauthorizedDelegate(function(){
+                            core.unauthorizedDelegate(function () {
                                 // try it once more after delegation to authorize
                                 core.submitForm(formElement, onSuccess, onError, onComplete);
                             });
@@ -241,7 +428,7 @@
             });
         },
 
-        isNotAuthorized: function(result) {
+        isNotAuthorized: function (result) {
             return result.status == 401 || result.status == 403;
         },
 
@@ -271,7 +458,7 @@
          *        general 'components' class which is probably bound during the components 'init'
          */
         getView: function (element, viewClass, initializer, force) {
-            return window.core.getWidget(document, element, viewClass, initializer, force);
+            return core.getWidget(document, element, viewClass, initializer, force);
         },
 
         /**
@@ -344,6 +531,17 @@
             return name;
         },
 
+        getWidgetNames: function (widget, separator) {
+            return core.splitWidgetName(core.getWidgetName(widget));
+        },
+
+        splitWidgetName: function (name, separator) {
+            if (!separator) {
+                separator = name.indexOf('/') >= 0 ? '/' : '.';
+            }
+            return name.split(separator);
+        },
+
         /**
          * the dialog to select a repository path in a tree view
          */
@@ -404,6 +602,23 @@
                 }
             }
             return _.isObject(object) || !object;
+        },
+
+        addPathSegment: function (path, segment) {
+            if (segment) {
+                if (path.length > 0 && !path.endsWith('/') && segment.indexOf('/') != 0) {
+                    path += '/';
+                }
+                path += segment;
+                if (!core.endsWith(path, '/')) {
+                    path += '/';
+                }
+            }
+            return path;
+        },
+
+        endsWith: function (string, snippet) {
+            return string.lastIndexOf(snippet) == string.length - snippet.length;
         }
     };
 

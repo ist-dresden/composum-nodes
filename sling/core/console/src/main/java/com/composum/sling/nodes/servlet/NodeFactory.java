@@ -126,7 +126,7 @@ public class NodeFactory {
 
             // set mime type by the received content if not specified
             if (StringUtils.isBlank(params.mimeType)) {
-                setMimTypeByData(name, contentNode, property);
+                setMimeTypeByData(name, contentNode, property);
             }
 
             return node;
@@ -182,14 +182,14 @@ public class NodeFactory {
 
             // set mime type by the received content if not specified
             if (StringUtils.isBlank(params.mimeType)) {
-                setMimTypeByData(name, node, property);
+                setMimeTypeByData(name, node, property);
             }
 
             return node;
         }
     }
 
-    public static void setMimTypeByData(String name, Node node, Property property) throws RepositoryException {
+    public static void setMimeTypeByData(String name, Node node, Property property) throws RepositoryException {
         if (property != null) {
             String mimeType = MimeTypeUtil.getMimeType(name, property, null);
             if (StringUtils.isNotBlank(mimeType)) {

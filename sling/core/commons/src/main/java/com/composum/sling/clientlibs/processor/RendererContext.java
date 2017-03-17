@@ -48,7 +48,7 @@ public class RendererContext {
         for (ClientlibLink link : renderedClientlibs) {
             if (reference.use(link)) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("rendered: " + reference.path + " - using: " + reference.getUsedAlternative());
+                    LOG.debug("rendered: " + reference.keyPath + " - using: " + reference.getUsedAlternative());
                 }
                 return true;
             }
@@ -71,21 +71,14 @@ public class RendererContext {
         return getClientlibService().mapClientlibURLs();
     }
 
+    public boolean useMinifiedFiles() {
+        return getClientlibService().useMinifiedFiles();
+    }
+
     public ClientlibService getClientlibService() {
         if (clientlibService == null) {
-            clientlibService = getService(ClientlibService.class);
+            clientlibService = context.getService(ClientlibService.class);
         }
         return clientlibService;
-    }
-
-    public SlingScriptHelper getScriptHelper() {
-        if (scriptHelper == null) {
-            scriptHelper = context.getAttribute("sling", SlingScriptHelper.class);
-        }
-        return scriptHelper;
-    }
-
-    public <ServiceType> ServiceType getService(Class<ServiceType> type) {
-        return getScriptHelper().getService(type);
     }
 }

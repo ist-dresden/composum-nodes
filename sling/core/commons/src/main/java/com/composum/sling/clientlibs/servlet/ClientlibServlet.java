@@ -41,7 +41,11 @@ public class ClientlibServlet extends SlingSafeMethodsServlet {
 
         try {
             RequestPathInfo pathInfo = request.getRequestPathInfo();
+            String selectors = pathInfo.getSelectorString(); /* probably '.min' (!) */
             String path = pathInfo.getResourcePath();
+            if (StringUtils.isNotBlank(selectors)) {
+                path += "." + selectors;
+            }
 
             Clientlib.Type type = Clientlib.Type.valueOf(pathInfo.getExtension().toLowerCase());
 

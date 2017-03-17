@@ -20,9 +20,10 @@
             }
         });
 
-        components.RichTextWidget = Backbone.View.extend({
+        components.RichTextWidget = widgets.Widget.extend({
 
             initialize: function (options) {
+                widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.$editor = this.richText();
                 this.$editor.trumbowyg(components.const.richtext.defaultOptions);
                 var style = this.$el.data('style');
@@ -58,15 +59,19 @@
             }
         });
 
-        components.richTextWidget = {
+        widgets.register('.widget.richtext-widget', components.RichTextWidget, {
 
-            afterClone: function ($el) {
+            /**
+             * reset a cloned instance to the 'original' DOM element only
+             */
+            afterClone: function () {
+                var $el = $(this);
                 var $wrapper = $(document.createElement('div'));
                 var $content = $el.find('.composum-widgets-richtext_value').clone();
                 $wrapper.append($content);
                 $el.html($wrapper.html());
             }
-        };
+        });
 
         /**
          * trumbowyg editor customizing
@@ -81,7 +86,7 @@
                         form = core.getWidget($dialog[0], 'form', core.components.FormWidget),
                         formWidgets = {};
                     $dialog.addClass('composum-widgets-richtext_link-dialog');
-                    components.setUp(form.el);
+                    window.widgets.setUp(form.el);
 
                     form.$('[name]').each(function () {
                         var name = $(this).attr('name');

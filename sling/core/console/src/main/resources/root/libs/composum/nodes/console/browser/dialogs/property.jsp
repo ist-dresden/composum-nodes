@@ -23,22 +23,24 @@
             <input name="path" type="hidden">
             <input name="oldname" type="hidden">
             <div class="row">
-              <div class="col-lg-7 col-md-7 col-sm-7 col-xs-12">
+              <div class="col-lg-7 col-md-7 col-sm-7 col-xs-7">
                 <div class="form-group type">
                   <label class="control-label">Type</label>
                   <select name="type" class="widget property-type-widget form-control">
                   </select>
                 </div>
               </div>
-              <div class="col-lg-3 col-md-3 col-sm-3 col-xs-8 subtype">
-                <label class="control-label">Subtype</label>
-                <select name="subtype" class="subtype-select widget combo-box-widget form-control">
-                  <option value="string">string value</option>
-                  <option value="plaintext">plain text</option>
-                  <option value="richtext">rich text</option>
-                </select>
+              <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                <div class="form-group subtype">
+                  <label class="control-label">Subtype</label>
+                  <select name="subtype" class="subtype-select widget select-widget form-control">
+                    <option value="string">string value</option>
+                    <option value="plaintext">plain text</option>
+                    <option value="richtext">rich text</option>
+                  </select>
+                </div>
               </div>
-              <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4">
+              <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
                 <div class="form-group multi">
                   <label class="control-label">Multi</label>
                   <input name="multi" class="multi-select-box form-control widget checkbox-widget" type="checkbox">

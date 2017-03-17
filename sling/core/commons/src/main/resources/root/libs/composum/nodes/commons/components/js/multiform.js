@@ -7,11 +7,37 @@
 
     core.components = core.components || {};
 
-    (function (components) {
+    (function (components, widgets) {
 
         //
         // Multi 'Form'
         //
+
+        components.const = _.extend(components.const || {}, {
+            multiform: {
+                css: {
+                    base: 'multi-form-widget',
+                    current: 'current',
+                    selector: {
+                        item: '.multi-form-item',
+                        handle: '.item-select',
+                        widget: '.widget',
+                        richtext: '.richtext-widget',
+                        actions: '.action-bar',
+                        table: '_table'
+                    }
+                },
+                data: {
+                    name: 'name'
+                },
+                pattern: {
+                    name: {
+                        widget: /(.+\/)?:name$/,
+                        replace: '(\/([^/-]+)(-[^/]+)?\/)?([^/]+)$'
+                    }
+                }
+            }
+        });
 
         /**
          * a generic item implementation for a MultiFormWidget item
@@ -19,6 +45,18 @@
         components.MultiFormItem = Backbone.View.extend({
 
             initialize: function (options) {
+                var c = components.const.multiform;
+                widgets.setUp(this.el);
+                this.$widgets = this.$(c.css.selector.widget);
+                var self = this;
+                this.$widgets.each(function () {
+                    if (this.view) {
+                        this.name = this.view.retrieveName();
+                        if (this.name && this.name.match(c.pattern.name.widget)) {
+                            self.nameWidget = this.view;
+                        }
+                    }
+                });
             },
 
             /**
@@ -26,7 +64,7 @@
              */
             getValue: function () {
                 var value = {};
-                this.$('.widget').each(function () {
+                this.$widgets.each(function () {
                     if (this.view) {
                         if (_.isFunction(this.view.getValue)) {
                             var name = core.getWidgetName(this.view);
@@ -47,7 +85,7 @@
              * presets the values of the item
              */
             setValue: function (value) {
-                this.$('.widget').each(function () {
+                this.$widgets.each(function () {
                     if (this.view) {
                         if (_.isFunction(this.view.setValue)) {
                             var name = core.getWidgetName(this.view);
@@ -58,9 +96,8 @@
             },
 
             reset: function () {
-                var $widgets = this.$('.widget');
-                if ($widgets.length > 0) {
-                    $widgets.each(function () {
+                if (this.$widgets.length > 0) {
+                    this.$widgets.each(function () {
                         if (this.view && _.isFunction(this.view.reset)) {
                             this.view.reset.apply(this.view);
                         }
@@ -70,30 +107,51 @@
                 }
             },
 
-            clone: function () {
-                var $clone = this.$el.clone();
-                $clone.find('.richtext-widget').each(function () {
-                    components.richTextWidget.afterClone.apply(this, [$(this)]);
+            prepare: function (path, index) {
+                var c = components.const.multiform;
+                var pattern = new RegExp('^' + path + c.pattern.name.replace);
+                var nameValue = this.getNameValue();
+                var self = this;
+                this.$widgets.each(function () {
+                    var matcher = pattern.exec(this.name);
+                    if (matcher) {
+                        var name = undefined;
+                        if (nameValue) {
+                            if (this.view !== self.nameWidget) {
+                                name = path + '/' + nameValue + '/' + matcher[4];
+                            }
+                        } else {
+                            name = path + '/' + matcher[2] + '-' + index + '/' + matcher[4];
+                        }
+                        this.view.declareName(name);
+                    }
                 });
-                return $clone;
+            },
+
+            getNameValue: function () {
+                if (this.nameWidget) {
+                    return this.nameWidget.getValue();
+                }
+                return undefined;
             }
         });
 
         /**
          * the generic multi form widget manages a set of structured form items
          */
-        components.MultiFormWidget = Backbone.View.extend({
+        components.MultiFormWidget = widgets.Widget.extend({
 
             initialize: function (options) {
+                var c = components.const.multiform;
                 this.itemList = [];
                 this.itemType = options.itemType || components.MultiFormItem;
-                this.name = this.$el.attr('data-name') || 'name';
-                var $itemElements = this.$('.multi-form-item');
+                this.name = this.$el.data(c.data.name) || 'name';
+                var $itemElements = this.$(c.css.selector.item);
                 for (var i = 0; i < $itemElements.length; i++) {
                     this.itemList[i] = this.newItem($itemElements[i]);
                 }
                 this.current(this.itemList[0]);
-                if (this.$('.action-bar').length == 0) {
+                if (this.$(c.css.selector.actions).length == 0) {
                     this.$el.append(
                         '<div class="action-bar btn-toolbar" role="toolbar">' +
                         '<div class="btn-group btn-group-sm">' +
@@ -106,10 +164,10 @@
                         '</div>' +
                         '</div>');
                 }
-                this.$('.action-bar button.add').unbind('click').on('click', _.bind(this.add, this));
-                this.$('.action-bar button.remove').unbind('click').on('click', _.bind(this.remove, this));
-                this.$('.action-bar button.move-up').unbind('click').on('click', _.bind(this.moveUp, this));
-                this.$('.action-bar button.move-down').unbind('click').on('click', _.bind(this.moveDown, this));
+                this.$(c.css.selector.actions + ' button.add').unbind('click').on('click', _.bind(this.add, this));
+                this.$(c.css.selector.actions + ' button.remove').unbind('click').on('click', _.bind(this.remove, this));
+                this.$(c.css.selector.actions + ' button.move-up').unbind('click').on('click', _.bind(this.moveUp, this));
+                this.$(c.css.selector.actions + ' button.move-down').unbind('click').on('click', _.bind(this.moveDown, this));
             },
 
             getValue: function () {
@@ -134,6 +192,30 @@
                 }
             },
 
+            prepare: function () {
+                for (var i = 0; i < this.itemList.length; i++) {
+                    if (_.isFunction(this.itemList[i].prepare)) {
+                        this.itemList[i].prepare(this.name, i);
+                    }
+                }
+            },
+
+            validate: function (alertMethod) {
+                var names = [];
+                for (var i = 0; i < this.itemList.length; i++) {
+                    if (_.isFunction(this.itemList[i].getNameValue)) {
+                        var name = this.itemList[i].getNameValue();
+                        if (name) {
+                            if (_.contains(names, name)) {
+                                this.alert(alertMethod, 'danger', 'name', 'names not unique', name);
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            },
+
             reset: function (size) {
                 if (!size || size < 1) {
                     size = 1;
@@ -150,23 +232,30 @@
             },
 
             newItem: function (element) {
+                var c = components.const.multiform;
                 var item = core.getView(element, this.itemType, _.bind(function (item) {
-                    if (item.$('.item-select').length == 0) {
-                        item.$el.prepend('<input class="item-select form-control" type="radio" name="item-select-' + this.name + '">');
+                    var $handle = item.$(c.css.selector.handle);
+                    if ($handle.length == 0) {
+                        item.$el.prepend('<input class="item-select form-control" type="radio">');
+                        $handle = item.$(c.css.selector.handle);
                     }
-                    item.$('.item-select').unbind('click').on('click', _.bind(this.onSelect, this));
-                    components.setUp(item.el);
+                    $handle.prop('checked', false);
+                    $handle.unbind('click').on('click', _.bind(this.onSelect, this));
+                    window.widgets.setUp(item.el);
                 }, this), this.itemType != components.MultiFormItem);
                 return item;
             },
 
             onSelect: function (event) {
+                var c = components.const.multiform;
                 var itemElement = $(event.currentTarget).closest('.multi-form-item')[0];
                 for (var i = 0; i < this.itemList.length; i++) {
                     if (itemElement === this.itemList[i].el) {
-                        this.itemList[i].$('.item-select').unbind('click');
+                        var $handle = this.itemList[i].$(c.css.selector.handle);
+                        $handle.unbind('click');
                         this.current(this.itemList[i]);
-                        this.itemList[i].$('.item-select').on('click', _.bind(this.onSelect, this));
+                        this.$(c.css.selector.handle).not($handle).prop('checked', false);
+                        $handle.on('click', _.bind(this.onSelect, this));
                         break;
                     }
                 }
@@ -177,14 +266,15 @@
             },
 
             current: function (item) {
+                var c = components.const.multiform;
                 if (item && this.indexOf(item) >= 0) {
                     this.currentItem = item;
                     for (var i = 0; i < this.itemList.length; i++) {
-                        this.itemList[i].$el.removeClass('current');
-                        this.itemList[i].$('.item-select').attr('value', i);
+                        this.itemList[i].$el.removeClass(c.css.current);
+                        this.itemList[i].$(c.css.selector.handle).attr('value', i);
                     }
-                    this.currentItem.$el.addClass('current');
-                    this.currentItem.$('.item-select').click();
+                    this.currentItem.$el.addClass(c.css.current);
+                    this.currentItem.$(c.css.selector.handle).click();
                 }
                 return this.currentItem;
             },
@@ -194,6 +284,9 @@
                 var template = this.itemList[this.itemList.length - 1];
                 var $clone = (_.isFunction(template.clone) ? template.clone() : template.$el.clone());
                 template.$el.parent().append($clone);
+                $clone.each(function () {
+                    widgets.apply(this, 'afterClone');
+                });
                 var newItem = this.newItem($clone);
                 newItem.reset();
                 this.itemList[this.itemList.length] = newItem;
@@ -253,6 +346,9 @@
             }
         });
 
-    })(core.components);
+        widgets.register(widgets.const.css.selector.prefix +
+            components.const.multiform.css.base, components.MultiFormWidget);
+
+    })(core.components, window.widgets);
 
 })(window.core);

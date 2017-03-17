@@ -39,10 +39,11 @@
                 var path = browser.getCurrentPath();
                 var version = this.name.getValue();
                 core.ajaxDelete("/bin/cpm/nodes/version.version.json" + path, {
-                    data: JSON.stringify({
-                        version: version,
-                        path: path
-                    })},
+                        data: JSON.stringify({
+                            version: version,
+                            path: path
+                        })
+                    },
                     _.bind(function (result) {
                         this.hide();
                     }, this),
@@ -192,7 +193,7 @@
                 var path = browser.getCurrentPath();
                 var dialog = browser.getAddLabelDialog();
                 var rows = this.table.getSelections();
-                dialog.show(function() {
+                dialog.show(function () {
                     dialog.setVersion(path, rows[0].name);
                 }, _.bind(this.reload, this));
 
@@ -242,7 +243,7 @@
             deleteVersion: function (event) {
                 var dialog = browser.getDeleteVersionDialog();
                 var rows = this.table.getSelections();
-                dialog.show(function() {
+                dialog.show(function () {
                     dialog.setVersion(rows.length == 0 ? "" : rows[0].name);
                 }, _.bind(this.reload, this));
 

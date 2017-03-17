@@ -394,6 +394,7 @@ body.left-open #split-view-horizontal-split > .right-pane {
     margin-left: 15px;
 }
 
+body.top-disabled #split-view-vertical-split > .open-top,
 body.top-open #split-view-vertical-split > .open-top {
     display: none;
 }
@@ -644,9 +645,9 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     margin: 0;
 }
 
-.query-panel .query-result td {
+.query-panel .query-result tbody td {
     border: none;
-    padding: 2px 5px;
+    padding: 2px 5px !important; /* important because 'important' in bootstrap... */
     line-height: 25px;
     white-space: nowrap;
     font-size: 14px;
@@ -728,7 +729,7 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 
 .left-open .detail-view .detail-tabs,
 .top-open .detail-view .detail-tabs {
-    padding-left: 5px; /* no extra gap if left side or top area is open */
+    padding-left: 6px; /* no extra gap if left side or top area is open */
 }
 
 .detail-view .detail-tabs .title {
@@ -754,6 +755,8 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     right: 20px;
 }
 
+.top-disabled .detail-view .detail-toolbar,
+.top-disabled .detail-view .full-table-view .bootstrap-table .fixed-table-toolbar,
 .top-open .detail-view .detail-toolbar,
 .top-open .detail-view .full-table-view .bootstrap-table .fixed-table-toolbar {
     right: 0;
@@ -847,16 +850,16 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 }
 
 .detail-view .bootstrap-table table thead > tr > th,
-.detail-view .bootstrap-table table td {
+.detail-view .bootstrap-table table tbody td {
     font-size: 14px;
     font-weight: normal;
     line-height: 25px;
-    padding: 2px 5px;
+    padding: 2px 5px !important; /* important because 'important' in bootstrap... */
 }
 
 .detail-view .bootstrap-table table th.bs-checkbox,
 .detail-view .bootstrap-table table td.bs-checkbox {
-    padding: 8px 5px 8px 6px;
+    padding: 8px 5px 8px 6px !important; /* important because 'important' in bootstrap... */
 }
 
 .detail-view .bootstrap-table thead tr {

@@ -6,7 +6,6 @@ import com.composum.sling.clientlibs.handle.ClientlibLink;
 import com.composum.sling.clientlibs.handle.ClientlibRef;
 import com.composum.sling.clientlibs.processor.RendererContext;
 import com.composum.sling.clientlibs.service.ClientlibService;
-import com.composum.sling.core.BeanContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +65,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
     @Override
     public int doEndTag() throws JspException {
         try {
-            RendererContext rendererContext = RendererContext.instance(new BeanContext.Page(pageContext), request);
+            RendererContext rendererContext = RendererContext.instance(context, request);
 
             Clientlib.Type type = getType();
             Clientlib clientlib = new Clientlib(request, path, type);
@@ -74,7 +73,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
             if (clientlib.isValid()) {
 
                 JspWriter writer = this.pageContext.getOut();
-                ClientlibService service = this.sling.getScriptHelper().getService(ClientlibService.class);
+                ClientlibService service = context.getService(ClientlibService.class);
                 service.renderClientlibLinks(clientlib, properties, writer, rendererContext);
 
             } else {
@@ -82,7 +81,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
                 if (StringUtils.isNotBlank(path)) {
                     ClientlibRef reference = new ClientlibRef(type, path, true, false);
                     if (!rendererContext.isClientlibRendered(reference)) {
-                        ClientlibLink link = new ClientlibLink(clientlib);
+                        ClientlibLink link = new ClientlibLink(clientlib, rendererContext.useMinifiedFiles());
                         rendererContext.registerClientlibLink(link);
                         JspWriter writer = this.pageContext.getOut();
                         switch (type) {

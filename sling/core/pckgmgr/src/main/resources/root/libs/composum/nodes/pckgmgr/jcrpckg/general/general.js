@@ -153,7 +153,7 @@
                 }
                 this.reload();
             },
-                
+
             reload: function () {
                 core.console.JobControlTab.prototype.reload.apply(this);
                 core.ajaxGet(core.getContextUrl('/bin/packages.header.html' + pckgmgr.getCurrentPath()), {},

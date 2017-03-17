@@ -69,16 +69,16 @@ public class ClientlibRef extends ClientlibKey {
      * check an already present link for compatibility and use this link if possible
      */
     public boolean use(ClientlibLink link) {
-        if (type == link.type && pattern.matcher(link.path).matches()) {
+        if (type == link.type && pattern.matcher(link.keyPath).matches()) {
             usedAlternative = link;
             return true;
         }
         return false;
     }
 
-    // transform version rules like "jslibs/jquery/([1-3]*:3.0.0)/jquery.min.js"
-    // to a regex pattern (e.g. "^.*/jslibs/jquery/[1-3][^/]*/jquery([\\.-]min)?.js$")
-    // and to a path to the preferred artifact (e.g. "jslibs/jquery/3.0.0)/jquery.min.js")
+    // transform version rules like "jslibs/jquery/([1-3]*:3.1.1)/jquery.js"
+    // to a regex pattern (e.g. "^.*/jslibs/jquery/[1-3][^/]*/jquery.js$")
+    // and to a path to the preferred artifact (e.g. "jslibs/jquery/3.1.1)/jquery.js")
 
     protected Pattern ruleToPattern(String rule) {
         // (xxx*:yyy) -> (xxx[^/]*:yyy)
@@ -86,7 +86,7 @@ public class ClientlibRef extends ClientlibKey {
         // (xxxx:yyy) -> xxxx
         rule = rule.replaceAll("\\(([^:]+):[^)]+\\)", "$1");
         // make '.min' optional
-        rule = rule.replaceAll("([\\.-]min)\\.", "($1)?.");
+        rule = rule.replaceAll("([\\.-]min)(\\.[^./]+)?$", "($1)?$2");
         // check dots as dots
         rule = rule.replaceAll("\\.", "\\\\.");
         // allow code paths at start

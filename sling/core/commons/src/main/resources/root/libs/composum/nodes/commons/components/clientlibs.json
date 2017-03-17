@@ -4,16 +4,16 @@
     "css": {
       "jcr:primaryType": "sling:OrderedFolder",
       "bootstrap": {
-        "embed": "jslibs/bootstrap/3.3.7/css/bootstrap.min.css"
+        "embed": "jslibs/bootstrap/3.3.7/css/bootstrap.css"
       },
       "bootstrap-theme": {
-        "embed": "jslibs/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+        "embed": "jslibs/bootstrap/3.3.7/css/bootstrap-theme.css"
       }
     },
     "js": {
       "jcr:primaryType": "sling:OrderedFolder",
       "jquery": {
-        "embed": "jslibs/jquery/3.0.0/jquery.min.js"
+        "embed": "jslibs/jquery/3.1.1/jquery.js"
       },
       "jquery.base64": {
         "embed": "jslibs/jquery/base64/jquery.base64.js"
@@ -26,28 +26,28 @@
         ]
       },
       "underscore": {
-        "embed": "jslibs/underscore/1.8.3/underscore-min.js"
+        "embed": "jslibs/underscore/1.8.3/underscore.js"
       },
       "moment": {
-        "embed": "jslibs/moment/2.10.3/moment-with-locales.min.js"
+        "embed": "jslibs/moment/2.10.3/moment-with-locales.js"
       },
       "backbone": {
-        "embed": "jslibs/backbone/1.3.3/backbone-min.js"
+        "embed": "jslibs/backbone/1.3.3/backbone.js"
       },
       "bootstrap": {
-        "embed": "jslibs/bootstrap/3.3.7/js/bootstrap.min.js"
+        "embed": "jslibs/bootstrap/3.3.7/js/bootstrap.js"
       },
       "bootstrap3-datetimepicker": {
-        "embed": "jslibs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.js"
+        "embed": "jslibs/bootstrap-datetimepicker/4.17.45/js/bootstrap-datetimepicker.js"
       },
       "bootstrap3-editable": {
-        "embed": "jslibs/x-editable/1.5.1/bootstrap3-editable/js/bootstrap-editable.min.js"
+        "embed": "jslibs/x-editable/1.5.1/bootstrap3-editable/js/bootstrap-editable.js"
       },
       "bootstrap3-typeahead": {
-        "embed": "jslibs/typeahead/3.1.0/bootstrap3-typeahead.min.js"
+        "embed": "jslibs/typeahead/3.1.0/bootstrap3-typeahead.js"
       },
       "fileinput": {
-        "embed": "jslibs/bootstrap-fileinput/4.3.2/js/fileinput.min.js"
+        "embed": "jslibs/bootstrap-fileinput/4.3.6/js/fileinput.js"
       }
     }
   },
@@ -57,14 +57,14 @@
       "jcr:primaryType": "sling:OrderedFolder",
       "embed": [
         "composum/nodes/commons/components/css/components.css",
-        "jslibs/trumbowyg/2.3.0/ui/trumbowyg.min.css",
+        "jslibs/trumbowyg/2.3.0/ui/trumbowyg.css",
         "composum/nodes/commons/components/richtext/richtext.css"
       ]
     },
     "js": {
       "jcr:primaryType": "sling:OrderedFolder",
       "depends":[
-        "jslibs/trumbowyg/2.3.0/trumbowyg.min.js"
+        "jslibs/trumbowyg/2.3.0/trumbowyg.js"
       ],
       "embed": [
         "composum/nodes/commons/components/js/core.js",
@@ -73,7 +73,6 @@
         "composum/nodes/commons/components/js/tree.js",
         "composum/nodes/commons/components/js/multiform.js",
         "composum/nodes/commons/components/js/components.js",
-        "composum/nodes/commons/components/js/init.js",
         "composum/nodes/commons/components/js/dialogs.js",
         "composum/nodes/commons/components/richtext/richtext.js",
         "composum/nodes/commons/components/js/codeEditor.js"

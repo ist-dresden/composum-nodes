@@ -16,8 +16,7 @@ Servers
 build
 # Maven
 target
-# Gradle
-.gradle
+# Groovy
 .groovy
 # some source repos
 .svn

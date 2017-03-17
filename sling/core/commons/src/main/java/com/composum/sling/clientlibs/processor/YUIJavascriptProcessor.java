@@ -48,7 +48,7 @@ public class YUIJavascriptProcessor implements JavascriptProcessor {
                                      Writer writer, RendererContext context,
                                      String template)
             throws IOException {
-        List<ClientlibLink> links = clientlib.getLinks(context, clientlibConfig.getJavascriptDebug());
+        List<ClientlibLink> links = clientlib.getLinks(context, clientlibConfig.getDebug());
         for (int i = 0; i < links.size(); ) {
             ClientlibLink link = links.get(i);
             writer.append(MessageFormat.format(template, link.getUrl(context)));
@@ -64,7 +64,7 @@ public class YUIJavascriptProcessor implements JavascriptProcessor {
         InputStream result = source;
         if (source != null) {
             context.hint(ResourceUtil.PROP_MIME_TYPE, "application/javascript");
-            if (clientlibConfig.getJavascriptMinimize()) {
+            if (context.useMinifiedFiles() && clientlibConfig.getJavascriptMinimize()) {
                 final PipedOutputStream outputStream = new PipedOutputStream();
                 result = new PipedInputStream(outputStream);
                 context.execute(new Runnable() {

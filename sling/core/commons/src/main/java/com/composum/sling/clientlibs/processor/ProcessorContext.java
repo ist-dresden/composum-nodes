@@ -16,17 +16,20 @@ public class ProcessorContext {
     protected final ExecutorService executorService;
     protected final Map<String, Object> hints;
     protected final boolean mapClientlibURLs;
+    protected final boolean useMinifiedFiles;
 
     public ProcessorContext(final SlingHttpServletRequest request,
                             final ResourceResolver resolver,
                             final ExecutorService executorService,
                             final Map<String, Object> hints,
-                            final boolean mapClientlibURLs) {
+                            final boolean mapClientlibURLs,
+                            final boolean useMinifiedFiles) {
         this.request = request;
         this.resolver = resolver;
         this.hints = hints;
         this.executorService = executorService;
         this.mapClientlibURLs = mapClientlibURLs;
+        this.useMinifiedFiles = useMinifiedFiles;
     }
 
     public SlingHttpServletRequest getRequest() {
@@ -39,6 +42,10 @@ public class ProcessorContext {
 
     public boolean mapClientlibURLs() {
         return mapClientlibURLs;
+    }
+
+    public boolean useMinifiedFiles() {
+        return useMinifiedFiles;
     }
 
     public void execute(Runnable runnable) {

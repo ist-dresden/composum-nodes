@@ -6,6 +6,7 @@ import com.composum.sling.clientlibs.service.ClientlibProcessor;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -22,6 +23,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Clientlib {
 
@@ -36,6 +39,10 @@ public class Clientlib {
     public static final String PROP_DEPENDS = "depends";
     public static final String PROP_EMBED = "embed";
 
+    public static final String MINIFIED_SELECTOR = ".min";
+    public static final Pattern UNMINIFIED_PATTERN = Pattern.compile("^(.+/)([^/]+)(\\.min)?(\\.[^.]+)$");
+    public static final Pattern MINIFIED_PATTERN = Pattern.compile("^(.+/)([^/]+)(\\.min)(\\.[^.]+)?$");
+
     public static final String[] LINK_PROPERTIES = new String[]{ClientlibKey.PROP_REL};
 
     protected final SlingHttpServletRequest request;
@@ -43,6 +50,7 @@ public class Clientlib {
     protected final ResourceHandle resource;
     protected final ResourceHandle definition;
 
+    protected final String path;
     protected final ClientlibRef clientlibRef;
 
     private transient Calendar lastModified;
@@ -50,8 +58,9 @@ public class Clientlib {
     public Clientlib(SlingHttpServletRequest request, String path, Type type) {
         this.request = request;
         this.resolver = request.getResourceResolver();
+        this.path = path;
         clientlibRef = new ClientlibRef(type, path, false, false);
-        this.resource = ResourceHandle.use(retrieveResource(clientlibRef.path));
+        this.resource = ResourceHandle.use(retrieveResource(clientlibRef.keyPath));
         this.definition = retrieveDefinition();
     }
 
@@ -60,7 +69,7 @@ public class Clientlib {
     }
 
     protected ResourceHandle retrieveDefinition() {
-        String path = clientlibRef.path + "/" + clientlibRef.type;
+        String path = clientlibRef.keyPath + "/" + clientlibRef.type;
         Resource resource = retrieveResource(path);
         return ResourceHandle.use(resource);
     }
@@ -96,7 +105,7 @@ public class Clientlib {
     }
 
     public String getPath() {
-        return clientlibRef.path + "." + clientlibRef.type.name();
+        return path + "." + clientlibRef.type.name();
     }
 
     public Type getType() {
@@ -122,10 +131,10 @@ public class Clientlib {
                 for (String embedRule : resource.getProperty(PROP_EMBED, new String[0])) {
                     embedRule = embedRule.trim();
                     ClientlibRef reference = new ClientlibRef(this.clientlibRef, embedRule, false, false);
-                    Resource target = retrieveResource(reference.path);
+                    Resource target = retrieveResource(reference.keyPath);
                     if (target != null) {
                         if (target.isResourceType(RESOURCE_TYPE)) {
-                            Clientlib embedded = new Clientlib(request, reference.path, reference.type);
+                            Clientlib embedded = new Clientlib(request, reference.keyPath, reference.type);
                             lastModified = getLastModified(embedded.getLastModified(), lastModified);
                         } else {
                             lastModified = getLastModified(new FileHandle(target), lastModified);
@@ -176,11 +185,11 @@ public class Clientlib {
             hasEmbeddedContent = getLinks(links, context, expanded, depends, reference, definition);
             if (!expanded && (depends == null || depends) && hasEmbeddedContent) {
                 if (!context.isClientlibRendered(clientlibRef)) {
-                    ClientlibLink link = new ClientlibLink(clientlibRef, resource);
+                    ClientlibLink link = new ClientlibLink(clientlibRef, resource, true);
                     context.registerClientlibLink(link);
                     links.add(link);
                 } else {
-                    if (depends == null || !depends) {
+                    if (depends == null) {
                         logDuplicate(clientlibRef);
                     }
                 }
@@ -229,7 +238,7 @@ public class Clientlib {
     protected boolean getClientlibLink(List<ClientlibLink> links, RendererContext context,
                                        boolean expanded, Boolean depends,
                                        ClientlibRef reference, Map<String, String> properties) {
-        String path = reference.path;
+        String path = reference.keyPath;
         Resource target = retrieveResource(path);
         if (target != null) {
             if (target.isResourceType(RESOURCE_TYPE)) {
@@ -248,9 +257,12 @@ public class Clientlib {
     protected void addFileToList(List<ClientlibLink> links, RendererContext context, boolean depends,
                                  ClientlibRef reference, Map<String, String> properties, Resource target) {
         if (!context.isClientlibRendered(reference)) {
+            if (context.useMinifiedFiles()) {
+                target = getMinifiedSibling(target);
+            }
             FileHandle file = new FileHandle(target);
             if (file.isValid()) {
-                ClientlibLink link = new ClientlibLink(reference, target, properties);
+                ClientlibLink link = new ClientlibLink(reference, target, properties, false /* already done */);
                 context.registerClientlibLink(link);
                 if (depends) {
                     links.add(link);
@@ -290,11 +302,11 @@ public class Clientlib {
                 for (String refRule : resource.getProperty(PROP_EMBED, new String[0])) {
                     refRule = refRule.trim();
                     ClientlibRef ref = new ClientlibRef(clientlibRef.type, refRule, false, optional);
-                    Resource target = retrieveResource(ref.path);
+                    Resource target = retrieveResource(ref.keyPath);
                     if (target != null) {
                         if (target.isResourceType(RESOURCE_TYPE)) {
                             ResourceHandle handle = ResourceHandle.use(target);
-                            Clientlib embedded = new Clientlib(request, ref.path, ref.type);
+                            Clientlib embedded = new Clientlib(request, ref.keyPath, ref.type);
                             if (LOG.isDebugEnabled()) {
                                 LOG.debug("embedded clientlib: " + handle.getPath());
                             }
@@ -304,7 +316,7 @@ public class Clientlib {
                             processFile(output, processor, context, target, optional, contentSet);
                         }
                     } else {
-                        logNotAvailable(resource, ref.path, optional);
+                        logNotAvailable(resource, ref.keyPath, optional);
                     }
                 }
                 if (isFile(resource)) {
@@ -324,6 +336,9 @@ public class Clientlib {
                                ClientlibProcessor processor, ProcessorContext context,
                                Resource resource, boolean optional, List<ClientlibLink> contentSet)
             throws RepositoryException, IOException {
+        if (context.useMinifiedFiles()) {
+            resource = getMinifiedSibling(resource);
+        }
         FileHandle file = new FileHandle(resource);
         InputStream content = file.getStream();
         if (content != null) {
@@ -335,7 +350,7 @@ public class Clientlib {
                 output.write('\n');
                 output.write('\n');
                 output.flush();
-                ClientlibLink link = new ClientlibLink(clientlibRef.type, resource);
+                ClientlibLink link = new ClientlibLink(clientlibRef.type, resource, false /* already done */);
                 contentSet.add(link);
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("embedded file: " + resource.getPath());
@@ -351,6 +366,44 @@ public class Clientlib {
     //
     //
     //
+
+    public static String getMinifiedSibling(String path) {
+        Matcher matcher = UNMINIFIED_PATTERN.matcher(path);
+        if (matcher.matches() && StringUtils.isBlank(matcher.group(3))) {
+            String ext = matcher.group(4);
+            String minified = matcher.group(1) + matcher.group(2) + MINIFIED_SELECTOR;
+            if (StringUtils.isNotBlank(ext)) {
+                minified += ext;
+            }
+            return minified;
+        }
+        return path;
+    }
+
+    public static String getUnminifiedSibling(String path) {
+        Matcher matcher = MINIFIED_PATTERN.matcher(path);
+        if (matcher.matches() && StringUtils.isNotBlank(matcher.group(3))) {
+            String ext = matcher.group(4);
+            String unminified = matcher.group(1) + matcher.group(2);
+            if (StringUtils.isNotBlank(ext)) {
+                unminified += ext;
+            }
+            return unminified;
+        }
+        return path;
+    }
+
+    public static Resource getMinifiedSibling(Resource resource) {
+        String path = resource.getPath();
+        String minifiedPath = getMinifiedSibling(path);
+        if (!path.equals(minifiedPath)) {
+            Resource minified = resource.getResourceResolver().getResource(minifiedPath);
+            if (minified != null) {
+                return minified;
+            }
+        }
+        return resource;
+    }
 
     protected void logDuplicate(ClientlibRef reference) {
         String message = "Clientlib entry '" + reference + "' of '"
@@ -378,14 +431,6 @@ public class Clientlib {
                         + resource.getPath() + "' not available but optional.");
             }
         }
-    }
-
-    public static String[] splitPathAndName(String path) {
-        String[] result = new String[2];
-        int nameSeparator = path.lastIndexOf('/');
-        result[0] = path.substring(0, nameSeparator);
-        result[1] = path.substring(nameSeparator + 1);
-        return result;
     }
 
     public static boolean isFile(Resource resource) {
