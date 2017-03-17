@@ -331,7 +331,9 @@ public class LinkUtil {
         }
         if (extension == null) {
             String resourceType = resource.getResourceType();
-            if (resourceType != null && !resource.getPrimaryType().equals(resourceType)) {
+            String primaryType;
+            if (resourceType != null &&
+                    (primaryType = resource.getPrimaryType()) != null && !primaryType.equals(resourceType)) {
                 extension = EXT_HTML; // use '.html' by default if a real resource type is present
             } else {
                 ResourceHandle content = resource.getContentResource();
