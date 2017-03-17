@@ -8,6 +8,9 @@
       },
       "bootstrap-theme": {
         "embed": "jslibs/bootstrap/3.3.7/css/bootstrap-theme.css"
+      },
+      "bootstrap-slider": {
+        "embed": "jslibs/bootstrap-slider/9.7.2/css/bootstrap-slider.css"
       }
     },
     "js": {
@@ -46,7 +49,10 @@
       "bootstrap3-typeahead": {
         "embed": "jslibs/typeahead/3.1.0/bootstrap3-typeahead.js"
       },
-      "fileinput": {
+      "bootstrap-slider": {
+        "embed": "jslibs/bootstrap-slider/9.7.2/bootstrap-slider.js"
+      },
+      "bootstrap-fileinput": {
         "embed": "jslibs/bootstrap-fileinput/4.3.6/js/fileinput.js"
       }
     }
@@ -75,6 +81,7 @@
         "composum/nodes/commons/components/js/components.js",
         "composum/nodes/commons/components/js/dialogs.js",
         "composum/nodes/commons/components/richtext/richtext.js",
+        "composum/nodes/commons/components/slider/slider.js",
         "composum/nodes/commons/components/js/codeEditor.js"
       ]
     }

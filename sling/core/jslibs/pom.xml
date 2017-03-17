@@ -41,6 +41,7 @@
                             root/libs/jslibs/bootstrap/3.3.7;path:=/libs/jslibs/bootstrap/3.3.7;overwrite:=true,
                             root/libs/jslibs/bootstrap-datetimepicker/4.17.45;path:=/libs/jslibs/bootstrap-datetimepicker/4.17.45;overwrite:=true,
                             root/libs/jslibs/bootstrap-fileinput/4.3.6;path:=/libs/jslibs/bootstrap-fileinput/4.3.6;overwrite:=true,
+                            root/libs/jslibs/bootstrap-slider/9.7.2;path:=/libs/jslibs/bootstrap-slider/9.7.2;overwrite:=true,
                             root/libs/jslibs/bootstrap-table/1.7.0;path:=/libs/jslibs/bootstrap-table/1.7.0;overwrite:=true,
                             root/libs/jslibs/jquery/1.12.4;path:=/libs/jslibs/jquery/1.12.4;overwrite:=true,
                             root/libs/jslibs/jquery/2.2.4;path:=/libs/jslibs/jquery/2.2.4;overwrite:=true,
