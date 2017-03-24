@@ -30,44 +30,7 @@
         // login and profile
         //
 
-        console.profile = {
-
-            aspects: {},
-
-            get: function (aspect, key, defaultValue) {
-                var object = console.profile.aspects[aspect];
-                if (!object) {
-                    var item = localStorage.getItem('composum.core.' + aspect);
-                    if (item) {
-                        object = JSON.parse(item);
-                        console.profile.aspects[aspect] = object;
-                    }
-                }
-                var value = undefined;
-                if (object) {
-                    value = key ? object[key] : object;
-                }
-                return value !== undefined ? value : defaultValue;
-            },
-
-            set: function (aspect, key, value) {
-                var object = console.profile.get(aspect, undefined, {});
-                if (key) {
-                    object[key] = value;
-                } else {
-                    object = value;
-                }
-                console.profile.aspects[aspect] = object;
-                console.profile.save(aspect);
-            },
-
-            save: function (aspect) {
-                var value = console.profile.aspects[aspect];
-                if (value) {
-                    localStorage.setItem('composum.core.' + aspect, JSON.stringify(value));
-                }
-            }
-        };
+        console.profile = new core.LocalProfile('composum.core');
 
         console.UserLoginDialog = core.components.Dialog.extend({
 

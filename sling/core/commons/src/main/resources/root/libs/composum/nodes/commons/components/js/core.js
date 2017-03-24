@@ -622,4 +622,46 @@
         }
     };
 
+    window.core.LocalProfile = function(key) {
+        this.profileKey = key;
+        this.aspects = {};
+    };
+
+    _.extend(window.core.LocalProfile.prototype, {
+
+        get: function (aspect, key, defaultValue) {
+            var object = this.aspects[aspect];
+            if (!object) {
+                var item = localStorage.getItem(this.profileKey + '.' + aspect);
+                if (item) {
+                    object = JSON.parse(item);
+                    this.aspects[aspect] = object;
+                }
+            }
+            var value = undefined;
+            if (object) {
+                value = key ? object[key] : object;
+            }
+            return value !== undefined ? value : defaultValue;
+        },
+
+        set: function (aspect, key, value) {
+            var object = this.get(aspect, undefined, {});
+            if (key) {
+                object[key] = value;
+            } else {
+                object = value;
+            }
+            this.aspects[aspect] = object;
+            this.save(aspect);
+        },
+
+        save: function (aspect) {
+            var value = this.aspects[aspect];
+            if (value) {
+                localStorage.setItem(this.profileKey + '.' + aspect, JSON.stringify(value));
+            }
+        }
+    });
+
 })(window);
