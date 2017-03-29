@@ -579,6 +579,50 @@
         widgets.register('.widget.text-area-widget', components.TextAreaWidget);
 
         /**
+         * the 'abstract' PathSelector is a Widget which interacts with a PathWidget
+         */
+        components.PathSelector = widgets.Widget.extend({
+
+            initialize: function (options) {
+                widgets.Widget.prototype.initialize.apply(this, [options]);
+                this.setPathWidget(options.pathWidget);
+            },
+
+            // getEventId: function () {...},
+            // onPathChanged: function (path) {...}
+
+            setPathWidget: function (pathWidget) {
+                if (this.pathWidget) {
+                    this.pathWidget.$input.off('change.' + this.getEventId());
+                }
+                this.pathWidget = pathWidget;
+                if (this.pathWidget) {
+                    this.pathWidget.$input.on('change.' + this.getEventId(), _.bind(this.pathInputChanged, this));
+                }
+            },
+
+            /**
+             * the callback on each change in the input field;
+             * selects the node in the tree view if the nodes exists
+             */
+            pathInputChanged: function () {
+                if (!this.busy) {
+                    this.busy = true;
+                    var path = this.pathWidget.getValue();
+                    if (path !== this.lastPathSelected) {
+                        if (path.indexOf('/') === 0) {
+                            core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (data) {
+                                this.lastPathSelected = data.path;
+                                this.onPathChanged(data.path);
+                            }, this));
+                        }
+                    }
+                    this.busy = false;
+                }
+            }
+        });
+
+        /**
          * the 'path-widget' (window.core.components.PathWidget)
          *
          * the widget behaviour to extend an input or an input group to select repository path values
@@ -594,7 +638,7 @@
                 // retrieve element attributes
                 this.dialogTitle = this.$el.attr('title');
                 this.dialogLabel = this.$el.data('label');
-                this.rootPath = this.$el.data('root') || '/';
+                this.setRootPath(this.$el.data('root') || '/');
                 this.filter = this.$el.data('filter');
                 // switch off the browsers autocomplete function (!)
                 this.$textField.attr('autocomplete', 'off');
@@ -650,7 +694,12 @@
              * hook for more complex path retrieval - performs the callback with the current value here
              */
             getPath: function (callback) {
-                callback(this.getValue());
+                var value = this.getValue();
+                if (_.isFunction(callback)) {
+                    callback(value);
+                } else {
+                    return value;
+                }
             },
 
             /**
@@ -658,6 +707,14 @@
              */
             setPath: function (path) {
                 this.setValue(path);
+            },
+
+            getRootPath: function () {
+                return this.rootPath ? this.rootPath : '/';
+            },
+
+            setRootPath: function (path) {
+                this.rootPath = path;
             }
         });
 
