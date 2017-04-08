@@ -25,4 +25,19 @@ public interface SlingBean {
      * @param context the scripting context (e.g. a JSP PageContext or a Groovy scripting context)
      */
     void initialize(BeanContext context);
+
+    /**
+     * returns the name of the resource wrapped by this bean
+     */
+    String getName();
+
+    /**
+     * returns the path of the resource wrapped by this bean
+     */
+    String getPath();
+
+    /**
+     * returns the type of the resource wrapped by this bean
+     */
+    String getType();
 }

@@ -19,13 +19,13 @@
           </div>
 
           <div class="form-group">
-            <label class="-: control-label" data-default="Select(ed) Path">Select(ed) Path</label>
+            <label class="control-label" data-default="Select(ed) Path">Select(ed) Path</label>
             <input type="text" class="path-input form-control widget path-widget" name="path" />
           </div>
           <div class="form-group">
             <label class="control-label">Select in Tree</label>
             <div class="tree-panel">
-              <div class="path-select-tree" data-selected-x="/">
+              <div class="path-select-tree">
               </div>
             </div>
           </div>

@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
  * the abstract model base class for Composum Console components addressed by a forward from
  * a console servlet with the models resource path in the requests suffix
  */
-public class AbstractServletBean extends AbstractSlingBean {
+public abstract class AbstractServletBean extends AbstractSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractServletBean.class);
 
