@@ -1,6 +1,7 @@
 package com.composum.sling.cpnl;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.util.ExpressionUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
@@ -29,9 +30,8 @@ public class CpnlTagSupport extends TagSupport {
     protected Resource resource;
     protected ResourceResolver resourceResolver;
 
-    private transient JspApplicationContext jspAppContext;
-    private transient ExpressionFactory expressionFactory;
-    private transient ELContext elContext;
+    private transient ExpressionUtil expressionUtil;
+
 
     /**
      * Reset all member variables to the (default) start values. Called prior
@@ -43,9 +43,7 @@ public class CpnlTagSupport extends TagSupport {
         context = null;
         out = null;
         request = null;
-        elContext = null;
-        expressionFactory = null;
-        jspAppContext = null;
+        expressionUtil = null;
     }
 
     @Override
@@ -87,47 +85,19 @@ public class CpnlTagSupport extends TagSupport {
         super.release();
     }
 
-    protected JspApplicationContext getJspAppContext() {
-        if (jspAppContext == null) {
-            ServletContext servletContext = pageContext.getServletContext();
-            jspAppContext = JspFactory.getDefaultFactory().getJspApplicationContext(servletContext);
+    /** Returns or creates the expressionUtil . Not null. */
+    protected com.composum.sling.core.util.ExpressionUtil getExpressionUtil() {
+        if (expressionUtil == null) {
+            expressionUtil = new ExpressionUtil(pageContext);
         }
-        return jspAppContext;
-    }
-
-    protected ExpressionFactory getExpressionFactory() {
-        if (expressionFactory == null) {
-            expressionFactory = getJspAppContext().getExpressionFactory();
-        }
-        return expressionFactory;
-    }
-
-    protected ELContext getELContext() {
-        if (elContext == null) {
-            elContext = pageContext.getELContext();
-        }
-        return elContext;
-    }
-
-    protected ValueExpression createValueExpression(ELContext elContext, String expression, Class<?> type) {
-        return getExpressionFactory().createValueExpression(elContext, expression, type);
+        return expressionUtil;
     }
 
     /**
      * evaluate an EL expression value, the value can contain @{..} expression rules which are transformed to ${..}
      */
     protected <T> T eval(Object value, T defaultValue) {
-        T result = null;
-        if (value instanceof String) {
-            String expression = (String) value;
-            if (StringUtils.isNotBlank(expression)) {
-                expression = expression.replaceAll("@\\{([^\\}]+)\\}", "\\${$1}");
-                Class type = defaultValue != null ? defaultValue.getClass() : String.class;
-                ELContext elContext = getELContext();
-                ValueExpression valueExpression = createValueExpression(elContext, expression, type);
-                result = (T) valueExpression.getValue(elContext);
-            }
-        }
-        return result != null ? result : defaultValue;
+        return getExpressionUtil().eval(value, defaultValue);
     }
+
 }
