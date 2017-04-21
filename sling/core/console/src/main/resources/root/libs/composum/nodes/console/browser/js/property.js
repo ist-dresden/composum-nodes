@@ -148,11 +148,16 @@
                 var subtype = 'string';
                 if (type === 'String') {
                     if (value) {
-                        if (value.indexOf('\n') >= 0) {
-                            subtype = 'plaintext';
-                        }
-                        if (value.indexOf('</') >= 0) {
-                            subtype = 'richtext';
+                        var valueSet = _.isArray(value) ? value : [value];
+                        for (var i = 0; i < valueSet.length; i++) {
+                            if (valueSet[i].indexOf('</') >= 0) {
+                                subtype = 'richtext';
+                                break;
+                            }
+                            if (valueSet[i].indexOf('\n') >= 0) {
+                                subtype = 'plaintext';
+                                break;
+                            }
                         }
                     }
                 }
@@ -173,6 +178,8 @@
                     this.typeChanged();
                     this.$multi.prop('checked', false);
                     this.multiChanged();
+                    this.$name.val(undefined);
+                    this.$oldname.val(undefined);
                     this.$title.empty().html('Create Property');
                     this.$delete.addClass('hidden');
                 }
@@ -283,7 +290,7 @@
              * (this is useful to reset 'subtypes' (widget types) to the default type).
              */
             setType: function (type, subtype) {
-                if (!this.type || this.type != type || this.subtype != subtype) {
+                if (!this.type || this.type !== type || this.subtype !== subtype) {
                     // use new type or let it unchanged or fallback to 'String'
                     this.type = type || this.type || 'String';
                     this.subtype = subtype;
@@ -304,34 +311,39 @@
              * of the current JCR property type (the last case is used directly by the PropertyNameWidget).
              */
             setWidgetType: function (typeSelector) {
-                if (!this.typeSelector || this.typeSelector != typeSelector) {
+                if (!this.typeSelector || this.typeSelector !== typeSelector) {
                     this.typeSelector = typeSelector;
                     this.$('.widget').each(function () {
                         var $widget = $(this);
-                        $widget.addClass('hidden');
-                        var $input = $widget.is('input,textarea') ? $widget : $widget.find('input,textarea');
-                        $input.removeAttr('name');
-                        $input.removeAttr('data-rules');
-                        if (_.isFunction($widget.reset)) {
-                            $widget.reset.apply($widget[0]);
+                        var widget = $widget[0].view;
+                        if (widget) {
+                            $widget.addClass('hidden');
+                            widget.$input.removeAttr('name');
+                            widget.$input.removeAttr('data-rules');
+                            if (_.isFunction(widget.reset)) {
+                                widget.reset.apply(widget);
+                            }
                         }
                     });
                     var propertyWidget = this;
-                    this.$('.widget.' + typeSelector).each(function () {
+                    var propertyName = propertyWidget.$el.attr('data-name');
+                    var propertyRules = propertyWidget.$el.attr('data-rules');
+                    this.$('.widget.property-type-' + typeSelector).each(function () {
                         var $widget = $(this);
-                        $widget.removeClass('hidden');
-                        var $input = $widget.is('input,textarea') ? $widget : $widget.find('input,textarea');
-                        $input.attr('name', propertyWidget.$el.attr('data-name') || 'value');
-                        var rules = propertyWidget.$el.attr('data-rules');
-                        if (rules) {
-                            $input.attr('data-rules', rules);
+                        var widget = $widget[0].view;
+                        if (widget) {
+                            $widget.removeClass('hidden');
+                            widget.$input.attr('name', propertyName || 'value');
+                            if (propertyRules) {
+                                widget.$input.attr('data-rules', propertyRules);
+                            }
                         }
                     });
                 }
             },
 
             setMultiValue: function (multi) {
-                if (!this.multiValue || this.multiValue != multi) {
+                if (!this.multiValue || this.multiValue !== multi) {
                     this.multiValue = multi || false;
                     if (this.multiValue) {
                         this.$el.removeClass('single-value');

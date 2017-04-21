@@ -95,7 +95,7 @@
                 var values = {};
                 this.$('.widget').each(function () {
                     if (this.view) {
-                        if (this.view.$el.parent().closest(c.css.selector.item).length == 0 &&
+                        if (this.view.$el.parent().closest(c.css.selector.item).length === 0 &&
                             _.isFunction(this.view.getValue)) {
                             var name = core.getWidgetNames(this.view);
                             // store 'structured names' in a complex object...
@@ -121,7 +121,7 @@
                 var c = components.const.form;
                 this.$('.widget').each(function () {
                     if (this.view) {
-                        if (this.view.$el.parent().closest(c.css.selector.item).length == 0 &&
+                        if (this.view.$el.parent().closest(c.css.selector.item).length === 0 &&
                             _.isFunction(this.view.setValue)) {
                             var name = core.getWidgetNames(this.view);
                             // map complex object to 'structured names'...
@@ -236,7 +236,7 @@
              * defines the (initial) value of the input field
              */
             setValue: function (value) {
-                this.$input.prop('checked', value == 'false' ? false : value);
+                this.$input.prop('checked', value === 'false' ? false : value);
             },
 
             /**
@@ -294,7 +294,7 @@
             },
 
             getOnlyOne: function () {
-                return this.getCount() == 1 ? this.$('input[type="radio"]').val() : undefined;
+                return this.getCount() === 1 ? this.$('input[type="radio"]').val() : undefined;
             },
 
             getValue: function () {
@@ -394,7 +394,7 @@
              */
             setValue: function (value, triggerChange) {
                 var currentValue = this.$textField.val();
-                if ('' + currentValue != '' + value) {
+                if ('' + currentValue !== '' + value) {
                     this.$textField.val(value);
                     if (triggerChange) {
                         this.$textField.trigger('change');
@@ -514,7 +514,7 @@
              */
             setValue: function (value, triggerChange) {
                 var currentValue = this.$input.text();
-                if ('' + currentValue != '' + value) {
+                if ('' + currentValue !== '' + value) {
                     this.$input[0].value = value;
                     if (triggerChange) {
                         this.$input.trigger('change');
@@ -572,7 +572,7 @@
             reset: function () {
                 this.valid = undefined;
                 this.$input.closest('.form-group').removeClass('has-error');
-                this.$input.text('');
+                this.$input.val(undefined);
             }
         });
 
@@ -989,9 +989,9 @@
 
             nameChanged: function (name, contextWidget) {
                 // set 'subtypes' of name for useful typeahead
-                if ('jcr:primaryType' == name) {
+                if ('jcr:primaryType' === name) {
                     contextWidget.setWidgetType.apply(contextWidget, ['jcr-primaryType']);
-                } else if ('jcr:mixinTypes' == name) {
+                } else if ('jcr:mixinTypes' === name) {
                     contextWidget.setWidgetType.apply(contextWidget, ['jcr-mixinTypes']);
                 }
             }

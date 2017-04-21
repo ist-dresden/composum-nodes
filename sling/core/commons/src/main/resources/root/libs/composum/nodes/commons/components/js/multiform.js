@@ -68,15 +68,17 @@
                     if (this.view) {
                         if (_.isFunction(this.view.getValue)) {
                             var name = core.getWidgetName(this.view);
-                            if (name) {
+                            if (name && name !== 'undefined') {
                                 value[name] = this.view.getValue.apply(this.view);
                             }
                         }
                     }
                 });
                 var values = _.values(value);
-                if (values.length == 1) {
+                if (values.length === 1) {
                     value = values[0];
+                } else if (values.length == 0) {
+                    value = undefined;
                 }
                 return value;
             },
@@ -151,7 +153,7 @@
                     this.itemList[i] = this.newItem($itemElements[i]);
                 }
                 this.current(this.itemList[0]);
-                if (this.$(c.css.selector.actions).length == 0) {
+                if (this.$(c.css.selector.actions).length === 0) {
                     this.$el.append(
                         '<div class="action-bar btn-toolbar" role="toolbar">' +
                         '<div class="btn-group btn-group-sm">' +
@@ -235,14 +237,14 @@
                 var c = components.const.multiform;
                 var item = core.getView(element, this.itemType, _.bind(function (item) {
                     var $handle = item.$(c.css.selector.handle);
-                    if ($handle.length == 0) {
+                    if ($handle.length === 0) {
                         item.$el.prepend('<input class="item-select form-control" type="radio">');
                         $handle = item.$(c.css.selector.handle);
                     }
                     $handle.prop('checked', false);
                     $handle.unbind('click').on('click', _.bind(this.onSelect, this));
                     window.widgets.setUp(item.el);
-                }, this), this.itemType != components.MultiFormItem);
+                }, this), this.itemType !== components.MultiFormItem);
                 return item;
             },
 
@@ -296,7 +298,7 @@
             remove: function () {
                 if (this.itemList.length > 1) {
                     var currentIndex = this.indexOf(this.currentItem);
-                    if (currentIndex == this.itemList.length - 1) {
+                    if (currentIndex === this.itemList.length - 1) {
                         currentIndex--;
                     }
                     this.currentItem.$el.remove();
@@ -332,7 +334,7 @@
                 if (widget && _.isFunction(widget.getValue)) {
                     return widget.getValue();
                 } else {
-                    return element.val();
+                    return _.isFuntion(element.val) ? element.val() : undefined;
                 }
             },
 
@@ -341,7 +343,9 @@
                 if (widget && _.isFunction(widget.setValue)) {
                     widget.setValue(value);
                 } else {
-                    element.val(value);
+                    if (_.isFunction(element.val)) {
+                        element.val(value);
+                    }
                 }
             }
         });
