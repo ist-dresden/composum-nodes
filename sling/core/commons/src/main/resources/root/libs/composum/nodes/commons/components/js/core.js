@@ -18,6 +18,9 @@
             },
             attr: {
                 name: 'name'
+            },
+            tag: {
+                input: [ 'input', 'select', 'textarea' ]
             }
         },
 
@@ -83,7 +86,11 @@
             },
 
             retrieveInput: function () {
-                return this.$el.is('input') ? this.$el : this.$('input');
+                var $inputEl = [];
+                for (var i=0; $inputEl.length === 0 && i < widgets.const.tag.input.length; i++) {
+                    $inputEl = this.$el.is(widgets.const.tag.input[i]) ? this.$el : this.$(widgets.const.tag.input[i]);
+                }
+                return $inputEl;
             },
 
             retrieveName: function () {
@@ -379,7 +386,7 @@
                 var key;
                 while (!(key = keys.next()).done) {
                     var value = formData.getAll(key.value);
-                    data[key.value] = value.length == 1 ? value[0] : value;
+                    data[key.value] = value.length === 1 ? value[0] : value;
                 }
             }
             $.ajax({
@@ -429,7 +436,7 @@
         },
 
         isNotAuthorized: function (result) {
-            return result.status == 401 || result.status == 403;
+            return result.status === 401 || result.status === 403;
         },
 
         resultMessage: function (result, message) {
@@ -442,7 +449,7 @@
 
         getContextUrl: function (url) {
             var contextPath = $('html').data('context-path');
-            if (contextPath && url.indexOf(contextPath) != 0) {
+            if (contextPath && url.indexOf(contextPath) !== 0) {
                 url = contextPath + url;
             }
             return url;
@@ -519,6 +526,9 @@
             if (_.isFunction(widget.getName)) {
                 name = widget.getName.apply(widget)
             }
+            if (!name && widget.name && widget.name !== 'undefined') {
+                name = widget.name;
+            }
             if (!name) {
                 name = widget.$el.attr('name');
             }
@@ -559,13 +569,13 @@
 
         buildContentPath: function (parentPath, nodeName) {
             if (parentPath && parentPath.length > 0) {
-                if (parentPath.charAt(parentPath.length - 1) != '/') {
+                if (parentPath.charAt(parentPath.length - 1) !== '/') {
                     parentPath += '/';
                 }
             } else {
                 parentPath = '/';
             }
-            if (nodeName.indexOf('/') == 0) {
+            if (nodeName.indexOf('/') === 0) {
                 nodeName = nodeName.substring(1);
             }
             return parentPath + nodeName;
@@ -606,7 +616,7 @@
 
         addPathSegment: function (path, segment) {
             if (segment) {
-                if (path.length > 0 && !path.endsWith('/') && segment.indexOf('/') != 0) {
+                if (path.length > 0 && !path.endsWith('/') && segment.indexOf('/') !== 0) {
                     path += '/';
                 }
                 path += segment;
@@ -618,7 +628,7 @@
         },
 
         endsWith: function (string, snippet) {
-            return string.lastIndexOf(snippet) == string.length - snippet.length;
+            return string.lastIndexOf(snippet) === string.length - snippet.length;
         }
     };
 
