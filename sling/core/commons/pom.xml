@@ -50,7 +50,8 @@
                             com.composum.sling.core.*,
                             com.composum.sling.cpnl.*,
                             com.google.gson.*,
-                            javax.inject.*
+                            javax.inject.*,
+                            org.apache.commons.lang3.*
                         </Export-Package>
                         <Embed-Dependency>
                             *;scope=compile|runtime
