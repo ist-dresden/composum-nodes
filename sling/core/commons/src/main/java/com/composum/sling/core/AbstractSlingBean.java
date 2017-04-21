@@ -1,5 +1,6 @@
 package com.composum.sling.core;
 
+import com.composum.sling.core.request.DomIdentifiers;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -55,6 +56,8 @@ public abstract class AbstractSlingBean implements SlingBean {
 
     private transient String name;
     private transient String path;
+    private transient String type;
+    private transient String domId;
     private transient String id;
     private transient String url;
 
@@ -158,6 +161,20 @@ public abstract class AbstractSlingBean implements SlingBean {
             name = getResource().getName();
         }
         return name;
+    }
+
+    public String getType() {
+        if (type == null) {
+            type = getResource().getResourceType();
+        }
+        return type;
+    }
+
+    public String getDomId() {
+        if (domId == null) {
+            domId = DomIdentifiers.getInstance(context).getElementId(this);
+        }
+        return domId;
     }
 
     public String getId() {

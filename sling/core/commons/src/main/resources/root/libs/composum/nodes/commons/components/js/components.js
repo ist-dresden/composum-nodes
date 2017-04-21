@@ -95,7 +95,7 @@
                 var values = {};
                 this.$('.widget').each(function () {
                     if (this.view) {
-                        if (this.view.$el.parent().closest(c.css.selector.item).length == 0 &&
+                        if (this.view.$el.parent().closest(c.css.selector.item).length === 0 &&
                             _.isFunction(this.view.getValue)) {
                             var name = core.getWidgetNames(this.view);
                             // store 'structured names' in a complex object...
@@ -121,7 +121,7 @@
                 var c = components.const.form;
                 this.$('.widget').each(function () {
                     if (this.view) {
-                        if (this.view.$el.parent().closest(c.css.selector.item).length == 0 &&
+                        if (this.view.$el.parent().closest(c.css.selector.item).length === 0 &&
                             _.isFunction(this.view.setValue)) {
                             var name = core.getWidgetNames(this.view);
                             // map complex object to 'structured names'...
@@ -236,7 +236,7 @@
              * defines the (initial) value of the input field
              */
             setValue: function (value) {
-                this.$input.prop('checked', value == 'false' ? false : value);
+                this.$input.prop('checked', value === 'false' ? false : value);
             },
 
             /**
@@ -294,7 +294,7 @@
             },
 
             getOnlyOne: function () {
-                return this.getCount() == 1 ? this.$('input[type="radio"]').val() : undefined;
+                return this.getCount() === 1 ? this.$('input[type="radio"]').val() : undefined;
             },
 
             getValue: function () {
@@ -394,7 +394,7 @@
              */
             setValue: function (value, triggerChange) {
                 var currentValue = this.$textField.val();
-                if ('' + currentValue != '' + value) {
+                if ('' + currentValue !== '' + value) {
                     this.$textField.val(value);
                     if (triggerChange) {
                         this.$textField.trigger('change');
@@ -514,7 +514,7 @@
              */
             setValue: function (value, triggerChange) {
                 var currentValue = this.$input.text();
-                if ('' + currentValue != '' + value) {
+                if ('' + currentValue !== '' + value) {
                     this.$input[0].value = value;
                     if (triggerChange) {
                         this.$input.trigger('change');
@@ -572,11 +572,55 @@
             reset: function () {
                 this.valid = undefined;
                 this.$input.closest('.form-group').removeClass('has-error');
-                this.$input.text('');
+                this.$input.val(undefined);
             }
         });
 
         widgets.register('.widget.text-area-widget', components.TextAreaWidget);
+
+        /**
+         * the 'abstract' PathSelector is a Widget which interacts with a PathWidget
+         */
+        components.PathSelector = widgets.Widget.extend({
+
+            initialize: function (options) {
+                widgets.Widget.prototype.initialize.apply(this, [options]);
+                this.setPathWidget(options.pathWidget);
+            },
+
+            // getEventId: function () {...},
+            // onPathChanged: function (path) {...}
+
+            setPathWidget: function (pathWidget) {
+                if (this.pathWidget) {
+                    this.pathWidget.$input.off('change.' + this.getEventId());
+                }
+                this.pathWidget = pathWidget;
+                if (this.pathWidget) {
+                    this.pathWidget.$input.on('change.' + this.getEventId(), _.bind(this.pathInputChanged, this));
+                }
+            },
+
+            /**
+             * the callback on each change in the input field;
+             * selects the node in the tree view if the nodes exists
+             */
+            pathInputChanged: function () {
+                if (!this.busy) {
+                    this.busy = true;
+                    var path = this.pathWidget.getValue();
+                    if (path !== this.lastPathSelected) {
+                        if (path.indexOf('/') === 0) {
+                            core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (data) {
+                                this.lastPathSelected = data.path;
+                                this.onPathChanged(data.path);
+                            }, this));
+                        }
+                    }
+                    this.busy = false;
+                }
+            }
+        });
 
         /**
          * the 'path-widget' (window.core.components.PathWidget)
@@ -594,7 +638,7 @@
                 // retrieve element attributes
                 this.dialogTitle = this.$el.attr('title');
                 this.dialogLabel = this.$el.data('label');
-                this.rootPath = this.$el.data('root') || '/';
+                this.setRootPath(this.$el.data('root') || '/');
                 this.filter = this.$el.data('filter');
                 // switch off the browsers autocomplete function (!)
                 this.$textField.attr('autocomplete', 'off');
@@ -650,7 +694,12 @@
              * hook for more complex path retrieval - performs the callback with the current value here
              */
             getPath: function (callback) {
-                callback(this.getValue());
+                var value = this.getValue();
+                if (_.isFunction(callback)) {
+                    callback(value);
+                } else {
+                    return value;
+                }
             },
 
             /**
@@ -658,6 +707,14 @@
              */
             setPath: function (path) {
                 this.setValue(path);
+            },
+
+            getRootPath: function () {
+                return this.rootPath ? this.rootPath : '/';
+            },
+
+            setRootPath: function (path) {
+                this.rootPath = path;
             }
         });
 
@@ -932,9 +989,9 @@
 
             nameChanged: function (name, contextWidget) {
                 // set 'subtypes' of name for useful typeahead
-                if ('jcr:primaryType' == name) {
+                if ('jcr:primaryType' === name) {
                     contextWidget.setWidgetType.apply(contextWidget, ['jcr-primaryType']);
-                } else if ('jcr:mixinTypes' == name) {
+                } else if ('jcr:mixinTypes' === name) {
                     contextWidget.setWidgetType.apply(contextWidget, ['jcr-mixinTypes']);
                 }
             }
