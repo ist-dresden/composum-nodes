@@ -749,7 +749,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
                 if (file != null) {
                     InputStream input = file.getInputStream();
-                    boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
+                    boolean force = RequestUtil.getParameter(request, PARAM_FORCE, true);
 
                     JcrPackageManager manager = PackageUtil.createPackageManager(request);
                     JcrPackage jcrPackage = manager.upload(input, force);
