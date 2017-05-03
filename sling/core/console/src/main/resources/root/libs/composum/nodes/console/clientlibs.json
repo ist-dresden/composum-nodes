@@ -90,7 +90,7 @@
       "embed": [
         "jslibs/bootstrap/3.3.7/css/bootstrap-theme.css",
         "jslibs/bootstrap-table/1.7.0/bootstrap-table.css",
-        "jslibs/bootstrap-datetimepicker/4.14.30/css/bootstrap-datetimepicker.css",
+        "jslibs/bootstrap-datetimepicker/4.17.45/css/bootstrap-datetimepicker.css",
         "jslibs/split-pane/0.9.3/split-pane.css"
       ]
     },

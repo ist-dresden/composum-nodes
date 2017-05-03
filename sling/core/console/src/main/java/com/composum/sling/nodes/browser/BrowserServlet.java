@@ -21,10 +21,12 @@ public class BrowserServlet extends AbstractConsoleServlet {
 
     public static final Pattern PATH_PATTERN = Pattern.compile("^(/bin/browser(\\.[^/]+)?\\.html)(/.*)?$");
 
+    @Override
     protected Pattern getPathPattern(BeanContext context) {
         return PATH_PATTERN;
     }
 
+    @Override
     protected String getResourceType(BeanContext context) {
         return RESOURCE_TYPE;
     }
