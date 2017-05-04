@@ -617,6 +617,32 @@
         });
 
 
+        browser.XmlTab = browser.DisplayTab.extend({
+
+            initialize: function (options) {
+                options = _.extend(options, {
+                    displayKey: 'xmlView'
+                });
+                browser.DisplayTab.prototype.initialize.apply(this, [options]);
+                this.$iframe = this.$('.embedded iframe');
+                this.$('.xml-toolbar .reload').click(_.bind(this.reload, this));
+                this.$download = this.$('.xml-toolbar .download');
+            },
+
+            reload: function () {
+                this.$download.attr('href', this.getUrl());
+                this.$iframe.attr('src', this.getUrl());
+            },
+
+            getUrl: function () {
+                var path = browser.getCurrentPath();
+                var url = '/bin/cpm/nodes/source.xml' + path;
+                return core.getContextUrl(url);
+            }
+
+        });
+
+
         //
         // detail view (console)
         //
@@ -643,6 +669,9 @@
         }, {
             selector: '> .json',
             tabType: browser.JsonTab
+        }, {
+            selector: '> .xml',
+            tabType: browser.XmlTab
         }, {
             selector: '> .acl',
             tabType: browser.PoliciesTab
