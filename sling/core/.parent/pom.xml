@@ -251,7 +251,7 @@
 
                                 <!-- No css minify - that's done in the application. -->
                                 <cssSourceDir>.</cssSourceDir>
-                                <cssSourceExcludes>**</cssSourceExcludes>
+                                <cssSourceExcludes><cssSourceExclude>**</cssSourceExclude></cssSourceExcludes>
                             </configuration>
                             <goals>
                                 <goal>minify</goal>
