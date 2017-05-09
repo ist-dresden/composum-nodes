@@ -56,7 +56,7 @@
                                         </div>
                                         <div class="btn-group btn-group-sm" role="group">
                                             <button type="button" class="copy fa fa-copy btn btn-default"
-                                                    title="Copy selecto node to clipboard"><span
+                                                    title="Copy selected node to clipboard"><span
                                                     class="label">Copy</span></button>
                                             <button type="button" class="paste fa fa-paste btn btn-default"
                                                     title="Paste node from clipboard into the selected node"><span

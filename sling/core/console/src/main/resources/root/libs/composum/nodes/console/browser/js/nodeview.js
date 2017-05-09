@@ -627,16 +627,21 @@
                 this.$iframe = this.$('.embedded iframe');
                 this.$('.xml-toolbar .reload').click(_.bind(this.reload, this));
                 this.$download = this.$('.xml-toolbar .download');
+                this.$zip = this.$('.xml-toolbar .zip');
+                this.$pkg = this.$('.xml-toolbar .pkg');
             },
 
             reload: function () {
-                this.$download.attr('href', this.getUrl());
                 this.$iframe.attr('src', this.getUrl());
+                this.$download.attr('href', this.getUrl('xml'));
+                this.$zip.attr('href', this.getUrl('zip'));
+                this.$pkg.attr('href', this.getUrl('pkg'));
             },
 
-            getUrl: function () {
+            getUrl: function (type) {
+                var type = type || "xml";
                 var path = browser.getCurrentPath();
-                var url = '/bin/cpm/nodes/source.xml' + path;
+                var url = '/bin/cpm/nodes/source.' + type + path;
                 return core.getContextUrl(url);
             }
 
