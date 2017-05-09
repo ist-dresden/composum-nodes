@@ -626,6 +626,7 @@
                 browser.DisplayTab.prototype.initialize.apply(this, [options]);
                 this.$iframe = this.$('.embedded iframe');
                 this.$('.xml-toolbar .reload').click(_.bind(this.reload, this));
+                this.$('.xml-toolbar .copy').click(_.bind(this.copyToClipboard, this));
                 this.$download = this.$('.xml-toolbar .download');
                 this.$zip = this.$('.xml-toolbar .zip');
                 this.$pkg = this.$('.xml-toolbar .pkg');
@@ -643,6 +644,14 @@
                 var path = browser.getCurrentPath();
                 var url = '/bin/cpm/nodes/source.' + type + path;
                 return core.getContextUrl(url);
+            },
+
+            copyToClipboard: function() {
+                var xmlContentDocument = document.querySelector(".xml .detail-content iframe").contentDocument;
+                xmlContentDocument.designMode = "on";
+                xmlContentDocument.execCommand("selectAll",false,null);
+                xmlContentDocument.execCommand("copy",false,null);
+                xmlContentDocument.designMode = "off";
             }
 
         });
