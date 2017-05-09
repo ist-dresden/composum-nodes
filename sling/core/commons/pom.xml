@@ -22,10 +22,21 @@
 
     <build>
         <plugins>
-
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-scr-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <!-- Minify the JS-Resources - needs the build-helper-maven-plugin -->
+                <groupId>com.samaxes.maven</groupId>
+                <artifactId>minify-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <!-- Needed for the minify-maven-plugin. -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
             </plugin>
 
             <plugin>

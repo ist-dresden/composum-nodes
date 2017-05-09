@@ -219,6 +219,70 @@
                     </configuration>
                 </plugin>
 
+                <plugin>
+                    <!-- If this is included, the build-helper-maven-plugin is also needed to actually include the minifed stuff into the JAR. -->
+                    <groupId>com.samaxes.maven</groupId>
+                    <artifactId>minify-maven-plugin</artifactId>
+                    <version>1.7.6</version>
+                    <executions>
+                        <execution>
+                            <id>minify-javascripts</id>
+                            <configuration>
+                                <!-- source maps wouldn't work since js are combined into one file later. -->
+                                <closureCreateSourceMap>false</closureCreateSourceMap>
+                                <verbose>false</verbose>
+                                <skipMerge>true</skipMerge>
+                                <jsEngine>CLOSURE</jsEngine>
+
+                                <webappSourceDir>${basedir}/src/main/resources</webappSourceDir>
+                                <webappTargetDir>${project.build.directory}/generated-sources/minify</webappTargetDir>
+
+                                <jsSourceDir>.</jsSourceDir>
+                                <jsTargetDir>.</jsTargetDir>
+                                <jsSourceIncludes>
+                                    <jsSourceInclude>**/*.js</jsSourceInclude>
+                                </jsSourceIncludes>
+                                <jsSourceExcludes>
+                                    <jsSourceExclude>**/*.min.js</jsSourceExclude>
+                                    <!-- Also exclude local development stuff excluded from git. -->
+                                    <jsSourceExclude>**/local-*/**/*.js</jsSourceExclude>
+                                    <jsSourceExclude>**/.local-*/**/*.js</jsSourceExclude>
+                                </jsSourceExcludes>
+
+                                <!-- No css minify - that's done in the application. -->
+                                <cssSourceDir>.</cssSourceDir>
+                                <cssSourceExcludes><cssSourceExclude>**</cssSourceExclude></cssSourceExcludes>
+                            </configuration>
+                            <goals>
+                                <goal>minify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <!-- necessary to include the minfied js (see minify-maven-plugin) into the JAR. -->
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>3.0.0</version>
+                    <executions>
+                        <execution>
+                            <id>add-minified-resource</id>
+                            <phase>generate-resources</phase>
+                            <goals>
+                                <goal>add-resource</goal>
+                            </goals>
+                            <configuration>
+                                <resources>
+                                    <resource>
+                                        <directory>${project.build.directory}/generated-sources/minify</directory>
+                                    </resource>
+                                </resources>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
             </plugins>
         </pluginManagement>
     </build>
