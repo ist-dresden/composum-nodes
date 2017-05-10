@@ -14,6 +14,18 @@
         <a href="" class="zip fa fa-file-archive-o btn btn-default" title="Download whole tree as ZIP file" target="_blank"><span class="label">Zip</span></a>
         <a href="" class="pkg fa fa-suitcase btn btn-default" title="Download whole tree as package ZIP file" target="_blank"><span class="label">Package</span></a>
       </div>
+      <div class="menu btn-group btn-group-sm dropdown" role="group">
+        <button type="button"
+                class="glyphicon-menu-hamburger glyphicon btn btn-default dropdown-toggle"
+                data-toggle="dropdown" title="Source type..."><span class="label">Source type...</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+          <li><a href="#json" class="json"
+                 title="Show a JSON view of the source">JSON</a></li>
+          <li class="active"><a href="#xml" class="xml"
+                 title="Show a XML view of the source">XML</a></li>
+        </ul>
+      </div>
     </div>
     <div class="embedded frame-container detail-content">
       <iframe src="" width="100%" height="100%"></iframe>
