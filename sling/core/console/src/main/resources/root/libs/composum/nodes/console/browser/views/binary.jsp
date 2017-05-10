@@ -12,7 +12,8 @@
         <%--
         <a class="download fa fa-download btn btn-default" href="#binary" data-group="binary" title="Download Binary Asset"><span class="label">Download</span></a>
         --%>
-        <a class="json fa fa-code btn btn-default" href="#json" data-group="json" title="JSON View"><span class="label">JSON</span></a>
+        <a class="source json fa fa-code btn btn-default" href="#json" data-group="json" title="Source view as JSON (switchable to XML)"><span class="label">JSON</span></a>
+        <a class="source xml fa fa-code btn btn-default hidden" href="#xml" data-group="xml" title="Source view as XML (switchable to JSON)"><span class="label">XML</span></a>
         <a class="acl fa fa-key btn btn-default" href="#acl" data-group="acl" title="Access Rules"><span class="label">ACL</span></a>
         <a class="version fa fa-history btn btn-default" href="#version" data-group="version" title="Versions"><span class="label">Versions</span></a>
       </div>

@@ -37,6 +37,18 @@
         <a href="" class="download fa fa-download btn btn-default" title="Download as JSON file"><span class="label">Download</span></a>
         <button type="button" class="upload fa fa-upload btn btn-default" title="Update from an uploaded JSON file"><span class="label">Upload</span></button>
       </div>
+      <div class="menu btn-group btn-group-sm dropdown" role="group">
+        <button type="button"
+                class="glyphicon-menu-hamburger glyphicon btn btn-default dropdown-toggle"
+                data-toggle="dropdown" title="Source type..."><span class="label">Source type...</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+          <li class="active"><a href="#json" class="json"
+                 title="Show a JSON view of the source">JSON</a></li>
+          <li><a href="#xml" class="xml"
+                 title="Show a XML view of the source">XML</a></li>
+        </ul>
+      </div>
     </div>
     <div class="embedded frame-container detail-content">
       <iframe src="" width="100%" height="100%"></iframe>
