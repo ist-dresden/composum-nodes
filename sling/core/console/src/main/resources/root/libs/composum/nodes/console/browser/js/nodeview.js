@@ -73,6 +73,7 @@
             },
 
             reload: function () {
+                browser.nodeView.sourceViewTabVisibility();
                 this.loadContent(this.getUrl());
             },
 
@@ -569,6 +570,7 @@
                 this.$('.json-toolbar .reload').click(_.bind(this.reload, this));
                 this.$download = this.$('.json-toolbar .download');
                 this.$('.json-toolbar .upload').click(_.bind(this.upload, this));
+                this.$('.json-toolbar .menu a').click(_.bind(this.tabSelected, this));
             },
 
             remember: function () {
@@ -583,6 +585,7 @@
             reload: function () {
                 this.$download.attr('href', this.getUrl(0, 0, 'base64', true));
                 this.$iframe.attr('src', this.getUrl());
+                browser.nodeView.sourceViewTabVisibility('json');
             },
 
             getUrl: function (depth, indent, binary, download) {
@@ -613,7 +616,57 @@
                         dialog.initDialog(parentPath, nodeName);
                     }
                 }, this));
+            },
+
+            tabSelected: function(event) {
+                browser.nodeView.tabSelected(event);
             }
+        });
+
+
+        browser.XmlTab = browser.DisplayTab.extend({
+
+            initialize: function (options) {
+                options = _.extend(options, {
+                    displayKey: 'xmlView'
+                });
+                browser.DisplayTab.prototype.initialize.apply(this, [options]);
+                this.$iframe = this.$('.embedded iframe');
+                this.$('.xml-toolbar .reload').click(_.bind(this.reload, this));
+                this.$('.xml-toolbar .copy').click(_.bind(this.copyToClipboard, this));
+                this.$download = this.$('.xml-toolbar .download');
+                this.$zip = this.$('.xml-toolbar .zip');
+                this.$pkg = this.$('.xml-toolbar .pkg');
+                this.$('.xml-toolbar .menu a').click(_.bind(this.tabSelected, this));
+            },
+
+            reload: function () {
+                this.$iframe.attr('src', this.getUrl());
+                this.$download.attr('href', this.getUrl('xml'));
+                this.$zip.attr('href', this.getUrl('zip'));
+                this.$pkg.attr('href', this.getUrl('pkg'));
+                browser.nodeView.sourceViewTabVisibility('xml');
+            },
+
+            getUrl: function (type) {
+                var type = type || "xml";
+                var path = browser.getCurrentPath();
+                var url = '/bin/cpm/nodes/source.' + type + path;
+                return core.getContextUrl(url);
+            },
+
+            copyToClipboard: function() {
+                var xmlContentDocument = document.querySelector(".xml .detail-content iframe").contentDocument;
+                xmlContentDocument.designMode = "on";
+                xmlContentDocument.execCommand("selectAll",false,null);
+                xmlContentDocument.execCommand("copy",false,null);
+                xmlContentDocument.designMode = "off";
+            },
+
+            tabSelected: function(event) {
+                browser.nodeView.tabSelected(event);
+            }
+
         });
 
 
@@ -643,6 +696,9 @@
         }, {
             selector: '> .json',
             tabType: browser.JsonTab
+        }, {
+            selector: '> .xml',
+            tabType: browser.XmlTab
         }, {
             selector: '> .acl',
             tabType: browser.PoliciesTab
@@ -740,7 +796,20 @@
                     $(document).trigger("favorite:toggle", [this.path]);
                     this.checkFavorite();
                 }
+            },
+
+            /**
+             * Shows only the selected tab from the source view tabs.
+             */
+            sourceViewTabVisibility: function (tab) {
+                var shownTab = tab || core.console.getProfile().get('browser', 'sourceview');
+                if (shownTab) {
+                    core.console.getProfile().set('browser', 'sourceview', shownTab);
+                    this.$detailView.find('.node-tabs .source').addClass('hidden');
+                    this.$detailView.find('.node-tabs .source.' + shownTab).removeClass('hidden');
+                }
             }
+
         });
 
         browser.nodeView = core.getView('#browser-view', browser.NodeView);
