@@ -12,7 +12,7 @@ import java.util.HashMap;
  */
 public class InheritedValues extends HashMap<String, Object> implements ValueMap {
 
-    public static final Object UNDEFINED = new String("");
+    public static final Object UNDEFINED = "";
 
     protected final Resource resource;
     protected final boolean nodeInheritance;
@@ -67,7 +67,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
     @Override
     public <T> T get(String name, T defaultValue) {
         Class<T> type = PropertyUtil.getType(defaultValue);
-        T value = (T) get(name, type);
+        T value = get(name, type);
         return value != null ? value : defaultValue;
     }
 
