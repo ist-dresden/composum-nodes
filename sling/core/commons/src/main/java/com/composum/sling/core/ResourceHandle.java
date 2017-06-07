@@ -186,7 +186,7 @@ public class ResourceHandle extends ResourceWrapper {
         inheritedValues = null;
     }
 
-    protected InheritedValues getInheritedValues() {
+    public InheritedValues getInheritedValues() {
         if (inheritedValues == null) {
             inheritedValues = new InheritedValues(this, useNodeInheritance);
         }
