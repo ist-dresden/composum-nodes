@@ -73,7 +73,6 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
 
     @SuppressWarnings("unchecked")
     protected <T> T findInherited(String name, Class<T> type) {
-        findEntryPoint();
         HierarchyScanResult found = findOriginAndValue(name, type);
         return found != null ? (T) found.value : null;
     }
@@ -99,6 +98,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
      */
     public HierarchyScanResult findOriginAndValue(String name, Class<?> type) {
         Object value;
+        findEntryPoint();
         String path = getRelativePath(name);
         for (Resource parent = entryPoint; parent != null; parent = parent.getParent()) {
             ValueMap parentProps = parent.adaptTo(ValueMap.class);
