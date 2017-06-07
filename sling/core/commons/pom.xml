@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.sling.core</groupId>
         <artifactId>composum-sling-core-parent</artifactId>
-        <version>1.7.1-SNAPSHOT</version>
+        <version>1.7.1</version>
         <relativePath>../.parent</relativePath>
     </parent>
 
@@ -49,8 +49,7 @@
                             com.composum.sling.clientlibs.*,
                             com.composum.sling.core.*,
                             com.composum.sling.cpnl.*,
-                            com.google.gson.*,
-                            javax.inject.*
+                            com.google.gson.*
                         </Export-Package>
                         <Embed-Dependency>
                             *;scope=compile|runtime
