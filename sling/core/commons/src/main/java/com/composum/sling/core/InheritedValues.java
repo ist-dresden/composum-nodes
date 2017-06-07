@@ -12,7 +12,7 @@ import java.util.HashMap;
  */
 public class InheritedValues extends HashMap<String, Object> implements ValueMap {
 
-    public static final Object UNDEFINED = new String("");
+    public static final Object UNDEFINED = "";
 
     protected final Resource resource;
     protected final boolean nodeInheritance;
@@ -67,34 +67,45 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
     @Override
     public <T> T get(String name, T defaultValue) {
         Class<T> type = PropertyUtil.getType(defaultValue);
-        T value = (T) get(name, type);
+        T value = get(name, type);
         return value != null ? value : defaultValue;
     }
 
+    @SuppressWarnings("unchecked")
     protected <T> T findInherited(String name, Class<T> type) {
         findEntryPoint();
-        T value = scanNodeHierarchy(name, type);
-        // TODO if not found scan in the 'design' or context definition
-        return value;
+        HierarchyScanResult found = findOriginAndValue(name, type);
+        return found != null ? (T) found.value : null;
+    }
+
+    public static class HierarchyScanResult {
+
+        public final Resource origin;
+        public final Object value;
+
+        public HierarchyScanResult(Resource origin, Object value) {
+            this.origin = origin;
+            this.value = value;
+        }
     }
 
     /**
      * Searches the value along the repositories hierarchy by the entry point and path determined before.
      *
      * @param name the property name or path
-     * @param <T>  the expected type of the value
+     * @param type  the expected type of the value
      * @return the value found or <code>null</code> if no such value found
      * in one of the appropriate parent nodes
      */
-    protected <T> T scanNodeHierarchy(String name, Class<T> type) {
-        T value;
+    public HierarchyScanResult findOriginAndValue(String name, Class<?> type) {
+        Object value;
         String path = getRelativePath(name);
         for (Resource parent = entryPoint; parent != null; parent = parent.getParent()) {
             ValueMap parentProps = parent.adaptTo(ValueMap.class);
             if (parentProps != null) {
                 value = parentProps.get(path, type);
                 if (value != null) {
-                    return value;
+                    return new HierarchyScanResult(parent, value);
                 }
             }
             if (exitPoint != null && parent.getPath().equals(exitPoint.getPath())) {
