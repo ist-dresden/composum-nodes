@@ -60,8 +60,7 @@
                             com.composum.sling.clientlibs.*,
                             com.composum.sling.core.*,
                             com.composum.sling.cpnl.*,
-                            com.google.gson.*,
-                            javax.inject.*
+                            com.google.gson.*
                         </Export-Package>
                         <Embed-Dependency>
                             *;scope=compile|runtime
