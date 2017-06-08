@@ -204,6 +204,9 @@
                 options = _.extend(options, {
                     displayKey: 'imageView',
                     loadContent: function (url) {
+                        if (!this.isAsset) {
+                            url = '/bin/cpm/nodes/node.load.bin' + url;
+                        }
                         this.$image.attr('src', core.getContextUrl(url));
                     }
                 });

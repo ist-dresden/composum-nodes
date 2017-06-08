@@ -1,6 +1,5 @@
 package com.composum.sling.nodes.servlet;
 
-import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.config.FilterConfiguration;
 import com.composum.sling.core.exception.ParameterValidationException;
@@ -16,8 +15,10 @@ import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
@@ -31,9 +32,11 @@ import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -48,6 +51,7 @@ import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -177,12 +181,12 @@ public class NodeServlet extends NodeTreeServlet {
     // Servlet operations
     //
 
-    public enum Extension {json, html, lock, groovy}
+    public enum Extension {json, html, lock, groovy, bin}
 
     public enum Operation {
         create, copy, move, reorder, delete, toggle,
         tree, reference, mixins, resolve, typeahead,
-        query, queryTemplates, filters, map
+        query, queryTemplates, filters, map, load
     }
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
@@ -233,6 +237,8 @@ public class NodeServlet extends NodeTreeServlet {
                 Operation.query, new HtmlQueryOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.queryTemplates, new GetQueryTemplates());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.bin,
+                Operation.load, new LoadBinaryOperation());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
@@ -752,6 +758,46 @@ public class NodeServlet extends NodeTreeServlet {
             } catch (RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+    }
+
+    protected class LoadBinaryOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws ServletException, IOException {
+
+            Binary binary = ResourceUtil.getBinaryData(resource);
+            if (binary == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
+            try {
+                MimeType mimeType = MimeTypeUtil.getMimeType(resource);
+                if (mimeType != null) {
+                    response.setContentType(mimeType.toString());
+                }
+
+                response.setContentLength((int) binary.getSize());
+                response.setStatus(HttpServletResponse.SC_OK);
+
+                InputStream input = binary.getStream();
+                BufferedInputStream buffered = new BufferedInputStream(input);
+                try {
+                    IOUtils.copy(buffered, response.getOutputStream());
+                } finally {
+                    buffered.close();
+                    input.close();
+                }
+
+            } catch (RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            } finally {
+                binary.dispose();
             }
         }
     }
