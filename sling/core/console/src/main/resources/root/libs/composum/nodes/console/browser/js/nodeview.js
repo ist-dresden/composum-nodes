@@ -169,7 +169,7 @@
                 });
                 browser.DisplayTab.prototype.initialize.apply(this, [options]);
                 this.$iframe = this.$('.embedded iframe');
-                this.$iframe.on('load.preview',_.bind(this.onFrameLoad, this));
+                this.$iframe.on('load.preview', _.bind(this.onFrameLoad, this));
             },
 
             onFrameLoad: function (event) {
@@ -198,7 +198,7 @@
                 options = _.extend(options, {
                     displayKey: 'imageView',
                     loadContent: function (url) {
-                        this.$image.attr('src', core.getContextUrl(url));
+                        this.$image.attr('src', core.getContextUrl('/bin/cpm/nodes/node.load.bin' + url));
                     }
                 });
                 browser.DisplayTab.prototype.initialize.apply(this, [options]);
@@ -386,8 +386,7 @@
                         'event.job.topic': 'com/composum/sling/core/script/GroovyJobExecutor',
                         'reference': path,
                         '_charset_': 'UTF-8'
-                    }, {
-                    },
+                    }, {},
                     _.bind(function (data, msg, xhr) {
                         this.scriptJob = data;
                         this.delay(true);
