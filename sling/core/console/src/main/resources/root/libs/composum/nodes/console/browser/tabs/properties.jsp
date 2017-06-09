@@ -13,6 +13,10 @@
         <button class="copy fa fa-copy btn btn-default" title="Copy selected properties"><span class="label">Copy</span></button>
         <button class="paste fa fa-paste btn btn-default" title="Paste copied properties"><span class="label">Paste</span></button>
       </div>
+      <div class="btn-group btn-group-sm" role="group">
+        <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
+        </button>
+      </div>
     </div>
     <div class="table-container">
       <table id="browser-view-property-table" class="property-table"

@@ -37,6 +37,10 @@
             return core.getView('#node-upload-dialog', nodes.UploadNodeDialog);
         };
 
+        nodes.getUpdateFileDialog = function () {
+            return core.getView('#file-update-dialog', nodes.UpdateFileDialog);
+        };
+
         nodes.CreateNodeDialog = core.components.Dialog.extend({
 
             initialize: function (options) {
@@ -468,6 +472,39 @@
                         }
                     }
                 }
+            }
+        });
+
+        nodes.UpdateFileDialog = core.components.Dialog.extend({
+
+            initialize: function (options) {
+                this.profile = {
+                    adjustLastModified: true
+                };
+                core.components.Dialog.prototype.initialize.apply(this, [options]);
+                this.$form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.$panel = this.$('.form-panel');
+                this.$path = this.$('input[name="path"]');
+                this.$file = this.$('input[name="file"]');
+                this.$adjustLastModified = this.$('input[name="adjustLastModified"]');
+                this.$('button.update').click(_.bind(this.updateFile, this));
+            },
+
+            initDialog: function (path) {
+                this.$path.val(path);
+                this.profile = core.console.getProfile().get('browser', 'updateFileDialog', this.profile);
+                this.$adjustLastModified.prop('checked', this.profile.adjustLastModified);
+            },
+
+            updateFile: function (event) {
+                event.preventDefault();
+                var path = this.$path.val();
+                this.submitForm(_.bind(function () {
+                    this.profile.adjustLastModified = this.$adjustLastModified.prop('checked');
+                    core.console.getProfile().set('browser', 'updateFileDialog', this.profile);
+                    $(document).trigger('path:changed', [path]);
+                }, this));
+                return false;
             }
         });
 
