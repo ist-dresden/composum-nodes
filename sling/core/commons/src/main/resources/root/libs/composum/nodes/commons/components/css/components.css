@@ -61,8 +61,16 @@
  * File Input
  */
 
-.file-input .fileinput-remove-button .glyphicon {
-    line-height: 20px;
+.file-input .input-group button {
+    height: 34px;
+}
+
+.file-input .input-group button span {
+    line-height: 23px;
+}
+
+.file-input .file-preview-frame .file-actions {
+    display: none;
 }
 
 /**

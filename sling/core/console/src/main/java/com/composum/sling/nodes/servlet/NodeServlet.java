@@ -25,13 +25,16 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.request.RequestPathInfo;
+import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
@@ -61,8 +65,11 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -186,7 +193,7 @@ public class NodeServlet extends NodeTreeServlet {
     public enum Operation {
         create, copy, move, reorder, delete, toggle,
         tree, reference, mixins, resolve, typeahead,
-        query, queryTemplates, filters, map, load
+        query, queryTemplates, filters, map, load, download, fileUpdate
     }
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
@@ -239,6 +246,8 @@ public class NodeServlet extends NodeTreeServlet {
                 Operation.queryTemplates, new GetQueryTemplates());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.bin,
                 Operation.load, new LoadBinaryOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.bin,
+                Operation.download, new DownloadBinaryOperation());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
@@ -251,6 +260,8 @@ public class NodeServlet extends NodeTreeServlet {
                 Operation.move, new MoveOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.lock,
                 Operation.toggle, new ToggleLockOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
+                Operation.fileUpdate, new UpdateFileOperation());
 
         // PUT
         operations.setOperation(ServletOperationSet.Method.PUT, Extension.json,
@@ -776,10 +787,7 @@ public class NodeServlet extends NodeTreeServlet {
             }
 
             try {
-                MimeType mimeType = MimeTypeUtil.getMimeType(resource);
-                if (mimeType != null) {
-                    response.setContentType(mimeType.toString());
-                }
+                prepareResponse(response, resource);
 
                 response.setContentLength((int) binary.getSize());
                 response.setStatus(HttpServletResponse.SC_OK);
@@ -800,11 +808,93 @@ public class NodeServlet extends NodeTreeServlet {
                 binary.dispose();
             }
         }
+
+        protected void prepareResponse(SlingHttpServletResponse response, ResourceHandle resource) {
+            MimeType mimeType = MimeTypeUtil.getMimeType(resource);
+            if (mimeType != null) {
+                response.setContentType(mimeType.toString());
+            }
+        }
+    }
+
+    protected class DownloadBinaryOperation extends LoadBinaryOperation {
+
+        @Override
+
+        protected void prepareResponse(SlingHttpServletResponse response, ResourceHandle resource) {
+            super.prepareResponse(response, resource);
+
+            String filename = MimeTypeUtil.getFilename(resource, null);
+            if (StringUtils.isNotBlank(filename)) {
+                response.setHeader("Content-Disposition", "inline; filename=" + filename);
+            }
+
+            Calendar lastModified = resource.getProperty(com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED, Calendar.class);
+            if (lastModified != null) {
+                response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, lastModified.getTimeInMillis());
+            }
+        }
     }
 
     //
     // Change Operations
     //
+
+    /**
+     * The 'fileUpdate' via POST (multipart form) implementation expects:
+     * <ul>
+     * <li>the 'path' parameter with the path of the new nodes parent</li>
+     * <li>the 'file' part (form element / parameter) with the binary content (optional)</li>
+     * </ul>
+     */
+    protected class UpdateFileOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+
+            Resource content = resource;
+
+            // use resource as content if name is always 'jcr:content' else use child 'jcr:content'
+            if (resource.isValid() && (JcrConstants.JCR_CONTENT.equals(content.getName()) ||
+                    (content = resource.getChild(JcrConstants.JCR_CONTENT)) != null)) {
+
+                NodeParameters params = getNodeParameters(request);
+                ModifiableValueMap values = content.adaptTo(ModifiableValueMap.class);
+
+                ResourceResolver resolver = request.getResourceResolver();
+                RequestParameterMap parameters = request.getRequestParameterMap();
+
+                Property property = null;
+                RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
+                if (file != null) {
+                    InputStream input = file.getInputStream();
+                    values.put(JcrConstants.JCR_DATA, input);
+                }
+
+                if (RequestUtil.getParameter(request, "adjustLastModified", Boolean.FALSE)) {
+                    GregorianCalendar now = new GregorianCalendar();
+                    now.setTime(new Date());
+                    values.put(JcrConstants.JCR_LASTMODIFIED, now);
+                    values.put(JcrConstants.JCR_LASTMODIFIED + "By", resolver.getUserID());
+                }
+
+                resolver.commit();
+
+                JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY, resource, LabelType.name, false);
+
+            } else {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "no valid file resource '" + resource.getPath() + "'");
+            }
+        }
+
+        public NodeParameters getNodeParameters(SlingHttpServletRequest request)
+                throws IOException {
+            return getFormParameters(request);
+        }
+    }
 
     protected class ToggleLockOperation implements ServletOperation {
 
