@@ -9,7 +9,11 @@
 
     (function (browser) {
 
-        browser.DisplayTab = core.console.DetailTab.extend({
+        /**
+         * the abstract tab to display the current resource by their own view with
+         * typical Sling URL variations specified in the views toolbar
+         */
+        browser.AbstractDisplayTab = core.console.DetailTab.extend({
 
             pathPattern: new RegExp('^(https?://[^/]+)?(/.*)$'),
             urlPattern: new RegExp('^(.*/[^/]+)(\\.[^.]+)$'),
@@ -103,6 +107,11 @@
                 return this.$selectors.val();
             },
 
+            urlHasModifiers: function () {
+                return this.isMapped() || this.$pathPrefix.val() || this.getSelectors() || this.$extension.val()
+                    || this.$suffix.val() || this.$parameters.val()
+            },
+
             getUrl: function () {
                 var url = this.$el.attr(this.isMapped() ? 'data-mapped' : 'data-path');
                 var pathPrefix = this.$pathPrefix.val();
@@ -162,7 +171,7 @@
             }
         });
 
-        browser.HtmlTab = browser.DisplayTab.extend({
+        browser.HtmlTab = browser.AbstractDisplayTab.extend({
 
             initialize: function (options) {
                 options = _.extend(options, {
@@ -172,7 +181,7 @@
                         this.$iframe.attr('src', url);
                     }
                 });
-                browser.DisplayTab.prototype.initialize.apply(this, [options]);
+                browser.AbstractDisplayTab.prototype.initialize.apply(this, [options]);
                 this.$iframe = this.$('.embedded iframe');
                 this.$iframe.on('load.preview', _.bind(this.onFrameLoad, this));
             },
@@ -197,17 +206,48 @@
             }
         });
 
-        browser.ImageTab = browser.DisplayTab.extend({
+        /**
+         * an abstract display view with 'download' link and upload function for file content update
+         */
+        browser.AbstractFileTab = browser.AbstractDisplayTab.extend({
+
+            initialize: function (options) {
+                browser.AbstractDisplayTab.prototype.initialize.apply(this, [options]);
+                this.$image = this.$('.image-frame img');
+                this.$('.detail-toolbar .update').click(_.bind(this.upload, this));
+                this.$download = this.$('.detail-toolbar .download');
+            },
+
+            reload: function () {
+                browser.AbstractDisplayTab.prototype.reload.apply(this);
+                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.bin' + this.$el.data('path')));
+            },
+
+            upload: function () {
+                var currentPath = browser.getCurrentPath();
+                if (currentPath) {
+                    var dialog = core.nodes.getUpdateFileDialog();
+                    dialog.show(_.bind(function () {
+                        dialog.initDialog(currentPath);
+                    }, this));
+                }
+            }
+        });
+
+        browser.ImageTab = browser.AbstractFileTab.extend({
 
             initialize: function (options) {
                 this.isAsset = !!this.$el.data('asset');
                 options = _.extend(options, {
                     displayKey: 'imageView',
                     loadContent: function (url) {
+                        if (!this.urlHasModifiers() && !this.isAsset) {
+                            url = '/bin/cpm/nodes/node.load.bin' + url;
+                        }
                         this.$image.attr('src', core.getContextUrl(url));
                     }
                 });
-                browser.DisplayTab.prototype.initialize.apply(this, [options]);
+                browser.AbstractFileTab.prototype.initialize.apply(this, [options]);
                 this.$image = this.$('.image-frame img');
             },
 
@@ -217,18 +257,21 @@
             }
         });
 
-        browser.VideoTab = browser.DisplayTab.extend({
+        browser.VideoTab = browser.AbstractFileTab.extend({
 
             initialize: function (options) {
                 options = _.extend(options, {
                     displayKey: 'videoView',
                     loadContent: function (url) {
-                        var mimeType = this.$el.attr('data-type');
+                        if (!this.urlHasModifiers()) {
+                            url = '/bin/cpm/nodes/node.load.bin' + url;
+                        }
+                        var mimeType = this.$el.data('type');
                         this.$source.attr('type', mimeType);
                         this.$source.attr('src', core.getContextUrl(url));
                     }
                 });
-                browser.DisplayTab.prototype.initialize.apply(this, [options]);
+                browser.AbstractFileTab.prototype.initialize.apply(this, [options]);
                 this.$video = this.$('.video-frame video');
                 this.$source = this.$video.find('source');
             }
@@ -238,15 +281,27 @@
 
             initialize: function (options) {
                 this.editor = core.getWidget(this.$el, '.widget.code-editor-widget', core.components.CodeEditorWidget);
+                this.$('.editor-toolbar .update').click(_.bind(this.upload, this));
                 this.$download = this.$('.editor-toolbar .download');
             },
 
             reload: function () {
-                this.$download.attr('href', this.$('.editor-frame .code-editor').attr('data-path'));
+                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.bin'
+                    + this.$('.editor-frame .code-editor').data('path')));
             },
 
             resize: function () {
                 this.editor.resize();
+            },
+
+            upload: function () {
+                var currentPath = browser.getCurrentPath();
+                if (currentPath) {
+                    var dialog = core.nodes.getUpdateFileDialog();
+                    dialog.show(_.bind(function () {
+                        dialog.initDialog(currentPath);
+                    }, this));
+                }
             }
         });
 
@@ -618,19 +673,19 @@
                 }, this));
             },
 
-            tabSelected: function(event) {
+            tabSelected: function (event) {
                 browser.nodeView.tabSelected(event);
             }
         });
 
 
-        browser.XmlTab = browser.DisplayTab.extend({
+        browser.XmlTab = browser.AbstractDisplayTab.extend({
 
             initialize: function (options) {
                 options = _.extend(options, {
                     displayKey: 'xmlView'
                 });
-                browser.DisplayTab.prototype.initialize.apply(this, [options]);
+                browser.AbstractDisplayTab.prototype.initialize.apply(this, [options]);
                 this.$iframe = this.$('.embedded iframe');
                 this.$('.xml-toolbar .reload').click(_.bind(this.reload, this));
                 this.$('.xml-toolbar .copy').click(_.bind(this.copyToClipboard, this));
@@ -655,15 +710,15 @@
                 return core.getContextUrl(url);
             },
 
-            copyToClipboard: function() {
+            copyToClipboard: function () {
                 var xmlContentDocument = document.querySelector(".xml .detail-content iframe").contentDocument;
                 xmlContentDocument.designMode = "on";
-                xmlContentDocument.execCommand("selectAll",false,null);
-                xmlContentDocument.execCommand("copy",false,null);
+                xmlContentDocument.execCommand("selectAll", false, null);
+                xmlContentDocument.execCommand("copy", false, null);
                 xmlContentDocument.designMode = "off";
             },
 
-            tabSelected: function(event) {
+            tabSelected: function (event) {
                 browser.nodeView.tabSelected(event);
             }
 

@@ -27,6 +27,7 @@
                 this.$copyButton.click(_.bind(this.clipboardCopy, this));
                 this.$pasteButton = this.$('.table-toolbar .paste');
                 this.$pasteButton.click(_.bind(this.clipboardPaste, this));
+                this.$('.table-toolbar .reload').click(_.bind(this.reload, this));
             },
 
             reload: function () {

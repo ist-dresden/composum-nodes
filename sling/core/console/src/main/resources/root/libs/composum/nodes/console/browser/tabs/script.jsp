@@ -28,10 +28,10 @@
                             class="label">Edit</span></button>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
-                    <a href="" class="download fa fa-download btn btn-default" title="Download text file"><span
-                            class="label">Download</span></a>
-                    <button type="button" class="upload fa fa-upload btn btn-default" title="Upload text file"><span
-                            class="label">Upload</span></button>
+                    <a href="" class="download fa fa-download btn btn-default" title="Download text file"
+                       target="_blank"><span class="label">Download</span></a>
+                    <button type="button" class="update fa fa-upload btn btn-default" title="Update text file"><span
+                            class="label">Update File</span></button>
                 </div>
             </div>
             <div class="detail-content">
