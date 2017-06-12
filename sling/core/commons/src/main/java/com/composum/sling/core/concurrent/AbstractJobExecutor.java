@@ -137,6 +137,10 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
             HashMap<String, Object> authInfo = new HashMap<>();
             authInfo.put("user.jcr.session", session);
         }
+
+        public void close() {
+            session.logout();
+        }
     }
 
     @Override
