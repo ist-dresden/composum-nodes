@@ -1,9 +1,5 @@
 package com.composum.sling.core.script
 
-/**
- * Created by rw on 08.10.15.
- */
-
 println "meta: " + getMetaClass()
 println "log: " + log
 println "binding: " + binding

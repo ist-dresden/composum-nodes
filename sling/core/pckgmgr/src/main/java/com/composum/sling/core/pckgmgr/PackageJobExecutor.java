@@ -153,6 +153,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
                 }
             } finally {
                 lock.unlock();
+                close();
             }
         }
 
