@@ -12,28 +12,72 @@ import java.util.HashMap;
  */
 public class InheritedValues extends HashMap<String, Object> implements ValueMap {
 
+    /**
+     * the various types of inheritance
+     * <dl>
+     * <dt>contentRelated</dt>
+     * <dd>
+     * Each node at the same position relative to the 'jcr:content' nodes is checked for an inherited value.
+     * <code><pre>
+     *     - jcr:content/aaa/bbb/{relative/property/path}
+     *       - ...
+     *       - jcr:content/aaa/bbb/{relative/property/path}
+     * </pre></code></dd>
+     * <dt>contentBased</dt>
+     * <dd>
+     * The 'jcr:content' parents are the base to retrieve the inherited value.
+     * <code><pre>
+     *     - jcr:content/{relative/property/path}
+     *       - ...
+     *       - jcr:content/aaa/.../xxx/{relative/property/path}
+     * </pre></code></dd>
+     * <dt>nodeRelated</dt>
+     * <dd>
+     * Each parent node can store an appropriate value.
+     * <code><pre>
+     *     - jcr:content/{relative/property/path}
+     *       - aaa
+     *         - bbb/{relative/property/path}
+     *           ...
+     *           - xxx/{relative/property/path}
+     * </pre></code>
+     * Can be restricted to the subtree of 'jcr:content/...'.</dd>
+     * <dt>sameContent</dt>
+     * <dd>
+     * The same as 'nodeRelated' but the search is stopped at the next 'jcr:content' parent node if present.
+     * </dd>
+     * </dl>
+     */
+    public enum Type {
+        contentRelated, contentBased, nodeRelated, sameContent
+    }
+
     public static final Object UNDEFINED = "";
 
     protected final Resource resource;
-    protected final boolean nodeInheritance;
-    protected final boolean restrictToSameContent;
+    protected final Type inheritanceType;
 
     protected transient Resource exitPoint;
     protected transient Resource entryPoint;
     protected transient String relativePath;
 
     public InheritedValues(Resource resource) {
-        this(resource, false);
+        this(resource, Type.contentRelated);
     }
 
-    public InheritedValues(Resource resource, boolean nodeInheritance) {
-        this(resource, nodeInheritance, true);
-    }
-
-    public InheritedValues(Resource resource, boolean nodeInheritance, boolean restrictToSameContent) {
+    public InheritedValues(Resource resource, Type inheritanceType) {
         this.resource = resource;
-        this.nodeInheritance = nodeInheritance;
-        this.restrictToSameContent = restrictToSameContent;
+        this.inheritanceType = inheritanceType;
+    }
+
+    @Deprecated
+    public InheritedValues(Resource resource, boolean nodeInheritance) {
+        this(resource, Type.sameContent);
+    }
+
+    @Deprecated
+    public InheritedValues(Resource resource, boolean nodeInheritance, boolean restrictToSameContent) {
+        this(resource, nodeInheritance ? (restrictToSameContent ? Type.sameContent : Type.nodeRelated) : Type.contentRelated);
     }
 
     /**
@@ -92,7 +136,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
      * Searches the value along the repositories hierarchy by the entry point and path determined before.
      *
      * @param name the property name or path
-     * @param type  the expected type of the value
+     * @param type the expected type of the value
      * @return the value found or <code>null</code> if no such value found
      * in one of the appropriate parent nodes
      */
@@ -137,23 +181,26 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
             Resource parent = resource;
             String name = null;
             while (parent != null && !ResourceUtil.CONTENT_NODE.equals(name = parent.getName())) {
-                if (path.length() > 0) {
-                    path.insert(0, '/');
+                if (inheritanceType != Type.contentBased) {
+                    if (path.length() > 0) {
+                        path.insert(0, '/');
+                    }
+                    path.insert(0, name);
                 }
-                path.insert(0, name);
                 parent = parent.getParent();
             }
-            if (!nodeInheritance && parent != null && ResourceUtil.CONTENT_NODE.equals(name)) {
+            if (inheritanceType != Type.nodeRelated && inheritanceType != Type.sameContent
+                    && parent != null && ResourceUtil.CONTENT_NODE.equals(name)) {
                 // the resource is a child of an element with a content subtree ('jcr:content/...')
                 path.insert(0, '/');
                 path.insert(0, ResourceUtil.CONTENT_NODE);
                 relativePath = path.toString();
                 entryPoint = parent.getParent();
             } else {
-                // no content subtree ('jcr:content/...') detected, use node inheritance
+                // node inheritance or no content subtree ('jcr:content/...') detected...
                 relativePath = "";
                 entryPoint = resource.getParent();
-                if (restrictToSameContent && parent != null && ResourceUtil.CONTENT_NODE.equals(name)) {
+                if (inheritanceType == Type.sameContent && parent != null && ResourceUtil.CONTENT_NODE.equals(name)) {
                     exitPoint = parent;
                 }
             }
