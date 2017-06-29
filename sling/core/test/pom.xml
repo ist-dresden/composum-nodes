@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- This does deliberately not depend on he core/.parent/pom.xml since we need newer library versions for testing stuff sensibly. -->
+
+    <groupId>com.composum.sling.core</groupId>
+    <artifactId>composum-sling-core-test</artifactId>
+    <version>1.9.0-SNAPSHOT</version>
+
+    <name>Composum Core Sling Testing</name>
+    <description>
+        Since the dependency versions of composum core are deliberately low to provide backwards compatibility,
+        there is trouble to use newer mocking and testing libraries. So we perform tests in this module with newer
+        versions here, and accept the relatively small risk of behavioural changes of these dependencies that break the
+        code.
+    </description>
+
+    <build>
+        <plugins>
+            <plugin>
+                <!-- http://felix.apache.org/documentation/subprojects/apache-felix-maven-scr-plugin/apache-felix-maven-scr-plugin-use.html -->
+                <!-- Only for the test classes to use MockOSGI.activate. -->
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-scr-plugin</artifactId>
+                <version>1.20.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-scr-scrdescriptor</id>
+                        <goals>
+                            <goal>scr</goal>
+                        </goals>
+                        <configuration>
+                            <properties>
+                                <service.vendor>IST GmbH Dresden</service.vendor>
+                            </properties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.12.4</version>
+                <configuration>
+                    <systemProperties>
+                        <org.slf4j.simpleLogger.log.com.composum>DEBUG</org.slf4j.simpleLogger.log.com.composum>
+                    </systemProperties>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <dependencies>
+
+        <!-- Sling testing dependencies. We define these first, so that they fix the transitive dependency versions to override the
+            versions given in the tested composum modules. Sling-mock-oak has to come before sling-mock to get its
+            specifically needed versions. -->
+        <dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.sling/org.apache.sling.testing.sling-mock-oak -->
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.testing.sling-mock-oak</artifactId>
+            <version>2.0.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.sling/org.apache.sling.testing.sling-mock -->
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.testing.sling-mock</artifactId>
+            <version>2.2.12</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Various needed libraries. -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.scr.annotations</artifactId>
+            <version>1.9.10</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- More testing dependencies -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.10.19</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.6</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Tested composum modules included last since their transitive dependency versions need to be overwritten by the sling-mock stuff. -->
+        <dependency>
+            <groupId>com.composum.sling.core</groupId>
+            <artifactId>composum-sling-core-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+    </dependencies>
+
+</project>

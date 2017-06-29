@@ -14,14 +14,6 @@ public interface ClientlibConfiguration {
 
     // JS configuration
 
-    boolean getJavascriptMinimize();
-
-    boolean getJavascriptMunge();
-
-    boolean getJavascriptOptimize();
-
-    int getJavascriptLineBreak();
-
     String getJavascriptTemplate();
 
     // Link configuration
@@ -41,4 +33,8 @@ public interface ClientlibConfiguration {
     int getThreadPoolMin();
 
     int getThreadPoolMax();
+
+    /** General - Resolver cachetime : the time (in seconds) the clientlib resolver caches the locations of all client libraries for a category. <=0 means no caching. */
+    int getResolverCachetime();
+
 }

@@ -1,109 +1,108 @@
 package com.composum.sling.clientlibs.servlet;
 
 import com.composum.sling.clientlibs.handle.Clientlib;
-import com.composum.sling.clientlibs.service.ClientlibProcessor;
-import com.composum.sling.clientlibs.service.ClientlibService;
-import com.composum.sling.core.util.HttpUtil;
-import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.clientlibs.handle.ClientlibLink;
+import com.composum.sling.clientlibs.handle.ClientlibRef;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.resource.PersistenceException;
-import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.apache.sling.api.servlets.HttpConstants;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @SlingServlet(
         resourceTypes = Clientlib.RESOURCE_TYPE,
         extensions = {"js", "css"},
-        methods = {"GET"}
+        methods = {HttpConstants.METHOD_GET, HttpConstants.METHOD_HEAD}
 )
-public class ClientlibServlet extends SlingSafeMethodsServlet {
+public class ClientlibServlet extends AbstractClientlibServlet {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientlibServlet.class);
+    private static final Logger LOG = getLogger(ClientlibServlet.class);
 
-    @Reference
-    protected ClientlibService clientlibService;
+    protected static final Pattern FILENAME_PATTERN = Pattern.compile("[^/]*+$");
+    protected static final Pattern HASHSUFFIX_PATTERN = Pattern.compile("/?([0-9a-zA-Z_-]++)/" + FILENAME_PATTERN.pattern());
 
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
+        serve(true, request, response);
+    }
 
+    @Override
+    protected void doHead(SlingHttpServletRequest request, SlingHttpServletResponse response) throws ServletException, IOException {
+        serve(false, request, response);
+    }
+
+    private void serve(boolean get, SlingHttpServletRequest request, SlingHttpServletResponse response) throws IOException, ServletException {
         try {
             RequestPathInfo pathInfo = request.getRequestPathInfo();
-            String selectors = pathInfo.getSelectorString(); /* probably '.min' (!) */
+            String selectors = pathInfo.getSelectorString();
             String path = pathInfo.getResourcePath();
-            if (StringUtils.isNotBlank(selectors)) {
-                path += "." + selectors;
-            }
+            String hash = parseHashFromSuffix(pathInfo.getSuffix());
 
             Clientlib.Type type = Clientlib.Type.valueOf(pathInfo.getExtension().toLowerCase());
+            ClientlibRef clientlibref = new ClientlibRef(type, path, false, null);
 
-            Clientlib clientlib = new Clientlib(request, path, type);
-
-            if (clientlib.isValid()) {
-                deliverClientlib(request, response, clientlib);
-            }
-
+            deliverClientlib(get, request, response, clientlibref, hash, isMinified(selectors));
         } catch (RepositoryException | LoginException ex) {
             throw new ServletException(ex);
         }
     }
 
-    protected void deliverClientlib(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                    Clientlib clientlib)
-            throws RepositoryException, LoginException, IOException {
-
-        String encoding = null;
-        String header;
-
-        header = request.getHeader(HttpUtil.HEADER_ACCEPT_ENCODING);
-        if (StringUtils.isNotBlank(header) && header.contains("gzip")) {
-            encoding = ClientlibService.ENCODING_GZIP;
+    /** Creates an path that is rendered by this servlet containing the given parameters. */
+    public static String makePath(String path, Clientlib.Type type, boolean minified, String hash) {
+        StringBuilder builder = new StringBuilder(path);
+        if (minified) builder.append(".min");
+        if (!path.endsWith("." + type.name()) && type != Clientlib.Type.img && type != Clientlib.Type.link) {
+            builder.append('.').append(type.name()); // relevant for categories
         }
-
-        header = request.getHeader(HttpUtil.HEADER_CACHE_CONTROL);
-        if (StringUtils.isNotBlank(header)) {
-            if (header.contains(HttpUtil.VALUE_NO_CACHE)) {
-
-                clientlibService.resetContent(clientlib, encoding);
-            }
-        }
-
-        Map<String, Object> hints;
-        try {
-            hints = clientlibService.prepareContent(request, clientlib, encoding);
-        } catch (PersistenceException ex) {
-            LOG.warn("2nd try for preparation of '" + clientlib.getPath() + "' after exception: " + ex.toString());
-            // try it once more on concurrency problems (with a fresh resolver)
-            hints = clientlibService.prepareContent(request, clientlib, encoding);
-        }
-
-        Object value;
-        if ((value = hints.get(ResourceUtil.PROP_MIME_TYPE)) != null) {
-            response.setContentType(value + "; charset=" + ClientlibProcessor.DEFAULT_CHARSET);
-        }
-        if ((value = hints.get(ResourceUtil.PROP_ENCODING)) != null) {
-            response.setHeader(HttpUtil.HEADER_CONTENT_ENCODING, value.toString());
-            response.setHeader(HttpUtil.HEADER_VARY, HttpUtil.HEADER_ACCEPT_ENCODING);
-        }
-        if ((value = hints.get("size")) != null) {
-            response.setHeader(HttpUtil.HEADER_CONTENT_LENGTH, value.toString());
-        }
-        if ((value = hints.get(ResourceUtil.PROP_LAST_MODIFIED)) instanceof Calendar) {
-            response.setDateHeader(HttpUtil.HEADER_LAST_MODIFIED, ((Calendar) value).getTimeInMillis());
-        }
-
-        clientlibService.deliverContent(clientlib, response.getOutputStream(), encoding);
+        return appendHashSuffix(builder.toString(), hash);
     }
+
+    @Override
+    protected String makeUri(boolean minified, ClientlibLink link) {
+        return makePath(link.path, link.type, minified, link.hash);
+    }
+
+    /**
+     * Appends a suffix containing the hash code, if given. The file name is repeated to satisfy browsers
+     * with the correct type and file name, though it is not used by the servlet.
+     *
+     * @param url  an url to which we append the suffix
+     * @param hash optional, the hash code
+     * @return the url with suffix /{hash}/{filename} appended, where {filename} is the last part of a / separated url.
+     */
+    public static String appendHashSuffix(String url, String hash) {
+        if (null == hash) return url;
+        Matcher matcher = FILENAME_PATTERN.matcher(url);
+        String fname = "";
+        if (matcher.find()) fname = matcher.group(0);
+        return url + "/" + hash + "/" + fname;
+    }
+
+    /**
+     * Does the inverse to {@link #appendHashSuffix(String, String)}: extracts the hash from the generated suffix.
+     *
+     * @param suffix the suffix generated by {@link #appendHashSuffix(String, String)} , nullable
+     * @return the hash if it could be extracted, otherwise null.
+     */
+    public static String parseHashFromSuffix(String suffix) {
+        if (StringUtils.isBlank(suffix)) return null;
+        Matcher matcher = HASHSUFFIX_PATTERN.matcher(suffix);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        } else LOG.warn("Could not parse hash suffix {}", suffix);
+        return null;
+    }
+
 }

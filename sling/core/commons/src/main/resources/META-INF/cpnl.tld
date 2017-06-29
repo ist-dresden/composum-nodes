@@ -61,25 +61,32 @@
 
     <tag>
         <description>
-            Includes a clientlib reference (JS, CSS)
+            Includes a clientlib reference (JS, CSS etc).
+            Client libraries are folders of sling:resourceType composum/nodes/commons/clientlib containing
+            subfolders for each type, and declare dependencies to other client libraries. The tag can reference
+            multiple client libraries if they are referenced by category, and if the client library/-ies have dependencies
+            to other client libraries / resources. Thus, the tag can render as several link / script / img tags.
         </description>
         <name>clientlib</name>
         <tag-class>com.composum.sling.cpnl.ClientlibTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
+            <description>Path to the client library - folder of sling:resourceType composum/nodes/commons/clientlib. One of path or category is required.</description>
             <name>path</name>
-            <required>true</required>
-            <rtexprvalue>true</rtexprvalue>
-            <type>java.lang.String</type>
-        </attribute>
-        <attribute>
-            <name>type</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
         <attribute>
-            <name>rel</name>
+            <description>Category of client libraries to be included. One of path or category is required.</description>
+            <name>category</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <description>Type of rendered resources: css, js, link, img, png, jpg. Default: link .</description>
+            <name>type</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>

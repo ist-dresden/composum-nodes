@@ -1,6 +1,5 @@
 package com.composum.sling.clientlibs.processor;
 
-import com.composum.sling.clientlibs.handle.Clientlib;
 import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.io.IOUtils;
@@ -22,7 +21,7 @@ public class DefaultGzipProcessor implements GzipProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultGzipProcessor.class);
 
     @Override
-    public InputStream processContent(Clientlib clientlib, final InputStream source, ProcessorContext context)
+    public InputStream processContent(final InputStream source, ProcessorContext context)
             throws IOException {
         InputStream result = source;
         if (source != null) {

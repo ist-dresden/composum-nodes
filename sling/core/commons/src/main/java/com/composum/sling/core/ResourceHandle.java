@@ -34,7 +34,11 @@ import java.util.regex.Pattern;
  */
 public class ResourceHandle extends ResourceWrapper {
 
-    /** the 'adaptTo' like wrapping helper */
+    /**
+     * The 'adaptTo' like wrapping helper.
+     *
+     * @return the wrapped resource (may be resource itself if it is a ResourceHandle), not null
+     */
     public static ResourceHandle use(Resource resource) {
         return resource instanceof ResourceHandle
                 ? ((ResourceHandle) resource) : new ResourceHandle(resource);
@@ -63,6 +67,8 @@ public class ResourceHandle extends ResourceWrapper {
     private transient ResourceHandle contentResource;
     private transient InheritedValues inheritedValues;
     protected InheritedValues.Type inheritanceType = InheritedValues.Type.contentRelated;
+    protected boolean useNodeInheritance = false;
+    protected transient Calendar lastModified;
 
     /**
      * creates a new wrapper instance.
@@ -463,4 +469,15 @@ public class ResourceHandle extends ResourceWrapper {
     public boolean isFile() {
         return ResourceUtil.isFile(this);
     }
+
+    public Calendar getLastModified() {
+        if (lastModified == null) {
+            lastModified = getProperty(ResourceUtil.PROP_LAST_MODIFIED, Calendar.class);
+            if (null == lastModified) {
+                lastModified = getProperty(ResourceUtil.PROP_CREATED, Calendar.class);
+            }
+        }
+        return lastModified;
+    }
+
 }
