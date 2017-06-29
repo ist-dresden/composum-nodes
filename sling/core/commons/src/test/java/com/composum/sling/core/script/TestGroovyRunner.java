@@ -21,6 +21,7 @@ public class TestGroovyRunner extends TestCase {
 
     @Test
     public void testSimpleScript() throws Exception {
+        //java.lang.NoClassDefFoundError: org/slf4j/event/LoggingEvent
         StringWriter out = new StringWriter();
         GroovyRunner runner = new GroovyRunner(null, new PrintWriter(out));
         Map<String,Object> variables = new HashMap();

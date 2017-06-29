@@ -6,7 +6,7 @@
 <cpn:component id="status" type="com.composum.sling.nodes.console.Consoles">
 <html data-context-path="${slingRequest.contextPath}">
 <sling:call script="head.jsp"/>
-<cpn:clientlib path="composum/nodes/console/page/css/content.css"/>
+<cpn:clientlib type="css" path="composum/nodes/console/clientlibs/page"/>
 <body id="overview" class="console">
   <div id="ui">
     <sling:call script="dialogs.jsp"/>

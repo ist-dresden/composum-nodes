@@ -1,6 +1,5 @@
 package com.composum.sling.clientlibs.processor;
 
-import com.composum.sling.clientlibs.handle.Clientlib;
 import com.composum.sling.clientlibs.service.ClientlibProcessor;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.io.IOUtils;
@@ -27,7 +26,7 @@ public class CssUrlMapper implements ClientlibProcessor {
     public static final Pattern URL_PATTERN = Pattern.compile("(url\\s*\\(\\s*['\"]?)([^'\")]+)([\"']?\\s*\\))");
 
     @Override
-    public InputStream processContent(Clientlib clientlib, final InputStream source, final ProcessorContext context)
+    public InputStream processContent(final InputStream source, final ProcessorContext context)
             throws IOException {
         final PipedOutputStream outputStream = new PipedOutputStream();
         InputStream result = new PipedInputStream(outputStream);

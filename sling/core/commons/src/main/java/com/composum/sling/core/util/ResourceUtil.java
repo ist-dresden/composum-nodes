@@ -54,6 +54,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String PROP_ENCODING = "jcr:encoding";
     public static final String PROP_PRIMARY_TYPE = "jcr:primaryType";
     public static final String PROP_JCR_CONTENT = "jcr:content";
+    public static final String PROP_CREATED = "jcr:created";
     public static final String PROP_LAST_MODIFIED = "jcr:lastModified";
     public static final String PROP_FILE_REFERENCE = "fileReference";
 

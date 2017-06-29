@@ -25,6 +25,9 @@
 		<module>usermgnt</module>
 		<module>slingfeature</module>
 		<module>corepckg</module>
+
+		<!-- Test modules - no deployed code contained -->
+		<module>test</module>
 	</modules>
 
 </project>
