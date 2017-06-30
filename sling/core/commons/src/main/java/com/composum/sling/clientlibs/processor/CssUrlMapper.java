@@ -55,7 +55,7 @@ public class CssUrlMapper implements ClientlibProcessor {
             while (matcher.find(pos)) {
                 String unmapped = matcher.group(2);
                 String mapped = map(context, unmapped);
-                writer.write(css, pos, matcher.start());
+                writer.write(css, pos, matcher.start() - pos);
                 writer.write(matcher.group(1));
                 writer.write(mapped);
                 writer.write(matcher.group(3));
@@ -66,7 +66,7 @@ public class CssUrlMapper implements ClientlibProcessor {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
         }
     }
 
