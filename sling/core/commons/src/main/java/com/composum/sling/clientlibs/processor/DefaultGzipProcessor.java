@@ -35,9 +35,10 @@ public class DefaultGzipProcessor implements GzipProcessor {
                     try {
                         IOUtils.copy(source, gzipOutputStream);
                         gzipOutputStream.flush();
-                        gzipOutputStream.close();
                     } catch (IOException ex) {
                         LOG.error(ex.getMessage(), ex);
+                    } finally {
+                        IOUtils.closeQuietly(gzipOutputStream);
                     }
                 }
             });

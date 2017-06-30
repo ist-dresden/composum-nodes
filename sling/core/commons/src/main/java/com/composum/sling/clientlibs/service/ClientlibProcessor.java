@@ -13,7 +13,8 @@ public interface ClientlibProcessor {
     /**
      * Transforms the content and result in a stream with the probably changed content - for pipes.
      *
-     * @param sourceStream the original to process by the processor
+     * @param sourceStream the original to process by the processor. the processor returns a different stream, this
+     *                     must be closed by the processor.
      * @return the transformation result - might also be the originial sourceStream if switched off
      */
     InputStream processContent(InputStream sourceStream, ProcessorContext context)
