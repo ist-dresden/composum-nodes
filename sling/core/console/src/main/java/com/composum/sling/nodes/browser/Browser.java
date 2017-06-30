@@ -11,6 +11,7 @@ import com.composum.sling.nodes.console.ConsoleServletBean;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
+import org.slf4j.Logger;
 
 import javax.jcr.Binary;
 import javax.jcr.Node;
@@ -22,7 +23,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class Browser extends ConsoleServletBean {
+
+    private static final Logger LOG = getLogger(Browser.class);
 
     public static final String TYPE_FILE = "nt:file";
     public static final String TYPE_RESOURCE = "nt:resource";
@@ -106,7 +111,7 @@ public class Browser extends ConsoleServletBean {
                 }
             } catch (RepositoryException ex) {
                 primaryType = String.format("{%s}", ex.getMessage());
-                ex.printStackTrace();
+                LOG.error(ex.getMessage(), ex);
             }
         }
         return primaryType;
@@ -305,7 +310,7 @@ public class Browser extends ConsoleServletBean {
             try {
                 binary = data.getBinary();
             } catch (RepositoryException e) {
-                e.printStackTrace();
+                LOG.error(e.getMessage(), e);
             }
         }
         return binary;
