@@ -57,7 +57,8 @@ public class DefaultClientlibService implements ClientlibService {
 
     static {
         CRUD_CACHE_FOLDER_PROPS = new HashMap<>();
-        CRUD_CACHE_FOLDER_PROPS.put(com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE, "sling:Folder");
+        CRUD_CACHE_FOLDER_PROPS.put(com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE, ResourceUtil
+                .TYPE_SLING_FOLDER);
     }
 
     private static final Logger LOG = getLogger(DefaultClientlibService.class);
@@ -396,7 +397,7 @@ public class DefaultClientlibService implements ClientlibService {
                     refreshSession(adminResolver, false);
                     cacheEntry = adminResolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
                     adminResolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS)
-                            .adaptTo(Node.class).addMixin("mix:title"); // FIXME hps use sensible mixin
+                            .adaptTo(Node.class).addMixin("mix:title"); // TODO maybe use more sensible mixin
 
 
                     cacheFile = new FileHandle(cacheEntry);
@@ -467,7 +468,7 @@ public class DefaultClientlibService implements ClientlibService {
         return inputStream;
     }
 
-    protected synchronized Resource giveParent(ResourceResolver resolver, String path) {
+    protected Resource giveParent(ResourceResolver resolver, String path) {
         Resource resource = null;
         SequencerService.Token token = sequencer.acquire(path);
         try {

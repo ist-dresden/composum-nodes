@@ -150,19 +150,6 @@ public class AbstractClientlibTest {
         assertEquals(expectedProcessedLibs, visitor.getProcessedElements().toString());
     }
 
-    /** Call if you need to inspect the testdata in the repository. Long long output. */
-    // @Test
-    // @After
-    public void printJcr() throws Exception {
-        StringWriter writer = new StringWriter();
-        JsonWriter jsonWriter = new JsonWriter(writer);
-        jsonWriter.setHtmlSafe(true);
-        jsonWriter.setIndent("    ");
-        JsonUtil.exportJson(jsonWriter, context.resourceResolver().getResource("/"), MappingRules
-                .getDefaultMappingRules(), 99);
-        System.out.println(writer);
-    }
-
     protected void verifyEqualHashesOfVisitors(ClientlibElement clientlib) throws IOException, RepositoryException {
         debuggingMode = false;
         UpdateTimeVisitor updateTimeVisitor = new UpdateTimeVisitor(clientlib, clientlib2Service, context
