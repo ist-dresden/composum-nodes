@@ -26,6 +26,9 @@
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button" class="start-editing fa fa-pencil btn btn-default" title="Edit Script"><span
                             class="label">Edit</span></button>
+                    <a href="${browser.editCodeUrl}" target="${browser.current.path}"
+                       class="edit-window fa fa-edit btn btn-default"
+                       title="Edit text in a new window (browser tab)"><span class="label">Edit Window</span></a>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
                     <a href="" class="download fa fa-download btn btn-default" title="Download text file"
