@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -34,9 +33,12 @@ import java.util.HashMap;
 import java.util.concurrent.Callable;
 
 import static com.composum.sling.core.script.GroovyRunner.DEFAULT_SETUP_SCRIPT;
-import static com.composum.sling.core.util.ResourceUtil.*;
+import static com.composum.sling.core.util.ResourceUtil.CONTENT_NODE;
 import static com.composum.sling.core.util.ResourceUtil.PROP_DATA;
 import static com.composum.sling.core.util.ResourceUtil.PROP_MIME_TYPE;
+import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_FILE;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_RESOURCE;
 
 @Component(
         label = "Groovy Job Executor Service",
@@ -126,9 +128,9 @@ public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
         final String scriptname;
         if (scriptPath.endsWith("/jcr:content")) {
             final String substringWithoutContent = scriptPath.substring(0, scriptPath.lastIndexOf('/'));
-            scriptname = substringWithoutContent.substring(substringWithoutContent.lastIndexOf(File.separator) + 1);
+            scriptname = substringWithoutContent.substring(substringWithoutContent.lastIndexOf('/') + 1);
         } else {
-            scriptname = scriptPath.substring(scriptPath.lastIndexOf(File.separator) + 1);
+            scriptname = scriptPath.substring(scriptPath.lastIndexOf('/') + 1);
         }
         Resource scriptAuditResource = resourceResolver.create(auditResource, scriptname, new HashMap<String, Object>() {{
             put(PROP_PRIMARY_TYPE, TYPE_FILE);
