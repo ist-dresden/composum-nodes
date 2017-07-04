@@ -384,6 +384,7 @@
 
             /**
              * returns the current value from the input field
+             * @extends widgets.Widget
              */
             getValue: function () {
                 return this.$textField.val();
@@ -391,6 +392,7 @@
 
             /**
              * defines the (initial) value of the input field
+             * @extends widgets.Widget
              */
             setValue: function (value, triggerChange) {
                 var currentValue = this.$textField.val();
@@ -400,6 +402,13 @@
                         this.$textField.trigger('change');
                     }
                 }
+            },
+
+            /**
+             * @extends widgets.Widget
+             */
+            setDefaultValue: function (value) {
+                this.$textField.attr('placeholder', value);
             },
 
             /**
@@ -425,6 +434,7 @@
 
             /**
              * validates the current value using the 'rules' and the 'pattern' if present
+             * @extends widgets.Widget
              */
             validate: function (alertMethod) {
                 this.valid = true;
@@ -466,6 +476,7 @@
 
             /**
              * resets the validation state and the input field value
+             * @extends widgets.Widget
              */
             reset: function () {
                 this.valid = undefined;
