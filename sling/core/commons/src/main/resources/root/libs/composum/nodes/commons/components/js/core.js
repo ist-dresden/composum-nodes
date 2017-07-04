@@ -20,7 +20,7 @@
                 name: 'name'
             },
             tag: {
-                input: [ 'input', 'select', 'textarea' ]
+                input: ['input', 'select', 'textarea']
             }
         },
 
@@ -77,6 +77,10 @@
             });
         },
 
+        /**
+         *
+         * #abstract
+         */
         Widget: Backbone.View.extend({
 
             initialize: function (options) {
@@ -87,7 +91,7 @@
 
             retrieveInput: function () {
                 var $inputEl = [];
-                for (var i=0; $inputEl.length === 0 && i < widgets.const.tag.input.length; i++) {
+                for (var i = 0; $inputEl.length === 0 && i < widgets.const.tag.input.length; i++) {
                     $inputEl = this.$el.is(widgets.const.tag.input[i]) ? this.$el : this.$(widgets.const.tag.input[i]);
                 }
                 return $inputEl;
@@ -108,6 +112,38 @@
             retrieveForm: function () {
                 var $form = this.$el.closest(widgets.const.css.selector.form);
                 return $form.length > 0 ? $form[0].view : undefined;
+            },
+
+            /**
+             * #abstract
+             * @returns {undefined}
+             */
+            getValue: function () {
+                return undefined;
+            },
+
+            /**
+             * #abstract
+             */
+            setValue: function (value) {
+            },
+
+            /**
+             * #default
+             */
+            setDefaultValue: function (value) {
+            },
+
+            /**
+             * #abstract
+             */
+            reset: function () {
+            },
+
+            /**
+             * #abstract
+             */
+            validate: function (alertMethod) {
             },
 
             initRules: function ($element) {
@@ -131,9 +167,9 @@
                 var rules = $element.data('rules');
                 if (rules) {
                     this.rules = _.extend(this.rules || {}, {
-                        mandatory: rules.indexOf('mandatory' >= 0),
-                        blank: rules.indexOf('blank' >= 0),
-                        unique: rules.indexOf('unique' >= 0)
+                        mandatory: rules.indexOf('mandatory') >= 0,
+                        blank: rules.indexOf('blank') >= 0,
+                        unique: rules.indexOf('unique') >= 0
                     });
                 }
             },
@@ -632,7 +668,7 @@
         }
     };
 
-    window.core.LocalProfile = function(key) {
+    window.core.LocalProfile = function (key) {
         this.profileKey = key;
         this.aspects = {};
     };
