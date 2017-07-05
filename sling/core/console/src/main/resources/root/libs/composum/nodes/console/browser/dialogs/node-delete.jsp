@@ -21,16 +21,17 @@
 
                         <div class="form-group">
                             <label class="control-label">Node Path for Deletion</label>
-                            <div class="path input-group widget path-widget">
-                                <input name="path" class="form-control" data-rules="mandatory" data-pattern="/^\//"
-                                       type="text"/>
+                            <div class="path input-group widget path-widget" data-rules="mandatory"
+                                 data-pattern="/^\//">
+                                <input name="path" class="form-control" type="text"/>
                                 <span class="input-group-btn">
                                     <button class="select btn btn-default" type="button" title="Select Repository Path">...</button>
                                 </span>
                             </div>
                         </div>
                         <div class="checkbox">
-                            <label><input class="smart" type="checkbox" value="">Don't ask up to the next page reload.</label>
+                            <label><input class="smart" type="checkbox" value="">Don't ask up to the next page
+                                reload.</label>
                         </div>
                     </div>
 

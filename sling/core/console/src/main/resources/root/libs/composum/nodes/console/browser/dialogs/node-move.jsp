@@ -21,8 +21,8 @@
 
                         <div class="form-group">
                             <label class="control-label">Node to move <span>(path)</span></label>
-                            <div class="path input-group widget path-widget">
-                                <input name="target-node" class="form-control" data-rules="mandatory" type="text"/>
+                            <div class="path input-group widget path-widget" data-rules="mandatory">
+                                <input name="target-node" class="form-control" type="text"/>
                                 <span class="input-group-btn">
                                     <button class="select btn btn-default" type="button" title="Select Repository Path">
                                         ...
@@ -32,8 +32,8 @@
                         </div>
                         <div class="form-group">
                             <label class="control-label">Target Path <span>(new parent path)</span></label>
-                            <div class="path input-group widget path-widget">
-                                <input name="path" class="form-control" data-rules="mandatory" type="text"/>
+                            <div class="path input-group widget path-widget" data-rules="mandatory">
+                                <input name="path" class="form-control" type="text"/>
                                 <span class="input-group-btn">
                                     <button class="select btn btn-default" type="button" title="Select Repository Path">
                                         ...
