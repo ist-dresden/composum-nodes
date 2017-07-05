@@ -11,6 +11,9 @@
       },
       "bootstrap-slider": {
         "embed": "jslibs/bootstrap-slider/9.7.2/css/bootstrap-slider.css"
+      },
+      "bootstrap-colorpicker": {
+        "embed": "jslibs/bootstrap-colorpicker/2.5.0/css/bootstrap-colorpicker.css"
       }
     },
     "js": {
@@ -52,6 +55,9 @@
       "bootstrap-slider": {
         "embed": "jslibs/bootstrap-slider/9.7.2/bootstrap-slider.js"
       },
+      "bootstrap-colorpicker": {
+        "embed": "jslibs/bootstrap-colorpicker/2.5.0/js/bootstrap-colorpicker.js"
+      },
       "bootstrap-fileinput": {
         "embed": "jslibs/bootstrap-fileinput/4.3.6/js/fileinput.js"
       }
@@ -65,6 +71,7 @@
         "jslibs/bootstrap/(3.*:3.3.7)/css/bootstrap.css",
         "jslibs/bootstrap/(3.*:3.3.7)/css/bootstrap-theme.css",
         "jslibs/bootstrap-slider/(9.*:9.7.2)/css/bootstrap-slider.css",
+        "jslibs/bootstrap-colorpicker/(2.*:2.5.0)/css/bootstrap-colorpicker.css",
         "jslibs/trumbowyg/(2.*:2.3.0)/ui/trumbowyg.css"
       ],
       "embed": [
@@ -85,6 +92,7 @@
         "jslibs/x-editable/(1.*:1.5.1)/bootstrap3-editable/js/bootstrap-editable.js",
         "jslibs/typeahead/(3.*:3.1.0)/bootstrap3-typeahead.js",
         "jslibs/bootstrap-slider/(9.*:9.7.2)/bootstrap-slider.js",
+        "jslibs/bootstrap-colorpicker/(2.*:2.5.0)/js/bootstrap-colorpicker.js",
         "jslibs/bootstrap-fileinput/(4.*:4.3.6)/js/fileinput.js",
         "jslibs/trumbowyg/(2.*:2.3.0)/trumbowyg.js"
       ],
@@ -98,6 +106,7 @@
         "composum/nodes/commons/components/js/dialogs.js",
         "composum/nodes/commons/components/richtext/richtext.js",
         "composum/nodes/commons/components/slider/slider.js",
+        "composum/nodes/commons/components/colorpicker/colorpicker.js",
         "composum/nodes/commons/components/js/codeEditor.js"
       ]
     }

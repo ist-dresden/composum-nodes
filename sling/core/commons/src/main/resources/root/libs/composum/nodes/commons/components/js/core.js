@@ -141,9 +141,28 @@
             },
 
             /**
-             * #abstract
+             * validates the current value using the 'rules' and the 'pattern' if present
+             * @extends widgets.Widget
              */
             validate: function (alertMethod) {
+                this.valid = true;
+                var value = this.getValue();
+                if (this.rules) {
+                    if (this.rules.mandatory) {
+                        // check for a defined and not blank value
+                        var valid = this.valid = (value !== undefined &&
+                        (this.rules.blank || value.trim().length > 0));
+                        if (!valid) {
+                            this.alert(alertMethod, 'danger', '', 'value is mandatory');
+                        }
+                    }
+                }
+                if (this.valid) {
+                    this.$el.removeClass('has-error');
+                } else {
+                    this.$el.addClass('has-error');
+                }
+                return this.valid;
             },
 
             initRules: function ($element) {
