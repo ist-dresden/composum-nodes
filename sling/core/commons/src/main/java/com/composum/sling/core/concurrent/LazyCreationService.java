@@ -46,6 +46,31 @@ public interface LazyCreationService {
                       CreationStrategy creator, Map<String, Object> parentProperties)
             throws RepositoryException;
 
+    /**
+     * Retrieves a resource or applies a creation strategy to be carried out with an admin resolver to create it.
+     * <p>
+     * It is an error if getter still returns null after creator is executed.
+     * </p>
+     *
+     * @param <T>                    the type the {@link RetrievalStrategy} returns.
+     * @param resolver               the users resolver. If the resource needed to be created, that is getter returns
+     *                               null, we create it and call a {@link javax.jcr.Session#refresh(boolean)}(true) on
+     *                               this session before we call getter again. Passed as a parameter to getter.
+     * @param path                   the absolute path at which the creator creates the resource. Passed as a parameter
+     *                               to getter and creator.
+     * @param getter                 side effect free function to retrieve the resource. This can be executed several
+     *                               times in this process.
+     * @param creator                a strategy to create the resource. Only called when the resource doesn't exist. Is
+     *                               only called after the parent of path is created.
+     * @param parentCreationStrategy strategy with which non-existing parents of path are created.
+     * @return the object.
+     */
+    <T> T getOrCreate(ResourceResolver resolver, String path, RetrievalStrategy<T> getter,
+                      CreationStrategy creator, ParentCreationStrategy parentCreationStrategy)
+            throws RepositoryException;
+
+
+    /** Strategy to retrieve the resources content. */
     interface RetrievalStrategy<T> {
         /**
          * Side effect free function to retrieve whatever we want to retrieve.
@@ -59,15 +84,35 @@ public interface LazyCreationService {
         T get(ResourceResolver resolver, String path) throws RepositoryException;
     }
 
+    /** Strategy to create the resource itself. */
     interface CreationStrategy {
         /**
          * Create the resource with the given administrative resolver. A {@link ResourceResolver#commit()} is
          * not necessary - that's performed in the LazyCreationService.
          *
          * @param resolver an administrative resolver
-         * @param path     the path at which the resource is created.
+         * @param parent   the parent of the resource at which to attach the resource
+         * @param name     the name of the resource to create.
          */
-        void create(ResourceResolver resolver, String path) throws RepositoryException, PersistenceException;
+        void create(ResourceResolver resolver, Resource parent, String name)
+                throws RepositoryException, PersistenceException;
+    }
+
+    /** Strategy to create the parents of the retrieved resource. */
+    interface ParentCreationStrategy {
+        /**
+         * Create the resource with the given administrative resolver. A {@link ResourceResolver#commit()} is
+         * not necessary - that's performed in the LazyCreationService.
+         *
+         * @param resolver      an administrative resolver
+         * @param parentsParent the parent of the parent resource at which to attach the new parent
+         * @param parentName    the name of the parent resource to create.
+         * @param level         informative, the level of the parent: 1 is the immediate parent of the resource, 2 the
+         *                      next level up, ...
+         * @return the created parent resource
+         */
+        Resource createParent(ResourceResolver resolver, Resource parentsParent, String parentName, int level)
+                throws RepositoryException, PersistenceException;
     }
 
 }

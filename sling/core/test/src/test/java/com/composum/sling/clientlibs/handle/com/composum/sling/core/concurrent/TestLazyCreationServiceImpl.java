@@ -11,6 +11,7 @@ import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.test.util.JcrTestUtils;
 import com.google.gson.stream.JsonWriter;
 import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.hamcrest.ResourceMatchers;
@@ -152,11 +153,9 @@ public class TestLazyCreationServiceImpl {
                             },
                             new LazyCreationService.CreationStrategy() {
                                 @Override
-                                public void create(ResourceResolver resolver, String path) throws
-                                        RepositoryException, PersistenceException {
-                                    String[] separated = ResourceUtil.splitPathAndName
-                                            (path);
-                                    resolver.create(resolver.getResource(separated[0]), separated[1], itemProps);
+                                public void create(ResourceResolver resolver, Resource parent, String name)
+                                        throws RepositoryException, PersistenceException {
+                                    resolver.create(parent, name, itemProps);
                                 }
                             },
                             folderProps);

@@ -41,7 +41,22 @@ public class LazyCreationServiceImpl implements LazyCreationService {
 
     @Override
     public <T> T getOrCreate(ResourceResolver resolver, String path, RetrievalStrategy<T> getter,
-                             CreationStrategy creator, Map<String, Object> parentProperties)
+                             CreationStrategy creator, final Map<String, Object> parentProperties)
+            throws RepositoryException {
+        ParentCreationStrategy parentCreationStrategy = new ParentCreationStrategy() {
+            @Override
+            public Resource createParent(ResourceResolver resolver, Resource parentsParent, String parentName, int
+                    level)
+                    throws RepositoryException, PersistenceException {
+                return resolver.create(parentsParent, parentName, parentProperties);
+            }
+        };
+        return getOrCreate(resolver, path, getter, creator, parentCreationStrategy);
+    }
+
+    @Override
+    public <T> T getOrCreate(ResourceResolver resolver, String path, RetrievalStrategy<T> getter,
+                             CreationStrategy creator, ParentCreationStrategy parentCreationStrategy)
             throws RepositoryException {
         Validate.notNull(path, "Path must not be null");
         Validate.isTrue(path.startsWith("/"), "Path must be absolute: %s", path);
@@ -58,7 +73,8 @@ public class LazyCreationServiceImpl implements LazyCreationService {
                         if (null == parentResource) {
                             sequencer.release(token); // release lock temporarily to prevent deadlocks
                             token = null;
-                            safeCreateParent(adminResolver, parentPath, parentProperties);
+                            parentResource = safeCreateParent(adminResolver, parentPath, 1, parentCreationStrategy);
+                            Validate.notNull(parentResource, "Parent creator didn't create " + parentPath);
                             token = sequencer.acquire(parentPath);
                         }
                         refreshSession(resolver, true);
@@ -66,8 +82,10 @@ public class LazyCreationServiceImpl implements LazyCreationService {
                             // nobody created it during re-acquiring lock
                             try {
                                 refreshSession(adminResolver, false);
-                                creator.create(adminResolver, path);
+                                creator.create(adminResolver, parentResource, ResourceUtil.getName(path));
                                 adminResolver.commit();
+                                Resource resourceAsAdmin = adminResolver.getResource(path);
+                                Validate.notNull(resourceAsAdmin, "Bug: could not find %s even after calling creator", path);
                                 LOG.debug("Created {}", path);
                             } catch (ItemExistsException | PersistenceException e) { // ignore
                                 LOG.info("Creation of {} aborted because of probably parallel creation {}", path, e);
@@ -93,7 +111,8 @@ public class LazyCreationServiceImpl implements LazyCreationService {
      * Tries to create the parent while catching exceptions that could be triggered by someone having created it in
      * parallel in the meantime. Includes commit and locks path on this node.
      */
-    protected Resource safeCreateParent(ResourceResolver adminResolver, String path, Map<String, Object> properties) {
+    protected Resource safeCreateParent(ResourceResolver adminResolver, String path, int level,
+                                        ParentCreationStrategy parentCreationStrategy) throws RepositoryException {
         String[] separated = com.composum.sling.core.util.ResourceUtil.splitPathAndName(path);
         String parentPath = "".equals(separated[0]) ? "/" : separated[0];
         SequencerService.Token token = sequencer.acquire(parentPath);
@@ -104,19 +123,23 @@ public class LazyCreationServiceImpl implements LazyCreationService {
                 if (parent == null) {
                     sequencer.release(token); // avoid any deadlock conditions by freeing lock temporarily
                     token = null;
-                    parent = safeCreateParent(adminResolver, parentPath, properties);
+                    parent = safeCreateParent(adminResolver, parentPath, level + 1, parentCreationStrategy);
                     token = sequencer.acquire(parentPath);
-                }
-                try {
                     refreshSession(adminResolver, false);
-                    resource = adminResolver.create(parent, separated[1], properties);
-                    adminResolver.commit();
-                    LOG.debug("Created parent {}", path);
-                } catch (PersistenceException e) { // ignore
-                    LOG.info("Creation of {} aborted because of probably parallel creation {}", path, e);
-                    resource = adminResolver.getResource(path);
-                    if (null == resource) {
-                        LOG.error("Bug: creation aborted *and* resource is not there!", e);
+                    resource = adminResolver.getResource(path); // could have been created when re-locking
+                }
+                if (null == resource) {
+                    try {
+                        resource = parentCreationStrategy.createParent(adminResolver, parent, separated[1], level);
+                        Validate.notNull(parent, "Parent creator didn't create " + path);
+                        adminResolver.commit();
+                        LOG.debug("Created parent {}", path);
+                    } catch (PersistenceException e) { // ignore
+                        LOG.info("Creation of {} aborted because of probably parallel creation {}", path, e);
+                        resource = adminResolver.getResource(path);
+                        if (null == resource) {
+                            LOG.error("Bug: creation aborted *and* resource is not there!", e);
+                        }
                     }
                 }
             }

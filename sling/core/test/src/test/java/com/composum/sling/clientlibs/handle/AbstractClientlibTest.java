@@ -81,9 +81,7 @@ public class AbstractClientlibTest {
             }
         }); // TODO: how to use properties?
 
-        final SequencerService sequencerService = context.registerService(SequencerService.class, new
-                SemaphoreSequencer());
-        MockOsgi.activate(sequencerService, context.bundleContext());
+        final SequencerService sequencerService = context.registerInjectActivateService(new SemaphoreSequencer());
 
         ServletContext servletContext = Mockito.mock(ServletContext.class);
         BeanContext beanContext = new BeanContext.Servlet(servletContext, context.bundleContext(), context.request(),

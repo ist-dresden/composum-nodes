@@ -347,11 +347,11 @@ public class ResourceHandle extends ResourceWrapper {
             Resource parent = super.getParent();
             if (parent == null && isSynthetic()) {
                 final String parentPath = getParentPath();
-                return getResourceResolver().resolve(parentPath).adaptTo(ResourceHandle.class);
+                return ResourceHandle.use(getResourceResolver().resolve(parentPath));
             } else if (parent == null) {
                 return null;
             } else {
-                return parent.adaptTo(ResourceHandle.class);
+                return ResourceHandle.use(parent);
             }
         } else {
             return null;

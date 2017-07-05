@@ -384,4 +384,16 @@ public abstract class AbstractSlingBean implements SlingBean {
     public String getStringId() {
         return super.toString();
     }
+
+    /**
+     * Default implementation: uses {@link #toString(StringBuilder)}.
+     *
+     * @return a string representation for debugging.
+     */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        toString(sb);
+        return sb.toString();
+    }
 }
