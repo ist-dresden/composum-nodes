@@ -319,7 +319,7 @@
                         if (widget) {
                             $widget.addClass('hidden');
                             widget.$input.removeAttr('name');
-                            widget.$input.removeAttr('data-rules');
+                            widget.$el.removeAttr('data-rules');
                             if (_.isFunction(widget.reset)) {
                                 widget.reset.apply(widget);
                             }
@@ -335,7 +335,7 @@
                             $widget.removeClass('hidden');
                             widget.$input.attr('name', propertyName || 'value');
                             if (propertyRules) {
-                                widget.$input.attr('data-rules', propertyRules);
+                                widget.$el.attr('data-rules', propertyRules);
                             }
                         }
                     });
