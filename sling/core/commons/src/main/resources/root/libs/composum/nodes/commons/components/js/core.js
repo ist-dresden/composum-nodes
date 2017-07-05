@@ -191,9 +191,9 @@
                         this.valid = this.extValidate(value);
                     }
                     if (this.valid) {
-                        this.$el.removeClass('has-error');
+                        this.$el.closest('.form-group').removeClass('has-error');
                     } else {
-                        this.$l.addClass('has-error');
+                        this.$el.closest('.form-group').addClass('has-error');
                     }
                 }
                 return this.valid;

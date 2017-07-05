@@ -51,6 +51,9 @@
              */
             setDefaultValue: function (value) {
                 this.$input.attr('placeholder', value);
+                var val = this.$input.val();
+                this.setValue(value);
+                this.$input.val(val);
             },
 
             /**
