@@ -1,7 +1,18 @@
+/**
+ * Checkbox
+ */
 .form-group.checkbox {
     margin-top: 32px;
 }
 
+.checkbox-widget.form-control{
+    border: none;
+    padding-left: 0;
+}
+
+/**
+ * Radio Group
+ */
 .radio-group-widget.form-control {
     border: none;
     border-radius: 0;
@@ -14,13 +25,15 @@
     font-size: 16px;
 }
 
-/*
- *
+/**
+ * Text Field
  */
-
 .text-field-widget {
 }
 
+/**
+ * Number Field
+ */
 .number-field-widget input {
     text-align: right;
 }
@@ -52,7 +65,6 @@
 /**
  * Path Widget
  */
-
 .path-widget button.glyphicon {
     margin-top: -1px;
 }
@@ -60,7 +72,6 @@
 /**
  * File Input
  */
-
 .file-input .input-group button {
     height: 34px;
 }
@@ -76,10 +87,9 @@
 /**
  * Multi Form Widget
  */
-
 .multi-form-content {
     overflow: visible; /* scroll; is truncating a possible typeahead (!) */
-/*  max-height: 360px; */
+    /*  max-height: 360px; */
 }
 
 .multi-form-item {
@@ -110,9 +120,8 @@
 }
 
 /**
- * SplitPane
+ * Split Pane
  */
-
 .split-pane > .split-pane-divider:after {
     font-family: FontAwesome;
     position: absolute;
@@ -137,7 +146,6 @@
 /**
  * Tree
  */
-
 .form-group .tree-panel {
     position: relative;
     min-height: 200px;
@@ -150,11 +158,11 @@
     background-image: none;
     border: 1px solid #ccc;
     border-radius: 4px;
-    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
-    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
-    -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
-    -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
-    transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+    -webkit-transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+    -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
 }
 
 .jstree-contextmenu {
@@ -252,73 +260,3 @@
 .modal-dialog .form-group > .form-control.checkbox-widget {
     margin-top: 0;
 }
-
-/*
- * Breadcrumbs (Arrow via CSS)
- */
-
-#browser-view .breadcrumbs {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 27px;
-    background-color: #e4e4e4;
-	list-style: none;
-	overflow: hidden;
-	margin: 0;
-	padding: 0 7px;
-	z-index: 7;
-}
-
-#browser-view .breadcrumbs li {
-	float: left;
-}
-
-#browser-view .breadcrumbs li a {
-	text-decoration: none;
-	padding: 4px 0 3px;
-	position: relative;
-	display: block;
-	float: left;
-}
-
-#browser-view .breadcrumbs li:after {
-    content: '/';
-    display: inline-block;
-	padding: 5px 0 2px;
-	margin: 0 3px;
-}
-
-#browser-view .breadcrumbs li:last-child:after {
-    content: none;
-}
-
-/*
-/* background to overlap arrow (after) and arrow (before) */
-/*
-#browser-view .breadcrumbs li a:after,
-#browser-view .breadcrumbs li a:before {
-	content: " ";
-	display: block;
-	width: 0;
-	height: 0;
-	border-top: 16px solid transparent;
-	border-bottom: 16px solid transparent;
-	position: absolute;
-	top: 50%;
-	margin-top: -16px;
-	left: 100%;
-}
-
-#browser-view .breadcrumbs li a:after {
-	border-left: 8px solid #fafafa;
-	z-index: 9;
-}
-
-#browser-view .breadcrumbs li a:before {
-	border-left: 8px solid #aaa;
-	margin-left: 1px;
-	z-index: 8;
-}
-*/

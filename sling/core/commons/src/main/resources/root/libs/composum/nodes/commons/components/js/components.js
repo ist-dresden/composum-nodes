@@ -199,6 +199,9 @@
                 widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.$typeHint = this.$('sling-post-type-hint');
                 this.$deleteHint = this.$('sling-post-delete-hint');
+                if (!this.$input.attr('value')) {
+                    this.$input.attr('value','true')
+                }
             },
 
             retrieveInput: function () {
