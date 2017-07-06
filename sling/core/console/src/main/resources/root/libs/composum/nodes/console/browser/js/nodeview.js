@@ -654,7 +654,7 @@
                     binary = this.binary.getValue();
                 }
                 var path = browser.getCurrentPath();
-                var url = '/bin/cpm/nodes/node.' + (download ? 'download.' : '') + binary + '.' + depth + '.json' + path;
+                var url = '/bin/cpm/nodes/node.' + (download ? 'map.download.' : '') + binary + '.' + depth + '.json' + path;
                 if (indent > 0) {
                     url += '?indent=' + indent;
                 }
