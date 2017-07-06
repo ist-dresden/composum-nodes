@@ -21,7 +21,7 @@ import java.util.Map;
 
 public class FileHandle {
 
-    private Logger LOG = LoggerFactory.getLogger(FileHandle.class);
+    private final Logger LOG = LoggerFactory.getLogger(FileHandle.class);
 
     public static final Map<String, Object> CRUD_FILE_PROPS;
     public static final Map<String, Object> CRUD_CONTENT_PROPS;
@@ -47,10 +47,12 @@ public class FileHandle {
         this.content = retrieveContent();
     }
 
+    /** Handle to the content node of the file; not null. */
     public ResourceHandle getContent() {
         return content;
     }
 
+    /** Handle to the main node of the file; not null. */
     public ResourceHandle getResource() {
         return resource;
     }
@@ -98,7 +100,10 @@ public class FileHandle {
     public Calendar getLastModified() {
         if (lastModified == null) {
             if (content.isValid()) {
-                lastModified = content.getProperty(ResourceUtil.PROP_LAST_MODIFIED, Calendar.class);
+                lastModified = content.getLastModified();
+            }
+            if (null == lastModified && resource.isValid()) {
+                lastModified = resource.getLastModified();
             }
         }
         return lastModified;
@@ -181,5 +186,10 @@ public class FileHandle {
                 extension = "";
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return "FileHandle, " + (isValid() ? resource.getPath() : ("<invalid: " + resource + ">"));
     }
 }

@@ -20,7 +20,7 @@
                 name: 'name'
             },
             tag: {
-                input: [ 'input', 'select', 'textarea' ]
+                input: ['input', 'select', 'textarea']
             }
         },
 
@@ -77,6 +77,10 @@
             });
         },
 
+        /**
+         *
+         * #abstract
+         */
         Widget: Backbone.View.extend({
 
             initialize: function (options) {
@@ -87,7 +91,7 @@
 
             retrieveInput: function () {
                 var $inputEl = [];
-                for (var i=0; $inputEl.length === 0 && i < widgets.const.tag.input.length; i++) {
+                for (var i = 0; $inputEl.length === 0 && i < widgets.const.tag.input.length; i++) {
                     $inputEl = this.$el.is(widgets.const.tag.input[i]) ? this.$el : this.$(widgets.const.tag.input[i]);
                 }
                 return $inputEl;
@@ -110,7 +114,95 @@
                 return $form.length > 0 ? $form[0].view : undefined;
             },
 
+            /**
+             * #abstract
+             * @returns {undefined}
+             */
+            getValue: function () {
+                return undefined;
+            },
+
+            /**
+             * #abstract
+             */
+            setValue: function (value) {
+            },
+
+            /**
+             * #default
+             */
+            setDefaultValue: function (value) {
+            },
+
+            /**
+             * #abstract
+             */
+            reset: function () {
+            },
+
+            /**
+             * returns the current validation state, calls 'validate' if no state is present
+             */
+            isValid: function (alertMethod) {
+                if (this.valid === undefined) {
+                    this.valid = _.isFunction(this.validate)
+                        ? this.validate(alertMethod)
+                        : true;
+                }
+                this.alertFlush(alertMethod);
+                return this.valid;
+            },
+
+            validationReset: function () {
+                this.valid = undefined;
+                this.alertMessage = undefined;
+            },
+
+            /**
+             * validates the current value using the 'rules' and the 'pattern' if present
+             */
+            validate: function (alertMethod) {
+                this.valid = true;
+                // check only if this field has a 'name' (included in a form) and is visible
+                // prevent from validation check if the 'name' is removed or the class contains 'hidden'
+                if (!this.$el.hasClass('hidden') && this.retrieveName()) {
+                    var value = this.getValue();
+                    if (this.rules) {
+                        if (this.rules.mandatory) {
+                            // check for a defined and not blank value
+                            var valid = this.valid = (value !== undefined &&
+                            (this.rules.blank || value.trim().length > 0));
+                            if (!valid) {
+                                this.alert(alertMethod, 'danger', '', 'value is mandatory');
+                            }
+                        }
+                        if (this.valid && this.rules.pattern) {
+                            // check pattern only if not blank (blank is valid if allowed explicitly)
+                            var valid = this.valid = (this.rules.blank && (!value || value.trim().length < 1))
+                                || this.rules.pattern.test(value);
+                            if (!valid) {
+                                this.alert(alertMethod, 'danger', '',
+                                    this.rules.patternHint || "value doesn't match pattern", this.rules.pattern);
+                            }
+                        }
+                    }
+                    // the extension hook for further validation in 'subclasses'
+                    if (this.valid && _.isFunction(this.extValidate)) {
+                        this.valid = this.extValidate(value);
+                    }
+                    if (this.valid) {
+                        this.$el.closest('.form-group').removeClass('has-error');
+                    } else {
+                        this.$el.closest('.form-group').addClass('has-error');
+                    }
+                }
+                return this.valid;
+            },
+
             initRules: function ($element) {
+                if (!$element) {
+                    $element = this.$el;
+                }
                 this.label = $element.data('label');
                 // scan 'data-pattern' attribute
                 var pattern = $element.data('pattern');
@@ -131,29 +223,11 @@
                 var rules = $element.data('rules');
                 if (rules) {
                     this.rules = _.extend(this.rules || {}, {
-                        mandatory: rules.indexOf('mandatory' >= 0),
-                        blank: rules.indexOf('blank' >= 0),
-                        unique: rules.indexOf('unique' >= 0)
+                        mandatory: rules.indexOf('mandatory') >= 0,
+                        blank: rules.indexOf('blank') >= 0,
+                        unique: rules.indexOf('unique') >= 0
                     });
                 }
-            },
-
-            /**
-             * returns the current validation state, calls 'validate' if no state is present
-             */
-            isValid: function (alertMethod) {
-                if (this.valid === undefined) {
-                    this.valid = _.isFunction(this.validate)
-                        ? this.validate(alertMethod)
-                        : true;
-                }
-                this.alertFlush(alertMethod);
-                return this.valid;
-            },
-
-            validationReset: function () {
-                this.valid = undefined;
-                this.alertMessage = undefined;
             },
 
             grabFocus: function () {
@@ -632,7 +706,7 @@
         }
     };
 
-    window.core.LocalProfile = function(key) {
+    window.core.LocalProfile = function (key) {
         this.profileKey = key;
         this.aspects = {};
     };

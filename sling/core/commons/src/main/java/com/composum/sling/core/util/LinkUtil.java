@@ -29,7 +29,7 @@ public class LinkUtil {
     public static final String FORWARDED_SSL_HEADER = "X-Forwarded-SSL";
     public static final String FORWARDED_SSL_ON = "on";
 
-    public static final String URL_PATTERN_STRING = "^(https?)://([^/]+)(:\\d+)?(/.*)?$";
+    public static final String URL_PATTERN_STRING = "^(?:(https?):)?//([^/]+)(:\\d+)?(/.*)?$";
     public static final Pattern URL_PATTERN = Pattern.compile(URL_PATTERN_STRING);
 
     public static final Pattern SELECTOR_PATTERN = Pattern.compile("^(.*/[^/]+)(\\.[^.]+)$");
@@ -207,7 +207,8 @@ public class LinkUtil {
         Matcher matcher = defaultPortPattern.matcher(url);
         // remove the port if the URL matches (contains the port nnumber)
         if (matcher.matches()) {
-            url = matcher.group(1) + "://" + matcher.group(2);
+            if (null == matcher.group(1)) url = "//" + matcher.group(2);
+            else url = matcher.group(1) + "://" + matcher.group(2);
             String uri = matcher.group(3);
             if (StringUtils.isNotBlank(uri)) {
                 url += uri;

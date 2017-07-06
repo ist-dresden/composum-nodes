@@ -18,8 +18,44 @@
     min-height: 350px;
 }
 
-#browser #browser-query .query-head .query-actions form {
-    padding-left: 29px;
+/*
+ * Breadcrumbs (Arrow via CSS)
+ */
+#browser-view .breadcrumbs {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 27px;
+    background-color: #e4e4e4;
+    list-style: none;
+    overflow: hidden;
+    margin: 0;
+    padding: 0 7px;
+    z-index: 7;
+}
+
+#browser-view .breadcrumbs li {
+    float: left;
+}
+
+#browser-view .breadcrumbs li a {
+    text-decoration: none;
+    padding: 4px 0 3px;
+    position: relative;
+    display: block;
+    float: left;
+}
+
+#browser-view .breadcrumbs li:after {
+    content: '/';
+    display: inline-block;
+    padding: 5px 0 2px;
+    margin: 0 3px;
+}
+
+#browser-view .breadcrumbs li:last-child:after {
+    content: none;
 }
 
 #browser #browser-view .breadcrumbs {
@@ -30,10 +66,6 @@
 #browser.left-open #browser-view .breadcrumbs,
 #browser.top-open #browser-view .breadcrumbs {
     padding-left: 8px;
-}
-
-#browser.left-open #browser-query .query-head .query-actions form {
-    padding-left: 6px;
 }
 
 #browser.top-open #browser-view .breadcrumbs {
@@ -286,6 +318,14 @@
 #browser-query .query-panel .query-result tr.lock-holder td.icon span::after {
     opacity: 1;
     color: #a94442; /* danger */
+}
+
+#browser #browser-query .query-head .query-actions form {
+    padding-left: 29px;
+}
+
+#browser.left-open #browser-query .query-head .query-actions form {
+    padding-left: 6px;
 }
 
 /**

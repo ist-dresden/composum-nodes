@@ -202,5 +202,14 @@
         "jslibs/ace/1.2.6/theme-clouds.js"
       ]
     }
+  },
+  "page": {
+    "sling:resourceType": "composum/nodes/commons/clientlib",
+    "css": {
+      "jcr:primaryType": "nt:unstructured",
+      "embed": [
+        "composum/nodes/console/page/css/content.css"
+      ]
+    }
   }
 }

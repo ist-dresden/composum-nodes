@@ -4,8 +4,8 @@
 --%><sling:defineObjects/>
 <div class="composum-widgets-richtext_link-dialog_url form-group">
     <label class="control-label">Link (Content Path)</label>
-    <div class="link input-group widget path-widget">
-        <input name="url" class="form-control" data-rules="mandatory" type="text" autofocus/>
+    <div class="link input-group widget path-widget" data-rules="mandatory">
+        <input name="url" class="form-control" type="text" autofocus/>
         <span class="input-group-btn">
             <button class="select btn btn-default" type="button" title="Select Repository Path">...</button></span>
     </div>

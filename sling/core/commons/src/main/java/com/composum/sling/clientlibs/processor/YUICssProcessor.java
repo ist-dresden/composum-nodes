@@ -1,7 +1,5 @@
 package com.composum.sling.clientlibs.processor;
 
-import com.composum.sling.clientlibs.handle.Clientlib;
-import com.composum.sling.clientlibs.handle.ClientlibLink;
 import com.composum.sling.clientlibs.service.ClientlibConfiguration;
 import com.composum.sling.core.util.ResourceUtil;
 import com.yahoo.platform.yui.compressor.CssCompressor;
@@ -17,10 +15,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.io.Writer;
-import java.text.MessageFormat;
-import java.util.List;
-import java.util.Map;
 
 @Component(
         label = "Clientlib CSS Processor (YUI)",
@@ -28,7 +22,7 @@ import java.util.Map;
         immediate = true
 )
 @Service
-public class YUICssProcessor implements CssProcessor {
+public class YUICssProcessor extends AbstractClientlibRenderer implements CssProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(YUICssProcessor.class);
 
@@ -36,28 +30,12 @@ public class YUICssProcessor implements CssProcessor {
     private ClientlibConfiguration clientlibConfig;
 
     @Override
-    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
-                                     Writer writer, RendererContext context)
-            throws IOException {
-        renderClientlibLinks(clientlib, properties, writer, context, clientlibConfig.getCssTemplate());
-    }
-
-    public void renderClientlibLinks(Clientlib clientlib, Map<String, String> properties,
-                                     Writer writer, RendererContext context,
-                                     String template)
-            throws IOException {
-        List<ClientlibLink> links = clientlib.getLinks(context, clientlibConfig.getDebug());
-        for (int i = 0; i < links.size(); ) {
-            ClientlibLink link = links.get(i);
-            writer.append(MessageFormat.format(template, link.getUrl(context)));
-            if (++i < links.size()) {
-                writer.append('\n');
-            }
-        }
+    protected String getLinkTemplate() {
+        return clientlibConfig.getCssTemplate();
     }
 
     @Override
-    public InputStream processContent(Clientlib clientlib, final InputStream source, ProcessorContext context)
+    public InputStream processContent(final InputStream source, ProcessorContext context)
             throws IOException {
         InputStream result = source;
         if (source != null) {

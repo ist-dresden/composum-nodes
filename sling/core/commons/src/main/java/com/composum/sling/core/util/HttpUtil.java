@@ -17,4 +17,6 @@ public class HttpUtil extends HttpConstants {
 
     public static final String HEADER_VARY = "Vary";
     public static final String HEADER_ACCEPT_ENCODING = "Accept-Encoding";
+
+    public static final String HEADER_IF_NONE_MATCH = "If-None-Match";
 }

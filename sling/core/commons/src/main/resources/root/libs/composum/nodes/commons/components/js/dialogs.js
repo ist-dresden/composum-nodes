@@ -61,12 +61,6 @@
              */
             reset: function () {
                 this.alert();
-                // reset all default HTML component elements
-                this.$('input,textarea,select').each(function () {
-                    if (this.type !== 'radio' && this.type !== 'hidden') {
-                        $(this).val(undefined);
-                    }
-                });
                 // reset all known View instances using their 'reset' method
                 this.$('.widget').each(function () {
                     if (this.view) {

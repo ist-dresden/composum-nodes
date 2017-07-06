@@ -60,42 +60,6 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
 
     // JS configuration
 
-    public static final String JS_MINIMIZE = "javascript.minimize";
-    @Property(
-            name = JS_MINIMIZE,
-            label = "JS - Minimize",
-            description = "compress Javascript with the YUI compressor (if not 'debug' is set); default: false",
-            boolValue = false
-    )
-    protected boolean jsMinimize;
-
-    public static final String JS_MUNGE = "javascript.munge";
-    @Property(
-            name = JS_MUNGE,
-            label = "JS - Munge",
-            description = "munge javascript source code (if not 'debug' is set)",
-            boolValue = false
-    )
-    protected boolean jsMunge;
-
-    public static final String JS_OPTIMIZE = "javascript.optimize";
-    @Property(
-            name = JS_OPTIMIZE,
-            label = "JS - Optimize",
-            description = "optimize javascript source code (if not 'debug' is set); default: false",
-            boolValue = false
-    )
-    protected boolean jsOptimize;
-
-    public static final String JS_LINEBREAK = "javascript.lineBreak";
-    @Property(
-            name = JS_LINEBREAK,
-            label = "JS - Line Break",
-            description = "length of compressed Javascript source lines (if not 'debug' is set); default: 500",
-            intValue = 500
-    )
-    protected int jsLineBreak;
-
     public static final String JS_DEFAULT_TEMPLATE = "  <script type=\"text/javascript\" src=\"{0}\"></script>";
     public static final String JS_TEMPLATE = "javascript.template";
     @Property(
@@ -148,7 +112,7 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
             description = "if 'on' for all clientlib files which have a '.min' sibling the '.min' files is used; default: 'on'",
             boolValue = DEFAULT_USE_MINIFIED_FILES
     )
-    private boolean useMinifiedFiles;
+    protected boolean useMinifiedFiles;
 
     public static final boolean DEFAULT_MAP_CLIENTLIB_URLS = true;
     public static final String MAP_CLIENTLIB_URLS = "clientlibs.url.map";
@@ -158,7 +122,7 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
             description = "if 'on' all clientlib URLs are mapped by the Resource Resolver; default: 'on'",
             boolValue = DEFAULT_MAP_CLIENTLIB_URLS
     )
-    private boolean mapClientlibURLs;
+    protected boolean mapClientlibURLs;
 
     public static final int DEFAULT_THREAD_POOL_MIN = 10;
     public static final String MIN_THREAD_POOL_SIZE = "clientlibs.threadpool.min";
@@ -181,6 +145,16 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     )
     protected int threadPoolMax;
 
+    public static final int DEFAULT_RESOLVER_CACHETIME = 60;
+    public static final String RESOLVER_CACHETIME = "clientlibs.resolver.cachetime";
+    @Property(
+            name = RESOLVER_CACHETIME,
+            label = "General - Resolver cachetime",
+            description = "the time (in seconds) the clientlib resolver caches the locations of all client libraries for a category. <=0 means no caching.",
+            intValue = DEFAULT_RESOLVER_CACHETIME
+    )
+    protected int resolverCachetime;
+
     // CSS configuration
 
     public boolean getCssMinimize() {
@@ -196,22 +170,6 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     }
 
     // JS configuration
-
-    public boolean getJavascriptMinimize() {
-        return jsMinimize;
-    }
-
-    public boolean getJavascriptMunge() {
-        return jsMunge;
-    }
-
-    public boolean getJavascriptOptimize() {
-        return jsOptimize;
-    }
-
-    public int getJavascriptLineBreak() {
-        return jsLineBreak;
-    }
 
     public String getJavascriptTemplate() {
         return jsTemplate;
@@ -253,6 +211,11 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
         return threadPoolMax;
     }
 
+    /** General - Resolver cachetime : the time (in seconds) the clientlib resolver caches the locations of all client libraries for a category. <=0 means no caching. */
+    public int getResolverCachetime() {
+        return resolverCachetime;
+    }
+
     @Modified
     @Activate
     protected void activate(ComponentContext context) {
@@ -263,10 +226,6 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
         cssLineBreak = PropertiesUtil.toInteger(properties.get(CSS_LINEBREAK), 0);
         cssTemplate = PropertiesUtil.toString(properties.get(CSS_TEMPLATE), CSS_DEFAULT_TEMPLATE);
         // JS configuration
-        jsMinimize = PropertiesUtil.toBoolean(properties.get(JS_MINIMIZE), false);
-        jsMunge = PropertiesUtil.toBoolean(properties.get(JS_MUNGE), false);
-        jsOptimize = PropertiesUtil.toBoolean(properties.get(JS_OPTIMIZE), false);
-        jsLineBreak = PropertiesUtil.toInteger(properties.get(JS_LINEBREAK), 500);
         jsTemplate = PropertiesUtil.toString(properties.get(JS_TEMPLATE), JS_DEFAULT_TEMPLATE);
         // Link configuration
         linkTemplate = PropertiesUtil.toString(properties.get(LINK_TEMPLATE), LINK_DEFAULT_TEMPLATE);
@@ -279,5 +238,6 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
         threadPoolMax = PropertiesUtil.toInteger(properties.get(MAX_THREAD_POOL_SIZE), DEFAULT_THREAD_POOL_MAX);
         if (threadPoolMin < DEFAULT_THREAD_POOL_MIN) threadPoolMin = DEFAULT_THREAD_POOL_MIN;
         if (threadPoolMax < threadPoolMin) threadPoolMax = threadPoolMin;
+        resolverCachetime = PropertiesUtil.toInteger(properties.get(RESOLVER_CACHETIME), DEFAULT_RESOLVER_CACHETIME);
     }
 }

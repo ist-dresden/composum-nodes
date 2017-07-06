@@ -6,6 +6,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.jcr.base.util.AccessControlUtil;
+import org.slf4j.Logger;
 
 import javax.jcr.Binary;
 import javax.jcr.Node;
@@ -19,10 +20,14 @@ import javax.jcr.security.Privilege;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  *
  */
 public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
+
+    private static final Logger LOG = getLogger(ResourceUtil.class);
 
     public static final String PROP_RESOURCE_TYPE =
             SlingConstants.NAMESPACE_PREFIX + ":" + SlingConstants.PROPERTY_RESOURCE_TYPE;
@@ -54,6 +59,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String PROP_ENCODING = "jcr:encoding";
     public static final String PROP_PRIMARY_TYPE = "jcr:primaryType";
     public static final String PROP_JCR_CONTENT = "jcr:content";
+    public static final String PROP_CREATED = "jcr:created";
     public static final String PROP_LAST_MODIFIED = "jcr:lastModified";
     public static final String PROP_FILE_REFERENCE = "fileReference";
 
@@ -379,7 +385,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
                     }
                 }
             } catch (RepositoryException e) {
-                e.printStackTrace();
+                LOG.error(e.getMessage(), e);
             }
         }
         return false;

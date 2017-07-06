@@ -12,7 +12,7 @@
       </button>
       <div id="composum-logo" class="navbar-brand">
         <a href="${cpn:url(slingRequest,'/libs/composum/nodes/console/content')}">
-          <cpn:clientlib path="/libs/composum/nodes/console/page/images/composum-nodes-logo-on-black.png"/>
+          <cpn:image src="/libs/composum/nodes/console/page/images/composum-nodes-logo-on-black.png" alt=""/>
         </a>
       </div>
     </div>

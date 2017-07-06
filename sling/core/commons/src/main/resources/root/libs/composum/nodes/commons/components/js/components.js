@@ -199,6 +199,9 @@
                 widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.$typeHint = this.$('sling-post-type-hint');
                 this.$deleteHint = this.$('sling-post-delete-hint');
+                if (!this.$input.attr('value')) {
+                    this.$input.attr('value','true')
+                }
             },
 
             retrieveInput: function () {
@@ -374,7 +377,7 @@
                 widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.$textField = this.textField();
                 // scan 'rules / pattern' attributes
-                this.initRules(this.$textField);
+                this.initRules();
                 // bind change events if any validation option has been found
                 if (this.rules) {
                     this.$textField.on('keyup.validate', _.bind(this.validate, this));
@@ -384,6 +387,7 @@
 
             /**
              * returns the current value from the input field
+             * @extends widgets.Widget
              */
             getValue: function () {
                 return this.$textField.val();
@@ -391,6 +395,7 @@
 
             /**
              * defines the (initial) value of the input field
+             * @extends widgets.Widget
              */
             setValue: function (value, triggerChange) {
                 var currentValue = this.$textField.val();
@@ -400,6 +405,13 @@
                         this.$textField.trigger('change');
                     }
                 }
+            },
+
+            /**
+             * @extends widgets.Widget
+             */
+            setDefaultValue: function (value) {
+                this.$textField.attr('placeholder', value);
             },
 
             /**
@@ -420,52 +432,12 @@
              * retrieves the input field to use (for redefinition in more complex widgets)
              */
             textField: function () {
-                return this.$el.is('input') ? this.$el : this.$('input');
-            },
-
-            /**
-             * validates the current value using the 'rules' and the 'pattern' if present
-             */
-            validate: function (alertMethod) {
-                this.valid = true;
-                // check only if this field has a 'name' (included in a form) and is visible
-                // prevent from validation check if the 'name' is removed or the class contains 'hidden'
-                if (!this.$el.hasClass('hidden') && this.$textField.prop('name')) {
-                    var value = this.getValue();
-                    if (this.rules) {
-                        if (this.rules.mandatory) {
-                            // check for a defined and not blank value
-                            var valid = this.valid = (value !== undefined &&
-                            (this.rules.blank || value.trim().length > 0));
-                            if (!valid) {
-                                this.alert(alertMethod, 'danger', '', 'value is mandatory');
-                            }
-                        }
-                        if (this.valid && this.rules.pattern) {
-                            // check pattern only if not blank (blank is valid if allowed explicitly)
-                            var valid = this.valid = (this.rules.blank && (!value || value.trim().length < 1))
-                                || this.rules.pattern.test(value);
-                            if (!valid) {
-                                this.alert(alertMethod, 'danger', '',
-                                    this.rules.patternHint || "value doesn't match pattern", this.rules.pattern);
-                            }
-                        }
-                    }
-                    // the extension hook for further validation in 'subclasses'
-                    if (this.valid && _.isFunction(this.extValidate)) {
-                        this.valid = this.extValidate(value);
-                    }
-                    if (this.valid) {
-                        this.$textField.closest('.form-group').removeClass('has-error');
-                    } else {
-                        this.$textField.closest('.form-group').addClass('has-error');
-                    }
-                }
-                return this.valid;
+                return this.$input;
             },
 
             /**
              * resets the validation state and the input field value
+             * @extends widgets.Widget
              */
             reset: function () {
                 this.valid = undefined;
@@ -534,36 +506,6 @@
              */
             selectAll: function () {
                 this.$input.select();
-            },
-
-            /**
-             * validates the current value using the 'rules' and the 'pattern' if present
-             */
-            validate: function () {
-                this.valid = true;
-                // check only if this field has a 'name' (included in a form) and is visible
-                // prevent from validation check if the 'name' is removed or the class contains 'hidden'
-                if (!this.$el.hasClass('hidden') && this.$input.prop('name')) {
-                    var value = this.getValue();
-                    if (this.rules) {
-                        var rules = this.rules;
-                        if (rules.mandatory) {
-                            // check for a defined and not blank value
-                            this.valid = (value !== undefined &&
-                            (this.rules.blank || value.trim().length > 0));
-                        }
-                    }
-                    // the extension hook for further validation in 'subclasses'
-                    if (this.valid && _.isFunction(this.extValidate)) {
-                        this.valid = this.extValidate(value);
-                    }
-                    if (this.valid) {
-                        this.$input.closest('.form-group').removeClass('has-error');
-                    } else {
-                        this.$input.closest('.form-group').addClass('has-error');
-                    }
-                }
-                return this.valid;
             },
 
             /**

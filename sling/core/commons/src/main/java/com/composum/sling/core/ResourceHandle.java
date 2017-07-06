@@ -34,11 +34,14 @@ import java.util.regex.Pattern;
  */
 public class ResourceHandle extends ResourceWrapper {
 
-    /** the 'adaptTo' like wrapping helper */
+    /**
+     * The 'adaptTo' like wrapping helper.
+     *
+     * @return the wrapped resource (may be resource itself if it is a ResourceHandle), not null
+     */
     public static ResourceHandle use(Resource resource) {
-        ResourceHandle handle = resource instanceof ResourceHandle
+        return resource instanceof ResourceHandle
                 ? ((ResourceHandle) resource) : new ResourceHandle(resource);
-        return handle;
     }
 
     /** the universal validation test */
@@ -63,7 +66,9 @@ public class ResourceHandle extends ResourceWrapper {
 
     private transient ResourceHandle contentResource;
     private transient InheritedValues inheritedValues;
+    protected InheritedValues.Type inheritanceType = InheritedValues.Type.contentRelated;
     protected boolean useNodeInheritance = false;
+    protected transient Calendar lastModified;
 
     /**
      * creates a new wrapper instance.
@@ -96,8 +101,7 @@ public class ResourceHandle extends ResourceWrapper {
     }
 
     public <T> T getProperty(String key, Class<T> type) {
-        T value = properties.get(key, type);
-        return value;
+        return properties.get(key, type);
     }
 
     public String getProperty(String key) {
@@ -182,13 +186,17 @@ public class ResourceHandle extends ResourceWrapper {
     // inherited property values
 
     public void setUseNodeInheritance(boolean nodeInheritance) {
-        useNodeInheritance = nodeInheritance;
+        setInheritanceType(InheritedValues.Type.sameContent);
+    }
+
+    public void setInheritanceType(InheritedValues.Type type) {
+        inheritanceType = type;
         inheritedValues = null;
     }
 
     public InheritedValues getInheritedValues() {
         if (inheritedValues == null) {
-            inheritedValues = new InheritedValues(this, useNodeInheritance);
+            inheritedValues = new InheritedValues(this, inheritanceType);
         }
         return inheritedValues;
     }
@@ -200,7 +208,7 @@ public class ResourceHandle extends ResourceWrapper {
     }
 
     public <T> T getInherited(String key, Class<T> type) {
-        T value = (T) getProperty(key, type);
+        T value = getProperty(key, type);
         if (value == null) {
             value = getInheritedValues().get(key, type);
         }
@@ -238,7 +246,7 @@ public class ResourceHandle extends ResourceWrapper {
             }
         }
         if (result == null) {
-            result = getProperties().get (JcrConstants.JCR_PRIMARYTYPE, (String) null);
+            result = getProperties().get(JcrConstants.JCR_PRIMARYTYPE, (String) null);
         }
         return result;
     }
@@ -251,7 +259,7 @@ public class ResourceHandle extends ResourceWrapper {
         if (node != null) {
             try {
                 return node.isNodeType(type);
-            } catch (RepositoryException e) {
+            } catch (RepositoryException ignored) {
             }
         }
         return isResourceType(type);
@@ -359,15 +367,9 @@ public class ResourceHandle extends ResourceWrapper {
         return parent;
     }
 
-
-    /**
-     * @return
-     */
     public String getParentPath() {
-        final String parentPath = ResourceUtil.getParent(getPath());
-        return parentPath;
+        return ResourceUtil.getParent(getPath());
     }
-
 
     /**
      * Retrieves a child of this resource or a parent specified by its base path, name pattern and type;
@@ -451,10 +453,7 @@ public class ResourceHandle extends ResourceWrapper {
      */
     public boolean isRenderable() {
         String resourceType = getResourceType();
-        if (StringUtils.isBlank(resourceType)) {
-            return isRenderableFile();
-        }
-        return true;
+        return !StringUtils.isBlank(resourceType) || isRenderableFile();
     }
 
     /**
@@ -470,4 +469,15 @@ public class ResourceHandle extends ResourceWrapper {
     public boolean isFile() {
         return ResourceUtil.isFile(this);
     }
+
+    public Calendar getLastModified() {
+        if (lastModified == null) {
+            lastModified = getProperty(ResourceUtil.PROP_LAST_MODIFIED, Calendar.class);
+            if (null == lastModified) {
+                lastModified = getProperty(ResourceUtil.PROP_CREATED, Calendar.class);
+            }
+        }
+        return lastModified;
+    }
+
 }

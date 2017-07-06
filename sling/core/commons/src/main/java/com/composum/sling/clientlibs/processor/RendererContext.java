@@ -3,16 +3,19 @@ package com.composum.sling.clientlibs.processor;
 import com.composum.sling.clientlibs.handle.ClientlibLink;
 import com.composum.sling.clientlibs.handle.ClientlibRef;
 import com.composum.sling.clientlibs.service.ClientlibService;
+import com.composum.sling.clientlibs.service.ClientlibConfiguration;
+import com.composum.sling.clientlibs.service.DefaultClientlibService;
 import com.composum.sling.core.BeanContext;
 import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.scripting.SlingScriptHelper;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
- * The context implementation for the clientlib ink rendering.
+ * The context implementation for the clientlib link rendering, request scoped.
  * This context provides a registry to avoid clientlib duplicates.
  */
 public class RendererContext {
@@ -33,46 +36,45 @@ public class RendererContext {
     public final BeanContext context;
     public final SlingHttpServletRequest request;
 
-    protected final HashSet<ClientlibLink> renderedClientlibs;
+    protected final Set<ClientlibLink> renderedClientlibs;
 
-    private transient SlingScriptHelper scriptHelper;
-    private transient ClientlibService clientlibService;
+    protected transient ClientlibService clientlibService;
 
     protected RendererContext(BeanContext context, SlingHttpServletRequest request) {
         this.context = context;
         this.request = request;
-        this.renderedClientlibs = new HashSet<>();
+        this.renderedClientlibs = new LinkedHashSet<>();
     }
 
+    /** Checks whether a referenced resource or client library is satisfied by an already rendered resource. */
     public boolean isClientlibRendered(ClientlibRef reference) {
         for (ClientlibLink link : renderedClientlibs) {
-            if (reference.use(link)) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("rendered: " + reference.keyPath + " - using: " + reference.getUsedAlternative());
-                }
+            if (reference.isSatisfiedby(link)) {
+                LOG.debug("rendered: {} - using: {}", reference, link.path);
                 return true;
             }
         }
         return false;
     }
 
+    /** Registers rendered resources / client libraries that have already been rendered for the current request. */
     public void registerClientlibLink(ClientlibLink link) {
-        if (true || !renderedClientlibs.contains(link)) {
+        if (renderedClientlibs.contains(link)) {
+            LOG.error("Bug: duplicate clientlib link: " + link);
+        } else {
             renderedClientlibs.add(link);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("registered: " + link);
             }
-        } else {
-            LOG.error("duplicate clientlib link: " + link);
         }
     }
 
     public boolean mapClientlibURLs() {
-        return getClientlibService().mapClientlibURLs();
+        return getConfiguration().getMapClientlibURLs();
     }
 
     public boolean useMinifiedFiles() {
-        return getClientlibService().useMinifiedFiles();
+        return getConfiguration().getUseMinifiedFiles();
     }
 
     public ClientlibService getClientlibService() {
@@ -81,4 +83,18 @@ public class RendererContext {
         }
         return clientlibService;
     }
+
+    public Set<ClientlibLink> getRenderedClientlibs() {
+        return renderedClientlibs;
+    }
+
+    public ClientlibConfiguration getConfiguration() {
+        return getClientlibService().getClientlibConfig();
+    }
+
+    public ResourceResolver getResolver() {
+        return request.getResourceResolver();
+    }
+
 }
+

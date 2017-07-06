@@ -247,23 +247,19 @@ public abstract class AbstractSlingBean implements SlingBean {
     }
 
     public <T> T getProperty(String key, T defaultValue) {
-        T value = resource.getContentProperty(key, defaultValue);
-        return value;
+        return resource.getContentProperty(key, defaultValue);
     }
 
     public <T> T getProperty(String key, Class<T> type) {
-        T value = resource.getContentProperty(key, type);
-        return value;
+        return resource.getContentProperty(key, type);
     }
 
     public <T> T getInherited(String key, T defaultValue) {
-        T value = resource.getInherited(key, defaultValue);
-        return value;
+        return resource.getInherited(key, defaultValue);
     }
 
     public <T> T getInherited(String key, Class<T> type) {
-        T value = resource.getInherited(key, type);
-        return value;
+        return resource.getInherited(key, type);
     }
 
     //
@@ -286,7 +282,7 @@ public abstract class AbstractSlingBean implements SlingBean {
     // JCR Query helpers
     //
 
-    public static interface NodeClosure {
+    public interface NodeClosure {
 
         void call(Node node) throws RepositoryException;
     }
@@ -299,7 +295,7 @@ public abstract class AbstractSlingBean implements SlingBean {
     }
 
     public <T extends AbstractSlingBean> List<T> findBeans(String queryString, Class<T> type) {
-        List<T> result = new ArrayList<T>();
+        List<T> result = new ArrayList<>();
         try {
             Constructor<T> constructor = type.getConstructor(BeanContext.class, Resource.class);
             NodeIterator iterator = findNodes(queryString);
@@ -329,6 +325,7 @@ public abstract class AbstractSlingBean implements SlingBean {
     }
 
     public NodeIterator findNodes(String queryString) throws RepositoryException {
+        //noinspection deprecation
         return findNodes(queryString, Query.XPATH);
     }
 
