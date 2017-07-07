@@ -1,6 +1,7 @@
 package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -17,6 +18,7 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -62,6 +64,36 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String PROP_CREATED = "jcr:created";
     public static final String PROP_LAST_MODIFIED = "jcr:lastModified";
     public static final String PROP_FILE_REFERENCE = "fileReference";
+
+    /**
+     * retrieves all children of a type (node type or resource type)
+     */
+    public static List<Resource> getChildrenByType(final Resource resource, String type) {
+        final ArrayList<Resource> children = new ArrayList<>();
+        if (resource !=null) {
+            for (final Resource child : resource.getChildren()) {
+                if (isResourceType(child, type)) {
+                    children.add(child);
+                }
+            }
+        }
+        return children;
+    }
+
+    /**
+     * retrieves all children of a sling:resourceType
+     */
+    public static List<Resource> getChildrenByResourceType(final Resource resource, String resourceType) {
+        final ArrayList<Resource> children = new ArrayList<>();
+        if (resource != null) {
+            for (final Resource child : resource.getChildren()) {
+                if (child.isResourceType(resourceType)) {
+                    children.add(child);
+                }
+            }
+        }
+        return children;
+    }
 
     public static int getIndexOfSameType(Resource resource) {
         if (resource != null) {
@@ -123,21 +155,49 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
         return extension;
     }
 
-    public static boolean isResourceType(Resource resource, String resourceType) {
+    /**
+     * retrieves the primary type of the resources node
+     */
+    public static String getPrimaryType(Resource resource) {
+        String result = null;
         if (resource != null) {
-            if (resource.isResourceType(resourceType)) {
-                return true;
-            } else {
+            Node node = resource.adaptTo(Node.class);
+            if (node != null) {
                 try {
-                    final Node node = resource.adaptTo(Node.class);
-                    return node != null && node.isNodeType(resourceType);
-                } catch (RepositoryException e) {
-                    return false;
+                    NodeType type = node.getPrimaryNodeType();
+                    if (type != null) {
+                        result = type.getName();
+                    }
+                } catch (RepositoryException ignore) {
                 }
             }
-        } else {
-            return false;
+            if (result == null) {
+                ValueMap values = resource.adaptTo(ValueMap.class);
+                if (values != null) {
+                    result = values.get(JcrConstants.JCR_PRIMARYTYPE, (String) null);
+                }
+            }
         }
+        return result;
+    }
+
+    public static boolean isResourceType(Resource resource, String resourceType) {
+        return (resource != null && (resource.isResourceType(resourceType) || isNodeType(resource, resourceType)));
+    }
+
+    public static boolean isPrimaryType(Resource resource, String primaryType) {
+        return (primaryType.equals(getPrimaryType(resource)));
+    }
+
+    public static boolean isNodeType(Resource resource, String primaryType) {
+        if (resource != null) {
+            try {
+                final Node node = resource.adaptTo(Node.class);
+                return node != null && node.isNodeType(primaryType);
+            } catch (RepositoryException ignore) {
+            }
+        }
+        return false;
     }
 
     public static Resource getResourceType(Resource resource) {
