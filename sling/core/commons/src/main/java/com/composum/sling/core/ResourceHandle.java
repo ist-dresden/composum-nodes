@@ -14,7 +14,6 @@ import com.composum.sling.core.util.PropertyUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceWrapper;
 import org.apache.sling.api.resource.ValueMap;
@@ -22,7 +21,6 @@ import org.apache.sling.api.resource.ValueMap;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -34,11 +32,14 @@ import java.util.regex.Pattern;
  */
 public class ResourceHandle extends ResourceWrapper {
 
-    /** the 'adaptTo' like wrapping helper */
+    /**
+     * The 'adaptTo' like wrapping helper.
+     *
+     * @return the wrapped resource (may be resource itself if it is a ResourceHandle), not null
+     */
     public static ResourceHandle use(Resource resource) {
-        ResourceHandle handle = resource instanceof ResourceHandle
+        return resource instanceof ResourceHandle
                 ? ((ResourceHandle) resource) : new ResourceHandle(resource);
-        return handle;
     }
 
     /** the universal validation test */
@@ -63,7 +64,9 @@ public class ResourceHandle extends ResourceWrapper {
 
     private transient ResourceHandle contentResource;
     private transient InheritedValues inheritedValues;
+    protected InheritedValues.Type inheritanceType = InheritedValues.Type.contentRelated;
     protected boolean useNodeInheritance = false;
+    protected transient Calendar lastModified;
 
     /**
      * creates a new wrapper instance.
@@ -96,8 +99,7 @@ public class ResourceHandle extends ResourceWrapper {
     }
 
     public <T> T getProperty(String key, Class<T> type) {
-        T value = properties.get(key, type);
-        return value;
+        return properties.get(key, type);
     }
 
     public String getProperty(String key) {
@@ -182,13 +184,17 @@ public class ResourceHandle extends ResourceWrapper {
     // inherited property values
 
     public void setUseNodeInheritance(boolean nodeInheritance) {
-        useNodeInheritance = nodeInheritance;
+        setInheritanceType(InheritedValues.Type.sameContent);
+    }
+
+    public void setInheritanceType(InheritedValues.Type type) {
+        inheritanceType = type;
         inheritedValues = null;
     }
 
     public InheritedValues getInheritedValues() {
         if (inheritedValues == null) {
-            inheritedValues = new InheritedValues(this, useNodeInheritance);
+            inheritedValues = new InheritedValues(this, inheritanceType);
         }
         return inheritedValues;
     }
@@ -200,7 +206,7 @@ public class ResourceHandle extends ResourceWrapper {
     }
 
     public <T> T getInherited(String key, Class<T> type) {
-        T value = (T) getProperty(key, type);
+        T value = getProperty(key, type);
         if (value == null) {
             value = getInheritedValues().get(key, type);
         }
@@ -225,36 +231,14 @@ public class ResourceHandle extends ResourceWrapper {
      * retrieves the primary type of the resources node
      */
     public String getPrimaryType() {
-        String result = null;
-        Node node = getNode();
-        if (node != null) {
-            try {
-                NodeType type = node.getPrimaryNodeType();
-                if (type != null) {
-                    result = type.getName();
-                }
-            } catch (RepositoryException e) {
-                // ok, no node type accessible, use properties
-            }
-        }
-        if (result == null) {
-            result = getProperties().get (JcrConstants.JCR_PRIMARYTYPE, (String) null);
-        }
-        return result;
+        return ResourceUtil.getPrimaryType(getResource());
     }
 
     /**
      * check the node type or the resource type
      */
     public boolean isOfType(String type) {
-        Node node = getNode();
-        if (node != null) {
-            try {
-                return node.isNodeType(type);
-            } catch (RepositoryException e) {
-            }
-        }
-        return isResourceType(type);
+        return ResourceUtil.isResourceType(getResource(), type);
     }
 
     /**
@@ -339,11 +323,11 @@ public class ResourceHandle extends ResourceWrapper {
             Resource parent = super.getParent();
             if (parent == null && isSynthetic()) {
                 final String parentPath = getParentPath();
-                return getResourceResolver().resolve(parentPath).adaptTo(ResourceHandle.class);
+                return ResourceHandle.use(getResourceResolver().resolve(parentPath));
             } else if (parent == null) {
                 return null;
             } else {
-                return parent.adaptTo(ResourceHandle.class);
+                return ResourceHandle.use(parent);
             }
         } else {
             return null;
@@ -359,15 +343,9 @@ public class ResourceHandle extends ResourceWrapper {
         return parent;
     }
 
-
-    /**
-     * @return
-     */
     public String getParentPath() {
-        final String parentPath = ResourceUtil.getParent(getPath());
-        return parentPath;
+        return ResourceUtil.getParent(getPath());
     }
-
 
     /**
      * Retrieves a child of this resource or a parent specified by its base path, name pattern and type;
@@ -451,10 +429,7 @@ public class ResourceHandle extends ResourceWrapper {
      */
     public boolean isRenderable() {
         String resourceType = getResourceType();
-        if (StringUtils.isBlank(resourceType)) {
-            return isRenderableFile();
-        }
-        return true;
+        return !StringUtils.isBlank(resourceType) || isRenderableFile();
     }
 
     /**
@@ -470,4 +445,15 @@ public class ResourceHandle extends ResourceWrapper {
     public boolean isFile() {
         return ResourceUtil.isFile(this);
     }
+
+    public Calendar getLastModified() {
+        if (lastModified == null) {
+            lastModified = getProperty(ResourceUtil.PROP_LAST_MODIFIED, Calendar.class);
+            if (null == lastModified) {
+                lastModified = getProperty(ResourceUtil.PROP_CREATED, Calendar.class);
+            }
+        }
+        return lastModified;
+    }
+
 }

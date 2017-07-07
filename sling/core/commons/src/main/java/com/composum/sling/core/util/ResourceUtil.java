@@ -1,11 +1,13 @@
 package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.jcr.base.util.AccessControlUtil;
+import org.slf4j.Logger;
 
 import javax.jcr.Binary;
 import javax.jcr.Node;
@@ -16,13 +18,18 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  *
  */
 public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
+
+    private static final Logger LOG = getLogger(ResourceUtil.class);
 
     public static final String PROP_RESOURCE_TYPE =
             SlingConstants.NAMESPACE_PREFIX + ":" + SlingConstants.PROPERTY_RESOURCE_TYPE;
@@ -44,6 +51,10 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String TYPE_LOCKABLE = "mix:lockable";
     public static final String TYPE_ORDERABLE = "mix:orderable";
     public static final String TYPE_REFERENCEABLE = "mix:referenceable";
+    public static final String TYPE_LAST_MODIFIED = "mix:lastModified";
+    public static final String TYPE_CREATED = "mix:created";
+    public static final String TYPE_TITLE = "mix:title";
+    public static final String TYPE_VERSIONABLE = "mix:versionable";
 
     public static final String PROP_UUID = "jcr:uuid";
     public static final String PROP_TITLE = "jcr:title";
@@ -53,9 +64,41 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String PROP_MIME_TYPE = "jcr:mimeType";
     public static final String PROP_ENCODING = "jcr:encoding";
     public static final String PROP_PRIMARY_TYPE = "jcr:primaryType";
+    public static final String PROP_MIXINTYPES = "jcr:mixinTypes";
     public static final String PROP_JCR_CONTENT = "jcr:content";
+    public static final String PROP_CREATED = "jcr:created";
     public static final String PROP_LAST_MODIFIED = "jcr:lastModified";
     public static final String PROP_FILE_REFERENCE = "fileReference";
+
+    /**
+     * retrieves all children of a type (node type or resource type)
+     */
+    public static List<Resource> getChildrenByType(final Resource resource, String type) {
+        final ArrayList<Resource> children = new ArrayList<>();
+        if (resource !=null) {
+            for (final Resource child : resource.getChildren()) {
+                if (isResourceType(child, type)) {
+                    children.add(child);
+                }
+            }
+        }
+        return children;
+    }
+
+    /**
+     * retrieves all children of a sling:resourceType
+     */
+    public static List<Resource> getChildrenByResourceType(final Resource resource, String resourceType) {
+        final ArrayList<Resource> children = new ArrayList<>();
+        if (resource != null) {
+            for (final Resource child : resource.getChildren()) {
+                if (child.isResourceType(resourceType)) {
+                    children.add(child);
+                }
+            }
+        }
+        return children;
+    }
 
     public static int getIndexOfSameType(Resource resource) {
         if (resource != null) {
@@ -117,21 +160,49 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
         return extension;
     }
 
-    public static boolean isResourceType(Resource resource, String resourceType) {
+    /**
+     * retrieves the primary type of the resources node
+     */
+    public static String getPrimaryType(Resource resource) {
+        String result = null;
         if (resource != null) {
-            if (resource.isResourceType(resourceType)) {
-                return true;
-            } else {
+            Node node = resource.adaptTo(Node.class);
+            if (node != null) {
                 try {
-                    final Node node = resource.adaptTo(Node.class);
-                    return node != null && node.isNodeType(resourceType);
-                } catch (RepositoryException e) {
-                    return false;
+                    NodeType type = node.getPrimaryNodeType();
+                    if (type != null) {
+                        result = type.getName();
+                    }
+                } catch (RepositoryException ignore) {
                 }
             }
-        } else {
-            return false;
+            if (result == null) {
+                ValueMap values = resource.adaptTo(ValueMap.class);
+                if (values != null) {
+                    result = values.get(JcrConstants.JCR_PRIMARYTYPE, (String) null);
+                }
+            }
         }
+        return result;
+    }
+
+    public static boolean isResourceType(Resource resource, String resourceType) {
+        return (resource != null && (resource.isResourceType(resourceType) || isNodeType(resource, resourceType)));
+    }
+
+    public static boolean isPrimaryType(Resource resource, String primaryType) {
+        return (primaryType.equals(getPrimaryType(resource)));
+    }
+
+    public static boolean isNodeType(Resource resource, String primaryType) {
+        if (resource != null) {
+            try {
+                final Node node = resource.adaptTo(Node.class);
+                return node != null && node.isNodeType(primaryType);
+            } catch (RepositoryException ignore) {
+            }
+        }
+        return false;
     }
 
     public static Resource getResourceType(Resource resource) {
@@ -379,7 +450,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
                     }
                 }
             } catch (RepositoryException e) {
-                e.printStackTrace();
+                LOG.error(e.getMessage(), e);
             }
         }
         return false;
