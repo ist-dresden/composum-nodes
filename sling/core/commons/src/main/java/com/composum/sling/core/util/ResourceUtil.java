@@ -51,6 +51,8 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String TYPE_LOCKABLE = "mix:lockable";
     public static final String TYPE_ORDERABLE = "mix:orderable";
     public static final String TYPE_REFERENCEABLE = "mix:referenceable";
+    public static final String TYPE_LAST_MODIFIED = "mix:lastModified";
+    public static final String TYPE_CREATED = "mix:created";
 
     public static final String PROP_UUID = "jcr:uuid";
     public static final String PROP_TITLE = "jcr:title";
@@ -60,6 +62,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String PROP_MIME_TYPE = "jcr:mimeType";
     public static final String PROP_ENCODING = "jcr:encoding";
     public static final String PROP_PRIMARY_TYPE = "jcr:primaryType";
+    public static final String PROP_MIXINTYPES = "jcr:mixinTypes";
     public static final String PROP_JCR_CONTENT = "jcr:content";
     public static final String PROP_CREATED = "jcr:created";
     public static final String PROP_LAST_MODIFIED = "jcr:lastModified";

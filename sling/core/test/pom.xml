@@ -53,6 +53,7 @@
                 <configuration>
                     <systemProperties>
                         <org.slf4j.simpleLogger.log.com.composum>DEBUG</org.slf4j.simpleLogger.log.com.composum>
+                        <org.slf4j.simpleLogger.showDateTime>true</org.slf4j.simpleLogger.showDateTime>
                     </systemProperties>
                 </configuration>
             </plugin>
