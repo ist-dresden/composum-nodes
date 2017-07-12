@@ -33,6 +33,19 @@ public class MimeTypeUtil {
     public static final Pattern FILE_EXT_FROM_MIME = Pattern.compile("^.*/([a-zA-Z]+[0-9]?)$");
 
     //
+    // mime type check
+    //
+
+    public static boolean isMimeType(Resource resource, String pattern) {
+        return isMimeType(resource, Pattern.compile(pattern));
+    }
+
+    public static boolean isMimeType(Resource resource, Pattern pattern) {
+        String mimeType = getMimeType(resource, "");
+        return pattern.matcher(mimeType).matches();
+    }
+
+    //
     // mime types
     //
 
