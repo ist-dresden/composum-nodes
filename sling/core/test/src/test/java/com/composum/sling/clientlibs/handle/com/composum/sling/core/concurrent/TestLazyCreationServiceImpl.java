@@ -209,7 +209,7 @@ public class TestLazyCreationServiceImpl {
     @Test
     public void testCreationAndInitWithRandomDelays() throws Exception {
         setup(NOSEQUENCER);
-        runCreationAndInitInParallel(100);
+        runCreationAndInitInParallel(300);
     }
 
     /**
@@ -233,14 +233,14 @@ public class TestLazyCreationServiceImpl {
             public ResourceHandle call() throws Exception {
                 final ResourceResolver resolver2 = resourceResolverFactory.getAdministrativeResourceResolver(null);
                 ResourceHandle handle = lazyCreationService.getOrCreate(resolver2, path,
-                        makeGetter(), makeCreator(100), makeInitializer(300), makeParentCreator(20));
+                        makeGetter(), makeCreator(200), makeInitializer(300), makeParentCreator(20));
                 return handle;
             }
         });
         validateResult(future2.get(), true);
         long timing = System.currentTimeMillis() - begin;
-        assertTrue("Did this wait for lock? " + timing, timing > 1500);
-        assertTrue("Lock should have been broken. " + timing, timing < 2500);
+        assertTrue("Did this wait for lock? Perhaps simultaneous locking bug hit. timing=" + timing, timing > 1500);
+        assertTrue("Lock should have been broken. timing=" + timing, timing < 2700);
         validateResult(future1.get(), true);
         timing = System.currentTimeMillis() - begin;
         assertTrue("" + timing, timing >= 3000);
@@ -344,6 +344,39 @@ public class TestLazyCreationServiceImpl {
         });
         future1.get();
         future2.get();
+        resolver.close();
+        resolver2.close();
+    }
+
+    /** Parallel creation of children of a parent does not require locking. */
+    @Test
+    public void testParallelChildCreation() throws Exception {
+        setup(NOSEQUENCER);
+        final String path = context.uniqueRoot().content() + "/parallelchildren";
+        final ResourceHandle handle = lazyCreationService.getOrCreate(context.resourceResolver(), path,
+                makeGetter(), makeCreator(0), makeInitializer(0), makeParentCreator(0));
+        final ResourceResolver resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
+        final ResourceResolver resolver2 = resourceResolverFactory.getAdministrativeResourceResolver(null);
+        Future<ResourceHandle> future1 = executor.submit(new Callable<ResourceHandle>() {
+            public ResourceHandle call() throws Exception {
+                Resource child1 = resolver.create(resolver.getResource(handle.getPath()), "child1", ITEM_PROPS);
+                Thread.sleep(500);
+                resolver.commit();
+                return ResourceHandle.use(child1);
+            }
+        });
+        Future<ResourceHandle> future2 = executor.submit(new Callable<ResourceHandle>() {
+            public ResourceHandle call() throws Exception {
+                Resource child2 = resolver2.create(resolver2.getResource(handle.getPath()), "child2", ITEM_PROPS);
+                Thread.sleep(500);
+                resolver2.commit();
+                return handle;
+            }
+        });
+        future1.get();
+        future2.get();
+        resolver.close();
+        resolver2.close();
     }
 
 }
