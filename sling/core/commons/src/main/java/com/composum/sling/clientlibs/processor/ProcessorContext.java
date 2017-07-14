@@ -6,7 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * The context in which processing of a {@link com.composum.sling.clientlibs.handle.Clientlib} takes place.
@@ -57,6 +59,11 @@ public class ProcessorContext {
     /** Schedules the runnable for execution in the future. */
     public void execute(Runnable runnable) {
         executorService.execute(runnable);
+    }
+
+    /** Schedules something for execution in the future. */
+    public <T> Future<T> submit(Callable<T> callable) {
+        return executorService.submit(callable);
     }
 
     public void hint(String key, Object value) {

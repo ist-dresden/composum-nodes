@@ -5,6 +5,8 @@ import com.composum.sling.clientlibs.service.*;
 import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.clientlibs.service.DefaultClientlibService;
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.concurrent.LazyCreationService;
+import com.composum.sling.core.concurrent.LazyCreationServiceImpl;
 import com.composum.sling.core.concurrent.SemaphoreSequencer;
 import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.mapping.MappingRules;
@@ -61,29 +63,30 @@ public class AbstractClientlibTest {
         setupTime = GregorianCalendar.getInstance();
         context.request().setContextPath(CONTEXTPATH);
 
+        final SequencerService sequencerService = context.registerInjectActivateService(new SemaphoreSequencer());
+
+        final LazyCreationService creationService = context.registerInjectActivateService(
+                new LazyCreationServiceImpl());
+
         configurationService = context.registerService(ClientlibConfiguration.class, new
                 ClientlibConfigurationService() {
-            {
-                cacheRoot = ClientlibConfigurationService.DEFAULT_CACHE_ROOT;
-                threadPoolMin = 0;
-                threadPoolMax = 1;
-                linkTemplate = ClientlibConfigurationService.LINK_DEFAULT_TEMPLATE;
-            }
+                    {
+                        cacheRoot = ClientlibConfigurationService.DEFAULT_CACHE_ROOT;
+                        threadPoolMin = 0;
+                        threadPoolMax = 1;
+                        linkTemplate = ClientlibConfigurationService.LINK_DEFAULT_TEMPLATE;
+                    }
 
-            @Override
-            public boolean getDebug() {
-                return AbstractClientlibTest.this.debuggingMode;
-            }
+                    @Override
+                    public boolean getDebug() {
+                        return AbstractClientlibTest.this.debuggingMode;
+                    }
 
-            @Override
-            public boolean getUseMinifiedFiles() {
-                return AbstractClientlibTest.this.useMinifiedFiles;
-            }
-        }); // TODO: how to use properties?
-
-        final SequencerService sequencerService = context.registerService(SequencerService.class, new
-                SemaphoreSequencer());
-        MockOsgi.activate(sequencerService, context.bundleContext());
+                    @Override
+                    public boolean getUseMinifiedFiles() {
+                        return AbstractClientlibTest.this.useMinifiedFiles;
+                    }
+                }); // TODO: how to use properties?
 
         ServletContext servletContext = Mockito.mock(ServletContext.class);
         BeanContext beanContext = new BeanContext.Servlet(servletContext, context.bundleContext(), context.request(),
@@ -92,13 +95,14 @@ public class AbstractClientlibTest {
 
         clientlib2Service = (DefaultClientlibService) context.registerService(ClientlibService.class, new
                 DefaultClientlibService() {
-            {
-                clientlibConfig = configurationService;
-                resolverFactory = context.getService(ResourceResolverFactory.class);
-                sequencer = sequencerService;
-                activate(context.componentContext());
-            }
-        });
+                    {
+                        clientlibConfig = configurationService;
+                        resolverFactory = context.getService(ResourceResolverFactory.class);
+                        sequencer = sequencerService;
+                        lazyCreationService = creationService;
+                        activate(context.componentContext());
+                    }
+                });
         // TODO: MockOsgi.activate(clientlibService, context.bundleContext()); should work but doesn't
 
         executorService = Executors.newFixedThreadPool(2);
@@ -131,7 +135,8 @@ public class AbstractClientlibTest {
 
     protected void checkDeliveredContent(ClientlibElement lib, String expectedContent, String expectedProcessedLibs)
             throws Exception {
-        ClientlibService.ClientlibInfo hints = clientlib2Service.prepareContent(context.request(), lib.getRef(), false, null,
+        ClientlibService.ClientlibInfo hints = clientlib2Service.prepareContent(context.request(), lib.getRef(),
+                false, null,
                 false, "thisisnotahash", -1);
         Calendar now = GregorianCalendar.getInstance();
         Calendar lastModified = hints.lastModified;
@@ -148,19 +153,6 @@ public class AbstractClientlibTest {
         ProcessingVisitor visitor = new ProcessingVisitor(lib, clientlib2Service, out, null, ctx);
         visitor.execute();
         assertEquals(expectedProcessedLibs, visitor.getProcessedElements().toString());
-    }
-
-    /** Call if you need to inspect the testdata in the repository. Long long output. */
-    // @Test
-    // @After
-    public void printJcr() throws Exception {
-        StringWriter writer = new StringWriter();
-        JsonWriter jsonWriter = new JsonWriter(writer);
-        jsonWriter.setHtmlSafe(true);
-        jsonWriter.setIndent("    ");
-        JsonUtil.exportJson(jsonWriter, context.resourceResolver().getResource("/"), MappingRules
-                .getDefaultMappingRules(), 99);
-        System.out.println(writer);
     }
 
     protected void verifyEqualHashesOfVisitors(ClientlibElement clientlib) throws IOException, RepositoryException {
