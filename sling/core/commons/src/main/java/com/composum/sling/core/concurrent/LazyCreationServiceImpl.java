@@ -361,11 +361,42 @@ public class LazyCreationServiceImpl implements LazyCreationService {
     }
 
     @Override
-    public boolean isInitialized(Resource aresource) throws RepositoryException {
-        ResourceHandle resource = ResourceHandle.use(aresource);
-        return resource.isValid() && null != resource.getProperty(PROP_LAST_MODIFIED) &&
-                !resource.getResourceResolver().adaptTo(Session.class).getWorkspace().getLockManager().holdsLock
-                        (resource.getPath());
+    public boolean isInitialized(Resource resource) throws RepositoryException {
+        ResourceHandle handle = ResourceHandle.use(resource);
+        return handle.isValid() && null != handle.getProperty(PROP_LAST_MODIFIED) &&
+                !handle.getResourceResolver().adaptTo(Session.class).getWorkspace().getLockManager().holdsLock
+                        (handle.getPath());
+    }
+
+    @Override
+    public Resource waitForInitialization(ResourceResolver resolver, String path) throws RepositoryException {
+        Resource resource = resolver.getResource(path);
+        if (null == resource) {
+            // there may be a creation in progress, so we wait for the lock.
+            SequencerService.Token token = sequencer.acquire(path);
+            sequencer.release(token);
+            refreshSession(resolver, true);
+            resource = resolver.getResource(path);
+        }
+        if (null == resource) return null;
+        if (isInitialized(resource)) return resource;
+
+        final long stopPollingTime = System.currentTimeMillis() + maximumLockWaitTimeSec * 1000;
+        long waitStep = 0;
+        long restWait;
+        do {
+            try {
+                Thread.sleep(waitStep);
+            } catch (InterruptedException e) {
+            }
+            refreshSession(resolver, true);
+            resource = resolver.getResource(path);
+            if (isInitialized(resource)) return resource;
+
+            restWait = stopPollingTime - System.currentTimeMillis();
+            waitStep = Math.min(waitStep * 2 + 100, restWait); // iterative doubling to not try too often
+        } while (restWait > 0);
+        return null;
     }
 
     /**

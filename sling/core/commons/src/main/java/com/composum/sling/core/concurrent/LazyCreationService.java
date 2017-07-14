@@ -131,6 +131,16 @@ public interface LazyCreationService {
      */
     boolean isInitialized(Resource resource) throws RepositoryException;
 
+    /**
+     * For resources created by {@link #getOrCreate(ResourceResolver, String, RetrievalStrategy, CreationStrategy,
+     * InitializationStrategy, ParentCreationStrategy)} or {@link #getOrCreate(ResourceResolver, String,
+     * RetrievalStrategy, CreationStrategy, InitializationStrategy, Map)}, this returns the resource when the
+     * initialization process is finished. If the resource is in creation, this waits a while.
+     *
+     * @return the initialized resource, or null if we couldn't find it or it took too long.
+     */
+    Resource waitForInitialization(ResourceResolver resolver, String path) throws RepositoryException;
+
     /** Strategy to retrieve the resources content. */
     interface RetrievalStrategy<T> {
         /**
@@ -191,5 +201,16 @@ public interface LazyCreationService {
         Resource createParent(ResourceResolver resolver, Resource parentsParent, String parentName, int level)
                 throws RepositoryException, PersistenceException;
     }
+
+    /**
+     * Simplest {@link com.composum.sling.core.concurrent.LazyCreationService.RetrievalStrategy}: just returns the
+     * resource.
+     */
+    final RetrievalStrategy<Resource> IDENTITY_RETRIEVER = new RetrievalStrategy<Resource>() {
+        @Override
+        public Resource get(ResourceResolver resolver, String path) throws RepositoryException {
+            return resolver.getResource(path);
+        }
+    };
 
 }

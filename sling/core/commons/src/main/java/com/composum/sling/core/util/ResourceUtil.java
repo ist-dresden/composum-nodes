@@ -53,6 +53,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String TYPE_REFERENCEABLE = "mix:referenceable";
     public static final String TYPE_LAST_MODIFIED = "mix:lastModified";
     public static final String TYPE_CREATED = "mix:created";
+    public static final String TYPE_TITLE = "mix:title";
 
     public static final String PROP_UUID = "jcr:uuid";
     public static final String PROP_TITLE = "jcr:title";

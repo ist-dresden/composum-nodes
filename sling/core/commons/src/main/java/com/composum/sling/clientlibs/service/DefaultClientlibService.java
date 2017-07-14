@@ -3,6 +3,7 @@ package com.composum.sling.clientlibs.service;
 import com.composum.sling.clientlibs.handle.*;
 import com.composum.sling.clientlibs.processor.*;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.concurrent.LazyCreationService;
 import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.collections.map.LRUMap;
@@ -22,15 +23,11 @@ import javax.jcr.Session;
 import javax.jcr.query.Query;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.composum.sling.clientlibs.handle.Clientlib.PROP_CATEGORY;
-import static com.composum.sling.clientlibs.handle.Clientlib.PROP_ORDER;
-import static com.composum.sling.clientlibs.handle.Clientlib.RESOURCE_TYPE;
+import static com.composum.sling.clientlibs.handle.Clientlib.*;
 import static com.composum.sling.core.util.ResourceUtil.PROP_RESOURCE_TYPE;
 import static com.composum.sling.core.util.ResourceUtil.TYPE_SLING_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -71,6 +68,9 @@ public class DefaultClientlibService implements ClientlibService {
 
     @Reference
     protected SequencerService sequencer;
+
+    @Reference
+    protected LazyCreationService lazyCreationService;
 
     @Reference
     protected JavascriptProcessor javascriptProcessor;
@@ -337,7 +337,7 @@ public class DefaultClientlibService implements ClientlibService {
      */
     @Override
     public ClientlibInfo prepareContent(SlingHttpServletRequest request, final ClientlibRef clientlibRef, boolean
-            minified, String encoding, boolean forceRefreshCache, String requestedHash, long ifModifiedSince) throws
+            minified, String rawEncoding, boolean forceRefreshCache, String requestedHash, long ifModifiedSince) throws
             IOException, RepositoryException {
         ClientlibElement element = resolve(clientlibRef, request.getResourceResolver());
         if (null == element) {
@@ -345,10 +345,10 @@ public class DefaultClientlibService implements ClientlibService {
             throw new FileNotFoundException("No client libraries for " + clientlibRef);
         }
 
-        encoding = adjustEncoding(encoding);
+        final String encoding = adjustEncoding(rawEncoding);
         String cachePath = getCachePath(clientlibRef, minified, encoding);
 
-        FileHandle cacheFile = new FileHandle(request.getResourceResolver().getResource(cachePath));
+        FileHandle cacheFile = new FileHandle(lazyCreationService.waitForInitialization(request.getResourceResolver(), cachePath));
         ClientlibInfo fileHints = getFileHints(cacheFile, element.makeLink());
 
         boolean ifModifiedIsOlder = (ifModifiedSince > 0) && (null != cacheFile.getLastModified()) &&
@@ -359,7 +359,6 @@ public class DefaultClientlibService implements ClientlibService {
 
         if (refreshForced || !cacheAssumedRecent) {
             ResourceResolver adminResolver = null;
-            SequencerService.Token token = sequencer.acquire(cachePath);
             try {
                 // recheck since the admin resolver could change things, and when acquiring the lock the
                 // cache file might have been recreated.
@@ -370,7 +369,7 @@ public class DefaultClientlibService implements ClientlibService {
                 UpdateTimeVisitor updateTimeVisitor = new UpdateTimeVisitor(element, this, request
                         .getResourceResolver());
                 updateTimeVisitor.execute();
-                String hash = updateTimeVisitor.getHash();
+                final String hash = updateTimeVisitor.getHash();
                 String cacheFileHash = cacheFile.getContent().getProperty(PROP_HASH);
 
                 boolean refreshNeeded = refreshForced || !hash.equals(cacheFileHash);
@@ -382,49 +381,27 @@ public class DefaultClientlibService implements ClientlibService {
                 if (refreshNeeded) {
                     LOG.info("prepare ''{}''...", clientlibRef);
 
-                    final ProcessorContext context = new ProcessorContext(request, adminResolver, executorService,
-                            getClientlibConfig().getMapClientlibURLs(), minified && clientlibConfig
-                            .getUseMinifiedFiles());
-
                     Resource cacheEntry = adminResolver.getResource(cachePath);
                     if (cacheEntry != null) {
                         adminResolver.delete(cacheEntry);
                         adminResolver.commit();
                     }
 
-                    String[] separated = com.composum.sling.core.util.ResourceUtil.splitPathAndName(cachePath);
-                    Resource parent = giveParent(adminResolver, separated[0]);
-                    refreshSession(adminResolver, false);
-                    cacheEntry = adminResolver.create(parent, separated[1], FileHandle.CRUD_FILE_PROPS);
-                    adminResolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS)
-                            .adaptTo(Node.class).addMixin("mix:title"); // TODO maybe use more sensible mixin
+                    final ProcessorContext context = new ProcessorContext(request, adminResolver, executorService,
+                            getClientlibConfig().getMapClientlibURLs(), minified && clientlibConfig
+                            .getUseMinifiedFiles());
 
+                    LazyCreationService.InitializationStrategy initializer = initializationStrategy(clientlibRef,
+                            encoding, hash, context);
 
-                    cacheFile = new FileHandle(cacheEntry);
-                    if (cacheFile.isValid()) {
-                        LOG.debug("create clientlib cache content ''{}''...", cacheFile.getResource().getPath());
-
-                        InputStream inputStream = startProcessing(clientlibRef, encoding, context);
-                        cacheFile.storeContent(inputStream);
-
-                        ModifiableValueMap contentValues = cacheFile.getContent().adaptTo(ModifiableValueMap.class);
-                        contentValues.put(com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED, Calendar
-                                .getInstance());
-                        contentValues.putAll(context.getHints());
-                        contentValues.put(PROP_HASH, hash);
-
-                        adminResolver.commit();
-
-                        LOG.info("clientlib cache content ''{}'' created", cacheFile.getResource().getPath());
-                    } else {
-                        LOG.error("can't create cache content in '{}'!", cacheFile != null ? cacheFile.getResource()
-                                .getPath() : "null");
-                    }
+                    Resource resource = lazyCreationService.getOrCreate(adminResolver, cachePath,
+                            LazyCreationService.IDENTITY_RETRIEVER, creationStrategy(), initializer,
+                            CRUD_CACHE_FOLDER_PROPS);
+                    cacheFile = new FileHandle(resource);
                 }
 
                 fileHints = getFileHints(cacheFile, element.makeLink());
             } finally {
-                sequencer.release(token);
                 if (null != adminResolver) adminResolver.close();
             }
         }
@@ -432,66 +409,94 @@ public class DefaultClientlibService implements ClientlibService {
         return fileHints;
     }
 
+    protected LazyCreationService.CreationStrategy creationStrategy() {
+        return new LazyCreationService.CreationStrategy() {
+            @Override
+            public Resource create(ResourceResolver adminResolver, Resource parent, String name) throws
+                    RepositoryException, PersistenceException {
+                Resource cacheEntry = adminResolver.create(parent, name, FileHandle.CRUD_FILE_PROPS);
+                adminResolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS)
+                        .adaptTo(Node.class).addMixin(ResourceUtil.TYPE_TITLE);
+                FileHandle cacheFile = new FileHandle(cacheEntry);
+                cacheFile.storeContent(new ByteArrayInputStream("".getBytes())); // mandatory node jcr:data
+                return cacheEntry;
+            }
+        };
+    }
+
+    protected LazyCreationService.InitializationStrategy initializationStrategy(
+            final ClientlibRef clientlibRef, final String encoding, final String hash, final ProcessorContext context) {
+        return new LazyCreationService.InitializationStrategy() {
+            @Override
+            public void initialize(ResourceResolver adminResolver, Resource cacheEntry) throws
+                    RepositoryException, PersistenceException {
+
+                try {
+                    FileHandle cacheFile = new FileHandle(cacheEntry);
+                    if (cacheFile.isValid()) {
+                        LOG.debug("create clientlib cache content ''{}''...", cacheFile.getResource()
+                                .getPath());
+
+                        final PipedOutputStream outputStream = new PipedOutputStream();
+                        InputStream inputStream = new PipedInputStream(outputStream);
+                        Future<Void> result = startProcessing(clientlibRef, encoding, context, outputStream);
+                        if (ENCODING_GZIP.equals(encoding)) {
+                            inputStream = gzipProcessor.processContent(inputStream, context);
+                        }
+                        cacheFile.storeContent(inputStream);
+
+                        ModifiableValueMap contentValues = cacheFile.getContent().adaptTo
+                                (ModifiableValueMap.class);
+                        contentValues.put(ResourceUtil.PROP_LAST_MODIFIED,
+                                Calendar.getInstance());
+                        contentValues.putAll(context.getHints());
+                        contentValues.put(PROP_HASH, hash);
+
+                        adminResolver.commit();
+                        result.get(); // transport any exceptions here
+
+                        LOG.info("clientlib cache content ''{}'' created", cacheFile.getResource()
+                                .getPath());
+                    } else {
+                        LOG.error("can't create cache content in '{}'!", cacheFile != null ? cacheFile
+                                .getResource().getPath() : "null");
+                    }
+                } catch (Exception e) {
+                    LOG.error("Error when initializing content in " + cacheEntry + "; deleting the file", e);
+                    refreshSession(adminResolver, false);
+                    adminResolver.delete(cacheEntry);
+                    throw new PersistenceException("" + e, e);
+                }
+            }
+        };
+    }
 
     /** Starts the processing (generation of the embedded content) of the clientlib / -category in the background. */
-    protected InputStream startProcessing(final ClientlibRef clientlibRef, String encoding, final ProcessorContext
-            context) throws IOException {
-        final PipedOutputStream outputStream = new PipedOutputStream();
-        InputStream inputStream = new PipedInputStream(outputStream);
+    protected Future<Void> startProcessing(final ClientlibRef clientlibRef, String encoding,
+                                           final ProcessorContext context, final OutputStream outputStream)
+            throws IOException {
         final ClientlibProcessor processor = processorMap.get(clientlibRef.type);
 
-        context.execute(new Runnable() {
+        Future<Void> callable = context.submit(new Callable<Void>() {
             @Override
-            public void run() {
+            public Void call() throws Exception {
                 ResourceResolver processingAdminResolver = null;
                 try {
                     processingAdminResolver = createAdministrativeResolver();
                     // retrieve clientlibs again since we need another resolver (not threadsafe)
-                    // and need to retrieve the clientlibs again with an admin resolver, anyway
-                    // to ensure they are independent of the login.
                     ClientlibElement adminElement = resolve(clientlibRef, processingAdminResolver);
                     ProcessingVisitor visitor = new ProcessingVisitor(adminElement, DefaultClientlibService.this,
                             outputStream, processor, context);
                     visitor.execute();
-                } catch (IOException | RepositoryException | RuntimeException ex) {
-                    LOG.error(ex.getMessage(), ex);
                 } finally {
                     IOUtils.closeQuietly(outputStream);
                     if (null != processingAdminResolver) processingAdminResolver.close();
                 }
+                return null;
             }
         });
 
-        if (ENCODING_GZIP.equals(encoding)) {
-            inputStream = gzipProcessor.processContent(inputStream, context);
-        }
-        return inputStream;
-    }
-
-    protected Resource giveParent(ResourceResolver resolver, String path) {
-        Resource resource = null;
-        SequencerService.Token token = sequencer.acquire(path);
-        try {
-            refreshSession(resolver, true);
-            resource = resolver.getResource(path);
-            if (resource == null) {
-                String[] separated = com.composum.sling.core.util.ResourceUtil.splitPathAndName(path);
-                Resource parent = "".equals(separated[0]) ? resolver.getResource("/") : giveParent(resolver,
-                        separated[0]);
-                try {
-                    refreshSession(resolver, true);
-                    resource = resolver.create(parent, separated[1], CRUD_CACHE_FOLDER_PROPS);
-                    resolver.commit();
-                } catch (PersistenceException pex) {
-                    // catch it and hope that the parent is available. necessary to continue on transaction isolation
-                    // problems
-                    LOG.error("clientlib giveParent('{}'): {}", path, pex);
-                }
-            }
-        } finally {
-            sequencer.release(token);
-        }
-        return resource;
+        return callable;
     }
 
     protected ClientlibInfo getFileHints(final FileHandle file, ClientlibLink link) {
@@ -515,13 +520,8 @@ public class DefaultClientlibService implements ClientlibService {
             outputStream, String encoding) throws IOException, RepositoryException {
         encoding = adjustEncoding(encoding);
         String cachePath = getCachePath(clientlibRef, minified, encoding);
-        FileHandle file = new FileHandle(resolver.getResource(cachePath));
-        if (!file.isValid()) { // this normally means there is another thread recreating the cachefile - wait for it
-            SequencerService.Token token = sequencer.acquire(cachePath);
-            sequencer.release(token);
-            refreshSession(resolver, false);
-            file = new FileHandle(resolver.getResource(cachePath));
-        }
+        Resource resource = lazyCreationService.waitForInitialization(resolver, cachePath);
+        FileHandle file = new FileHandle(resource);
         if (file.isValid()) {
             InputStream content = file.getStream();
             if (content != null) {
