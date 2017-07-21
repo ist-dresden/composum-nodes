@@ -296,7 +296,7 @@ public interface BeanContext {
     }
 
     /**
-     * a Map based implementation for a background service or a job execution
+     * a Service based implementation for a background service or a job execution
      */
     class Service extends Map {
 
