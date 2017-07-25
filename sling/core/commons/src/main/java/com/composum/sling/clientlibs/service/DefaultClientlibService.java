@@ -383,6 +383,7 @@ public class DefaultClientlibService implements ClientlibService {
 
                     Resource cacheEntry = adminResolver.getResource(cachePath);
                     if (cacheEntry != null) {
+                        LOG.info("deleting to be refreshed ''{}''...", cacheEntry);
                         adminResolver.delete(cacheEntry);
                         adminResolver.commit();
                     }
@@ -394,7 +395,7 @@ public class DefaultClientlibService implements ClientlibService {
                     LazyCreationService.InitializationStrategy initializer = initializationStrategy(clientlibRef,
                             encoding, hash, context);
 
-                    Resource resource = lazyCreationService.getOrCreate(adminResolver, cachePath,
+                    Resource resource = lazyCreationService.getOrCreate(request.getResourceResolver(), cachePath,
                             LazyCreationService.IDENTITY_RETRIEVER, creationStrategy(), initializer,
                             CRUD_CACHE_FOLDER_PROPS);
                     cacheFile = new FileHandle(resource);

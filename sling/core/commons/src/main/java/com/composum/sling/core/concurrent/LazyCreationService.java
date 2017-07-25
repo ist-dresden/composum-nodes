@@ -209,7 +209,8 @@ public interface LazyCreationService {
     final RetrievalStrategy<Resource> IDENTITY_RETRIEVER = new RetrievalStrategy<Resource>() {
         @Override
         public Resource get(ResourceResolver resolver, String path) throws RepositoryException {
-            return resolver.getResource(path);
+            Resource resource = resolver.getResource(path);
+            return resource;
         }
     };
 
