@@ -1,10 +1,20 @@
 package com.composum.sling.clientlibs.handle;
 
-import com.composum.sling.clientlibs.processor.*;
+import com.composum.sling.clientlibs.processor.DefaultLinkRenderer;
+import com.composum.sling.clientlibs.processor.LinkRenderer;
+import com.composum.sling.clientlibs.processor.RenderingVisitor;
+import com.composum.sling.clientlibs.processor.UpdateTimeVisitor;
+import com.composum.sling.clientlibs.service.ClientlibConfigurationService;
+import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.core.util.ResourceUtil;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.testing.mock.sling.servlet.MockSlingHttpServletRequest;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.util.Arrays;
@@ -18,7 +28,9 @@ import static com.composum.sling.clientlibs.handle.Clientlib.Type.js;
 import static com.composum.sling.clientlibs.handle.Clientlib.Type.link;
 import static com.composum.sling.clientlibs.handle.ClientlibLink.PROP_REL;
 import static com.composum.sling.clientlibs.handle.ClientlibResourceFolder.*;
+import static com.composum.sling.clientlibs.service.ClientlibConfigurationService.DEFAULT_CACHE_ROOT;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
 
 /**
@@ -345,5 +357,32 @@ public class ClientlibTest extends AbstractClientlibTest {
         for (Clientlib clientlib : Arrays.asList(c1, c2, c3, c4, linkit, expanded))
             verifyEqualHashesOfVisitors(clientlib);
     }
+
+    /** Tests weird case that the cached file is not found from the users resolver. */
+    @Test
+    public void testCacheInaccessible() throws Exception {
+        ClientlibService.ClientlibInfo hints = clientlib2Service.prepareContent(context.request(), c1.getRef(),
+                false, null,
+                false, "thisisnotahash", -1);
+        Calendar lastModified = hints.lastModified;
+        Thread.sleep(1000);
+
+        // resolver that can't access the cache
+        ResourceResolver noAccessToCacheResolver = Mockito.spy(context.resourceResolver());
+        when(noAccessToCacheResolver.getResource(Mockito.startsWith(DEFAULT_CACHE_ROOT))).thenReturn(null);
+        SlingHttpServletRequest request = new MockSlingHttpServletRequest(noAccessToCacheResolver, context
+                .bundleContext());
+        hints = clientlib2Service.prepareContent(request, c1.getRef(),
+                false, null,
+                false, "thisisnotahash", -1);
+        assertNull(hints);
+
+        // the cached file should not have been regenerated
+        hints = clientlib2Service.prepareContent(context.request(), c1.getRef(),
+                false, null,
+                false, "thisisnotahash", -1);
+        assertEquals(lastModified, hints.lastModified);
+    }
+
 
 }
