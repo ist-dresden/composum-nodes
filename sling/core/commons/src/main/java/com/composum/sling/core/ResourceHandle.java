@@ -46,7 +46,7 @@ public class ResourceHandle extends ResourceWrapper {
     public static boolean isValid(Resource resource) {
         return resource instanceof ResourceHandle
                 ? ((ResourceHandle) resource).isValid()
-                : resource != null;
+                : resource != null && resource.getResourceResolver().getResource(resource.getPath()) != null;
     }
 
     // initialized attributes
