@@ -363,8 +363,15 @@ public class DefaultClientlibService implements ClientlibService {
                 // recheck since the admin resolver could change things, and when acquiring the lock the
                 // cache file might have been recreated.
                 adminResolver = createAdministrativeResolver();
-                element = resolve(clientlibRef, adminResolver);
                 cacheFile = new FileHandle(adminResolver.getResource(cachePath));
+                if (cacheFile.isValid() && null == request.getResourceResolver().getResource(cachePath)) {
+                    refreshSession(request.getResourceResolver(), true);
+                    if (null == request.getResourceResolver().getResource(cachePath)) { // shouldn't happen
+                        LOG.warn("Cache file exists but is not accessible for user: {}", cachePath);
+                        return null;
+                    }
+                }
+                element = resolve(clientlibRef, adminResolver);
 
                 UpdateTimeVisitor updateTimeVisitor = new UpdateTimeVisitor(element, this, request
                         .getResourceResolver());
@@ -383,6 +390,7 @@ public class DefaultClientlibService implements ClientlibService {
 
                     Resource cacheEntry = adminResolver.getResource(cachePath);
                     if (cacheEntry != null) {
+                        LOG.info("deleting to be refreshed ''{}''...", cacheEntry);
                         adminResolver.delete(cacheEntry);
                         adminResolver.commit();
                     }
@@ -394,7 +402,7 @@ public class DefaultClientlibService implements ClientlibService {
                     LazyCreationService.InitializationStrategy initializer = initializationStrategy(clientlibRef,
                             encoding, hash, context);
 
-                    Resource resource = lazyCreationService.getOrCreate(adminResolver, cachePath,
+                    Resource resource = lazyCreationService.getOrCreate(request.getResourceResolver(), cachePath,
                             LazyCreationService.IDENTITY_RETRIEVER, creationStrategy(), initializer,
                             CRUD_CACHE_FOLDER_PROPS);
                     cacheFile = new FileHandle(resource);

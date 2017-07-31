@@ -156,8 +156,9 @@ public class LazyCreationServiceImpl implements LazyCreationService {
      * {@link #maximumLockWaitTimeSec} when waiting for the lock, we break the lock and create it ourselves.
      */
     @Override
-    public <T> T getOrCreate(ResourceResolver resolver, String path, RetrievalStrategy<T> getter, CreationStrategy
-            creator, InitializationStrategy initializer, ParentCreationStrategy parentCreationStrategy) throws
+    public <T> T getOrCreate(final ResourceResolver resolver, final String path, RetrievalStrategy<T> getter,
+                             final CreationStrategy creator, final InitializationStrategy initializer,
+                             final ParentCreationStrategy parentCreationStrategy) throws
             RepositoryException, PersistenceException {
         Validate.notNull(path, "Path must not be null");
         Validate.isTrue(path.startsWith("/"), "Path must be absolute: %s", path);
@@ -391,6 +392,10 @@ public class LazyCreationServiceImpl implements LazyCreationService {
             }
             refreshSession(resolver, true);
             resource = resolver.getResource(path);
+            if (null == resource) {
+                LOG.warn("Resource unexpectedly vanished during wait: {}", path);
+                return null; // vanished again - how??
+            }
             if (isInitialized(resource)) return resource;
 
             restWait = stopPollingTime - System.currentTimeMillis();

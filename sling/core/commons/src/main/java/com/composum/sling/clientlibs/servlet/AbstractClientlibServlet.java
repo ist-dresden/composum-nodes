@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -69,6 +70,11 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
             // try it once more on concurrency problems (with a fresh resolver)
             hints = service.prepareContent(request, clientlibRef, minified, encoding, refreshCache, requestedHash,
                     ifModifiedSince);
+        }
+
+        if (null == hints) {
+            LOG.warn("Not found: " + request.getRequestURI());
+            throw new FileNotFoundException(request.getRequestURI());
         }
 
         if (hints.hash.equals(requestedHash)) {

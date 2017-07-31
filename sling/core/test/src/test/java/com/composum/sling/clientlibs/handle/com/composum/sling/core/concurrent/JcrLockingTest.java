@@ -34,7 +34,7 @@ import static org.apache.jackrabbit.JcrConstants.*;
  * Verifies that JCR locking works as expected - preparation for
  * {@link com.composum.sling.core.concurrent.LazyCreationServiceImpl}.
  */
-public class TestJcrLocking {
+public class JcrLockingTest {
 
     public String path;
 

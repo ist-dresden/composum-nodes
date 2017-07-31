@@ -6,7 +6,6 @@ import com.composum.sling.core.concurrent.LazyCreationServiceImpl;
 import com.composum.sling.core.concurrent.SemaphoreSequencer;
 import com.composum.sling.core.concurrent.SequencerService;
 import org.apache.commons.collections.Factory;
-import org.apache.commons.collections.map.DefaultedMap;
 import org.apache.commons.collections.map.LazyMap;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
@@ -37,12 +36,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Tests for {@link com.composum.sling.core.concurrent.LazyCreationServiceImpl}.
  */
-public class TestLazyCreationServiceImpl {
+public class LazyCreationServiceImplTest {
 
     @Rule
     public final SlingContext context = new SlingContext(ResourceResolverType.JCR_OAK);
 
-    private static final Logger LOG = getLogger(TestLazyCreationServiceImpl.class);
+    private static final Logger LOG = getLogger(LazyCreationServiceImplTest.class);
 
     protected LazyCreationService lazyCreationService;
 
@@ -110,7 +109,7 @@ public class TestLazyCreationServiceImpl {
     @After
     public void checkNothingWasInitializedTwice() {
         for (Map.Entry<String, AtomicInteger> entry : initCount.entrySet()) {
-            assertEquals("" + initCount, 1, entry.getValue().get());
+            assertEquals(entry.getKey() + " in " + initCount, 1, entry.getValue().get());
         }
     }
 
