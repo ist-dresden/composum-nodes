@@ -93,6 +93,11 @@
                             <artifactId>composum-sling-user-management</artifactId>
                             <target>/libs/composum/nodes/install</target>
                         </embedded>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-sling-core-config</artifactId>
+                            <target>/libs/composum/nodes/install</target>
+                        </embedded>
                     </embeddeds>
 
                 </configuration>
@@ -127,6 +132,11 @@
             <artifactId>composum-sling-core-jslibs</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-sling-core-config</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
     </dependencies>
     <profiles>
@@ -136,6 +146,31 @@
         </profile>
         <profile>
             <id>installPackage</id>
+            <activation>
+                <property>
+                    <name>deploy.package</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>com.day.jcr.vault</groupId>
+                        <artifactId>content-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-content-package</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
         </profile>
         <profile>
             <id>installTestContent</id>
