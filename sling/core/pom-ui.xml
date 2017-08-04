@@ -22,6 +22,7 @@
 		<module>pckgmgr</module>
 		<module>usermgnt</module>
 		<module>slingfeature</module>
+		<module>corecfg</module>
 		<module>corepckg</module>
 	</modules>
 
