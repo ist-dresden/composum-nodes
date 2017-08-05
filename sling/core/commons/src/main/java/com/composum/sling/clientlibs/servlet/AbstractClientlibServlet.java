@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -71,6 +72,11 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
                     ifModifiedSince);
         }
 
+        if (null == hints) {
+            LOG.warn("Not found: " + request.getRequestURI());
+            throw new FileNotFoundException(request.getRequestURI());
+        }
+
         if (hints.hash.equals(requestedHash)) {
             boolean notModified = false;
             if (hints.mimeType != null) {
@@ -79,28 +85,36 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
             if (hints.encoding != null) {
                 response.setHeader(HttpUtil.HEADER_CONTENT_ENCODING, hints.encoding);
                 response.setHeader(HttpUtil.HEADER_VARY, HttpUtil.HEADER_ACCEPT_ENCODING);
-            } if (hints.size != null) {
+            }
+            if (hints.size != null) {
                 response.setHeader(HttpUtil.HEADER_CONTENT_LENGTH, hints.size.toString());
             }
             if (hints.lastModified != null) {
                 long timeInMillis = hints.lastModified.getTimeInMillis();
                 response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, timeInMillis);
-                if (get && 0 < ifModifiedSince) {
-                    if (ifModifiedSince > timeInMillis) {
-                        LOG.debug("Skipping retransmission because " + HttpConstants.HEADER_IF_MODIFIED_SINCE + "={} " +
-                                "" + "but " + "modified {}", ifModifiedSince, timeInMillis);
+                if (get) {
+                    if (!HttpUtil.isModifiedSince(ifModifiedSince, timeInMillis)) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Skipping retransmission because " + HttpConstants.HEADER_IF_MODIFIED_SINCE +
+                                    "={} but modified {}", ifModifiedSince, timeInMillis);
+                        }
                         notModified = true;
-                    } else
-                        LOG.debug("Transmitting because " + HttpConstants.HEADER_IF_MODIFIED_SINCE + "={} but " +
-                                "modified " + "{}", ifModifiedSince, timeInMillis);
+                    } else {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Transmitting because " + HttpConstants.HEADER_IF_MODIFIED_SINCE +
+                                    "={} but modified {}", ifModifiedSince, timeInMillis);
+                        }
+                    }
                 }
             }
 
             if (get) {
-                if (notModified) response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
-                else
+                if (notModified) {
+                    response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+                } else {
                     service.deliverContent(request.getResourceResolver(), clientlibRef, minified, response
                             .getOutputStream(), encoding);
+                }
             }
         } else {
             response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);

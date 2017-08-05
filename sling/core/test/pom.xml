@@ -18,6 +18,12 @@
         code.
     </description>
 
+    <properties>
+        <source.encoding>UTF-8</source.encoding>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -47,6 +53,7 @@
                 <configuration>
                     <systemProperties>
                         <org.slf4j.simpleLogger.log.com.composum>DEBUG</org.slf4j.simpleLogger.log.com.composum>
+                        <org.slf4j.simpleLogger.showDateTime>true</org.slf4j.simpleLogger.showDateTime>
                     </systemProperties>
                 </configuration>
             </plugin>
@@ -73,6 +80,20 @@
             <version>2.2.12</version>
             <scope>test</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.sling/org.apache.sling.testing.logging-mock -->
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.testing.logging-mock</artifactId>
+            <version>2.0.0</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.sling/org.apache.sling.testing.hamcrest -->
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.testing.hamcrest</artifactId>
+            <version>1.0.2</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Various needed libraries. -->
         <dependency>
@@ -97,12 +118,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
             <version>1.10.19</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.6</version>
             <scope>test</scope>
         </dependency>
 

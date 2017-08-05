@@ -14,7 +14,6 @@ import com.composum.sling.core.util.PropertyUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceWrapper;
 import org.apache.sling.api.resource.ValueMap;
@@ -22,7 +21,6 @@ import org.apache.sling.api.resource.ValueMap;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -48,7 +46,7 @@ public class ResourceHandle extends ResourceWrapper {
     public static boolean isValid(Resource resource) {
         return resource instanceof ResourceHandle
                 ? ((ResourceHandle) resource).isValid()
-                : resource != null;
+                : resource != null && resource.getResourceResolver().getResource(resource.getPath()) != null;
     }
 
     // initialized attributes
@@ -233,36 +231,14 @@ public class ResourceHandle extends ResourceWrapper {
      * retrieves the primary type of the resources node
      */
     public String getPrimaryType() {
-        String result = null;
-        Node node = getNode();
-        if (node != null) {
-            try {
-                NodeType type = node.getPrimaryNodeType();
-                if (type != null) {
-                    result = type.getName();
-                }
-            } catch (RepositoryException e) {
-                // ok, no node type accessible, use properties
-            }
-        }
-        if (result == null) {
-            result = getProperties().get(JcrConstants.JCR_PRIMARYTYPE, (String) null);
-        }
-        return result;
+        return ResourceUtil.getPrimaryType(getResource());
     }
 
     /**
      * check the node type or the resource type
      */
     public boolean isOfType(String type) {
-        Node node = getNode();
-        if (node != null) {
-            try {
-                return node.isNodeType(type);
-            } catch (RepositoryException ignored) {
-            }
-        }
-        return isResourceType(type);
+        return ResourceUtil.isResourceType(getResource(), type);
     }
 
     /**
@@ -347,11 +323,11 @@ public class ResourceHandle extends ResourceWrapper {
             Resource parent = super.getParent();
             if (parent == null && isSynthetic()) {
                 final String parentPath = getParentPath();
-                return getResourceResolver().resolve(parentPath).adaptTo(ResourceHandle.class);
+                return ResourceHandle.use(getResourceResolver().resolve(parentPath));
             } else if (parent == null) {
                 return null;
             } else {
-                return parent.adaptTo(ResourceHandle.class);
+                return ResourceHandle.use(parent);
             }
         } else {
             return null;

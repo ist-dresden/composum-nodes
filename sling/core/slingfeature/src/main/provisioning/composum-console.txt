@@ -7,3 +7,12 @@
   com.composum.sling.core/composum-sling-core-console
   com.composum.sling.core/composum-sling-package-manager
   com.composum.sling.core/composum-sling-user-management
+
+[configurations]
+  org.apache.sling.jcr.base.internal.LoginAdminWhitelist.fragment-composum_core
+    whitelist.name="composum_core"
+    whitelist.bundles=[
+      "com.composum.core.commons",
+      "com.composum.core.pckgmgr",
+      "com.composum.core.pckginstall"
+    ]
