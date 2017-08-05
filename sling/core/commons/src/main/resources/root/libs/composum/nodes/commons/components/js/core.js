@@ -655,6 +655,21 @@
             return parentPath + nodeName;
         },
 
+        getParentAndName: function (nodePath) {
+            var lastSlash = nodePath.lastIndexOf('/');
+            if (lastSlash >= 0) {
+                return {
+                    path: nodePath.substring(0, lastSlash),
+                    name: nodePath.substring(lastSlash + 1)
+                };
+            } else {
+                return {
+                    path: '',
+                    name: nodePath
+                };
+            }
+        },
+
         getNameFromPath: function (nodePath) {
             var lastSlash = nodePath.lastIndexOf('/');
             var name = lastSlash >= 0 ? nodePath.substring(lastSlash + 1) : nodePath;

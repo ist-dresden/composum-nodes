@@ -99,4 +99,13 @@ public class NodeUtil {
         }
         return name;
     }
+
+    public static boolean isNodeType (Node node, String... nodeType) throws RepositoryException {
+        for (String type : nodeType) {
+            if (node.isNodeType(type)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

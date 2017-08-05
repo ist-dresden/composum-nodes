@@ -172,6 +172,11 @@
                 this.$(c.css.selector.actions + ' button.move-down').unbind('click').on('click', _.bind(this.moveDown, this));
             },
 
+            declareName: function (name) {
+                this.$el.data(c.data.name, this.name = name);
+                this.prepare();
+            },
+
             getValue: function () {
                 var valueSet = [];
                 for (var i = 0; i < this.itemList.length; i++) {

@@ -71,6 +71,24 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static final String PROP_FILE_REFERENCE = "fileReference";
 
     /**
+     * retrieves all children of one of a type from a type set (node type or resource type)
+     */
+    public static List<Resource> getChildrenByType(final Resource resource, List<String> typeSet) {
+        final ArrayList<Resource> children = new ArrayList<>();
+        if (resource !=null) {
+            for (final Resource child : resource.getChildren()) {
+                for (String type : typeSet) {
+                    if (isResourceType(child, type)) {
+                        children.add(child);
+                        break;
+                    }
+                }
+            }
+        }
+        return children;
+    }
+
+    /**
      * retrieves all children of a type (node type or resource type)
      */
     public static List<Resource> getChildrenByType(final Resource resource, String type) {
