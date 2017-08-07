@@ -554,9 +554,14 @@
          *        general 'components' class which is probably bound during the components 'init'
          */
         getWidget: function (root, element, viewClass, initializer, force) {
+            var $root = $(root);
             var $element;
             if (typeof element === 'string') {
-                $element = $(root).find(element);
+                if ($root.is(element)) {
+                    $element = $root;
+                } else {
+                    $element = $root.find(element);
+                }
             } else {
                 $element = $(element);
             }
@@ -653,6 +658,21 @@
                 nodeName = nodeName.substring(1);
             }
             return parentPath + nodeName;
+        },
+
+        getParentAndName: function (nodePath) {
+            var lastSlash = nodePath.lastIndexOf('/');
+            if (lastSlash >= 0) {
+                return {
+                    path: nodePath.substring(0, lastSlash),
+                    name: nodePath.substring(lastSlash + 1)
+                };
+            } else {
+                return {
+                    path: '',
+                    name: nodePath
+                };
+            }
         },
 
         getNameFromPath: function (nodePath) {

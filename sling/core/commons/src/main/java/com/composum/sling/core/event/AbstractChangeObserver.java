@@ -1,9 +1,16 @@
 package com.composum.sling.core.event;
 
+import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Modified;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.osgi.framework.BundleContext;
+import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,17 +53,83 @@ public abstract class AbstractChangeObserver implements EventListener {
                     new StringFilter.BlackList("/(jcr|sling):[^/]*$"),
                     new StringFilter.WhiteList("/jcr:(title|description|data)[^/]*$"));
 
-    /**
-     * the collection to register all changed nodes of the event list
-     */
-    protected class ChangeCollection extends HashMap<String, ChangedContent> {
+    protected BundleContext bundleContext;
 
-        public void registerChange(Session session, String path, Calendar time, String user)
-                throws RepositoryException {
+    // to complete for a change observer...
+
+    /**
+     * returns the user id used by the observer (used to detect self generated events)
+     */
+    protected abstract String getServiceUserId();
+
+    /**
+     * determines the root path (probably configured) for the observer registration
+     */
+    protected abstract String getObservedPath();
+
+    /**
+     * performs the change for the handler implementation
+     */
+    protected abstract void doOnChange(ResourceResolver resolver, ChangedResource change)
+            throws RepositoryException, PersistenceException;
+
+    /**
+     * returns 'true' if the node is the target node for the change
+     */
+    protected abstract boolean isTargetNode(Node node) throws RepositoryException;
+
+    /**
+     * returns 'null' if the target node traversal should ends (extension hook)
+     */
+    protected String getTargetPath(Node node) throws RepositoryException {
+        String path = node.getPath();
+        return "/".equals(path) ? null : path;
+    }
+
+    /**
+     * extension hook to determine the handler filter based on the events property path
+     */
+    protected StringFilter getPropertyPathFilter() {
+        return PROPERTY_PATH_FILTER;
+    }
+
+    /**
+     * extension hook to determine the handler filter based on the events node path
+     */
+    protected StringFilter getNodePathFilter() {
+        return StringFilter.ALL;
+    }
+
+    /**
+     * extension hook to determine the handler filter based on the found target resource
+     */
+    protected ResourceFilter getResourceFilter() {
+        return ResourceFilter.ALL;
+    }
+
+    /**
+     * performs the right login and returns the resolver
+     */
+    protected abstract ResourceResolver getResolver() throws LoginException;
+
+    /**
+     * performs the right login and returns the session
+     */
+    protected abstract Session getSession() throws RepositoryException;
+
+    // event handler...
+
+    /**
+     * the collection to register all changed target resources of the event list
+     */
+    protected class ChangeCollection extends HashMap<String, ChangedResource> {
+
+        public void registerChange(Session session, ResourceResolver resolver, String path, Calendar time, String user)
+                throws RepositoryException, LoginException {
             Node contentNode = getContentNode(session, path);
             if (contentNode != null) {
                 path = contentNode.getPath();
-                ChangedContent change = get(path);
+                ChangedResource change = get(path);
                 if (change != null) {
                     change.mergeChange(time, user);
                 } else {
@@ -64,20 +137,26 @@ public abstract class AbstractChangeObserver implements EventListener {
                         SimpleDateFormat dateFormat = new SimpleDateFormat(LOG_DATE_FORMAT);
                         LOG.debug("registered: " + path + ", " + dateFormat.format(time.getTime()) + ", " + user);
                     }
-                    put(path, new ChangedContent(contentNode, time, user));
+                    Resource resource = resolver.getResource(path);
+                    if (resource != null && getResourceFilter().accept(resource)) {
+                        put(path, new ChangedResource(resource, time, user));
+                    }
                 }
             }
         }
     }
 
-    protected class ChangedContent {
+    /**
+     * the collection item for a change to perform
+     */
+    protected class ChangedResource {
 
-        protected final Node node;
+        protected final Resource resource;
         protected Calendar time;
         protected String user;
 
-        public ChangedContent(Node node, Calendar time, String user) {
-            this.node = node;
+        public ChangedResource(Resource resource, Calendar time, String user) {
+            this.resource = resource;
             this.time = time;
             this.user = user;
         }
@@ -89,8 +168,8 @@ public abstract class AbstractChangeObserver implements EventListener {
             }
         }
 
-        public Node getNode() {
-            return node;
+        public Resource getResource() {
+            return resource;
         }
 
         public Calendar getTime() {
@@ -102,26 +181,13 @@ public abstract class AbstractChangeObserver implements EventListener {
         }
     }
 
-    protected abstract String getServiceUserId();
-
-    protected abstract String getObservedPath();
-
-    protected abstract void doOnChange(ResourceResolver resolver, ChangedContent change)
-            throws RepositoryException, PersistenceException;
-
-    protected abstract boolean isContentNode(Node node) throws RepositoryException;
-
-    protected abstract ResourceResolver getResolver() throws LoginException;
-
-    protected abstract Session getSession() throws RepositoryException;
-
-
     /**
      * collects the changed nodes and calls the observers strategy (doOnChange) for each node found
      */
     @Override
     public void onEvent(EventIterator events) {
         try {
+            // this resolver should be the only one (for this handling thread)
             ResourceResolver resolver = getResolver();
             if (resolver != null) {
                 try {
@@ -140,11 +206,13 @@ public abstract class AbstractChangeObserver implements EventListener {
                                 time.setTime(new Date(event.getDate()));
                                 int type = event.getType();
                                 if (isPropertyEvent(type)) {
-                                    if (PROPERTY_PATH_FILTER.accept(path)) {
-                                        changedNodes.registerChange(session, path, time, user);
+                                    if (getPropertyPathFilter().accept(path)) {
+                                        changedNodes.registerChange(session, resolver, path, time, user);
                                     }
                                 } else {
-                                    changedNodes.registerChange(session, path, time, user);
+                                    if (getNodePathFilter().accept(path)) {
+                                        changedNodes.registerChange(session, resolver, path, time, user);
+                                    }
                                 }
                             }
                         } catch (RepositoryException rex) {
@@ -153,7 +221,7 @@ public abstract class AbstractChangeObserver implements EventListener {
                     }
                     // handle change actions on the detected nodes
                     if (changedNodes.size() > 0) {
-                        for (ChangedContent change : changedNodes.values()) {
+                        for (ChangedResource change : changedNodes.values()) {
                             try {
                                 doOnChange(resolver, change);
                             } catch (RepositoryException ex) {
@@ -175,7 +243,7 @@ public abstract class AbstractChangeObserver implements EventListener {
     }
 
     /**
-     * determine the abstract 'content node' of one item
+     * determines the target node (the node to perform the change) of one event item
      */
     protected Node getContentNode(Session session, String path)
             throws RepositoryException {
@@ -188,23 +256,29 @@ public abstract class AbstractChangeObserver implements EventListener {
                 node = item.getParent();
             }
             while (node != null
-                    && !isContentNode(node)
-                    && !"/".equals(path = node.getPath())) {
+                    && !isTargetNode(node)
+                    && (path = getTargetPath(node)) != null) {
                 node = node.getParent();
             }
-        } catch (PathNotFoundException ex) {
+        } catch (PathNotFoundException ignore) {
             // probably removed... ignore
         }
-        return !"/".equals(path) ? node : null;
+        return path != null ? node : null;
     }
 
+    /**
+     * returns 'trus' if the event is of type 'property change'
+     */
     protected boolean isPropertyEvent(int type) {
         return (type & (Event.PROPERTY_ADDED |
                 Event.PROPERTY_CHANGED |
                 Event.PROPERTY_REMOVED)) != 0;
     }
 
-    protected void activate() {
+    @Activate
+    @Modified
+    protected void activate(ComponentContext context) {
+        bundleContext = context.getBundleContext();
         try {
             Session session = getSession();
             session.getWorkspace().getObservationManager().addEventListener(
@@ -215,6 +289,7 @@ public abstract class AbstractChangeObserver implements EventListener {
         }
     }
 
+    @Deactivate
     protected void deactivate() {
         try {
             Session session = getSession();
