@@ -72,7 +72,7 @@
                 this.$oldname = this.$('input[name="oldname"]');
                 this.$name = this.$('input[name="name"]');
                 this.$type = this.$('select[name="type"]');
-                this.$subtype = this.$('.subtype');
+                this.$subtype = this.$('.subtype-select');
                 this.subtype = core.getWidget(this.$subtype, '.widget.select-widget', core.components.SelectWidget);
                 this.$multi = this.$('input[name="multi"]');
                 this.valueWidget = core.getWidget(this.$el,

@@ -144,6 +144,7 @@
              * #abstract
              */
             validate: function (alertMethod) {
+                return true;
             },
 
             initRules: function ($element) {
@@ -516,9 +517,14 @@
          *        general 'components' class which is probably bound during the components 'init'
          */
         getWidget: function (root, element, viewClass, initializer, force) {
+            var $root = $(root);
             var $element;
             if (typeof element === 'string') {
-                $element = $(root).find(element);
+                if ($root.is(element)) {
+                    $element = $root;
+                } else {
+                    $element = $root.find(element);
+                }
             } else {
                 $element = $(element);
             }
