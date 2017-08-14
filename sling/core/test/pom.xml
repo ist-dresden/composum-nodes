@@ -18,11 +18,44 @@
         code.
     </description>
 
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Hans-Peter Störr</name>
+            <email>hp.stoerr@ist-software.com</email>
+            <organization>IST GmbH Dresden</organization>
+            <organizationUrl>http://www.ist-software.com</organizationUrl>
+        </developer>
+    </developers>
+
     <properties>
         <source.encoding>UTF-8</source.encoding>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
+
+    <scm>
+        <connection>scm:git:https://github.com/ist-dresden/composum.git</connection>
+        <developerConnection>scm:git:https://github.com/ist-dresden/composum.git</developerConnection>
+        <url>https://github.com/ist-dresden/composum.git</url>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>archiva</id>
+            <url>https://build.ist-software.com/archiva/repository/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <build>
         <plugins>
