@@ -15,7 +15,7 @@ import org.apache.sling.api.wrappers.SlingHttpServletRequestWrapper;
 import com.composum.sling.core.filter.StringFilter;
 
 /**
- *
+ * Wrapper that extends the functionality of {@link SlingHttpServletRequest}.
  */
 public class RequestHandle extends SlingHttpServletRequestWrapper {
 

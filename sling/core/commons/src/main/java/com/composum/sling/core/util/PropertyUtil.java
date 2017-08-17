@@ -2,23 +2,14 @@ package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
-import javax.jcr.Binary;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
-import javax.jcr.PropertyType;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.ValueFactory;
-import javax.jcr.ValueFormatException;
+import javax.jcr.*;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.*;
 
 /**
  * Created by rw on 26.02.15.
@@ -99,9 +90,6 @@ public class PropertyUtil {
 
     /**
      * FIXME(rw,2015-04-22) not useful in the core layer
-     *
-     * @param name
-     * @return
      */
     public static String manglePropertyName(String name) {
         if (name != null && name.length() > 0) {
@@ -164,6 +152,22 @@ public class PropertyUtil {
         SET_PROPERTY_STRATEGY_MAP.put(PROP_PRIMARY_TYPE, new SetPropertyStrategy.PrimaryType());
         SET_PROPERTY_STRATEGY_MAP.put(PROP_MIXIN_TYPES, new SetPropertyStrategy.MixinTypes());
     }
+
+    /** The most appropriate Java type for a {@link PropertyType}. */
+    protected static final Map<Integer, Class> DEFAULT_PROPERTY_TYPES = new HashMap<Integer, Class>() {{
+        put(PropertyType.STRING, String.class);
+        put(PropertyType.BINARY, Binary.class);
+        put(PropertyType.LONG, Long.class);
+        put(PropertyType.DOUBLE, Double.class);
+        put(PropertyType.DATE, Calendar.class);
+        put(PropertyType.BOOLEAN, Boolean.class);
+        put(PropertyType.NAME, String.class);
+        put(PropertyType.PATH, String.class);
+        put(PropertyType.REFERENCE, String.class);
+        put(PropertyType.WEAKREFERENCE, String.class);
+        put(PropertyType.URI, java.net.URI.class);
+        put(PropertyType.DECIMAL, BigDecimal.class);
+    }};
 
     /**
      * @param name
@@ -284,5 +288,38 @@ public class PropertyUtil {
             }
         }
         return jcrValue;
+    }
+
+    /** Reads the value of a property as the given type. */
+    public static <T> T readValue(Value value, Class<T> type) throws RepositoryException {
+        try {
+            if (null == value) return null;
+            if (type.isAssignableFrom(value.getClass())) return type.cast(value);
+
+            if (Long.class.equals(type)) return type.cast(value.getLong());
+            if (Integer.class.equals(type)) return type.cast(value.getLong());
+            if (Short.class.equals(type)) return type.cast((short) value.getLong());
+            if (Byte.class.equals(type)) return type.cast((byte) value.getLong());
+            if (Float.class.equals(type)) return type.cast((float) value.getLong());
+            if (Double.class.equals(type)) return type.cast(value.getDouble());
+            if (String.class.equals(type)) return type.cast(value.getString());
+            if (Boolean.class.equals(type)) return type.cast(value.getBoolean());
+            if (java.net.URI.class.equals(type)) return type.cast(new URI(value.getString()));
+            if (java.net.URL.class.equals(type)) return type.cast(new URL(value.getString()));
+
+            if (Date.class.equals(type)) return type.cast(value.getDate().getTime());
+            if (Calendar.class.equals(type)) return type.cast(value.getDate());
+            if (BigDecimal.class.equals(type)) return type.cast(value.getDecimal());
+            if (Binary.class.equals(type)) return type.cast(value.getBinary());
+            if (InputStream.class.equals(type)) return type.cast(value.getBinary().getStream());
+
+            Class defaultType = DEFAULT_PROPERTY_TYPES.get(value.getType());
+            if (null != defaultType && type.isAssignableFrom(defaultType))
+                return type.cast(readValue(value, defaultType));
+
+            throw new IllegalArgumentException("Type " + type + " not supported yet.");
+        } catch (URISyntaxException | MalformedURLException | RuntimeException e) {
+            throw new ValueFormatException("Can't convert to " + type, e);
+        }
     }
 }
