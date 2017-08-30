@@ -1,6 +1,7 @@
 package com.composum.sling.core.filter;
 
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
@@ -509,6 +510,23 @@ public interface ResourceFilter {
         public FilterSet(Rule rule, List<ResourceFilter> filters) {
             this.rule = rule;
             this.set = filters;
+        }
+
+        /**
+         * Combines a set of filter instances by a combination rule
+         *
+         * @param rule    the combination rule
+         * @param filters the set of combined filters
+         */
+        public FilterSet(Rule rule, String... filters) {
+            this.rule = rule;
+            this.set = new ArrayList<>();
+            for (String string : filters) {
+                ResourceFilter filter = ResourceFilterMapping.fromString(string);
+                if (!ALL.equals(filter)) {
+                    set.add(filter);
+                }
+            }
         }
 
         /**
