@@ -19,7 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by rw on 19.05.15.
+ * Build resource filters from String representation / saved in Resources, and vice versa.
  */
 public class ResourceFilterMapping {
 
