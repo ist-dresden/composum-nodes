@@ -2,10 +2,13 @@ package com.composum.sling.core;
 
 import com.composum.sling.core.util.PropertyUtil;
 import com.composum.sling.core.util.ResourceUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 
 import java.util.HashMap;
+
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  * The value map which extends the property retrieval to the context (parents,...) of a resource.
@@ -161,7 +164,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
 
     protected String getRelativePath(String name) {
         String path = relativePath;
-        if (!path.endsWith("/")) {
+        if (!path.endsWith("/") && isNotBlank(path)) {
             path += "/";
         }
         path += name;
