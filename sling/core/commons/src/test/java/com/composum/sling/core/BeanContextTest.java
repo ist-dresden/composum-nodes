@@ -15,32 +15,31 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 import static org.easymock.EasyMock.createMock;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.Assert.*;
 
 /** Some tests for {@link BeanContext}. */
 public class BeanContextTest {
 
+    final ResourceResolver resolver = createMock(ResourceResolver.class);
+    final Resource resource = new SyntheticResource(resolver, "/whatever", "type");
+    SlingHttpServletRequest request = new SlingHttpServletRequestWrapper(createMock(SlingHttpServletRequest
+            .class)) {
+        @Override
+        public Resource getResource() {
+            return resource;
+        }
+
+        @Override
+        public ResourceResolver getResourceResolver() {
+            return resolver;
+        }
+    };
+    SlingHttpServletResponse response = new SlingHttpServletResponseWrapper(createMock(SlingHttpServletResponse
+            .class));
+    ServletContext servletContext = createMock(ServletContext.class);
+
     @Test
     public void adaptTo() {
-        final ResourceResolver resolver = createMock(ResourceResolver.class);
-        final Resource resource = new SyntheticResource(resolver, "/whatever", "type");
-        SlingHttpServletRequest request = new SlingHttpServletRequestWrapper(createMock(SlingHttpServletRequest
-                .class)) {
-            @Override
-            public Resource getResource() {
-                return resource;
-            }
-
-            @Override
-            public ResourceResolver getResourceResolver() {
-                return resolver;
-            }
-        };
-        SlingHttpServletResponse response = new SlingHttpServletResponseWrapper(createMock(SlingHttpServletResponse
-                .class));
-        ServletContext servletContext = createMock(ServletContext.class);
-
         BeanContext.Servlet context = new BeanContext.Servlet(servletContext, createMock
                 (BundleContext.class), request, response);
 
@@ -65,6 +64,20 @@ public class BeanContextTest {
         assertSame(servletContext, context.adaptTo(servletContext.getClass()));
 
         assertNull(context.adaptTo(Object.class));
+    }
+
+    @Test
+    public void copy() {
+        BeanContext.Servlet context = new BeanContext.Servlet(servletContext, createMock
+                (BundleContext.class), request, response);
+
+        Resource freshResource = new SyntheticResource(null, "/fresh", "other");
+        BeanContext.Servlet copy = context.cloneWith(freshResource);
+        assertSame(copy.getRequest(), context.getRequest());
+        assertSame(copy.getResponse(), context.getResponse());
+        assertSame(copy.getResolver(), context.getResolver());
+        assertSame(copy.getLocale(), context.getLocale());
+        assertSame(copy.getResource(), freshResource);
     }
 
 }

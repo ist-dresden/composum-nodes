@@ -122,9 +122,28 @@ public interface BeanContext extends Adaptable {
     <AdapterType> AdapterType adaptTo(Class<AdapterType> type);
 
     /**
+     * Returns a clone of this context with the resource overridden. If the {@link #getResolver()} was null, it will be
+     * set to the resource's {@link Resource#getResourceResolver()}, otherwise it will be kept. All other internal
+     * structures of this will be referenced by the copy, too.
+     *
+     * @param resource the resource
+     * @return a context with the same type as this, with resource and possibly resolver changed.
+     */
+    BeanContext cloneWith(Resource resource);
+
+    /**
      * the base class of the context interface with general methods
      */
     abstract class AbstractContext extends SlingAdaptable implements BeanContext {
+
+        protected AbstractContext() {
+        }
+
+        /** Copy constructor - sets every attribute from other. */
+        protected AbstractContext(AbstractContext other) {
+            Validate.isAssignableFrom(getClass(), other.getClass(),
+                    "Cannot initialize " + getClass() + " from " + other.getClass());
+        }
 
         protected abstract <T> T retrieveService(Class<T> type);
 
@@ -182,6 +201,7 @@ public interface BeanContext extends Adaptable {
             if (null != object && type.isAssignableFrom(object.getClass())) return true;
             return type.isAssignableFrom(defaultclass);
         }
+
     }
 
     /**
@@ -191,6 +211,17 @@ public interface BeanContext extends Adaptable {
 
         protected SlingBindings slingBindings;
         protected SlingScriptHelper scriptHelper;
+
+        protected AbstractScriptContext() {
+        }
+
+        /** Copy constructor */
+        protected AbstractScriptContext(AbstractScriptContext other) {
+            super(other);
+            this.scriptHelper = other.scriptHelper;
+            this.slingBindings = other.slingBindings;
+        }
+
 
         @Override
         public <T> T retrieveService(Class<T> type) {
@@ -226,8 +257,8 @@ public interface BeanContext extends Adaptable {
         private java.util.Map<String, Object> requestScopeMap;
         private java.util.Map<String, Object> sessionScopeMap;
 
-        private transient SlingHttpServletRequest request;
-        private transient Resource resource;
+        protected transient SlingHttpServletRequest request;
+        protected transient Resource resource;
         protected transient ResourceResolver resolver;
 
         public Map() {
@@ -254,6 +285,17 @@ public interface BeanContext extends Adaptable {
             this.pageScopeMap = pageScopeMap;
             this.requestScopeMap = requestScopeMap;
             this.sessionScopeMap = sessionScopeMap;
+        }
+
+        /** Copy constructor. */
+        public Map(Map other) {
+            super(other);
+            this.pageScopeMap = other.pageScopeMap;
+            this.requestScopeMap = other.requestScopeMap;
+            this.sessionScopeMap = other.sessionScopeMap;
+            this.request = other.request;
+            this.resource = other.resource;
+            this.resolver = other.resolver;
         }
 
         @Override
@@ -345,6 +387,14 @@ public interface BeanContext extends Adaptable {
                 }
             }
         }
+
+        @Override
+        public Map cloneWith(Resource resource) {
+            Map copy = new Map(this);
+            copy.resource = resource;
+            if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
+            return copy;
+        }
     }
 
     /**
@@ -352,8 +402,24 @@ public interface BeanContext extends Adaptable {
      */
     class Service extends Map {
 
+        public Service() {
+        }
+
+        /** Copy constructor. */
+        public Service(Service other) {
+            super(other);
+        }
+
         public Service(ResourceResolver resolver) {
             setAttribute(ATTR_RESOLVER, this.resolver = resolver, Scope.request);
+        }
+
+        @Override
+        public Service cloneWith(Resource resource) {
+            Service copy = new Service(this);
+            copy.resource = resource;
+            if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
+            return copy;
         }
     }
 
@@ -369,6 +435,13 @@ public interface BeanContext extends Adaptable {
 
         public Page(PageContext pageContext) {
             this.pageContext = pageContext;
+        }
+
+        public Page(Page other) {
+            super(other);
+            this.pageContext = other.pageContext;
+            this.resource = other.resource;
+            this.resolver = other.resolver;
         }
 
         public PageContext getPageContext() {
@@ -429,6 +502,14 @@ public interface BeanContext extends Adaptable {
                 return type.cast(pageContext);
             return super.adaptTo(type);
         }
+
+        @Override
+        public BeanContext cloneWith(Resource resource) {
+            Page copy = new Page(this);
+            copy.resource = resource;
+            if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
+            return copy;
+        }
     }
 
     /**
@@ -450,6 +531,17 @@ public interface BeanContext extends Adaptable {
             this.bundleContext = bundleContext;
             this.request = request;
             this.response = response;
+        }
+
+        /** Copy constructor. */
+        public Servlet(Servlet other) {
+            super(other);
+            this.servletContext = other.servletContext;
+            this.bundleContext = other.bundleContext;
+            this.request = other.request;
+            this.response = other.response;
+            this.resource = other.resource;
+            this.resolver = other.resolver;
         }
 
         @Override
@@ -556,6 +648,14 @@ public interface BeanContext extends Adaptable {
             if (typeFits(type, BundleContext.class, bundleContext, BundleContext.class))
                 return type.cast(servletContext);
             return super.adaptTo(type);
+        }
+
+        @Override
+        public Servlet cloneWith(Resource resource) {
+            Servlet copy = new Servlet(this);
+            copy.resource = resource;
+            if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
+            return copy;
         }
     }
 }
