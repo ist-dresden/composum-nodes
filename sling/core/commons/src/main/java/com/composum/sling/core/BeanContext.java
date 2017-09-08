@@ -1,8 +1,12 @@
 package com.composum.sling.core;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.sling.adapter.annotations.Adapter;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.adapter.Adaptable;
+import org.apache.sling.api.adapter.SlingAdaptable;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.scripting.SlingBindings;
@@ -13,19 +17,22 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.PageContext;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
- * the interface for the different scripting contexts (JSP, Groovy, ...)
- * and the basic implementations for this interface
+ * The interface for the different scripting contexts (JSP, Groovy, ...) and the basic implementations for this
+ * interface. This serves as a container for the basic objects often used to initialize models.
  */
-public interface BeanContext {
+@org.apache.sling.adapter.annotations.Adaptable(adaptableClass = BeanContext.class,
+        adapters = @Adapter(condition = "If the context contains an entity of the requested type",
+                value = {Resource.class, ResourceResolver.class,
+                        SlingHttpServletRequest.class, SlingHttpServletResponse.class})
+)
+public interface BeanContext extends Adaptable {
 
     //
     // the attribute names of the main context attributes
@@ -103,12 +110,25 @@ public interface BeanContext {
     Class<?> getType(String className) throws ClassNotFoundException;
 
     /**
+     * Adapts to the components {@link Resource}, {@link ResourceResolver}, {@link SlingHttpServletRequest}, {@link
+     * SlingHttpServletResponse}, {@link Locale}, {@link BeanContext} itself, or possibly more if defined in Sling.
+     * Cached - multiple calls will always return the same object.
+     *
+     * @param type not null, the type to be adapted to
+     * @return the component of type or whatever Sling has adapters for, or null if there is nothing.
+     * @see SlingAdaptable#adaptTo(Class)
+     */
+    @Override
+    <AdapterType> AdapterType adaptTo(Class<AdapterType> type);
+
+    /**
      * the base class of the context interface with general methods
      */
-    abstract class AbstractContext implements BeanContext {
+    abstract class AbstractContext extends SlingAdaptable implements BeanContext {
 
         protected abstract <T> T retrieveService(Class<T> type);
 
+        @Override
         public <T> T getService(Class<T> type) {
             String typeKey = type.getName();
             T service = getAttribute(typeKey, type);
@@ -119,6 +139,7 @@ public interface BeanContext {
             return service;
         }
 
+        @Override
         public Class<?> getType(String className) throws ClassNotFoundException {
             Class<?> type = null;
             // use Sling DynamicClassLoader
@@ -132,6 +153,35 @@ public interface BeanContext {
             }
             return type;
         }
+
+        @Override
+        public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+            if (typeFits(type, BeanContext.class, this, BeanContext.class))
+                return type.cast(this);
+            if (typeFits(type, ServletRequest.class, getRequest(), SlingHttpServletRequest.class))
+                return type.cast(getRequest());
+            if (typeFits(type, ServletResponse.class, getResponse(), SlingHttpServletResponse.class))
+                return type.cast(getResponse());
+            if (typeFits(type, ResourceResolver.class, getResolver(), ResourceResolver.class))
+                return type.cast(getResolver());
+            if (typeFits(type, Resource.class, getResource(), Resource.class))
+                return type.cast(getResource());
+            if (Locale.class.equals(type)) return type.cast(Locale.class);
+            return super.adaptTo(type); // fall back to sling mechanisms.
+        }
+
+        /**
+         * A type fits if it is below some upper bound (we don't want to return something for type, say, Object) and if
+         * it is assignable from the real class of the object. If the object is null, we will return null (and pass by
+         * the other Sling adaptable mechanisms) if the type is assignable from the default type the object would
+         * implement / extend.
+         */
+        protected <AdapterType> boolean typeFits(Class<?> type, Class<?> upperbound,
+                                                 AdapterType object, Class<AdapterType> defaultclass) {
+            if (!upperbound.isAssignableFrom(type)) return false;
+            if (null != object && type.isAssignableFrom(object.getClass())) return true;
+            return type.isAssignableFrom(defaultclass);
+        }
     }
 
     /**
@@ -142,10 +192,12 @@ public interface BeanContext {
         protected SlingBindings slingBindings;
         protected SlingScriptHelper scriptHelper;
 
+        @Override
         public <T> T retrieveService(Class<T> type) {
             return getScriptHelper().getService(type);
         }
 
+        @Override
         public <T> T[] getServices(Class<T> serviceType, String filter) {
             return getScriptHelper().getServices(serviceType, filter);
         }
@@ -367,6 +419,16 @@ public interface BeanContext {
         public void setAttribute(String name, Object value, Scope scope) {
             pageContext.setAttribute(name, value, scope.value);
         }
+
+        /**
+         * {@inheritDoc} Adapts to {@link PageContext} as well.
+         */
+        @Override
+        public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+            if (typeFits(type, PageContext.class, pageContext, PageContext.class))
+                return type.cast(pageContext);
+            return super.adaptTo(type);
+        }
     }
 
     /**
@@ -467,11 +529,13 @@ public interface BeanContext {
             }
         }
 
+        @Override
         public <T> T retrieveService(Class<T> type) {
             ServiceReference<T> reference = bundleContext.getServiceReference(type);
             return bundleContext.getService(reference);
         }
 
+        @Override
         public <T> T[] getServices(Class<T> type, String filter) throws InvalidSyntaxException {
             List<T> services = new ArrayList<>();
             Collection<ServiceReference<T>> references;
@@ -480,6 +544,18 @@ public interface BeanContext {
                 services.add(bundleContext.getService(reference));
             }
             return (T[]) services.toArray();
+        }
+
+        /**
+         * {@inheritDoc} Adapts to {@link ServletContext} and {@link BundleContext} as well.
+         */
+        @Override
+        public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+            if (typeFits(type, ServletContext.class, servletContext, ServletContext.class))
+                return type.cast(servletContext);
+            if (typeFits(type, BundleContext.class, bundleContext, BundleContext.class))
+                return type.cast(servletContext);
+            return super.adaptTo(type);
         }
     }
 }

@@ -40,6 +40,20 @@
             </plugin>
 
             <plugin>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>maven-sling-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-adapter-metadata</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>generate-adapter-metadata</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>
