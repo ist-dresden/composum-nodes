@@ -9,6 +9,7 @@ import org.apache.sling.api.adapter.Adaptable;
 import org.apache.sling.api.adapter.SlingAdaptable;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
@@ -111,8 +112,9 @@ public interface BeanContext extends Adaptable {
 
     /**
      * Adapts to the components {@link Resource}, {@link ResourceResolver}, {@link SlingHttpServletRequest}, {@link
-     * SlingHttpServletResponse}, {@link Locale}, {@link BeanContext} itself, or possibly more if defined in Sling.
-     * Cached - multiple calls will always return the same object.
+     * SlingHttpServletResponse}, {@link Locale}, {@link BeanContext} itself, a {@link ValueMap} for the request, or
+     * possibly more if defined in Sling. Cached - multiple calls will always return the same object, except for {@link
+     * ValueMap}.
      *
      * @param type not null, the type to be adapted to
      * @return the component of type or whatever Sling has adapters for, or null if there is nothing.
@@ -185,6 +187,9 @@ public interface BeanContext extends Adaptable {
                 return type.cast(getResolver());
             if (typeFits(type, Resource.class, getResource(), Resource.class))
                 return type.cast(getResource());
+            // adaptTo ValueMap as well, to directly support injecting resource attributes in sling-models
+            if (ValueMap.class.equals(type))
+                return null != getResource() ? type.cast(getResource().adaptTo(ValueMap.class)) : null;
             if (Locale.class.equals(type)) return type.cast(Locale.class);
             return super.adaptTo(type); // fall back to sling mechanisms.
         }

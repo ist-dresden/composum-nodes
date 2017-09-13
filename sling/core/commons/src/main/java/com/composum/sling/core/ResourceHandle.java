@@ -188,8 +188,8 @@ public class ResourceHandle extends ResourceWrapper {
     }
 
     public void setInheritanceType(InheritedValues.Type type) {
+        if (type != inheritanceType) inheritedValues = null;
         inheritanceType = type;
-        inheritedValues = null;
     }
 
     public InheritedValues getInheritedValues() {

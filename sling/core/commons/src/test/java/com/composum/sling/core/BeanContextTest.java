@@ -17,7 +17,11 @@ import javax.servlet.ServletResponse;
 import static org.easymock.EasyMock.createMock;
 import static org.junit.Assert.*;
 
-/** Some tests for {@link BeanContext}. */
+/**
+ * Some tests for {@link BeanContext}.
+ *
+ * @author Hans-Peter Stoerr
+ */
 public class BeanContextTest {
 
     final ResourceResolver resolver = createMock(ResourceResolver.class);
@@ -37,6 +41,9 @@ public class BeanContextTest {
     SlingHttpServletResponse response = new SlingHttpServletResponseWrapper(createMock(SlingHttpServletResponse
             .class));
     ServletContext servletContext = createMock(ServletContext.class);
+
+    BeanContext.Servlet context = new BeanContext.Servlet(servletContext, createMock
+            (BundleContext.class), request, response);
 
     @Test
     public void adaptTo() {
@@ -68,9 +75,6 @@ public class BeanContextTest {
 
     @Test
     public void copy() {
-        BeanContext.Servlet context = new BeanContext.Servlet(servletContext, createMock
-                (BundleContext.class), request, response);
-
         Resource freshResource = new SyntheticResource(null, "/fresh", "other");
         BeanContext.Servlet copy = context.cloneWith(freshResource);
         assertSame(copy.getRequest(), context.getRequest());

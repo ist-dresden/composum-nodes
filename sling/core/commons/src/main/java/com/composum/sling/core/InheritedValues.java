@@ -175,8 +175,8 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
     }
 
     /**
-     * Retrieves the first parent node for inheritance traversal
-     * and defines the relativePath of the property.
+     * Retrieves the first parent node for inheritance traversal (that is, the node above jcr:content)
+     * and defines the relativePath of the property wrt. this node.
      */
     protected void findEntryPoint() {
         if (entryPoint == null) {
