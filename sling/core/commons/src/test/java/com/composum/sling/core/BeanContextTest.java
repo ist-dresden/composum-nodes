@@ -84,4 +84,22 @@ public class BeanContextTest {
         assertSame(copy.getResource(), freshResource);
     }
 
+    @Test
+    public void instantiateSlingBean() {
+        assertNull(context.adaptTo(SlingBean.class));
+        assertNull(context.adaptTo(AbstractSlingBean.class));
+        TestingSlingBean testBean = context.adaptTo(TestingSlingBean.class);
+        assertNotNull(testBean);
+        assertTrue(testBean.initialized);
+    }
+
+    public static class TestingSlingBean extends AbstractSlingBean {
+        boolean initialized;
+
+        @Override
+        public void initialize(BeanContext context) {
+            initialized = true;
+        }
+    }
+
 }

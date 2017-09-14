@@ -16,13 +16,20 @@ import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
+import org.slf4j.Logger;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.PageContext;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.*;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * The interface for the different scripting contexts (JSP, Groovy, ...) and the basic implementations for this
@@ -111,10 +118,13 @@ public interface BeanContext extends Adaptable {
     Class<?> getType(String className) throws ClassNotFoundException;
 
     /**
-     * Adapts to the components {@link Resource}, {@link ResourceResolver}, {@link SlingHttpServletRequest}, {@link
-     * SlingHttpServletResponse}, {@link Locale}, {@link BeanContext} itself, a {@link ValueMap} for the request, or
-     * possibly more if defined in Sling. Cached - multiple calls will always return the same object, except for {@link
-     * ValueMap}.
+     * <p>Adapts to the components {@link Resource}, {@link ResourceResolver}, {@link SlingHttpServletRequest}, {@link
+     * SlingHttpServletResponse}, {@link Locale}, {@link BeanContext} itself, a {@link ValueMap} for the request, {@link
+     * SlingBean}s or possibly more if defined in Sling.</p> <p>In case of {@link SlingBean} we try the basic sling
+     * mechanism (possibly calling Sling-Models) and, failing that, try to instantiate and {@link
+     * SlingBean#initialize(BeanContext)} it ourselves, if it is instantiable and the Sling-Models @Model annotation is
+     * not present.</p> <p>Cached - multiple calls will always return the same object, except for {@link ValueMap} and
+     * {@link SlingBean}s.</p>
      *
      * @param type not null, the type to be adapted to
      * @return the component of type or whatever Sling has adapters for, or null if there is nothing.
@@ -137,6 +147,8 @@ public interface BeanContext extends Adaptable {
      * the base class of the context interface with general methods
      */
     abstract class AbstractContext extends SlingAdaptable implements BeanContext {
+
+        private static final Logger LOG = getLogger(AbstractContext.class);
 
         protected AbstractContext() {
         }
@@ -191,7 +203,37 @@ public interface BeanContext extends Adaptable {
             if (ValueMap.class.equals(type))
                 return null != getResource() ? type.cast(getResource().adaptTo(ValueMap.class)) : null;
             if (Locale.class.equals(type)) return type.cast(Locale.class);
-            return super.adaptTo(type); // fall back to sling mechanisms.
+
+            AdapterType slingAdaption = super.adaptTo(type); // fall back to default sling mechanisms
+            if (null != slingAdaption) return slingAdaption;
+
+            return tryToInstantiateSlingBean(type);
+        }
+
+        /**
+         * If type is an instantiable SlingBean but not a Sling-Models bean, try to instantiate it. We have to check per
+         * reflection whether the Sling-Models @Models annotation is present since we cannot distinguish a failed
+         * Sling-Models instantiation (returning null) from not being a Sling-Models bean at all (also returning null),
+         * and the Sling-Models ModelFactory cannot be a dependency, here.
+         */
+        protected <AdapterType> AdapterType tryToInstantiateSlingBean(Class<AdapterType> type) {
+            if (!type.isInterface() && !Modifier.isAbstract(type.getModifiers())
+                    && SlingBean.class.isAssignableFrom(type)) {
+                boolean isSlingModelsModel = false;
+                for (Annotation annotation : type.getAnnotations())
+                    isSlingModelsModel = isSlingModelsModel ||
+                            annotation.annotationType().getName().equals("org.apache.sling.models.annotations.Model");
+                if (!isSlingModelsModel) {
+                    try {
+                        SlingBean slingBean = (SlingBean) type.newInstance();
+                        slingBean.initialize(this);
+                        return type.cast(slingBean);
+                    } catch (InstantiationException  | IllegalAccessException | RuntimeException e) {
+                        LOG.error("Couldn't instantiate " + type, e);
+                    }
+                }
+            }
+            return null;
         }
 
         /**
@@ -203,8 +245,7 @@ public interface BeanContext extends Adaptable {
         protected <AdapterType> boolean typeFits(Class<?> type, Class<?> upperbound,
                                                  AdapterType object, Class<AdapterType> defaultclass) {
             if (!upperbound.isAssignableFrom(type)) return false;
-            if (null != object && type.isAssignableFrom(object.getClass())) return true;
-            return type.isAssignableFrom(defaultclass);
+            return null != object && type.isAssignableFrom(object.getClass()) || type.isAssignableFrom(defaultclass);
         }
 
     }
@@ -258,9 +299,9 @@ public interface BeanContext extends Adaptable {
      */
     class Map extends AbstractScriptContext {
 
-        private java.util.Map<String, Object> pageScopeMap;
-        private java.util.Map<String, Object> requestScopeMap;
-        private java.util.Map<String, Object> sessionScopeMap;
+        private final java.util.Map<String, Object> pageScopeMap;
+        private final java.util.Map<String, Object> requestScopeMap;
+        private final java.util.Map<String, Object> sessionScopeMap;
 
         protected transient SlingHttpServletRequest request;
         protected transient Resource resource;
