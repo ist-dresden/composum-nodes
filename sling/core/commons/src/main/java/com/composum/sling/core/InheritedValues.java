@@ -2,7 +2,7 @@ package com.composum.sling.core;
 
 import com.composum.sling.core.util.PropertyUtil;
 import com.composum.sling.core.util.ResourceUtil;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 
@@ -52,7 +52,14 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
      * </dl>
      */
     public enum Type {
-        contentRelated, contentBased, nodeRelated, sameContent
+        contentRelated, contentBased, nodeRelated, sameContent,
+        /**
+         * Special value to signify that a (context dependent) "default" inheritance type is to be used, for usage in
+         * annotation attributes to specify defaults, since a null value cannot be used there. Only use this in
+         * annotations, not in other code .Context-dependent; it is a runtime error if this is actually used in
+         * ResourceHandle.
+         */
+        useDefault
     }
 
     public static final Object UNDEFINED = "";
@@ -69,6 +76,8 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
     }
 
     public InheritedValues(Resource resource, Type inheritanceType) {
+        Validate.notNull(inheritanceType,"Inheritance type null is not permitted.");
+        Validate.isTrue(Type.useDefault != inheritanceType, "useDefault is not a valid inheritance strategy");
         this.resource = resource;
         this.inheritanceType = inheritanceType;
     }

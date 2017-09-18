@@ -202,7 +202,7 @@ public interface BeanContext extends Adaptable {
             // adaptTo ValueMap as well, to directly support injecting resource attributes in sling-models
             if (ValueMap.class.equals(type))
                 return null != getResource() ? type.cast(getResource().adaptTo(ValueMap.class)) : null;
-            if (Locale.class.equals(type)) return type.cast(Locale.class);
+            if (Locale.class.equals(type)) return type.cast(getLocale());
 
             AdapterType slingAdaption = super.adaptTo(type); // fall back to default sling mechanisms
             if (null != slingAdaption) return slingAdaption;
