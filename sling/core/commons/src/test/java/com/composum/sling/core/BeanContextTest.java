@@ -13,6 +13,9 @@ import org.osgi.framework.BundleContext;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpSession;
+
+import java.util.Locale;
 
 import static org.easymock.EasyMock.createMock;
 import static org.junit.Assert.*;
@@ -42,8 +45,8 @@ public class BeanContextTest {
             .class));
     ServletContext servletContext = createMock(ServletContext.class);
 
-    BeanContext.Servlet context = new BeanContext.Servlet(servletContext, createMock
-            (BundleContext.class), request, response);
+    BeanContext context = new BeanContext.Servlet(servletContext, createMock
+            (BundleContext.class), request, response).cloneWith(Locale.GERMANY);
 
     @Test
     public void adaptTo() {
@@ -76,7 +79,7 @@ public class BeanContextTest {
     @Test
     public void copy() {
         Resource freshResource = new SyntheticResource(null, "/fresh", "other");
-        BeanContext.Servlet copy = context.cloneWith(freshResource);
+        BeanContext copy = context.cloneWith(freshResource);
         assertSame(copy.getRequest(), context.getRequest());
         assertSame(copy.getResponse(), context.getResponse());
         assertSame(copy.getResolver(), context.getResolver());

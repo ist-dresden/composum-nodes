@@ -1,7 +1,6 @@
 package com.composum.sling.core;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
 import org.apache.sling.adapter.annotations.Adapter;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -24,8 +23,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.PageContext;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
@@ -49,6 +46,7 @@ public interface BeanContext extends Adaptable {
     String ATTR_RESOLVER = "resourceResolver";
     String ATTR_REQUEST = "request";
     String ATTR_RESPONSE = "response";
+    String ATTR_LOCALE = "locale";
 
     /**
      * the Scope enumeration according to the JSPs PageContext
@@ -88,7 +86,8 @@ public interface BeanContext extends Adaptable {
     SlingHttpServletResponse getResponse();
 
     /**
-     * Returns the locale declared determined using the context.
+     * Returns the locale declared determined using the context, determined and cached as {@link #getAttribute(String,
+     * Class)} ({@link #ATTR_LOCALE}).
      */
     Locale getLocale();
 
@@ -134,9 +133,8 @@ public interface BeanContext extends Adaptable {
     <AdapterType> AdapterType adaptTo(Class<AdapterType> type);
 
     /**
-     * Returns a clone of this context with the resource overridden. If the {@link #getResolver()} was null, it will be
-     * set to the resource's {@link Resource#getResourceResolver()}, otherwise it will be kept. All other internal
-     * structures of this will be referenced by the copy, too.
+     * Returns a clone of this context with the resource overridden. All other internal structures of this will be
+     * referenced by the copy, too.
      *
      * @param resource the resource
      * @return a context with the same type as this, with resource and possibly resolver changed.
@@ -144,22 +142,49 @@ public interface BeanContext extends Adaptable {
     BeanContext cloneWith(Resource resource);
 
     /**
+     * Returns a clone of this context with the locale overridden. All other internal structures of this will be
+     * referenced by the copy, too.
+     *
+     * @param locale the locale; if this is null {@link #getLocale()} will take this from the attributes.
+     * @return a context with the same type as this, with resource and possibly resolver changed.
+     */
+    BeanContext cloneWith(Locale locale);
+
+    /**
      * the base class of the context interface with general methods
      */
-    abstract class AbstractContext extends SlingAdaptable implements BeanContext {
+    abstract class AbstractContext extends SlingAdaptable implements BeanContext, Cloneable {
 
         private static final Logger LOG = getLogger(AbstractContext.class);
+
+        protected transient Locale locale;
 
         protected AbstractContext() {
         }
 
-        /** Copy constructor - sets every attribute from other. */
-        protected AbstractContext(AbstractContext other) {
-            Validate.isAssignableFrom(getClass(), other.getClass(),
-                    "Cannot initialize " + getClass() + " from " + other.getClass());
+        @Override
+        protected Object clone() {
+            try {
+                return super.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new IllegalStateException("Impossible: clone didn't work", e);
+            }
         }
 
         protected abstract <T> T retrieveService(Class<T> type);
+
+        @Override
+        public Locale getLocale() {
+            if (null == locale) locale = getAttribute(ATTR_LOCALE, Locale.class);
+            return locale;
+        }
+
+        @Override
+        public BeanContext cloneWith(Locale locale) {
+            AbstractContext cloned = (AbstractContext) clone();
+            cloned.locale = locale;
+            return cloned;
+        }
 
         @Override
         public <T> T getService(Class<T> type) {
@@ -228,7 +253,7 @@ public interface BeanContext extends Adaptable {
                         SlingBean slingBean = (SlingBean) type.newInstance();
                         slingBean.initialize(this);
                         return type.cast(slingBean);
-                    } catch (InstantiationException  | IllegalAccessException | RuntimeException e) {
+                    } catch (InstantiationException | IllegalAccessException | RuntimeException e) {
                         LOG.error("Couldn't instantiate " + type, e);
                     }
                 }
@@ -260,14 +285,6 @@ public interface BeanContext extends Adaptable {
 
         protected AbstractScriptContext() {
         }
-
-        /** Copy constructor */
-        protected AbstractScriptContext(AbstractScriptContext other) {
-            super(other);
-            this.scriptHelper = other.scriptHelper;
-            this.slingBindings = other.slingBindings;
-        }
-
 
         @Override
         public <T> T retrieveService(Class<T> type) {
@@ -333,17 +350,6 @@ public interface BeanContext extends Adaptable {
             this.sessionScopeMap = sessionScopeMap;
         }
 
-        /** Copy constructor. */
-        public Map(Map other) {
-            super(other);
-            this.pageScopeMap = other.pageScopeMap;
-            this.requestScopeMap = other.requestScopeMap;
-            this.sessionScopeMap = other.sessionScopeMap;
-            this.request = other.request;
-            this.resource = other.resource;
-            this.resolver = other.resolver;
-        }
-
         @Override
         public Resource getResource() {
             if (resource == null) {
@@ -368,11 +374,6 @@ public interface BeanContext extends Adaptable {
         @Override
         public SlingHttpServletResponse getResponse() {
             return getAttribute(ATTR_RESPONSE, SlingHttpServletResponse.class);
-        }
-
-        @Override
-        public Locale getLocale() {
-            return Locale.getDefault();
         }
 
         @Override
@@ -436,7 +437,7 @@ public interface BeanContext extends Adaptable {
 
         @Override
         public Map cloneWith(Resource resource) {
-            Map copy = new Map(this);
+            Map copy = (Map) clone();
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
             return copy;
@@ -451,18 +452,13 @@ public interface BeanContext extends Adaptable {
         public Service() {
         }
 
-        /** Copy constructor. */
-        public Service(Service other) {
-            super(other);
-        }
-
         public Service(ResourceResolver resolver) {
             setAttribute(ATTR_RESOLVER, this.resolver = resolver, Scope.request);
         }
 
         @Override
         public Service cloneWith(Resource resource) {
-            Service copy = new Service(this);
+            Service copy = (Service) clone();
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
             return copy;
@@ -481,13 +477,6 @@ public interface BeanContext extends Adaptable {
 
         public Page(PageContext pageContext) {
             this.pageContext = pageContext;
-        }
-
-        public Page(Page other) {
-            super(other);
-            this.pageContext = other.pageContext;
-            this.resource = other.resource;
-            this.resolver = other.resolver;
         }
 
         public PageContext getPageContext() {
@@ -521,11 +510,6 @@ public interface BeanContext extends Adaptable {
         }
 
         @Override
-        public Locale getLocale() {
-            return Locale.getDefault();
-        }
-
-        @Override
         public <T> T getAttribute(String name, Class<T> T) {
             Object attribute = null;
             if (StringUtils.isNotBlank(name)) {
@@ -551,7 +535,7 @@ public interface BeanContext extends Adaptable {
 
         @Override
         public BeanContext cloneWith(Resource resource) {
-            Page copy = new Page(this);
+            Page copy = (Page) clone();
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
             return copy;
@@ -579,17 +563,6 @@ public interface BeanContext extends Adaptable {
             this.response = response;
         }
 
-        /** Copy constructor. */
-        public Servlet(Servlet other) {
-            super(other);
-            this.servletContext = other.servletContext;
-            this.bundleContext = other.bundleContext;
-            this.request = other.request;
-            this.response = other.response;
-            this.resource = other.resource;
-            this.resolver = other.resolver;
-        }
-
         @Override
         public Resource getResource() {
             if (resource == null) {
@@ -614,11 +587,6 @@ public interface BeanContext extends Adaptable {
         @Override
         public SlingHttpServletResponse getResponse() {
             return this.response;
-        }
-
-        @Override
-        public Locale getLocale() {
-            return Locale.getDefault();
         }
 
         @Override
@@ -698,7 +666,7 @@ public interface BeanContext extends Adaptable {
 
         @Override
         public Servlet cloneWith(Resource resource) {
-            Servlet copy = new Servlet(this);
+            Servlet copy = (Servlet) clone();
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
             return copy;
