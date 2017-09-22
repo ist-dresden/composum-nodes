@@ -18,7 +18,11 @@ public interface SlingBean {
      * @param context  the scripting context (e.g. a JSP PageContext or a Groovy scripting context)
      * @param resource the resource to use (normally the resource addressed by the request)
      * @see BeanContext#cloneWith(Resource)
+     * @deprecated please use {@link BeanContext#cloneWith(Resource)}.{@link BeanContext#adaptTo(Class)} with the needed
+     * SlingBean class to instantiate the object, since {@link #initialize(BeanContext, Resource)} doesn't initialize
+     * fields injected by Sling-Models.
      */
+    @Deprecated
     void initialize(BeanContext context, Resource resource);
 
     /**
@@ -26,7 +30,10 @@ public interface SlingBean {
      * the resource determined from the context.
      *
      * @param context the scripting context (e.g. a JSP PageContext or a Groovy scripting context)
+     * @deprecated please use {@link BeanContext#adaptTo(Class)} with the needed SlingBean class to instantiate the
+     * object, since {@link #initialize(BeanContext)} doesn't initialize fields injected by Sling-Models.
      */
+    @Deprecated
     void initialize(BeanContext context);
 
     /**
