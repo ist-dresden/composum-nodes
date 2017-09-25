@@ -66,7 +66,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
     @Reference
     private NodesConfiguration coreConfig;
 
-    @Override protected boolean isEnabled() {
+    @Override
+    protected boolean isEnabled() {
         return coreConfig.isEnabled(this);
     }
 
@@ -103,7 +104,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json, Operation.authorizable, new DeleteAuthorizable());
     }
 
-    @Override protected ServletOperationSet getOperations() {
+    @Override
+    protected ServletOperationSet getOperations() {
         return operations;
     }
 
@@ -133,6 +135,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         boolean disabled;
         String disabledReason;
         Map<String, Object> properties = new HashMap<>();
+
         static UserEntry fromUser(User user) throws RepositoryException {
             UserEntry userEntry = new UserEntry();
             Iterator<Group> groupIterator = user.memberOf();
@@ -204,13 +207,15 @@ public class UserManagementServlet extends AbstractServiceServlet {
             this.authorizableClass = authorizableClass;
         }
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws RepositoryException, IOException, ServletException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
             final Query q = new Query() {
-                @Override public <T> void build(final QueryBuilder<T> builder) {
+                @Override
+                public <T> void build(final QueryBuilder<T> builder) {
                     builder.setCondition(builder.nameMatches("%"));
                     builder.setSortOrder("@name", QueryBuilder.Direction.ASCENDING);
                     builder.setSelector(authorizableClass);
@@ -249,14 +254,16 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public static class QueryAuthorizables implements ServletOperation {
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws RepositoryException, IOException, ServletException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
             final String path = AbstractServiceServlet.getPath(request);
             final Query q = new Query() {
-                @Override public <T> void build(final QueryBuilder<T> builder) {
+                @Override
+                public <T> void build(final QueryBuilder<T> builder) {
                     builder.setCondition(builder.nameMatches("%" + (path.startsWith("/") ? path.substring(1) : path) + "%"));
                     builder.setSortOrder("@name", QueryBuilder.Direction.ASCENDING);
                     builder.setSelector(Authorizable.class);
@@ -354,7 +361,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public static class GetTree implements ServletOperation {
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws RepositoryException, IOException, ServletException {
             final ResourceResolver resolver = request.getResourceResolver();
             String originalRequestPath = AbstractServiceServlet.getPath(request);
@@ -368,7 +376,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
             final Query q = new Query() {
-                @Override public <T> void build(final QueryBuilder<T> builder) {
+                @Override
+                public <T> void build(final QueryBuilder<T> builder) {
                     builder.setCondition(builder.nameMatches("%"));
                     builder.setSortOrder("@name", QueryBuilder.Direction.ASCENDING);
                     builder.setSelector(Authorizable.class);
@@ -412,7 +421,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
                             .name("text").value(authorizableByRequestPath.getID())
                             .name("name").value(authorizableByRequestPath.getID())
                             .name("path").value(authorizableByRequestPath.getPath())
-                            .name("type").value(authorizableByRequestPath.isGroup()?"group":"user")
+                            .name("type").value(authorizableByRequestPath.isGroup() ? "group" : "user")
                             .name("disabled").value(authorizableByRequestPath.isGroup() ? false : ((User) authorizableByRequestPath).isDisabled())
                             .name("systemUser").value(isSystemUser(authorizableByRequestPath))
                             .name("state").beginObject().name("loaded").value(true).endObject()
@@ -421,12 +430,12 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 }
                 for (String path : paths) {
                     jsonWriter.beginObject()
-                        .name("id").value(requestPath + path)
-                        .name("text").value(path)
-                        .name("name").value(path)
-                        .name("path").value(requestPath + path)
-                        .name("state").beginObject().name("loaded").value(false).endObject()
-                    .endObject();
+                            .name("id").value(requestPath + path)
+                            .name("text").value(path)
+                            .name("name").value(path)
+                            .name("path").value(requestPath + path)
+                            .name("state").beginObject().name("loaded").value(false).endObject()
+                            .endObject();
                 }
                 for (Authorizable authorizable : auths) {
                     jsonWriter.beginObject()
@@ -434,7 +443,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
                             .name("text").value(authorizable.getID())
                             .name("name").value(authorizable.getID())
                             .name("path").value(authorizable.getPath())
-                            .name("type").value(authorizable.isGroup()?"group":"user")
+                            .name("type").value(authorizable.isGroup() ? "group" : "user")
                             .name("disabled").value(authorizable.isGroup() ? false : ((User) authorizable).isDisabled())
                             .name("systemUser").value(isSystemUser(authorizable))
                             .name("state").beginObject().name("loaded").value(true).endObject()
@@ -490,7 +499,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public static class ChangePassword implements ServletOperation {
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws RepositoryException, IOException, ServletException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -509,7 +519,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public static class DisableUser implements ServletOperation {
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws RepositoryException, IOException, ServletException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -528,7 +539,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public static class EnableUser implements ServletOperation {
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws RepositoryException, IOException, ServletException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -545,7 +557,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public static class GetUser implements ServletOperation {
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws RepositoryException, IOException, ServletException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -625,7 +638,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 if (StringUtils.isEmpty(intermediatePath)) {
                     newUser = userManager.createUser(username, password);
                 } else {
-                    newUser = userManager.createUser(username, password, new Principal(){
+                    newUser = userManager.createUser(username, password, new Principal() {
                         @Override
                         public String getName() {
                             return username;
@@ -663,10 +676,11 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 if (authorizableName.equals("admin") || authorizableName.equals("anonymous")) {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, authorizableName + " deleted. System destroyed.");
                 } else {
-                    final Authorizable authorizable = userManager.getAuthorizable(authorizableName);
+                    Authorizable authorizable = userManager.getAuthorizable(authorizableName);
                     if (authorizable == null) {
-                        response.sendError(HttpServletResponse.SC_NOT_FOUND, authorizableName + " not found.");
-                    } else {
+                        authorizable = userManager.getAuthorizableByPath(path);
+                    }
+                    if (authorizable != null) {
                         Iterator<Group> groupIterator = authorizable.declaredMemberOf();
                         while (groupIterator.hasNext()) {
                             Group group = groupIterator.next();
@@ -675,6 +689,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
                         authorizable.remove();
                         session.save();
                         ResponseUtil.writeEmptyArray(response);
+                    } else {
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND, authorizableName + " not found.");
                     }
                 }
             } else {
@@ -696,7 +712,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
             if (StringUtils.isEmpty(intermediatePath)) {
                 newGroup = userManager.createGroup(name);
             } else {
-                newGroup = userManager.createGroup(name, new Principal(){
+                newGroup = userManager.createGroup(name, new Principal() {
                     @Override
                     public String getName() {
                         return name;
@@ -718,7 +734,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     public static class GetGroup implements ServletOperation {
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws RepositoryException, IOException, ServletException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -728,7 +745,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
             } else {
                 final UserManager userManager = session.getUserManager();
                 final Authorizable authorizable = userManager.getAuthorizable(path.startsWith("/") ? path.substring(1) : path);
-                if (authorizable==null) {
+                if (authorizable == null) {
                     ResponseUtil.writeEmptyArray(response);
                 } else {
                     Group group = (Group) authorizable;
@@ -752,7 +769,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             super(Authorizable.class);
         }
 
-        @Override protected AuthorizableEntry processPrincipal(Authorizable authorizable) throws RepositoryException {
+        @Override
+        protected AuthorizableEntry processPrincipal(Authorizable authorizable) throws RepositoryException {
             AuthorizableEntry authorizableEntry = new AuthorizableEntry();
             Principal principal = authorizable.getPrincipal();
             Iterator<Group> groupIterator = authorizable.memberOf();
@@ -772,7 +790,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             super(User.class);
         }
 
-        @Override protected UserEntry processPrincipal(User user) throws RepositoryException {
+        @Override
+        protected UserEntry processPrincipal(User user) throws RepositoryException {
             return UserEntry.fromUser(user);
         }
     }
@@ -783,7 +802,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             super(Group.class);
         }
 
-        @Override protected GroupEntry processPrincipal(Group group) throws RepositoryException {
+        @Override
+        protected GroupEntry processPrincipal(Group group) throws RepositoryException {
             GroupEntry groupEntry = new GroupEntry();
             Principal principal = group.getPrincipal();
             Iterator<Group> groupIterator = group.memberOf();
