@@ -1,9 +1,12 @@
 {
   "sling:resourceType": "composum/nodes/commons/clientlib",
+  "category": [
+    "composum.core.console.usermgnt"
+  ],
   "css": {
     "jcr:primaryType": "sling:OrderedFolder",
     "depends": [
-      "composum/nodes/console/clientlibs/console"
+      "category:composum.core.console.default"
     ],
     "embed": [
       "composum/nodes/usermgnt/css/usermanagement.css"
@@ -12,7 +15,7 @@
   "js": {
     "jcr:primaryType": "sling:OrderedFolder",
     "depends": [
-      "composum/nodes/console/clientlibs/console"
+      "category:composum.core.console.default"
     ],
     "dialogs": {
       "embed": [

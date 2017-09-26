@@ -1,23 +1,27 @@
 {
   "browser": {
     "sling:resourceType": "composum/nodes/commons/clientlib",
+    "category": [
+      "composum.core.console.browser"
+    ],
+    "order": 100,
     "css": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "composum/nodes/console/clientlibs/console"
+        "category:composum.core.console.default"
       ],
       "embed": [
-        "composum/nodes/console/components/codeeditor/codeeditor.css",
+        "composum/nodes/console/components/codeeditor/clientlib",
         "composum/nodes/console/browser/css/nodes.css",
         "composum/nodes/console/browser/css/browser.css",
-        "composum/nodes/console/browser/components/favorites/favorites.css"
+        "composum/nodes/console/browser/components/favorites/clientlib"
       ]
     },
     "js": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "composum/nodes/console/clientlibs/console",
-        "composum/nodes/console/clientlibs/ace"
+        "category:composum.core.console.default",
+        "category:composum.edit.components.ace"
       ],
       "embed": [
         "composum/nodes/console/browser/js/property.js",
@@ -25,7 +29,7 @@
         "composum/nodes/console/browser/js/query.js",
         "composum/nodes/console/browser/js/browser.js",
         "composum/nodes/console/browser/js/navigation.js",
-        "composum/nodes/console/browser/components/favorites/favorites.js",
+        "composum/nodes/console/browser/components/favorites/clientlib",
         "composum/nodes/console/browser/js/properties.js",
         "composum/nodes/console/browser/js/accessPolicyEntryDialog.js",
         "composum/nodes/console/browser/js/policiesTable.js",
@@ -37,6 +41,11 @@
   },
   "console": {
     "sling:resourceType": "composum/nodes/commons/clientlib",
+    "description": "embeds the complete set of console widgets and components",
+    "category": [
+      "composum.core.console.default"
+    ],
+    "order": 100,
     "link": {
       "jcr:primaryType": "nt:unstructured",
       "cpn-64": {
@@ -51,7 +60,7 @@
     "css": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "composum/nodes/console/clientlibs/base"
+        "category:composum.core.console.base"
       ],
       "embed": [
         "jslibs/trumbowyg/2.3.0/ui/trumbowyg.css",
@@ -62,7 +71,7 @@
     "js": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "composum/nodes/console/clientlibs/base",
+        "category:composum.core.console.base",
         "jslibs/trumbowyg/2.3.0/trumbowyg.js"
       ],
       "components": {
@@ -78,19 +87,26 @@
   },
   "base": {
     "sling:resourceType": "composum/nodes/commons/clientlib",
+    "category": [
+      "composum.core.console.base"
+    ],
+    "order": 100,
     "css": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
         "fonts/awesome/4.7.0/css/font-awesome.css",
         "jslibs/bootstrap/3.3.7/css/bootstrap.css",
-        "jslibs/jstree/3.3.3/themes/proton/style.css",
-        "jslibs/x-editable/1.5.1/bootstrap3-editable/css/bootstrap-editable.css",
-        "jslibs/bootstrap-fileinput/4.3.6/css/fileinput.css"
+        "jslibs/jstree/3.3.3/themes/proton/style.css"
       ],
       "embed": [
+        "jslibs/jstree/3.3.3/themes/proton/style.css",
+        "jslibs/x-editable/1.5.1/bootstrap3-editable/css/bootstrap-editable.css",
         "jslibs/bootstrap/3.3.7/css/bootstrap-theme.css",
         "jslibs/bootstrap-table/1.7.0/bootstrap-table.css",
         "jslibs/bootstrap-datetimepicker/4.17.45/css/bootstrap-datetimepicker.css",
+        "jslibs/bootstrap-slider/9.7.2/css/bootstrap-slider.css",
+        "jslibs/bootstrap-colorpicker/2.5.0/css/bootstrap-colorpicker.css",
+        "jslibs/bootstrap-fileinput/4.3.6/css/fileinput.css",
         "jslibs/split-pane/0.9.3/split-pane.css"
       ]
     },
@@ -109,78 +125,64 @@
           "/etc/clientlibs/granite/jquery/granite/csrf/source/csrf.js"
         ]
       },
-      "underscore": {
-        "embed": "jslibs/underscore/1.8.3/underscore.js"
-      },
-      "moment": {
-        "embed": "jslibs/moment/2.10.3/moment-with-locales.js"
-      },
-      "backbone": {
-        "embed": "jslibs/backbone/1.3.3/backbone.js"
-      },
-      "bootstrap": {
-        "embed": "jslibs/bootstrap/3.3.7/js/bootstrap.js"
-      },
-      "bootstrap-table": {
-        "embed": "jslibs/bootstrap-table/1.7.0/bootstrap-table.js"
-      },
-      "bootstrap-datetimepicker": {
-        "embed": "jslibs/bootstrap-datetimepicker/4.17.45/js/bootstrap-datetimepicker.js"
-      },
-      "bootstrap3-editable": {
-        "embed": "jslibs/x-editable/1.5.1/bootstrap3-editable/js/bootstrap-editable.js"
-      },
-      "bootstrap3-typeahead": {
-        "embed": "jslibs/typeahead/3.1.0/bootstrap3-typeahead.js"
-      },
-      "fileinput": {
-        "embed": "jslibs/bootstrap-fileinput/4.3.6/js/fileinput.js"
-      },
-      "split-pane": {
-        "embed": "jslibs/split-pane/0.9.3/split-pane.js"
-      },
-      "jstree": {
-        "embed": "jslibs/jstree/3.3.3/jstree.js"
+      "libs": {
+        "embed": [
+          "jslibs/underscore/1.8.3/underscore.js",
+          "jslibs/moment/2.10.3/moment-with-locales.js",
+          "jslibs/backbone/1.3.3/backbone.js",
+          "jslibs/bootstrap/3.3.7/js/bootstrap.js",
+          "jslibs/bootstrap-table/1.7.0/bootstrap-table.js",
+          "jslibs/bootstrap-datetimepicker/4.17.45/js/bootstrap-datetimepicker.js",
+          "jslibs/x-editable/1.5.1/bootstrap3-editable/js/bootstrap-editable.js",
+          "jslibs/typeahead/3.1.0/bootstrap3-typeahead.js",
+          "jslibs/bootstrap-slider/9.7.2/bootstrap-slider.js",
+          "jslibs/bootstrap-colorpicker/2.5.0/js/bootstrap-colorpicker.js",
+          "jslibs/bootstrap-fileinput/4.3.6/js/fileinput.js",
+          "jslibs/split-pane/0.9.3/split-pane.js",
+          "jslibs/jstree/3.3.3/jstree.js"
+        ]
       }
     }
   },
   "codeeditor": {
     "sling:resourceType": "composum/nodes/commons/clientlib",
+    "category": [
+      "composum.edit.codeeditor"
+    ],
     "css": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "fonts/awesome/4.7.0/css/font-awesome.css",
-        "composum/nodes/console/clientlibs/ace"
-      ],
-      "embed": [
-        "jslibs/bootstrap/3.3.7/css/bootstrap.css",
-        "jslibs/bootstrap/3.3.7/css/bootstrap-theme.css",
+        "fonts/awesome/(4.*:4.7.0)/css/font-awesome.css",
+        "composum/nodes/console/clientlibs/ace",
+        "jslibs/bootstrap/(3.*:3.3.7)/css/bootstrap.css",
+        "jslibs/bootstrap/(3.*:3.3.7)/css/bootstrap-theme.css",
         "composum/nodes/console/page/css/console.css",
-        "composum/nodes/console/components/codeeditor/codeeditor.css"
+        "composum/nodes/console/components/codeeditor/clientlib"
       ]
     },
     "js": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "composum/nodes/console/clientlibs/ace"
-      ],
-      "embed": [
-        "jslibs/jquery/2.2.4/jquery.js",
-        "jslibs/underscore/1.8.3/underscore.js",
-        "jslibs/backbone/1.3.3/backbone.js",
-        "jslibs/bootstrap/3.3.7/js/bootstrap.js",
+        "composum/nodes/console/clientlibs/ace",
+        "jslibs/jquery/(2.*:2.2.4)/jquery.js",
+        "jslibs/underscore/(1.*:1.8.3)/underscore.js",
+        "jslibs/backbone/(1.*:1.3.3)/backbone.js",
+        "jslibs/bootstrap/(3.*:3.3.7)/js/bootstrap.js",
         "composum/nodes/commons/components/js/core.js",
         "composum/nodes/commons/components/js/dialogs.js",
         "composum/nodes/commons/components/js/components.js",
         "composum/nodes/commons/components/js/codeEditor.js",
         "composum/nodes/commons/components/js/multiform.js",
         "composum/nodes/console/page/js/console.js",
-        "composum/nodes/console/components/codeeditor/codeeditor.js"
+        "composum/nodes/console/components/codeeditor/clientlib"
       ]
     }
   },
   "ace": {
     "sling:resourceType": "composum/nodes/commons/clientlib",
+    "category": [
+      "composum.edit.components.ace"
+    ],
     "js": {
       "jcr:primaryType": "nt:unstructured",
       "expanded": true,
