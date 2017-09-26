@@ -15,5 +15,5 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <!-- switch of auto link for phone numbers -->
   <meta name="format-detection" content="telephone=no"/>
-<cpn:clientlib type="link" path="composum/nodes/console/clientlibs/console"/>
-<cpn:clientlib type="css" path="composum/nodes/console/clientlibs/console"/>
+<cpn:clientlib type="link" category="core.console.default"/>
+<cpn:clientlib type="css" category="composum.core.console.default"/>
