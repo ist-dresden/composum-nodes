@@ -74,20 +74,20 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
     @Override
     public void visit(ClientlibCategory category, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent)
             throws IOException, RepositoryException {
-        LOG.debug(">>> {} {}", mode, category);
+        LOG.trace(">>> {} {}", mode, category);
         if (notProcessed(category.getRef())) {
             for (Clientlib clientlib : category.clientlibs)
                 clientlib.accept(this, EMBEDDED, null);
             action(category, mode, parent);
             markAsProcessed(category.makeLink());
         }
-        LOG.debug("<<< {} => {}", category, hasEmbeddedFiles);
+        LOG.trace("<<< {} => {}", category, hasEmbeddedFiles);
     }
 
     @Override
     public void visit(Clientlib clientlib, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent) throws
             IOException, RepositoryException {
-        LOG.debug(">>> {} {}", mode, clientlib);
+        LOG.trace(">>> {} {}", mode, clientlib);
         if (notProcessed(clientlib.getRef())) {
             updateHash(clientlib.resource.getPath(), clientlib.resource.getLastModified());
             ClientlibResourceFolder folder = clientlib.getResourceFolder();
@@ -95,13 +95,13 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
             action(clientlib, mode, parent);
             markAsProcessed(clientlib.makeLink());
         }
-        LOG.debug("<<< {} => {}", clientlib, hasEmbeddedFiles);
+        LOG.trace("<<< {} => {}", clientlib, hasEmbeddedFiles);
     }
 
     @Override
     public void visit(ClientlibResourceFolder folder, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder
             parent) throws IOException, RepositoryException {
-        LOG.debug(">>> {} {}", mode, folder);
+        LOG.trace(">>> {} {}", mode, folder);
         updateHash(folder.resource.getPath(), folder.resource.getLastModified());
         for (ClientlibRef dependency : folder.getDependencies())
             resolveAndAccept(dependency, DEPENDS, folder);
@@ -111,13 +111,13 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
             resolveAndAccept(embedded, embeddingMode, folder);
         for (ClientlibElement child : folder.getChildren())
             child.accept(getVisitorFor(mode, child), embeddingMode, folder);
-        LOG.debug("<<< {} => {}", folder, hasEmbeddedFiles);
+        LOG.trace("<<< {} => {}", folder, hasEmbeddedFiles);
     }
 
     @Override
     public void visit(ClientlibFile file, VisitorMode mode, ClientlibResourceFolder parent) throws
             RepositoryException, IOException {
-        LOG.debug(">>> {} {}", mode, file);
+        LOG.trace(">>> {} {}", mode, file);
         if (notProcessed(file.getRef())) {
             if (EMBEDDED == mode) {
                 updateHash(file.handle.getPath(), file.handle.getLastModified());
@@ -126,18 +126,18 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
             action(file, mode, parent);
             markAsProcessed(file.makeLink());
         }
-        LOG.debug("<<< {} {}", mode, file);
+        LOG.trace("<<< {} {}", mode, file);
     }
 
     @Override
     public void visit(ClientlibExternalUri externalUri, VisitorMode mode, ClientlibResourceFolder parent) {
-        LOG.debug(">>> {} {}", mode, externalUri);
+        LOG.trace(">>> {} {}", mode, externalUri);
         if (notProcessed(externalUri.getRef())) {
             action(externalUri, mode, parent);
             markAsProcessed(externalUri.makeLink());
         }
         // never embedded -> irrelevant for hash.
-        LOG.debug("<<< {} {}", mode, externalUri);
+        LOG.trace("<<< {} {}", mode, externalUri);
     }
 
     protected void resolveAndAccept(ClientlibRef ref, VisitorMode mode, ClientlibResourceFolder folder) throws

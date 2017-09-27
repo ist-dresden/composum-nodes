@@ -71,8 +71,10 @@ public class ClientlibTag extends CpnlBodyTagSupport {
 
             if (StringUtils.isNotBlank(path)) {
                 ref = new ClientlibRef(type, path, false, null);
+                LOG.debug("<cpn:clientlib.{} path={}/>", type, path);
             } else if (StringUtils.isNotBlank(category)) {
                 ref = ClientlibRef.forCategory(type, category, false, null);
+                LOG.debug("<cpn:clientlib.{} category={}/>", type, category);
             } else {
                 LOG.error("No path nor category attribute was given!");
             }
