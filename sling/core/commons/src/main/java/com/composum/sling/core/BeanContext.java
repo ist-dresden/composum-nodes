@@ -1,31 +1,43 @@
 package com.composum.sling.core;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.adapter.annotations.Adapter;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.adapter.Adaptable;
+import org.apache.sling.api.adapter.SlingAdaptable;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
+import org.slf4j.Logger;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.PageContext;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Modifier;
+import java.util.*;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * the interface for the different scripting contexts (JSP, Groovy, ...)
- * and the basic implementations for this interface
+ * The interface for the different scripting contexts (JSP, Groovy, ...) and the basic implementations for this
+ * interface. This serves as a container for the basic objects often used to initialize models.
  */
-public interface BeanContext {
+@org.apache.sling.adapter.annotations.Adaptable(adaptableClass = BeanContext.class,
+        adapters = @Adapter(condition = "If the context contains an entity of the requested type",
+                value = {Resource.class, ResourceResolver.class,
+                        SlingHttpServletRequest.class, SlingHttpServletResponse.class})
+)
+public interface BeanContext extends Adaptable {
 
     //
     // the attribute names of the main context attributes
@@ -34,6 +46,7 @@ public interface BeanContext {
     String ATTR_RESOLVER = "resourceResolver";
     String ATTR_REQUEST = "request";
     String ATTR_RESPONSE = "response";
+    String ATTR_LOCALE = "locale";
 
     /**
      * the Scope enumeration according to the JSPs PageContext
@@ -73,7 +86,8 @@ public interface BeanContext {
     SlingHttpServletResponse getResponse();
 
     /**
-     * Returns the locale declared determined using the context.
+     * Returns the locale declared determined using the context, determined and cached as {@link #getAttribute(String,
+     * Class)} ({@link #ATTR_LOCALE}).
      */
     Locale getLocale();
 
@@ -103,12 +117,76 @@ public interface BeanContext {
     Class<?> getType(String className) throws ClassNotFoundException;
 
     /**
+     * <p>Adapts to the components {@link Resource}, {@link ResourceResolver}, {@link SlingHttpServletRequest}, {@link
+     * SlingHttpServletResponse}, {@link Locale}, {@link BeanContext} itself, a {@link ValueMap} for the request, {@link
+     * SlingBean}s or possibly more if defined in Sling.</p> <p>In case of {@link SlingBean} we try the basic sling
+     * mechanism (possibly calling Sling-Models) and, failing that, try to instantiate and {@link
+     * SlingBean#initialize(BeanContext)} it ourselves, if it is instantiable and the Sling-Models @Model annotation is
+     * not present.</p> <p>Cached - multiple calls will always return the same object, except for {@link ValueMap} and
+     * {@link SlingBean}s.</p>
+     *
+     * @param type not null, the type to be adapted to
+     * @return the component of type or whatever Sling has adapters for, or null if there is nothing.
+     * @see SlingAdaptable#adaptTo(Class)
+     */
+    @Override
+    <AdapterType> AdapterType adaptTo(Class<AdapterType> type);
+
+    /**
+     * Returns a clone of this context with the resource overridden. All other internal structures of this will be
+     * referenced by the copy, too.
+     *
+     * @param resource the resource
+     * @return a context with the same type as this, with resource and possibly resolver changed.
+     */
+    BeanContext cloneWith(Resource resource);
+
+    /**
+     * Returns a clone of this context with the locale overridden. All other internal structures of this will be
+     * referenced by the copy, too.
+     *
+     * @param locale the locale; if this is null {@link #getLocale()} will take this from the attributes.
+     * @return a context with the same type as this, with resource and possibly resolver changed.
+     */
+    BeanContext cloneWith(Locale locale);
+
+    /**
      * the base class of the context interface with general methods
      */
-    abstract class AbstractContext implements BeanContext {
+    abstract class AbstractContext extends SlingAdaptable implements BeanContext, Cloneable {
+
+        private static final Logger LOG = getLogger(AbstractContext.class);
+
+        protected transient Locale locale;
+
+        protected AbstractContext() {
+        }
+
+        @Override
+        protected Object clone() {
+            try {
+                return super.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new IllegalStateException("Impossible: clone didn't work", e);
+            }
+        }
 
         protected abstract <T> T retrieveService(Class<T> type);
 
+        @Override
+        public Locale getLocale() {
+            if (null == locale) locale = getAttribute(ATTR_LOCALE, Locale.class);
+            return locale;
+        }
+
+        @Override
+        public BeanContext cloneWith(Locale locale) {
+            AbstractContext cloned = (AbstractContext) clone();
+            cloned.locale = locale;
+            return cloned;
+        }
+
+        @Override
         public <T> T getService(Class<T> type) {
             String typeKey = type.getName();
             T service = getAttribute(typeKey, type);
@@ -119,6 +197,7 @@ public interface BeanContext {
             return service;
         }
 
+        @Override
         public Class<?> getType(String className) throws ClassNotFoundException {
             Class<?> type = null;
             // use Sling DynamicClassLoader
@@ -132,6 +211,68 @@ public interface BeanContext {
             }
             return type;
         }
+
+        @Override
+        public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+            if (typeFits(type, BeanContext.class, this, BeanContext.class))
+                return type.cast(this);
+            if (typeFits(type, ServletRequest.class, getRequest(), SlingHttpServletRequest.class))
+                return type.cast(getRequest());
+            if (typeFits(type, ServletResponse.class, getResponse(), SlingHttpServletResponse.class))
+                return type.cast(getResponse());
+            if (typeFits(type, ResourceResolver.class, getResolver(), ResourceResolver.class))
+                return type.cast(getResolver());
+            if (typeFits(type, Resource.class, getResource(), Resource.class))
+                return type.cast(getResource());
+            // adaptTo ValueMap as well, to directly support injecting resource attributes in sling-models
+            if (ValueMap.class.equals(type))
+                return null != getResource() ? type.cast(getResource().adaptTo(ValueMap.class)) : null;
+            if (Locale.class.equals(type)) return type.cast(getLocale());
+
+            AdapterType slingAdaption = super.adaptTo(type); // fall back to default sling mechanisms
+            if (null != slingAdaption) return slingAdaption;
+
+            return tryToInstantiateSlingBean(type);
+        }
+
+        /**
+         * If type is an instantiable SlingBean but not a Sling-Models bean, try to instantiate it. We have to check per
+         * reflection whether the Sling-Models @Models annotation is present since we cannot distinguish a failed
+         * Sling-Models instantiation (returning null) from not being a Sling-Models bean at all (also returning null),
+         * and the Sling-Models ModelFactory cannot be a dependency, here.
+         */
+        protected <AdapterType> AdapterType tryToInstantiateSlingBean(Class<AdapterType> type) {
+            if (!type.isInterface() && !Modifier.isAbstract(type.getModifiers())
+                    && SlingBean.class.isAssignableFrom(type)) {
+                boolean isSlingModelsModel = false;
+                for (Annotation annotation : type.getAnnotations())
+                    isSlingModelsModel = isSlingModelsModel ||
+                            annotation.annotationType().getName().equals("org.apache.sling.models.annotations.Model");
+                if (!isSlingModelsModel) {
+                    try {
+                        SlingBean slingBean = (SlingBean) type.newInstance();
+                        slingBean.initialize(this);
+                        return type.cast(slingBean);
+                    } catch (InstantiationException | IllegalAccessException | RuntimeException e) {
+                        LOG.error("Couldn't instantiate " + type, e);
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * A type fits if it is below some upper bound (we don't want to return something for type, say, Object) and if
+         * it is assignable from the real class of the object. If the object is null, we will return null (and pass by
+         * the other Sling adaptable mechanisms) if the type is assignable from the default type the object would
+         * implement / extend.
+         */
+        protected <AdapterType> boolean typeFits(Class<?> type, Class<?> upperbound,
+                                                 AdapterType object, Class<AdapterType> defaultclass) {
+            if (!upperbound.isAssignableFrom(type)) return false;
+            return null != object && type.isAssignableFrom(object.getClass()) || type.isAssignableFrom(defaultclass);
+        }
+
     }
 
     /**
@@ -142,10 +283,15 @@ public interface BeanContext {
         protected SlingBindings slingBindings;
         protected SlingScriptHelper scriptHelper;
 
+        protected AbstractScriptContext() {
+        }
+
+        @Override
         public <T> T retrieveService(Class<T> type) {
             return getScriptHelper().getService(type);
         }
 
+        @Override
         public <T> T[] getServices(Class<T> serviceType, String filter) {
             return getScriptHelper().getServices(serviceType, filter);
         }
@@ -170,12 +316,12 @@ public interface BeanContext {
      */
     class Map extends AbstractScriptContext {
 
-        private java.util.Map<String, Object> pageScopeMap;
-        private java.util.Map<String, Object> requestScopeMap;
-        private java.util.Map<String, Object> sessionScopeMap;
+        private final java.util.Map<String, Object> pageScopeMap;
+        private final java.util.Map<String, Object> requestScopeMap;
+        private final java.util.Map<String, Object> sessionScopeMap;
 
-        private transient SlingHttpServletRequest request;
-        private transient Resource resource;
+        protected transient SlingHttpServletRequest request;
+        protected transient Resource resource;
         protected transient ResourceResolver resolver;
 
         public Map() {
@@ -228,11 +374,6 @@ public interface BeanContext {
         @Override
         public SlingHttpServletResponse getResponse() {
             return getAttribute(ATTR_RESPONSE, SlingHttpServletResponse.class);
-        }
-
-        @Override
-        public Locale getLocale() {
-            return Locale.getDefault();
         }
 
         @Override
@@ -293,6 +434,14 @@ public interface BeanContext {
                 }
             }
         }
+
+        @Override
+        public Map cloneWith(Resource resource) {
+            Map copy = (Map) clone();
+            copy.resource = resource;
+            if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
+            return copy;
+        }
     }
 
     /**
@@ -300,8 +449,19 @@ public interface BeanContext {
      */
     class Service extends Map {
 
+        public Service() {
+        }
+
         public Service(ResourceResolver resolver) {
             setAttribute(ATTR_RESOLVER, this.resolver = resolver, Scope.request);
+        }
+
+        @Override
+        public Service cloneWith(Resource resource) {
+            Service copy = (Service) clone();
+            copy.resource = resource;
+            if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
+            return copy;
         }
     }
 
@@ -350,11 +510,6 @@ public interface BeanContext {
         }
 
         @Override
-        public Locale getLocale() {
-            return Locale.getDefault();
-        }
-
-        @Override
         public <T> T getAttribute(String name, Class<T> T) {
             Object attribute = null;
             if (StringUtils.isNotBlank(name)) {
@@ -366,6 +521,24 @@ public interface BeanContext {
         @Override
         public void setAttribute(String name, Object value, Scope scope) {
             pageContext.setAttribute(name, value, scope.value);
+        }
+
+        /**
+         * {@inheritDoc} Adapts to {@link PageContext} as well.
+         */
+        @Override
+        public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+            if (typeFits(type, PageContext.class, pageContext, PageContext.class))
+                return type.cast(pageContext);
+            return super.adaptTo(type);
+        }
+
+        @Override
+        public BeanContext cloneWith(Resource resource) {
+            Page copy = (Page) clone();
+            copy.resource = resource;
+            if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
+            return copy;
         }
     }
 
@@ -417,11 +590,6 @@ public interface BeanContext {
         }
 
         @Override
-        public Locale getLocale() {
-            return Locale.getDefault();
-        }
-
-        @Override
         public <T> T getAttribute(String name, Class<T> T) {
             T attribute = null;
             if (StringUtils.isNotBlank(name)) {
@@ -467,11 +635,13 @@ public interface BeanContext {
             }
         }
 
+        @Override
         public <T> T retrieveService(Class<T> type) {
             ServiceReference<T> reference = bundleContext.getServiceReference(type);
             return bundleContext.getService(reference);
         }
 
+        @Override
         public <T> T[] getServices(Class<T> type, String filter) throws InvalidSyntaxException {
             List<T> services = new ArrayList<>();
             Collection<ServiceReference<T>> references;
@@ -480,6 +650,26 @@ public interface BeanContext {
                 services.add(bundleContext.getService(reference));
             }
             return (T[]) services.toArray();
+        }
+
+        /**
+         * {@inheritDoc} Adapts to {@link ServletContext} and {@link BundleContext} as well.
+         */
+        @Override
+        public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+            if (typeFits(type, ServletContext.class, servletContext, ServletContext.class))
+                return type.cast(servletContext);
+            if (typeFits(type, BundleContext.class, bundleContext, BundleContext.class))
+                return type.cast(servletContext);
+            return super.adaptTo(type);
+        }
+
+        @Override
+        public Servlet cloneWith(Resource resource) {
+            Servlet copy = (Servlet) clone();
+            copy.resource = resource;
+            if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
+            return copy;
         }
     }
 }
