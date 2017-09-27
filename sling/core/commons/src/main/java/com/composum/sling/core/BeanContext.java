@@ -1,5 +1,6 @@
 package com.composum.sling.core;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.adapter.annotations.Adapter;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -33,9 +34,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  * interface. This serves as a container for the basic objects often used to initialize models.
  */
 @org.apache.sling.adapter.annotations.Adaptable(adaptableClass = BeanContext.class,
-        adapters = @Adapter(condition = "If the context contains an entity of the requested type",
-                value = {Resource.class, ResourceResolver.class,
-                        SlingHttpServletRequest.class, SlingHttpServletResponse.class})
+                                                adapters = @Adapter(condition = "If the context contains an entity of" +
+                                                        " the requested type",
+                                                                    value = {Resource.class, ResourceResolver.class,
+                                                                            SlingHttpServletRequest.class,
+                                                                            SlingHttpServletResponse.class})
 )
 public interface BeanContext extends Adaptable {
 
@@ -129,26 +132,26 @@ public interface BeanContext extends Adaptable {
      * @return the component of type or whatever Sling has adapters for, or null if there is nothing.
      * @see SlingAdaptable#adaptTo(Class)
      */
-    @Override
-    <AdapterType> AdapterType adaptTo(Class<AdapterType> type);
+    @Override <AdapterType> AdapterType adaptTo(Class<AdapterType> type);
 
     /**
-     * Returns a clone of this context with the resource overridden. All other internal structures of this will be
-     * referenced by the copy, too.
+     * Returns a clone of this context with the resource overridden, or <code>this</code> if it already had this
+     * resource. All other internal structures of this will be referenced by the copy, too.
      *
      * @param resource the resource
-     * @return a context with the same type as this, with resource and possibly resolver changed.
+     * @return a context with the {@link #getResource()} <code>resource</code>, everything else (except possibly
+     * resolver) unchanged. Might be <code>this</code>.
      */
-    BeanContext cloneWith(Resource resource);
+    BeanContext withResource(Resource resource);
 
     /**
-     * Returns a clone of this context with the locale overridden. All other internal structures of this will be
-     * referenced by the copy, too.
+     * Returns a clone of this context with the locale overridden, or <code>this</code> if it already had this locale.
+     * All other internal structures of this will be referenced by the copy, too.
      *
      * @param locale the locale; if this is null {@link #getLocale()} will take this from the attributes.
-     * @return a context with the same type as this, with resource and possibly resolver changed.
+     * @return a context with this locale, otherwise sharing everything else. Might be <code>this</code>.
      */
-    BeanContext cloneWith(Locale locale);
+    BeanContext withLocale(Locale locale);
 
     /**
      * the base class of the context interface with general methods
@@ -180,7 +183,8 @@ public interface BeanContext extends Adaptable {
         }
 
         @Override
-        public BeanContext cloneWith(Locale locale) {
+        public BeanContext withLocale(Locale locale) {
+            if (ObjectUtils.equals(getLocale(), locale)) return this;
             AbstractContext cloned = (AbstractContext) clone();
             cloned.locale = locale;
             return cloned;
@@ -436,7 +440,8 @@ public interface BeanContext extends Adaptable {
         }
 
         @Override
-        public Map cloneWith(Resource resource) {
+        public Map withResource(Resource resource) {
+            if (this.getResource() == resource) return this; // deliberately == since equals might be dangerous
             Map copy = (Map) clone();
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
@@ -457,7 +462,8 @@ public interface BeanContext extends Adaptable {
         }
 
         @Override
-        public Service cloneWith(Resource resource) {
+        public Service withResource(Resource resource) {
+            if (this.getResource() == resource) return this; // deliberately == since equals might be dangerous
             Service copy = (Service) clone();
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
@@ -534,7 +540,8 @@ public interface BeanContext extends Adaptable {
         }
 
         @Override
-        public BeanContext cloneWith(Resource resource) {
+        public BeanContext withResource(Resource resource) {
+            if (this.getResource() == resource) return this; // deliberately == since equals might be dangerous
             Page copy = (Page) clone();
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
@@ -665,7 +672,8 @@ public interface BeanContext extends Adaptable {
         }
 
         @Override
-        public Servlet cloneWith(Resource resource) {
+        public Servlet withResource(Resource resource) {
+            if (this.getResource() == resource) return this; // deliberately == since equals might be dangerous
             Servlet copy = (Servlet) clone();
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
