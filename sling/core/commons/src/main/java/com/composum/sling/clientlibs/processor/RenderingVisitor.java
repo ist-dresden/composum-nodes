@@ -82,13 +82,13 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
 
     @Override
     public void action(ClientlibExternalUri externalUri, VisitorMode mode, ClientlibResourceFolder parent) {
-        LOG.debug(">>> {} {}", mode, externalUri);
+        LOG.trace(">>> {} {}", mode, externalUri);
         if (!context.isClientlibRendered(externalUri.getRef())) {
             ClientlibLink link = externalUri.makeLink();
             linksToRender.add(link); // external references can't be embedded
             context.registerClientlibLink(link);
         }
-        LOG.debug("<<< {} {}", mode, externalUri);
+        LOG.trace("<<< {} {}", mode, externalUri);
     }
 
     public List<ClientlibLink> getLinksToRender() {
