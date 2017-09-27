@@ -12,13 +12,17 @@ A simple Apache Sling based Resource/JCR development tool
 
 ### see also
 
-#### [Composum Platform](https://github.com/ist-dresden/composum-platform)
+#### [Composum Pages](https://github.com/ist-dresden/composum-pages)
 
-* [Composum Platform Wiki](https://ist-software.atlassian.net/wiki/display/CMP/Composum+Platform)
+* [Composum Pages Wiki](https://ist-software.atlassian.net/wiki/display/CMP/Composum+Pages)
 
 #### [Composum Assets](https://github.com/ist-dresden/composum-assets)
 
 * [Composum Assets Wiki](https://ist-software.atlassian.net/wiki/display/CMP/Composum+Assets)
+
+#### [Composum Platform](https://github.com/ist-dresden/composum-platform)
+
+* [Composum Platform Wiki](https://ist-software.atlassian.net/wiki/display/CMP/Composum+Platform)
 
 #### [Composum Prototype](https://github.com/ist-dresden/composum-prototype)
 
