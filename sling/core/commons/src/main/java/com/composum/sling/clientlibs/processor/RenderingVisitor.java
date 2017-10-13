@@ -23,6 +23,7 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
 
     protected final RendererContext context;
     protected final List<ClientlibLink> linksToRender;
+    protected final boolean ownerWasAlreadyRendered;
 
     public RenderingVisitor(ClientlibElement owner, RendererContext context) {
         this(owner, context, null, null);
@@ -33,6 +34,7 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
         super(owner, context.getClientlibService(), context.getResolver(), processedElements);
         this.context = context;
         this.linksToRender = linksToRender != null ? linksToRender : new ArrayList<ClientlibLink>();
+        this.ownerWasAlreadyRendered = context.isClientlibRendered(owner.getRef());
     }
 
     @Override
@@ -49,23 +51,24 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
     @Override
     public void action(ClientlibCategory clientlibCategory, ClientlibVisitor.VisitorMode mode,
                        ClientlibResourceFolder parent) throws IOException, RepositoryException {
-        if (hasEmbeddedFiles && !context.getConfiguration().getDebug()) render(mode, clientlibCategory);
-        else context.registerClientlibLink(clientlibCategory.makeLink());
+        if (hasEmbeddedFiles && !context.getConfiguration().getDebug()) render(mode, clientlibCategory, parent);
+        else context.registerClientlibLink(clientlibCategory.makeLink(), parent);
     }
 
     @Override
     public void action(Clientlib clientlib, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent) throws
             IOException, RepositoryException {
-        if (hasEmbeddedFiles && !context.getConfiguration().getDebug()) render(mode, clientlib);
-        else context.registerClientlibLink(clientlib.makeLink());
+        if (hasEmbeddedFiles && !context.getConfiguration().getDebug()) render(mode, clientlib, parent);
+        else context.registerClientlibLink(clientlib.makeLink(), parent);
     }
 
     @Override
     public void action(ClientlibFile file, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent) {
-        render(mode, file);
+        render(mode, file, parent);
     }
 
-    protected void render(VisitorMode mode, ClientlibElement element) {
+    protected void render(VisitorMode mode, ClientlibElement element, ClientlibResourceFolder parent) {
+        if (ownerWasAlreadyRendered) return;
         ClientlibLink link = element.makeLink();
         if (owner == element) link = link.withHash(getHash());
         if (context.isClientlibRendered(element.getRef())) {
@@ -76,7 +79,7 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
         } else {
             if (DEPENDS == mode || context.getConfiguration().getDebug())
                 linksToRender.add(link);
-            context.registerClientlibLink(link);
+            context.registerClientlibLink(link, parent);
         }
     }
 
@@ -86,12 +89,17 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
         if (!context.isClientlibRendered(externalUri.getRef())) {
             ClientlibLink link = externalUri.makeLink();
             linksToRender.add(link); // external references can't be embedded
-            context.registerClientlibLink(link);
+            context.registerClientlibLink(link, parent);
         }
         LOG.trace("<<< {} {}", mode, externalUri);
     }
 
     public List<ClientlibLink> getLinksToRender() {
         return linksToRender;
+    }
+
+    @Override
+    protected void notPresent(ClientlibRef ref, VisitorMode mode, ClientlibResourceFolder parent) {
+        LOG.info("Not present: {} referenced from {}", ref, parent);
     }
 }
