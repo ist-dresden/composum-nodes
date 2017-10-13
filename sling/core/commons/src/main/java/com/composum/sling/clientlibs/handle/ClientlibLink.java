@@ -25,7 +25,7 @@ import static com.composum.sling.clientlibs.handle.ClientlibLink.Kind.EXTERNALUR
  */
 public class ClientlibLink {
 
-    /** The kind of resource we link to. */
+    /** The kind of resource we link to: {@link #CATEGORY}, {@link #CLIENTLIB}, {@link #FILE}, {@link #EXTERNALURI}. */
     public enum Kind {
         /** A link to a category of clientlibs which is rendered by the {@link com.composum.sling.clientlibs.servlet.ClientlibCategoryServlet}. */
         CATEGORY,
