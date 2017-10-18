@@ -1,6 +1,7 @@
 package com.composum.sling.clientlibs.processor;
 
 import com.composum.sling.clientlibs.handle.*;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
@@ -14,8 +15,8 @@ import static com.composum.sling.clientlibs.handle.ClientlibVisitor.VisitorMode.
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * Visitor that realizes the rendering process for a client library.
- * The visit functions return true if the processed element embedded some files.
+ * Visitor that realizes the rendering process for a client library. The visit functions return true if the processed
+ * element embedded some files.
  */
 public class RenderingVisitor extends AbstractClientlibVisitor {
 
@@ -72,10 +73,9 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
         ClientlibLink link = element.makeLink();
         if (owner == element) link = link.withHash(getHash());
         if (context.isClientlibRendered(element.getRef())) {
-            if (EMBEDDED == mode) {
+            if (EMBEDDED == mode)
                 LOG.error("Already rendered / embedded file is also embedded in clientlib {} and thus included twice:" +
-                                " {}", owner, link);
-            }
+                        " {}", owner, link);
         } else {
             if (DEPENDS == mode || context.getConfiguration().getDebug())
                 linksToRender.add(link);
@@ -100,6 +100,13 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
 
     @Override
     protected void notPresent(ClientlibRef ref, VisitorMode mode, ClientlibResourceFolder parent) {
-        LOG.info("Not present: {} referenced from {}", ref, parent);
+        if (StringUtils.contains(ref.path, ","))
+            LOG.warn("Not present and contains , - should probably be a multi string: " +
+                    "{} references {}", parent, ref);
+        else if (StringUtils.contains(ref.category, ","))
+            LOG.warn("Not present and contains , - should probably be a multi " +
+                    "string: " +
+                    "{} references {}", parent, ref);
+        else LOG.info("Not present: {} referenced from {}", ref, parent);
     }
 }
