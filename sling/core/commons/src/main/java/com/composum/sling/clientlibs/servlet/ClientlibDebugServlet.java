@@ -15,16 +15,23 @@ import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.query.Query;
+import javax.jcr.query.QueryManager;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.LinkedHashSet;
 
 import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  * Prints a rough overview over the structure of the client library, incl. dependent or embedded client libraries.
+ * URL e.g. http://localhost:9090/bin/cpm/nodes/debug/clientlibstructure.css.html
  *
  * @author Hans-Peter Stoerr
  * @since 10/2017
@@ -40,24 +47,37 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
     @Reference
     private ClientlibService clientlibService;
 
-    protected void printUsage(PrintWriter writer) {
+    protected void printUsage(SlingHttpServletRequest request, PrintWriter writer) {
+        String url = request.getRequestURL().toString().replaceAll("\\.[^/]+$", "") + ".css.html";
+        writer.println("<h2>Usage:</h2>");
         writer.println("Please give the type of the client library as extension and one or more");
-        writer.println("client libraries or -categories as parameter lib. For example:");
-        writer.println("http://localhost:9090/bin/cpm/nodes/debug/clientlibstructure.css?" +
-                "lib=category:composum.core.console.browser");
-        writer.println("This prints the files and other included client libraries.");
-        writer.println("It does not check for duplicated elements, as the normal rendering process does.");
+        writer.println("client libraries or -categories as parameter lib. Some examples:<ul>");
+        printLinkItem(writer, url + "?lib=category:composum.core.console.browser");
+        printLinkItem(writer, url + "?lib=/libs/composum/nodes/console/clientlibs/base");
+        printLinkItem(writer, url + "?lib=composum/nodes/console/clientlibs/base");
+        writer.println("</ul>This prints the files and other included client libraries.");
+        writer.println("It does not check for duplicated elements, as the normal rendering process does.</p>");
+        writer.println("This prints all libraries of the type given as extension:<ul>");
+        printLinkItem(writer, url);
+        writer.println("</ul>");
+        writer.flush();
+    }
+
+    protected void printLinkItem(PrintWriter writer, String url) {
+        writer.println("<li><a href=\"" + url + "\">" + url + "</a></li>");
     }
 
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
+        response.setContentType("text/html");
         PrintWriter writer = response.getWriter();
-        writer.println("Print rough structure of client libraries");
+        writer.println("<html><body><h1>Rough structure of client libraries</h1>");
 
-        String typeString = request.getRequestPathInfo().getExtension();
-        if (StringUtils.isBlank(typeString) || null == request.getParameter("lib")) {
-            printUsage(writer);
+        String typeString = request.getRequestPathInfo().getSelectorString();
+        if (isBlank(typeString) || null == request.getParameter("lib")) {
+            printUsage(request, writer);
+            if (isNotBlank(typeString)) printAllLibs(request, writer, typeString);
             return;
         }
         Clientlib.Type type = Clientlib.Type.valueOf(typeString);
@@ -69,18 +89,79 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
             } else {
                 ref = new ClientlibRef(type, lib, false, null);
             }
-            ClientlibElement clientlib = clientlibService.resolve(ref, request.getResourceResolver());
-            Validate.notNull(clientlib, "Not found: " + ref);
-            writer.println("=================== Structure of " + ref + ": ===================");
-            try {
-                new DebugVisitor(clientlib, clientlibService, request.getResourceResolver(), writer).execute();
-            } catch (RepositoryException e) {
-                throw new ServletException(e);
-            }
-            writer.println();
+            displayClientlibStructure(request, writer, ref);
         }
 
-        writer.println("DONE");
+        writer.println("<hr/></body></html>");
+    }
+
+    private void printAllLibs(SlingHttpServletRequest request, PrintWriter writer, String typeString) throws
+            ServletException, IOException {
+        try {
+            ResourceResolver resolver = request.getResourceResolver();
+            QueryManager querymanager = resolver.adaptTo(Session.class).getWorkspace()
+                    .getQueryManager();
+            String statement = "//element(*)[sling:resourceType='composum/nodes/commons/clientlib']/" + typeString +
+                    "/..";
+            NodeIterator clientlibs = null;
+            clientlibs = querymanager.createQuery(statement, Query.XPATH).execute().getNodes();
+            while (clientlibs.hasNext())
+                displayClientlibStructure(request, writer,
+                        new Clientlib(Clientlib.Type.valueOf(typeString), resolver.getResource(clientlibs.nextNode()
+                                .getPath())).getRef());
+
+        } catch (RepositoryException e) {
+            throw new ServletException(e);
+        }
+    }
+
+    private void displayClientlibStructure(SlingHttpServletRequest request, PrintWriter writer, ClientlibRef ref)
+            throws IOException, ServletException {
+        ClientlibElement clientlib = clientlibService.resolve(ref, request.getResourceResolver());
+        String normalizedPath = normalizePath(ref, clientlib, request.getResourceResolver());
+        StringBuilder categories = new StringBuilder();
+        if (clientlib instanceof Clientlib) {
+            Clientlib thelib = (Clientlib) clientlib;
+            if (thelib.getCategories().isEmpty()) categories.append(" (no categories)");
+            else {
+                categories.append(" (in categories ");
+                for (String cat : thelib.getCategories()) {
+                    categories.append("<a href=\"").append(request.getRequestURL())
+                            .append("?lib=category:").append(cat).append("\">").append(cat).append("</a>");
+                }
+                categories.append(")");
+            }
+        }
+        Validate.notNull(clientlib, "Not found: " + ref);
+        writer.println("<hr/>");
+        writer.println("<h2>Structure of <a href=\"" + request.getRequestURL() + "?lib=" + normalizedPath + "\">" +
+                ref + "</a>" + categories + "</h2>");
+        writer.println("<code>&lt;cpn:clientlib type=\"" + ref.type.name() + "\" path=\"" + normalizedPath +
+                "\"/&gt;</code><br/><hr/><pre>");
+        try {
+            new DebugVisitor(clientlib, clientlibService, request.getResourceResolver(), writer).execute();
+        } catch (RepositoryException e) {
+            throw new ServletException(e);
+        }
+        writer.println("</pre>");
+    }
+
+    private String normalizePath(ClientlibRef ref, ClientlibElement clientlib, ResourceResolver resolver) {
+        if (ref.isCategory()) return "category:" + ref.category;
+        if (!ref.path.startsWith("/")) return ref.path;
+        for (String pathelement : resolver.getSearchPath()) {
+            if (ref.path.startsWith(pathelement)) {
+                String normalizedPath = ref.path.substring(pathelement.length());
+                // check whether clientlib is shadowed by other lib in other segments of the search path
+                ClientlibElement lib2 = clientlibService.resolve(new ClientlibRef(ref.type, normalizedPath, ref
+                        .optional, ref.properties), resolver);
+                if (lib2 instanceof Clientlib) {
+                    Clientlib reresolvedLib = (Clientlib) lib2;
+                    if (reresolvedLib.getRef().path.equals(clientlib.getRef().path)) return normalizedPath;
+                }
+            }
+        }
+        return ref.path;
     }
 
     protected class DebugVisitor extends AbstractClientlibVisitor {
@@ -112,7 +193,7 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
 
         @Override
         protected void notPresent(ClientlibRef ref, VisitorMode mode, ClientlibResourceFolder folder) {
-            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " Not present: " + mode + ref);
+            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " Not present: " + ref);
         }
 
         @Override
@@ -127,7 +208,9 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
         @Override
         public void visit(Clientlib clientlib, VisitorMode mode, ClientlibResourceFolder parent) throws IOException,
                 RepositoryException {
-            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " " + clientlib);
+            String order = 0 != clientlib.getOrder() ? " [order=" + clientlib.getOrder() + "]" : "";
+            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " " + clientlib
+                    + order);
             indentation++;
             super.visit(clientlib, mode, parent);
             indentation--;
@@ -136,7 +219,8 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
         @Override
         public void visit(ClientlibResourceFolder folder, VisitorMode mode, ClientlibResourceFolder parent) throws
                 IOException, RepositoryException {
-            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " " + folder);
+            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " " + folder
+                    + (folder.getOptional() ? "[Opt]" : ""));
             indentation++;
             super.visit(folder, mode, parent);
             indentation--;
