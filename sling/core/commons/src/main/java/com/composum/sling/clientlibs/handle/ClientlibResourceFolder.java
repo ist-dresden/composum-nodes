@@ -94,7 +94,7 @@ public class ClientlibResourceFolder implements ClientlibElement {
         return res;
     }
 
-    /** Returns all children that are resource folders as well, that is, not a {@link #isFile(Resource)}. */
+    /** Returns all children - either {@link ClientlibResourceFolder} as well, or {@link ClientlibFile} . */
     public List<ClientlibElement> getChildren() {
         List<ClientlibElement> children = new ArrayList<>();
         for (Resource child : resource.getChildren()) {

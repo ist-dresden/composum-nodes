@@ -49,6 +49,7 @@ public class Clientlib implements ClientlibElement {
         return new ClientlibLink(getType(), ClientlibLink.Kind.CLIENTLIB, resource.getPath(), null);
     }
 
+    /** Type of the element: {@link #link}, {@link #css}, {@link #js}, {@link #img}. */
     public enum Type {link, css, js, img}
 
     private final Type type;

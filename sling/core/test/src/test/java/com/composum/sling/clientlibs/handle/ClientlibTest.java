@@ -13,6 +13,8 @@ import org.apache.sling.testing.mock.sling.servlet.MockSlingHttpServletRequest;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
@@ -37,6 +39,8 @@ import static org.mockito.Mockito.when;
  * Tests for Clientlib rendering and processing.
  */
 public class ClientlibTest extends AbstractClientlibTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ClientlibTest.class);
 
     private Clientlib c1;
     private Clientlib c2;
@@ -160,10 +164,15 @@ public class ClientlibTest extends AbstractClientlibTest {
 
     @Test
     public void testLinkGenerationC1() throws Exception {
-        List<ClientlibLink> links = new RenderingVisitor(c1, rendererContext).execute().getLinksToRender();
+        RenderingVisitor renderingVisitor = new RenderingVisitor(c1, rendererContext);
+        List<ClientlibLink> links = renderingVisitor.execute().getLinksToRender();
         assertEquals("[js:/libs/jquery/2.2.4/jquery.js, js:/apps/c1@{hash}]", canonicHashes(links));
         assertEquals("[js:/libs/jquery/2.2.4/jquery.js, js:/apps/jslib/2.3.1/outerembed.js, js:/apps/c1/js/c1child" +
                 ".js, js:/apps/c1@{hash}]", canonicHashes(getRenderedClientlibs()));
+
+        // same as testDeliveryC1 ; repeated here only for hash check. The hash isn't fixed because of varying
+        // creation times, which can't easily be changed since jcr:created isn't modifiable.
+        assertEquals(renderingVisitor.getHash(), deliveryC1());
     }
 
     @Test
@@ -178,7 +187,11 @@ public class ClientlibTest extends AbstractClientlibTest {
 
     @Test
     public void testDeliveryC1() throws Exception {
-        checkDeliveredContent(c1, "/apps/jslib/2.3.1/outerembed.js\n\nc1child.js\n\n",
+        deliveryC1();
+    }
+
+    protected String deliveryC1() throws Exception {
+        return checkDeliveredContent(c1, "/apps/jslib/2.3.1/outerembed.js\n\nc1child.js\n\n",
                 "[js:/libs/jquery/2.2.4/jquery" + ".js, js:/apps/jslib/2.3.1/outerembed.js, js:/apps/c1/js/c1child" +
                         ".js, js:/apps/c1]");
     }
@@ -213,13 +226,30 @@ public class ClientlibTest extends AbstractClientlibTest {
 
     @Test
     public void testLinkGenerationC3() throws Exception {
-        List<ClientlibLink> links = new RenderingVisitor(c3, rendererContext).execute().getLinksToRender();
+        RenderingVisitor renderingVisitor = new RenderingVisitor(c3, rendererContext);
+        List<ClientlibLink> links = renderingVisitor.execute().getLinksToRender();
         assertEquals("[js:/libs/jquery/2.2.4/jquery.js, js:/apps/c1@{hash}, js:/libs/jslib/c2dep.js, " +
                 "js:/libs/jslib/onlyc3depend.min.js, js:/libs/c3@{hash}]", canonicHashes(links));
         assertEquals("[js:/libs/jquery/2.2.4/jquery.js, js:/apps/jslib/2.3.1/outerembed.js, js:/apps/c1/js/c1child" +
                 ".js, js:/apps/c1@{hash}, js:/libs/jslib/c2dep.js, js:/apps/c2/js/c2child.js, js:/apps/c2, " +
                 "js:/libs/c3/js/c3child.js, js:/libs/jslib/onlyc3depend.min.js, js:/libs/jslib/onlyc3embed.js, " +
                 "js:/libs/c3@{hash}]", canonicHashes(getRenderedClientlibs()));
+    }
+
+    @Test
+    public void testSameHashWhenRenderedTwice() throws Exception {
+        LOG.info("Rendering 1");
+        RenderingVisitor renderingVisitor = new RenderingVisitor(c3, rendererContext);
+        renderingVisitor.execute();
+
+        LOG.info("Rendering 2");
+        RenderingVisitor renderingVisitor2 = new RenderingVisitor(c3, rendererContext);
+        renderingVisitor2.execute();
+
+        assertEquals(renderingVisitor.getHash(), renderingVisitor2.getHash());
+
+        // same as testDeliveryC3 ; repeated here only for hash check
+        assertEquals(renderingVisitor.getHash(), deliveryC3());
     }
 
     @Test
@@ -233,6 +263,22 @@ public class ClientlibTest extends AbstractClientlibTest {
                 ".js, js:/apps/c1, js:/libs/jslib/c2dep.js, js:/apps/c2/js/c2child.js, js:/apps/c2, " +
                 "js:/libs/c3/js/c3child.js, js:/libs/jslib/onlyc3depend.min.js, js:/libs/jslib/onlyc3embed.js, " +
                 "js:/libs/c3]", getRenderedClientlibs().toString());
+    }
+
+    @Test
+    public void testLinkGenerationC3WithPreviousC1() throws Exception {
+        testLinkGenerationC1();
+
+        RenderingVisitor renderingVisitor = new RenderingVisitor(c3, rendererContext);
+        List<ClientlibLink> links = renderingVisitor.execute().getLinksToRender();
+        // in comparison to testLinkGenerationC3 all stuff already mentioned in c1 is not here:
+        assertEquals("[js:/libs/jslib/c2dep.js, js:/libs/jslib/onlyc3depend.min.js, js:/libs/c3@{hash}]",
+                canonicHashes(links));
+        // same as only c3
+        assertEquals("[js:/libs/jquery/2.2.4/jquery.js, js:/apps/jslib/2.3.1/outerembed.js, js:/apps/c1/js/c1child" +
+                ".js, js:/apps/c1@{hash}, js:/libs/jslib/c2dep.js, js:/apps/c2/js/c2child.js, js:/apps/c2, " +
+                "js:/libs/c3/js/c3child.js, js:/libs/jslib/onlyc3depend.min.js, js:/libs/jslib/onlyc3embed.js, " +
+                "js:/libs/c3@{hash}]", canonicHashes(getRenderedClientlibs()));
     }
 
     /** This is not really a test yet - just a sanity check since everything in the repo has creation date "now". */
@@ -250,7 +296,11 @@ public class ClientlibTest extends AbstractClientlibTest {
 
     @Test
     public void testDeliveryC3() throws Exception {
-        checkDeliveredContent(c3, "c2child.js\n\nc3child.js\n\n/libs/jslib/onlyc3embed.js\n\n",
+        deliveryC3();
+    }
+
+    protected String deliveryC3() throws Exception {
+        return checkDeliveredContent(c3, "c2child.js\n\nc3child.js\n\n/libs/jslib/onlyc3embed.js\n\n",
                 "[js:/libs/jquery/2.2.4/jquery.js, js:/apps/jslib/2.3.1/outerembed.js, js:/apps/c1/js/c1child.js, " +
                         "js:/apps/c1, js:/libs/jslib/c2dep.js, js:/apps/c2/js/c2child.js, js:/apps/c2, " +
                         "js:/libs/c3/js/c3child.js, js:/libs/jslib/onlyc3depend.min.js, js:/libs/jslib/onlyc3embed" +
