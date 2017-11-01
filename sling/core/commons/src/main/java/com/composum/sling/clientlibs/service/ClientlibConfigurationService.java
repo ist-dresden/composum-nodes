@@ -19,6 +19,15 @@ import java.util.Dictionary;
 @Service
 public class ClientlibConfigurationService implements ClientlibConfiguration {
 
+    public static final String TAGDEBUG = "tagdebug";
+    @Property(
+            name = TAGDEBUG,
+            label = "Tag-Debug",
+            description = "Inserts HTML comments with the client libraries that have been called up into the page",
+            boolValue = false
+    )
+    protected boolean tagdebug;
+
     // CSS configuration
 
     public static final String DEBUG = "debug";
@@ -214,6 +223,11 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     /** General - Resolver cachetime : the time (in seconds) the clientlib resolver caches the locations of all client libraries for a category. <=0 means no caching. */
     public int getResolverCachetime() {
         return resolverCachetime;
+    }
+
+    /** Inserts HTML comments with the client libraries that have been called up into the page */
+    public boolean getTagDebug() {
+        return tagdebug;
     }
 
     @Modified

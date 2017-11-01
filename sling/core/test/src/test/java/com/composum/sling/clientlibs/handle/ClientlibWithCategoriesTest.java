@@ -89,7 +89,8 @@ public class ClientlibWithCategoriesTest extends AbstractClientlibTest {
     public void testLinkGenerationCat3Expanded() throws Exception {
         debuggingMode = true;
         ClientlibCategory ref = getClientlibs2("category:cat3", js);
-        List<ClientlibLink> links = new RenderingVisitor(ref, rendererContext).execute().getLinksToRender();
+        RenderingVisitor renderingVisitor = new RenderingVisitor(ref, rendererContext);
+        List<ClientlibLink> links = renderingVisitor.execute().getLinksToRender();
         assertEquals("[js:/apps/3.1.js, js:/libs/1.js, js:/libs/2.1.js, js:/apps/2.2.js, js:/apps/3.2.js]", links
                 .toString());
         assertEquals("[js:/apps/3.1.js, js:/libs/1.js, js:/libs/1, js:category:cat1, js:/libs/2.1.js, js:/apps/2.1, " +
@@ -98,11 +99,24 @@ public class ClientlibWithCategoriesTest extends AbstractClientlibTest {
                 getRenderedClientlibs().toString());
     }
 
+    @Test
+    public void testHashes() throws Exception {
+        ClientlibCategory ref = getClientlibs2("category:cat3", js);
+        RenderingVisitor renderingVisitor = new RenderingVisitor(ref, rendererContext);
+        renderingVisitor.execute();
+        assertEquals(renderingVisitor.getHash(), delivery());
+    }
+
 
     @Test
     public void testDelivery() throws Exception {
+        delivery();
+    }
+
+    protected String delivery() throws Exception {
         ClientlibCategory ref = getClientlibs2("category:cat3", js);
-        checkDeliveredContent(ref, "/apps/3.1.js\n\n/libs/2.1.js\n\n/apps/2.2.js\n\n/apps/3.2.js\n\n",
+        return checkDeliveredContent(ref,
+                "/apps/3.1.js\n\n/libs/2.1.js\n\n/apps/2.2.js\n\n/apps/3.2.js\n\n",
                 "[js:/apps/3.1.js, js:/libs/1.js, js:/libs/1, js:category:cat1, js:/libs/2.1.js, js:/apps/2.1, " +
                         "js:/apps/2.2.js, js:/apps/2.2, js:category:cat2, js:/apps/3.2.js, js:/apps/3, " +
                         "js:category:cat3]");

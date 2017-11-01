@@ -14,10 +14,12 @@ import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
 import java.io.IOException;
 
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+
 /**
- * A tag build references to styles and script files. Renders either links to individual files,
- * client libraries containing several embedded files or client library categories containing embedded files
- * for a category of client libraries.
+ * A tag build references to styles and script files. Renders either links to individual files, client libraries
+ * containing several embedded files or client library categories containing embedded files for a category of client
+ * libraries.
  */
 public class ClientlibTag extends CpnlBodyTagSupport {
 
@@ -84,6 +86,10 @@ public class ClientlibTag extends CpnlBodyTagSupport {
 
             if (null != clientlib) { // if this is a clientlib or category
                 JspWriter writer = this.pageContext.getOut();
+                if (service.getClientlibConfig().getTagDebug()) {
+                    writer.println("<!-- cpn:clientlib." + type + " " + defaultIfNull(path, "") +
+                            " " + defaultIfNull(category, "") + " -->");
+                }
                 service.renderClientlibLinks(clientlib, writer, rendererContext);
             } else {
                 LOG.error("No clientlib found for path {} / category {} ");
