@@ -12,13 +12,13 @@ public interface SlingBean {
      * This basic initialization sets up the context and resource attributes only, all the other attributes are set
      * 'lazy' during their getter calls.
      * <p>
-     * You might want to consider using {@link #initialize(BeanContext)} after {@link BeanContext#cloneWith(Resource)},
+     * You might want to consider using {@link #initialize(BeanContext)} after {@link BeanContext#withResource(Resource)},
      * which should be the same thing.
      *
      * @param context  the scripting context (e.g. a JSP PageContext or a Groovy scripting context)
      * @param resource the resource to use (normally the resource addressed by the request)
-     * @see BeanContext#cloneWith(Resource)
-     * @deprecated please use {@link BeanContext#cloneWith(Resource)}.{@link BeanContext#adaptTo(Class)} with the needed
+     * @see BeanContext#withResource(Resource)
+     * @deprecated please use {@link BeanContext#withResource(Resource)}.{@link BeanContext#adaptTo(Class)} with the needed
      * SlingBean class to instantiate the object, since {@link #initialize(BeanContext, Resource)} doesn't initialize
      * fields injected by Sling-Models.
      */

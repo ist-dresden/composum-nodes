@@ -1,7 +1,9 @@
 package com.composum.sling.cpnl;
 
+import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.SlingBean;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.resource.Resource;
 import org.osgi.framework.InvalidSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,21 +182,36 @@ public class ComponentTag extends CpnlBodyTagSupport {
         SlingBean component = null;
         Class<? extends SlingBean> type = getComponentType();
         if (type != null) {
-            component = type.newInstance();
-            initialize(component);
-            injectFieldDependecies(component);
+            BeanContext baseContext = context.withResource(getModelResource(context));
+            component = baseContext.adaptTo(type);
+            injectServices(component);
+            additionalInitialization(component);
         }
         return component;
     }
 
-    protected void initialize(SlingBean component) {
-        component.initialize(context);
+    /**
+     * Hook that can change the resource used for {@link #createComponent()} if necessary. This implementation just uses
+     * the resource from the {@link #context} ( {@link BeanContext#getResource()} ).
+     */
+    public Resource getModelResource(BeanContext context) {
+        return context.getResource();
     }
 
     /**
-     * define attributes marked for injection in a new component instance
+     * Hook for perform additional initialization of the component. When called, the fields of the component are already
+     * initialized with Sling-Models or {@link SlingBean#initialize(BeanContext)} / {@link
+     * SlingBean#initialize(BeanContext, Resource)}.
      */
-    protected void injectFieldDependecies(SlingBean component) throws IllegalAccessException {
+    protected void additionalInitialization(SlingBean component) {
+        // empty
+    }
+
+    /**
+     * Inject OSGI services for attributes marked for injection in a new component instance, if not already
+     * initialized e.g. by Sling-Models.
+     */
+    protected void injectServices(SlingBean component) throws IllegalAccessException {
         final Field[] declaredFields;
         if (fieldCache.containsKey(component.getClass())) {
             declaredFields = fieldCache.get(component.getClass());
@@ -203,18 +220,20 @@ public class ComponentTag extends CpnlBodyTagSupport {
             fieldCache.put(component.getClass(), declaredFields);
         }
         for (Field field : declaredFields) {
-            if (!field.isAccessible()) {
-                field.setAccessible(true);
-            }
             if (field.isAnnotationPresent(Inject.class)) {
-                String filter = null;
-                if (field.isAnnotationPresent(Named.class)) {
-                    Named name = field.getAnnotation(Named.class);
-                    filter = "(service.pid=" + name.value() + ")";
+                if (!field.isAccessible()) {
+                    field.setAccessible(true);
                 }
-                Class<?> typeOfField = field.getType();
-                Object o = retrieveFirstServiceOfType(typeOfField, filter);
-                field.set(component, o);
+                if (null == field.get(component)) { // if not initialized already by Sling-Models
+                    String filter = null;
+                    if (field.isAnnotationPresent(Named.class)) {
+                        Named name = field.getAnnotation(Named.class);
+                        filter = "(service.pid=" + name.value() + ")";
+                    }
+                    Class<?> typeOfField = field.getType();
+                    Object o = retrieveFirstServiceOfType(typeOfField, filter);
+                    field.set(component, o);
+                }
             }
         }
     }
