@@ -85,11 +85,18 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
-            <description>Type of rendered resources: css, js, link, img, png, jpg. Default: link .</description>
+            <description>Type of rendered resources: css, js, link, img, png, jpg. Default: link.</description>
             <name>type</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <description>An optional boolean (JSP-EL) expression for a conditional clientlib link.</description>
+            <name>test</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Object</type>
         </attribute>
     </tag>
 
