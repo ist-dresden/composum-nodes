@@ -30,6 +30,8 @@ public class ClientlibTag extends CpnlBodyTagSupport {
     protected Clientlib.Type type;
     protected String path;
     protected String category;
+    protected Object test;
+    private transient Boolean testResult;
 
     public void setType(String type) {
         this.type = Clientlib.Type.valueOf(type);
@@ -41,6 +43,23 @@ public class ClientlibTag extends CpnlBodyTagSupport {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    /**
+     * the 'test' expression for conditional tags
+     */
+    public void setTest(Object value) {
+        test = value;
+    }
+
+    /**
+     * evaluates the test expression if present and returns the evaluation result; default: 'true'
+     */
+    protected boolean getTestResult() {
+        if (testResult == null) {
+            testResult = eval(test, test instanceof Boolean ? (Boolean) test : Boolean.TRUE);
+        }
+        return testResult;
     }
 
     @Override
@@ -65,39 +84,41 @@ public class ClientlibTag extends CpnlBodyTagSupport {
 
     @Override
     public int doEndTag() throws JspException {
-        try {
-            RendererContext rendererContext = RendererContext.instance(context, request);
+        if (getTestResult()) {
+            try {
+                RendererContext rendererContext = RendererContext.instance(context, request);
 
-            Clientlib.Type type = getType();
-            ClientlibRef ref = null;
+                Clientlib.Type type = getType();
+                ClientlibRef ref = null;
 
-            if (StringUtils.isNotBlank(path)) {
-                ref = new ClientlibRef(type, path, false, null);
-                LOG.debug("<cpn:clientlib.{} path={}/>", type, path);
-            } else if (StringUtils.isNotBlank(category)) {
-                ref = ClientlibRef.forCategory(type, category, false, null);
-                LOG.debug("<cpn:clientlib.{} category={}/>", type, category);
-            } else {
-                LOG.error("No path nor category attribute was given!");
-            }
-
-            ClientlibService service = context.getService(ClientlibService.class);
-            ClientlibElement clientlib = service.resolve(ref, request.getResourceResolver());
-
-            if (null != clientlib) { // if this is a clientlib or category
-                JspWriter writer = this.pageContext.getOut();
-                if (service.getClientlibConfig().getTagDebug()) {
-                    writer.println("<!-- cpn:clientlib." + type + " " + defaultIfNull(path, "") +
-                            " " + defaultIfNull(category, "") + " -->");
+                if (StringUtils.isNotBlank(path)) {
+                    ref = new ClientlibRef(type, path, false, null);
+                    LOG.debug("<cpn:clientlib.{} path={}/>", type, path);
+                } else if (StringUtils.isNotBlank(category)) {
+                    ref = ClientlibRef.forCategory(type, category, false, null);
+                    LOG.debug("<cpn:clientlib.{} category={}/>", type, category);
+                } else {
+                    LOG.error("No path nor category attribute was given!");
                 }
-                service.renderClientlibLinks(clientlib, writer, rendererContext);
-            } else {
-                LOG.error("No clientlib found for path {} / category {} ");
+
+                ClientlibService service = context.getService(ClientlibService.class);
+                ClientlibElement clientlib = service.resolve(ref, request.getResourceResolver());
+
+                if (null != clientlib) { // if this is a clientlib or category
+                    JspWriter writer = this.pageContext.getOut();
+                    if (service.getClientlibConfig().getTagDebug()) {
+                        writer.println("<!-- cpn:clientlib." + type + " " + defaultIfNull(path, "") +
+                                " " + defaultIfNull(category, "") + " -->");
+                    }
+                    service.renderClientlibLinks(clientlib, writer, rendererContext);
+                } else {
+                    LOG.error("No clientlib found for path {} / category {} ");
+                }
+            } catch (IOException | RepositoryException e) {
+                LOG.error(e.getMessage(), e);
             }
-        } catch (IOException | RepositoryException e) {
-            LOG.error(e.getMessage(), e);
+            super.doEndTag();
         }
-        super.doEndTag();
         return EVAL_PAGE;
     }
 }
