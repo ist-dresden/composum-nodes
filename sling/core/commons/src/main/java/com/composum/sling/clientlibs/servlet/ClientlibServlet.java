@@ -44,18 +44,20 @@ public class ClientlibServlet extends AbstractClientlibServlet {
     }
 
     private void serve(boolean get, SlingHttpServletRequest request, SlingHttpServletResponse response) throws IOException, ServletException {
-        try {
-            RequestPathInfo pathInfo = request.getRequestPathInfo();
-            String selectors = pathInfo.getSelectorString();
-            String path = pathInfo.getResourcePath();
-            String hash = parseHashFromSuffix(pathInfo.getSuffix());
+        if (!dropRequest(request, response)) {
+            try {
+                RequestPathInfo pathInfo = request.getRequestPathInfo();
+                String selectors = pathInfo.getSelectorString();
+                String path = pathInfo.getResourcePath();
+                String hash = parseHashFromSuffix(pathInfo.getSuffix());
 
-            Clientlib.Type type = Clientlib.Type.valueOf(pathInfo.getExtension().toLowerCase());
-            ClientlibRef clientlibref = new ClientlibRef(type, path, false, null);
+                Clientlib.Type type = Clientlib.Type.valueOf(pathInfo.getExtension().toLowerCase());
+                ClientlibRef clientlibref = new ClientlibRef(type, path, false, null);
 
-            deliverClientlib(get, request, response, clientlibref, hash, isMinified(selectors));
-        } catch (RepositoryException | LoginException ex) {
-            throw new ServletException(ex);
+                deliverClientlib(get, request, response, clientlibref, hash, isMinified(selectors));
+            } catch (RepositoryException | LoginException ex) {
+                throw new ServletException(ex);
+            }
         }
     }
 
