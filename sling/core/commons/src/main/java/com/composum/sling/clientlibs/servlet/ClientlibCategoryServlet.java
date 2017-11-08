@@ -59,22 +59,24 @@ public class ClientlibCategoryServlet extends AbstractClientlibServlet {
 
     @Override
     protected void doHead(SlingHttpServletRequest request, SlingHttpServletResponse response) throws ServletException, IOException {
-        serve(true, request, response);
+        serve(false, request, response);
     }
 
     private void serve(boolean get, SlingHttpServletRequest request, SlingHttpServletResponse response) throws IOException, ServletException {
-        try {
-            RequestPathInfo pathInfo = request.getRequestPathInfo();
-            String selectors = pathInfo.getSelectorString();
-            Clientlib.Type type = Clientlib.Type.valueOf(pathInfo.getExtension().toLowerCase());
-            Pair<String, String> categoryAndHash = parseCategoryAndHashFromSuffix(pathInfo.getSuffix());
+        if (!dropRequest(request, response)) {
+            try {
+                RequestPathInfo pathInfo = request.getRequestPathInfo();
+                String selectors = pathInfo.getSelectorString();
+                Clientlib.Type type = Clientlib.Type.valueOf(pathInfo.getExtension().toLowerCase());
+                Pair<String, String> categoryAndHash = parseCategoryAndHashFromSuffix(pathInfo.getSuffix());
 
-            ClientlibRef ref = ClientlibRef.forCategory(type, categoryAndHash.getLeft(), false, null);
+                ClientlibRef ref = ClientlibRef.forCategory(type, categoryAndHash.getLeft(), false, null);
 
-            deliverClientlib(get, request, response, ref, categoryAndHash.getRight(), isMinified(selectors));
+                deliverClientlib(get, request, response, ref, categoryAndHash.getRight(), isMinified(selectors));
 
-        } catch (RepositoryException | LoginException ex) {
-            throw new ServletException(ex);
+            } catch (RepositoryException | LoginException ex) {
+                throw new ServletException(ex);
+            }
         }
     }
 

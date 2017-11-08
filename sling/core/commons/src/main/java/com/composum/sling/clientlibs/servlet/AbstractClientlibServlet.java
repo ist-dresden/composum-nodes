@@ -108,10 +108,10 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
                 }
             }
 
-            if (get) {
-                if (notModified) {
-                    response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
-                } else {
+            if (notModified) {
+                response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+            } else {
+                if (get) {
                     service.deliverContent(request.getResourceResolver(), clientlibRef, minified, response
                             .getOutputStream(), encoding);
                 }
@@ -124,7 +124,7 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
         }
     }
 
-    private String makeUrl(SlingHttpServletRequest request, ClientlibLink link, boolean minified) {
+    protected String makeUrl(SlingHttpServletRequest request, ClientlibLink link, boolean minified) {
         String uri = makeUri(minified, link);
         String url;
         if (configuration.getMapClientlibURLs()) {
@@ -148,4 +148,13 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
         return minified;
     }
 
+    protected boolean dropRequest(SlingHttpServletRequest request, SlingHttpServletResponse response) {
+        String uri = request.getRequestURI();
+        if (uri.endsWith(".map")) {
+            LOG.info("request dropped: '{}'", uri);
+            response.setStatus(HttpServletResponse.SC_GONE);
+            return true;
+        }
+        return false;
+    }
 }
