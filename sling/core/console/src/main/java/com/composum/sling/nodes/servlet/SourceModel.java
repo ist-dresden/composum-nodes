@@ -88,19 +88,25 @@ public class SourceModel extends ConsoleSlingBean {
             return ddot > 0 ? name.substring(0, ddot) : "";
         }
 
+        public boolean isMultiValue() {
+            return value instanceof Object[];
+        }
+
         public String getName() {
             return name;
         }
 
         public String getString() {
 
-            if (value instanceof Object[]) {
+            if (isMultiValue()) {
                 StringBuilder buffer = new StringBuilder();
                 buffer.append(getTypePrefix(value));
                 Object[] array = (Object[]) value;
                 buffer.append("[");
                 for (int i = 0; i < array.length; ) {
-                    buffer.append(getString(array[i]));
+                    String string = getString(array[i]);
+                    string = string.replaceAll(",", "\\\\,");
+                    buffer.append(string);
                     if (++i < array.length) {
                         buffer.append(',');
                     }
@@ -139,6 +145,9 @@ public class SourceModel extends ConsoleSlingBean {
 
         @Override
         public int compareTo(Property other) {
+            if (other == null) {
+                return 1;
+            }
             String ns = getNs();
             String ons = other.getNs();
             if (ns.isEmpty() && !ons.isEmpty()) {
