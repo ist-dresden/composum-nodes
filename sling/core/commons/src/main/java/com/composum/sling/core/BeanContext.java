@@ -372,7 +372,10 @@ public interface BeanContext extends Adaptable {
 
         @Override
         public SlingHttpServletRequest getRequest() {
-            return getAttribute(ATTR_REQUEST, SlingHttpServletRequest.class);
+            if (request == null) {
+                request = getAttribute(ATTR_REQUEST, SlingHttpServletRequest.class);
+            }
+            return request;
         }
 
         @Override
@@ -459,6 +462,22 @@ public interface BeanContext extends Adaptable {
 
         public Service(ResourceResolver resolver) {
             setAttribute(ATTR_RESOLVER, this.resolver = resolver, Scope.request);
+        }
+
+        public Service(SlingHttpServletRequest request, SlingHttpServletResponse response) {
+            this(request, response, request.getResource());
+        }
+
+        public Service(SlingHttpServletRequest request, SlingHttpServletResponse response, Resource resource) {
+            this (request, response, resource, request.getResourceResolver());
+        }
+
+        public Service(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                       Resource resource, ResourceResolver resolver) {
+            setAttribute(ATTR_REQUEST, this.request = request, Scope.request);
+            setAttribute(ATTR_RESPONSE, response, Scope.request);
+            setAttribute(ATTR_RESOLVER, this.resolver = resolver, Scope.request);
+            setAttribute(ATTR_RESOURCE, this.resource = resource, Scope.request);
         }
 
         @Override
