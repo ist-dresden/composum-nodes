@@ -110,7 +110,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
                         writer.println("<!-- cpn:clientlib." + type + " " + defaultIfNull(path, "") +
                                 " " + defaultIfNull(category, "") + " -->");
                     }
-                    service.renderClientlibLinks(clientlib, writer, rendererContext);
+                    service.renderClientlibLinks(clientlib, writer, request, rendererContext);
                 } else {
                     LOG.error("No clientlib found for path {} / category {} ");
                 }

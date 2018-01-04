@@ -33,17 +33,16 @@ public class RendererContext {
         return attribute;
     }
 
-    public final BeanContext context;
-    public final SlingHttpServletRequest request;
-
     protected final Set<ClientlibLink> renderedClientlibs;
+
+    protected transient ResourceResolver resolver;
 
     protected transient ClientlibService clientlibService;
 
     protected RendererContext(BeanContext context, SlingHttpServletRequest request) {
-        this.context = context;
-        this.request = request;
         this.renderedClientlibs = new LinkedHashSet<>();
+        clientlibService = context.getService(ClientlibService.class);
+        resolver = request.getResourceResolver();
     }
 
     /** Checks whether a referenced resource or client library is satisfied by an already rendered resource. */
@@ -82,9 +81,6 @@ public class RendererContext {
     }
 
     public ClientlibService getClientlibService() {
-        if (clientlibService == null) {
-            clientlibService = context.getService(ClientlibService.class);
-        }
         return clientlibService;
     }
 
@@ -97,7 +93,7 @@ public class RendererContext {
     }
 
     public ResourceResolver getResolver() {
-        return request.getResourceResolver();
+        return resolver;
     }
 
 }

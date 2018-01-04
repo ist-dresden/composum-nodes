@@ -91,7 +91,6 @@ public class AbstractClientlibTest {
         ServletContext servletContext = Mockito.mock(ServletContext.class);
         BeanContext beanContext = new BeanContext.Servlet(servletContext, context.bundleContext(), context.request(),
                 context.response());
-        rendererContext = RendererContext.instance(beanContext, context.request());
 
         clientlib2Service = (DefaultClientlibService) context.registerService(ClientlibService.class, new
                 DefaultClientlibService() {
@@ -104,6 +103,8 @@ public class AbstractClientlibTest {
                     }
                 });
         // TODO: MockOsgi.activate(clientlibService, context.bundleContext()); should work but doesn't
+
+        rendererContext = RendererContext.instance(beanContext, context.request());
 
         executorService = Executors.newFixedThreadPool(2);
     }
