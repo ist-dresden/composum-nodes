@@ -48,6 +48,23 @@
       }
     }
   },
+  "core": {
+    "sling:resourceType": "composum/nodes/commons/clientlib",
+    "description": "embeds the necessary set of dependencies to use the core features",
+    "category": [
+      "composum.components.core"
+    ],
+    "order": 110,
+    "css": {
+      "jcr:primaryType": "sling:OrderedFolder",
+      "embed": ["category:composum.components.base"]
+    },
+    "js": {
+      "jcr:primaryType": "sling:OrderedFolder",
+      "embed": ["category:composum.components.base",
+                "composum/nodes/commons/components/js/core.js"]
+    }
+  },
   "components": {
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "description": "embeds the complete set of widget components and declares all necessary dependencies",
