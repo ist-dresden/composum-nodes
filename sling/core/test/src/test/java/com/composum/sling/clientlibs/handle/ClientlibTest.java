@@ -393,7 +393,7 @@ public class ClientlibTest extends AbstractClientlibTest {
         LinkRenderer linkRenderer = new DefaultLinkRenderer() {{
             this.clientlibConfig = configurationService;
         }};
-        linkRenderer.renderClientlibLinks(linkit, writer, rendererContext);
+        linkRenderer.renderClientlibLinks(linkit, writer, context.request(), rendererContext);
         assertEquals("  <link rel=\"\" href=\"/context/libs/links/root.png\" />\n" + "  <link rel=\"firstrel\" " +
                 "href=\"/context/libs/links/first.png\" />\n" + "  <link rel=\"firstrel\" " +
                 "href=\"//externalurl/hallooo\" />\n" + "  <link rel=\"secondrel\" href=\"http://example" + "" +

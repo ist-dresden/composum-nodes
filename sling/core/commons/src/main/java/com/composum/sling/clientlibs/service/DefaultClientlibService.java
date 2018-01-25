@@ -316,12 +316,13 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     @Override
-    public void renderClientlibLinks(ClientlibElement clientlib, Writer writer, RendererContext context) throws
+    public void renderClientlibLinks(ClientlibElement clientlib, Writer writer, SlingHttpServletRequest request,
+                                     RendererContext context) throws
             IOException, RepositoryException {
         final Clientlib.Type type = clientlib.getType();
         final ClientlibRenderer renderer = rendererMap.get(type);
         if (renderer != null) {
-            renderer.renderClientlibLinks(clientlib, writer, context);
+            renderer.renderClientlibLinks(clientlib, writer, request, context);
         }
     }
 

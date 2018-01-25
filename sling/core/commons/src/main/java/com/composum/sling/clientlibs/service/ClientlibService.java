@@ -35,8 +35,8 @@ public interface ClientlibService {
      *
      * @param clientlib a {@link Clientlib} or {@link ClientlibCategory}
      */
-    void renderClientlibLinks(ClientlibElement clientlib, Writer writer, RendererContext context) throws IOException,
-            RepositoryException;
+    void renderClientlibLinks(ClientlibElement clientlib, Writer writer, SlingHttpServletRequest request,
+                              RendererContext context) throws IOException, RepositoryException;
 
     /**
      * Writes the content to a cache if it wasn't there, and returns a collection of information to be put into the
