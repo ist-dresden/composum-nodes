@@ -171,7 +171,7 @@
                         if (this.rules.mandatory) {
                             // check for a defined and not blank value
                             var valid = this.valid = (value !== undefined &&
-                            (this.rules.blank || value.trim().length > 0));
+                                (this.rules.blank || value.trim().length > 0));
                             if (!valid) {
                                 this.alert(alertMethod, 'danger', '', 'value is mandatory');
                             }
@@ -266,6 +266,13 @@
     window.widgets.register('.widget.hidden-widget', window.widgets.Widget);
 
     window.core = {
+
+        const: {
+            url: {
+                //                    2:scheme   3:host    5:port     6:path        9:selectors  10:ext     11:suffix  13:params
+                sling: new RegExp('^((https?)://([^:/]+)(:([^/]+))?)?(/[^.?]*)(\\.(([^/?]+)\\.)?([^./?]+))?(/[^?]*)?(\\?(.*))?$')
+            }
+        },
 
         getHtml: function (url, onSuccess, onError, onComplete) {
             core.ajaxGet(url, {dataType: 'html'}, onSuccess, onError, onComplete);
@@ -765,6 +772,106 @@
             if (value) {
                 localStorage.setItem(this.profileKey + '.' + aspect, JSON.stringify(value));
             }
+        }
+    });
+
+    window.core.SlingUrl = function (url) {
+        this.url = url;
+        var parts = window.core.const.url.sling.exec(url);
+        this.scheme = parts[2];
+        this.host = parts[3];
+        this.port = parts[5];
+        this.context = $('html').data('context-path');
+        this.path = parts[6];
+        if (this.context) {
+            if (this.path.indexOf(this.context) === 0) {
+                this.path = this.path.substring(this.context.length);
+            }
+        }
+        this.selectors = parts[9] ? parts[9].split('.') : [];
+        this.extension = parts[10];
+        this.suffix = parts[11];
+        this.parameters = {};
+        if (parts[13]) {
+            var params = parts[13].split("&");
+            for (var i = 0; i < params.length; i++) {
+                var pair = params[i].split('=');
+                var name = decodeURIComponent(pair[0]);
+                if (name) {
+                    var value = pair.length > 1 ? decodeURIComponent(pair[1]) : null;
+                    if (this.parameters[name]) {
+                        if (_.isArray(this.parameters[name])) {
+                            this.parameters[name].push(value);
+                        } else {
+                            this.parameters[name] = [this.parameters[name], value];
+                        }
+                    } else {
+                        this.parameters[name] = value;
+                    }
+                }
+            }
+        }
+    };
+
+    _.extend(window.core.SlingUrl.prototype, {
+
+        build: function () {
+            this.url = "";
+            if (this.scheme) {
+                this.url += this.scheme + '://';
+            }
+            if (this.host) {
+                if (!this.scheme) {
+                    this.url += '//';
+                }
+                this.url += this.host;
+                if (this.port) {
+                    this.url += ':' + this.port;
+                }
+            }
+            if (this.context) {
+                this.url += this.context;
+            }
+            if (this.path) {
+                this.url += this.path;
+            }
+            if (_.isArray(this.selectors) && this.selectors.length > 0) {
+                this.url += this.selectors.join('.');
+            }
+            if (this.extension) {
+                this.url += '.' + this.extension;
+            }
+            if (this.suffix) {
+                this.url += this.suffix;
+            }
+            if (this.parameters) {
+                var params = '';
+                var value, array, object = this.parameters;
+                _.each(_.keys(object), function (name) {
+                    params += params.length === 0 ? '?' : '&';
+                    value = object[name];
+                    if (_.isArray(value)) {
+                        array = value;
+                        for (var i = 0; i < array.length;) {
+                            value = array[i];
+                            params += encodeURIComponent(name);
+                            if (value) {
+                                params += '=' + encodeURIComponent(value);
+                            }
+                            if (++i < array.length) {
+                                params += '&';
+                            }
+                        }
+                    } else {
+                        params += encodeURIComponent(name);
+                        if (value) {
+                            params += '=' + encodeURIComponent(value);
+                        }
+                    }
+                });
+                this.url += params;
+            }
+            return this.url;
         }
     });
 
