@@ -77,8 +77,10 @@
       "depends": [
         "jslibs/bootstrap/(3.*:3.3.7)/css/bootstrap.css",
         "jslibs/bootstrap/(3.*:3.3.7)/css/bootstrap-theme.css",
+        "jslibs/x-editable/(1.*:1.5.1)/bootstrap3-editable/css/bootstrap-editable.css",
         "jslibs/bootstrap-slider/(9.*:9.7.2)/css/bootstrap-slider.css",
         "jslibs/bootstrap-colorpicker/(2.*:2.5.0)/css/bootstrap-colorpicker.css",
+        "jslibs/bootstrap-fileinput/(4.*:4.3.6)/css/fileinput.css",
         "jslibs/trumbowyg/(2.*:2.3.0)/ui/trumbowyg.css"
       ],
       "embed": [
