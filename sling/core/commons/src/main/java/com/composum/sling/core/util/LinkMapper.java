@@ -15,7 +15,7 @@ public interface LinkMapper {
     class ContextMapper implements LinkMapper {
 
         public String mapUri(SlingHttpServletRequest request, String uri) {
-            return LinkUtil.isExternalUrl(uri) ? uri : request.getContextPath() + uri;
+            return LinkUtil.isExternalUrl(uri) ? uri : request.getContextPath() + LinkUtil.encodePath(uri);
         }
     }
 
