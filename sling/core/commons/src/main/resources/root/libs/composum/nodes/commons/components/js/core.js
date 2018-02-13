@@ -271,6 +271,12 @@
             url: {
                 //                    2:scheme   3:host    5:port     6:path        9:selectors  10:ext     11:suffix  13:params
                 sling: new RegExp('^((https?)://([^:/]+)(:([^/]+))?)?(/[^.?]*)(\\.(([^/?]+)\\.)?([^./?]+))?(/[^?]*)?(\\?(.*))?$')
+            },
+            alert: {
+                type: {
+                    error: 'danger',
+                    warn: 'warning'
+                }
             }
         },
 
@@ -638,14 +644,38 @@
             return name.split(separator);
         },
 
+        getAlertType: function(messageLevel) {
+            return core.const.alert.type[messageLevel] || messageLevel;
+        },
+
         /**
-         * the dialog to select a repository path in a tree view
+         * displays a short 'alert' dialog with a single message
+         * @param type the message error level (success, info, warning, danger)
+         * @param title the message text to display in the heading of the dialog
+         * @param message the message text to display; optional - if not present the alert will hide
+         * @param result an optional result object from an Ajax call; a hint from this result is added to the text
          */
         alert: function (type, title, message, result) {
+            type = core.getAlertType(type);
             var dialog = core.getView('#alert-dialog', core.components.Dialog);
             dialog.$('.modal-header h4').text(title || 'Alert');
             dialog.show(_.bind(function () {
                 dialog.alert(type, message, result);
+            }, this));
+        },
+
+        /**
+         * displays a short 'alert' dialog with a message list
+         * @param type the message error level (success, info, warning, danger)
+         * @param title the message text to display in the heading of the dialog
+         * @param messages the message list with items like {level:(error,warn,info),text:'...'}
+         */
+        messages: function (type, title, messages) {
+            type = core.getAlertType(type);
+            var dialog = core.getView('#alert-dialog', core.components.Dialog);
+            dialog.$('.modal-header h4').text(title || 'Alert');
+            dialog.show(_.bind(function () {
+                dialog.messages(type, undefined, messages);
             }, this));
         },
 

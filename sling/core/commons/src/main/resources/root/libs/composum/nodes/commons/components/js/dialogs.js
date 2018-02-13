@@ -9,6 +9,16 @@
 
     (function (components) {
 
+        components.const = components.const || {};
+        components.const.dialog = {
+            alert: {
+                type: {
+                    error: 'danger',
+                    warn: 'warning'
+                }
+            }
+        };
+
         /**
          * the basic dialog component as 'superclass' for all dialog components
          */
@@ -16,11 +26,13 @@
 
             initialize: function (options) {
                 this.$alert = this.$('.alert');
+                this.$messageHead = this.$('.messages .panel-heading');
+                this.$messageBody = this.$('.messages .panel-body');
                 this.setUpWidgets(this.el);
                 this.$el.on('shown.bs.modal', _.bind(this.onShown, this));
             },
 
-            setUpWidgets: function(root) {
+            setUpWidgets: function (root) {
                 window.widgets.setUp(root);
             },
 
@@ -44,7 +56,7 @@
                 }
             },
 
-            resetOnShown: function() {
+            resetOnShown: function () {
                 this.reset();
             },
 
@@ -72,31 +84,89 @@
             },
 
             /**
-             * Displays a message text in a dialogs predefined alert box.
+             * Displays a message text in a dialogs predefined alert or message panel box.
              * @param type the message error level (success, info, warning, danger)
              * @param message the message text to display; optional - if not present the alert will hide
              * @param result an optional result object from an Ajax call; a hint from this result is added to the text
              */
             alert: function (type, message, result) {
-                this.$alert.removeClass();
                 if (message) {
-                    this.$alert.html(result ? core.resultMessage(result, message) : message);
-                    this.$alert.addClass('alert').addClass('alert-' + type);
+                    type = components.const.dialog.alert.type[type] || type;
+                    if (this.$messageBody.length === 1) {
+                        this.$messageHead.html(result ? core.resultMessage(result, message) : message);
+                        this.$messageHead.removeClass('hidden');
+                        this.$messageBody.html('');
+                        this.$messageBody.addClass('hidden');
+                        this.$messageBody.parent().removeClass().addClass('panel').addClass('panel-' + type);
+                    } else {
+                        this.$alert.html(result ? core.resultMessage(result, message) : message);
+                        this.$alert.removeClass().addClass('alert').addClass('alert-' + type);
+                    }
                 } else {
-                    this.$alert.html('');
-                    this.$alert.addClass('alert').addClass('alert-hidden');
+                    if (this.$messageBody.length === 1) {
+                        this.$messageBody.parent().removeClass().addClass('hidden');
+                        this.$messageHead.html('');
+                        this.$messageBody.html('');
+                    } else {
+                        this.$alert.html('');
+                        this.$alert.removeClass().addClass('alert').addClass('hidden');
+                    }
+                }
+            },
+
+            /**
+             * Displays a message list with title in a dialogs predefined message panel box.
+             * @param type the message error level (success, info, warning, danger)
+             * @param title the message text to display in the heading; optional - if not present the box will hide
+             * @param messages the message list with items like {level:(error,warn,info),text:'...'}
+             */
+            messages: function (type, title, messages) {
+                if (this.$messageBody.length === 1) {
+                    type = components.const.dialog.alert.type[type] || type;
+                    this.$messageBody.parent().removeClass();
+                    if (title) {
+                        this.$messageHead.html(title);
+                        this.$messageHead.removeClass('hidden');
+                        this.$messageBody.parent().addClass('panel').addClass('panel-' + type);
+                    } else {
+                        this.$messageHead.addClass('hidden');
+                    }
+                    this.$messageBody.html('');
+                    if (_.isArray(messages) && messages.length > 0) {
+                        this.$messageBody.html('<ul></ul>');
+                        var $list = this.$messageBody.find('ul');
+                        for (var i = 0; i < messages.length; i++) {
+                            var level = messages[i].level;
+                            level = components.const.dialog.alert.type[level] || level;
+                            $list.append('<li class="bg-' + level + '">' + messages[i].text + '</li>')
+                        }
+                        this.$messageBody.removeClass('hidden');
+                    } else {
+                        this.$messageBody.html('');
+                        this.$messageBody.addClass('hidden');
+                    }
+                } else {
+                    this.alert(type, title);
                 }
             },
 
             /**
              * Submit the form of the dialog.
-             * @param onSuccess an optional callback function called after a successful request
+             * @param onSuccess optional; 'true' or a callback function called after a successful request
              */
             submitForm: function (onSuccess, onError, onComplete) {
                 core.submitForm(this.el,
                     _.bind(function (result) {
                         if (_.isFunction(onSuccess)) {
                             onSuccess(result);
+                        } else {
+                            if (onSuccess) { // use 'true' to show an 'alter' with the success messages
+                                if (_.isObject(result) && _.isObject(result.response)) {
+                                    var response = result.response;
+                                    var messages = result.messages;
+                                    core.messages(response.level, response.text, messages);
+                                }
+                            }
                         }
                         this.hide();
                     }, this),
@@ -105,7 +175,13 @@
                             onError(result);
                         } else {
                             if (onError === undefined || onError) {
-                                this.alert('danger', "Error on submit", result);
+                                if (_.isObject(result.responseJSON) && _.isObject(result.responseJSON.response)) {
+                                    var response = result.responseJSON.response;
+                                    var messages = result.responseJSON.messages;
+                                    this.messages(response.level, response.text, messages);
+                                } else {
+                                    this.alert('danger', "Error on submit", result);
+                                }
                             }
                         }
                     }, this),

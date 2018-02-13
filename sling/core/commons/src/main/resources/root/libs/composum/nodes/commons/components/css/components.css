@@ -260,3 +260,19 @@
 .modal-dialog .form-group > .form-control.checkbox-widget {
     margin-top: 0;
 }
+
+.modal-dialog .modal-body .messages .panel-body {
+    max-height: 250px;
+    overflow: auto;
+    padding: 10px;
+}
+
+.modal-dialog .modal-body .messages .panel-body ul {
+    list-style: none;
+    padding: 0;
+}
+
+.modal-dialog .modal-body .messages .panel-body li {
+    padding: 3px 5px;
+    margin-bottom: 3px;
+}

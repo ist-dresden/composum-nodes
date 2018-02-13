@@ -12,7 +12,9 @@
                 </div>
                 <div class="modal-body">
                     <div class="messages">
-                        <div class="alert"></div>
+                        <div class="hidden">
+                            <div class="panel-body"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer buttons">
