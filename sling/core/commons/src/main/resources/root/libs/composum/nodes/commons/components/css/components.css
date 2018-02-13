@@ -264,6 +264,10 @@
 .modal-dialog .modal-body .messages .panel-body {
     max-height: 250px;
     overflow: auto;
+    padding: 0 0 10px;
+}
+
+.modal-dialog .modal-body .messages .panel .panel-body {
     padding: 10px;
 }
 
@@ -275,4 +279,8 @@
 .modal-dialog .modal-body .messages .panel-body li {
     padding: 3px 5px;
     margin-bottom: 3px;
+}
+
+#alert-dialog .modal-dialog .modal-body .messages .panel {
+    margin-bottom: 0;
 }

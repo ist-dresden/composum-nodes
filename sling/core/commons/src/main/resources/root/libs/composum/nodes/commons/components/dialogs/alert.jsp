@@ -4,23 +4,22 @@
 <div id="alert-dialog" class="dialog modal fade" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content form-panel">
-            <form>
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">Alert</h4>
-                </div>
-                <div class="modal-body">
-                    <div class="messages">
-                        <div class="hidden">
-                            <div class="panel-body"></div>
-                        </div>
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Alert</h4>
+            </div>
+            <div class="modal-body">
+                <div class="messages">
+                    <div class="hidden">
+                        <div class="panel-heading"></div>
+                        <div class="panel-body"></div>
                     </div>
                 </div>
-                <div class="modal-footer buttons">
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer buttons">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>

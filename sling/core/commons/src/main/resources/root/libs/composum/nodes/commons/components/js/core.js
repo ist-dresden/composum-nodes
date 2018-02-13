@@ -644,7 +644,7 @@
             return name.split(separator);
         },
 
-        getAlertType: function(messageLevel) {
+        getAlertType: function (messageLevel) {
             return core.const.alert.type[messageLevel] || messageLevel;
         },
 
@@ -673,7 +673,7 @@
         messages: function (type, title, messages) {
             type = core.getAlertType(type);
             var dialog = core.getView('#alert-dialog', core.components.Dialog);
-            dialog.$('.modal-header h4').text(title || 'Alert');
+            dialog.$('.modal-header h4').text(title);
             dialog.show(_.bind(function () {
                 dialog.messages(type, undefined, messages);
             }, this));
