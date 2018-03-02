@@ -13,7 +13,9 @@
                 selector: {
                     general: '.widget',
                     prefix: '.widget.',
-                    form: 'form.form-widget'
+                    form: 'form.form-widget',
+                    group: '.form-group',
+                    label: 'label .label-text'
                 }
             },
             attr: {
@@ -101,6 +103,12 @@
                 return this.$input.attr(widgets.const.attr.name);
             },
 
+            retrieveLabel: function () {
+                var c = widgets.const.css.selector;
+                var $label = this.$el.closest(c.group).find(c.label);
+                return $label.length === 1 ? $label.text().trim() : this.retrieveName();
+            },
+
             declareName: function (name) {
                 if (name) {
                     this.$input.attr(widgets.const.attr.name, name);
@@ -168,14 +176,6 @@
                 if (!this.$el.hasClass('hidden') && this.retrieveName()) {
                     var value = this.getValue();
                     if (this.rules) {
-                        if (this.rules.mandatory) {
-                            // check for a defined and not blank value
-                            var valid = this.valid = (value !== undefined &&
-                                (this.rules.blank || value.trim().length > 0));
-                            if (!valid) {
-                                this.alert(alertMethod, 'danger', '', 'value is mandatory');
-                            }
-                        }
                         if (this.valid && this.rules.pattern) {
                             // check pattern only if not blank (blank is valid if allowed explicitly)
                             var valid = this.valid = (this.rules.blank && (!value || value.trim().length < 1))
@@ -183,6 +183,14 @@
                             if (!valid) {
                                 this.alert(alertMethod, 'danger', '',
                                     this.rules.patternHint || "value doesn't match pattern", this.rules.pattern);
+                            }
+                        }
+                        if (this.valid && this.rules.mandatory) {
+                            // check for a defined and not blank value
+                            var valid = this.valid = (value !== undefined &&
+                                (this.rules.blank || value.trim().length > 0));
+                            if (!valid) {
+                                this.alert(alertMethod, 'danger', '', 'value is mandatory');
                             }
                         }
                     }
@@ -203,7 +211,7 @@
                 if (!$element) {
                     $element = this.$el;
                 }
-                this.label = $element.data('label');
+                this.label = $element.data('label') || this.retrieveLabel();
                 // scan 'data-pattern' attribute
                 var pattern = $element.data('pattern');
                 if (pattern) {

@@ -200,7 +200,7 @@
                 this.$typeHint = this.$('sling-post-type-hint');
                 this.$deleteHint = this.$('sling-post-delete-hint');
                 if (!this.$input.attr('value')) {
-                    this.$input.attr('value','true')
+                    this.$input.attr('value', 'true')
                 }
             },
 
@@ -260,6 +260,8 @@
 
             initialize: function (options) {
                 widgets.Widget.prototype.initialize.apply(this, [options]);
+                // scan 'rules / pattern' attributes
+                this.initRules();
                 this.$('.btn').click(_.bind(this.onSelect, this));
             },
 
@@ -291,6 +293,12 @@
          * possible attributes:
          */
         components.RadioGroupWidget = widgets.Widget.extend({
+
+            initialize: function (options) {
+                widgets.Widget.prototype.initialize.apply(this, [options]);
+                // scan 'rules / pattern' attributes
+                this.initRules();
+            },
 
             getCount: function () {
                 return this.$('input[type="radio"]').length;
@@ -326,6 +334,12 @@
          * possible attributes:
          */
         components.SelectWidget = widgets.Widget.extend({
+
+            initialize: function (options) {
+                widgets.Widget.prototype.initialize.apply(this, [options]);
+                // scan 'rules / pattern' attributes
+                this.initRules();
+            },
 
             retrieveInput: function () {
                 return this.$el.is('select') ? this.$el : this.$('select');
@@ -847,13 +861,18 @@
          * the 'file-upload-widget' (window.core.components.FileUploadWidget)
          * possible attributes:
          * - data-options: 'hidePreview' (no file preview), 'showUpload' (the direct upload button)
+         *  'browse:<Label>(:<Title>)', 'remove:<Label>(:<Title>)','upload:<Label>(:<Title>)',
          */
         components.FileUploadWidget = components.TextFieldWidget.extend({
 
             initialize: function (options) {
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
                 var dataOptions = this.$el.data('options');
+                options.showPreview = true;
+                options.showUpload = false;
+                options.fileType = 'any';
                 if (dataOptions) {
+                    var idx;
                     if (dataOptions.indexOf('hidePreview') >= 0) {
                         options.showPreview = false;
                         options.showUploadedThumbs = false;
@@ -861,18 +880,31 @@
                     if (dataOptions.indexOf('showUpload') >= 0) {
                         options.showUpload = true;
                     }
+                    this.getOptionText(options, dataOptions, 'browse');
+                    this.getOptionText(options, dataOptions, 'remove');
+                    this.getOptionText(options, dataOptions, 'upload');
                 }
                 var dataType = this.$el.data('type');
                 if (dataType) {
                     options.fileType = dataType;
                 }
-                this.whatever = this.$textField.fileinput({
-                    showPreview: options.showPreview === undefined ? true : options.showPreview,
-                    showUpload: options.showUpload || false,
-                    fileType: options.fileType || "any"
-                });
+                this.whatever = this.$textField.fileinput(options);
                 this.$widget = this.$el.closest('.file-input-new');
                 this.$inputCaption = this.$widget.find('.kv-fileinput-caption');
+            },
+
+            getOptionText: function (target, dataOptions, key) {
+                var idx;
+                if ((idx = dataOptions.indexOf(key + ':')) >= 0) {
+                    target[key + 'Label'] = dataOptions.substring(idx + key.length + 1).trim();
+                    if ((idx = target[key + 'Label'].indexOf(',')) > 0) {
+                        target[key + 'Label'] = target[key + 'Label'].substring(0, idx).trim();
+                    }
+                    if ((idx = target[key + 'Label'].indexOf(':')) > 0) {
+                        target[key + 'Title'] = target[key + 'Label'].substring(idx + 1).trim();
+                        target[key + 'Label'] = target[key + 'Label'].substring(0, idx).trim();
+                    }
+                }
             },
 
             /**
@@ -890,6 +922,15 @@
              */
             reset: function () {
                 this.$textField.fileinput('clear');
+            },
+
+            setName: function (name) {
+                this.$textField.attr('name', name);
+            },
+
+            getFileName: function () {
+                var files = this.$textField.fileinput('getFileStack');
+                return files.length === 1 ? files[0].name : undefined;
             }
         });
 

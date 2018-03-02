@@ -138,7 +138,11 @@
                         for (var i = 0; i < messages.length; i++) {
                             var level = messages[i].level;
                             level = components.const.dialog.alert.type[level] || level;
-                            $list.append('<li class="bg-' + level + '">' + messages[i].text + '</li>')
+                            $list.append('<li class="bg-' + level + ' text-' + level + '">'
+                                + (messages[i].label ? '<span class="label">' + messages[i].label + ':</span>' : '')
+                                + messages[i].text
+                                + (messages[i].hint ? '<span class="hint">(' + messages[i].hint + ')</span>' : '')
+                                + '</li>')
                         }
                         this.$messageBody.removeClass('hidden');
                     } else {
@@ -160,7 +164,7 @@
                         if (_.isFunction(onSuccess)) {
                             onSuccess(result);
                         } else {
-                            if (onSuccess) { // use 'true' to show an 'alter' with the success messages
+                            if (onSuccess) { // use 'true' to show the success messages
                                 if (_.isObject(result) && _.isObject(result.response)) {
                                     var response = result.response;
                                     var messages = result.messages;

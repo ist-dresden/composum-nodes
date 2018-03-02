@@ -5,7 +5,7 @@
     margin-top: 32px;
 }
 
-.checkbox-widget.form-control{
+.checkbox-widget.form-control {
     border: none;
     padding-left: 0;
 }
@@ -279,6 +279,17 @@
 .modal-dialog .modal-body .messages .panel-body li {
     padding: 3px 5px;
     margin-bottom: 3px;
+}
+
+.modal-dialog .modal-body .messages .label {
+    color: #333;
+    font-size: 100%;
+    font-weight: bold;
+}
+
+.modal-dialog .modal-body .messages .hint {
+    color: #777;
+    margin-left: 0.5rem;
 }
 
 #alert-dialog .modal-dialog .modal-body .messages .panel {
