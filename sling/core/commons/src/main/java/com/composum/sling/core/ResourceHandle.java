@@ -15,6 +15,7 @@ import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceWrapper;
 import org.apache.sling.api.resource.ValueMap;
@@ -29,7 +30,7 @@ import java.util.regex.Pattern;
 /**
  * the wrapper to enhance the Sling Resource class
  */
-public class ResourceHandle extends ResourceWrapper implements Cloneable {
+public class ResourceHandle extends ResourceWrapper implements JcrResource, Cloneable {
 
     /**
      * The 'adaptTo' like wrapping helper.
@@ -292,10 +293,13 @@ public class ResourceHandle extends ResourceWrapper implements Cloneable {
     }
 
     /**
-     * retrieves the primary type of the resources node
+     * retrieves the primary type of the resources node; is using the 'getPrimaryType()' method
+     * if the wrapped resource is a JcrResource.
      */
     public String getPrimaryType() {
-        return ResourceUtil.getPrimaryType(getResource());
+        return resource instanceof JcrResource
+                ? ((JcrResource) resource).getPrimaryType()
+                : getProperty(JcrConstants.JCR_PRIMARYTYPE);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.composum.sling.core.util;
 
+import com.composum.sling.core.JcrResource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingConstants;
@@ -75,7 +76,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
      */
     public static List<Resource> getChildrenByType(final Resource resource, List<String> typeSet) {
         final ArrayList<Resource> children = new ArrayList<>();
-        if (resource !=null) {
+        if (resource != null) {
             for (final Resource child : resource.getChildren()) {
                 for (String type : typeSet) {
                     if (isResourceType(child, type)) {
@@ -93,7 +94,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
      */
     public static List<Resource> getChildrenByType(final Resource resource, String type) {
         final ArrayList<Resource> children = new ArrayList<>();
-        if (resource !=null) {
+        if (resource != null) {
             for (final Resource child : resource.getChildren()) {
                 if (isResourceType(child, type)) {
                     children.add(child);
@@ -184,20 +185,25 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static String getPrimaryType(Resource resource) {
         String result = null;
         if (resource != null) {
-            Node node = resource.adaptTo(Node.class);
-            if (node != null) {
-                try {
-                    NodeType type = node.getPrimaryNodeType();
-                    if (type != null) {
-                        result = type.getName();
+            if (resource instanceof JcrResource) {
+                // use the resource itself if it implements the JcrResource interface (maybe a version of a resource)
+                result = ((JcrResource) resource).getPrimaryType();
+            } else {
+                Node node = resource.adaptTo(Node.class);
+                if (node != null) {
+                    try {
+                        NodeType type = node.getPrimaryNodeType();
+                        if (type != null) {
+                            result = type.getName();
+                        }
+                    } catch (RepositoryException ignore) {
                     }
-                } catch (RepositoryException ignore) {
                 }
-            }
-            if (result == null) {
-                ValueMap values = resource.adaptTo(ValueMap.class);
-                if (values != null) {
-                    result = values.get(JcrConstants.JCR_PRIMARYTYPE, (String) null);
+                if (result == null) {
+                    ValueMap values = resource.adaptTo(ValueMap.class);
+                    if (values != null) {
+                        result = values.get(JcrConstants.JCR_PRIMARYTYPE, (String) null);
+                    }
                 }
             }
         }
@@ -205,7 +211,8 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     }
 
     public static boolean isResourceType(Resource resource, String resourceType) {
-        return (resource != null && (resource.isResourceType(resourceType) || isNodeType(resource, resourceType)));
+        return (resource != null && (resource.isResourceType(resourceType)
+                || isPrimaryType(resource, resourceType) || isNodeType(resource, resourceType)));
     }
 
     public static boolean isPrimaryType(Resource resource, String primaryType) {

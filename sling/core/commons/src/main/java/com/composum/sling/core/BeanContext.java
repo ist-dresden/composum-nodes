@@ -273,7 +273,9 @@ public interface BeanContext extends Adaptable {
          */
         protected <AdapterType> boolean typeFits(Class<?> type, Class<?> upperbound,
                                                  AdapterType object, Class<AdapterType> defaultclass) {
-            if (!upperbound.isAssignableFrom(type)) return false;
+            if (!upperbound.isAssignableFrom(type)) {
+                return false;
+            }
             return null != object && type.isAssignableFrom(object.getClass()) || type.isAssignableFrom(defaultclass);
         }
 
@@ -553,17 +555,22 @@ public interface BeanContext extends Adaptable {
          */
         @Override
         public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
-            if (typeFits(type, PageContext.class, pageContext, PageContext.class))
+            if (typeFits(type, PageContext.class, pageContext, PageContext.class)) {
                 return type.cast(pageContext);
+            }
             return super.adaptTo(type);
         }
 
         @Override
         public BeanContext withResource(Resource resource) {
-            if (this.getResource() == resource) return this; // deliberately == since equals might be dangerous
+            if (this.getResource() == resource) {
+                return this; // deliberately == since equals might be dangerous
+            }
             Page copy = (Page) clone();
             copy.resource = resource;
-            if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
+            if (null == getResolver() && null != resource) {
+                resolver = resource.getResourceResolver();
+            }
             return copy;
         }
     }

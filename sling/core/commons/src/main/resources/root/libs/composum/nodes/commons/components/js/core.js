@@ -741,6 +741,10 @@
             return path;
         },
 
+        mangleNameValue: function(name) {
+            return name.replace(/[%*!?]+/g, '').replace(/[\s]+/g, '_').replace(/[$%&/#+]+/g, '-');
+        },
+
         // general helpers
 
         isEmptyObject: function (object) {
