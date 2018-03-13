@@ -178,12 +178,7 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public String getPrimaryType() {
-        try {
-            return resource.adaptTo(Node.class).getPrimaryNodeType().getName();
-        } catch (RepositoryException rex) {
-            LOG.error(rex.getMessage(), rex);
-        }
-        return "";
+        return StringUtils.defaultString(ResourceUtil.getPrimaryType(resource));
     }
 
     public List<Property> getPropertyList() {
