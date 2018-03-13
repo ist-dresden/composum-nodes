@@ -278,18 +278,8 @@ public interface ResourceFilter {
          */
         @Override
         public boolean accept(Resource resource) {
-            if (resource != null) {
-                Node node = resource.adaptTo(Node.class);
-                if (node != null) {
-                    NodeType type;
-                    try {
-                        type = node.getPrimaryNodeType();
-                        return filter.accept(type.getName());
-                    } catch (RepositoryException e) {
-                        // ok, its possible that primary type is not available (synthetic resource)
-                    }
-                }
-            }
+            String primaryType = ResourceUtil.getPrimaryType(resource);
+            if (StringUtils.isNotBlank(primaryType)) return filter.accept(primaryType);
             return false;
         }
 
