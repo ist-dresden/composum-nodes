@@ -178,7 +178,7 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public String getPrimaryType() {
-        return ResourceUtil.getPrimaryType(resource);
+        return StringUtils.defaultString(ResourceUtil.getPrimaryType(resource));
     }
 
     public List<Property> getPropertyList() {
