@@ -245,22 +245,43 @@ public class LinkUtil {
         return finalTarget;
     }
 
+    /**
+     * Determines the 'final URL' of a link to a resource by traversing along the 'redirect' properties.
+     *
+     * @param resource the addressed resource
+     * @param trace    the list of paths traversed before (to detect loops in redirects)
+     * @return a 'final' path or URL; <code>null</code> if no different target found
+     * @throws RedirectLoopException if a redirect loop has been detected
+     */
     protected static String getFinalTarget(ResourceHandle resource, List<String> trace)
             throws RedirectLoopException {
         String finalTarget = null;
         if (resource.isValid()) {
             String path = resource.getPath();
             if (trace.contains(path)) {
+                // throw an exception if a loop has been detected
                 throw new RedirectLoopException(trace, path);
             }
+            // search for redirects and resolve them...
             String redirect = resource.getProperty(PROP_TARGET);
             if (StringUtils.isBlank(redirect)) {
                 redirect = resource.getProperty(PROP_REDIRECT);
             }
+            if (StringUtils.isBlank(redirect)) {
+                // try to use the properties of a 'jcr:content' child instead of the target resource itself
+                ResourceHandle contentResource = resource.getContentResource();
+                if (resource != contentResource) {
+                    redirect = contentResource.getProperty(PROP_TARGET);
+                    if (StringUtils.isBlank(redirect)) {
+                        redirect = contentResource.getProperty(PROP_REDIRECT);
+                    }
+                }
+            }
             if (StringUtils.isNotBlank(redirect)) {
                 trace.add(path);
-                finalTarget = redirect;
+                finalTarget = redirect; // use the redirect target as the link URL
                 if (!URL_PATTERN.matcher(finalTarget).matches()) {
+                    // look forward if the redirect found points to another resource
                     ResourceResolver resolver = resource.getResourceResolver();
                     Resource targetResource = resolver.getResource(finalTarget);
                     if (targetResource != null) {
