@@ -436,7 +436,7 @@
                     }
                 },
                 error: function (result) {
-                    if (core.isNotAuthorized(result)) {
+                    if (action.indexOf('/j_security_check') < 0 && core.isNotAuthorized(result)) {
                         if (_.isFunction(core.unauthorizedDelegate)) {
                             core.unauthorizedDelegate(function () {
                                 // try it once more after delegation to authorize
@@ -537,9 +537,10 @@
         resultMessage: function (result, message) {
             var hintPattern = new RegExp('<title>(.+)</title>', 'im');
             var hint = hintPattern.exec(result.responseText);
-            var text = (message ? (message + ' - ') : '') + result.status + ': ' + result.statusText
-                + (hint ? ('\n\n(' + hint[1] + ')') : '');
-            return text;
+            return (message ? message : '')
+                + (hint ? ((message ? '\n\n' : '') + hint[1])
+                    : ((message ? ' - ' : '') + (result.responseText ? result.responseText
+                        : (result.status + ': ' + result.statusText))));
         },
 
         getContextUrl: function (url) {
@@ -741,7 +742,7 @@
             return path;
         },
 
-        mangleNameValue: function(name) {
+        mangleNameValue: function (name) {
             return name.replace(/[%*!?]+/g, '').replace(/[\s]+/g, '_').replace(/[$%&/#+]+/g, '-');
         },
 

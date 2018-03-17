@@ -184,7 +184,7 @@
                                     var messages = result.responseJSON.messages;
                                     this.messages(response.level, response.text, messages);
                                 } else {
-                                    this.alert('danger', "Error on submit", result);
+                                    this.alert('danger', core.resultMessage(result, "Error"));
                                 }
                             }
                         }

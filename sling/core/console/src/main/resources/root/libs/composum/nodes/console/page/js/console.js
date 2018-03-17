@@ -23,7 +23,7 @@
 
         console.authorize = function (retryThisFailedCall) {
             var loginDialog = console.getUserLoginDialog();
-            loginDialog.show(undefined, retryThisFailedCall, 'authorization');
+            loginDialog.handleUnauthorized(retryThisFailedCall);
         };
 
         //
@@ -43,6 +43,31 @@
                 $login.click(_.bind(this.login, this));
                 this.$('button.logout').click(_.bind(this.logout, this));
                 this.$el.on('shown.bs.modal', _.bind(this.onShown, this));
+                this.callsToRetry = [];
+                this.showing = false;
+            },
+
+            /**
+             * collect all failed request calls to retry after successful login
+             * @param retryThisFailedCall the call to retry after login
+             */
+            handleUnauthorized: function (retryThisFailedCall) {
+                if (this.showing) {
+                    // collect all failed calls during login
+                    this.callsToRetry.push(retryThisFailedCall);
+                } else {
+                    // show login dialog and collect failed calls...
+                    this.showing = true;
+                    this.callsToRetry = [retryThisFailedCall];
+                    this.show(undefined, _.bind(function () {
+                        // retry after login all collected calls
+                        this.callsToRetry.forEach(function (retryThisFailedCall) {
+                            retryThisFailedCall();
+                        });
+                        this.showing = false;
+                        this.callsToRetry = [];
+                    }, this), 'authorization');
+                }
             },
 
             show: function (initView, callback, type) {
@@ -71,13 +96,16 @@
 
             login: function (event) {
                 event.preventDefault();
-                this.submitForm(undefined, false, _.bind(function () {
-                    if (_.isFunction(this.callback)) {
-                        this.hide();
-                    } else {
-                        core.initPermissions();
-                    }
-                }, this));
+                this.submitForm(_.bind(function () {
+                        if (_.isFunction(this.callback)) {
+                            this.hide();
+                        } else {
+                            core.initPermissions();
+                        }
+                    }, this),
+                    _.bind(function (result) {
+                        this.alert('danger', core.resultMessage(result));
+                    }, this));
                 return false;
             }
         });
