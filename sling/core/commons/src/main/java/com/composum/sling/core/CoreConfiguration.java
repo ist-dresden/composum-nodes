@@ -16,6 +16,7 @@ public interface CoreConfiguration {
 
     String ERRORPAGE_STATUS = "errorpage.status";
     String ERRORPAGES_PATH = "errorpages.path";
+    String DEFAULT_ERRORPAGES = "errorpages.default";
 
     String TREE_INTERMEDIATE_FILTER_KEY = "tree.intermediate.filter";
 

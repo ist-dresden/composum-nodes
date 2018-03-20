@@ -122,24 +122,35 @@ public class DefaultClientlibService implements ClientlibService {
 
     @Override
     public ClientlibElement resolve(ClientlibRef ref, ResourceResolver resolver) {
-        if (ref.isCategory()) {
-            List<Resource> resources = retrieveCategoryResources(ref.category, resolver);
-            if (!resources.isEmpty()) return new ClientlibCategory(ref, resources);
-        } else if (ref.isExternalUri()) {
-            return new ClientlibExternalUri(ref.type, ref.externalUri, ref.properties);
-        } else {
-            Resource resource = retrieveResource(ref.path, resolver);
-            if (null != resource) {
-                if (resource.isResourceType(RESOURCE_TYPE)) return new Clientlib(ref.type, resource);
-                if (ClientlibFile.isFile(resource)) {
-                    resource = minificationVariant(resource);
-                    return new ClientlibFile(ref, ref.type, resource, ref.properties);
+        if (ref != null /* shouldn't happen but was happened */) {
+            if (ref.isCategory()) {
+                List<Resource> resources = retrieveCategoryResources(ref.category, resolver);
+                if (!resources.isEmpty()) return new ClientlibCategory(ref, resources);
+            } else if (ref.isExternalUri()) {
+                return new ClientlibExternalUri(ref.type, ref.externalUri, ref.properties);
+            } else {
+                Resource resource = retrieveResource(ref.path, resolver);
+                if (null != resource) {
+                    if (resource.isResourceType(RESOURCE_TYPE)) return new Clientlib(ref.type, resource);
+                    if (ClientlibFile.isFile(resource)) {
+                        resource = minificationVariant(resource);
+                        return new ClientlibFile(ref, ref.type, resource, ref.properties);
+                    }
+                    LOG.warn("Ignored resource {} with unknown type {}", resource.getPath(), resource.getResourceType());
                 }
-                LOG.warn("Ignored resource {} with unknown type {}", resource.getPath(), resource.getResourceType());
+            }
+            if (ref.optional) {
+                LOG.debug("Could not resolve {}", ref);
+            } else {
+                LOG.warn("Could not resolve {}", ref);
+            }
+        } else {
+            try {
+                throw new RuntimeException("Clientlib ref is NULL!");
+            } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
             }
         }
-        if (ref.optional) LOG.debug("Could not resolve {}", ref);
-        else LOG.warn("Could not resolve {}", ref);
         return null;
     }
 
