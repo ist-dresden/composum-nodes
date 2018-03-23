@@ -16,7 +16,7 @@
         };
 
         browser.setCurrentPath = function (path, supressEvent) {
-            if (!browser.current || browser.current.path != path) {
+            if (!browser.current || browser.current.path !== path) {
                 if (path) {
                     browser.refreshCurrentPath(path, _.bind(function (result) {
                         core.console.getProfile().set('browser', 'current', path);
@@ -105,7 +105,7 @@
                     }
                 });
                 this.initialSelect = this.$el.attr('data-selected');
-                if (!this.initialSelect || this.initialSelect == '/') {
+                if (!this.initialSelect || this.initialSelect === '/') {
                     this.initialSelect = core.console.getProfile().get(this.getProfileId(), 'current', "/");
                 }
                 this.initializeFilter();
@@ -131,6 +131,7 @@
                 if (node) {
                     var path = node.original.path;
                     var keyCode = event.which;
+                    // noinspection FallThroughInSwitchStatementJS
                     switch (keyCode) {
                         case 68:  // D(elete)
                             if (!event.ctrlKey && !event.metaKey) {
@@ -215,26 +216,32 @@
                 var oldPath = draggedNode.path;
                 var nodeName = core.getNameFromPath(oldPath);
                 var newPath = core.buildContentPath(parentPath, nodeName);
+                var beforePath = this.getNodePath(this.getNodeOfIndex(targetNode, index));
+                var data = {
+                    path: parentPath,
+                    name: nodeName
+                };
+                if (beforePath) {
+                    data.before = beforePath;
+                } else {
+                    data.index = -1;
+                }
                 core.ajaxPut('/bin/cpm/nodes/node.move.json' + core.encodePath(oldPath),
-                    JSON.stringify({
-                        path: parentPath,
-                        name: nodeName,
-                        index: index
-                    }), {
+                    JSON.stringify(data), {
                         dataType: 'json'
                     }, _.bind(function (data) {
                         $(document).trigger('path:moved', [oldPath, newPath]);
                     }, this), _.bind(function (result) {
                         var dialog = core.nodes.getMoveNodeDialog();
                         dialog.show(_.bind(function () {
-                            dialog.setValues(draggedNode, targetNode, index);
+                            dialog.setValues(draggedNode, targetNode, beforePath, index);
                             dialog.alert('danger', 'Error on moving node!', result);
                         }, this));
                     }, this));
             },
 
             dataUrlForPath: function (path) {
-                var params = this.filter && 'default' != this.filter ? '?filter=' + this.filter : '';
+                var params = this.filter && 'default' !== this.filter ? '?filter=' + this.filter : '';
                 return '/bin/cpm/nodes/node.tree.json' + path + params;
             }
         });
@@ -347,7 +354,7 @@
                         dialog.show(_.bind(function () {
                             dialog.setNodePath(clipboard.path);
                             dialog.setTargetPath(path);
-                            dialog.alert('danger', 'Error on copying node!', result);
+                            dialog.errorMessage('Copy Node', result);
                         }, this), _.bind(function () {
                             if (_.isFunction(callback)) {
                                 callback.call(this, path);
@@ -411,7 +418,7 @@
                 if (node) {
                     core.ajaxPost('/bin/cpm/nodes/node.toggle.lock' + node.path,
                         {}, {}, undefined, undefined, _.bind(function (result) {
-                            if (result.status == 200) {
+                            if (result.status === 200) {
                                 $(document).trigger('path:changed', [node.path]);
                             } else {
                                 core.alert('danger', 'Error', 'Error on toggle node lock', result);

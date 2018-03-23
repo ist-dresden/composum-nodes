@@ -38,6 +38,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     public static final String PARAM_MIME_TYPE = "mimeType";
     public static final String PARAM_NAME = "name";
     public static final String PARAM_PATH = "path";
+    public static final String PARAM_BEFORE = "before";
     public static final String PARAM_QUERY = "query";
     public static final String PARAM_RESOURCE_TYPE = "resourceType";
     public static final String PARAM_TITLE = "title";
