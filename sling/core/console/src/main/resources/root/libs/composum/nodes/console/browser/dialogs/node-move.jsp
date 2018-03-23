@@ -41,19 +41,31 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group name">
-                            <label class="control-label">New Node Name</label>
-                            <input name="name" class="form-control widget text-field-widget" type="text"
-                                   placeholder="enter node name" autofocus>
-                        </div>
-                        <div class="form-group index">
-                            <label class="control-label">Position</label>
-                            <div class="index input-group widget number-field-widget" data-options="0">
-                                <input name="index" type="text" class="form-control"/>
-                                <span class="input-group-addon spinner">
-                                    <span class="decrement fa fa-minus" title="decrement"></span>
-                                    <span class="increment fa fa-plus" title="increment"></span>
-                                </span>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <div class="form-group name">
+                                    <label class="control-label">New Node Name</label>
+                                    <input name="name" class="form-control widget text-field-widget" type="text"
+                                           placeholder="enter node name" autofocus>
+                                </div>
+                            </div>
+                            <div class="col-xs-4">
+                                <div class="form-group before">
+                                    <label class="control-label">Order Before &nbsp; &nbsp; &nbsp; or at ...</label>
+                                    <input name="before" class="form-control widget text-field-widget" type="text"
+                                           placeholder="node name" autofocus>
+                                </div>
+                            </div>
+                            <div class="col-xs-2">
+                                <div class="form-group index">
+                                    <label class="control-label">Position</label>
+                                    <div class="index input-group widget number-field-widget" data-options="-1">
+                                        <input name="index" type="text" class="form-control"/>
+                                        <span class="input-group-addon spinner"><span
+                                                class="decrement fa fa-minus" title="decrement"></span><span
+                                                class="increment fa fa-plus" title="increment"></span></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

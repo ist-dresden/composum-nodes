@@ -28,6 +28,7 @@ import java.util.Map;
 /**
  * The configuration service for all servlets in the core bundle.
  */
+@SuppressWarnings("FieldCanBeLocal")
 @Component(
         label = "Composum Core Configuration",
         description = "the configuration service for all servlets in the core bundle",

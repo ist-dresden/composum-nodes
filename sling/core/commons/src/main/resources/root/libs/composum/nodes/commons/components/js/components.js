@@ -744,7 +744,7 @@
 
             initialize: function (options) {
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
-                var dataOptions = this.$el.data('options');
+                var dataOptions = '' + this.$el.data('options');
                 if (dataOptions) {
                     var values = dataOptions.split(':');
                     if (values.length > 0) options.minValue = values[0];
@@ -778,12 +778,12 @@
 
             increment: function () {
                 if (this.stepSize) {
-                    this.setValue(parseInt(this.getValue()) + this.stepSize, true);
+                    this.setValue((this.getValue() ? parseInt(this.getValue()) : this.minValue) + this.stepSize, true);
                 }
             },
 
             decrement: function () {
-                if (this.stepSize) {
+                if (this.stepSize && this.getValue()) {
                     this.setValue(parseInt(this.getValue()) - this.stepSize, true);
                 }
             },

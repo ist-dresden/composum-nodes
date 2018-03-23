@@ -179,13 +179,7 @@
                             onError(result);
                         } else {
                             if (onError === undefined || onError) {
-                                if (_.isObject(result.responseJSON) && _.isObject(result.responseJSON.response)) {
-                                    var response = result.responseJSON.response;
-                                    var messages = result.responseJSON.messages;
-                                    this.messages(response.level, response.text, messages);
-                                } else {
-                                    this.alert('danger', core.resultMessage(result, "Error"));
-                                }
+                                this.errorMessage("Error", result);
                             }
                         }
                     }, this),
@@ -200,6 +194,14 @@
                     _.bind(function (result) {
                         if (_.isFunction(onSuccess)) {
                             onSuccess(result);
+                        } else {
+                            if (onSuccess) { // use 'true' to show the success messages
+                                if (_.isObject(result) && _.isObject(result.response)) {
+                                    var response = result.response;
+                                    var messages = result.messages;
+                                    core.messages(response.level, response.text, messages);
+                                }
+                            }
                         }
                         this.hide();
                     }, this),
@@ -208,7 +210,7 @@
                             onError(result);
                         } else {
                             if (onError === undefined || onError) {
-                                this.alert('danger', "Error on submit", result);
+                                this.errorMessage("Error", result);
                             }
                         }
                     }, this),
@@ -220,15 +222,32 @@
                 core.ajaxPut(url, JSON.stringify(data), {
                     dataType: 'json'
                 }, onSuccess, undefined, _.bind(function (result) {
-                    if (result.status == 200) {
-                        if (_.isFunction(onSuccess)) {
+                    if (result.status >= 200 && result.status < 299) {
+                        if (result.status === 200 && _.isFunction(onSuccess)) {
                             onSuccess(result);
+                            this.hide();
+                        } else {
+                            var detail = result.responseJSON;
+                            if (result.status !== 200 && _.isObject(detail) && detail.response) {
+                                this.messages(detail.response.level, detail.response.text, detail.messages);
+                            } else {
+                                this.hide();
+                            }
                         }
-                        this.hide();
                     } else {
-                        this.alert('danger', 'Error on ' + label, result);
+                        this.errorMessage(label, result);
                     }
                 }, this));
+            },
+
+            errorMessage: function(message, result) {
+                var detail = result.responseJSON;
+                if (_.isObject(detail) && detail.response) {
+                    this.messages(detail.response.level, detail.response.text, detail.messages);
+                } else {
+                    var level = result.status >= 300 && result.status < 399 ? 'info' : 'danger';
+                    this.alert(level, message, result);
+                }
             }
         });
 

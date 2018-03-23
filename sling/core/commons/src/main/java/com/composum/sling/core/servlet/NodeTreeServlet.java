@@ -360,12 +360,17 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
 
         public String type;
         public String path;
-        public Integer index;
+        public String before;
+        public String index;
         public String name;
         public String title;
         public String mimeType;
         public String resourceType;
         public String jcrContent;
+
+        public Integer index() {
+            return StringUtils.isNotBlank(index) ? Integer.parseInt(index) : null;
+        }
     }
 
     public NodeParameters getFormParameters(SlingHttpServletRequest request) {
@@ -373,7 +378,8 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         NodeParameters params = new NodeParameters();
         params.name = request.getParameter(PARAM_NAME);
         params.path = request.getParameter(PARAM_PATH);
-        params.index = RequestUtil.getParameter(request, PARAM_INDEX, (Integer) null);
+        params.before = request.getParameter(PARAM_BEFORE);
+        params.index = request.getParameter(PARAM_INDEX);
         params.type = request.getParameter(PARAM_TYPE);
         params.title = request.getParameter(PARAM_TITLE);
         params.mimeType = request.getParameter(PARAM_MIME_TYPE);

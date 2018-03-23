@@ -165,11 +165,12 @@
 
             saveNode: function (event) {
                 event.preventDefault();
+
                 function mixinValues(arrayOfElements) {
                     var stringValues = [];
                     for (var i = 0; i < arrayOfElements.length; i++) {
                         var mixinName = $(arrayOfElements[i]).val();
-                        if (mixinName != '') {
+                        if (mixinName !== '') {
                             stringValues[i] = mixinName;
                         }
                     }
@@ -239,7 +240,7 @@
                     $(document).trigger('path:inserted', [parentPath, newNodeName]);
                     this.hide();
                 }, this), _.bind(function (result) {
-                    core.alert('danger', 'Error', 'Error on copying node', result);
+                    this.errorMessage("Copy Node", result);
                 }, this));
                 return false;
             }
@@ -253,6 +254,7 @@
                 this.$node = this.$('input[name="target-node"]');
                 this.$path = this.$('input[name="path"]');
                 this.$name = this.$('input[name="name"]');
+                this.$before = this.$('input[name="before"]');
                 this.$index = this.$('input[name="index"]');
                 this.$('button.move').click(_.bind(this.moveNode, this));
             },
@@ -263,32 +265,34 @@
                 this.$name.val(node.name);
             },
 
-            setValues: function (draggedNode, dropTarget, index) {
+            setValues: function (draggedNode, dropTarget, before, index) {
                 this.$node.val(draggedNode.path);
                 this.$path.val(dropTarget.path);
                 this.$name.val(draggedNode.name);
-                this.$index.val(index);
+                this.$before.val(before);
+                this.$index.val(index || index === 0 ? index : -1);
             },
 
             moveNode: function (event) {
                 event.preventDefault();
                 if (this.$form.isValid()) {
                     var oldPath = this.$node.val();
-                    var name = this.$name.val();
-                    var targetPath = this.$path.val();
-                    var index = this.$index.val();
-                    if (!index && index != 0) {
-                        index = -1
+                    var data = {
+                        name: this.$name.val(),
+                        path: this.$path.val()
+                    };
+                    var val;
+                    if (val = this.$before.val()) {
+                        data.before = val;
                     }
-                    var newPath = core.buildContentPath(targetPath, name);
+                    if (val = this.$index.val() || val === 0) {
+                        data.index = val;
+                    }
+                    var newPath = core.buildContentPath(data.path, name);
                     this.submitPUT(
                         'move node',
-                        '/bin/cpm/nodes/node.move.json' + core.encodePath(oldPath), {
-                            name: name,
-                            path: targetPath,
-                            index: index
-                        },
-                        function () {
+                        '/bin/cpm/nodes/node.move.json' + core.encodePath(oldPath), data,
+                        function (result) {
                             $(document).trigger('path:moved', [oldPath, newPath]);
                         });
                 } else {

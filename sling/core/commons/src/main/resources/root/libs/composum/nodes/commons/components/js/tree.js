@@ -711,6 +711,14 @@
 
             // jstree helpers
 
+            /**
+             * @param node the node or the 'original' of a node; can be {undefined}
+             * @returns the path from a node; can be {undefined}
+             */
+            getNodePath: function (node) {
+                return node ? (node.original ? node.original.path : node.path) : undefined;
+            },
+
             refreshNodeById: function (id, callback) {
                 console.log(this.nodeIdPrefix + 'tree.refreshNodeById(' + id + ')');
                 var selected;
@@ -769,6 +777,21 @@
                                 }
                             }
                         }
+                    }
+                }
+                return undefined;
+            },
+
+            /**
+             * @param mixed the parent tree node
+             * @param index the index of the child node
+             * @returns the node child at the given index of the given parent node
+             */
+            getNodeOfIndex: function (mixed, index) {
+                if (mixed) {
+                    var node = this.jstree.get_node(mixed);
+                    if (node && node.children) {
+                        return this.jstree.get_node(node.children[index]);
                     }
                 }
                 return undefined;
