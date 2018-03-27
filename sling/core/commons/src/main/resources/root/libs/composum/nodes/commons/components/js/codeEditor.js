@@ -129,11 +129,11 @@
             saveText: function (onSuccess) {
                 var path = this.getPath();
                 if (path) {
-                    core.ajaxPut("/bin/cpm/nodes/property.bin" + path, this.ace.getValue(), {
+                    core.ajaxPut("/bin/cpm/nodes/property.update.bin" + path, this.ace.getValue(), {
                         contentType: 'text/plain;charset=UTF-8',
                         dataType: 'text'
                     }, undefined, undefined, _.bind(function (result, x, y) {
-                        if (result.status == 200) {
+                        if (result.status === 200) {
                             if (_.isFunction(onSuccess)) {
                                 onSuccess(result);
                             }
