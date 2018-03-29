@@ -228,6 +228,7 @@
 }
 
 .jstree-rename-input {
+    margin-top: -2px;
     color: #000;
 }
 

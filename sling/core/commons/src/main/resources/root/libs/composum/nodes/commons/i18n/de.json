@@ -24,7 +24,17 @@
     }
   },
   "hint": {
-    "jcr:primaryType": "sling:Folder"
+    "jcr:primaryType": "sling:Folder",
+    "path": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "path",
+      "sling:message": "Pfad"
+    },
+    "new-parent-path": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "new parent path",
+      "sling:message": "neuer Vater-Pfad"
+    }
   },
   "label": {
     "jcr:primaryType": "sling:Folder",
@@ -47,6 +57,11 @@
       "jcr:primaryType": "sling:MessageEntry",
       "sling:key": "Close",
       "sling:message": "Schließen"
+    },
+    "copy": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Copy",
+      "sling:message": "Kopieren"
     },
     "create": {
       "jcr:primaryType": "sling:MessageEntry",
@@ -82,6 +97,11 @@
       "jcr:primaryType": "sling:MessageEntry",
       "sling:key": "Link Title",
       "sling:message": "Link-Titel"
+    },
+    "move": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Move",
+      "sling:message": "Verschieben"
     },
     "remove": {
       "jcr:primaryType": "sling:MessageEntry",
@@ -121,6 +141,41 @@
       "sling:key": "browse file system to find a file",
       "sling:message": "Auswahl einer Datei aus dem Dateisystem"
     },
+    "enter-node-name": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "enter node name",
+      "sling:message": "Knotennamen eingeben"
+    },
+    "move-node": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Move Node",
+      "sling:message": "Knoten Verschieben"
+    },
+    "new-node-name": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "New Node Name",
+      "sling:message": "Neuer Knotenname"
+    },
+    "node-name": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "node name",
+      "sling:message": "Knotenname"
+    },
+    "node-to-move": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Node to move",
+      "sling:message": "Zn verschiebender Knoten"
+    },
+    "or-at": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "or at",
+      "sling:message": "oder an"
+    },
+    "order-before": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Order Before",
+      "sling:message": "Anordnen vor"
+    },
     "remove-file": {
       "jcr:primaryType": "sling:MessageEntry",
       "sling:key": "remove the chosen file",
@@ -131,10 +186,23 @@
       "sling:key": "Select Repository Path",
       "sling:message": "Repository-Pfad auswählen"
     },
+    "target-path": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Target Path",
+      "sling:message": "Ziel-Pfad"
+    },
     "upload-file": {
       "jcr:primaryType": "sling:MessageEntry",
       "sling:key": "upload the chosen file",
       "sling:message": "die gewählte Datei hochladen"
+    }
+  },
+  "message": {
+    "jcr:primaryType": "sling:Folder",
+    "item-exists": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "An element with the same name exists already - use a different name!",
+      "sling:message": "Ein Element mit demselben Namen existiert bereits - verwenden Sie einen anderen Namen!"
     }
   }
 }

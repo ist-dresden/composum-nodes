@@ -1187,17 +1187,7 @@ public class NodeServlet extends NodeTreeServlet {
                                 newResource, LabelType.name, false);
 
                     } catch (ItemExistsException itex) {
-
-                        response.setStatus(HttpServletResponse.SC_CONFLICT);
-                        JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                        jsonWriter.beginObject();
-                        jsonWriter.name("success").value(false);
-                        jsonWriter.name("response").beginObject();
-                        jsonWriter.name("level").value("warn");
-                        jsonWriter.name("text").value(CpnlElFunctions.i18n(request,
-                                "a node with the copied name exists already - use a different name for the new node"));
-                        jsonWriter.endObject();
-                        jsonWriter.endObject();
+                        jsonAnswerItemExists(request, response);
                     }
                 } else {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST,
