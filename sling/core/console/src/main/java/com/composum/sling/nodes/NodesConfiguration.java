@@ -13,6 +13,7 @@ public interface NodesConfiguration {
     String ERRORPAGE_STATUS = "errorpage.status";
     String ERRORPAGES_PATH = "errorpages.path";
 
+    String CONSOLE_ACCESS_CHECK = "console.access.check";
     String CONSOLE_CATEGORIES_KEY = "console.categories";
 
     long QUERY_RESULT_LIMIT_DEFAULT = 500L;
@@ -33,6 +34,8 @@ public interface NodesConfiguration {
     String PROPERTY_SERVLET_ENABLED = "property.servlet.enabled";
     String VERSION_SERVLET_ENABLED = "version.servlet.enabled";
     String USER_MANAGEMENT_SERVLET_ENABLED = "usermanagement.servlet.enabled";
+
+    boolean checkConsoleAccess();
 
     String[] getConsoleCategories();
 

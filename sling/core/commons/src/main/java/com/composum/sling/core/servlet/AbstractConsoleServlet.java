@@ -1,6 +1,7 @@
 package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -33,6 +34,14 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
 
     protected abstract String getResourceType(BeanContext context);
 
+    /**
+     * extension point to check access rights for a console feature by feature path
+     * @return the path to the console feature (content); 'null' if no check supported or check switched off
+     */
+    protected String getConsolePath(BeanContext context) {
+        return null;
+    }
+
     protected String getRequestPath(SlingHttpServletRequest request) {
         RequestPathInfo reqPathInfo = request.getRequestPathInfo();
         String suffix = reqPathInfo.getSuffix();
@@ -56,14 +65,20 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
         final Matcher matcher = getPathPattern(context).matcher(pathInfo);
 
         if (matcher.matches()) {
+            if (checkConsoleAccess(context)) {
 
-            // the options for the delegation to the browser component implementation
-            RequestDispatcherOptions options = new RequestDispatcherOptions();
-            prepareForward(context, options);
+                // the options for the delegation to the browser component implementation
+                RequestDispatcherOptions options = new RequestDispatcherOptions();
+                prepareForward(context, options);
 
-            Resource resource = request.getResource();
-            RequestDispatcher dispatcher = request.getRequestDispatcher(resource, options);
-            dispatcher.forward(request, response);
+                Resource resource = request.getResource();
+                RequestDispatcher dispatcher = request.getRequestDispatcher(resource, options);
+                dispatcher.forward(request, response);
+
+            } else {
+                // redirect to suffix path without console view if access not granted
+                response.sendRedirect(LinkUtil.getUrl(request, getRequestPath(request)));
+            }
         }
     }
 
@@ -75,5 +90,18 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
         // set the view component resource type for each request received by this servlet
         String resourceType = getResourceType(context);
         options.setForceResourceType(resourceType);
+    }
+
+    /**
+     * Check access rights to the servlets path - is checking ACLs of the console path
+     * @param context the current request
+     * @return 'true' if access granted or access check switched off
+     */
+    protected boolean checkConsoleAccess(BeanContext context) {
+        String consolePath = getConsolePath(context);
+        if (StringUtils.isNotBlank(consolePath)) {
+            return context.getResolver().getResource(consolePath) != null;
+        }
+        return true;
     }
 }
