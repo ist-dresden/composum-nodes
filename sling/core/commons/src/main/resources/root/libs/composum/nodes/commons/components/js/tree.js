@@ -673,10 +673,15 @@
                 this.onNodeSelected(path, data.node);
             },
 
+            /**
+             * triggers a 'path:select(path[,name,type])' document event to adjust the view to the new selected path
+             * @param path
+             * @param node
+             */
             onNodeSelected: function (path, node) {
                 if (!this.busy) {
-                    console.log(this.nodeIdPrefix + 'tree.onNodeSelected(' + path + ',' + JSON.stringify(node.original) + ')');
-                    $(document).trigger("path:select", [path, node]);
+                    console.log(this.nodeIdPrefix + 'tree.trigger.path:select(' + path + ',' + JSON.stringify(node.original) + ') <- tree.onNodeSelected(~)');
+                    $(document).trigger("path:select", [path, node.original.name, node.original.type]);
                 }
             },
 
