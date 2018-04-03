@@ -227,6 +227,28 @@
     color: #a94442; /* danger */
 }
 
+.jstree-wholerow {
+     height: 23px;
+     margin-top: 2px; /* important gap for */
+     margin-bottom: 2px; /* DnD reordering */
+ }
+
+.jstree-node .jstree-ocl {
+     margin: 1px 0;
+ }
+
+.jstree-node .jstree-anchor {
+    margin: 2px 4px 0 0;
+}
+
+.jstree-node .jstree-themeicon {
+    margin: 1px 4px 0 0;
+}
+
+.jstree-dnd-parent {
+     border: 1px dashed rgba(50, 50, 50, 0.7);
+ }
+
 .jstree-rename-input {
     margin-top: -2px;
     color: #000;

@@ -51,6 +51,7 @@
              * the widgets 'isValid' always performs a 'validation' of the form
              */
             isValid: function (alertMethod) {
+                this.validationReset();
                 return this.validate(alertMethod);
             },
 
@@ -72,7 +73,7 @@
                 this.$(widgets.const.css.selector.general).each(function () {
                     if (this.view) {
                         if (_.isFunction(this.view.isValid)) {
-                            // check each widget independent from the current result
+                            // check each visible widget independent from the current result
                             valid = (this.view.isValid.apply(this.view, [alertMethod]) && valid);
                         }
                     }
@@ -744,14 +745,14 @@
 
             initialize: function (options) {
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
-                var dataOptions = '' + this.$el.data('options');
+                var dataOptions = this.$el.data('options');
                 if (dataOptions) {
-                    var values = dataOptions.split(':');
+                    var values = ('' + dataOptions).split(':'); // 'toString' - split - parse...
                     if (values.length > 0) options.minValue = values[0];
                     if (values.length > 1) options.stepSize = values[1];
                     if (values.length > 2) options.maxValue = values[2];
                 }
-                this.minValue = Number(options.minValue || 0);
+                this.minValue = options.minValue ? Number(options.minValue) : undefined;
                 this.stepSize = Number(options.stepSize || 1);
                 this.maxValue = options.maxValue ? Number(options.maxValue) : undefined;
                 this.$('.increment').click(_.bind(this.increment, this));
@@ -847,7 +848,7 @@
              * defines the (initial) value of the input field
              */
             setValue: function (value, triggerChange) {
-                this.$el.data('DateTimePicker').date(value ? new Date(value) : undefined);
+                this.$el.data('DateTimePicker').date(value ? new Date(value) : null);
                 this.validate();
                 if (triggerChange) {
                     this.$el.trigger('change');

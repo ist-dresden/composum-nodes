@@ -1176,7 +1176,7 @@ public class JsonUtil {
                     break;
                 case PropertyType.REFERENCE:
                 case PropertyType.WEAKREFERENCE:
-                    final Node refNode = session.getNode(object.toString());
+                    final Node refNode = session.getNodeByIdentifier(object.toString());
                     final String identifier = refNode.getIdentifier();
                     value = factory.createValue(identifier, type);
                     break;
