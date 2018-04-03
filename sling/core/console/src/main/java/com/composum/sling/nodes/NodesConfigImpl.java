@@ -34,6 +34,14 @@ import java.util.Map;
 public class NodesConfigImpl implements NodesConfiguration {
 
     @Property(
+            name = CONSOLE_ACCESS_CHECK,
+            label = "Check Console Access",
+            description = "if 'true' (checked) the access to the console pages is checked on servlet access",
+            boolValue =  true
+    )
+    private boolean checkConsoleAccess;
+
+    @Property(
             name = CONSOLE_CATEGORIES_KEY,
             label = "Console Categories",
             description = "the list of categories to determine the views in the core console",
@@ -184,6 +192,11 @@ public class NodesConfigImpl implements NodesConfiguration {
     }
 
     @Override
+    public boolean checkConsoleAccess() {
+        return checkConsoleAccess;
+    }
+
+    @Override
     public String[] getConsoleCategories() {
         return consoleCategories;
     }
@@ -238,6 +251,7 @@ public class NodesConfigImpl implements NodesConfiguration {
     @Modified
     protected void activate(ComponentContext context) {
         this.properties = context.getProperties();
+        checkConsoleAccess = (Boolean) properties.get(CONSOLE_ACCESS_CHECK);
         consoleCategories = PropertiesUtil.toStringArray(properties.get(CONSOLE_CATEGORIES_KEY));
         queryResultLimit = PropertiesUtil.toLong(properties.get(QUERY_RESULT_LIMIT_KEY), QUERY_RESULT_LIMIT_DEFAULT);
         queryTemplates = PropertiesUtil.toStringArray(properties.get(QUERY_TEMPLATES_KEY));
