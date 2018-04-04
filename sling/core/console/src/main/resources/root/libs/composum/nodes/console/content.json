@@ -7,7 +7,6 @@
       "sling:Redirect"
     ],
     "jcr:title": "Browser",
-    "sling:resourceType": "composum/nodes/console/page",
     "sling:redirect": "/bin/browser.html",
     "categories": [
       "core",
