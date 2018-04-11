@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class ClientlibCategoryServlet extends AbstractClientlibServlet {
 
     /** The path at which this servlet is deployed. */
-    public static final String PATH = "/bin/cpm/nodes/clientlibs";
+    public static final String PATH = "/bin/public/clientlibs";
 
     protected static final Pattern HASHSUFFIX_PATTERN = Pattern.compile("/?([0-9a-zA-Z_-]++)?/([" + Clientlib.CATEGORYNAME_CHARS + "]+)[.][a-z]+");
 
