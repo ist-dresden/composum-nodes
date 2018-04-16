@@ -10,6 +10,8 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.servlets.HttpConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import javax.servlet.ServletException;
@@ -27,6 +29,8 @@ import java.util.regex.Pattern;
         extensions = {"js", "css"}
 )
 public class ClientlibCategoryServlet extends AbstractClientlibServlet {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ClientlibCategoryServlet.class);
 
     /** The path at which this servlet is deployed. */
     public static final String PATH = "/bin/public/clientlibs";
@@ -71,11 +75,17 @@ public class ClientlibCategoryServlet extends AbstractClientlibServlet {
                 Pair<String, String> categoryAndHash = parseCategoryAndHashFromSuffix(pathInfo.getSuffix());
 
                 ClientlibRef ref = ClientlibRef.forCategory(type, categoryAndHash.getLeft(), false, null);
-
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("deliver: {} ({})", ref.category, request.getRequestURI());
+                }
                 deliverClientlib(get, request, response, ref, categoryAndHash.getRight(), isMinified(selectors));
 
             } catch (RepositoryException | LoginException ex) {
                 throw new ServletException(ex);
+            }
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("dropped: {}", request.getRequestURI());
             }
         }
     }

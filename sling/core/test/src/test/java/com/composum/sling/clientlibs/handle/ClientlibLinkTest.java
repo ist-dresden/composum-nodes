@@ -7,15 +7,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-
+import static com.composum.sling.clientlibs.handle.Clientlib.Type.js;
 import static com.composum.sling.clientlibs.handle.Clientlib.Type.link;
 import static com.composum.sling.clientlibs.handle.ClientlibLink.Kind.CATEGORY;
 import static com.composum.sling.clientlibs.handle.ClientlibLink.Kind.CLIENTLIB;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
-
-import static com.composum.sling.clientlibs.handle.Clientlib.Type.js;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for {@link ClientlibLink}.
@@ -116,9 +114,9 @@ public class ClientlibLinkTest extends AbstractClientlibTest {
         ClientlibLink link = cat.makeLink();
 
         useMinifiedFiles = false;
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.js/thecat.js", link.getUrl(context.request(), rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.js/thecat.js", link.getUrl(context.request(), rendererContext));
         useMinifiedFiles = true;
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.min.js/thecat.js", link.getUrl(context.request(), rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.min.js/thecat.js", link.getUrl(context.request(), rendererContext));
 
         // a clientlib ref to a category whould match the clientlib link to that category
         assertTrue(ref.isSatisfiedby(link));
@@ -126,9 +124,9 @@ public class ClientlibLinkTest extends AbstractClientlibTest {
         assertTrue(ref.isSatisfiedby(hashLink));
 
         useMinifiedFiles = false;
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.js/thehash/thecat.js", hashLink.getUrl(context.request(), rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.js/thehash/thecat.js", hashLink.getUrl(context.request(), rendererContext));
         useMinifiedFiles = true;
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.min.js/thehash/thecat.js", hashLink.getUrl(context.request(), rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.min.js/thehash/thecat.js", hashLink.getUrl(context.request(), rendererContext));
     }
 
     @Test
@@ -147,8 +145,8 @@ public class ClientlibLinkTest extends AbstractClientlibTest {
         assertEquals(CONTEXTPATH + "/apps/clientlib.js/Nnk0BQAAAAA/clientlib.js", new ClientlibLink(js, CLIENTLIB, "/apps/clientlib", null).withHash("Nnk0BQAAAAA").getUrl(context.request(), rendererContext));
         assertEquals("Nnk0BQAAAAA", ClientlibServlet.parseHashFromSuffix("/Nnk0BQAAAAA/clientlib.js"));
         assertEquals(null, ClientlibServlet.parseHashFromSuffix(null));
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.js/cat1.js", new ClientlibLink(js, CATEGORY, "cat1", null).getUrl(context.request(), rendererContext));
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.js/nqLDcqc8yMo/cat1.js", new ClientlibLink(js, CATEGORY, "cat1", null).withHash("nqLDcqc8yMo").getUrl(context.request(), rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.js/cat1.js", new ClientlibLink(js, CATEGORY, "cat1", null).getUrl(context.request(), rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.js/nqLDcqc8yMo/cat1.js", new ClientlibLink(js, CATEGORY, "cat1", null).withHash("nqLDcqc8yMo").getUrl(context.request(), rendererContext));
         assertEquals(Pair.of("cat1", "nqLDcqc8yMo"), ClientlibCategoryServlet.parseCategoryAndHashFromSuffix("/nqLDcqc8yMo/cat1.js"));
         assertEquals(Pair.of("cat1", null), ClientlibCategoryServlet.parseCategoryAndHashFromSuffix("/cat1.js"));
     }
