@@ -440,7 +440,7 @@
         <description>transforms a string value for rich text (HTML) rendering</description>
         <name>rich</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
-        <function-signature>java.lang.String rich(java.lang.String)</function-signature>
+        <function-signature>java.lang.String rich(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
     </function>
 
     <function>

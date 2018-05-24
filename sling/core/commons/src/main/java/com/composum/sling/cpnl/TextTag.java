@@ -1,6 +1,7 @@
 package com.composum.sling.cpnl;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceUtil;
 import org.apache.sling.scripting.jsp.util.TagUtil;
@@ -25,7 +26,7 @@ public class TextTag extends TagBase {
     public enum Type {text, rich, script, value}
 
     public interface EscapeFunction {
-        Object escape(Object value);
+        Object escape(SlingHttpServletRequest request, Object value);
     }
 
     public static final Map<Type, EscapeFunction> ESCAPE_FUNCTION_MAP;
@@ -34,25 +35,25 @@ public class TextTag extends TagBase {
         ESCAPE_FUNCTION_MAP = new HashMap<>();
         ESCAPE_FUNCTION_MAP.put(Type.text, new EscapeFunction() {
             @Override
-            public Object escape(Object value) {
+            public Object escape(SlingHttpServletRequest request, Object value) {
                 return CpnlElFunctions.text(TextTag.toString(value));
             }
         });
         ESCAPE_FUNCTION_MAP.put(Type.rich, new EscapeFunction() {
             @Override
-            public Object escape(Object value) {
-                return CpnlElFunctions.rich(TextTag.toString(value));
+            public Object escape(SlingHttpServletRequest request, Object value) {
+                return CpnlElFunctions.rich(request, TextTag.toString(value));
             }
         });
         ESCAPE_FUNCTION_MAP.put(Type.script, new EscapeFunction() {
             @Override
-            public Object escape(Object value) {
+            public Object escape(SlingHttpServletRequest request, Object value) {
                 return CpnlElFunctions.script(TextTag.toString(value));
             }
         });
         ESCAPE_FUNCTION_MAP.put(Type.value, new EscapeFunction() {
             @Override
-            public Object escape(Object value) {
+            public Object escape(SlingHttpServletRequest request, Object value) {
                 return CpnlElFunctions.value(value);
             }
         });
@@ -162,7 +163,7 @@ public class TextTag extends TagBase {
      */
     protected Object escape(Object value) {
         EscapeFunction function = ESCAPE_FUNCTION_MAP.get(this.type);
-        return function != null ? function.escape(value) : CpnlElFunctions.text(toString(value));
+        return function != null ? function.escape(TagUtil.getRequest(this.pageContext), value) : CpnlElFunctions.text(toString(value));
     }
 
     /**

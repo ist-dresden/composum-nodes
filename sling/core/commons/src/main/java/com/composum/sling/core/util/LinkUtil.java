@@ -29,8 +29,10 @@ public class LinkUtil {
     public static final String FORWARDED_SSL_HEADER = "X-Forwarded-SSL";
     public static final String FORWARDED_SSL_ON = "on";
 
-    public static final String URL_PATTERN_STRING = "^(?:(https?):)?//([^/]+)(:\\d+)?(/.*)?$";
+    public static final String URL_PATTERN_STRING = "^(?:(https?|mailto|tel):)?//([^/]+)(:\\d+)?(/.*)?$";
     public static final Pattern URL_PATTERN = Pattern.compile(URL_PATTERN_STRING);
+    public static final String SPECIAL_URL_STRING = "^(?:(mailto|tel):)(.+)$";
+    public static final Pattern SPECIAL_URL_PATTERN = Pattern.compile(SPECIAL_URL_STRING);
 
     public static final Pattern SELECTOR_PATTERN = Pattern.compile("^(.*/[^/]+)(\\.[^.]+)$");
 
@@ -220,10 +222,10 @@ public class LinkUtil {
     }
 
     /**
-     * Returns 'true' if the url is an 'external' url (starts with 'https?://')
+     * Returns 'true' if the url is an 'external' url (starts with 'https?://' or is a special URL)
      */
     public static boolean isExternalUrl(String url) {
-        return URL_PATTERN.matcher(url).matches();
+        return URL_PATTERN.matcher(url).matches() || SPECIAL_URL_PATTERN.matcher(url).matches();
     }
 
     /**

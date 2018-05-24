@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.MissingResourceException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * the set of taglib JSP EL functions
@@ -16,6 +18,8 @@ import java.util.MissingResourceException;
 public class CpnlElFunctions {
 
     private static final Logger LOG = LoggerFactory.getLogger(CpnlElFunctions.class);
+
+    public static final Pattern HREF_PATTERN = Pattern.compile("(<a(\\s*.*)?\\s*href\\s*=\\s*['\"])([^'\"]+)([\"'])");
 
     public static String i18n(SlingHttpServletRequest request, String text) {
         String translated = null;
@@ -133,8 +137,36 @@ public class CpnlElFunctions {
      * @param value the rich text value to escape
      * @return the escaped HTML code of the value
      */
-    public static String rich(String value) {
+    public static String rich(SlingHttpServletRequest request, String value) {
+        value = map(request, value);
         return value;
+    }
+
+    /**
+     * Replaces all 'href' attribute values found in the text value by the resolver mapped value.
+     *
+     * @param request the text (rich text) value
+     * @param value   the text (rich text) value
+     * @return the transformed text value
+     */
+    public static String map(SlingHttpServletRequest request, String value) {
+        StringBuilder result = new StringBuilder();
+        Matcher matcher = HREF_PATTERN.matcher(value);
+        int len = value.length();
+        int pos = 0;
+        while (matcher.find(pos)) {
+            String unmapped = matcher.group(3);
+            String mapped = url(request, unmapped);
+            result.append(value, pos, matcher.start());
+            result.append(matcher.group(1));
+            result.append(mapped);
+            result.append(matcher.group(4));
+            pos = matcher.end();
+        }
+        if (pos >= 0 && pos < len) {
+            result.append(value, pos, len);
+        }
+        return result.toString();
     }
 
     /**
