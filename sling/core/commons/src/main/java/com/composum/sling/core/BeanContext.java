@@ -34,11 +34,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  * interface. This serves as a container for the basic objects often used to initialize models.
  */
 @org.apache.sling.adapter.annotations.Adaptable(adaptableClass = BeanContext.class,
-                                                adapters = @Adapter(condition = "If the context contains an entity of" +
-                                                        " the requested type",
-                                                                    value = {Resource.class, ResourceResolver.class,
-                                                                            SlingHttpServletRequest.class,
-                                                                            SlingHttpServletResponse.class})
+        adapters = @Adapter(condition = "If the context contains an entity of" +
+                " the requested type",
+                value = {Resource.class, ResourceResolver.class,
+                        SlingHttpServletRequest.class,
+                        SlingHttpServletResponse.class})
 )
 public interface BeanContext extends Adaptable {
 
@@ -132,7 +132,8 @@ public interface BeanContext extends Adaptable {
      * @return the component of type or whatever Sling has adapters for, or null if there is nothing.
      * @see SlingAdaptable#adaptTo(Class)
      */
-    @Override <AdapterType> AdapterType adaptTo(Class<AdapterType> type);
+    @Override
+    <AdapterType> AdapterType adaptTo(Class<AdapterType> type);
 
     /**
      * Returns a clone of this context with the resource overridden, or <code>this</code> if it already had this
@@ -471,7 +472,7 @@ public interface BeanContext extends Adaptable {
         }
 
         public Service(SlingHttpServletRequest request, SlingHttpServletResponse response, Resource resource) {
-            this (request, response, resource, request.getResourceResolver());
+            this(request, response, resource, request.getResourceResolver());
         }
 
         public Service(SlingHttpServletRequest request, SlingHttpServletResponse response,
@@ -704,6 +705,83 @@ public interface BeanContext extends Adaptable {
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
             return copy;
+        }
+    }
+
+    /**
+     * a wrapper implementation base
+     */
+    class Wrapper implements BeanContext {
+
+        protected final BeanContext beanContext;
+
+        public Wrapper(BeanContext beanContext) {
+            this.beanContext = beanContext;
+        }
+
+        @Override
+        public Resource getResource() {
+            return beanContext.getResource();
+        }
+
+        @Override
+        public ResourceResolver getResolver() {
+            return beanContext.getResolver();
+        }
+
+        @Override
+        public SlingHttpServletRequest getRequest() {
+            return beanContext.getRequest();
+        }
+
+        @Override
+        public SlingHttpServletResponse getResponse() {
+            return beanContext.getResponse();
+        }
+
+        @Override
+        public Locale getLocale() {
+            return beanContext.getLocale();
+        }
+
+        @Override
+        public <T> T getAttribute(String name, Class<T> T) {
+            return beanContext.getAttribute(name, T);
+        }
+
+        @Override
+        public void setAttribute(String name, Object value, Scope scope) {
+            beanContext.setAttribute(name, value, scope);
+        }
+
+        @Override
+        public <T> T getService(Class<T> type) {
+            return beanContext.getService(type);
+        }
+
+        @Override
+        public <T> T[] getServices(Class<T> serviceType, String filter) throws InvalidSyntaxException {
+            return beanContext.getServices(serviceType, filter);
+        }
+
+        @Override
+        public Class<?> getType(String className) throws ClassNotFoundException {
+            return beanContext.getType(className);
+        }
+
+        @Override
+        public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+            return beanContext.adaptTo(type);
+        }
+
+        @Override
+        public BeanContext withResource(Resource resource) {
+            return beanContext.withResource(resource);
+        }
+
+        @Override
+        public BeanContext withLocale(Locale locale) {
+            return beanContext.withLocale(locale);
         }
     }
 }
