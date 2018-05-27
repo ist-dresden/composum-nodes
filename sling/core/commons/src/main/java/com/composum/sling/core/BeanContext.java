@@ -714,9 +714,15 @@ public interface BeanContext extends Adaptable {
     class Wrapper implements BeanContext {
 
         protected final BeanContext beanContext;
+        protected final ResourceResolver resolver;
 
         public Wrapper(BeanContext beanContext) {
+            this(beanContext, beanContext.getResolver());
+        }
+
+        public Wrapper(BeanContext beanContext, ResourceResolver resolverToUse) {
             this.beanContext = beanContext;
+            this.resolver = resolverToUse;
         }
 
         @Override
@@ -726,7 +732,7 @@ public interface BeanContext extends Adaptable {
 
         @Override
         public ResourceResolver getResolver() {
-            return beanContext.getResolver();
+            return resolver;
         }
 
         @Override
