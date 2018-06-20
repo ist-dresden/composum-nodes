@@ -6,6 +6,7 @@ import com.composum.sling.core.concurrent.JobMonitor;
 import com.composum.sling.core.concurrent.JobUtil;
 import com.composum.sling.core.pckgmgr.util.PackageProgressTracker;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
+import com.composum.sling.core.pckgmgr.util.PackageUtil.PackageItem;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
@@ -111,7 +112,7 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
     public enum Operation {
-        create, update, delete, download, upload, install, deploy, service, tree, view, query,
+        create, update, delete, download, upload, install, uninstall, deploy, service, list, tree, view, query,
         coverage, filterList, filterChange, filterAdd, filterRemove, filterMoveUp, filterMoveDown
     }
 
@@ -141,6 +142,8 @@ public class PackageServlet extends AbstractServiceServlet {
 
         // GET
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+            Operation.list, new ListOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.tree, new TreeOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.query, new QueryOperation());
@@ -165,6 +168,8 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.upload, new UploadOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.install, new InstallOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
+            Operation.uninstall, new UninstallOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.deploy, new ServiceOperation());
 
@@ -210,6 +215,22 @@ public class PackageServlet extends AbstractServiceServlet {
     //
     // operation implementations
     //
+
+    protected class ListOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+            ResourceHandle resource)
+            throws RepositoryException, IOException {
+            List<JcrPackage> jcrPackages = PackageUtil.createPackageManager(request).listPackages();
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            writer.beginArray();
+            for (JcrPackage jcrPackage : jcrPackages) {
+                new PackageItem(jcrPackage).toJson(writer);
+            }
+            writer.endArray();
+        }
+    }
 
     protected class TreeOperation implements ServletOperation {
 
@@ -541,6 +562,55 @@ public class PackageServlet extends AbstractServiceServlet {
             jsonAnswer(writer, "installation", "done", manager, jcrPackage);
         }
 
+    }
+
+    protected class UninstallOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+            ResourceHandle resource)
+            throws RepositoryException, IOException {
+
+            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
+
+            uninstallPackage(request, response, manager, jcrPackage);
+        }
+
+        protected void uninstallPackage(SlingHttpServletRequest request, SlingHttpServletResponse response,
+            JcrPackageManager manager, JcrPackage jcrPackage)
+            throws RepositoryException, IOException {
+
+            ResourceResolver resolver = request.getResourceResolver();
+            Session session = resolver.adaptTo(Session.class);
+            String path = jcrPackage.getNode().getPath();
+            String root = manager.getPackageRoot().getPath();
+            if (path.startsWith(root)) {
+                path = path.substring(root.length());
+            }
+
+            Map<String, Object> jobProperties = new HashMap<>();
+            jobProperties.put("reference", path);
+            jobProperties.put("operation", "uninstall");
+            jobProperties.put("userid", session.getUserID());
+            JobUtil.buildOutfileName(jobProperties);
+
+            Job job = jobManager.addJob(PackageJobExecutor.TOPIC, jobProperties);
+            final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), jobIdleTimeout);
+            if (isDone.call()) {
+                uninstallationDone(request, response, manager, jcrPackage, isDone);
+            } else {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Package uninstall not started!");
+            }
+        }
+
+        protected void uninstallationDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
+            JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
+            throws RepositoryException, IOException {
+
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            jsonAnswer(writer, "uninstallation", "done", manager, jcrPackage);
+        }
     }
 
     /**
