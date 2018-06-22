@@ -19,7 +19,7 @@ public class CpnlElFunctions {
 
     private static final Logger LOG = LoggerFactory.getLogger(CpnlElFunctions.class);
 
-    public static final Pattern HREF_PATTERN = Pattern.compile("(<a(\\s*.*)?\\s*href\\s*=\\s*['\"])([^'\"]+)([\"'])");
+    public static final Pattern HREF_PATTERN = Pattern.compile("(<a(\\s*[^>]*)?\\s*href\\s*=\\s*['\"])([^'\"]+)([\"'])");
 
     public static String i18n(SlingHttpServletRequest request, String text) {
         String translated = null;
