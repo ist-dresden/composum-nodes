@@ -288,6 +288,8 @@
             }
         },
 
+        log: log.getLogger('core'),
+
         getHtml: function (url, onSuccess, onError, onComplete) {
             core.ajaxGet(url, {dataType: 'html'}, onSuccess, onError, onComplete);
         },

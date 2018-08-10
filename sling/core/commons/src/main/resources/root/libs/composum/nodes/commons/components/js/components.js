@@ -595,21 +595,35 @@
                 // retrieve element attributes
                 this.dialogTitle = this.$el.attr('title');
                 this.dialogLabel = this.$el.data('label');
-                this.setRootPath(this.$el.data('root') || '/');
+                this.config = {
+                    rootPath: this.$el.data('root') || '/'
+                };
+                this.setRootPath(this.config.rootPath);
                 this.filter = this.$el.data('filter');
                 // switch off the browsers autocomplete function (!)
                 this.$textField.attr('autocomplete', 'off');
                 // add typeahead function to the input field
                 this.$textField.typeahead({
                     minLength: 1,
-                    source: function (query, callback) {
+                    source: _.bind(function (query, callback) {
                         // ensure that query is of a valid path pattern
                         if (query.indexOf('/') === 0) {
+                            var rootPath = this.getRootPath();
+                            if (rootPath !== '/') {
+                                query = rootPath + query;
+                            }
                             core.getJson('/bin/cpm/nodes/node.typeahead.json' + query, function (data) {
+                                if (rootPath !== '/') {
+                                    for (var i = 0; i < data.length; i++) {
+                                        if (data[i].indexOf(rootPath + '/') === 0) {
+                                            data[i] = data[i].substring(rootPath.length);
+                                        }
+                                    }
+                                }
                                 callback(data);
                             });
                         }
-                    },
+                    }, this),
                     // custom matcher to check last name in path only
                     matcher: function (item) {
                         var pattern = /^(.*\/)([^\/]*)$/.exec(this.query);
@@ -636,7 +650,7 @@
                 var selectDialog = core.getView('#path-select-dialog', components.SelectPathDialog);
                 selectDialog.setTitle(this.dialogTitle);
                 selectDialog.setLabel(this.dialogLabel);
-                selectDialog.setRootPath(this.rootPath);
+                selectDialog.setRootPath(this.getRootPath());
                 selectDialog.setFilter(this.filter);
                 selectDialog.show(_.bind(function () {
                         this.getPath(_.bind(selectDialog.setValue, selectDialog));
@@ -671,7 +685,11 @@
             },
 
             setRootPath: function (path) {
-                this.rootPath = path;
+                this.rootPath = this.adjustRootPath(path ? path : this.config.rootPath);
+            },
+
+            adjustRootPath: function (path) {
+                return path;
             }
         });
 

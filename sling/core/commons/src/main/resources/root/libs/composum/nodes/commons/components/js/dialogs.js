@@ -240,7 +240,7 @@
                 }, this));
             },
 
-            errorMessage: function(message, result) {
+            errorMessage: function (message, result) {
                 var detail = result.responseJSON;
                 if (_.isObject(detail) && detail.response) {
                     this.messages(detail.response.level, detail.response.text, detail.messages);
@@ -263,8 +263,8 @@
                 this.tree.onNodeSelected = _.bind(this.onNodeSelected, this);
                 this.$title = this.$('.modal-title');
                 this.$label = this.$('.path-input-label');
-                this.$input = this.$('input.path-input');
-                this.$input.on('change', _.bind(this.inputChanged, this));
+                this.input = core.getView(this.$('input.path-input'), components.PathWidget);
+                this.input.$el.on('change', _.bind(this.inputChanged, this));
                 this.$('button.select').click(_.bind(function () {
                     if (_.isFunction(this.callback)) {
                         this.callback(this.getValue());
@@ -299,6 +299,7 @@
              * defines the root path for the tree (default: '/')
              */
             setRootPath: function (rootPath) {
+                this.input.setRootPath(rootPath);
                 this.tree.setRootPath(rootPath);
             },
 
@@ -313,15 +314,38 @@
              * returns the current path value selected in this dialog
              */
             getValue: function () {
-                return this.$input.val();
+                var path = this.input.getValue();
+                if (path && !_.isEmpty(path = path.trim())) {
+                    var rootPath = this.tree.getRootPath();
+                    if (rootPath !== '/') {
+                        if (path.indexOf('/') === 0) {
+                            path = rootPath + path;
+                        } else {
+                            path = rootPath + '/' + path;
+                        }
+                    }
+                }
+                return path;
             },
 
             /**
-             * defines the (initial) value - the curent / old value
+             * defines the (initial) value - the current / old value
              */
             setValue: function (value) {
-                this.$input.val(value);
-                this.inputChanged(); // select vaöue in the tree
+                if (value && !_.isEmpty(value = value.trim())) {
+                    var rootPath = this.tree.getRootPath();
+                    if (rootPath !== '/') {
+                        if (value === rootPath) {
+                            value = '/';
+                        } else {
+                            if (value.indexOf(rootPath + '/') === 0) {
+                                value = value.substring(rootPath.length);
+                            }
+                        }
+                    }
+                }
+                this.input.setValue(value);
+                this.inputChanged(); // select value in the tree
             },
 
             /**
