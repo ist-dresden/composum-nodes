@@ -34,6 +34,8 @@
     </developers>
 
     <properties>
+        <release.repository.id>ossrh</release.repository.id>
+        <release.repository.url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</release.repository.url>
         <bundle.category>composum,core</bundle.category>
         <sling.scheme>http</sling.scheme>
         <sling.secure>false</sling.secure>
@@ -59,8 +61,8 @@
 
     <distributionManagement>
         <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>${release.repository.id}</id>
+            <url>${release.repository.url}</url>
         </repository>
         <snapshotRepository>
             <id>archiva</id>
