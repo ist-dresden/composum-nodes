@@ -1,12 +1,14 @@
 package com.composum.sling.cpnl;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceUtil;
 import org.apache.sling.scripting.jsp.util.TagUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspTagException;
 import javax.servlet.jsp.JspWriter;
 import java.io.IOException;
 import java.text.Format;
@@ -17,12 +19,14 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TextTag extends CpnlBodyTagSupport {
+public class TextTag extends TagBase {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TextTag.class);
 
     public enum Type {text, rich, script, value}
 
     public interface EscapeFunction {
-        Object escape(Object value);
+        Object escape(SlingHttpServletRequest request, Object value);
     }
 
     public static final Map<Type, EscapeFunction> ESCAPE_FUNCTION_MAP;
@@ -31,25 +35,25 @@ public class TextTag extends CpnlBodyTagSupport {
         ESCAPE_FUNCTION_MAP = new HashMap<>();
         ESCAPE_FUNCTION_MAP.put(Type.text, new EscapeFunction() {
             @Override
-            public Object escape(Object value) {
+            public Object escape(SlingHttpServletRequest request, Object value) {
                 return CpnlElFunctions.text(TextTag.toString(value));
             }
         });
         ESCAPE_FUNCTION_MAP.put(Type.rich, new EscapeFunction() {
             @Override
-            public Object escape(Object value) {
-                return CpnlElFunctions.rich(TextTag.toString(value));
+            public Object escape(SlingHttpServletRequest request, Object value) {
+                return CpnlElFunctions.rich(request, TextTag.toString(value));
             }
         });
         ESCAPE_FUNCTION_MAP.put(Type.script, new EscapeFunction() {
             @Override
-            public Object escape(Object value) {
+            public Object escape(SlingHttpServletRequest request, Object value) {
                 return CpnlElFunctions.script(TextTag.toString(value));
             }
         });
         ESCAPE_FUNCTION_MAP.put(Type.value, new EscapeFunction() {
             @Override
-            public Object escape(Object value) {
+            public Object escape(SlingHttpServletRequest request, Object value) {
                 return CpnlElFunctions.value(value);
             }
         });
@@ -62,14 +66,13 @@ public class TextTag extends CpnlBodyTagSupport {
     private boolean i18n = false;
     private Format format;
     private String output;
-    private String tagClass;
-    private String tagName;
 
     public TextTag() {
         super();
     }
 
-    private void init() {
+    @Override
+    protected void clear() {
         this.type = Type.text;
         this.value = null;
         this.propertyName = null;
@@ -77,77 +80,74 @@ public class TextTag extends CpnlBodyTagSupport {
         this.i18n = false;
         this.escape = true;
         this.output = null;
-        this.tagName = null;
-        this.tagClass = null;
+        super.clear();
     }
 
-    public void release() {
-        super.release();
-        init();
+    @Override
+    protected String getDefaultTagName() {
+        return "div";
     }
 
+    @Override
     public int doStartTag() throws JspException {
-        super.doStartTag();
-        this.bodyContent = null;
-        this.output = null;
-        if (this.value == null) {
-            if (this.propertyName != null) {
-                Resource resource = TagUtil.getRequest(this.pageContext).getResource();
-                this.value = ResourceUtil.getValueMap(resource).get(this.propertyName, Object.class);
+        int result = super.doStartTag();
+        if (renderTag()) {
+            this.bodyContent = null;
+            this.output = null;
+            if (this.value == null) {
+                if (this.propertyName != null) {
+                    Resource resource = TagUtil.getRequest(this.pageContext).getResource();
+                    this.value = ResourceUtil.getValueMap(resource).get(this.propertyName, Object.class);
+                }
             }
-        }
-        if (this.value != null) {
-            if (this.format != null) {
-                this.output = this.format.format(
-                        this.format instanceof MessageFormat
-                                ? new String[]{String.valueOf(this.value)}
-                                : this.value);
-            } else {
-                this.output = String.valueOf(this.value);
+            if (this.value != null) {
+                if (this.format != null) {
+                    this.output = this.format.format(
+                            this.format instanceof MessageFormat
+                                    ? new String[]{String.valueOf(this.value)}
+                                    : this.value);
+                } else {
+                    this.output = String.valueOf(this.value);
+                }
             }
+            if (StringUtils.isNotBlank(this.output) && this.i18n) {
+                this.output = CpnlElFunctions.i18n(this.request, this.output);
+            }
+            return this.output != null ? SKIP_BODY : EVAL_BODY_BUFFERED;
         }
-        if (StringUtils.isNotBlank(this.output) && this.i18n) {
-            this.output = CpnlElFunctions.i18n(this.request, this.output);
-        }
-        return this.output != null ? SKIP_BODY : EVAL_BODY_BUFFERED;
+        return result;
     }
 
-    public int doAfterBody() throws JspException {
+    public int doAfterBody() {
         this.output = this.bodyContent.getString().trim();
         return SKIP_BODY;
     }
 
-    public int doEndTag() throws JspException {
+    @Override
+    protected void renderTagStart() {
+    }
+
+    @Override
+    protected void renderTagEnd() {
         try {
             if (StringUtils.isNotEmpty(this.output)) {
                 this.output = toString(this.escape
                         ? escape(this.output)
                         : this.output);
                 JspWriter writer = this.pageContext.getOut();
-                if (StringUtils.isNotBlank(this.tagName) || StringUtils.isNotBlank(this.tagClass)) {
-                    if (this.tagName == null) {
-                        this.tagName = "div";
-                    }
-                    writer.write("<");
-                    writer.write(this.tagName);
-                    if (StringUtils.isNotBlank(this.tagClass)) {
-                        writer.write(" class=\"");
-                        writer.write(this.tagClass);
-                        writer.write("\"");
-                    }
-                    writer.write(">");
+                boolean renderTag = renderTag()
+                        && (StringUtils.isNotBlank(this.tagName) || StringUtils.isNotBlank(this.classes));
+                if (renderTag) {
+                    super.renderTagStart();
                 }
                 writer.write(this.output);
-                if (StringUtils.isNotBlank(this.tagName)) {
-                    writer.write("</");
-                    writer.write(this.tagName);
-                    writer.write(">");
+                if (renderTag) {
+                    super.renderTagEnd();
                 }
             }
-        } catch (IOException e) {
-            throw new JspTagException(e);
+        } catch (IOException ioex) {
+            LOG.error(ioex.getMessage(), ioex);
         }
-        return EVAL_PAGE;
     }
 
     public static String toString(Object value) {
@@ -163,7 +163,7 @@ public class TextTag extends CpnlBodyTagSupport {
      */
     protected Object escape(Object value) {
         EscapeFunction function = ESCAPE_FUNCTION_MAP.get(this.type);
-        return function != null ? function.escape(value) : CpnlElFunctions.text(toString(value));
+        return function != null ? function.escape(TagUtil.getRequest(this.pageContext), value) : CpnlElFunctions.text(toString(value));
     }
 
     /**
@@ -205,7 +205,7 @@ public class TextTag extends CpnlBodyTagSupport {
      * @param format the fmt to set
      */
     public void setFormat(String format) {
-        Pattern TEXT_FORMAT_STRING = Pattern.compile("\\{([^\\}]+)\\}(.+)$");
+        Pattern TEXT_FORMAT_STRING = Pattern.compile("\\{([^}]+)}(.+)$");
         Matcher matcher = TEXT_FORMAT_STRING.matcher(format);
         if (matcher.matches()) {
             switch (matcher.group(1)) {
@@ -220,16 +220,9 @@ public class TextTag extends CpnlBodyTagSupport {
     }
 
     /**
-     * @param tagName the tagName to set
-     */
-    public void setTagName(String tagName) {
-        this.tagName = tagName;
-    }
-
-    /**
      * @param tagClass the tagClass to set
      */
     public void setTagClass(String tagClass) {
-        this.tagClass = tagClass;
+        setClasses(tagClass);
     }
 }

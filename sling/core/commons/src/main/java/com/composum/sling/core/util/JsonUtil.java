@@ -874,10 +874,12 @@ public class JsonUtil {
                 }
                 break;
             case PropertyType.BOOLEAN:
-                writer.value(jcrValue != null ? jcrValue.getBoolean() : (Boolean) value);
+                writer.value(jcrValue != null ? jcrValue.getBoolean()
+                        : (value instanceof Boolean ? (Boolean) value : Boolean.valueOf(value.toString())));
                 break;
             case PropertyType.DATE:
-                Calendar cal = jcrValue != null ? jcrValue.getDate() : (Calendar) value;
+                Calendar cal = jcrValue != null ? jcrValue.getDate()
+                        : (value instanceof Calendar ? (Calendar) value : null);
                 if (cal != null) {
                     SimpleDateFormat dateFormat = new SimpleDateFormat(MappingRules.MAP_DATE_FORMAT);
                     dateFormat.setTimeZone(cal.getTimeZone());
@@ -886,14 +888,17 @@ public class JsonUtil {
                 break;
             case PropertyType.DECIMAL:
                 writer.value(getValueString(jcrValue != null
-                        ? jcrValue.getDecimal() : (BigDecimal) value, type, mapping));
+                        ? jcrValue.getDecimal() : (value instanceof BigDecimal ? (BigDecimal) value
+                        : new BigDecimal(value.toString())), type, mapping));
                 break;
             case PropertyType.DOUBLE:
                 writer.value(getValueString(jcrValue != null
-                        ? jcrValue.getDouble() : (Double) value, type, mapping));
+                        ? jcrValue.getDouble() : (value instanceof Double ? (Double) value
+                        : Double.valueOf(value.toString())), type, mapping));
                 break;
             case PropertyType.LONG:
-                writer.value(jcrValue != null ? jcrValue.getLong() : (Long) value);
+                writer.value(jcrValue != null ? jcrValue.getLong()
+                        : (value instanceof Long ? (Long) value : Long.valueOf(value.toString())));
                 break;
             case PropertyType.NAME:
             case PropertyType.PATH:
@@ -1111,11 +1116,11 @@ public class JsonUtil {
     /**
      * Create a JCR value from string value for the designated JCR type.
      *
-     * @param node    the node of the property
-     * @param type    the JCR type according to the types declared in PropertyType
-     * @param object  the value in the right type or a string representation of the value,
-     *                for binary values a input stream can be used as parameter or a string
-     *                with the base64 encoded data for the binary property
+     * @param node   the node of the property
+     * @param type   the JCR type according to the types declared in PropertyType
+     * @param object the value in the right type or a string representation of the value,
+     *               for binary values a input stream can be used as parameter or a string
+     *               with the base64 encoded data for the binary property
      * @return
      */
     public static Value makeJcrValue(Node node, int type, Object object,
@@ -1176,7 +1181,7 @@ public class JsonUtil {
                     break;
                 case PropertyType.REFERENCE:
                 case PropertyType.WEAKREFERENCE:
-                    final Node refNode = session.getNode(object.toString());
+                    final Node refNode = session.getNodeByIdentifier(object.toString());
                     final String identifier = refNode.getIdentifier();
                     value = factory.createValue(identifier, type);
                     break;

@@ -51,6 +51,7 @@
              * the widgets 'isValid' always performs a 'validation' of the form
              */
             isValid: function (alertMethod) {
+                this.validationReset();
                 return this.validate(alertMethod);
             },
 
@@ -72,7 +73,7 @@
                 this.$(widgets.const.css.selector.general).each(function () {
                     if (this.view) {
                         if (_.isFunction(this.view.isValid)) {
-                            // check each widget independent from the current result
+                            // check each visible widget independent from the current result
                             valid = (this.view.isValid.apply(this.view, [alertMethod]) && valid);
                         }
                     }
@@ -200,7 +201,7 @@
                 this.$typeHint = this.$('sling-post-type-hint');
                 this.$deleteHint = this.$('sling-post-delete-hint');
                 if (!this.$input.attr('value')) {
-                    this.$input.attr('value','true')
+                    this.$input.attr('value', 'true')
                 }
             },
 
@@ -260,6 +261,8 @@
 
             initialize: function (options) {
                 widgets.Widget.prototype.initialize.apply(this, [options]);
+                // scan 'rules / pattern' attributes
+                this.initRules();
                 this.$('.btn').click(_.bind(this.onSelect, this));
             },
 
@@ -291,6 +294,12 @@
          * possible attributes:
          */
         components.RadioGroupWidget = widgets.Widget.extend({
+
+            initialize: function (options) {
+                widgets.Widget.prototype.initialize.apply(this, [options]);
+                // scan 'rules / pattern' attributes
+                this.initRules();
+            },
 
             getCount: function () {
                 return this.$('input[type="radio"]').length;
@@ -326,6 +335,12 @@
          * possible attributes:
          */
         components.SelectWidget = widgets.Widget.extend({
+
+            initialize: function (options) {
+                widgets.Widget.prototype.initialize.apply(this, [options]);
+                // scan 'rules / pattern' attributes
+                this.initRules();
+            },
 
             retrieveInput: function () {
                 return this.$el.is('select') ? this.$el : this.$('select');
@@ -580,21 +595,35 @@
                 // retrieve element attributes
                 this.dialogTitle = this.$el.attr('title');
                 this.dialogLabel = this.$el.data('label');
-                this.setRootPath(this.$el.data('root') || '/');
+                this.config = {
+                    rootPath: this.$el.data('root') || '/'
+                };
+                this.setRootPath(this.config.rootPath);
                 this.filter = this.$el.data('filter');
                 // switch off the browsers autocomplete function (!)
                 this.$textField.attr('autocomplete', 'off');
                 // add typeahead function to the input field
                 this.$textField.typeahead({
                     minLength: 1,
-                    source: function (query, callback) {
+                    source: _.bind(function (query, callback) {
                         // ensure that query is of a valid path pattern
                         if (query.indexOf('/') === 0) {
+                            var rootPath = this.getRootPath();
+                            if (rootPath !== '/') {
+                                query = rootPath + query;
+                            }
                             core.getJson('/bin/cpm/nodes/node.typeahead.json' + query, function (data) {
+                                if (rootPath !== '/') {
+                                    for (var i = 0; i < data.length; i++) {
+                                        if (data[i].indexOf(rootPath + '/') === 0) {
+                                            data[i] = data[i].substring(rootPath.length);
+                                        }
+                                    }
+                                }
                                 callback(data);
                             });
                         }
-                    },
+                    }, this),
                     // custom matcher to check last name in path only
                     matcher: function (item) {
                         var pattern = /^(.*\/)([^\/]*)$/.exec(this.query);
@@ -621,7 +650,7 @@
                 var selectDialog = core.getView('#path-select-dialog', components.SelectPathDialog);
                 selectDialog.setTitle(this.dialogTitle);
                 selectDialog.setLabel(this.dialogLabel);
-                selectDialog.setRootPath(this.rootPath);
+                selectDialog.setRootPath(this.getRootPath());
                 selectDialog.setFilter(this.filter);
                 selectDialog.show(_.bind(function () {
                         this.getPath(_.bind(selectDialog.setValue, selectDialog));
@@ -656,7 +685,11 @@
             },
 
             setRootPath: function (path) {
-                this.rootPath = path;
+                this.rootPath = this.adjustRootPath(path ? path : this.config.rootPath);
+            },
+
+            adjustRootPath: function (path) {
+                return path;
             }
         });
 
@@ -732,12 +765,12 @@
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
                 var dataOptions = this.$el.data('options');
                 if (dataOptions) {
-                    var values = dataOptions.split(':');
+                    var values = ('' + dataOptions).split(':'); // 'toString' - split - parse...
                     if (values.length > 0) options.minValue = values[0];
                     if (values.length > 1) options.stepSize = values[1];
                     if (values.length > 2) options.maxValue = values[2];
                 }
-                this.minValue = Number(options.minValue || 0);
+                this.minValue = options.minValue ? Number(options.minValue) : undefined;
                 this.stepSize = Number(options.stepSize || 1);
                 this.maxValue = options.maxValue ? Number(options.maxValue) : undefined;
                 this.$('.increment').click(_.bind(this.increment, this));
@@ -764,12 +797,12 @@
 
             increment: function () {
                 if (this.stepSize) {
-                    this.setValue(parseInt(this.getValue()) + this.stepSize, true);
+                    this.setValue((this.getValue() ? parseInt(this.getValue()) : this.minValue) + this.stepSize, true);
                 }
             },
 
             decrement: function () {
-                if (this.stepSize) {
+                if (this.stepSize && this.getValue()) {
                     this.setValue(parseInt(this.getValue()) - this.stepSize, true);
                 }
             },
@@ -833,7 +866,7 @@
              * defines the (initial) value of the input field
              */
             setValue: function (value, triggerChange) {
-                this.$el.data('DateTimePicker').date(value ? new Date(value) : undefined);
+                this.$el.data('DateTimePicker').date(value ? new Date(value) : null);
                 this.validate();
                 if (triggerChange) {
                     this.$el.trigger('change');
@@ -847,13 +880,18 @@
          * the 'file-upload-widget' (window.core.components.FileUploadWidget)
          * possible attributes:
          * - data-options: 'hidePreview' (no file preview), 'showUpload' (the direct upload button)
+         *  'browse:<Label>(:<Title>)', 'remove:<Label>(:<Title>)','upload:<Label>(:<Title>)',
          */
         components.FileUploadWidget = components.TextFieldWidget.extend({
 
             initialize: function (options) {
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
                 var dataOptions = this.$el.data('options');
+                options.showPreview = true;
+                options.showUpload = false;
+                options.fileType = 'any';
                 if (dataOptions) {
+                    var idx;
                     if (dataOptions.indexOf('hidePreview') >= 0) {
                         options.showPreview = false;
                         options.showUploadedThumbs = false;
@@ -861,18 +899,31 @@
                     if (dataOptions.indexOf('showUpload') >= 0) {
                         options.showUpload = true;
                     }
+                    this.getOptionText(options, dataOptions, 'browse');
+                    this.getOptionText(options, dataOptions, 'remove');
+                    this.getOptionText(options, dataOptions, 'upload');
                 }
                 var dataType = this.$el.data('type');
                 if (dataType) {
                     options.fileType = dataType;
                 }
-                this.whatever = this.$textField.fileinput({
-                    showPreview: options.showPreview === undefined ? true : options.showPreview,
-                    showUpload: options.showUpload || false,
-                    fileType: options.fileType || "any"
-                });
+                this.whatever = this.$textField.fileinput(options);
                 this.$widget = this.$el.closest('.file-input-new');
                 this.$inputCaption = this.$widget.find('.kv-fileinput-caption');
+            },
+
+            getOptionText: function (target, dataOptions, key) {
+                var idx;
+                if ((idx = dataOptions.indexOf(key + ':')) >= 0) {
+                    target[key + 'Label'] = dataOptions.substring(idx + key.length + 1).trim();
+                    if ((idx = target[key + 'Label'].indexOf(',')) > 0) {
+                        target[key + 'Label'] = target[key + 'Label'].substring(0, idx).trim();
+                    }
+                    if ((idx = target[key + 'Label'].indexOf(':')) > 0) {
+                        target[key + 'Title'] = target[key + 'Label'].substring(idx + 1).trim();
+                        target[key + 'Label'] = target[key + 'Label'].substring(0, idx).trim();
+                    }
+                }
             },
 
             /**
@@ -890,6 +941,15 @@
              */
             reset: function () {
                 this.$textField.fileinput('clear');
+            },
+
+            setName: function (name) {
+                this.$textField.attr('name', name);
+            },
+
+            getFileName: function () {
+                var files = this.$textField.fileinput('getFileStack');
+                return files.length === 1 ? files[0].name : undefined;
             }
         });
 

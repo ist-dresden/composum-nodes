@@ -13,7 +13,9 @@
                 selector: {
                     general: '.widget',
                     prefix: '.widget.',
-                    form: 'form.form-widget'
+                    form: 'form.form-widget',
+                    group: '.form-group',
+                    label: 'label .label-text'
                 }
             },
             attr: {
@@ -101,6 +103,12 @@
                 return this.$input.attr(widgets.const.attr.name);
             },
 
+            retrieveLabel: function () {
+                var c = widgets.const.css.selector;
+                var $label = this.$el.closest(c.group).find(c.label);
+                return $label.length === 1 ? $label.text().trim() : this.retrieveName();
+            },
+
             declareName: function (name) {
                 if (name) {
                     this.$input.attr(widgets.const.attr.name, name);
@@ -168,14 +176,6 @@
                 if (!this.$el.hasClass('hidden') && this.retrieveName()) {
                     var value = this.getValue();
                     if (this.rules) {
-                        if (this.rules.mandatory) {
-                            // check for a defined and not blank value
-                            var valid = this.valid = (value !== undefined &&
-                            (this.rules.blank || value.trim().length > 0));
-                            if (!valid) {
-                                this.alert(alertMethod, 'danger', '', 'value is mandatory');
-                            }
-                        }
                         if (this.valid && this.rules.pattern) {
                             // check pattern only if not blank (blank is valid if allowed explicitly)
                             var valid = this.valid = (this.rules.blank && (!value || value.trim().length < 1))
@@ -183,6 +183,14 @@
                             if (!valid) {
                                 this.alert(alertMethod, 'danger', '',
                                     this.rules.patternHint || "value doesn't match pattern", this.rules.pattern);
+                            }
+                        }
+                        if (this.valid && this.rules.mandatory) {
+                            // check for a defined and not blank value
+                            var valid = this.valid = (value !== undefined &&
+                                (this.rules.blank || value.trim().length > 0));
+                            if (!valid) {
+                                this.alert(alertMethod, 'danger', '', 'value is mandatory');
                             }
                         }
                     }
@@ -203,7 +211,7 @@
                 if (!$element) {
                     $element = this.$el;
                 }
-                this.label = $element.data('label');
+                this.label = $element.data('label') || this.retrieveLabel();
                 // scan 'data-pattern' attribute
                 var pattern = $element.data('pattern');
                 if (pattern) {
@@ -266,6 +274,21 @@
     window.widgets.register('.widget.hidden-widget', window.widgets.Widget);
 
     window.core = {
+
+        const: {
+            url: {
+                //                    2:scheme   3:host    5:port     6:path        9:selectors  10:ext     11:suffix  13:params
+                sling: new RegExp('^((https?)://([^:/]+)(:([^/]+))?)?(/[^.?]*)(\\.(([^/?]+)\\.)?([^./?]+))?(/[^?]*)?(\\?(.*))?$')
+            },
+            alert: {
+                type: {
+                    error: 'danger',
+                    warn: 'warning'
+                }
+            }
+        },
+
+        log: log.getLogger('core'),
 
         getHtml: function (url, onSuccess, onError, onComplete) {
             core.ajaxGet(url, {dataType: 'html'}, onSuccess, onError, onComplete);
@@ -415,7 +438,7 @@
                     }
                 },
                 error: function (result) {
-                    if (core.isNotAuthorized(result)) {
+                    if (action.indexOf('/j_security_check') < 0 && core.isNotAuthorized(result)) {
                         if (_.isFunction(core.unauthorizedDelegate)) {
                             core.unauthorizedDelegate(function () {
                                 // try it once more after delegation to authorize
@@ -516,9 +539,10 @@
         resultMessage: function (result, message) {
             var hintPattern = new RegExp('<title>(.+)</title>', 'im');
             var hint = hintPattern.exec(result.responseText);
-            var text = (message ? (message + ' - ') : '') + result.status + ': ' + result.statusText
-                + (hint ? ('\n\n(' + hint[1] + ')') : '');
-            return text;
+            return (message ? message : '')
+                + (hint ? ((message ? '\n\n' : '') + hint[1])
+                    : ((message ? ' - ' : '') + (result.responseText ? result.responseText
+                        : (result.status + ': ' + result.statusText))));
         },
 
         getContextUrl: function (url) {
@@ -631,14 +655,38 @@
             return name.split(separator);
         },
 
+        getAlertType: function (messageLevel) {
+            return core.const.alert.type[messageLevel] || messageLevel;
+        },
+
         /**
-         * the dialog to select a repository path in a tree view
+         * displays a short 'alert' dialog with a single message
+         * @param type the message error level (success, info, warning, danger)
+         * @param title the message text to display in the heading of the dialog
+         * @param message the message text to display; optional - if not present the alert will hide
+         * @param result an optional result object from an Ajax call; a hint from this result is added to the text
          */
         alert: function (type, title, message, result) {
+            type = core.getAlertType(type);
             var dialog = core.getView('#alert-dialog', core.components.Dialog);
             dialog.$('.modal-header h4').text(title || 'Alert');
             dialog.show(_.bind(function () {
                 dialog.alert(type, message, result);
+            }, this));
+        },
+
+        /**
+         * displays a short 'alert' dialog with a message list
+         * @param type the message error level (success, info, warning, danger)
+         * @param title the message text to display in the heading of the dialog
+         * @param messages the message list with items like {level:(error,warn,info),text:'...'}
+         */
+        messages: function (type, title, messages) {
+            type = core.getAlertType(type);
+            var dialog = core.getView('#alert-dialog', core.components.Dialog);
+            dialog.$('.modal-header h4').text(title);
+            dialog.show(_.bind(function () {
+                dialog.messages(type, undefined, messages);
             }, this));
         },
 
@@ -694,6 +742,10 @@
             path = path.replace(':', '%3A');
             path = path.replace('.', '%2E');
             return path;
+        },
+
+        mangleNameValue: function (name) {
+            return name.replace(/[%*!?]+/g, '').replace(/[\s]+/g, '_').replace(/[$%&/#+]+/g, '-');
         },
 
         // general helpers
@@ -765,6 +817,106 @@
             if (value) {
                 localStorage.setItem(this.profileKey + '.' + aspect, JSON.stringify(value));
             }
+        }
+    });
+
+    window.core.SlingUrl = function (url) {
+        this.url = url;
+        var parts = window.core.const.url.sling.exec(url);
+        this.scheme = parts[2];
+        this.host = parts[3];
+        this.port = parts[5];
+        this.context = $('html').data('context-path');
+        this.path = parts[6];
+        if (this.context) {
+            if (this.path.indexOf(this.context) === 0) {
+                this.path = this.path.substring(this.context.length);
+            }
+        }
+        this.selectors = parts[9] ? parts[9].split('.') : [];
+        this.extension = parts[10];
+        this.suffix = parts[11];
+        this.parameters = {};
+        if (parts[13]) {
+            var params = parts[13].split("&");
+            for (var i = 0; i < params.length; i++) {
+                var pair = params[i].split('=');
+                var name = decodeURIComponent(pair[0]);
+                if (name) {
+                    var value = pair.length > 1 ? decodeURIComponent(pair[1]) : null;
+                    if (this.parameters[name]) {
+                        if (_.isArray(this.parameters[name])) {
+                            this.parameters[name].push(value);
+                        } else {
+                            this.parameters[name] = [this.parameters[name], value];
+                        }
+                    } else {
+                        this.parameters[name] = value;
+                    }
+                }
+            }
+        }
+    };
+
+    _.extend(window.core.SlingUrl.prototype, {
+
+        build: function () {
+            this.url = "";
+            if (this.scheme) {
+                this.url += this.scheme + '://';
+            }
+            if (this.host) {
+                if (!this.scheme) {
+                    this.url += '//';
+                }
+                this.url += this.host;
+                if (this.port) {
+                    this.url += ':' + this.port;
+                }
+            }
+            if (this.context) {
+                this.url += this.context;
+            }
+            if (this.path) {
+                this.url += this.path;
+            }
+            if (_.isArray(this.selectors) && this.selectors.length > 0) {
+                this.url += this.selectors.join('.');
+            }
+            if (this.extension) {
+                this.url += '.' + this.extension;
+            }
+            if (this.suffix) {
+                this.url += this.suffix;
+            }
+            if (this.parameters) {
+                var params = '';
+                var value, array, object = this.parameters;
+                _.each(_.keys(object), function (name) {
+                    params += params.length === 0 ? '?' : '&';
+                    value = object[name];
+                    if (_.isArray(value)) {
+                        array = value;
+                        for (var i = 0; i < array.length;) {
+                            value = array[i];
+                            params += encodeURIComponent(name);
+                            if (value) {
+                                params += '=' + encodeURIComponent(value);
+                            }
+                            if (++i < array.length) {
+                                params += '&';
+                            }
+                        }
+                    } else {
+                        params += encodeURIComponent(name);
+                        if (value) {
+                            params += '=' + encodeURIComponent(value);
+                        }
+                    }
+                });
+                this.url += params;
+            }
+            return this.url;
         }
     });
 

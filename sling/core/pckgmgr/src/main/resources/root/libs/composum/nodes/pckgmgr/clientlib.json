@@ -1,9 +1,13 @@
 {
   "sling:resourceType": "composum/nodes/commons/clientlib",
+  "category": [
+    "composum.core.console.pckgmgr"
+  ],
+  "order": 100,
   "css": {
     "jcr:primaryType": "sling:OrderedFolder",
     "depends": [
-      "composum/nodes/console/clientlibs/console"
+      "category:composum.core.console.default"
     ],
     "group": {
       "embed": [
@@ -12,10 +16,10 @@
     },
     "jcrpckg": {
       "embed": [
-        "composum/nodes/pckgmgr/jcrpckg/general/general.css",
-        "composum/nodes/pckgmgr/jcrpckg/filter/filter.css",
-        "composum/nodes/pckgmgr/jcrpckg/coverage/coverage.css",
-        "composum/nodes/pckgmgr/jcrpckg/options/options.css"
+        "composum/nodes/pckgmgr/jcrpckg/general/clientlib",
+        "composum/nodes/pckgmgr/jcrpckg/filter/clientlib",
+        "composum/nodes/pckgmgr/jcrpckg/coverage/clientlib",
+        "composum/nodes/pckgmgr/jcrpckg/options/clientlib"
       ]
     },
     "embed": [
@@ -26,7 +30,7 @@
   "js": {
     "jcr:primaryType": "sling:OrderedFolder",
     "depends": [
-      "composum/nodes/console/clientlibs/console"
+      "category:composum.core.console.default"
     ],
     "dialogs": {
       "embed": [
@@ -40,10 +44,10 @@
     },
     "jcrpckg": {
       "embed": [
-        "composum/nodes/pckgmgr/jcrpckg/general/general.js",
-        "composum/nodes/pckgmgr/jcrpckg/filter/filter.js",
-        "composum/nodes/pckgmgr/jcrpckg/coverage/coverage.js",
-        "composum/nodes/pckgmgr/jcrpckg/options/options.js"
+        "composum/nodes/pckgmgr/jcrpckg/general/clientlib",
+        "composum/nodes/pckgmgr/jcrpckg/filter/clientlib",
+        "composum/nodes/pckgmgr/jcrpckg/coverage/clientlib",
+        "composum/nodes/pckgmgr/jcrpckg/options/clientlib"
       ]
     },
     "pckgmgr": {

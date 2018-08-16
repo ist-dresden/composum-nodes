@@ -7,7 +7,6 @@
       "sling:Redirect"
     ],
     "jcr:title": "Users",
-    "sling:resourceType": "composum/nodes/usermgnt",
     "sling:redirect": "/bin/users.html",
     "categories": [
       "nodes",

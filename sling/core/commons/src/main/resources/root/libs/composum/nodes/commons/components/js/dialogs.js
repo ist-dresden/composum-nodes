@@ -9,6 +9,16 @@
 
     (function (components) {
 
+        components.const = components.const || {};
+        components.const.dialog = {
+            alert: {
+                type: {
+                    error: 'danger',
+                    warn: 'warning'
+                }
+            }
+        };
+
         /**
          * the basic dialog component as 'superclass' for all dialog components
          */
@@ -16,11 +26,13 @@
 
             initialize: function (options) {
                 this.$alert = this.$('.alert');
+                this.$messageHead = this.$('.messages .panel-heading');
+                this.$messageBody = this.$('.messages .panel-body');
                 this.setUpWidgets(this.el);
                 this.$el.on('shown.bs.modal', _.bind(this.onShown, this));
             },
 
-            setUpWidgets: function(root) {
+            setUpWidgets: function (root) {
                 window.widgets.setUp(root);
             },
 
@@ -44,7 +56,7 @@
                 }
             },
 
-            resetOnShown: function() {
+            resetOnShown: function () {
                 this.reset();
             },
 
@@ -72,31 +84,93 @@
             },
 
             /**
-             * Displays a message text in a dialogs predefined alert box.
+             * Displays a message text in a dialogs predefined alert or message panel box.
              * @param type the message error level (success, info, warning, danger)
              * @param message the message text to display; optional - if not present the alert will hide
              * @param result an optional result object from an Ajax call; a hint from this result is added to the text
              */
             alert: function (type, message, result) {
-                this.$alert.removeClass();
                 if (message) {
-                    this.$alert.html(result ? core.resultMessage(result, message) : message);
-                    this.$alert.addClass('alert').addClass('alert-' + type);
+                    type = components.const.dialog.alert.type[type] || type;
+                    if (this.$messageBody.length === 1) {
+                        this.$messageHead.html(result ? core.resultMessage(result, message) : message);
+                        this.$messageHead.removeClass('hidden');
+                        this.$messageBody.html('');
+                        this.$messageBody.addClass('hidden');
+                        this.$messageBody.parent().removeClass().addClass('panel').addClass('panel-' + type);
+                    } else {
+                        this.$alert.html(result ? core.resultMessage(result, message) : message);
+                        this.$alert.removeClass().addClass('alert').addClass('alert-' + type);
+                    }
                 } else {
-                    this.$alert.html('');
-                    this.$alert.addClass('alert').addClass('alert-hidden');
+                    if (this.$messageBody.length === 1) {
+                        this.$messageBody.parent().removeClass().addClass('hidden');
+                        this.$messageHead.html('');
+                        this.$messageBody.html('');
+                    } else {
+                        this.$alert.html('');
+                        this.$alert.removeClass().addClass('alert').addClass('hidden');
+                    }
+                }
+            },
+
+            /**
+             * Displays a message list with title in a dialogs predefined message panel box.
+             * @param type the message error level (success, info, warning, danger)
+             * @param title the message text to display in the heading; optional - if not present the box will hide
+             * @param messages the message list with items like {level:(error,warn,info),text:'...'}
+             */
+            messages: function (type, title, messages) {
+                if (this.$messageBody.length === 1) {
+                    type = components.const.dialog.alert.type[type] || type;
+                    this.$messageBody.parent().removeClass();
+                    if (title) {
+                        this.$messageHead.html(title);
+                        this.$messageHead.removeClass('hidden');
+                        this.$messageBody.parent().addClass('panel').addClass('panel-' + type);
+                    } else {
+                        this.$messageHead.addClass('hidden');
+                    }
+                    this.$messageBody.html('');
+                    if (_.isArray(messages) && messages.length > 0) {
+                        this.$messageBody.html('<ul></ul>');
+                        var $list = this.$messageBody.find('ul');
+                        for (var i = 0; i < messages.length; i++) {
+                            var level = messages[i].level;
+                            level = components.const.dialog.alert.type[level] || level;
+                            $list.append('<li class="bg-' + level + ' text-' + level + '">'
+                                + (messages[i].label ? '<span class="label">' + messages[i].label + ':</span>' : '')
+                                + messages[i].text
+                                + (messages[i].hint ? '<span class="hint">(' + messages[i].hint + ')</span>' : '')
+                                + '</li>')
+                        }
+                        this.$messageBody.removeClass('hidden');
+                    } else {
+                        this.$messageBody.html('');
+                        this.$messageBody.addClass('hidden');
+                    }
+                } else {
+                    this.alert(type, title);
                 }
             },
 
             /**
              * Submit the form of the dialog.
-             * @param onSuccess an optional callback function called after a successful request
+             * @param onSuccess optional; 'true' or a callback function called after a successful request
              */
             submitForm: function (onSuccess, onError, onComplete) {
                 core.submitForm(this.el,
                     _.bind(function (result) {
                         if (_.isFunction(onSuccess)) {
                             onSuccess(result);
+                        } else {
+                            if (onSuccess) { // use 'true' to show the success messages
+                                if (_.isObject(result) && _.isObject(result.response)) {
+                                    var response = result.response;
+                                    var messages = result.messages;
+                                    core.messages(response.level, response.text, messages);
+                                }
+                            }
                         }
                         this.hide();
                     }, this),
@@ -105,7 +179,7 @@
                             onError(result);
                         } else {
                             if (onError === undefined || onError) {
-                                this.alert('danger', "Error on submit", result);
+                                this.errorMessage("Error", result);
                             }
                         }
                     }, this),
@@ -120,6 +194,14 @@
                     _.bind(function (result) {
                         if (_.isFunction(onSuccess)) {
                             onSuccess(result);
+                        } else {
+                            if (onSuccess) { // use 'true' to show the success messages
+                                if (_.isObject(result) && _.isObject(result.response)) {
+                                    var response = result.response;
+                                    var messages = result.messages;
+                                    core.messages(response.level, response.text, messages);
+                                }
+                            }
                         }
                         this.hide();
                     }, this),
@@ -128,7 +210,7 @@
                             onError(result);
                         } else {
                             if (onError === undefined || onError) {
-                                this.alert('danger', "Error on submit", result);
+                                this.errorMessage("Error", result);
                             }
                         }
                     }, this),
@@ -140,15 +222,32 @@
                 core.ajaxPut(url, JSON.stringify(data), {
                     dataType: 'json'
                 }, onSuccess, undefined, _.bind(function (result) {
-                    if (result.status == 200) {
-                        if (_.isFunction(onSuccess)) {
+                    if (result.status >= 200 && result.status < 299) {
+                        if (result.status === 200 && _.isFunction(onSuccess)) {
                             onSuccess(result);
+                            this.hide();
+                        } else {
+                            var detail = result.responseJSON;
+                            if (result.status !== 200 && _.isObject(detail) && detail.response) {
+                                this.messages(detail.response.level, detail.response.text, detail.messages);
+                            } else {
+                                this.hide();
+                            }
                         }
-                        this.hide();
                     } else {
-                        this.alert('danger', 'Error on ' + label, result);
+                        this.errorMessage(label, result);
                     }
                 }, this));
+            },
+
+            errorMessage: function (message, result) {
+                var detail = result.responseJSON;
+                if (_.isObject(detail) && detail.response) {
+                    this.messages(detail.response.level, detail.response.text, detail.messages);
+                } else {
+                    var level = result.status >= 300 && result.status < 399 ? 'info' : 'danger';
+                    this.alert(level, message, result);
+                }
             }
         });
 
@@ -164,8 +263,8 @@
                 this.tree.onNodeSelected = _.bind(this.onNodeSelected, this);
                 this.$title = this.$('.modal-title');
                 this.$label = this.$('.path-input-label');
-                this.$input = this.$('input.path-input');
-                this.$input.on('change', _.bind(this.inputChanged, this));
+                this.input = core.getView(this.$('input.path-input'), components.PathWidget);
+                this.input.$el.on('change', _.bind(this.inputChanged, this));
                 this.$('button.select').click(_.bind(function () {
                     if (_.isFunction(this.callback)) {
                         this.callback(this.getValue());
@@ -200,6 +299,7 @@
              * defines the root path for the tree (default: '/')
              */
             setRootPath: function (rootPath) {
+                this.input.setRootPath(rootPath);
                 this.tree.setRootPath(rootPath);
             },
 
@@ -214,15 +314,38 @@
              * returns the current path value selected in this dialog
              */
             getValue: function () {
-                return this.$input.val();
+                var path = this.input.getValue();
+                if (path && !_.isEmpty(path = path.trim())) {
+                    var rootPath = this.tree.getRootPath();
+                    if (rootPath !== '/') {
+                        if (path.indexOf('/') === 0) {
+                            path = rootPath + path;
+                        } else {
+                            path = rootPath + '/' + path;
+                        }
+                    }
+                }
+                return path;
             },
 
             /**
-             * defines the (initial) value - the curent / old value
+             * defines the (initial) value - the current / old value
              */
             setValue: function (value) {
-                this.$input.val(value);
-                this.inputChanged(); // select vaöue in the tree
+                if (value && !_.isEmpty(value = value.trim())) {
+                    var rootPath = this.tree.getRootPath();
+                    if (rootPath !== '/') {
+                        if (value === rootPath) {
+                            value = '/';
+                        } else {
+                            if (value.indexOf(rootPath + '/') === 0) {
+                                value = value.substring(rootPath.length);
+                            }
+                        }
+                    }
+                }
+                this.input.setValue(value);
+                this.inputChanged(); // select value in the tree
             },
 
             /**

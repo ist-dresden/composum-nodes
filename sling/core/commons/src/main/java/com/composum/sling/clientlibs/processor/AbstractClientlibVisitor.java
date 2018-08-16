@@ -74,34 +74,34 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
     @Override
     public void visit(ClientlibCategory category, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent)
             throws IOException, RepositoryException {
-        LOG.debug(">>> {} {}", mode, category);
-        if (notProcessed(category.getRef())) {
+        LOG.trace(">>> {} {}", mode, category);
+        if (isNotProcessed(category.getRef())) {
             for (Clientlib clientlib : category.clientlibs)
                 clientlib.accept(this, EMBEDDED, null);
             action(category, mode, parent);
-            markAsProcessed(category.makeLink());
-        }
-        LOG.debug("<<< {} => {}", category, hasEmbeddedFiles);
+            markAsProcessed(category.makeLink(), parent, mode);
+        } else notPresent(category.getRef(), mode, parent);
+        LOG.trace("<<< {} => {}", category, hasEmbeddedFiles);
     }
 
     @Override
     public void visit(Clientlib clientlib, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent) throws
             IOException, RepositoryException {
-        LOG.debug(">>> {} {}", mode, clientlib);
-        if (notProcessed(clientlib.getRef())) {
+        LOG.trace(">>> {} {}", mode, clientlib);
+        if (isNotProcessed(clientlib.getRef())) {
             updateHash(clientlib.resource.getPath(), clientlib.resource.getLastModified());
             ClientlibResourceFolder folder = clientlib.getResourceFolder();
             if (null != folder) folder.accept(this, mode, null);
             action(clientlib, mode, parent);
-            markAsProcessed(clientlib.makeLink());
-        }
-        LOG.debug("<<< {} => {}", clientlib, hasEmbeddedFiles);
+            markAsProcessed(clientlib.makeLink(), parent, mode);
+        } else notPresent(clientlib.getRef(), mode, parent);
+        LOG.trace("<<< {} => {}", clientlib, hasEmbeddedFiles);
     }
 
     @Override
     public void visit(ClientlibResourceFolder folder, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder
             parent) throws IOException, RepositoryException {
-        LOG.debug(">>> {} {}", mode, folder);
+        LOG.trace(">>> {} {}", mode, folder);
         updateHash(folder.resource.getPath(), folder.resource.getLastModified());
         for (ClientlibRef dependency : folder.getDependencies())
             resolveAndAccept(dependency, DEPENDS, folder);
@@ -111,43 +111,43 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
             resolveAndAccept(embedded, embeddingMode, folder);
         for (ClientlibElement child : folder.getChildren())
             child.accept(getVisitorFor(mode, child), embeddingMode, folder);
-        LOG.debug("<<< {} => {}", folder, hasEmbeddedFiles);
+        action(folder, mode, parent);
+        LOG.trace("<<< {} => {}", folder, hasEmbeddedFiles);
     }
 
     @Override
     public void visit(ClientlibFile file, VisitorMode mode, ClientlibResourceFolder parent) throws
             RepositoryException, IOException {
-        LOG.debug(">>> {} {}", mode, file);
-        if (notProcessed(file.getRef())) {
+        LOG.trace(">>> {} {}", mode, file);
+        if (isNotProcessed(file.getRef())) {
             if (EMBEDDED == mode) {
                 updateHash(file.handle.getPath(), file.handle.getLastModified());
                 hasEmbeddedFiles = true;
             }
             action(file, mode, parent);
-            markAsProcessed(file.makeLink());
-        }
-        LOG.debug("<<< {} {}", mode, file);
+            markAsProcessed(file.makeLink(), parent, mode);
+        } else notPresent(file.getRef(), mode, parent);
+        LOG.trace("<<< {} {}", mode, file);
     }
 
     @Override
     public void visit(ClientlibExternalUri externalUri, VisitorMode mode, ClientlibResourceFolder parent) {
-        LOG.debug(">>> {} {}", mode, externalUri);
-        if (notProcessed(externalUri.getRef())) {
+        LOG.trace(">>> {} {}", mode, externalUri);
+        if (isNotProcessed(externalUri.getRef())) {
             action(externalUri, mode, parent);
-            markAsProcessed(externalUri.makeLink());
-        }
+            markAsProcessed(externalUri.makeLink(), parent, mode);
+        } else notPresent(externalUri.getRef(), mode, parent);
         // never embedded -> irrelevant for hash.
-        LOG.debug("<<< {} {}", mode, externalUri);
+        LOG.trace("<<< {} {}", mode, externalUri);
     }
 
     protected void resolveAndAccept(ClientlibRef ref, VisitorMode mode, ClientlibResourceFolder folder) throws
             IOException, RepositoryException {
-        if (notProcessed(ref)) {
+        if (isNotProcessed(ref)) {
             ClientlibElement element = service.resolve(ref, resolver);
             if (null != element) element.accept(getVisitorFor(mode, element), mode, folder);
-        } else {
-            alreadyProcessed(ref, mode, folder);
-        }
+            else notPresent(ref, mode, folder);
+        } else alreadyProcessed(ref, mode, folder);
     }
 
     /** Hook for additional checks about already processed elements. */
@@ -155,8 +155,13 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
         // empty here.
     }
 
+    /** Hook for additional checks about an element referenced but not present. Default: debuglog. */
+    protected void notPresent(ClientlibRef ref, VisitorMode mode, ClientlibResourceFolder parent) {
+        LOG.debug("Not present: {} referenced from {}", ref, parent);
+    }
+
     protected void updateHash(String path, Calendar updatetime) {
-        LOG.debug("Hashing {} with {}", path, null != updatetime ? updatetime.getTime() : null);
+        LOG.trace("Hashing {} with {}", path, null != updatetime ? updatetime.getTime() : null);
         embeddedHash = embeddedHash * 92821 + path.hashCode();
         if (null != updatetime) {
             embeddedHash = embeddedHash * 92821 + updatetime.getTimeInMillis();
@@ -178,17 +183,20 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
         return Base64.encodeBase64URLSafeString(b);
     }
 
-    /** Checks whether something matching this reference has already been {@link #markAsProcessed(ClientlibLink)}. */
-    protected boolean notProcessed(ClientlibRef ref) {
+    /** Checks whether something matching this reference has already been
+     * {@link #markAsProcessed(ClientlibLink, ClientlibResourceFolder, VisitorMode)}. */
+    protected boolean isNotProcessed(ClientlibRef ref) {
         return !ref.isSatisfiedby(processedElements);
     }
 
-    protected void markAsProcessed(ClientlibLink link) {
+    /** Marks a link processed for current clientlib call (that is, clientlib tag call).   */
+    protected void markAsProcessed(ClientlibLink link, ClientlibResourceFolder parent, VisitorMode visitorMode) {
         if (processedElements.contains(link)) {
-            LOG.error("Bug: duplicate clientlib link: {}", link);
+            LOG.error("Bug: processed duplicate clientlib link: {} mode {} from {}",
+                    new Object[]{link, visitorMode, parent});
         } else {
             processedElements.add(link);
-            LOG.debug("registered: {}", link);
+            LOG.debug("processed: {} mode {} parent {}", new Object[]{link, visitorMode, parent});
         }
     }
 

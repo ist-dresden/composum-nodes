@@ -458,16 +458,6 @@
     display: none;
 }
 
-#node-move-dialog .form-group.name {
-    width: 85%;
-    float: left;
-}
-
-#node-move-dialog .form-group.index {
-    width: 12%;
-    float: right;
-}
-
 /**
  * Tables
  */

@@ -29,8 +29,10 @@ public class LinkUtil {
     public static final String FORWARDED_SSL_HEADER = "X-Forwarded-SSL";
     public static final String FORWARDED_SSL_ON = "on";
 
-    public static final String URL_PATTERN_STRING = "^(?:(https?):)?//([^/]+)(:\\d+)?(/.*)?$";
+    public static final String URL_PATTERN_STRING = "^(?:(https?|mailto|tel):)?//([^/]+)(:\\d+)?(/.*)?$";
     public static final Pattern URL_PATTERN = Pattern.compile(URL_PATTERN_STRING);
+    public static final String SPECIAL_URL_STRING = "^(?:(mailto|tel):)(.+)$";
+    public static final Pattern SPECIAL_URL_PATTERN = Pattern.compile(SPECIAL_URL_STRING);
 
     public static final Pattern SELECTOR_PATTERN = Pattern.compile("^(.*/[^/]+)(\\.[^.]+)$");
 
@@ -220,10 +222,10 @@ public class LinkUtil {
     }
 
     /**
-     * Returns 'true' if the url is an 'external' url (starts with 'https?://')
+     * Returns 'true' if the url is an 'external' url (starts with 'https?://' or is a special URL)
      */
     public static boolean isExternalUrl(String url) {
-        return URL_PATTERN.matcher(url).matches();
+        return URL_PATTERN.matcher(url).matches() || SPECIAL_URL_PATTERN.matcher(url).matches();
     }
 
     /**
@@ -245,22 +247,43 @@ public class LinkUtil {
         return finalTarget;
     }
 
+    /**
+     * Determines the 'final URL' of a link to a resource by traversing along the 'redirect' properties.
+     *
+     * @param resource the addressed resource
+     * @param trace    the list of paths traversed before (to detect loops in redirects)
+     * @return a 'final' path or URL; <code>null</code> if no different target found
+     * @throws RedirectLoopException if a redirect loop has been detected
+     */
     protected static String getFinalTarget(ResourceHandle resource, List<String> trace)
             throws RedirectLoopException {
         String finalTarget = null;
         if (resource.isValid()) {
             String path = resource.getPath();
             if (trace.contains(path)) {
+                // throw an exception if a loop has been detected
                 throw new RedirectLoopException(trace, path);
             }
+            // search for redirects and resolve them...
             String redirect = resource.getProperty(PROP_TARGET);
             if (StringUtils.isBlank(redirect)) {
                 redirect = resource.getProperty(PROP_REDIRECT);
             }
+            if (StringUtils.isBlank(redirect)) {
+                // try to use the properties of a 'jcr:content' child instead of the target resource itself
+                ResourceHandle contentResource = resource.getContentResource();
+                if (resource != contentResource) {
+                    redirect = contentResource.getProperty(PROP_TARGET);
+                    if (StringUtils.isBlank(redirect)) {
+                        redirect = contentResource.getProperty(PROP_REDIRECT);
+                    }
+                }
+            }
             if (StringUtils.isNotBlank(redirect)) {
                 trace.add(path);
-                finalTarget = redirect;
+                finalTarget = redirect; // use the redirect target as the link URL
                 if (!URL_PATTERN.matcher(finalTarget).matches()) {
+                    // look forward if the redirect found points to another resource
                     ResourceResolver resolver = resource.getResourceResolver();
                     Resource targetResource = resolver.getResource(finalTarget);
                     if (targetResource != null) {
@@ -340,7 +363,8 @@ public class LinkUtil {
                 ResourceHandle content = resource.getContentResource();
                 if (content.isValid() && !ResourceUtil.isNonExistingResource(content)) {
                     resourceType = content.getResourceType();
-                    if (resourceType != null && !content.getPrimaryType().equals(resourceType)) {
+                    if (resourceType != null &&
+                            (primaryType = content.getPrimaryType()) != null && !primaryType.equals(resourceType)) {
                         extension = EXT_HTML; // use '.html' by default if a content resource exists with a real resource type
                     }
                 }

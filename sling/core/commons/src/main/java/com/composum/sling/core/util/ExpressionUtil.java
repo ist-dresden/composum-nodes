@@ -65,9 +65,13 @@ public class ExpressionUtil {
             if (StringUtils.isNotBlank(expression)) {
                 expression = expression.replaceAll("@\\{([^\\}]+)\\}", "\\${$1}");
                 Class type = defaultValue != null ? defaultValue.getClass() : String.class;
-                ELContext elContext = getELContext();
-                ValueExpression valueExpression = createValueExpression(elContext, expression, type);
-                result = (T) valueExpression.getValue(elContext);
+                if (String.class.equals(type) && !expression.contains("${") && !expression.contains("#{")) {
+                    result = (T) expression; // no change if it does not contain an actual EL expression
+                } else {
+                    ELContext elContext = getELContext();
+                    ValueExpression valueExpression = createValueExpression(elContext, expression, type);
+                    result = (T) valueExpression.getValue(elContext);
+                }
             }
         }
         return result != null ? result : defaultValue;

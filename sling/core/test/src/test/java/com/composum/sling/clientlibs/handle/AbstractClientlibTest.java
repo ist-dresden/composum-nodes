@@ -91,7 +91,6 @@ public class AbstractClientlibTest {
         ServletContext servletContext = Mockito.mock(ServletContext.class);
         BeanContext beanContext = new BeanContext.Servlet(servletContext, context.bundleContext(), context.request(),
                 context.response());
-        rendererContext = RendererContext.instance(beanContext, context.request());
 
         clientlib2Service = (DefaultClientlibService) context.registerService(ClientlibService.class, new
                 DefaultClientlibService() {
@@ -104,6 +103,8 @@ public class AbstractClientlibTest {
                     }
                 });
         // TODO: MockOsgi.activate(clientlibService, context.bundleContext()); should work but doesn't
+
+        rendererContext = RendererContext.instance(beanContext, context.request());
 
         executorService = Executors.newFixedThreadPool(2);
     }
@@ -133,7 +134,7 @@ public class AbstractClientlibTest {
         return (T) clientlib2Service.resolve(new ClientlibRef(type, path, false, null), context.resourceResolver());
     }
 
-    protected void checkDeliveredContent(ClientlibElement lib, String expectedContent, String expectedProcessedLibs)
+    protected String checkDeliveredContent(ClientlibElement lib, String expectedContent, String expectedProcessedLibs)
             throws Exception {
         ClientlibService.ClientlibInfo hints = clientlib2Service.prepareContent(context.request(), lib.getRef(),
                 false, null,
@@ -153,6 +154,7 @@ public class AbstractClientlibTest {
         ProcessingVisitor visitor = new ProcessingVisitor(lib, clientlib2Service, out, null, ctx);
         visitor.execute();
         assertEquals(expectedProcessedLibs, visitor.getProcessedElements().toString());
+        return visitor.getHash();
     }
 
     protected void verifyEqualHashesOfVisitors(ClientlibElement clientlib) throws IOException, RepositoryException {

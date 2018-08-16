@@ -4,6 +4,7 @@ import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.JobControlServlet;
 import com.composum.sling.core.servlet.SystemServlet;
 import com.composum.sling.core.util.ResourceUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
@@ -12,7 +13,6 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.osgi.PropertiesUtil;
@@ -28,6 +28,7 @@ import java.util.Map;
 /**
  * The configuration service for all servlets in the core bundle.
  */
+@SuppressWarnings("FieldCanBeLocal")
 @Component(
         label = "Composum Core Configuration",
         description = "the configuration service for all servlets in the core bundle",
@@ -49,10 +50,16 @@ public class CoreConfigImpl implements CoreConfiguration {
     @Property(
             name = ERRORPAGES_PATH,
             label = "Errorpages",
-            description = "the path to the errorpages; e.g. 'meta/errorpages' for searching errorpages along the requested path",
-            value = "meta/errorpages"
+            description = "the path to the errorpages; e.g. 'meta/errorpages' for searching errorpages along the requested path"
     )
     private String errorpagesPath;
+
+    @Property(
+            name = DEFAULT_ERRORPAGES,
+            label = "Default Errorpages",
+            description = "the path to the systems default error pages"
+    )
+    private String defaultErrorpages;
 
     public static final String JOBCONTROL_SERVLET_ENABLED = "jobcontrol.servlet.enabled";
     @Property(
@@ -84,21 +91,30 @@ public class CoreConfigImpl implements CoreConfiguration {
         return result != null ? result : false;
     }
 
+    /**
+     * Determines the error page corresponding to the requested path.
+     * Is searching upwards beginning with the requested path for an error page
+     * using the path pattern: {requested path}/{errorpagesPath}/{status code}.
+     * If nothing found the pattern: {defaultErrorpages}/{status code} is used if existing.
+     *
+     * @return the error page found; <code>null</code> if no error page available
+     */
     @Override
     public Resource getErrorpage(SlingHttpServletRequest request, int status) {
-
         Resource errorpage = null;
+        ResourceResolver resolver = request.getResourceResolver();
 
-        RequestPathInfo pathInfo = request.getRequestPathInfo();
-        if ("html".equalsIgnoreCase(pathInfo.getExtension())) { // handle page requests only
-
-            ResourceResolver resolver = request.getResourceResolver();
+        if (StringUtils.isNotBlank(errorpagesPath)) {
             if (errorpagesPath.startsWith("/")) {
+                // if the configured path is an absolute path use this path only
                 errorpage = resolver.getResource(errorpagesPath + "/" + status);
+
             } else {
                 String path = request.getRequestPathInfo().getResourcePath();
                 Resource resource = resolver.resolve(request, path);
-                while (resource == null || ResourceUtil.isNonExistingResource(resource)) {
+
+                // skip non existing resource paths in the requested path
+                while (ResourceUtil.isNonExistingResource(resource)) {
                     int lastSlash = path.lastIndexOf('/');
                     if (lastSlash > 0) {
                         path = path.substring(0, lastSlash);
@@ -107,6 +123,8 @@ public class CoreConfigImpl implements CoreConfiguration {
                     }
                     resource = resolver.resolve(request, path);
                 }
+
+                // scan upwards for an appropriate error page
                 while (errorpage == null && resource != null) {
                     path = resource.getPath();
                     if ("/".equals(path)) {
@@ -118,6 +136,10 @@ public class CoreConfigImpl implements CoreConfiguration {
                     }
                 }
             }
+        }
+        if (errorpage == null && StringUtils.isNotBlank(defaultErrorpages)) {
+            // use the default page if no custom error page found
+            errorpage = resolver.getResource(defaultErrorpages + "/" + status);
         }
         return errorpage;
     }
@@ -147,10 +169,8 @@ public class CoreConfigImpl implements CoreConfiguration {
     protected void activate(ComponentContext context) {
         this.properties = context.getProperties();
         forwardedSslPort = PropertiesUtil.toInteger(properties.get(FORWARDED_SSL_PORT), DEFAULT_FORWARDED_SSL_PORT);
-        errorpagesPath = (String) properties.get(ERRORPAGES_PATH);
-        if (errorpagesPath.endsWith("/") && errorpagesPath.length() > 1) {
-            errorpagesPath = errorpagesPath.substring(errorpagesPath.length() - 1);
-        }
+        errorpagesPath = StringUtils.removeEnd((String) properties.get(ERRORPAGES_PATH), "/");
+        defaultErrorpages = StringUtils.removeEnd((String) properties.get(DEFAULT_ERRORPAGES), "/");
         enabledServlets = new HashMap<>();
         enabledServlets.put(SystemServlet.class.getSimpleName(), systemServletEnabled =
                 (Boolean) properties.get(SYSTEM_SERVLET_ENABLED));

@@ -673,6 +673,7 @@ public class PackageUtil {
         String version = definition.get(JcrPackageDefinition.PN_VERSION);
         String description = definition.get(JcrPackageDefinition.PN_DESCRIPTION);
         Calendar lastModified = definition.getCalendar(JcrPackageDefinition.PN_LASTMODIFIED);
+        Calendar lastUnpacked = definition.getCalendar(JcrPackageDefinition.PN_LAST_UNPACKED);
         boolean includeVersions = definition.getBoolean("includeVersions");
         writer.beginObject();
         writer.name(JcrPackageDefinition.PN_GROUP).value(definition.get(JcrPackageDefinition.PN_GROUP));
@@ -685,6 +686,9 @@ public class PackageUtil {
         }
         if (lastModified != null) {
             writer.name(JcrPackageDefinition.PN_LASTMODIFIED).value(dateFormat.format(lastModified.getTime()));
+        }
+        if (lastUnpacked != null) {
+            writer.name(JcrPackageDefinition.PN_LAST_UNPACKED).value(dateFormat.format(lastUnpacked.getTime()));
         }
         writer.name("includeVersions").value(includeVersions);
         writer.endObject();

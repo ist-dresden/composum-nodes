@@ -3,9 +3,12 @@ package com.composum.sling.core.servlet;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.JsonUtil;
+import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.cpnl.CpnlElFunctions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
+import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -38,6 +41,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     public static final String PARAM_MIME_TYPE = "mimeType";
     public static final String PARAM_NAME = "name";
     public static final String PARAM_PATH = "path";
+    public static final String PARAM_BEFORE = "before";
     public static final String PARAM_QUERY = "query";
     public static final String PARAM_RESOURCE_TYPE = "resourceType";
     public static final String PARAM_TITLE = "title";
@@ -145,6 +149,24 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     }
 
     //
+    // default responses...
+    //
+
+    protected void jsonAnswerItemExists(SlingHttpServletRequest request, SlingHttpServletResponse response)
+            throws IOException {
+        response.setStatus(HttpServletResponse.SC_CONFLICT);
+        JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+        jsonWriter.beginObject();
+        jsonWriter.name("success").value(false);
+        jsonWriter.name("response").beginObject();
+        jsonWriter.name("level").value("warn");
+        jsonWriter.name("text").value(CpnlElFunctions.i18n(request,
+                "An element with the same name exists already - use a different name!"));
+        jsonWriter.endObject();
+        jsonWriter.endObject();
+    }
+
+    //
     // JSON parameters parsing
     //
 
@@ -172,5 +194,4 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         T object = gson.fromJson(inputReader, type);
         return object;
     }
-
 }

@@ -4,6 +4,7 @@ import com.composum.sling.clientlibs.handle.Clientlib;
 import com.composum.sling.clientlibs.handle.ClientlibCategory;
 import com.composum.sling.clientlibs.handle.ClientlibElement;
 import com.composum.sling.clientlibs.processor.RendererContext;
+import org.apache.sling.api.SlingHttpServletRequest;
 
 import javax.jcr.RepositoryException;
 import java.io.IOException;
@@ -18,7 +19,7 @@ public interface ClientlibRenderer {
      *
      */
     void renderClientlibLinks(ClientlibElement clientlib,
-                              Writer writer, RendererContext context)
+                              Writer writer, SlingHttpServletRequest request, RendererContext context)
             throws IOException, RepositoryException;
 
 }

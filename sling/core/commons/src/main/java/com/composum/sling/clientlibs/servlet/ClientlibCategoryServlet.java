@@ -10,6 +10,8 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.servlets.HttpConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import javax.servlet.ServletException;
@@ -28,8 +30,10 @@ import java.util.regex.Pattern;
 )
 public class ClientlibCategoryServlet extends AbstractClientlibServlet {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ClientlibCategoryServlet.class);
+
     /** The path at which this servlet is deployed. */
-    public static final String PATH = "/bin/cpm/nodes/clientlibs";
+    public static final String PATH = "/bin/public/clientlibs";
 
     protected static final Pattern HASHSUFFIX_PATTERN = Pattern.compile("/?([0-9a-zA-Z_-]++)?/([" + Clientlib.CATEGORYNAME_CHARS + "]+)[.][a-z]+");
 
@@ -59,22 +63,30 @@ public class ClientlibCategoryServlet extends AbstractClientlibServlet {
 
     @Override
     protected void doHead(SlingHttpServletRequest request, SlingHttpServletResponse response) throws ServletException, IOException {
-        serve(true, request, response);
+        serve(false, request, response);
     }
 
     private void serve(boolean get, SlingHttpServletRequest request, SlingHttpServletResponse response) throws IOException, ServletException {
-        try {
-            RequestPathInfo pathInfo = request.getRequestPathInfo();
-            String selectors = pathInfo.getSelectorString();
-            Clientlib.Type type = Clientlib.Type.valueOf(pathInfo.getExtension().toLowerCase());
-            Pair<String, String> categoryAndHash = parseCategoryAndHashFromSuffix(pathInfo.getSuffix());
+        if (!dropRequest(request, response)) {
+            try {
+                RequestPathInfo pathInfo = request.getRequestPathInfo();
+                String selectors = pathInfo.getSelectorString();
+                Clientlib.Type type = Clientlib.Type.valueOf(pathInfo.getExtension().toLowerCase());
+                Pair<String, String> categoryAndHash = parseCategoryAndHashFromSuffix(pathInfo.getSuffix());
 
-            ClientlibRef ref = ClientlibRef.forCategory(type, categoryAndHash.getLeft(), false, null);
+                ClientlibRef ref = ClientlibRef.forCategory(type, categoryAndHash.getLeft(), false, null);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("deliver: {} ({})", ref.category, request.getRequestURI());
+                }
+                deliverClientlib(get, request, response, ref, categoryAndHash.getRight(), isMinified(selectors));
 
-            deliverClientlib(get, request, response, ref, categoryAndHash.getRight(), isMinified(selectors));
-
-        } catch (RepositoryException | LoginException ex) {
-            throw new ServletException(ex);
+            } catch (RepositoryException | LoginException ex) {
+                throw new ServletException(ex);
+            }
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("dropped: {}", request.getRequestURI());
+            }
         }
     }
 

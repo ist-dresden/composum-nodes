@@ -5,6 +5,7 @@ import com.composum.sling.clientlibs.servlet.ClientlibCategoryServlet;
 import com.composum.sling.clientlibs.servlet.ClientlibServlet;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.sling.api.SlingHttpServletRequest;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,7 +26,7 @@ import static com.composum.sling.clientlibs.handle.ClientlibLink.Kind.EXTERNALUR
  */
 public class ClientlibLink {
 
-    /** The kind of resource we link to. */
+    /** The kind of resource we link to: {@link #CATEGORY}, {@link #CLIENTLIB}, {@link #FILE}, {@link #EXTERNALURI}. */
     public enum Kind {
         /** A link to a category of clientlibs which is rendered by the {@link com.composum.sling.clientlibs.servlet.ClientlibCategoryServlet}. */
         CATEGORY,
@@ -160,10 +161,11 @@ public class ClientlibLink {
      * parameterized by type and minified according to {@link RendererContext#useMinifiedFiles()}. </li> <li>Clientlib:
      * path to the client library plus minified and type.</li> <li>File:</li> </ul>
      *
+     * @param request the request
      * @param context the context
      * @return the url
      */
-    public String getUrl(RendererContext context) {
+    public String getUrl(SlingHttpServletRequest request, RendererContext context) {
         String uri;
         switch (kind) {
             case FILE: // we can only refer to that exact resource.
@@ -183,9 +185,9 @@ public class ClientlibLink {
         }
         String url;
         if (context.mapClientlibURLs()) {
-            url = LinkUtil.getUrl(context.request, uri);
+            url = LinkUtil.getUrl(request, uri);
         } else {
-            url = LinkUtil.getUnmappedUrl(context.request, uri);
+            url = LinkUtil.getUnmappedUrl(request, uri);
         }
         return url;
     }

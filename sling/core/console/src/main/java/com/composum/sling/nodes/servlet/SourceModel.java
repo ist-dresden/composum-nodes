@@ -12,7 +12,6 @@ import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
@@ -88,22 +87,41 @@ public class SourceModel extends ConsoleSlingBean {
             return ddot > 0 ? name.substring(0, ddot) : "";
         }
 
+        public boolean isMultiValue() {
+            return value instanceof Object[];
+        }
+
         public String getName() {
             return name;
         }
 
-        public String getString() {
+        public String getString(String indent) {
 
-            if (value instanceof Object[]) {
+            if (isMultiValue()) {
                 StringBuilder buffer = new StringBuilder();
                 buffer.append(getTypePrefix(value));
                 Object[] array = (Object[]) value;
-                buffer.append("[");
+                String lineBreak = "";
+                if (array.length > 0 && getString(array[0]).startsWith(" ")) {
+                    // if string values of an array are beginning with spaces we assume that the values
+                    // should be arranged as lines of string values with the current indent for each value
+                    lineBreak = "\r"; // '\r' is replaced by '\n' after escaping of embedded '\n' characters
+                }
+                buffer.append("[").append(lineBreak);
                 for (int i = 0; i < array.length; ) {
-                    buffer.append(getString(array[i]));
-                    if (++i < array.length) {
-                        buffer.append(',');
+                    String string = getString(array[i]);
+                    string = string.replaceAll(",", "\\\\,");
+                    if (StringUtils.isNotEmpty(lineBreak)) {
+                        string = string.trim();
+                        buffer.append(indent).append("    ");
                     }
+                    buffer.append(string);
+                    if (++i < array.length) {
+                        buffer.append(',').append(lineBreak);
+                    }
+                }
+                if (StringUtils.isNotEmpty(lineBreak)) {
+                    buffer.append(lineBreak).append(indent);
                 }
                 buffer.append("]");
                 return buffer.toString();
@@ -137,8 +155,12 @@ public class SourceModel extends ConsoleSlingBean {
             return "";
         }
 
+        @SuppressWarnings("NullableProblems")
         @Override
         public int compareTo(Property other) {
+            if (other == null) {
+                return 1;
+            }
             String ns = getNs();
             String ons = other.getNs();
             if (ns.isEmpty() && !ons.isEmpty()) {
@@ -169,12 +191,7 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public String getPrimaryType() {
-        try {
-            return resource.adaptTo(Node.class).getPrimaryNodeType().getName();
-        } catch (RepositoryException rex) {
-            LOG.error(rex.getMessage(), rex);
-        }
-        return "";
+        return StringUtils.defaultString(ResourceUtil.getPrimaryType(resource));
     }
 
     public List<Property> getPropertyList() {
@@ -455,7 +472,7 @@ public class SourceModel extends ConsoleSlingBean {
 
     public void writeProperties(Writer writer, String indent) throws IOException {
         for (Property property : getPropertyList()) {
-            writeProperty(writer, indent, property.getName(), property.getString());
+            writeProperty(writer, indent, property.getName(), property.getString(indent));
         }
     }
 
@@ -485,6 +502,7 @@ public class SourceModel extends ConsoleSlingBean {
                 .replaceAll("'", "&apos;")
                 .replaceAll("\"", "&quot;")
                 .replaceAll("\t", "&#x9;")
-                .replaceAll("\n", "&#xa;");
+                .replaceAll("\n", "&#xa;")
+                .replaceAll("\r", "\n");
     }
 }

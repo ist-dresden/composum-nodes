@@ -85,11 +85,18 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
-            <description>Type of rendered resources: css, js, link, img, png, jpg. Default: link .</description>
+            <description>Type of rendered resources: css, js, link, img, png, jpg. Default: link.</description>
             <name>type</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <description>An optional boolean (JSP-EL) expression for a conditional clientlib link.</description>
+            <name>test</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Object</type>
         </attribute>
     </tag>
 
@@ -135,6 +142,12 @@
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>test</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Object</type>
         </attribute>
         <dynamic-attributes>true</dynamic-attributes>
     </tag>
@@ -182,6 +195,12 @@
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
+        <attribute>
+            <name>test</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Object</type>
+        </attribute>
         <dynamic-attributes>true</dynamic-attributes>
     </tag>
 
@@ -228,6 +247,12 @@
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
+        <attribute>
+            <name>test</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Object</type>
+        </attribute>
         <dynamic-attributes>true</dynamic-attributes>
     </tag>
 
@@ -261,6 +286,12 @@
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>test</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Object</type>
         </attribute>
         <dynamic-attributes>true</dynamic-attributes>
     </tag>
@@ -315,10 +346,23 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
+            <name>classes</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <description>deprecated use 'cleasses' instead od this attribute</description>
             <name>tagClass</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>test</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Object</type>
         </attribute>
     </tag>
 
@@ -396,7 +440,7 @@
         <description>transforms a string value for rich text (HTML) rendering</description>
         <name>rich</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
-        <function-signature>java.lang.String rich(java.lang.String)</function-signature>
+        <function-signature>java.lang.String rich(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
     </function>
 
     <function>

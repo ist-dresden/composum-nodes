@@ -1,6 +1,5 @@
 package com.composum.sling.nodes.servlet;
 
-import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.mapping.MappingRules;
@@ -12,11 +11,13 @@ import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.PropertyUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
@@ -32,16 +33,18 @@ import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
+import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
-import javax.jcr.ValueFactory;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 /**
@@ -67,7 +70,7 @@ public class PropertyServlet extends AbstractServiceServlet {
 
     public enum Extension {json, bin}
 
-    public enum Operation {get, put, map, copy, remove}
+    public enum Operation {get, put, update, map, copy, remove}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -106,6 +109,8 @@ public class PropertyServlet extends AbstractServiceServlet {
                 Operation.copy, new CopyOperation());
         operations.setOperation(ServletOperationSet.Method.PUT, Extension.bin,
                 Operation.put, new PutBinaryOperation());
+        operations.setOperation(ServletOperationSet.Method.PUT, Extension.bin,
+                Operation.update, new PutUpdateOperation());
 
         // DELETE
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json,
@@ -288,6 +293,20 @@ public class PropertyServlet extends AbstractServiceServlet {
                                      ResourceHandle resource, Node node, BulkParameters parameters,
                                      JsonWriter writer)
                 throws RepositoryException, ServletException, IOException;
+
+        protected void clearProperty(Node node, String name) throws RepositoryException {
+            try {
+                Property property = node.getProperty(name);
+                if (property != null) {
+                    if (property.isMultiple()) {
+                        node.setProperty(name, (Value[]) null);
+                    } else {
+                        node.setProperty(name, (Value) null);
+                    }
+                }
+            } catch (PathNotFoundException ignore) {
+            }
+        }
     }
 
     protected class RemoveOperation extends BulkOperation {
@@ -308,17 +327,7 @@ public class PropertyServlet extends AbstractServiceServlet {
             if (parameters.names != null) {
                 writer.name("removed").beginArray();
                 for (String name : parameters.names) {
-                    try {
-                        Property property = node.getProperty(name);
-                        if (property != null) {
-                            if (property.isMultiple()) {
-                                node.setProperty(name, (Value[]) null);
-                            } else {
-                                node.setProperty(name, (Value) null);
-                            }
-                        }
-                    } catch (PathNotFoundException pnfex) {
-                    }
+                    clearProperty(node, name);
                     writer.value(name);
                 }
                 writer.endArray();
@@ -350,17 +359,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                         try {
                             Property property = template.getProperty(name);
                             if (property != null) {
-                                try {
-                                    Property oldProperty = node.getProperty(name);
-                                    if (oldProperty != null) {
-                                        if (oldProperty.isMultiple()) {
-                                            node.setProperty(name, (Value[]) null);
-                                        } else {
-                                            node.setProperty(name, (Value) null);
-                                        }
-                                    }
-                                } catch (PathNotFoundException pnfex) {
-                                }
+                                clearProperty(node, name);
                                 if (property.isMultiple()) {
                                     node.setProperty(name, property.getValues());
                                 } else {
@@ -368,7 +367,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                                 }
                                 writer.value(name);
                             }
-                        } catch (PathNotFoundException pnfex) {
+                        } catch (PathNotFoundException ignore) {
                         }
                     }
                     writer.endArray();
@@ -531,6 +530,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                     Session session = node.getSession();
                     InputStream input = request.getInputStream();
                     PropertyUtil.setProperty(node, com.composum.sling.core.util.ResourceUtil.PROP_DATA, input);
+                    postChange(node);
                     session.save();
 
                     response.setContentLength(0);
@@ -544,6 +544,27 @@ public class PropertyServlet extends AbstractServiceServlet {
             } catch (RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+
+        protected void postChange(Node node) throws RepositoryException {
+        }
+    }
+
+    protected class PutUpdateOperation extends PutBinaryOperation {
+
+        @Override
+        protected void postChange(Node node) throws RepositoryException {
+            Calendar lastModified = PropertyUtil.getProperty(node, JcrConstants.JCR_LASTMODIFIED, (Calendar) null);
+            if (lastModified != null) {
+                Session session = node.getSession();
+                String userId = session.getUserID();
+                Calendar now = new GregorianCalendar();
+                now.setTime(new Date());
+                PropertyUtil.setProperty(node, JcrConstants.JCR_LASTMODIFIED, now, PropertyType.DATE);
+                if (StringUtils.isNotBlank(userId)) {
+                    PropertyUtil.setProperty(node, JcrConstants.JCR_LASTMODIFIED + "By", userId, PropertyType.STRING);
+                }
             }
         }
     }

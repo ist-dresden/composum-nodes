@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.composum.sling.core</groupId>
         <artifactId>composum-sling-core-parent</artifactId>
-        <version>1.9.0-SNAPSHOT</version>
+        <version>1.9.0</version>
         <relativePath>../.parent</relativePath>
     </parent>
 
@@ -50,6 +50,7 @@
                             root/libs/jslibs/jquery/3.1.1;path:=/libs/jslibs/jquery/3.1.1;overwrite:=true,
                             root/libs/jslibs/jquery/base64;path:=/libs/jslibs/jquery/base64;overwrite:=true,
                             root/libs/jslibs/jstree/3.3.3;path:=/libs/jslibs/jstree/3.3.3;overwrite:=true,
+                            root/libs/jslibs/loglevel/1.6.1;path:=/libs/jslibs/loglevel/1.6.1;overwrite:=true,
                             root/libs/jslibs/moment/2.10.3;path:=/libs/jslibs/moment/2.10.3;overwrite:=true,
                             root/libs/jslibs/split-pane/0.9.3;path:=/libs/jslibs/split-pane/0.9.3;overwrite:=true,
                             root/libs/jslibs/trumbowyg/2.3.0;path:=/libs/jslibs/trumbowyg/2.3.0;overwrite:=true,

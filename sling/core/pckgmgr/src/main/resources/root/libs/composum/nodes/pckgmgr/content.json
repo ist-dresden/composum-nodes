@@ -7,7 +7,6 @@
       "sling:Redirect"
     ],
     "jcr:title": "Packages",
-    "sling:resourceType": "composum/nodes/pckgmgr",
     "sling:redirect": "/bin/packages.html",
     "categories": [
       "core",

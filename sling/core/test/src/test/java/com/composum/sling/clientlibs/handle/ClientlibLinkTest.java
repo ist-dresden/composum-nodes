@@ -7,15 +7,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-
+import static com.composum.sling.clientlibs.handle.Clientlib.Type.js;
 import static com.composum.sling.clientlibs.handle.Clientlib.Type.link;
 import static com.composum.sling.clientlibs.handle.ClientlibLink.Kind.CATEGORY;
 import static com.composum.sling.clientlibs.handle.ClientlibLink.Kind.CLIENTLIB;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
-
-import static com.composum.sling.clientlibs.handle.Clientlib.Type.js;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for {@link ClientlibLink}.
@@ -42,23 +40,23 @@ public class ClientlibLinkTest extends AbstractClientlibTest {
         ClientlibRef ref = new ClientlibRef(js, "/libs/somefile.js", false, null);
 
         ClientlibFile file = (ClientlibFile) clientlib2Service.resolve(ref, context.resourceResolver());
-        assertEquals(CONTEXTPATH + "/libs/somefile.js", file.makeLink().getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/libs/somefile.js", file.makeLink().getUrl(context.request(), rendererContext));
         assertTrue(ref.isSatisfiedby(file.makeLink()));
 
         // useMinifiedFiles doesn't matter for getUrl on files:
         useMinifiedFiles = true;
-        assertEquals(CONTEXTPATH + "/libs/somefile.js", file.makeLink().getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/libs/somefile.js", file.makeLink().getUrl(context.request(), rendererContext));
 
         file = (ClientlibFile) clientlib2Service.resolve(ref, context.resourceResolver());
         // but useMinifiedFiles matters when resolving files:
-        assertEquals(CONTEXTPATH + "/libs/somefile.min.js", file.makeLink().getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/libs/somefile.min.js", file.makeLink().getUrl(context.request(), rendererContext));
         assertTrue(ref.isSatisfiedby(file.makeLink())); // despite of .min...
 
         // if it is (brokenly) referenced as min
         ref = new ClientlibRef(js, "/libs/somefile.min.js", false, null);
         file = (ClientlibFile) clientlib2Service.resolve(ref, context.resourceResolver());
         // it just stays that way
-        assertEquals(CONTEXTPATH + "/libs/somefile.min.js", file.makeLink().getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/libs/somefile.min.js", file.makeLink().getUrl(context.request(), rendererContext));
         assertTrue(ref.isSatisfiedby(file.makeLink()));
     }
 
@@ -71,7 +69,7 @@ public class ClientlibLinkTest extends AbstractClientlibTest {
         ClientlibFile file = (ClientlibFile) clientlib2Service.resolve(ref, context.resourceResolver());
         // it just stays that way
         ClientlibLink link = file.makeLink();
-        assertEquals(CONTEXTPATH + "/libs/nomin.js", link.getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/libs/nomin.js", link.getUrl(context.request(), rendererContext));
         assertTrue(ref.isSatisfiedby(link));
     }
 
@@ -82,7 +80,7 @@ public class ClientlibLinkTest extends AbstractClientlibTest {
         ClientlibFile file = (ClientlibFile) clientlib2Service.resolve(ref, context.resourceResolver());
         // the minified version is rendered
         ClientlibLink link = file.makeLink();
-        assertEquals(CONTEXTPATH + "/libs/onlymin.min.js", link.getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/libs/onlymin.min.js", link.getUrl(context.request(), rendererContext));
         assertTrue(ref.isSatisfiedby(link));
     }
 
@@ -93,18 +91,18 @@ public class ClientlibLinkTest extends AbstractClientlibTest {
         useMinifiedFiles = false;
         ClientlibLink link = lib.makeLink();
 
-        assertEquals(CONTEXTPATH + "/apps/clientlib.js", link.getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/apps/clientlib.js", link.getUrl(context.request(), rendererContext));
         useMinifiedFiles = true;
-        assertEquals(CONTEXTPATH + "/apps/clientlib.min.js", link.getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/apps/clientlib.min.js", link.getUrl(context.request(), rendererContext));
 
         assertTrue(lib.getRef().isSatisfiedby(link));
         ClientlibLink hashLink = link.withHash("thehash");
         assertTrue(lib.getRef().isSatisfiedby(hashLink));
 
         useMinifiedFiles = false;
-        assertEquals(CONTEXTPATH + "/apps/clientlib.js/thehash/clientlib.js", hashLink.getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/apps/clientlib.js/thehash/clientlib.js", hashLink.getUrl(context.request(), rendererContext));
         useMinifiedFiles = true;
-        assertEquals(CONTEXTPATH + "/apps/clientlib.min.js/thehash/clientlib.min.js", hashLink.getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/apps/clientlib.min.js/thehash/clientlib.min.js", hashLink.getUrl(context.request(), rendererContext));
 
     }
 
@@ -116,9 +114,9 @@ public class ClientlibLinkTest extends AbstractClientlibTest {
         ClientlibLink link = cat.makeLink();
 
         useMinifiedFiles = false;
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.js/thecat.js", link.getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.js/thecat.js", link.getUrl(context.request(), rendererContext));
         useMinifiedFiles = true;
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.min.js/thecat.js", link.getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.min.js/thecat.js", link.getUrl(context.request(), rendererContext));
 
         // a clientlib ref to a category whould match the clientlib link to that category
         assertTrue(ref.isSatisfiedby(link));
@@ -126,16 +124,16 @@ public class ClientlibLinkTest extends AbstractClientlibTest {
         assertTrue(ref.isSatisfiedby(hashLink));
 
         useMinifiedFiles = false;
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.js/thehash/thecat.js", hashLink.getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.js/thehash/thecat.js", hashLink.getUrl(context.request(), rendererContext));
         useMinifiedFiles = true;
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.min.js/thehash/thecat.js", hashLink.getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.min.js/thehash/thecat.js", hashLink.getUrl(context.request(), rendererContext));
     }
 
     @Test
     public void urlRendering() {
         for (String uri : asList("//example.net/bla/blu", "http://example.net/bluf/blaeh", "https://example.net/testsestest?hi=ho")) {
             ClientlibLink lnk = new ClientlibLink(link, ClientlibLink.Kind.EXTERNALURI, uri, null);
-            assertEquals(uri, lnk.getUrl(rendererContext));
+            assertEquals(uri, lnk.getUrl(context.request(), rendererContext));
             ClientlibExternalUri element = new ClientlibExternalUri(link, uri, null);
             assertTrue(element.getRef().isSatisfiedby(element.makeLink()));
         }
@@ -143,12 +141,12 @@ public class ClientlibLinkTest extends AbstractClientlibTest {
 
     @Test
     public void hashSuffixRendering() {
-        assertEquals(CONTEXTPATH + "/apps/clientlib.js", new ClientlibLink(js, CLIENTLIB, "/apps/clientlib", null).getUrl(rendererContext));
-        assertEquals(CONTEXTPATH + "/apps/clientlib.js/Nnk0BQAAAAA/clientlib.js", new ClientlibLink(js, CLIENTLIB, "/apps/clientlib", null).withHash("Nnk0BQAAAAA").getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/apps/clientlib.js", new ClientlibLink(js, CLIENTLIB, "/apps/clientlib", null).getUrl(context.request(), rendererContext));
+        assertEquals(CONTEXTPATH + "/apps/clientlib.js/Nnk0BQAAAAA/clientlib.js", new ClientlibLink(js, CLIENTLIB, "/apps/clientlib", null).withHash("Nnk0BQAAAAA").getUrl(context.request(), rendererContext));
         assertEquals("Nnk0BQAAAAA", ClientlibServlet.parseHashFromSuffix("/Nnk0BQAAAAA/clientlib.js"));
         assertEquals(null, ClientlibServlet.parseHashFromSuffix(null));
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.js/cat1.js", new ClientlibLink(js, CATEGORY, "cat1", null).getUrl(rendererContext));
-        assertEquals(CONTEXTPATH + "/bin/cpm/nodes/clientlibs.js/nqLDcqc8yMo/cat1.js", new ClientlibLink(js, CATEGORY, "cat1", null).withHash("nqLDcqc8yMo").getUrl(rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.js/cat1.js", new ClientlibLink(js, CATEGORY, "cat1", null).getUrl(context.request(), rendererContext));
+        assertEquals(CONTEXTPATH + "/bin/public/clientlibs.js/nqLDcqc8yMo/cat1.js", new ClientlibLink(js, CATEGORY, "cat1", null).withHash("nqLDcqc8yMo").getUrl(context.request(), rendererContext));
         assertEquals(Pair.of("cat1", "nqLDcqc8yMo"), ClientlibCategoryServlet.parseCategoryAndHashFromSuffix("/nqLDcqc8yMo/cat1.js"));
         assertEquals(Pair.of("cat1", null), ClientlibCategoryServlet.parseCategoryAndHashFromSuffix("/cat1.js"));
     }
