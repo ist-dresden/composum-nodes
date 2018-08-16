@@ -46,6 +46,8 @@
         <profile>
             <id>develop</id>
             <properties>
+                <release.repository.id>archiva-internal</release.repository.id>
+                <release.repository.url>https://build.ist-software.com/archiva/repository/internal/</release.repository.url>
                 <deploy.bundle>true</deploy.bundle>
                 <sling.scheme>https</sling.scheme>
                 <sling.secure>true</sling.secure>
