@@ -3,16 +3,13 @@ package com.composum.sling.clientlibs.servlet;
 import com.composum.sling.clientlibs.handle.ClientlibLink;
 import com.composum.sling.clientlibs.handle.ClientlibRef;
 import com.composum.sling.clientlibs.service.ClientlibConfiguration;
-import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.clientlibs.service.ClientlibProcessor;
+import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.core.util.HttpUtil;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
@@ -28,24 +25,21 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Contains common functionality for the clientlib servlets.
  */
-@Component(componentAbstract = true)
 public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
 
     private final Logger LOG = getLogger(AbstractClientlibServlet.class);
 
-    @Reference
-    protected ClientlibService service;
+    protected abstract ClientlibService getClientlibService();
 
-    @Reference
-    protected ClientlibConfiguration configuration;
+    protected abstract ClientlibConfiguration.Config getConfig();
 
     /**
      * @param get           if false we serve a HEAD request, if true we serve a GET request
      * @param requestedHash the hash embedded in the URL that gives the requested version
      */
     protected void deliverClientlib(boolean get, SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                    ClientlibRef clientlibRef, String requestedHash, boolean minified) throws
-            RepositoryException, LoginException, IOException {
+                                    ClientlibRef clientlibRef, String requestedHash, boolean minified)
+            throws RepositoryException, IOException {
 
         String encoding = null;
         boolean refreshCache = false;
@@ -63,13 +57,13 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
 
         ClientlibService.ClientlibInfo hints;
         try {
-            hints = service.prepareContent(request, clientlibRef, minified, encoding, refreshCache, requestedHash,
-                    ifModifiedSince);
+            hints = getClientlibService().prepareContent(request, clientlibRef, minified, encoding, refreshCache,
+                    requestedHash, ifModifiedSince);
         } catch (PersistenceException ex) {
             LOG.warn("2nd try for preparation of '" + clientlibRef + "' after exception: " + ex);
             // try it once more on concurrency problems (with a fresh resolver)
-            hints = service.prepareContent(request, clientlibRef, minified, encoding, refreshCache, requestedHash,
-                    ifModifiedSince);
+            hints = getClientlibService().prepareContent(request, clientlibRef, minified, encoding, refreshCache,
+                    requestedHash, ifModifiedSince);
         }
 
         if (null == hints) {
@@ -112,8 +106,8 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
                 response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
             } else {
                 if (get) {
-                    service.deliverContent(request.getResourceResolver(), clientlibRef, minified, response
-                            .getOutputStream(), encoding);
+                    getClientlibService().deliverContent(request.getResourceResolver(), clientlibRef, minified,
+                            response.getOutputStream(), encoding);
                 }
             }
         } else {
@@ -127,7 +121,7 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
     protected String makeUrl(SlingHttpServletRequest request, ClientlibLink link, boolean minified) {
         String uri = makeUri(minified, link);
         String url;
-        if (configuration.getMapClientlibURLs()) {
+        if (getConfig().mapClientlibURLs()) {
             url = LinkUtil.getUrl(request, uri);
         } else {
             url = LinkUtil.getUnmappedUrl(request, uri);
@@ -148,13 +142,13 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
         return minified;
     }
 
-    protected boolean dropRequest(SlingHttpServletRequest request, SlingHttpServletResponse response) {
+    protected boolean usefulRequest(SlingHttpServletRequest request, SlingHttpServletResponse response) {
         String uri = request.getRequestURI();
         if (uri.endsWith(".map")) {
             LOG.info("request dropped: '{}'", uri);
             response.setStatus(HttpServletResponse.SC_GONE);
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 }

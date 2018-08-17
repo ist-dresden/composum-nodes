@@ -1,8 +1,14 @@
 package com.composum.sling.clientlibs.processor;
 
-import com.composum.sling.clientlibs.handle.*;
-import com.composum.sling.clientlibs.service.ClientlibService;
+import com.composum.sling.clientlibs.handle.ClientlibElement;
+import com.composum.sling.clientlibs.handle.ClientlibFile;
+import com.composum.sling.clientlibs.handle.ClientlibLink;
+import com.composum.sling.clientlibs.handle.ClientlibRef;
+import com.composum.sling.clientlibs.handle.ClientlibResourceFolder;
+import com.composum.sling.clientlibs.handle.ClientlibVisitor;
+import com.composum.sling.clientlibs.handle.FileHandle;
 import com.composum.sling.clientlibs.service.ClientlibProcessor;
+import com.composum.sling.clientlibs.service.ClientlibService;
 import org.apache.commons.io.IOUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -12,12 +18,10 @@ import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 
+import static com.composum.sling.clientlibs.handle.ClientlibVisitor.VisitorMode.EMBEDDED;
 import static org.slf4j.LoggerFactory.getLogger;
-import static com.composum.sling.clientlibs.handle.ClientlibVisitor.VisitorMode.*;
 
 /**
  * Appends all embedded files to an input stream.

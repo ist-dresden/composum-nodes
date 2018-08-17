@@ -73,11 +73,11 @@ public class RendererContext {
     }
 
     public boolean mapClientlibURLs() {
-        return getConfiguration().getMapClientlibURLs();
+        return getConfiguration().mapClientlibURLs();
     }
 
     public boolean useMinifiedFiles() {
-        return getConfiguration().getUseMinifiedFiles();
+        return getConfiguration().useMinifiedFiles();
     }
 
     public ClientlibService getClientlibService() {
@@ -88,7 +88,7 @@ public class RendererContext {
         return renderedClientlibs;
     }
 
-    public ClientlibConfiguration getConfiguration() {
+    public ClientlibConfiguration.Config getConfiguration() {
         return getClientlibService().getClientlibConfig();
     }
 

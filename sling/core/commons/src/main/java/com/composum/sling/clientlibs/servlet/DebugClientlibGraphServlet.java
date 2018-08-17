@@ -1,14 +1,19 @@
 package com.composum.sling.clientlibs.servlet;
 
-import com.composum.sling.clientlibs.handle.*;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
+import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.handle.ClientlibElement;
+import com.composum.sling.clientlibs.handle.ClientlibFile;
+import com.composum.sling.clientlibs.handle.ClientlibRef;
+import com.composum.sling.clientlibs.handle.ClientlibResourceFolder;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +22,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -35,10 +41,11 @@ import java.util.List;
  * @since 10/2017
  * @deprecated Not yet fully functional
  */
-@SlingServlet(
-        methods = HttpConstants.METHOD_GET,
-        paths = "/bin/cpm/nodes/debug/clientlibgraph"
-)
+@Component(service = Servlet.class,
+        property = {
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/nodes/debug/clientlibgraph",
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
+        })
 @Deprecated
 public class DebugClientlibGraphServlet extends SlingSafeMethodsServlet {
 
@@ -118,19 +125,14 @@ public class DebugClientlibGraphServlet extends SlingSafeMethodsServlet {
                 e(path, ref.category, embedded);
                 return;
             }
-            for (Clientlib lib : libs)
+            for (Clientlib lib : libs) {
                 if (ref.isSatisfiedby(lib.makeLink())) {
                     e(path, lib.getResourceFolder().resource.getPath(), embedded);
                     return;
                 }
-            Resource file = resolver.resolve(ref.path);
-            if (null != file) {
-                // w.println("# " + file.getPath());
-//            e(w, rf.resource.getPath(), file.getPath(), embedded);
-//            n(w, file.getPath(), file.getName());
-                return;
             }
-            w.println("# " + ref);
+            Resource file = resolver.resolve(ref.path);
+            //... ???
         }
 
         private void childedges(ClientlibResourceFolder rf,

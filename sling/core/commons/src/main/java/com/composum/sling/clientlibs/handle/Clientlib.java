@@ -9,7 +9,6 @@ import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -50,7 +49,9 @@ public class Clientlib implements ClientlibElement {
     }
 
     /** Type of the element: {@link #link}, {@link #css}, {@link #js}, {@link #img}. */
-    public enum Type {link, css, js, img}
+    public enum Type {
+        link, css, js, img
+    }
 
     private final Type type;
     public final ResourceHandle resource;

@@ -1,7 +1,5 @@
 package com.composum.sling.clientlibs.handle;
 
-import javax.jcr.RepositoryException;
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -27,7 +25,7 @@ public class ClientlibExternalUri implements ClientlibElement {
      * since external references are never embedded.
      */
     @Override
-    public void accept(ClientlibVisitor visitor, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent) throws IOException, RepositoryException {
+    public void accept(ClientlibVisitor visitor, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent) {
         visitor.visit(this, ClientlibVisitor.VisitorMode.DEPENDS, parent);
     }
 

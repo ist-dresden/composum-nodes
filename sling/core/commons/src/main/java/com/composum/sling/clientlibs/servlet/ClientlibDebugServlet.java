@@ -1,17 +1,26 @@
 package com.composum.sling.clientlibs.servlet;
 
-import com.composum.sling.clientlibs.handle.*;
+import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.handle.ClientlibCategory;
+import com.composum.sling.clientlibs.handle.ClientlibElement;
+import com.composum.sling.clientlibs.handle.ClientlibExternalUri;
+import com.composum.sling.clientlibs.handle.ClientlibFile;
+import com.composum.sling.clientlibs.handle.ClientlibLink;
+import com.composum.sling.clientlibs.handle.ClientlibRef;
+import com.composum.sling.clientlibs.handle.ClientlibResourceFolder;
+import com.composum.sling.clientlibs.handle.ClientlibVisitor;
 import com.composum.sling.clientlibs.processor.AbstractClientlibVisitor;
 import com.composum.sling.clientlibs.service.ClientlibService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +29,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -36,10 +46,11 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * @author Hans-Peter Stoerr
  * @since 10/2017
  */
-@SlingServlet(
-        methods = HttpConstants.METHOD_GET,
-        paths = "/bin/cpm/nodes/debug/clientlibstructure"
-)
+@Component(service = Servlet.class,
+        property = {
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/nodes/debug/clientlibstructure",
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
+        })
 public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientlibDebugServlet.class);
@@ -103,8 +114,8 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
                     .getQueryManager();
             String statement = "//element(*)[sling:resourceType='composum/nodes/commons/clientlib']/" + typeString +
                     "/..";
-            NodeIterator clientlibs = null;
-            clientlibs = querymanager.createQuery(statement, Query.XPATH).execute().getNodes();
+            @SuppressWarnings("deprecation")
+            NodeIterator clientlibs = querymanager.createQuery(statement, Query.XPATH).execute().getNodes();
             while (clientlibs.hasNext())
                 displayClientlibStructure(request, writer,
                         new Clientlib(Clientlib.Type.valueOf(typeString), resolver.getResource(clientlibs.nextNode()
@@ -172,7 +183,7 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
 
         protected DebugVisitor(ClientlibElement owner, ClientlibService service, ResourceResolver resolver,
                                PrintWriter writer) {
-            super(owner, service, resolver, new LinkedHashSet<ClientlibLink>());
+            super(owner, service, resolver, new LinkedHashSet<>());
             this.writer = writer;
         }
 
@@ -188,7 +199,6 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
 
         @Override
         protected void markAsProcessed(ClientlibLink link, ClientlibResourceFolder parent, VisitorMode visitorMode) {
-            return;
         }
 
         @Override

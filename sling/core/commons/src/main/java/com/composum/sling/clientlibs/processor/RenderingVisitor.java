@@ -1,6 +1,14 @@
 package com.composum.sling.clientlibs.processor;
 
-import com.composum.sling.clientlibs.handle.*;
+import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.handle.ClientlibCategory;
+import com.composum.sling.clientlibs.handle.ClientlibElement;
+import com.composum.sling.clientlibs.handle.ClientlibExternalUri;
+import com.composum.sling.clientlibs.handle.ClientlibFile;
+import com.composum.sling.clientlibs.handle.ClientlibLink;
+import com.composum.sling.clientlibs.handle.ClientlibRef;
+import com.composum.sling.clientlibs.handle.ClientlibResourceFolder;
+import com.composum.sling.clientlibs.handle.ClientlibVisitor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -34,7 +42,7 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
                                LinkedHashSet<ClientlibLink> processedElements) {
         super(owner, context.getClientlibService(), context.getResolver(), processedElements);
         this.context = context;
-        this.linksToRender = linksToRender != null ? linksToRender : new ArrayList<ClientlibLink>();
+        this.linksToRender = linksToRender != null ? linksToRender : new ArrayList<>();
         this.ownerWasAlreadyRendered = context.isClientlibRendered(owner.getRef());
     }
 
@@ -51,15 +59,14 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
 
     @Override
     public void action(ClientlibCategory clientlibCategory, ClientlibVisitor.VisitorMode mode,
-                       ClientlibResourceFolder parent) throws IOException, RepositoryException {
-        if (hasEmbeddedFiles && !context.getConfiguration().getDebug()) render(mode, clientlibCategory, parent);
+                       ClientlibResourceFolder parent) {
+        if (hasEmbeddedFiles && !context.getConfiguration().debug()) render(mode, clientlibCategory, parent);
         else context.registerClientlibLink(clientlibCategory.makeLink(), parent);
     }
 
     @Override
-    public void action(Clientlib clientlib, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent) throws
-            IOException, RepositoryException {
-        if (hasEmbeddedFiles && !context.getConfiguration().getDebug()) render(mode, clientlib, parent);
+    public void action(Clientlib clientlib, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent) {
+        if (hasEmbeddedFiles && !context.getConfiguration().debug()) render(mode, clientlib, parent);
         else context.registerClientlibLink(clientlib.makeLink(), parent);
     }
 
@@ -77,7 +84,7 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
                 LOG.error("Already rendered / embedded file is also embedded in clientlib {} and thus included twice:" +
                         " {}", owner, link);
         } else {
-            if (DEPENDS == mode || context.getConfiguration().getDebug())
+            if (DEPENDS == mode || context.getConfiguration().debug())
                 linksToRender.add(link);
             context.registerClientlibLink(link, parent);
         }

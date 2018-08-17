@@ -3,16 +3,20 @@ package com.composum.sling.clientlibs.servlet;
 import com.composum.sling.clientlibs.handle.Clientlib;
 import com.composum.sling.clientlibs.handle.ClientlibLink;
 import com.composum.sling.clientlibs.handle.ClientlibRef;
+import com.composum.sling.clientlibs.service.ClientlibConfiguration;
+import com.composum.sling.clientlibs.service.ClientlibService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
-import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.regex.Matcher;
@@ -20,17 +24,34 @@ import java.util.regex.Pattern;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-@SlingServlet(
-        resourceTypes = Clientlib.RESOURCE_TYPE,
-        extensions = {"js", "css"},
-        methods = {HttpConstants.METHOD_GET, HttpConstants.METHOD_HEAD}
-)
+@Component(service = Servlet.class,
+        property = {
+                ServletResolverConstants.SLING_SERVLET_RESOURCE_TYPES + "="+Clientlib.RESOURCE_TYPE,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_HEAD,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=css",
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=js"
+        })
 public class ClientlibServlet extends AbstractClientlibServlet {
 
     private static final Logger LOG = getLogger(ClientlibServlet.class);
 
     protected static final Pattern FILENAME_PATTERN = Pattern.compile("[^/]*+$");
     protected static final Pattern HASHSUFFIX_PATTERN = Pattern.compile("/?([0-9a-zA-Z_-]++)/" + FILENAME_PATTERN.pattern());
+
+    @Reference
+    protected ClientlibService service;
+
+    @Reference
+    protected ClientlibConfiguration configuration;
+
+    protected ClientlibService getClientlibService() {
+        return service;
+    }
+
+    protected ClientlibConfiguration.Config getConfig() {
+        return configuration.getConfig();
+    }
 
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
@@ -44,7 +65,7 @@ public class ClientlibServlet extends AbstractClientlibServlet {
     }
 
     private void serve(boolean get, SlingHttpServletRequest request, SlingHttpServletResponse response) throws IOException, ServletException {
-        if (!dropRequest(request, response)) {
+        if (usefulRequest(request, response)) {
             try {
                 RequestPathInfo pathInfo = request.getRequestPathInfo();
                 String selectors = pathInfo.getSelectorString();
@@ -55,7 +76,7 @@ public class ClientlibServlet extends AbstractClientlibServlet {
                 ClientlibRef clientlibref = new ClientlibRef(type, path, false, null);
 
                 deliverClientlib(get, request, response, clientlibref, hash, isMinified(selectors));
-            } catch (RepositoryException | LoginException ex) {
+            } catch (RepositoryException ex) {
                 throw new ServletException(ex);
             }
         }

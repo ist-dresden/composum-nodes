@@ -4,7 +4,6 @@ import com.composum.sling.clientlibs.processor.RendererContext;
 import com.composum.sling.clientlibs.servlet.ClientlibCategoryServlet;
 import com.composum.sling.clientlibs.servlet.ClientlibServlet;
 import com.composum.sling.core.util.LinkUtil;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.sling.api.SlingHttpServletRequest;
 
 import java.util.Collections;
@@ -79,7 +78,7 @@ public class ClientlibLink {
         this.path = path;
         this.type = type;
         this.kind = kind;
-        this.properties = Collections.unmodifiableMap(properties != null ? new HashMap<>(properties) : new HashMap<String, String>());
+        this.properties = Collections.unmodifiableMap(properties != null ? new HashMap<>(properties) : new HashMap<>());
         this.hash = hash;
     }
 

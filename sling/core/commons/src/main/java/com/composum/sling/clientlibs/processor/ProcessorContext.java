@@ -23,7 +23,7 @@ public class ProcessorContext {
     protected final SlingHttpServletRequest request;
     protected final ResourceResolver resolver;
     protected final ExecutorService executorService;
-    protected final Map<String, Object> hints = Collections.synchronizedMap(new HashMap<String, Object>());
+    protected final Map<String, Object> hints = Collections.synchronizedMap(new HashMap<>());
     protected final boolean mapClientlibURLs;
     protected final boolean useMinifiedFiles;
 

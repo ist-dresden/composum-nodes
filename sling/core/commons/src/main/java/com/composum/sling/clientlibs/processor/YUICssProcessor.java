@@ -3,9 +3,9 @@ package com.composum.sling.clientlibs.processor;
 import com.composum.sling.clientlibs.service.ClientlibConfiguration;
 import com.composum.sling.core.util.ResourceUtil;
 import com.yahoo.platform.yui.compressor.CssCompressor;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,11 +17,10 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
 @Component(
-        label = "Clientlib CSS Processor (YUI)",
-        description = "Delivers CSS content bundled and minimized.",
-        immediate = true
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Clientlib CSS Processor (YUI)"
+        }
 )
-@Service
 public class YUICssProcessor extends AbstractClientlibRenderer implements CssProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(YUICssProcessor.class);
@@ -31,7 +30,7 @@ public class YUICssProcessor extends AbstractClientlibRenderer implements CssPro
 
     @Override
     protected String getLinkTemplate() {
-        return clientlibConfig.getCssTemplate();
+        return clientlibConfig.getConfig().cssTemplate();
     }
 
     @Override
@@ -40,20 +39,17 @@ public class YUICssProcessor extends AbstractClientlibRenderer implements CssPro
         InputStream result = source;
         if (source != null) {
             context.hint(ResourceUtil.PROP_MIME_TYPE, "text/css");
-            if (context.useMinifiedFiles() && clientlibConfig.getCssMinimize()) {
+            if (context.useMinifiedFiles() && clientlibConfig.getConfig().cssMinimize()) {
                 final PipedOutputStream outputStream = new PipedOutputStream();
                 result = new PipedInputStream(outputStream);
-                context.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try (OutputStreamWriter writer = new OutputStreamWriter(outputStream);
-                             InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET)) {
-                            final CssCompressor compressor = new CssCompressor(sourceReader);
-                            compressor.compress(writer, clientlibConfig.getCssLineBreak());
-                            writer.flush();
-                        } catch (IOException ex) {
-                            LOG.error(ex.getMessage(), ex);
-                        }
+                context.execute(() -> {
+                    try (OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+                         InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET)) {
+                        final CssCompressor compressor = new CssCompressor(sourceReader);
+                        compressor.compress(writer, clientlibConfig.getConfig().cssLineBreak());
+                        writer.flush();
+                    } catch (IOException ex) {
+                        LOG.error(ex.getMessage(), ex);
                     }
                 });
             }

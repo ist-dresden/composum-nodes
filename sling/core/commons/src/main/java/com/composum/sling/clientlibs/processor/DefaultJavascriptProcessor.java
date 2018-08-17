@@ -2,13 +2,12 @@ package com.composum.sling.clientlibs.processor;
 
 import com.composum.sling.clientlibs.service.ClientlibConfiguration;
 import com.composum.sling.core.util.ResourceUtil;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -16,26 +15,24 @@ import java.io.InputStream;
  * and relies on minified siblings for each javascript, generated e.g. with minify-maven-plugin. (Yui is not sufficient.)
  */
 @Component(
-        label = "Clientlib Default Javascript Processor",
-        description = "Delivers Javascript content bundled.",
-        immediate = true
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Clientlib Default Javascript Processor"
+        }
 )
-@Service
 public class DefaultJavascriptProcessor extends AbstractClientlibRenderer implements JavascriptProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultJavascriptProcessor.class);
 
     @Reference
-    private ClientlibConfiguration clientlibConfig;
+    protected ClientlibConfiguration clientlibConfig;
 
     @Override
     protected String getLinkTemplate() {
-        return clientlibConfig.getJavascriptTemplate();
+        return clientlibConfig.getConfig().javascriptTemplate();
     }
 
     @Override
-    public InputStream processContent(final InputStream source, ProcessorContext context)
-            throws IOException {
+    public InputStream processContent(final InputStream source, ProcessorContext context) {
         context.hint(ResourceUtil.PROP_MIME_TYPE, "application/javascript");
         return source;
     }

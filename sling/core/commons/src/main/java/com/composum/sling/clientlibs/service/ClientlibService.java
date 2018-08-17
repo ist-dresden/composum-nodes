@@ -28,7 +28,7 @@ public interface ClientlibService {
     resource itself is returned. */
     Resource getMinifiedSibling(Resource resource);
 
-    ClientlibConfiguration getClientlibConfig();
+    ClientlibConfiguration.Config getClientlibConfig();
 
     /**
      * Renders the references to the ressources of the clientlibs into the page.

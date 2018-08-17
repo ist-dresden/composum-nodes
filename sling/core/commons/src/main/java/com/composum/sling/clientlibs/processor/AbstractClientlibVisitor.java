@@ -52,7 +52,7 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
         this.service = service;
         this.resolver = resolver;
         this.owner = owner;
-        this.processedElements = null != processedElements ? processedElements : new LinkedHashSet<ClientlibLink>();
+        this.processedElements = null != processedElements ? processedElements : new LinkedHashSet<>();
     }
 
     /**
@@ -219,8 +219,7 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
     }
 
     /** Optional action to take after visiting the element. Default : empty. */
-    protected void action(ClientlibResourceFolder folder, VisitorMode mode, ClientlibResourceFolder parent) throws
-            IOException, RepositoryException {
+    protected void action(ClientlibResourceFolder folder, VisitorMode mode, ClientlibResourceFolder parent) {
     }
 
     /** Optional action to take after visiting the element. Default : empty. */
