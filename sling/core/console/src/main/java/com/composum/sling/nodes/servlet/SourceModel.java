@@ -20,6 +20,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.attribute.FileTime;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -71,6 +74,8 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+
+    public static final FileTime NO_TIME = FileTime.from(0, TimeUnit.MILLISECONDS);
 
     public class Property implements Comparable<Property> {
 
@@ -178,6 +183,7 @@ public class SourceModel extends ConsoleSlingBean {
 
     protected final NodesConfiguration config;
 
+    private transient FileTime lastModified;
     private transient List<Property> propertyList;
     private transient List<Resource> subnodeList;
 
@@ -192,6 +198,15 @@ public class SourceModel extends ConsoleSlingBean {
 
     public String getPrimaryType() {
         return StringUtils.defaultString(ResourceUtil.getPrimaryType(resource));
+    }
+
+    public FileTime getLastModified() {
+        if (lastModified == null) {
+            Calendar timestamp = resource.getProperties().get(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
+            lastModified = timestamp != null ?
+                    FileTime.from(timestamp.getTimeInMillis(), TimeUnit.MILLISECONDS) : NO_TIME;
+        }
+        return lastModified == NO_TIME ? null : lastModified;
     }
 
     public List<Property> getPropertyList() {
@@ -295,7 +310,7 @@ public class SourceModel extends ConsoleSlingBean {
         entry = new ZipEntry("META-INF/vault/properties.xml");
         zipStream.putNextEntry(entry);
 
-        Writer writer = new OutputStreamWriter(zipStream, "UTF-8");
+        Writer writer = new OutputStreamWriter(zipStream, StandardCharsets.UTF_8);
         writer.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n")
                 .append("<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n")
                 .append("<properties>\n")
@@ -326,7 +341,7 @@ public class SourceModel extends ConsoleSlingBean {
         entry = new ZipEntry("META-INF/vault/filter.xml");
         zipStream.putNextEntry(entry);
 
-        Writer writer = new OutputStreamWriter(zipStream, "UTF-8");
+        Writer writer = new OutputStreamWriter(zipStream, StandardCharsets.UTF_8);
         writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
                 .append("<workspaceFilter version=\"1.0\">\n")
                 .append("    <filter root=\"")
@@ -363,10 +378,14 @@ public class SourceModel extends ConsoleSlingBean {
 
         ZipEntry entry;
         String path = resource.getPath();
+        FileTime lastModified = getLastModified();
 
         entry = new ZipEntry(getZipName(root, path + "/.content.xml"));
+        if (lastModified != null) {
+            entry.setLastModifiedTime(lastModified);
+        }
         zipStream.putNextEntry(entry);
-        Writer writer = new OutputStreamWriter(zipStream, "UTF-8");
+        Writer writer = new OutputStreamWriter(zipStream, StandardCharsets.UTF_8);
         writeFile(writer, true);
         writer.flush();
         zipStream.closeEntry();
