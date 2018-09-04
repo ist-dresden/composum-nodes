@@ -137,8 +137,8 @@
 }
 
 #browser-query .popover {
-    max-width: 100%;
-    width: 100%;
+    max-width: 99%;
+    width: 98%;
 }
 
 #browser-query .popover table {
@@ -147,7 +147,9 @@
 
 #browser-query .popover .popover-content {
     min-height: 150px;
+    max-height: 500px;
     padding: 8px;
+    overflow: scroll;
 }
 
 #browser-query .popover .query-templates .nav-tabs a {
@@ -176,6 +178,18 @@
 
 #browser-query .popover ul li:last-child a {
     border-bottom: none;
+}
+
+#browser-query .popover .popover-content .panel-heading {
+    padding: 8px;
+}
+
+#browser-query .popover .popover-content .panel-body {
+    padding: 4px 8px;
+}
+
+#browser-query .popover .popover-content .panel-body p {
+    margin: 4px 0;
 }
 
 #browser-query .query-head {
