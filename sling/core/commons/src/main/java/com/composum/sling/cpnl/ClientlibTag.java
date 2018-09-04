@@ -67,6 +67,9 @@ public class ClientlibTag extends CpnlBodyTagSupport {
         super.clear();
         type = null;
         path = null;
+        category = null;
+        test = null;
+        testResult = null;
     }
 
     protected Clientlib.Type getType() {
