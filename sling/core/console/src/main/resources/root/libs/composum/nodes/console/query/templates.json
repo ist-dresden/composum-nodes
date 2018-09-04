@@ -1,0 +1,35 @@
+{
+  "jcr:primaryType": "sling:Folder",
+  "sling:resourceType": "composum/nodes/console/query/templates",
+  "by-type": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "composum/nodes/console/query/template",
+    "jcr:title":"search resources by type",
+    "group": "Nodes",
+    "xpath": "/jcr:root${root path.path}//*[jcr:like(@sling:resourceType,\u0027${resource type.2}\u0027) and @jcr:primaryType\u003d\u0027${primary type}\u0027]"
+  },
+  "template-04": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "composum/nodes/console/query/template",
+    "group": "Pages",
+    "xpath": "/jcr:root/content//*[jcr:like(@sling:resourceType,\u0027%/parsys\u0027) and @jcr:primaryType\u003d\u0027cpp:Container\u0027]"
+  },
+  "template-04b": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "composum/nodes/console/query/template",
+    "group": "Pages",
+    "xpath": "/jcr:root/content//*[jcr:like(@sling:resourceType,\u0027%/parsys\u0027) and @jcr:primaryType\u003d\u0027cpp:Container\u0027]"
+  },
+  "template-04c": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "composum/nodes/console/query/template",
+    "group": "Pages",
+    "xpath": "/jcr:root/content//*[jcr:like(@sling:resourceType,\u0027%/parsys\u0027) and @jcr:primaryType\u003d\u0027cpp:Container\u0027]"
+  },
+  "template-04d": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "composum/nodes/console/query/template",
+    "group": "Pages",
+    "xpath": "/jcr:root/content//*[jcr:like(@sling:resourceType,\u0027%/parsys\u0027) and @jcr:primaryType\u003d\u0027cpp:Container\u0027]"
+  }
+}

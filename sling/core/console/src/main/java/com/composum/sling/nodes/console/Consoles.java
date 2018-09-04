@@ -44,9 +44,7 @@ public class Consoles extends ConsolePage {
     }
 
     public static final String CONTENT_QUERY_BASE = "/jcr:root";
-    public static final String CONTENT_QUERY_RULE = "//content[@sling:resourceType='composum/nodes/console/page']";
-    public static final String CONTENT_QUERY_LIBS = CONTENT_QUERY_BASE + "/libs" + CONTENT_QUERY_RULE;
-    public static final String CONTENT_QUERY_APPS = CONTENT_QUERY_BASE + "/apps" + CONTENT_QUERY_RULE;
+    public static final String CONTENT_QUERY_RULE = "/content[@sling:resourceType='composum/nodes/console/page']";
 
     public class ConsoleFilter implements ResourceFilter {
 
@@ -67,8 +65,7 @@ public class Consoles extends ConsolePage {
                         String[] rule = StringUtils.split(precondition, ":");
                         PreconditionFilter filter = PRECONDITION_FILTERS.get(rule[0]);
                         if (filter != null) {
-                            boolean accept = filter.accept(context, resource, rule.length > 0 ? rule[1] : null);
-                            return accept;
+                            return filter.accept(context, resource, rule.length > 1 ? rule[1] : null);
                         }
                     }
                     return true;
@@ -113,7 +110,7 @@ public class Consoles extends ConsolePage {
         public String getUrl() {
             String suffix = getRequest().getRequestPathInfo().getSuffix();
             return LinkUtil.getUnmappedUrl(getRequest(), getPath())
-                    .replaceAll("\\$\\{path\\}", StringUtils.isNotBlank(suffix) ? suffix : "");
+                    .replaceAll("\\$\\{path}", StringUtils.isNotBlank(suffix) ? suffix : "");
         }
 
         public String getLinkAttributes() {
@@ -151,8 +148,7 @@ public class Consoles extends ConsolePage {
 
     public String getCurrentUser() {
         Session session = getSession();
-        String userId = session.getUserID();
-        return userId;
+        return session.getUserID();
     }
 
     public String getWorkspaceName() {
@@ -162,8 +158,10 @@ public class Consoles extends ConsolePage {
     public List<Console> getConsoles() {
         if (consoles == null) {
             consoles = new ArrayList<>();
-            findConsoles(consoles, CONTENT_QUERY_APPS);
-            findConsoles(consoles, CONTENT_QUERY_LIBS);
+            ResourceResolver resolver = getResolver();
+            for (String path : resolver.getSearchPath()) {
+                findConsoles(consoles, CONTENT_QUERY_BASE + path + CONTENT_QUERY_RULE);
+            }
             Collections.sort(consoles);
         }
         return consoles;
@@ -172,6 +170,7 @@ public class Consoles extends ConsolePage {
     protected void findConsoles(List<Console> consoles, String query) {
         ResourceResolver resolver = getResolver();
 
+        @SuppressWarnings("deprecation")
         Iterator<Resource> consoleContentResources = resolver.findResources(query, Query.XPATH);
         if (consoleContentResources != null) {
 
