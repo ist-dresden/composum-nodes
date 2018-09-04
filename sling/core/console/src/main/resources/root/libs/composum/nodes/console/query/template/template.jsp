@@ -18,13 +18,13 @@
                 <c:if test="${not empty template.xpath}">
                     <tr>
                         <td>XPath</td>
-                        <td><a href="xpath">${cpn:text(template.xpath)}</a></td>
+                        <td width="100%"><a href="xpath">${cpn:text(template.xpath)}</a></td>
                     </tr>
                 </c:if>
                 <c:if test="${not empty template.sql2}">
                     <tr>
-                        <td>SQL-2</td>
-                        <td><a href="sql2">${cpn:text(template.sql2)}</a></td>
+                        <td>SQL2</td>
+                        <td width="100%"><a href="sql2">${cpn:text(template.sql2)}</a></td>
                     </tr>
                 </c:if>
             </table>
