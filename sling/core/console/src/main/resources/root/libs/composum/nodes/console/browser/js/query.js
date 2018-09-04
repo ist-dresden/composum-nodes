@@ -112,36 +112,39 @@
                     $form.html('');
                     if (newParams) {
                         for (var i = 0; i < newParams.length; i++) {
-                            var type = /\.(path)(\.[\d]+)?$/.exec(newParams[i]);
-                            var grow = /\.([\d]+)$/.exec(newParams[i]);
-                            var label = /^([^.]+)(\..+)?$/.exec(newParams[i])[1];
-                            var templateClass = 'template' + (type ? ('-' + type[1]) : '');
-                            var $template = $line.find('.' + templateClass);
-                            var $input = $template.clone();
-                            var $inputField = $input.find('input');
-                            $input.attr('data-key', newParams[i]);
-                            $input.find('.key').text(label);
-                            if (grow) {
-                                $input.css({'flex-grow': grow[1]});
-                            }
-                            var $pathSelect = $input.find('.path-select');
-                            if ($pathSelect.length > 0) {
-                                $pathSelect.on('click', function (event) {
-                                    var $group = $(event.currentTarget).closest('.input-group');
-                                    var label = $group.find('.key').text();
-                                    var $field = $group.find('input');
-                                    var selectDialog = core.getView('#path-select-dialog', core.components.SelectPathDialog);
-                                    selectDialog.setTitle(label);
-                                    selectDialog.show(function () {
-                                        selectDialog.setValue($field.val());
-                                    }, function () {
-                                        $field.val(selectDialog.getValue());
+                            var label = /^([^.]+)(\..+)?$/.exec(newParams[i]);
+                            if (label && $form.find('.input-group[data-key="' + newParams[i] + '"]').length === 0) {
+                                label = label[1].replace(/_/g, ' ');
+                                var type = /\.(path)(\.[\d]+)?$/.exec(newParams[i]);
+                                var grow = /\.([\d]+)$/.exec(newParams[i]);
+                                var templateClass = 'template' + (type ? ('-' + type[1]) : '');
+                                var $template = $line.find('.' + templateClass);
+                                var $input = $template.clone();
+                                var $inputField = $input.find('input');
+                                $input.attr('data-key', newParams[i]);
+                                $input.find('.key').text(label);
+                                if (grow) {
+                                    $input.css({'flex-grow': grow[1]});
+                                }
+                                var $pathSelect = $input.find('.path-select');
+                                if ($pathSelect.length > 0) {
+                                    $pathSelect.on('click', function (event) {
+                                        var $group = $(event.currentTarget).closest('.input-group');
+                                        var label = $group.find('.key').text();
+                                        var $field = $group.find('input');
+                                        var selectDialog = core.getView('#path-select-dialog', core.components.SelectPathDialog);
+                                        selectDialog.setTitle(label);
+                                        selectDialog.show(function () {
+                                            selectDialog.setValue($field.val());
+                                        }, function () {
+                                            $field.val(selectDialog.getValue());
+                                        });
                                     });
-                                });
+                                }
+                                $inputField.focus(_.bind(this.hidePopover, this));
+                                $input.removeClass(templateClass);
+                                $form.append($input);
                             }
-                            $inputField.focus(_.bind(this.hidePopover, this));
-                            $input.removeClass(templateClass);
-                            $form.append($input);
                         }
                     }
                 }
@@ -151,26 +154,8 @@
                 var queries = core.console.getProfile().get('query', 'history', []);
                 queries = _.without(queries, query); // remove existing entry
                 queries = _.union([query], queries); // insert query at first pos
-                queries = _.first(queries, 12); // restrict history to 12 entries
+                queries = _.first(queries, 30); // restrict history to 30 entries
                 core.console.getProfile().set('query', 'history', queries);
-            },
-
-            setupQueriesMenu: function () {
-                this.$history.html('');
-                var queries = core.console.getProfile().get('query', 'history', []);
-                if (queries) {
-                    for (var i = 0; i < queries.length; i++) {
-                        this.$history.append('<li><a href="#">' + queries[i] + '</a></li>');
-                    }
-                }
-                this.$history.find('li>a').on('click', _.bind(this.querySelected, this));
-                this.$history.append('<li role="separator" class="divider"></li>');
-                this.$history.append('<li><a href="#" class="clear">clear history</a></li>');
-                this.$history.find('li>a.clear').on('click', _.bind(function (event) {
-                    event.preventDefault();
-                    core.console.getProfile().set('query', 'history', undefined);
-                    this.setupQueriesMenu();
-                }, this));
             },
 
             querySelected: function (event) {
@@ -240,7 +225,10 @@
 
             showPopover: function (key, title, content) {
                 this.$povHook.popover('destroy');
-                this.$povHook.off().on('inserted.bs.popover', _.bind(this.initPopover, this));
+                this.$povHook.off()
+                    .on('inserted.bs.popover', _.bind(this.initPopover, this))
+                    .on('shown.bs.popover', _.bind(this.onPopoverShown, this))
+                    .on('hidden.bs.popover', _.bind(this.onPopoverHidden, this));
                 this.$povHook.popover({
                     title: title,
                     placement: 'bottom',
@@ -275,12 +263,25 @@
             },
 
             hidePopover: function () {
-                if (this.popover === 'templates'){
+                if (this.popover === 'templates') {
                     this.$povHook.popover('hide');
                 } else {
                     this.$povHook.popover('destroy');
                     this.popover = undefined;
                 }
+            },
+
+            onPopoverShown: function () {
+                if (this.popover === 'templates') {
+                    this.$templates.addClass('active')
+                } else {
+                    this.$history.addClass('active')
+                }
+            },
+
+            onPopoverHidden: function () {
+                this.$templates.removeClass('active');
+                this.$history.removeClass('active');
             }
         });
 
