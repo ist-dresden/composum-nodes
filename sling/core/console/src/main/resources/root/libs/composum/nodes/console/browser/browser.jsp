@@ -94,7 +94,7 @@
                 <div class="split-pane-divider"></div>
                 <div class="split-pane-component right-pane">
                     <div id="split-view-vertical-split" class="split-pane vertical-split fixed-top">
-                        <div class="split-pane-component top-pane">
+                        <div class="split-pane-component top-pane query-split-pane">
                             <div id="browser-query">
                                 <sling:call script="query.jsp"/>
                             </div>
