@@ -15,6 +15,11 @@
           </span>
         </div>
       </div>
+      <div class="props btn-group btn-group-sm widget select-buttons-widget">
+        <button type="button" data-value="source" class="fa fa-sticky-note-o btn btn-default" title="render as JSON source"><span class="label">Source</span></button>
+        <button type="button" data-value="notype" class="fa fa-times btn btn-default" title="no type hints in values"><span class="label">no type</span></button>
+        <button type="button" data-value="type" class="fa fa-exclamation btn btn-default" title="type hints in values"><span class="label">no type</span></button>
+      </div>
       <div class="binary btn-group btn-group-sm widget select-buttons-widget">
         <button type="button" data-value="link" class="fa fa-external-link btn btn-default" title="embed link to binary data"><span class="label">Link</span></button>
         <button type="button" data-value="base64" class="fa fa-plus-square btn btn-default" title="embed binary data base64 encoded"><span class="label">Base 64</span></button>
@@ -31,13 +36,14 @@
         </div>
       </div>
       <div class="btn-group btn-group-sm" role="group">
-        <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload JSON view"><span class="label">Reload</span></button>
+        <button type="button" class="copy fa fa-copy btn btn-default" title="Copy JSON to clipboard"><span class="label">Copy</span></button>
       </div>
       <div class="btn-group btn-group-sm" role="group">
         <a href="" class="download fa fa-download btn btn-default" title="Download as JSON file"><span class="label">Download</span></a>
         <button type="button" class="upload fa fa-upload btn btn-default" title="Update from an uploaded JSON file"><span class="label">Upload</span></button>
       </div>
       <div class="menu btn-group btn-group-sm dropdown" role="group">
+        <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload JSON view"><span class="label">Reload</span></button>
         <button type="button"
                 class="glyphicon-menu-hamburger glyphicon btn btn-default dropdown-toggle"
                 data-toggle="dropdown" title="Source type..."><span class="label">Source type...</span>
