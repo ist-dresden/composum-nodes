@@ -7,6 +7,8 @@ import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.resource.ResourceResolver;
 
 import javax.jcr.Session;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A basic class for all '/bin/{service}/path/to/resource' servlets.
@@ -88,10 +90,31 @@ public class RequestUtil extends org.apache.sling.api.request.RequestUtil {
         String[] selectors = request.getRequestPathInfo().getSelectors();
         for (String selector : selectors) {
             try {
-                int value = Integer.parseInt(selector);
-                return value;
+                return Integer.parseInt(selector);
             } catch (NumberFormatException nfex) {
                 // ok, try next
+            }
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Retrieves a number in the selectors and returns it if present otherwise the default value.
+     *
+     * @param request      the request object with the selector info
+     * @param groupPattern the regex to extract the value - as group '1'; e.g. 'key([\d]+)'
+     * @param defaultValue the default number value
+     */
+    public static int getIntSelector(SlingHttpServletRequest request, Pattern groupPattern, int defaultValue) {
+        String[] selectors = request.getRequestPathInfo().getSelectors();
+        for (String selector : selectors) {
+            Matcher matcher = groupPattern.matcher(selector);
+            if (matcher.matches()) {
+                try {
+                    return Integer.parseInt(matcher.group(1));
+                } catch (NumberFormatException nfex) {
+                    // ok, try next
+                }
             }
         }
         return defaultValue;

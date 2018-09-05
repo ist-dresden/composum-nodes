@@ -611,17 +611,21 @@
 
             initialize: function (options) {
                 this.$iframe = this.$('.embedded iframe');
+                this.props = core.getWidget(this.$el, '.json-toolbar .props', core.components.SelectButtonsWidget);
                 this.binary = core.getWidget(this.$el, '.json-toolbar .binary', core.components.SelectButtonsWidget);
                 this.depth = core.getWidget(this.$el, '.json-toolbar .depth', core.components.NumberFieldWidget);
                 this.indent = core.getWidget(this.$el, '.json-toolbar .indent', core.components.NumberFieldWidget);
                 var profile = core.console.getProfile().get('jsonView', undefined,
-                    {binary: 'link', depth: 5, indent: 2});
+                    {props: 'type', binary: 'link', depth: 5, indent: 2});
+                this.props.setValue(profile.props);
                 this.binary.setValue(profile.binary);
                 this.depth.setValue(profile.depth);
                 this.indent.setValue(profile.indent);
+                this.props.$el.on('change.json', _.bind(this.remember, this));
                 this.binary.$el.on('change.json', _.bind(this.remember, this));
                 this.depth.$textField.on('change.json', _.bind(this.remember, this));
                 this.indent.$textField.on('change.json', _.bind(this.remember, this));
+                this.$('.json-toolbar .copy').click(_.bind(this.copyToClipboard, this));
                 this.$('.json-toolbar .reload').click(_.bind(this.reload, this));
                 this.$download = this.$('.json-toolbar .download');
                 this.$('.json-toolbar .upload').click(_.bind(this.upload, this));
@@ -629,36 +633,43 @@
             },
 
             remember: function () {
+                var props = this.props.getValue();
                 var binary = this.binary.getValue();
                 var indent = this.indent.getValue();
                 var depth = this.depth.getValue();
                 var profile = core.console.getProfile().set('jsonView', undefined,
-                    {binary: binary, depth: depth, indent: indent});
+                    {props: props, binary: binary, depth: depth, indent: indent});
                 this.reload();
             },
 
             reload: function () {
-                this.$download.attr('href', this.getUrl(0, 0, 'base64', true));
+                this.$download.attr('href', this.getUrl(0, 0, 'notype', 'base64', true));
                 this.$iframe.attr('src', this.getUrl());
                 browser.nodeView.sourceViewTabVisibility('json');
             },
 
-            getUrl: function (depth, indent, binary, download) {
+            getUrl: function (depth, indent, props, binary, download) {
                 if (depth === undefined) {
                     depth = this.depth.getValue();
                 }
                 if (indent === undefined) {
                     indent = this.indent.getValue();
                 }
+                if (props === undefined) {
+                    props = this.props.getValue();
+                }
                 if (binary === undefined) {
                     binary = this.binary.getValue();
                 }
                 var path = browser.getCurrentPath();
-                var url = '/bin/cpm/nodes/node.' + (download ? 'map.download.' : '') + binary + '.' + depth + '.json' + path;
+                var url = '/bin/cpm/nodes/node.' + (download ? 'map.download.' : '') + binary + '.d' + depth;
                 if (indent > 0) {
-                    url += '?indent=' + indent;
+                    url += '.i' + indent;
                 }
-                return core.getContextUrl(url);
+                if (props !== 'type') {
+                    url += '.' + props;
+                }
+                return core.getContextUrl(url + '.json' + path);
             },
 
             upload: function () {
@@ -671,6 +682,14 @@
                         dialog.initDialog(parentPath, nodeName);
                     }
                 }, this));
+            },
+
+            copyToClipboard: function () {
+                var contentDocument = document.querySelector(".json .detail-content iframe").contentDocument;
+                contentDocument.designMode = "on";
+                contentDocument.execCommand("selectAll", false, null);
+                contentDocument.execCommand("copy", false, null);
+                contentDocument.designMode = "off";
             },
 
             tabSelected: function (event) {

@@ -188,4 +188,14 @@ public class CpnlElFunctions {
     public static String script(String value) {
         return StringEscapeUtils.escapeEcmaScript(value);
     }
+
+    /**
+     * Returns the encapsulated CDATA string of a value (no escaping!).
+     *
+     * @param value the value to encasulate
+     * @return the string with <![CDATA[ ... ]]> around
+     */
+    public static String cdata(String value) {
+        return "<![CDATA[" + value + "]]>";
+    }
 }

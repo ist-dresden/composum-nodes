@@ -457,4 +457,11 @@
         <function-signature>java.lang.String script(java.lang.String)</function-signature>
     </function>
 
+    <function>
+        <description>encapsulates a text with CDATA</description>
+        <name>cdata</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String cdata(java.lang.String)</function-signature>
+    </function>
+
 </taglib>

@@ -23,7 +23,7 @@ public class TextTag extends TagBase {
 
     private static final Logger LOG = LoggerFactory.getLogger(TextTag.class);
 
-    public enum Type {text, rich, script, value}
+    public enum Type {text, rich, script, cdata, path, value}
 
     public interface EscapeFunction {
         Object escape(SlingHttpServletRequest request, Object value);
@@ -49,6 +49,18 @@ public class TextTag extends TagBase {
             @Override
             public Object escape(SlingHttpServletRequest request, Object value) {
                 return CpnlElFunctions.script(TextTag.toString(value));
+            }
+        });
+        ESCAPE_FUNCTION_MAP.put(Type.cdata, new EscapeFunction() {
+            @Override
+            public Object escape(SlingHttpServletRequest request, Object value) {
+                return CpnlElFunctions.cdata(TextTag.toString(value));
+            }
+        });
+        ESCAPE_FUNCTION_MAP.put(Type.path, new EscapeFunction() {
+            @Override
+            public Object escape(SlingHttpServletRequest request, Object value) {
+                return CpnlElFunctions.path(TextTag.toString(value));
             }
         });
         ESCAPE_FUNCTION_MAP.put(Type.value, new EscapeFunction() {
