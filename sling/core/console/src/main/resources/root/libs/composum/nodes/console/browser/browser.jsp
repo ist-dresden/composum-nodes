@@ -91,7 +91,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="split-pane-divider"></div>
+                <div class="split-pane-divider split-pane-divider-main-horizontal"></div>
                 <div class="split-pane-component right-pane">
                     <div id="split-view-vertical-split" class="split-pane vertical-split fixed-top">
                         <div class="split-pane-component top-pane query-split-pane">
@@ -99,7 +99,7 @@
                                 <sling:call script="query.jsp"/>
                             </div>
                         </div>
-                        <div class="split-pane-divider"></div>
+                        <div class="split-pane-divider split-pane-divider-main-vertical"></div>
                         <div class="split-pane-component bottom-pane">
                             <div id="browser-view">
                                 <sling:call script="view.jsp"/>
