@@ -1250,6 +1250,9 @@ public class NodeServlet extends NodeTreeServlet {
     // raw mapping
     //
 
+    public static final Pattern MAP_DEPTH_SELECTOR = Pattern.compile("^d([\\d]+)$");
+    public static final Pattern MAP_INDENT_SELECTOR = Pattern.compile("^i([\\d]+)$");
+
     protected class MapGetOperation implements ServletOperation {
 
         @Override
@@ -1263,17 +1266,30 @@ public class NodeServlet extends NodeTreeServlet {
             }
 
             try {
+                boolean asSource = RequestUtil.checkSelector(request, "source");
+                boolean embedTypes = !(asSource || RequestUtil.checkSelector(request, "notype"));
+                ResourceFilter nodeFilter = null;
+                if (asSource || RequestUtil.checkSelector(request, "nofile")) {
+                    nodeFilter = new ResourceFilter.FilterSet(ResourceFilter.FilterSet.Rule.and,
+                            new ResourceFilter.PrimaryTypeFilter(new StringFilter.BlackList("^nt:(file|resource)$")),
+                            MappingRules.MAPPING_NODE_FILTER);
+                }
                 MappingRules rules = new MappingRules(MappingRules.getDefaultMappingRules(),
-                        null, null, null, new MappingRules.PropertyFormat(
-                        RequestUtil.getParameter(request, "format",
-                                RequestUtil.getSelector(request, MappingRules.PropertyFormat.Scope.value)),
-                        RequestUtil.getParameter(request, "binary",
-                                RequestUtil.getSelector(request, MappingRules.PropertyFormat.Binary.base64))),
+                        nodeFilter,
+                        asSource ? MappingRules.SOURCE_EXPORT_FILTER : null, null,
+                        new MappingRules.PropertyFormat(
+                                RequestUtil.getParameter(request, "format",
+                                        RequestUtil.getSelector(request, MappingRules.PropertyFormat.Scope.value)),
+                                RequestUtil.getParameter(request, "binary",
+                                        RequestUtil.getSelector(request, MappingRules.PropertyFormat.Binary.base64)),
+                                embedTypes),
                         RequestUtil.getParameter(request, "depth",
-                                RequestUtil.getIntSelector(request, 0)),
+                                RequestUtil.getIntSelector(request, MAP_DEPTH_SELECTOR,
+                                        RequestUtil.getIntSelector(request, 0))),
                         null);
 
-                int indent = RequestUtil.getParameter(request, "indent", 0);
+                int indent = RequestUtil.getParameter(request, "indent",
+                        RequestUtil.getIntSelector(request, MAP_INDENT_SELECTOR, 0));
                 JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
                 if (indent > 0) {
                     jsonWriter.setIndent(StringUtils.repeat(' ', indent));

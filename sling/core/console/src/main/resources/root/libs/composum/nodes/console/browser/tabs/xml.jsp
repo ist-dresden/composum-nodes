@@ -6,7 +6,6 @@
   <div class="xml detail-panel" data-path="${browser.current.pathEncoded}">
     <div class="xml-toolbar detail-toolbar">
       <div class="btn-group btn-group-sm" role="group">
-        <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span></button>
         <button type="button" class="copy fa fa-copy btn btn-default" title="Copy XML to clipboard"><span class="label">Copy</span></button>
       </div>
       <div class="btn-group btn-group-sm" role="group">
@@ -15,6 +14,7 @@
         <a href="" class="pkg fa fa-suitcase btn btn-default" title="Download whole tree as package ZIP file" target="_blank"><span class="label">Package</span></a>
       </div>
       <div class="menu btn-group btn-group-sm dropdown" role="group">
+        <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span></button>
         <button type="button"
                 class="glyphicon-menu-hamburger glyphicon btn btn-default dropdown-toggle"
                 data-toggle="dropdown" title="Source type..."><span class="label">Source type...</span>

@@ -251,7 +251,7 @@
                     var query;
                     if (string) {
                         var data = JSON.parse(atob(string));
-                        query = data[$link.attr('href')];
+                        query = data[$link.data('type')];
                     } else {
                         query = $link.text();
                     }
