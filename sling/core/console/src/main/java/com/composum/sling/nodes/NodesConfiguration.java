@@ -41,8 +41,6 @@ public interface NodesConfiguration {
 
     long getQueryResultLimit();
 
-    String[] getQueryTemplates();
-
     boolean isEnabled(Servlet servlet);
 
     ResourceFilter getPageNodeFilter();

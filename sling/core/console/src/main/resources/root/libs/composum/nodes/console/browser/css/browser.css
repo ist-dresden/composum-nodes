@@ -18,11 +18,9 @@
     min-height: 150px;
 }
 
-
 #browser .split-pane .split-pane-divider-main-vertical {
     z-index: 0;
 }
-
 
 /**
  * general Bootstrap
@@ -209,37 +207,63 @@
     border: none;
 }
 
-#browser-query .query-head .query-actions form {
+#browser-query .query-export button,
+#browser-query .query-head .query-actions .export-menu {
     position: absolute;
-    top: 6px;
-    left: 1px;
     right: 6px;
 }
 
-#browser-query .query-panel.actions .query-head .query-actions form {
+#browser-query .query-export button {
+    top: 6px;
+    width: 36px;
+}
+
+#browser-query .query-head .query-actions .export-menu {
+    top: 36px;
+    left: auto;
+}
+
+#browser-query .query-export button {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 34px;
+    height: 30px;
+    padding: 6px;
+    color: #777;
+}
+
+#browser-query .query-head .query-actions .query-input-form {
+    position: absolute;
+    top: 6px;
+    left: 1px;
+    right: 46px;
+}
+
+#browser-query .query-panel.actions .query-head .query-actions .query-input-form {
     right: 75px;
 }
 
-#browser-query .query-head .query-actions form .input-group-addon {
+#browser-query .query-head .query-actions .query-input-form .input-group-addon {
     top: 0;
     color: #777; /* mute */
 }
 
-#browser-query .query-head .query-actions form .input-group-addon.exec {
+#browser-query .query-head .query-actions .query-input-form .input-group-addon.exec {
     color: #337ab7; /* info */
 }
 
-#browser-query .query-head .query-actions form .input-group-addon.filter.on,
+#browser-query .query-head .query-actions .query-input-form .input-group-addon.filter.on,
 #browser-view .node-view-content .detail-toolbar .resolver.on {
     color: #337ab7; /* info */
 }
 
-#browser-query .query-head .query-actions form .input-group-addon.filter.off,
+#browser-query .query-head .query-actions .query-input-form .input-group-addon.filter.off,
 #browser-view .node-view-content .detail-toolbar .resolver.off {
     color: #777; /* mute */
 }
 
-#browser-query .query-head .query-actions form .input-group-addon.filter.off::after,
+#browser-query .query-head .query-actions .query-input-form .input-group-addon.filter.off::after,
 #browser-view .node-view-content .detail-toolbar .resolver.off:after {
     content: '\005c';
     color: #a94442; /* danger */
@@ -250,7 +274,7 @@
     font-size: 150%;
 }
 
-#browser-query .query-head .query-actions form .input-group-addon.filter.off::after {
+#browser-query .query-head .query-actions .query-input-form .input-group-addon.filter.off::after {
     top: 5px;
 }
 
@@ -401,12 +425,47 @@
     color: #a94442; /* danger */
 }
 
-#browser #browser-query .query-head .query-actions form {
+#browser #browser-query .query-head .query-actions .query-input-form {
     padding-left: 29px;
 }
 
-#browser.left-open #browser-query .query-head .query-actions form {
+#browser.left-open #browser-query .query-head .query-actions .query-input-form {
     padding-left: 6px;
+}
+
+#browser.left-open #browser-query .query-head .query-actions .query-input-form {
+    padding-left: 6px;
+}
+
+#browser.left-open #browser-query .query-head .query-actions .export-menu,
+#browser.left-open #browser-query .query-head .query-actions .export-menu .menu {
+    padding: 0 0 2px;
+    list-style: none;
+}
+
+#browser.left-open #browser-query .query-head .query-actions .export-menu .menu-group {
+    margin: 2px 0;
+    border-bottom: 1px solid #ccc;
+    padding: 2px 6px 0;
+    background: #eee;
+}
+
+#browser.left-open #browser-query .query-head .query-actions .export-menu .menu-group:first-child {
+    margin-top: 0;
+    padding-top: 4px;
+}
+
+#browser.left-open #browser-query .query-head .query-actions .export-menu .menu-item,
+#browser.left-open #browser-query .query-head .query-actions .export-menu .query-export-form {
+    margin: 0;
+    padding: 0;
+}
+
+#browser.left-open #browser-query .query-head .query-actions .export-menu .query-export-link {
+    display: inline-block;
+    width: 100%;
+    margin: 2px 2px 0 8px;
+    padding: 0 6px;
 }
 
 /**
@@ -510,8 +569,8 @@
 
 #browser-view .node-view-content .detail-toolbar .select-buttons-widget .btn {
     margin-top: 2px;
-    width: 29px;
-    padding: 3px 0px;
+    width: 25px;
+    padding: 3px 0;
     text-align: center;
 }
 
@@ -941,11 +1000,16 @@
  */
 
 #browser-view .json.detail-panel .detail-toolbar .input-group.number-field-widget {
-    max-width: 78px;
+    max-width: 70px;
 }
 
 #browser-view .json.detail-panel .detail-toolbar .input-group input {
-    max-width: 38px;
+    max-width: 30px;
+}
+
+#browser-view .json.detail-panel .detail-toolbar .input-group .input-group-addon {
+    width: 21px;
+    padding: 3px 3px 1px;
 }
 
 /**

@@ -6,12 +6,11 @@
 <div class="query-panel">
     <div class="query-head">
         <div class="query-actions action-bar" role="toolbar">
-            <cpn:form role="search" action="/bin/cpm/nodes/node.query.html" method="GET">
+            <cpn:form classes="query-input-form" role="search" action="/bin/cpm/nodes/node.query.html" method="GET">
                 <div class="input-group">
-                    <span class="templates fa fa-clipboard input-group-addon btn btn-default" title="Query Templates"></span>
-                    <span class="history fa fa-history input-group-addon btn btn-default"title="Query History"></span>
-                    <ul class="select dropdown-menu" role="menu">
-                    </ul>
+                    <span class="templates fa fa-clipboard input-group-addon btn btn-default"
+                          title="Query Templates"></span>
+                    <span class="history fa fa-history input-group-addon btn btn-default" title="Query History"></span>
                     <input type="text" class="form-control" placeholder="Search">
                     <span class="exec glyphicon-triangle-right glyphicon input-group-addon btn btn-default"
                           title="Execute query..."></span>
@@ -19,6 +18,12 @@
                           title="Tree Filter ON/OFF"></span>
                 </div>
             </cpn:form>
+            <div class="query-export">
+                <button class="fa fa-download btn btn-default" data-toggle="dropdown"
+                        title="Export Query Result"><span class="caret"></span></button>
+                <ul class="export-menu dropdown-menu" aria-labelledby="query-export" role="menu">
+                </ul>
+            </div>
         </div>
         <div class="param-input-line">
             <div class="input-group template">

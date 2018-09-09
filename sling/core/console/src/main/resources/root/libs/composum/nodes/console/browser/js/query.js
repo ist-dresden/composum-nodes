@@ -16,12 +16,13 @@
 
             initialize: function (options) {
                 this.$povHook = this.$('.popover-hook');
-                this.$form = this.$('.query-actions form');
+                this.$form = this.$('.query-actions .query-input-form');
                 this.$templates = this.$('.query-actions .templates');
                 this.$history = this.$('.query-actions .history');
-                this.$queryInput = this.$('.query-actions form input');
+                this.$queryInput = this.$('.query-actions .query-input-form input');
                 this.$execButton = this.$('.query-actions .exec');
                 this.$filterButton = this.$('.query-actions .filter');
+                this.$exportMenu = this.$('.query-actions .query-export');
                 this.$resultTable = this.$('.query-result table');
                 this.$form.on('submit', _.bind(this.executeQuery, this));
                 this.$templates.on('click.query', _.bind(this.showTemplates, this));
@@ -29,6 +30,7 @@
                 this.$execButton.on('click.query', _.bind(this.executeQuery, this));
                 this.$filterButton.on('click.query', _.bind(this.toggleFilter, this));
                 this.$filterButton.addClass(core.console.getProfile().get('query', 'filtered', true) ? 'on' : 'off');
+                this.$exportMenu.on('show.bs.dropdown', _.bind(this.showExportMenu, this));
                 this.$queryInput.on('focus.reset', _.bind(this.hidePopover, this));
                 this.$queryInput.on('keyup.validate', _.bind(this.queryUpdated, this));
                 this.$queryInput.on('change.validate', _.bind(this.queryUpdated, this));
@@ -46,9 +48,9 @@
                         query: this.prepareQuery(query),
                         filter: this.isFiltered() ? browser.tree.filter : ''
                     }
-                }, _.bind(function (result) {
+                }, _.bind(function (content) {
                     this.memorizeQuery(query);
-                    this.$resultTable.html(result);
+                    this.$resultTable.html(content);
                     var queryWidget = this;
                     this.$resultTable.find('td.icon').each(function () {
                         var $td = $(this);
@@ -80,6 +82,30 @@
                     }
                 }
                 return query;
+            },
+
+            showExportMenu: function () {
+                core.ajaxGet('/libs/composum/nodes/console/query/export/set.html', {
+                        data: {
+                            query: this.prepareQuery(this.$queryInput.val()),
+                            filter: this.isFiltered() ? browser.tree.filter : ''
+                        }
+                    },
+                    _.bind(function (content) {
+                        var $menu = this.$exportMenu.find('ul');
+                        $menu.html(content);
+                        $menu.find('input[name="query"]').each(function () {
+                            var $this = $(this);
+                            var value = atob($this.attr('value'));
+                            $this.attr('value', value);
+                        });
+                        $menu.find('.query-export-link').click(_.bind(function (event) {
+                            var $link = $(event.currentTarget);
+                            var $form = $link.closest('form');
+                            $form.submit();
+                        }, this));
+                    }, this)
+                );
             },
 
             queryUpdated: function (event) {
