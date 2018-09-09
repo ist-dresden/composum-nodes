@@ -61,17 +61,6 @@ public class NodesConfigImpl implements NodesConfiguration {
     private long queryResultLimit;
 
     @Property(
-            name = QUERY_TEMPLATES_KEY,
-            label = "Query Templates",
-            description = "a list of templates for the initial query history list",
-            value = {
-                    "/content/test ${text}",
-                    "${path}//${name}[jcr:contains(.,'${word}')]"
-            }
-    )
-    private String[] queryTemplates;
-
-    @Property(
             name = ERRORPAGES_PATH,
             label = "Errorpages",
             description = "the path to the errorpages; e.g. 'meta/errorpages' for searching errorpages along the requested path",
@@ -207,11 +196,6 @@ public class NodesConfigImpl implements NodesConfiguration {
     }
 
     @Override
-    public String[] getQueryTemplates() {
-        return queryTemplates;
-    }
-
-    @Override
     public ResourceFilter getPageNodeFilter() {
         return pageNodeFilter;
     }
@@ -254,7 +238,6 @@ public class NodesConfigImpl implements NodesConfiguration {
         checkConsoleAccess = (Boolean) properties.get(CONSOLE_ACCESS_CHECK);
         consoleCategories = PropertiesUtil.toStringArray(properties.get(CONSOLE_CATEGORIES_KEY));
         queryResultLimit = PropertiesUtil.toLong(properties.get(QUERY_RESULT_LIMIT_KEY), QUERY_RESULT_LIMIT_DEFAULT);
-        queryTemplates = PropertiesUtil.toStringArray(properties.get(QUERY_TEMPLATES_KEY));
         errorpagesPath = (String) properties.get(ERRORPAGES_PATH);
         if (errorpagesPath.endsWith("/") && errorpagesPath.length() > 1) {
             errorpagesPath = errorpagesPath.substring(errorpagesPath.length() - 1);

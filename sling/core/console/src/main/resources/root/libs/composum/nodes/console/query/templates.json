@@ -1,6 +1,6 @@
 {
   "jcr:primaryType": "sling:Folder",
-  "sling:resourceType": "composum/nodes/console/query/templates",
+  "sling:resourceType": "composum/nodes/console/query/template/set",
   "by-types": {
     "jcr:primaryType": "nt:unstructured",
     "sling:resourceType": "composum/nodes/console/query/template",

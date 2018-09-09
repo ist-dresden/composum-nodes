@@ -358,7 +358,7 @@ fieldset {
 }
 
 #split-view-vertical-split > .open-top a {
-    padding: 0px 6px 0 9px;
+    padding: 0 6px 0 9px;
 }
 
 #split-view-vertical-split > .split-pane-component.bottom-pane > .close-top a {
@@ -518,7 +518,7 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 }
 
 .navbar .navbar-right {
-    margin-right: 0px !important;
+    margin-right: 0 !important;
 }
 
 .navbar .system.nav > li > a,
@@ -602,15 +602,15 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     border: none;
 }
 
-.query-panel .query-head .query-actions form {
+.query-panel .query-head .query-actions .query-input-form {
     padding-left: 27px;
 }
 
-.left-open .query-panel .query-head .query-actions form {
+.left-open .query-panel .query-head .query-actions .query-input-form {
     padding-left: 6px;
 }
 
-.query-panel .query-head .query-actions form {
+.query-panel .query-head .query-actions .query-input-form {
     position: absolute;
     top: 6px;
     right: 6px;
@@ -845,7 +845,7 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 }
 
 .detail-view .bootstrap-table table th .th-inner {
-    line-height: default;
+    line-height: 25px;
     padding: 0;
 }
 

@@ -6,6 +6,7 @@ import com.composum.sling.core.exception.ParameterValidationException;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.mapping.MappingRules;
+import com.composum.sling.core.resource.SyntheticQueryResult;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.NodeTreeServlet;
 import com.composum.sling.core.servlet.ServletOperation;
@@ -29,6 +30,7 @@ import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.request.RequestDispatcherOptions;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.request.RequestPathInfo;
@@ -56,6 +58,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
@@ -196,7 +199,7 @@ public class NodeServlet extends NodeTreeServlet {
     public enum Operation {
         create, copy, move, reorder, delete, toggle,
         tree, reference, mixins, resolve, typeahead,
-        query, queryTemplates, filters, map, load, download, fileUpdate
+        query, filters, map, load, download, fileUpdate
     }
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
@@ -245,8 +248,6 @@ public class NodeServlet extends NodeTreeServlet {
                 Operation.query, new JsonQueryOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.html,
                 Operation.query, new HtmlQueryOperation());
-        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
-                Operation.queryTemplates, new GetQueryTemplates());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.bin,
                 Operation.load, new LoadBinaryOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.bin,
@@ -257,6 +258,8 @@ public class NodeServlet extends NodeTreeServlet {
                 Operation.map, new MapPostOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.create, new CreateOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.bin,
+                Operation.query, new ExportQueryOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.copy, new CopyOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
@@ -338,7 +341,7 @@ public class NodeServlet extends NodeTreeServlet {
      */
     public static final Pattern WORD_QUERY = Pattern.compile("^ *([^ /]+) *$");
 
-    protected class JsonQueryOperation implements ServletOperation {
+    protected abstract class AbstractQueryOperation implements ServletOperation {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
@@ -418,6 +421,21 @@ public class NodeServlet extends NodeTreeServlet {
             }
         }
 
+        protected abstract void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                                 String queryString, QueryResult result,
+                                                 ResourceFilter filter, ResourceResolver resolver)
+                throws RepositoryException, ServletException, IOException;
+
+        protected void writeError(SlingHttpServletResponse response, String queryString, Exception ex)
+                throws IOException {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "query: '" + queryString + "' (" + ex.getMessage() + ")");
+        }
+    }
+
+    protected class JsonQueryOperation extends AbstractQueryOperation {
+
+        @Override
         protected void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                         String queryString, QueryResult result,
                                         ResourceFilter filter, ResourceResolver resolver)
@@ -454,16 +472,9 @@ public class NodeServlet extends NodeTreeServlet {
 
             writer.endObject();
         }
-
-
-        protected void writeError(SlingHttpServletResponse response, String queryString, Exception ex)
-                throws IOException {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                    "query: '" + queryString + "' (" + ex.getMessage() + ")");
-        }
     }
 
-    protected class HtmlQueryOperation extends JsonQueryOperation {
+    protected class HtmlQueryOperation extends AbstractQueryOperation {
 
         @Override
         protected void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
@@ -544,6 +555,7 @@ public class NodeServlet extends NodeTreeServlet {
             writer.append("</tr>");
         }
 
+        @Override
         protected void writeError(SlingHttpServletResponse response, String queryString, Exception ex)
                 throws IOException {
             PrintWriter writer = response.getWriter();
@@ -553,19 +565,25 @@ public class NodeServlet extends NodeTreeServlet {
         }
     }
 
-    //
-    // Query templates
-    //
-
-    public class GetQueryTemplates implements ServletOperation {
+    protected class ExportQueryOperation extends AbstractQueryOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        protected void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                        String queryString, QueryResult result,
+                                        ResourceFilter filter, ResourceResolver resolver)
                 throws ServletException, IOException {
 
-            JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-            response.setStatus(HttpServletResponse.SC_OK);
-            JsonUtil.writeJsonArray(jsonWriter, nodesConfig.getQueryTemplates());
+            String rendererType = request.getParameter("export");
+
+            String syntheticPath = "/libs/composum/nodes/console/query/export";
+            SyntheticQueryResult resultResource = new SyntheticQueryResult(resolver, syntheticPath, result, filter, rendererType);
+            resultResource.putValue("query", queryString);
+
+            RequestDispatcherOptions options = new RequestDispatcherOptions();
+            options.setForceResourceType(rendererType);
+
+            RequestDispatcher dispatcher = request.getRequestDispatcher(resultResource, options);
+            dispatcher.forward(request, response);
         }
     }
 
@@ -1253,6 +1271,35 @@ public class NodeServlet extends NodeTreeServlet {
     public static final Pattern MAP_DEPTH_SELECTOR = Pattern.compile("^d([\\d]+)$");
     public static final Pattern MAP_INDENT_SELECTOR = Pattern.compile("^i([\\d]+)$");
 
+    public static MappingRules getJsonSelectorRules(SlingHttpServletRequest request) {
+        boolean asSource = RequestUtil.checkSelector(request, "source");
+        boolean embedTypes = !(asSource || RequestUtil.checkSelector(request, "notype"));
+        ResourceFilter nodeFilter = null;
+        if (asSource || RequestUtil.checkSelector(request, "nofile")) {
+            nodeFilter = new ResourceFilter.FilterSet(ResourceFilter.FilterSet.Rule.and,
+                    new ResourceFilter.PrimaryTypeFilter(new StringFilter.BlackList("^nt:(file|resource)$")),
+                    MappingRules.MAPPING_NODE_FILTER);
+        }
+        return new MappingRules(MappingRules.getDefaultMappingRules(),
+                nodeFilter,
+                asSource ? MappingRules.SOURCE_EXPORT_FILTER : null, null,
+                new MappingRules.PropertyFormat(
+                        RequestUtil.getParameter(request, "format",
+                                RequestUtil.getSelector(request, MappingRules.PropertyFormat.Scope.value)),
+                        RequestUtil.getParameter(request, "binary",
+                                RequestUtil.getSelector(request, MappingRules.PropertyFormat.Binary.base64)),
+                        embedTypes),
+                RequestUtil.getParameter(request, "depth",
+                        RequestUtil.getIntSelector(request, MAP_DEPTH_SELECTOR,
+                                RequestUtil.getIntSelector(request, 0))),
+                null);
+    }
+
+    public static int getJsonSelectorIndent(SlingHttpServletRequest request) {
+        return RequestUtil.getParameter(request, "indent",
+                RequestUtil.getIntSelector(request, MAP_INDENT_SELECTOR, 0));
+    }
+
     protected class MapGetOperation implements ServletOperation {
 
         @Override
@@ -1266,34 +1313,8 @@ public class NodeServlet extends NodeTreeServlet {
             }
 
             try {
-                boolean asSource = RequestUtil.checkSelector(request, "source");
-                boolean embedTypes = !(asSource || RequestUtil.checkSelector(request, "notype"));
-                ResourceFilter nodeFilter = null;
-                if (asSource || RequestUtil.checkSelector(request, "nofile")) {
-                    nodeFilter = new ResourceFilter.FilterSet(ResourceFilter.FilterSet.Rule.and,
-                            new ResourceFilter.PrimaryTypeFilter(new StringFilter.BlackList("^nt:(file|resource)$")),
-                            MappingRules.MAPPING_NODE_FILTER);
-                }
-                MappingRules rules = new MappingRules(MappingRules.getDefaultMappingRules(),
-                        nodeFilter,
-                        asSource ? MappingRules.SOURCE_EXPORT_FILTER : null, null,
-                        new MappingRules.PropertyFormat(
-                                RequestUtil.getParameter(request, "format",
-                                        RequestUtil.getSelector(request, MappingRules.PropertyFormat.Scope.value)),
-                                RequestUtil.getParameter(request, "binary",
-                                        RequestUtil.getSelector(request, MappingRules.PropertyFormat.Binary.base64)),
-                                embedTypes),
-                        RequestUtil.getParameter(request, "depth",
-                                RequestUtil.getIntSelector(request, MAP_DEPTH_SELECTOR,
-                                        RequestUtil.getIntSelector(request, 0))),
-                        null);
-
-                int indent = RequestUtil.getParameter(request, "indent",
-                        RequestUtil.getIntSelector(request, MAP_INDENT_SELECTOR, 0));
-                JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                if (indent > 0) {
-                    jsonWriter.setIndent(StringUtils.repeat(' ', indent));
-                }
+                MappingRules rules = getJsonSelectorRules(request);
+                int indent = getJsonSelectorIndent(request);
 
                 if (RequestUtil.checkSelector(request, "download")) {
                     response.setContentType(FILE_CONTENT_TYPE);
@@ -1311,6 +1332,10 @@ public class NodeServlet extends NodeTreeServlet {
 
                 response.setStatus(HttpServletResponse.SC_OK);
 
+                JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                if (indent > 0) {
+                    jsonWriter.setIndent(StringUtils.repeat(' ', indent));
+                }
                 JsonUtil.exportJson(jsonWriter, resource, rules);
 
             } catch (RepositoryException ex) {

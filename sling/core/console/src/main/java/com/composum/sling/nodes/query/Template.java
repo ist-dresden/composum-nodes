@@ -1,26 +1,19 @@
 package com.composum.sling.nodes.query;
 
 import com.composum.sling.core.BeanContext;
-import com.composum.sling.nodes.console.ConsoleSlingBean;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 
-import static com.composum.sling.core.util.ResourceUtil.PROP_DESCRIPTION;
-
-public class Template extends ConsoleSlingBean implements Comparable<Template> {
+public class Template extends ConfigItem {
 
     public static final String PROP_GROUP = "group";
     public static final String PROP_XPATH = "xpath";
     public static final String PROP_SQL2 = "sql2";
-
-    public static final String PROP_ORDER = "order";
-    public static final int ORDER_DEFAULT = 50;
 
     private transient String data;
 
@@ -34,24 +27,6 @@ public class Template extends ConsoleSlingBean implements Comparable<Template> {
 
     public Template() {
         super();
-    }
-
-    public int getOrder() {
-        return getProperty(PROP_ORDER, ORDER_DEFAULT);
-    }
-
-    public String getId() {
-        return getPath().replace('/', '-');
-    }
-
-    @Override
-    public String getTitle() {
-        String title = super.getTitle();
-        return StringUtils.isNotBlank(title) ? title : getName();
-    }
-
-    public String getDescription() {
-        return getProperty(PROP_DESCRIPTION, "");
     }
 
     public String getData() {
@@ -79,14 +54,5 @@ public class Template extends ConsoleSlingBean implements Comparable<Template> {
 
     public String getSql2() {
         return getProperty(PROP_SQL2, "");
-    }
-
-    @Override
-    public int compareTo(Template other) {
-        int result = getOrder() - other.getOrder();
-        if (result == 0) {
-            result = getTitle().compareTo(other.getTitle());
-        }
-        return result;
     }
 }
