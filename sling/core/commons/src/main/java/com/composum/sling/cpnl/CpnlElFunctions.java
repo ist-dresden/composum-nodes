@@ -3,6 +3,7 @@ package com.composum.sling.cpnl;
 import com.composum.sling.core.RequestBundle;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
@@ -19,7 +20,7 @@ public class CpnlElFunctions {
 
     private static final Logger LOG = LoggerFactory.getLogger(CpnlElFunctions.class);
 
-    public static final Pattern HREF_PATTERN = Pattern.compile("(<a(\\s*[^>]*)?\\s*href\\s*=\\s*['\"])([^'\"]+)([\"'])");
+    public static final Pattern HREF_PATTERN = Pattern.compile("(<a(\\s*[^>]*)?\\s*href\\s*=\\s*['\"])([^'\"]+)([\"'][^>]*>)");
 
     public static String i18n(SlingHttpServletRequest request, String text) {
         String translated = null;
@@ -128,7 +129,22 @@ public class CpnlElFunctions {
      * @return the HTML escaped text of the value
      */
     public static String text(String value) {
-        return StringEscapeUtils.escapeHtml4(value);
+        return value != null ? StringEscapeUtils.escapeHtml4(value) : value;
+    }
+
+    /**
+     * Returns the escaped text of a rich text value as html for a tag attribute.
+     *
+     * @param value the value to escape
+     * @return the HTML escaped text of the value
+     */
+    public static String html(SlingHttpServletRequest request, String value) {
+        if (value != null) {
+            value = rich(request, value);
+            value = value.replaceAll("\"", "&quot;")
+                    .replaceAll("'", "&apos;");
+        }
+        return value;
     }
 
     /**
@@ -138,7 +154,14 @@ public class CpnlElFunctions {
      * @return the escaped HTML code of the value
      */
     public static String rich(SlingHttpServletRequest request, String value) {
-        value = map(request, value);
+        if (value != null) {
+            // ensure that a rich text value is always enclosed with a HTML paragraph tag
+            if (StringUtils.isNotBlank(value) && !value.trim().startsWith("<p>")) {
+                value = "<p>" + value + "</p>";
+            }
+            // transform embedded resource links (paths) to mapped URLs
+            value = map(request, value);
+        }
         return value;
     }
 
@@ -176,7 +199,7 @@ public class CpnlElFunctions {
      * @return the encoded path
      */
     public static String path(String value) {
-        return LinkUtil.encodePath(value);
+        return value != null ? LinkUtil.encodePath(value) : null;
     }
 
     /**
@@ -186,7 +209,7 @@ public class CpnlElFunctions {
      * @return the Script escaped code of the value
      */
     public static String script(String value) {
-        return StringEscapeUtils.escapeEcmaScript(value);
+        return value != null ? StringEscapeUtils.escapeEcmaScript(value) : value;
     }
 
     /**
@@ -196,6 +219,6 @@ public class CpnlElFunctions {
      * @return the string with <![CDATA[ ... ]]> around
      */
     public static String cdata(String value) {
-        return "<![CDATA[" + value + "]]>";
+        return value != null ? "<![CDATA[" + value + "]]>" : null;
     }
 }
