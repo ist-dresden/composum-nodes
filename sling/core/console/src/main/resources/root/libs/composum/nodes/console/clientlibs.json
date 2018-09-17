@@ -125,6 +125,13 @@
           "/etc/clientlibs/granite/jquery/granite/csrf/source/csrf.js"
         ]
       },
+      "aem-6.4": {
+        "optional": true,
+        "embed": [
+          "/libs/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js",
+          "/libs/clientlibs/granite/jquery/granite/csrf/source/csrf.js"
+        ]
+      },
       "libs": {
         "embed": [
           "jslibs/loglevel/1.6.1/loglevel.js",
