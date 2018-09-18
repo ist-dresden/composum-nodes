@@ -176,9 +176,10 @@
                 if (!this.$el.hasClass('hidden') && this.retrieveName()) {
                     var value = this.getValue();
                     if (this.rules) {
+                        var valid;
                         if (this.valid && this.rules.pattern) {
                             // check pattern only if not blank (blank is valid if allowed explicitly)
-                            var valid = this.valid = (this.rules.blank && (!value || value.trim().length < 1))
+                            valid = this.valid = (this.rules.blank && (!value || value.trim().length < 1))
                                 || this.rules.pattern.test(value);
                             if (!valid) {
                                 this.alert(alertMethod, 'danger', '',
@@ -187,7 +188,7 @@
                         }
                         if (this.valid && this.rules.mandatory) {
                             // check for a defined and not blank value
-                            var valid = this.valid = (value !== undefined &&
+                            valid = this.valid = (value !== undefined &&
                                 (this.rules.blank || value.trim().length > 0));
                             if (!valid) {
                                 this.alert(alertMethod, 'danger', '', 'value is mandatory');
@@ -725,14 +726,12 @@
 
         getNameFromPath: function (nodePath) {
             var lastSlash = nodePath.lastIndexOf('/');
-            var name = lastSlash >= 0 ? nodePath.substring(lastSlash + 1) : nodePath;
-            return name;
+            return lastSlash >= 0 ? nodePath.substring(lastSlash + 1) : nodePath;
         },
 
         getParentPath: function (nodePath) {
             var lastSlash = nodePath.lastIndexOf('/');
-            var parentPath = nodePath.substring(0, lastSlash > 0 ? lastSlash : lastSlash + 1);
-            return parentPath;
+            return nodePath.substring(0, lastSlash > 0 ? lastSlash : lastSlash + 1);
         },
 
         encodePath: function (path) {

@@ -393,6 +393,14 @@
                 this.$textField = this.textField();
                 // scan 'rules / pattern' attributes
                 this.initRules();
+                var typeahead = this.typeahead(options);
+                if (typeahead) {
+                    // switch off the browsers autocomplete function (!)
+                    if (typeahead.autocomplete !== 'auto') {
+                        this.$textField.attr('autocomplete', typeahead.autocomplete || 'off');
+                    }
+                    this.$textField.typeahead(typeahead);
+                }
                 // bind change events if any validation option has been found
                 if (this.rules) {
                     this.$textField.on('keyup.validate', _.bind(this.validate, this));
@@ -430,6 +438,52 @@
             },
 
             /**
+             * @param options the initializers options object
+             * @returns the configuration object for the typeahead plugin
+             */
+            typeahead: function (options) {
+                var typeahead = this.$el.data('typeahead') || options.typeahead;
+                if (typeahead) {
+                    if (_.isString(typeahead)) {
+                        if (/^(https?:\/\/[^/]+)?\/[^/]+\/.*/i.exec(typeahead)) {
+                            var url = typeahead;
+                            // a typeahead service must return a JSON array of suggestions
+                            // for the current text value sent as 'query' parameter
+                            typeahead = function (query, callback) {
+                                core.ajaxGet(url, {
+                                    data: {
+                                        query: query
+                                    }
+                                }, function (data) {
+                                    callback(data);
+                                })
+                            };
+                        } else if (typeahead.indexOf('{') === 0) {
+                            typeahead = JSON.parse(typeahead);
+                        } else if (typeahead.indexOf(',') > 0 && typeahead.indexOf('(') < 0) {
+                            typeahead = typeahead.split(',')
+                        } else {
+                            try {
+                                var f = eval(typeahead);
+                                if (_.isFunction(f)) {
+                                    typeahead = f;
+                                }
+                            } catch (ex) {
+                            }
+                        }
+                    }
+                    if (_.isFunction(typeahead) || _.isArray(typeahead)) {
+                        return {
+                            minLength: 1,
+                            source: typeahead
+                        };
+                    }
+                    return typeahead;
+                }
+                return undefined;
+            },
+
+            /**
              * sets the focus on the textfield
              */
             focus: function () {
@@ -462,6 +516,32 @@
         });
 
         widgets.register('.widget.text-field-widget', components.TextFieldWidget);
+
+        components.ComboBoxWidget = components.TextFieldWidget.extend({
+
+            initialize: function (options) {
+                components.TextFieldWidget.prototype.initialize.apply(this, [options]);
+                this.$menu = this.$('.dropdown-menu');
+                this.$menu.find('li a').click(_.bind(this.optionSelected, this));
+                this.$textField.on('change.menu', _.bind(this.initMenu, this));
+            },
+
+            initMenu: function () {
+                this.$menu.find('li').removeClass('active');
+                this.$menu.find('li[data-value="' + this.getValue() + '"]').addClass('active');
+            },
+
+            optionSelected: function (event) {
+                event.preventDefault();
+                var $link = $(event.currentTarget);
+                var value = $link.closest('li').data('value');
+                this.setValue(value, true);
+                this.$menu.dropdown('toggle');
+                return false;
+            }
+        });
+
+        widgets.register('.widget.combobox-widget', components.ComboBoxWidget);
 
         /**
          * the 'text-field-widget' (window.core.components.TextFieldWidget)
@@ -591,7 +671,41 @@
         components.PathWidget = components.TextFieldWidget.extend({
 
             initialize: function (options) {
-                components.TextFieldWidget.prototype.initialize.apply(this, [options]);
+                components.TextFieldWidget.prototype.initialize.apply(this, [_.extend({
+                    typeahead: {
+                        minLength: 1,
+                        source: _.bind(function (query, callback) {
+                            // ensure that query is of a valid path pattern
+                            if (query.indexOf('/') === 0) {
+                                var rootPath = this.getRootPath();
+                                if (rootPath !== '/') {
+                                    query = rootPath + query;
+                                }
+                                core.getJson('/bin/cpm/nodes/node.typeahead.json' + query, function (data) {
+                                    if (rootPath !== '/') {
+                                        for (var i = 0; i < data.length; i++) {
+                                            if (data[i].indexOf(rootPath + '/') === 0) {
+                                                data[i] = data[i].substring(rootPath.length);
+                                            }
+                                        }
+                                    }
+                                    callback(data);
+                                });
+                            }
+                        }, this),
+                        // custom matcher to check last name in path only
+                        matcher: function (item) {
+                            var pattern = /^(.*\/)([^\/]*)$/.exec(this.query);
+                            return item.match('.*' + pattern[2] + '.*');
+                        },
+                        // the custom highlighter to mark the name pattern in the last segment
+                        highlighter: function (item) {
+                            var pattern = /^(.*\/)([^\/]*)$/.exec(this.query);
+                            var splitted = new RegExp('^(.*)' + pattern[2] + '(.*)?').exec(item);
+                            return splitted[1] + '<b>' + pattern[2] + '</b>' + (splitted[2] || '');
+                        }
+                    }
+                }, options)]);
                 // retrieve element attributes
                 this.dialogTitle = this.$el.attr('title');
                 this.dialogLabel = this.$el.data('label');
@@ -600,42 +714,6 @@
                 };
                 this.setRootPath(this.config.rootPath);
                 this.filter = this.$el.data('filter');
-                // switch off the browsers autocomplete function (!)
-                this.$textField.attr('autocomplete', 'off');
-                // add typeahead function to the input field
-                this.$textField.typeahead({
-                    minLength: 1,
-                    source: _.bind(function (query, callback) {
-                        // ensure that query is of a valid path pattern
-                        if (query.indexOf('/') === 0) {
-                            var rootPath = this.getRootPath();
-                            if (rootPath !== '/') {
-                                query = rootPath + query;
-                            }
-                            core.getJson('/bin/cpm/nodes/node.typeahead.json' + query, function (data) {
-                                if (rootPath !== '/') {
-                                    for (var i = 0; i < data.length; i++) {
-                                        if (data[i].indexOf(rootPath + '/') === 0) {
-                                            data[i] = data[i].substring(rootPath.length);
-                                        }
-                                    }
-                                }
-                                callback(data);
-                            });
-                        }
-                    }, this),
-                    // custom matcher to check last name in path only
-                    matcher: function (item) {
-                        var pattern = /^(.*\/)([^\/]*)$/.exec(this.query);
-                        return item.match('.*' + pattern[2] + '.*');
-                    },
-                    // the custom highlighter to mark the name pattern in the last segment
-                    highlighter: function (item) {
-                        var pattern = /^(.*\/)([^\/]*)$/.exec(this.query);
-                        var splitted = new RegExp('^(.*)' + pattern[2] + '(.*)?').exec(item);
-                        return splitted[1] + '<b>' + pattern[2] + '</b>' + (splitted[2] || '');
-                    }
-                });
                 // set up '.select' button if present
                 this.$selectButton = this.$('button.select');
                 if (this.$selectButton.length > 0) {
@@ -961,24 +1039,24 @@
         components.PropertyNameWidget = components.TextFieldWidget.extend({
 
             initialize: function (options) {
-                components.TextFieldWidget.prototype.initialize.apply(this, [options]);
-                // switch off the browsers autocomplete function (!)
-                //this.$textField.attr('autocomplete', 'off');
-                // add typeahead function to the input field
-                this.$textField.typeahead({
-                    minLength: 1,
-                    source: [
-                        'jcr:data',
-                        'jcr:description',
-                        'jcr:lastModified',
-                        'jcr:lastModifiedBy',
-                        'jcr:mixinTypes',
-                        'jcr:primaryType',
-                        'jcr:title',
-                        'sling:redirect',
-                        'sling:resourceType'
-                    ]
-                });
+                components.TextFieldWidget.prototype.initialize.apply(this, [_.extend({
+                    // let browsers autocomplete as is and add typeahead function to the input field
+                    typeahead: {
+                        autocomplete: 'auto',
+                        minLength: 1,
+                        source: [
+                            'jcr:data',
+                            'jcr:description',
+                            'jcr:lastModified',
+                            'jcr:lastModifiedBy',
+                            'jcr:mixinTypes',
+                            'jcr:primaryType',
+                            'jcr:title',
+                            'sling:redirect',
+                            'sling:resourceType'
+                        ]
+                    }
+                }, options)]);
             }
         });
 
@@ -1007,20 +1085,9 @@
         components.PrimaryTypeWidget = components.TextFieldWidget.extend({
 
             initialize: function (options) {
-                components.TextFieldWidget.prototype.initialize.apply(this, [options]);
-                // switch off the browsers autocomplete function (!)
-                this.$textField.attr('autocomplete', 'off');
-                // add typeahead function to the input field
-                this.$textField.typeahead({
-                    minLength: 1,
-                    source: function (query, callback) {
-                        core.ajaxGet('/bin/cpm/core/system.primaryTypes.json', {
-                            query: query
-                        }, function (data) {
-                            callback(data);
-                        })
-                    }
-                });
+                components.TextFieldWidget.prototype.initialize.apply(this, [_.extend({
+                    typeahead: '/bin/cpm/core/system.primaryTypes.json'
+                }, options)]);
             }
         });
 
@@ -1032,20 +1099,9 @@
         components.MixinTypeWidget = components.TextFieldWidget.extend({
 
             initialize: function (options) {
-                components.TextFieldWidget.prototype.initialize.apply(this, [options]);
-                // switch off the browsers autocomplete function (!)
-                this.$textField.attr('autocomplete', 'off');
-                // add typeahead function to the input field
-                this.$textField.typeahead({
-                    minLength: 1,
-                    source: function (query, callback) {
-                        core.ajaxGet('/bin/cpm/core/system.mixinTypes.json', {
-                            query: query
-                        }, function (data) {
-                            callback(data);
-                        })
-                    }
-                });
+                components.TextFieldWidget.prototype.initialize.apply(this, [_.extend({
+                    typeahead: '/bin/cpm/core/system.mixinTypes.json'
+                }, options)]);
             }
         });
 
