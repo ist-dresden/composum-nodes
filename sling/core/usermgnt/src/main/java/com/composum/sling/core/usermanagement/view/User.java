@@ -1,15 +1,17 @@
 package com.composum.sling.core.usermanagement.view;
 
-import com.composum.sling.nodes.console.ConsoleSlingBean;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.jcr.RepositoryException;
+
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
 
-import javax.jcr.RepositoryException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import com.composum.sling.nodes.console.ConsoleSlingBean;
 
 /**
  * Created by mzeibig on 16.11.15.
@@ -61,5 +63,17 @@ public class User extends ConsoleSlingBean {
         return getRequest().getRequestPathInfo().getSuffix();
     }
 
-
+    /**
+     * Returns true if the current request user is the admin user.
+     */
+    public boolean isCurrentUserAdmin() throws RepositoryException {
+    	boolean isAdmin = false;
+        final JackrabbitSession session = (JackrabbitSession) getSession();
+        final UserManager userManager = session.getUserManager();
+        Authorizable a = userManager.getAuthorizable(getRequest().getUserPrincipal());
+        if (a instanceof org.apache.jackrabbit.api.security.user.User) {
+        	isAdmin = ((org.apache.jackrabbit.api.security.user.User)a).isAdmin();
+        }
+        return isAdmin;
+    }
 }
