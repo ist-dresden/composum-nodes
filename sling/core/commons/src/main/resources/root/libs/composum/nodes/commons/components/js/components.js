@@ -523,12 +523,19 @@
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
                 this.$menu = this.$('.dropdown-menu');
                 this.$menu.find('li a').click(_.bind(this.optionSelected, this));
-                this.$textField.on('change.menu', _.bind(this.initMenu, this));
+                this.$textField.on('change.combobox', _.bind(this.onValueChange, this));
             },
 
-            initMenu: function () {
+            onValueChange: function () {
+                var value = this.getValue();
+                var self = this;
+                this.$('[data-value-class]').each(function () {
+                    var $el = $(this);
+                    var css = $el.data('value-class').replace(/\$/g, value);
+                    $el.removeClass().addClass(css);
+                });
                 this.$menu.find('li').removeClass('active');
-                this.$menu.find('li[data-value="' + this.getValue() + '"]').addClass('active');
+                this.$menu.find('li[data-value="' + value + '"]').addClass('active');
             },
 
             optionSelected: function (event) {
