@@ -4,11 +4,19 @@ import com.composum.sling.core.RequestBundle;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.translate.AggregateTranslator;
+import org.apache.commons.lang3.text.translate.CharSequenceTranslator;
+import org.apache.commons.lang3.text.translate.EntityArrays;
+import org.apache.commons.lang3.text.translate.LookupTranslator;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.MissingResourceException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,6 +29,104 @@ public class CpnlElFunctions {
     private static final Logger LOG = LoggerFactory.getLogger(CpnlElFunctions.class);
 
     public static final Pattern HREF_PATTERN = Pattern.compile("(<a(\\s*[^>]*)?\\s*href\\s*=\\s*['\"])([^'\"]+)([\"'][^>]*>)");
+
+    /** for the 'attr' escaping - the quotation type constants */
+    public static final int QTYPE_QUOT = 0;
+    public static final int QTYPE_APOS = 1;
+    public static final String[] QTYPE_CHAR = new String[]{"\"", "'"};
+    public static final String[] QTYPE_ESC = new String[]{"&quot;", "&apos;"};
+
+    public static final String[] RICH_TEXT_TAGS = new String[]{
+            "p", "br", "a", "ul", "li", "ol", "strong", "em", "u", "b", "i", "strike", "sub", "sup"
+    };
+
+    public static final String[][] RICH_TEXT_BASIC_ESCAPE = {
+            // avoid double escape
+            {"&amp;", "&amp;"},
+            {"&lt;", "&lt;"},
+            {"&gt;", "&gt;"},
+            // escape if not skipped
+            {"&", "&amp;"},
+            {"<", "&lt;"},
+            {">", "&gt;"},
+    };
+
+    protected static final List<String> RICH_TEXT_TAG_START;
+    protected static final List<String> RICH_TEXT_TAG_CLOSED;
+    protected static final int RICH_TEXT_TAG_MAX_LEN;
+
+    static {
+        int maxLen = 0;
+        RICH_TEXT_TAG_START = new ArrayList<>();
+        for (String tag : RICH_TEXT_TAGS) {
+            RICH_TEXT_TAG_START.add("<" + tag + " ");
+            int length = tag.length() + 2;
+            if (maxLen < length) {
+                maxLen = length;
+            }
+        }
+        RICH_TEXT_TAG_CLOSED = new ArrayList<>();
+        for (String tag : RICH_TEXT_TAGS) {
+            RICH_TEXT_TAG_CLOSED.add("<" + tag + ">");
+            RICH_TEXT_TAG_CLOSED.add("<" + tag + "/>");
+            RICH_TEXT_TAG_CLOSED.add("</" + tag + ">");
+            int length = tag.length() + 3;
+            if (maxLen < length) {
+                maxLen = length;
+            }
+        }
+        RICH_TEXT_TAG_MAX_LEN = maxLen;
+    }
+
+    public static class RichTextTagsFilter extends LookupTranslator {
+
+        protected boolean isInTagStart = false;
+
+        public RichTextTagsFilter() {
+            super(RICH_TEXT_BASIC_ESCAPE);
+        }
+
+        @Override
+        public int translate(CharSequence input, int index, Writer out) throws IOException {
+            if (isInTagStart) {
+                char token = input.charAt(index);
+                out.write(token);
+                if (token == '>') {
+                    isInTagStart = false;
+                }
+                return 1;
+            } else {
+                String subSeq = input.subSequence(index, index + Math.min(RICH_TEXT_TAG_MAX_LEN, input.length() - index))
+                        .toString().toLowerCase();
+                for (String pattern : RICH_TEXT_TAG_START) {
+                    if (subSeq.startsWith(pattern)) {
+                        out.write(pattern);
+                        isInTagStart = true;
+                        return pattern.length();
+                    }
+                }
+                for (String pattern : RICH_TEXT_TAG_CLOSED) {
+                    if (subSeq.startsWith(pattern)) {
+                        out.write(pattern);
+                        return pattern.length();
+                    }
+                }
+                return super.translate(input, index, out);
+            }
+        }
+    }
+
+
+    public static final CharSequenceTranslator ESCAPE_RICH_TEXT =
+            new AggregateTranslator(
+                    new RichTextTagsFilter(),
+                    new LookupTranslator(EntityArrays.ISO8859_1_ESCAPE()),
+                    new LookupTranslator(EntityArrays.HTML40_EXTENDED_ESCAPE())
+            );
+
+    public static String escapeRichText(String input) {
+        return ESCAPE_RICH_TEXT.translate(input);
+    }
 
     public static String i18n(SlingHttpServletRequest request, String text) {
         String translated = null;
@@ -136,13 +242,12 @@ public class CpnlElFunctions {
      * Returns the escaped text of a rich text value as html for a tag attribute.
      *
      * @param value the value to escape
-     * @return the HTML escaped text of the value
+     * @return the HTML escaped rich text of the value
      */
-    public static String html(SlingHttpServletRequest request, String value) {
+    public static String attr(SlingHttpServletRequest request, String value, int qType) {
         if (value != null) {
             value = rich(request, value);
-            value = value.replaceAll("\"", "&quot;")
-                    .replaceAll("'", "&apos;");
+            value = value.replaceAll(QTYPE_CHAR[qType], QTYPE_ESC[qType]);
         }
         return value;
     }
@@ -161,6 +266,7 @@ public class CpnlElFunctions {
             }
             // transform embedded resource links (paths) to mapped URLs
             value = map(request, value);
+            value = escapeRichText(value);
         }
         return value;
     }
