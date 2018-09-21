@@ -239,7 +239,10 @@ public class CpnlElFunctions {
     }
 
     /**
-     * Returns the escaped text of a rich text value as html for a tag attribute.
+     * Returns the escaped text of a rich text value as HTML text for a tag attribute.
+     * We assume that the result is used as value for a insertion done by jQuery.html();
+     * in this case all '&...' escaped chars are translated back by jQuery and the XSS protection
+     * is broken - to avoid this each '&' in the value is 'double escaped'
      *
      * @param value the value to escape
      * @return the HTML escaped rich text of the value
@@ -247,7 +250,9 @@ public class CpnlElFunctions {
     public static String attr(SlingHttpServletRequest request, String value, int qType) {
         if (value != null) {
             value = rich(request, value);
-            value = value.replaceAll(QTYPE_CHAR[qType], QTYPE_ESC[qType]);
+            value = value
+                    .replaceAll("&", "&amp;") // prevent from unescaping in jQuery.html()
+                    .replaceAll(QTYPE_CHAR[qType], QTYPE_ESC[qType]);
         }
         return value;
     }
