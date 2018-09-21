@@ -510,7 +510,15 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
             final Authorizable authorizable = userManager.getAuthorizable(username);
             User user = (User) authorizable;
-            user.changePassword(password);
+
+            if (user.isAdmin()) {
+            	//admin can do it without knowing the old password
+                user.changePassword(password);
+            } else {
+                String oldPassword = request.getParameter("oldPassword");
+                user.changePassword(password, oldPassword);
+            }
+
             session.save();
             ResponseUtil.writeEmptyArray(response);
         }

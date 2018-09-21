@@ -437,6 +437,13 @@
     </function>
 
     <function>
+        <description>transforms text of a rich text value as html for a tag attribute (encodes quotes)</description>
+        <name>attr</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String attr(org.apache.sling.api.SlingHttpServletRequest,java.lang.String,int)</function-signature>
+    </function>
+
+    <function>
         <description>transforms a string value for rich text (HTML) rendering</description>
         <name>rich</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
