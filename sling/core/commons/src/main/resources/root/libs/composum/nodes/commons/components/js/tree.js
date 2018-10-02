@@ -178,11 +178,20 @@
              * selects the node specified by its node path if the node is accepted by the filter
              * opens all nodes up to the target node automatically
              */
-            selectNode: function (path, callback, supressEvent) {
+            selectNode: function (path, callback, suppressEvent) {
                 this.resetSelection();
                 if (path) {
+                    if (this.inSelectNode) {
+                        window.setTimeout(_.bind(function () {
+                            if (this.log.getLevel() <= log.levels.DEBUG) {
+                                this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').delay...');
+                            }
+                            this.selectNode(path, callback, suppressEvent);
+                        }, this), 100);
+                    }
+                    this.inSelectNode = true;
                     if (this.log.getLevel() <= log.levels.DEBUG) {
-                        this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ')');
+                        this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ')>>>');
                     }
                     var tree = this;
                     var names = $.isArray(path) ? path : path.split('/');
@@ -194,19 +203,23 @@
                             index = rootNames.length;
                         }
                         var $node;
-                        var exit = function () {
+                        var exit = _.bind(function () {
                             tree.undelegate('after_open.jstree');
+                            this.inSelectNode = false;
                             if (_.isFunction(callback)) {
                                 callback(path);
                             }
-                        };
+                            if (this.log.getLevel() <= log.levels.DEBUG) {
+                                this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').exit.');
+                            }
+                        }, this);
                         var drilldown = function () {
                             var id;
                             if (index < names.length - 1) {
                                 id = tree.nodeId(_.first(names, index + 1));
                                 $node = tree.$('#' + id);
                                 index++;
-                                if ($node) {
+                                if ($node && $node.length > 0) {
                                     if (tree.jstree.is_open($node)) {
                                         drilldown.apply(this);
                                     } else {
@@ -222,8 +235,8 @@
                             } else {
                                 id = tree.nodeId(_.first(names, names.length));
                                 $node = tree.$('#' + id);
-                                if ($node) {
-                                    tree.jstree.select_node($node, supressEvent);
+                                if ($node && $node.length > 0) {
+                                    tree.jstree.select_node($node, suppressEvent);
                                     this.scrollIntoView($node);
                                 }
                                 exit();
@@ -231,7 +244,7 @@
                         };
                         this.delegate('after_open.jstree', undefined, _.bind(drilldown, this));
                         $node = this.$('#' + this.nodeId(this.getRootPath()));
-                        if ($node) {
+                        if ($node && $node.length > 0) {
                             if (this.jstree.is_open($node)) {
                                 drilldown.apply(this);
                             } else {
@@ -241,6 +254,8 @@
                                     exit();
                                 }
                             }
+                        } else {
+                            exit();
                         }
                     } else {
                         this.log.warn(this.nodeIdPrefix + 'tree.selectNode(' + path + ') not matching to root: ' + rootPath);
@@ -249,7 +264,9 @@
             },
 
             resetSelection: function () {
-                this.jstree.deselect_all();
+                if (this.getSelectedTreeNode()) {
+                    this.jstree.deselect_all();
+                }
             },
 
             reset: function () {
@@ -281,14 +298,20 @@
              * sets the root path for the tree
              */
             setRootPath: function (rootPath, refresh) {
-                if (this.rootPath !== rootPath) {
-                    this.rootPath = rootPath;
-                    if (refresh !== false) {
-                        refresh = true;
+                if (this.inSelectNode) {
+                    window.setTimeout(_.bind(function () {
+                        this.setRootPath(rootPath, refresh);
+                    }, this), 100);
+                } else {
+                    if (this.rootPath !== rootPath) {
+                        this.rootPath = rootPath;
+                        if (refresh !== false) {
+                            refresh = true;
+                        }
                     }
-                }
-                if (refresh) {
-                    this.refresh();
+                    if (refresh) {
+                        this.refresh();
+                    }
                 }
             },
 
@@ -383,6 +406,9 @@
             initSelectedData: function () {
                 if (!this.initialSelect) {
                     this.initialSelect = this.$el.attr('data-selected');
+                }
+                if (this.log.getLevel() <= log.levels.DEBUG) {
+                    this.log.debug(this.nodeIdPrefix + 'tree.initSelectedData(' + this.initialSelect + ')');
                 }
                 if (this.initialSelect) {
                     this.selectNode(this.initialSelect);
@@ -710,6 +736,8 @@
                             + JSON.stringify(node.original) + ') <- tree.onNodeSelected(~)');
                     }
                     $(document).trigger("path:select", [path, node.original.name, node.original.type]);
+                } else {
+                    this.$el.trigger("path:selected", [path]);
                 }
             },
 
