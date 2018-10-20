@@ -440,26 +440,18 @@
             onPathSelected: function (event, path) {
                 var node = this.getSelectedTreeNode();
                 if (!node || node.original.path !== path) {
-                    if (!this.busy) {
-                        // prevent from endless self activation
-                        this.busy = true;
-                        if (this.log.getLevel() <= log.levels.DEBUG) {
-                            this.log.debug(this.nodeIdPrefix + 'tree.onPathSelected(' + path + '): '
-                                + (node ? JSON.stringify(node.original) : 'undefined'));
-                        }
-                        try {
-                            this.selectNode(path, _.bind(function (path) {
-                                var node = this.getSelectedTreeNode();
-                                if (!node) {
-                                    if (_.isFunction(this.onPathSelectedFailed)) {
-                                        this.onPathSelectedFailed(path);
-                                    }
-                                }
-                            }, this));
-                        } finally {
-                            this.busy = false;
-                        }
+                    if (this.log.getLevel() <= log.levels.DEBUG) {
+                        this.log.debug(this.nodeIdPrefix + 'tree.onPathSelected(' + path + '): '
+                            + (node ? JSON.stringify(node.original) : 'undefined'));
                     }
+                    this.selectNode(path, _.bind(function (path) {
+                        var node = this.getSelectedTreeNode();
+                        if (!node) {
+                            if (_.isFunction(this.onPathSelectedFailed)) {
+                                this.onPathSelectedFailed(path);
+                            }
+                        }
+                    }, this));
                 }
             },
 
@@ -747,15 +739,7 @@
              * @param node
              */
             onNodeSelected: function (path, node) {
-                if (!this.busy) {
-                    if (this.log.getLevel() <= log.levels.DEBUG) {
-                        this.log.debug(this.nodeIdPrefix + 'tree.trigger.path:select(' + path + ','
-                            + JSON.stringify(node.original) + ') <- tree.onNodeSelected(~)');
-                    }
-                    $(document).trigger("path:select", [path, node.original.name, node.original.type]);
-                } else {
-                    this.$el.trigger("path:selected", [path]);
-                }
+                this.$el.trigger("path:selected", [path, node]);
             },
 
             /**

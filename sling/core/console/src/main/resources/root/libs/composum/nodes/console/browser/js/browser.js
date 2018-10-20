@@ -121,6 +121,10 @@
                 this.filter = core.console.getProfile().get(this.getProfileId(), 'filter');
             },
 
+            onNodeSelected: function(path, node) {
+                $(document).trigger("path:select", [path]);
+            },
+
             customKeys: function (event) {
                 var tagName = event.target.tagName;
                 if (tagName && tagName.toLowerCase() === "input") {

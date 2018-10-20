@@ -98,7 +98,7 @@
                 return '/bin/cpm/package.tree.json' + path;
             },
 
-            onNodeSelected: function (path, node, element) {
+            onNodeSelected: function (path, node) {
                 $(document).trigger("path:select", [path]);
             }
         });
