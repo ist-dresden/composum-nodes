@@ -437,6 +437,9 @@
             // ---------------
             // document events
 
+            /**
+             * @returns {boolean} 'true', if the path matches to the selected node, 'false' if not (node selection is triggered...)
+             */
             onPathSelected: function (event, path) {
                 var node = this.getSelectedTreeNode();
                 if (!node || node.original.path !== path) {
@@ -444,14 +447,18 @@
                         this.log.debug(this.nodeIdPrefix + 'tree.onPathSelected(' + path + '): '
                             + (node ? JSON.stringify(node.original) : 'undefined'));
                     }
-                    this.selectNode(path, _.bind(function (path) {
-                        var node = this.getSelectedTreeNode();
-                        if (!node) {
-                            if (_.isFunction(this.onPathSelectedFailed)) {
-                                this.onPathSelectedFailed(path);
-                            }
-                        }
-                    }, this));
+                    this.selectNode(path, _.bind(this.checkSelectedPath, this));
+                    return false;
+                }
+                return true;
+            },
+
+            checkSelectedPath: function (path) {
+                var node = this.getSelectedTreeNode();
+                if (!node) {
+                    if (_.isFunction(this.onPathSelectedFailed)) {
+                        this.onPathSelectedFailed(path);
+                    }
                 }
             },
 
@@ -734,12 +741,12 @@
             },
 
             /**
-             * triggers a 'path:select(path[,name,type])' document event to adjust the view to the new selected path
+             * triggers a 'node:selected(path,node)' event to adjust the view to the new selected path
              * @param path
              * @param node
              */
             onNodeSelected: function (path, node) {
-                this.$el.trigger("path:selected", [path, node]);
+                this.$el.trigger("node:selected", [path, node]);
             },
 
             /**
