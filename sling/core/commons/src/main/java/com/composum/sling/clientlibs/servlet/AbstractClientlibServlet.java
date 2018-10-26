@@ -3,8 +3,8 @@ package com.composum.sling.clientlibs.servlet;
 import com.composum.sling.clientlibs.handle.ClientlibLink;
 import com.composum.sling.clientlibs.handle.ClientlibRef;
 import com.composum.sling.clientlibs.service.ClientlibConfiguration;
-import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.clientlibs.service.ClientlibProcessor;
+import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.core.util.HttpUtil;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -12,7 +12,6 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
@@ -45,7 +44,7 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
      */
     protected void deliverClientlib(boolean get, SlingHttpServletRequest request, SlingHttpServletResponse response,
                                     ClientlibRef clientlibRef, String requestedHash, boolean minified) throws
-            RepositoryException, LoginException, IOException {
+            RepositoryException, IOException {
 
         String encoding = null;
         boolean refreshCache = false;
@@ -150,9 +149,10 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
 
     protected boolean dropRequest(SlingHttpServletRequest request, SlingHttpServletResponse response) {
         String uri = request.getRequestURI();
-        if (uri.endsWith(".map")) {
-            LOG.info("request dropped: '{}'", uri);
-            response.setStatus(HttpServletResponse.SC_GONE);
+        if (uri.endsWith(".map")) { // empty response for maps to avoid error log entries on client
+            LOG.info("map file request dropped (empty response): '{}'", uri);
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentLength(0);
             return true;
         }
         return false;
