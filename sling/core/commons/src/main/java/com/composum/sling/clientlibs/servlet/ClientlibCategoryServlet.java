@@ -8,7 +8,6 @@ import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
-import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +25,7 @@ import java.util.regex.Pattern;
 @SlingServlet(
         methods = {HttpConstants.METHOD_GET, HttpConstants.METHOD_HEAD},
         paths = ClientlibCategoryServlet.PATH,
-        extensions = {"js", "css"}
+        extensions = {"js", "css", "map"}
 )
 public class ClientlibCategoryServlet extends AbstractClientlibServlet {
 
@@ -80,7 +79,7 @@ public class ClientlibCategoryServlet extends AbstractClientlibServlet {
                 }
                 deliverClientlib(get, request, response, ref, categoryAndHash.getRight(), isMinified(selectors));
 
-            } catch (RepositoryException | LoginException ex) {
+            } catch (RepositoryException ex) {
                 throw new ServletException(ex);
             }
         } else {

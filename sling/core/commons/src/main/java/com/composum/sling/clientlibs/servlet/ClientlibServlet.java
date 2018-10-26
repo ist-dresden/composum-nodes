@@ -8,7 +8,6 @@ import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
-import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.slf4j.Logger;
 
@@ -22,7 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @SlingServlet(
         resourceTypes = Clientlib.RESOURCE_TYPE,
-        extensions = {"js", "css"},
+        extensions = {"js", "css", "map"},
         methods = {HttpConstants.METHOD_GET, HttpConstants.METHOD_HEAD}
 )
 public class ClientlibServlet extends AbstractClientlibServlet {
@@ -55,7 +54,7 @@ public class ClientlibServlet extends AbstractClientlibServlet {
                 ClientlibRef clientlibref = new ClientlibRef(type, path, false, null);
 
                 deliverClientlib(get, request, response, clientlibref, hash, isMinified(selectors));
-            } catch (RepositoryException | LoginException ex) {
+            } catch (RepositoryException ex) {
                 throw new ServletException(ex);
             }
         }
