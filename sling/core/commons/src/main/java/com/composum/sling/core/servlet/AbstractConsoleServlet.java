@@ -26,7 +26,7 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
     protected BundleContext bundleContext;
 
     @Activate
-    private void activate(final BundleContext bundleContext) {
+    protected void activate(final BundleContext bundleContext) {
         this.bundleContext = bundleContext;
     }
 
