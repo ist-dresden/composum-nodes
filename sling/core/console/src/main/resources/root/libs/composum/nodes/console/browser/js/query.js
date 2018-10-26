@@ -32,6 +32,11 @@
                 this.$filterButton.addClass(core.console.getProfile().get('query', 'filtered', true) ? 'on' : 'off');
                 this.$exportMenu.on('show.bs.dropdown', _.bind(this.showExportMenu, this));
                 this.$queryInput.on('focus.reset', _.bind(this.hidePopover, this));
+                this.$queryInput.on('keypress.exec', _.bind(function (event) {
+                    if (event.which === 13) {
+                        this.executeQuery(event);
+                    }
+                }, this));
                 this.$queryInput.on('keyup.validate', _.bind(this.queryUpdated, this));
                 this.$queryInput.on('change.validate', _.bind(this.queryUpdated, this));
                 this.$queryInput.val(core.console.getProfile().get('query', 'current'));
@@ -168,6 +173,11 @@
                                     });
                                 }
                                 $inputField.focus(_.bind(this.hidePopover, this));
+                                $inputField.keypress(_.bind(function (event) {
+                                    if (event.which === 13) {
+                                        this.executeQuery(event);
+                                    }
+                                }, this));
                                 $input.removeClass(templateClass);
                                 $form.append($input);
                             }
