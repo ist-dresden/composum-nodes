@@ -41,7 +41,7 @@
                 path = browser.current.path;
             }
             if (path) {
-                core.getJson('/bin/cpm/nodes/node.tree.json' + path, undefined, undefined,
+                core.getJson('/bin/cpm/nodes/node.tree.json' + path,
                     _.bind(function (result) {
                         browser.current = {
                             path: path,
@@ -121,7 +121,7 @@
                 this.filter = core.console.getProfile().get(this.getProfileId(), 'filter');
             },
 
-            onNodeSelected: function(path, node) {
+            onNodeSelected: function (path, node) {
                 $(document).trigger("path:select", [path]);
             },
 
@@ -493,7 +493,48 @@
         browser.Breadcrumbs = Backbone.View.extend({
 
             initialize: function (options) {
-                this.$('a').on('click', _.bind(this.pathSelected, this));
+                this.$toggle = this.$('.breadcrumbs-toggle');
+                this.$input = this.$('.path-input-field');
+                this.$open = this.$('.open-path');
+                this.$list = this.$('.breadcrumbs-list');
+                if ('path-input' === core.console.getProfile().get('browser', 'breadcrumbs')) {
+                    this.toggle();
+                }
+                this.$list.find('a').on('click', _.bind(this.pathSelected, this));
+                this.$open.click(_.bind(this.open, this));
+                this.$input.keypress(_.bind(function (event) {
+                    if (event.which === 13) {
+                        this.open();
+                    }
+                }, this));
+                this.$toggle.click(_.bind(this.toggle, this));
+            },
+
+            toggle: function (event) {
+                if (event) {
+                    event.preventDefault();
+                    core.console.getProfile().set('browser', 'breadcrumbs',
+                        this.$el.hasClass('input-path') ? 'breadcrumbs' : 'path-input');
+                }
+                if (this.$el.hasClass('input-path')) {
+                    this.$el.removeClass('input-path');
+                    this.$toggle.removeClass('active');
+                } else {
+                    this.$el.addClass('input-path');
+                    this.$toggle.addClass('active');
+                }
+                return false;
+            },
+
+            open: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                var path = this.$input.val();
+                if (path) {
+                    browser.setCurrentPath(path);
+                }
+                return false;
             },
 
             pathSelected: function (event) {
