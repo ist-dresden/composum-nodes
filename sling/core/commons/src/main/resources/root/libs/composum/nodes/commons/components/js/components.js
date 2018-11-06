@@ -762,7 +762,8 @@
              * stores the value for a selected path; extension hook for different path based values
              */
             setPath: function (path) {
-                this.setValue(path);
+                var oldValue = this.getValue();
+                this.setValue(path, oldValue !== path);
             },
 
             getRootPath: function () {
