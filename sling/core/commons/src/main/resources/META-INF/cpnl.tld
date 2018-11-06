@@ -201,6 +201,12 @@
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.Object</type>
         </attribute>
+        <attribute>
+            <name>body</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Object</type>
+        </attribute>
         <dynamic-attributes>true</dynamic-attributes>
     </tag>
 
