@@ -47,13 +47,13 @@
                 if (!data) {
                     data = this.toJSON();
                 }
-                core.ajaxPut("/bin/cpm/nodes/property.json" + this.get('path'), JSON.stringify(data), {
+                core.ajaxPut("/bin/cpm/nodes/property.json" + core.encodePath(this.get('path')), JSON.stringify(data), {
                     dataType: 'json'
                 }, onSuccess, onError);
             },
 
             destroy: function (onSuccess, onError) {
-                core.ajaxDelete("/bin/cpm/nodes/property.remove.json" + this.get('path'), {
+                core.ajaxDelete("/bin/cpm/nodes/property.remove.json" + core.encodePath(this.get('path')), {
                     data: JSON.stringify({
                         "names": [this.get('name')]
                     }),
@@ -93,14 +93,14 @@
             typeChanged: function () {
                 var currentValue = this.valueWidget.getValue();
                 var type = this.$type.val();
-                this.$subtype.css('visibility', type == 'String' ? 'visible' : 'hidden');
+                this.$subtype.css('visibility', type === 'String' ? 'visible' : 'hidden');
                 if (!this.busy) {
                     this.busy = true;
-                    var subtype = (type == 'String' ? this.subtype.getValue() : undefined);
+                    var subtype = (type === 'String' ? this.subtype.getValue() : undefined);
                     this.valueWidget.setType(type, subtype);
                     this.busy = false;
                 }
-                if (type == 'Binary') {
+                if (type === 'Binary') {
                     this.form.$el.removeClass('default');
                     this.form.$el.addClass('binary');
                     if (this.$multi.prop('checked')) {
@@ -188,7 +188,7 @@
             },
 
             getProperty: function () {
-                var property = new browser.Property({
+                return new browser.Property({
                     path: this.$path.val(),
                     name: this.$name.val(),
                     oldname: this.$oldname.val(),
@@ -196,7 +196,6 @@
                     multi: this.$multi.prop('checked'),
                     value: this.valueWidget.getValue()
                 });
-                return property;
             },
 
             uploadBinary: function () {

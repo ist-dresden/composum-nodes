@@ -21,7 +21,7 @@
             $(document).on('favorite:toggle', _.bind(this.onToggleFavorite, this));
             $(document).on('path:selected', _.bind(this.onPathSelected, this));
             this.loadProfile();
-            if (core.console.getProfile().get('navigation', 'tab') == 'history') {
+            if (core.console.getProfile().get('navigation', 'tab') === 'history') {
                 this.showHistoryTab();
             }
         },
@@ -131,10 +131,10 @@
 
         setItemState: function ($item) {
             var path = $item.attr('data-path');
-            if (path == browser.getCurrentPath()) {
+            if (path === browser.getCurrentPath() && browser.current.node) {
                 this.setNodeState($item, browser.current.node);
             } else {
-                core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (result) {
+                core.getJson('/bin/cpm/nodes/node.tree.json' + core.encodePath(path), _.bind(function (result) {
                     this.setNodeState($item, result);
                 }, this), _.bind(function (result) {
                     $item.remove();

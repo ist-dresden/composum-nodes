@@ -110,7 +110,7 @@
             loadText: function (onSuccess) {
                 var path = this.getPath();
                 if (path) {
-                    core.ajaxGet("/bin/cpm/nodes/property.bin" + path, {
+                    core.ajaxGet("/bin/cpm/nodes/property.bin" + core.encodePath(path), {
                             contentType: 'text/plain;charset=UTF-8',
                             dataType: 'text'
                         }, _.bind(function (data) {
@@ -129,7 +129,7 @@
             saveText: function (onSuccess) {
                 var path = this.getPath();
                 if (path) {
-                    core.ajaxPut("/bin/cpm/nodes/property.update.bin" + path, this.ace.getValue(), {
+                    core.ajaxPut("/bin/cpm/nodes/property.update.bin" + core.encodePath(path), this.ace.getValue(), {
                         contentType: 'text/plain;charset=UTF-8',
                         dataType: 'text'
                     }, undefined, undefined, _.bind(function (result, x, y) {

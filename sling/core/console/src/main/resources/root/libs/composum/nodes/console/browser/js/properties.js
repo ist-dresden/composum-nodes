@@ -51,13 +51,14 @@
                 var path = browser.getCurrentPath();
                 var clipboard = core.console.getProfile().get('properties', 'clipboard');
                 if (path && clipboard && clipboard.path && clipboard.names) {
-                    core.ajaxPut("/bin/cpm/nodes/property.copy.json" + path, JSON.stringify(clipboard), {
-                        dataType: 'json'
-                    }, _.bind(function (result) {
-                        $(document).trigger('path:changed', [path]);
-                    }, this), _.bind(function (result) {
-                        core.alert('danger', 'Error', 'Error on copying properties', result);
-                    }, this));
+                    core.ajaxPut("/bin/cpm/nodes/property.copy.json" + core.encodePath(path),
+                        JSON.stringify(clipboard), {
+                            dataType: 'json'
+                        }, _.bind(function (result) {
+                            $(document).trigger('path:changed', [path]);
+                        }, this), _.bind(function (result) {
+                            core.alert('danger', 'Error', 'Error on copying properties', result);
+                        }, this));
                 }
             },
 
@@ -69,7 +70,7 @@
                     names[i] = selected[i].name;
                 }
                 if (path && names) {
-                    core.ajaxDelete("/bin/cpm/nodes/property.remove.json" + path, {
+                    core.ajaxDelete("/bin/cpm/nodes/property.remove.json" + core.encodePath(path), {
                         data: JSON.stringify({names: names}),
                         dataType: 'json'
                     }, _.bind(function (result) {
@@ -285,7 +286,7 @@
             loadContent: function () {
                 var path = browser.getCurrentPath();
                 this.state.load = true;
-                core.getJson("/bin/cpm/nodes/property.map.json" + path,
+                core.getJson("/bin/cpm/nodes/property.map.json" + core.encodePath(path),
                     _.bind(function (result) {
                         this.$table.bootstrapTable('load', result);
                     }, this), _.bind(function (result) {

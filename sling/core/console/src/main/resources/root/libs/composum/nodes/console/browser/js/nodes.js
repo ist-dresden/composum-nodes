@@ -180,7 +180,7 @@
                 var mixinStrings = mixinValues(this.$('input[name="value"]'));
                 var path = this.$path.val();
 
-                core.ajaxPut("/bin/cpm/nodes/property.put.json" + path, JSON.stringify({
+                core.ajaxPut("/bin/cpm/nodes/property.put.json" + core.encodePath(path), JSON.stringify({
                     name: 'jcr:mixinTypes',
                     multi: true,
                     value: mixinStrings,

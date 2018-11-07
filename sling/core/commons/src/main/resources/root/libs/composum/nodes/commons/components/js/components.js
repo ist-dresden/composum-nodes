@@ -655,10 +655,11 @@
                     var path = this.pathWidget.getValue();
                     if (path !== this.lastPathSelected) {
                         if (path.indexOf('/') === 0) {
-                            core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (data) {
-                                this.lastPathSelected = data.path;
-                                this.onPathChanged(data.path);
-                            }, this));
+                            core.getJson('/bin/cpm/nodes/node.tree.json' + core.encodePath(path),
+                                _.bind(function (data) {
+                                    this.lastPathSelected = data.path;
+                                    this.onPathChanged(data.path);
+                                }, this));
                         }
                     }
                     this.busy = false;
@@ -820,7 +821,7 @@
              * retrieves the referenc for the path and stores this reference as value
              */
             retrieveReference: function (path) {
-                core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (data) {
+                core.getJson('/bin/cpm/nodes/node.tree.json' + core.encodePath(path), _.bind(function (data) {
                     this.path = path;
                     this.setValue(data.uuid ? data.uuid : data.id);
                 }, this));
