@@ -30,7 +30,7 @@
                 } else {
                     browser.current = undefined;
                     if (!supressEvent) {
-                        $(document).trigger("path:selected", [path]);
+                        $(document).trigger("path:selected", []);
                     }
                 }
             }
@@ -41,7 +41,7 @@
                 path = browser.current.path;
             }
             if (path) {
-                core.getJson('/bin/cpm/nodes/node.tree.json' + path,
+                core.getJson('/bin/cpm/nodes/node.tree.json' + core.encodePath(path),
                     _.bind(function (result) {
                         browser.current = {
                             path: path,
@@ -346,7 +346,7 @@
                 var clipboard = core.console.getProfile().get('nodes', 'clipboard');
                 if (path && clipboard && clipboard.path) {
                     var name = core.getNameFromPath(clipboard.path);
-                    core.ajaxPut("/bin/cpm/nodes/node.copy.json" + path, JSON.stringify({
+                    core.ajaxPut("/bin/cpm/nodes/node.copy.json" + core.encodePath(path), JSON.stringify({
                         path: clipboard.path,
                         name: name
                     }), {

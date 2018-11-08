@@ -395,7 +395,8 @@
 
             setupStatus: function () {
                 var path = browser.getCurrentPath();
-                core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ACTIVE.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
+                core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ACTIVE.json' + core.encodePath(path)
+                    + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
                     _.bind(function (data, msg, xhr) {
                         if (data && data.length > 0) {
                             this.scriptStarted();
@@ -535,7 +536,8 @@
                 this.$historyList.html('');
                 if (this.$bottomArea.hasClass('history')) {
                     var path = browser.getCurrentPath();
-                    core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ALL.json' + path + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
+                    core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ALL.json' + core.encodePath(path)
+                        + '?topic=com/composum/sling/core/script/GroovyJobExecutor', {},
                         _.bind(function (data, msg, xhr) {
                             for (var i = 0; i < data.length; i++) {
                                 var state = data[i].jobState;
@@ -669,7 +671,7 @@
                 if (props !== 'type') {
                     url += '.' + props;
                 }
-                return core.getContextUrl(url + '.json' + path);
+                return core.getContextUrl(url + '.json' + core.encodePath(path));
             },
 
             upload: function () {

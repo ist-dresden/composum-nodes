@@ -30,7 +30,7 @@
 
             loadTableData: function (table, scope, callback) {
                 var path = browser.getCurrentPath();
-                core.getJson('/bin/cpm/nodes/security.accessPolicies.' + scope + '.json' + path,
+                core.getJson('/bin/cpm/nodes/security.accessPolicies.' + scope + '.json' + core.encodePath(path),
                     _.bind(function (result) {
                         var idx = 0;
                         _.each(result, function (aclEntry) {
@@ -65,7 +65,7 @@
                 if (firstSelected && firstSelected.index > 0) {
                     var predecessor = this.localTable.getData(firstSelected.index - 1);
                     var successor = this.localTable.getData(firstSelected.index + 1);
-                    core.ajaxPost("/bin/cpm/nodes/security.reorder.json" + path, {
+                    core.ajaxPost("/bin/cpm/nodes/security.reorder.json" + core.encodePath(path), {
                         //data
                         object: JSON.stringify(firstSelected),
                         before: JSON.stringify(predecessor)
@@ -93,7 +93,7 @@
                 var predecessor = this.localTable.getData(firstSelected.index - 1);
                 var successor = this.localTable.getData(firstSelected.index + 1);
                 if (firstSelected && firstSelected.index + 1 < this.localTable.numberOfRows()) {
-                    core.ajaxPost("/bin/cpm/nodes/security.reorder.json" + path, {
+                    core.ajaxPost("/bin/cpm/nodes/security.reorder.json" + core.encodePath(path), {
                         //data
                         object: JSON.stringify(firstSelected),
                         before: JSON.stringify(successor)
@@ -118,7 +118,7 @@
                     entries[i] = selected[i];
                 }
                 if (path && entries) {
-                    core.ajaxDelete("/bin/cpm/nodes/security.accessPolicy.json" + path, {
+                    core.ajaxDelete("/bin/cpm/nodes/security.accessPolicy.json" + core.encodePath(path), {
                         data: JSON.stringify(entries),
                         dataType: 'json'
                     }, _.bind(function (result) {

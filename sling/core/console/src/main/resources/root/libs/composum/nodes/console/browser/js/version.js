@@ -38,7 +38,7 @@
                 event.preventDefault();
                 var path = browser.getCurrentPath();
                 var version = this.name.getValue();
-                core.ajaxDelete("/bin/cpm/nodes/version.version.json" + path, {
+                core.ajaxDelete("/bin/cpm/nodes/version.version.json" + core.encodePath(path), {
                         data: JSON.stringify({
                             version: version,
                             path: path
@@ -70,7 +70,7 @@
                 this.labelname.$el.typeahead({
                     minLength: 1,
                     source: function (query, callback) {
-                        core.getJson('/bin/cpm/nodes/version.labels.json' + path + '?label=' + query,
+                        core.getJson('/bin/cpm/nodes/version.labels.json' + core.encodePath(path) + '?label=' + query,
                             function (data) {
                                 callback(data);
                             });
@@ -82,7 +82,7 @@
                 event.preventDefault();
                 var path = browser.getCurrentPath();
                 var label = this.labelname.getValue();
-                core.ajaxDelete("/bin/cpm/nodes/version.deletelabel.json" + path, {
+                core.ajaxDelete("/bin/cpm/nodes/version.deletelabel.json" + core.encodePath(path), {
                     data: JSON.stringify({
                         label: label,
                         path: path
@@ -121,7 +121,7 @@
                 var path = browser.getCurrentPath();
                 var version = this.$name.val();
                 var label = this.$labelname.getValue();
-                core.ajaxPut("/bin/cpm/nodes/version.addlabel.json" + path, JSON.stringify({
+                core.ajaxPut("/bin/cpm/nodes/version.addlabel.json" + core.encodePath(path), JSON.stringify({
                     version: version,
                     label: label,
                     path: path
@@ -160,7 +160,7 @@
                 this.$checkpoint.click(_.bind(this.checkpoint, this));
 
                 var path = browser.getCurrentPath();
-                core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (data) {
+                core.getJson('/bin/cpm/nodes/node.tree.json' + core.encodePath(path), _.bind(function (data) {
                     var node = data;
                     if (node.jcrState.isVersionable && node.jcrState.checkedOut) {
                         this.$checkpoint.removeClass('disabled');
@@ -206,7 +206,7 @@
 
             checkpoint: function (event) {
                 var path = browser.getCurrentPath();
-                core.ajaxPost('/bin/cpm/nodes/version.checkpoint.json' + path, {}, {},
+                core.ajaxPost('/bin/cpm/nodes/version.checkpoint.json' + core.encodePath(path), {}, {},
                     _.bind(function (result) {
                         core.browser.tree.refresh();
                         core.browser.nodeView.reload();
@@ -218,7 +218,7 @@
 
             checkin: function (event) {
                 var path = browser.getCurrentPath();
-                core.ajaxPost('/bin/cpm/nodes/version.checkin.json' + path, {}, {},
+                core.ajaxPost('/bin/cpm/nodes/version.checkin.json' + core.encodePath(path), {}, {},
                     _.bind(function (result) {
                         core.browser.tree.refresh();
                         core.browser.nodeView.reload();
@@ -230,7 +230,7 @@
 
             checkout: function (event) {
                 var path = browser.getCurrentPath();
-                core.ajaxPost('/bin/cpm/nodes/version.checkout.json' + path, {}, {},
+                core.ajaxPost('/bin/cpm/nodes/version.checkout.json' + core.encodePath(path), {}, {},
                     _.bind(function (result) {
                         core.browser.tree.refresh();
                         core.browser.nodeView.reload();
@@ -253,7 +253,7 @@
                 var rows = this.table.getSelections();
                 var version = rows[0].name;
                 var path = browser.getCurrentPath();
-                core.ajaxPut("/bin/cpm/nodes/version.restore.json" + path, JSON.stringify({
+                core.ajaxPut("/bin/cpm/nodes/version.restore.json" + core.encodePath(path), JSON.stringify({
                         version: version,
                         path: path
                     }), {
@@ -325,7 +325,7 @@
             loadContent: function () {
                 var path = browser.getCurrentPath();
                 this.state.load = true;
-                core.getJson("/bin/cpm/nodes/version.versions.json" + path,
+                core.getJson("/bin/cpm/nodes/version.versions.json" + core.encodePath(path),
                     _.bind(function (result) {
                         this.$table.bootstrapTable('load', result);
                     }, this), _.bind(function (result) {

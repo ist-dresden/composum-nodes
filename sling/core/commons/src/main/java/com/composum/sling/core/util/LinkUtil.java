@@ -386,10 +386,17 @@ public class LinkUtil {
      */
     public static String encodePath(String path) {
         if (path != null) {
+            path = path.replaceAll("%", "%25"); // must be the 1st !
             path = path.replaceAll("/jcr:", "/_jcr_");
-            path = path.replaceAll("&", "%26");
-            path = path.replaceAll(":", "%3A");
+            path = path.replaceAll("\\?", "%3F");
+            path = path.replaceAll(">", "%3E");
+            path = path.replaceAll("=", "%3D");
+            path = path.replaceAll("<", "%3C");
             path = path.replaceAll(";", "%3B");
+            path = path.replaceAll(":", "%3A");
+            path = path.replaceAll("\\+", "%2B");
+            path = path.replaceAll("&", "%26");
+            path = path.replaceAll("#", "%23");
             path = path.replaceAll(" ", "%20");
         }
         return path;

@@ -196,7 +196,8 @@
 
             setupStatus: function () {
                 var path = this.getCurrentPath();
-                core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ACTIVE.json' + path + '?topic=' + this.jobTopic, {},
+                core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ACTIVE.json' + core.encodePath(path)
+                    + '?topic=' + this.jobTopic, {},
                     _.bind(function (data, msg, xhr) {
                         if (data && data.length > 0) {
                             this.jobStarted(data[0]);
@@ -359,7 +360,8 @@
                 }
                 this.$auditList.html('');
                 var path = this.getCurrentPath();
-                core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ALL.json' + path + '?topic=' + this.jobTopic, {},
+                core.ajaxGet('/bin/cpm/core/jobcontrol.jobs.ALL.json' + core.encodePath(path)
+                    + '?topic=' + this.jobTopic, {},
                     _.bind(function (data, msg, xhr) {
                         for (var i = 0; i < data.length; i++) {
                             var state = data[i].jobState;

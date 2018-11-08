@@ -46,7 +46,7 @@
                     this.$description.val(undefined);
                 }
                 this.$path.val(path);
-                this.form.$el.attr('action', core.getContextUrl('/bin/cpm/package.update.json' + path));
+                this.form.$el.attr('action', core.getContextUrl('/bin/cpm/package.update.json' + core.encodePath(path)));
             },
 
             updatePackage: function (event) {
@@ -156,7 +156,7 @@
 
             reload: function () {
                 core.console.JobControlTab.prototype.reload.apply(this);
-                core.ajaxGet(core.getContextUrl('/bin/packages.header.html' + pckgmgr.getCurrentPath()), {},
+                core.ajaxGet(core.getContextUrl('/bin/packages.header.html' + core.encodePath(pckgmgr.getCurrentPath())), {},
                     _.bind(function (data) {
                         this.$header.html(data);
                     }, this));
