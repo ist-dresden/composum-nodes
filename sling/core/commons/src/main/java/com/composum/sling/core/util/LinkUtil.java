@@ -1,3 +1,8 @@
+/*
+ * copyright (c) 2015ff IST GmbH Dresden, Germany - https://www.ist-software.com
+ *
+ * This software may be modified and distributed under the terms of the MIT license.
+ */
 package com.composum.sling.core.util;
 
 import com.composum.sling.core.ResourceHandle;
@@ -387,9 +392,15 @@ public class LinkUtil {
     public static String encodePath(String path) {
         if (path != null) {
             path = path.replaceAll("/jcr:", "/_jcr_");
-            path = path.replaceAll("&", "%26");
-            path = path.replaceAll(":", "%3A");
+            path = path.replaceAll("\\?", "%3F");
+            path = path.replaceAll(">", "%3E");
+            path = path.replaceAll("=", "%3D");
+            path = path.replaceAll("<", "%3C");
             path = path.replaceAll(";", "%3B");
+            path = path.replaceAll(":", "%3A");
+            path = path.replaceAll("\\+", "%2B");
+            path = path.replaceAll("&", "%26");
+            path = path.replaceAll("#", "%23");
             path = path.replaceAll(" ", "%20");
         }
         return path;

@@ -161,8 +161,16 @@
              */
             refresh: function (callback) {
                 var currentPath = this.getSelectedPath();
+                if (this.log.getLevel() <= log.levels.DEBUG) {
+                    this.log.debug(this.nodeIdPrefix + 'tree.refresh(' + currentPath + ')>>>');
+                }
+                this.preventFromSelect = true;
                 this.delegate('refresh.jstree', _.bind(function () {
                     this.undelegate('refresh.jstree');
+                    this.preventFromSelect = false;
+                    if (this.log.getLevel() <= log.levels.DEBUG) {
+                        this.log.debug(this.nodeIdPrefix + 'tree.refresh(' + currentPath + ').ends.');
+                    }
                     if (_.isFunction(callback)) {
                         callback(current);
                     } else {
@@ -178,78 +186,104 @@
              * selects the node specified by its node path if the node is accepted by the filter
              * opens all nodes up to the target node automatically
              */
-            selectNode: function (path, callback, supressEvent) {
+            selectNode: function (path, callback, suppressEvent) {
                 this.resetSelection();
                 if (path) {
-                    if (this.log.getLevel() <= log.levels.DEBUG) {
-                        this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ')');
-                    }
-                    var tree = this;
-                    var names = $.isArray(path) ? path : path.split('/');
-                    var index = 1;
-                    var rootPath = this.getRootPath();
-                    if (path.indexOf(rootPath) === 0) {
-                        if (rootPath !== '/') {
-                            var rootNames = rootPath.split('/');
-                            index = rootNames.length;
-                        }
-                        var $node;
-                        var exit = function () {
-                            tree.undelegate('after_open.jstree');
-                            if (_.isFunction(callback)) {
-                                callback(path);
+                    if (this.preventFromSelect) {
+                        window.setTimeout(_.bind(function () {
+                            if (this.log.getLevel() <= log.levels.DEBUG) {
+                                this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').delay...');
                             }
-                        };
-                        var drilldown = function () {
-                            var id;
-                            if (index < names.length - 1) {
-                                id = tree.nodeId(_.first(names, index + 1));
-                                $node = tree.$('#' + id);
-                                index++;
-                                if ($node) {
-                                    if (tree.jstree.is_open($node)) {
-                                        drilldown.apply(this);
-                                    } else {
-                                        if (!tree.jstree.is_leaf($node)) {
-                                            tree.jstree.open_node($node);
+                            this.selectNode(path, callback, suppressEvent);
+                        }, this), 100);
+                    } else {
+                        this.preventFromSelect = true;
+                        if (this.log.getLevel() <= log.levels.DEBUG) {
+                            this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ')>>>');
+                        }
+                        var tree = this;
+                        var names = $.isArray(path) ? path : path.split('/');
+                        var index = 1;
+                        var rootPath = this.getRootPath();
+                        if (path.indexOf(rootPath) === 0) {
+                            if (rootPath !== '/') {
+                                var rootNames = rootPath.split('/');
+                                index = rootNames.length;
+                            }
+                            var $node;
+                            var exit = _.bind(function () {
+                                tree.undelegate('after_open.jstree');
+                                this.preventFromSelect = false;
+                                if (_.isFunction(callback)) {
+                                    callback(path);
+                                }
+                                if (this.log.getLevel() <= log.levels.DEBUG) {
+                                    this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').exit.');
+                                }
+                            }, this);
+                            var drilldown = function () {
+                                var id;
+                                if (index < names.length - 1) {
+                                    id = tree.nodeId(_.first(names, index + 1));
+                                    $node = tree.$('#' + id);
+                                    index++;
+                                    if ($node && $node.length > 0) {
+                                        if (tree.jstree.is_open($node)) {
+                                            drilldown.apply(this);
                                         } else {
-                                            exit();
+                                            if (!tree.jstree.is_leaf($node)) {
+                                                tree.jstree.open_node($node, function (obj, ok) {
+                                                    if (!ok) {
+                                                        exit();
+                                                    }
+                                                });
+                                            } else {
+                                                exit();
+                                            }
                                         }
+                                    } else {
+                                        exit();
                                     }
                                 } else {
+                                    id = tree.nodeId(_.first(names, names.length));
+                                    $node = tree.$('#' + id);
+                                    if ($node && $node.length > 0) {
+                                        tree.jstree.select_node($node, suppressEvent);
+                                        this.scrollIntoView($node);
+                                    }
                                     exit();
                                 }
-                            } else {
-                                id = tree.nodeId(_.first(names, names.length));
-                                $node = tree.$('#' + id);
-                                if ($node) {
-                                    tree.jstree.select_node($node, supressEvent);
-                                    this.scrollIntoView($node);
+                            };
+                            this.delegate('after_open.jstree', undefined, _.bind(drilldown, this));
+                            $node = this.$('#' + this.nodeId(this.getRootPath()));
+                            if ($node && $node.length > 0) {
+                                if (this.jstree.is_open($node)) {
+                                    drilldown.apply(this);
+                                } else {
+                                    if (!this.jstree.is_leaf($node)) {
+                                        this.jstree.open_node($node, function (obj, ok) {
+                                            if (!ok) {
+                                                exit();
+                                            }
+                                        });
+                                    } else {
+                                        exit();
+                                    }
                                 }
+                            } else {
                                 exit();
                             }
-                        };
-                        this.delegate('after_open.jstree', undefined, _.bind(drilldown, this));
-                        $node = this.$('#' + this.nodeId(this.getRootPath()));
-                        if ($node) {
-                            if (this.jstree.is_open($node)) {
-                                drilldown.apply(this);
-                            } else {
-                                if (!this.jstree.is_leaf($node)) {
-                                    this.jstree.open_node($node);
-                                } else {
-                                    exit();
-                                }
-                            }
+                        } else {
+                            this.log.warn(this.nodeIdPrefix + 'tree.selectNode(' + path + ') not matching to root: ' + rootPath);
                         }
-                    } else {
-                        this.log.warn(this.nodeIdPrefix + 'tree.selectNode(' + path + ') not matching to root: ' + rootPath);
                     }
                 }
             },
 
             resetSelection: function () {
-                this.jstree.deselect_all();
+                if (this.getSelectedTreeNode()) {
+                    this.jstree.deselect_all();
+                }
             },
 
             reset: function () {
@@ -281,14 +315,20 @@
              * sets the root path for the tree
              */
             setRootPath: function (rootPath, refresh) {
-                if (this.rootPath !== rootPath) {
-                    this.rootPath = rootPath;
-                    if (refresh !== false) {
-                        refresh = true;
+                if (this.preventFromSelect) {
+                    window.setTimeout(_.bind(function () {
+                        this.setRootPath(rootPath, refresh);
+                    }, this), 100);
+                } else {
+                    if (this.rootPath !== rootPath) {
+                        this.rootPath = rootPath;
+                        if (refresh !== false) {
+                            refresh = true;
+                        }
                     }
-                }
-                if (refresh) {
-                    this.refresh();
+                    if (refresh) {
+                        this.refresh();
+                    }
                 }
             },
 
@@ -384,6 +424,9 @@
                 if (!this.initialSelect) {
                     this.initialSelect = this.$el.attr('data-selected');
                 }
+                if (this.log.getLevel() <= log.levels.DEBUG) {
+                    this.log.debug(this.nodeIdPrefix + 'tree.initSelectedData(' + this.initialSelect + ')');
+                }
                 if (this.initialSelect) {
                     this.selectNode(this.initialSelect);
                     this.initialSelect = undefined;
@@ -394,28 +437,27 @@
             // ---------------
             // document events
 
+            /**
+             * @returns {boolean} 'true', if the path matches to the selected node, 'false' if not (node selection is triggered...)
+             */
             onPathSelected: function (event, path) {
                 var node = this.getSelectedTreeNode();
                 if (!node || node.original.path !== path) {
-                    if (!this.busy) {
-                        // prevent from endless self activation
-                        this.busy = true;
-                        if (this.log.getLevel() <= log.levels.DEBUG) {
-                            this.log.debug(this.nodeIdPrefix + 'tree.onPathSelected(' + path + '): '
-                                + (node ? JSON.stringify(node.original) : 'undefined'));
-                        }
-                        try {
-                            this.selectNode(path, _.bind(function (path) {
-                                var node = this.getSelectedTreeNode();
-                                if (!node) {
-                                    if (_.isFunction(this.onPathSelectedFailed)) {
-                                        this.onPathSelectedFailed(path);
-                                    }
-                                }
-                            }, this));
-                        } finally {
-                            this.busy = false;
-                        }
+                    if (this.log.getLevel() <= log.levels.DEBUG) {
+                        this.log.debug(this.nodeIdPrefix + 'tree.onPathSelected(' + path + '): '
+                            + (node ? JSON.stringify(node.original) : 'undefined'));
+                    }
+                    this.selectNode(path, _.bind(this.checkSelectedPath, this));
+                    return false;
+                }
+                return true;
+            },
+
+            checkSelectedPath: function (path) {
+                var node = this.getSelectedTreeNode();
+                if (!node) {
+                    if (_.isFunction(this.onPathSelectedFailed)) {
+                        this.onPathSelectedFailed(path);
                     }
                 }
             },
@@ -699,18 +741,12 @@
             },
 
             /**
-             * triggers a 'path:select(path[,name,type])' document event to adjust the view to the new selected path
+             * triggers a 'node:selected(path,node)' event to adjust the view to the new selected path
              * @param path
              * @param node
              */
             onNodeSelected: function (path, node) {
-                if (!this.busy) {
-                    if (this.log.getLevel() <= log.levels.DEBUG) {
-                        this.log.debug(this.nodeIdPrefix + 'tree.trigger.path:select(' + path + ','
-                            + JSON.stringify(node.original) + ') <- tree.onNodeSelected(~)');
-                    }
-                    $(document).trigger("path:select", [path, node.original.name, node.original.type]);
-                }
+                this.$el.trigger("node:selected", [path, node]);
             },
 
             /**

@@ -16,9 +16,9 @@
     };
 
     usermanagement.setCurrentPath = function(path) {
-        if (! usermanagement.current || usermanagement.current.path != path) {
+        if (! usermanagement.current || usermanagement.current.path !== path) {
             if (path) {
-                core.getJson ('/bin/cpm/usermanagement.tree.json' + path, undefined, undefined,
+                core.getJson ('/bin/cpm/usermanagement.tree.json' + core.encodePath(path), undefined, undefined,
                     _.bind (function(result) {
                         usermanagement.current = {
                             path: path,
@@ -81,7 +81,7 @@
             return '/bin/cpm/usermanagement.tree.json' + path;
         },
 
-        onNodeSelected: function(path, node, element) {
+        onNodeSelected: function(path, node) {
             $(document).trigger("path:select", [path]);
         },
 

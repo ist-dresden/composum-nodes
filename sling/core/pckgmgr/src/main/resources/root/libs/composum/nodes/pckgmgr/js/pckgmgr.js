@@ -19,9 +19,9 @@
         };
 
         pckgmgr.setCurrentPath = function (path) {
-            if (!pckgmgr.current || pckgmgr.current.path != path) {
+            if (!pckgmgr.current || pckgmgr.current.path !== path) {
                 if (path) {
-                    core.getJson('/bin/cpm/package.tree.json' + path, undefined, undefined,
+                    core.getJson('/bin/cpm/package.tree.json' + core.encodePath(path), undefined, undefined,
                         _.bind(function (result) {
                             var pathMatch = pckgmgr.pathPattern.exec(path);
                             pckgmgr.current = {
@@ -40,7 +40,7 @@
                                 nodeUrl: core.getContextUrl('/bin/packages.html'
                                     + window.core.encodePath(path)),
                                 downloadUrl: pathMatch
-                                    ? core.getContextUrl('/bin/cpm/package.download.zip' + path)
+                                    ? core.getContextUrl('/bin/cpm/package.download.zip' + core.encodePath(path))
                                     : ''
                             };
                             core.console.getProfile().set('pckgmgr', 'current', path);
@@ -98,7 +98,7 @@
                 return '/bin/cpm/package.tree.json' + path;
             },
 
-            onNodeSelected: function (path, node, element) {
+            onNodeSelected: function (path, node) {
                 $(document).trigger("path:select", [path]);
             }
         });

@@ -735,11 +735,14 @@
         },
 
         encodePath: function (path) {
-            path = encodeURI(path);
-            path = path.replace('&', '%26');
-            path = path.replace(';', '%3B');
+            path = encodeURI(path); // except: ',/?:@&=+$#' ...
+            path = path.replace('\?', '%3F');
+            path = path.replace('=', '%3D');
             path = path.replace(':', '%3A');
-            path = path.replace('.', '%2E');
+            path = path.replace('\+', '%2B');
+            path = path.replace('&', '%26');
+            path = path.replace('#', '%23');
+            path = path.replace(' ', '%20');
             return path;
         },
 

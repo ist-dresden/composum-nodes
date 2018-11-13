@@ -774,10 +774,12 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     margin-top: 0;
 }
 
+.detail-view .btn-toolbar .btn,
 .detail-view .detail-toolbar .btn,
 .detail-view .bootstrap-table .fixed-table-toolbar .btn {
-    width: 34px;
-    padding: 4px 9px 3px;
+    width: 31px;
+    height: 29px;
+    padding: 4px 7px 3px;
     font-size: 14px;
 }
 
