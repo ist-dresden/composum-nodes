@@ -17,6 +17,7 @@ import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Tries to print a graph of all client libraries. Unfortunately it is somewhat too complex to be useful.
@@ -52,7 +54,7 @@ public class DebugClientlibGraphServlet extends SlingSafeMethodsServlet {
     private static final Logger LOG = LoggerFactory.getLogger(DebugClientlibGraphServlet.class);
 
     @Override
-    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
+    protected void doGet(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response)
             throws ServletException, IOException {
         try {
             new ClientlibGrapher(request, response).run();
@@ -70,7 +72,7 @@ public class DebugClientlibGraphServlet extends SlingSafeMethodsServlet {
         private final String type;
         private final boolean compressfolders;
 
-        public ClientlibGrapher(SlingHttpServletRequest request, SlingHttpServletResponse response) throws IOException {
+        public ClientlibGrapher(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response) throws IOException {
             this.w = response.getWriter();
             this.request = request;
             this.response = response;
@@ -82,7 +84,7 @@ public class DebugClientlibGraphServlet extends SlingSafeMethodsServlet {
 
         public void run() throws RepositoryException {
             response.setContentType("text/plain");
-            QueryManager querymanager = resolver.adaptTo(Session.class).getWorkspace().getQueryManager();
+            QueryManager querymanager = Objects.requireNonNull(resolver.adaptTo(Session.class)).getWorkspace().getQueryManager();
             String statement = "//element(*)[sling:resourceType='composum/nodes/commons/clientlib']/" + type + "/..";
             NodeIterator clientlibs = querymanager.createQuery(statement, Query.XPATH).execute().getNodes();
             List<Clientlib> libs = new ArrayList<>();

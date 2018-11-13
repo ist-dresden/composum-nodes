@@ -1,16 +1,15 @@
 package com.composum.sling.clientlibs.processor;
 
 import com.composum.sling.clientlibs.service.ClientlibConfiguration;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 @Component(
-        label = "Clientlib Link Processor",
-        description = "Renders collections of link tags.",
-        immediate = true
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Clientlib Link Processor"
+        }
 )
-@Service
 public class DefaultLinkRenderer extends AbstractClientlibRenderer implements LinkRenderer {
 
     @Reference
@@ -18,7 +17,7 @@ public class DefaultLinkRenderer extends AbstractClientlibRenderer implements Li
 
     @Override
     protected String getLinkTemplate() {
-        return clientlibConfig.getLinkTemplate();
+        return clientlibConfig.getConfig().linkTemplate();
     }
 
 }

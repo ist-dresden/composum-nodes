@@ -24,6 +24,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -34,6 +35,7 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 
 import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -79,7 +81,7 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
     }
 
     @Override
-    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
+    protected void doGet(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html");
         PrintWriter writer = response.getWriter();
@@ -94,7 +96,7 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
         Clientlib.Type type = Clientlib.Type.valueOf(typeString);
 
         for (String lib : request.getParameterValues("lib")) {
-            ClientlibRef ref = null;
+            ClientlibRef ref;
             if (lib.startsWith(PREFIX_CATEGORY)) {
                 ref = ClientlibRef.forCategory(type, lib.substring(PREFIX_CATEGORY.length()), false, null);
             } else {
@@ -110,7 +112,7 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
             ServletException, IOException {
         try {
             ResourceResolver resolver = request.getResourceResolver();
-            QueryManager querymanager = resolver.adaptTo(Session.class).getWorkspace()
+            QueryManager querymanager = Objects.requireNonNull(resolver.adaptTo(Session.class)).getWorkspace()
                     .getQueryManager();
             String statement = "//element(*)[sling:resourceType='composum/nodes/commons/clientlib']/" + typeString +
                     "/..";

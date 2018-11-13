@@ -5,6 +5,7 @@ import com.composum.sling.clientlibs.handle.ClientlibLink;
 import com.composum.sling.clientlibs.handle.ClientlibRef;
 import com.composum.sling.clientlibs.service.ClientlibConfiguration;
 import com.composum.sling.clientlibs.service.ClientlibService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -16,6 +17,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
@@ -77,30 +79,38 @@ public class ClientlibCategoryServlet extends AbstractClientlibServlet {
     }
 
     @Override
-    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
+    protected void doGet(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response)
             throws ServletException, IOException {
         serve(true, request, response);
     }
 
     @Override
-    protected void doHead(SlingHttpServletRequest request, SlingHttpServletResponse response) throws ServletException, IOException {
+    protected void doHead(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response)
+            throws ServletException, IOException {
         serve(false, request, response);
     }
 
-    private void serve(boolean get, SlingHttpServletRequest request, SlingHttpServletResponse response) throws IOException, ServletException {
+    private void serve(boolean get,
+                       @Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response)
+            throws IOException, ServletException {
         if (usefulRequest(request, response)) {
             try {
                 RequestPathInfo pathInfo = request.getRequestPathInfo();
-                String selectors = pathInfo.getSelectorString();
-                Clientlib.Type type = Clientlib.Type.valueOf(pathInfo.getExtension().toLowerCase());
-                Pair<String, String> categoryAndHash = parseCategoryAndHashFromSuffix(pathInfo.getSuffix());
+                String extension = pathInfo.getExtension();
+                if (StringUtils.isNotBlank(extension)) {
+                    String selectors = pathInfo.getSelectorString();
+                    Clientlib.Type type = Clientlib.Type.valueOf(extension.toLowerCase());
+                    Pair<String, String> categoryAndHash = parseCategoryAndHashFromSuffix(pathInfo.getSuffix());
 
-                ClientlibRef ref = ClientlibRef.forCategory(type, categoryAndHash.getLeft(), false, null);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("deliver: {} ({})", ref.category, request.getRequestURI());
+                    ClientlibRef ref = ClientlibRef.forCategory(type, categoryAndHash.getLeft(), false, null);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("deliver: {} ({})", ref.category, request.getRequestURI());
+                    }
+                    deliverClientlib(get, request, response, ref, categoryAndHash.getRight(), isMinified(selectors));
+
+                } else {
+                    LOG.error("no extension found ({})", request.getRequestURL().toString());
                 }
-                deliverClientlib(get, request, response, ref, categoryAndHash.getRight(), isMinified(selectors));
-
             } catch (RepositoryException ex) {
                 throw new ServletException(ex);
             }

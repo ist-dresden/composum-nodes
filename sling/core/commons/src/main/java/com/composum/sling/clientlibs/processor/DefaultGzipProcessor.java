@@ -32,17 +32,14 @@ public class DefaultGzipProcessor implements GzipProcessor {
             final PipedOutputStream outputStream = new PipedOutputStream();
             result = new PipedInputStream(outputStream);
             final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream);
-            context.execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        IOUtils.copy(source, gzipOutputStream);
-                        gzipOutputStream.flush();
-                    } catch (IOException ex) {
-                        LOG.error(ex.getMessage(), ex);
-                    } finally {
-                        IOUtils.closeQuietly(gzipOutputStream);
-                    }
+            context.execute(() -> {
+                try {
+                    IOUtils.copy(source, gzipOutputStream);
+                    gzipOutputStream.flush();
+                } catch (IOException ex) {
+                    LOG.error(ex.getMessage(), ex);
+                } finally {
+                    IOUtils.closeQuietly(gzipOutputStream);
                 }
             });
         }

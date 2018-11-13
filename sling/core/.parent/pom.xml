@@ -49,8 +49,8 @@
         <bundle.failOnError>true</bundle.failOnError>
         <bundle.status.skip>true</bundle.status.skip>
         <source.encoding>UTF-8</source.encoding>
-        <java.source>1.9</java.source>
-        <java.target>1.9</java.target>
+        <java.source>11</java.source>
+        <java.target>11</java.target>
     </properties>
 
     <scm>

@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class FileHandle {
 
@@ -134,7 +135,7 @@ public class FileHandle {
     public void storeContent(InputStream stream) {
         if (content.isValid()) {
             ModifiableValueMap values = content.adaptTo(ModifiableValueMap.class);
-            values.put(ResourceUtil.PROP_DATA, stream);
+            Objects.requireNonNull(values).put(ResourceUtil.PROP_DATA, stream);
         }
     }
 
@@ -148,6 +149,7 @@ public class FileHandle {
                 if (StringUtils.isNotBlank(uuid)) {
                     ResourceResolver resolver = resource.getResourceResolver();
                     Session session = resolver.adaptTo(Session.class);
+                    assert session != null;
                     try {
                         Node node = session.getNodeByIdentifier(uuid);
                         if (node != null) {
