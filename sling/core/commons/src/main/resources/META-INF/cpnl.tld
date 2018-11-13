@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <taglib xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd"
-    version="2.0">
+        xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd"
+        version="2.0">
 
     <description>
         a collection of universal Sling related tags
@@ -203,6 +203,40 @@
         </attribute>
         <attribute>
             <name>body</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Object</type>
+        </attribute>
+        <dynamic-attributes>true</dynamic-attributes>
+    </tag>
+
+    <tag>
+        <description>
+            Embeds an anchor link tag
+        </description>
+        <name>anchor</name>
+        <tag-class>com.composum.sling.cpnl.AnchorTag</tag-class>
+        <body-content>JSP</body-content>
+        <attribute>
+            <name>name</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>tagName</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>classes</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>test</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.Object</type>

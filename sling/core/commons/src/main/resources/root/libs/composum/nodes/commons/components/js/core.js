@@ -739,7 +739,6 @@
             path = path.replace('\?', '%3F');
             path = path.replace('=', '%3D');
             path = path.replace(':', '%3A');
-            //path = path.replace('.', '%2E');
             path = path.replace('\+', '%2B');
             path = path.replace('&', '%26');
             path = path.replace('#', '%23');
