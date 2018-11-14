@@ -25,7 +25,11 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.PageContext;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -166,10 +170,9 @@ public interface BeanContext extends Adaptable {
         protected AbstractContext() {
         }
 
-        @Override
-        protected Object clone() {
+        protected Object cloneContext() {
             try {
-                return super.clone();
+                return clone();
             } catch (CloneNotSupportedException e) {
                 throw new IllegalStateException("Impossible: clone didn't work", e);
             }
@@ -186,7 +189,7 @@ public interface BeanContext extends Adaptable {
         @Override
         public BeanContext withLocale(Locale locale) {
             if (ObjectUtils.equals(getLocale(), locale)) return this;
-            AbstractContext cloned = (AbstractContext) clone();
+            AbstractContext cloned = (AbstractContext) cloneContext();
             cloned.locale = locale;
             return cloned;
         }
@@ -256,6 +259,7 @@ public interface BeanContext extends Adaptable {
                 if (!isSlingModelsModel) {
                     try {
                         SlingBean slingBean = (SlingBean) type.newInstance();
+                        //noinspection deprecation
                         slingBean.initialize(this);
                         return type.cast(slingBean);
                     } catch (InstantiationException | IllegalAccessException | RuntimeException e) {
@@ -448,7 +452,7 @@ public interface BeanContext extends Adaptable {
         @Override
         public Map withResource(Resource resource) {
             if (this.getResource() == resource) return this; // deliberately == since equals might be dangerous
-            Map copy = (Map) clone();
+            Map copy = (Map) cloneContext();
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
             return copy;
@@ -486,7 +490,7 @@ public interface BeanContext extends Adaptable {
         @Override
         public Service withResource(Resource resource) {
             if (this.getResource() == resource) return this; // deliberately == since equals might be dangerous
-            Service copy = (Service) clone();
+            Service copy = (Service) cloneContext();
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
             return copy;
@@ -567,7 +571,7 @@ public interface BeanContext extends Adaptable {
             if (this.getResource() == resource) {
                 return this; // deliberately == since equals might be dangerous
             }
-            Page copy = (Page) clone();
+            Page copy = (Page) cloneContext();
             copy.resource = resource;
             if (null == getResolver() && null != resource) {
                 resolver = resource.getResourceResolver();
@@ -708,7 +712,7 @@ public interface BeanContext extends Adaptable {
         @Override
         public Servlet withResource(Resource resource) {
             if (this.getResource() == resource) return this; // deliberately == since equals might be dangerous
-            Servlet copy = (Servlet) clone();
+            Servlet copy = (Servlet) cloneContext();
             copy.resource = resource;
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
             return copy;
