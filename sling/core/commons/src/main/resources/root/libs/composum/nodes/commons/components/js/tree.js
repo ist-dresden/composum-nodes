@@ -697,7 +697,7 @@
             },
 
             /**
-             * the 'check_callback' is used here as the final drag and drop handler
+             * the 'check_callback' is used here as the final drag and drop handler (if not in HTML5 mode)
              * and determines the dragged and the target node and the position in the target node
              * to delegates these to the 'this.dropNode' function which must be provided
              * by the Tree 'superclass' or 'instance' if that extension has
@@ -705,19 +705,16 @@
              */
             checkCallback: function (op, node, par, pos, more) {
                 if (op === 'move_node') {
-                    if (node && par) {
-                        var dropNode = par.original;
-                        var dragNode = node.original;
-                        if (dragNode.path !== dropNode.path) {
-                            var reorder = (dropNode.path === core.getParentPath(dragNode.path));
-                            if (!reorder || pos !== this.getNodeIndex(node)) {
-                                if (_.isFunction(this.dropNode)) {
-                                    this.dropNode(dragNode, dropNode, pos, reorder);
-                                } else {
-                                    core.alert('warning', 'Drag Stop... (no implemented action)',
-                                        'dragged: ' + dragNode.path + '<br/>' +
-                                        'to target: ' + dropNode.path + " / pos: " + pos +
-                                        ' (' + (reorder ? 'reorder' : 'move') + ')');
+                    if (!this.jstree.settings.dnd.use_html5) {
+                        if (node && par && node.original && par.original) {
+                            var dropNode = par.original;
+                            var dragNode = node.original;
+                            if (dragNode.path !== dropNode.path) {
+                                var reorder = (dropNode.path === core.getParentPath(dragNode.path));
+                                if (!reorder || pos !== this.getNodeIndex(node)) {
+                                    if (_.isFunction(this.dropNode)) {
+                                        this.dropNode(dragNode, dropNode, pos, reorder);
+                                    }
                                 }
                             }
                         }
@@ -831,17 +828,15 @@
             getNodeIndex: function (mixed) {
                 if (mixed) {
                     var node = this.jstree.get_node(mixed);
-                    if (node && node.original) {
-                        var path = node.original.path;
-                        var parentPath = core.getParentPath(path);
-                        if (parentPath) {
-                            var parentId = this.nodeId(parentPath);
+                    if (node) {
+                        var parentId = this.jstree.get_parent(node);
+                        if (parentId) {
                             var parentNode = this.jstree.get_node(parentId);
-                            if (parentNode && parentNode.original) {
-                                var children = parentNode.original.children;
+                            if (parentNode) {
+                                var children = parentNode.children;
                                 if (children) {
                                     for (var i = 0; i < children.length; i++) {
-                                        if (children[i].path === path) {
+                                        if (children[i] === node.id) {
                                             return i;
                                         }
                                     }
