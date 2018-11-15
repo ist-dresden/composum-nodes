@@ -389,19 +389,32 @@ public class LinkUtil {
      * @param path the path to encode
      * @return the URL encoded path
      */
+    public static String encodeUrl(String path) {
+        if (path != null) {
+            path = path.replaceAll(">", "%3E");
+            path = path.replaceAll("<", "%3C");
+            path = path.replaceAll(" ", "%20");
+        }
+        return path;
+    }
+
+    /**
+     * URL encoding for a resource path (without the encoding for the '/' path delimiters).
+     *
+     * @param path the path to encode
+     * @return the URL encoded path
+     */
     public static String encodePath(String path) {
         if (path != null) {
+            path = encodeUrl(path);
             path = path.replaceAll("/jcr:", "/_jcr_");
             path = path.replaceAll("\\?", "%3F");
-            path = path.replaceAll(">", "%3E");
             path = path.replaceAll("=", "%3D");
-            path = path.replaceAll("<", "%3C");
             path = path.replaceAll(";", "%3B");
             path = path.replaceAll(":", "%3A");
             path = path.replaceAll("\\+", "%2B");
             path = path.replaceAll("&", "%26");
             path = path.replaceAll("#", "%23");
-            path = path.replaceAll(" ", "%20");
         }
         return path;
     }
