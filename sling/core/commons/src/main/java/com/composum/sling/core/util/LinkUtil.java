@@ -34,10 +34,10 @@ public class LinkUtil {
     public static final String FORWARDED_SSL_HEADER = "X-Forwarded-SSL";
     public static final String FORWARDED_SSL_ON = "on";
 
-    public static final String URL_PATTERN_STRING = "^(?:(https?|mailto|tel):)?//([^/]+)(:\\d+)?(/.*)?$";
-    public static final Pattern URL_PATTERN = Pattern.compile(URL_PATTERN_STRING);
+    public static final String URL_PATTERN_STRING = "^(?:(https?):)?//([^/]+)(:\\d+)?(/.*)?$";
+    public static final Pattern URL_PATTERN = Pattern.compile(URL_PATTERN_STRING, Pattern.CASE_INSENSITIVE);
     public static final String SPECIAL_URL_STRING = "^(?:(mailto|tel):)(.+)$";
-    public static final Pattern SPECIAL_URL_PATTERN = Pattern.compile(SPECIAL_URL_STRING);
+    public static final Pattern SPECIAL_URL_PATTERN = Pattern.compile(SPECIAL_URL_STRING, Pattern.CASE_INSENSITIVE);
 
     public static final Pattern SELECTOR_PATTERN = Pattern.compile("^(.*/[^/]+)(\\.[^.]+)$");
 
