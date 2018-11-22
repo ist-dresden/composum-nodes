@@ -917,8 +917,8 @@
             initialize: function (options) {
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
                 this.$el.datetimepicker({
-                    locale: 'en',
-                    format: 'YYYY-MM-DD HH:mm:ss',
+                    locale: this.$el.data('locale') || 'en',
+                    format: this.$el.data('format') || 'YYYY-MM-DD HH:mm:ss',
                     //format: 'DD.MM.YYYY HH:mm:ss',
                     extraFormats: [
                         'YY-MM-DD',
@@ -942,7 +942,7 @@
                         'DD.MM.YYYY HH:mm:ss',
                         'DD.MM.YYYY HH:mm:ss ZZ'
                     ],
-                    calendarWeeks: true,
+                    calendarWeeks: this.$el.data('weeks') !== 'false',
                     showTodayButton: true,
                     showClear: true,
                     showClose: true

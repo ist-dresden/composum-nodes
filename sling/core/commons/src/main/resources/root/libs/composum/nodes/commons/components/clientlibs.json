@@ -13,6 +13,7 @@
       ],
       "embed": [
         "jslibs/bootstrap/3.3.7/css/bootstrap-theme.css",
+        "jslibs/bootstrap-datetimepicker/4.17.45/css/bootstrap-datetimepicker.css",
         "jslibs/bootstrap-slider/9.7.2/css/bootstrap-slider.css",
         "jslibs/bootstrap-colorpicker/2.5.0/css/bootstrap-colorpicker.css"
       ]
@@ -78,6 +79,7 @@
       "depends": [
         "jslibs/bootstrap/(3.*:3.3.7)/css/bootstrap.css",
         "jslibs/bootstrap/(3.*:3.3.7)/css/bootstrap-theme.css",
+        "jslibs/bootstrap-datetimepicker/(4.*:4.17.45)/css/bootstrap-datetimepicker.css",
         "jslibs/x-editable/(1.*:1.5.1)/bootstrap3-editable/css/bootstrap-editable.css",
         "jslibs/bootstrap-slider/(9.*:9.7.2)/css/bootstrap-slider.css",
         "jslibs/bootstrap-colorpicker/(2.*:2.5.0)/css/bootstrap-colorpicker.css",
