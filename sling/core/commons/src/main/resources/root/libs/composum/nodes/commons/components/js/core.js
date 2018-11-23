@@ -777,6 +777,12 @@
 
         endsWith: function (string, snippet) {
             return string.lastIndexOf(snippet) === string.length - snippet.length;
+        },
+
+        toBoolean: function (value, defaultResult) {
+            return value
+                ? !_.contains(['false', 'off', 'no'], value.toLowerCase())
+                : defaultResult ? defaultResult : false;
         }
     };
 

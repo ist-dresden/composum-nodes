@@ -916,10 +916,16 @@
 
             initialize: function (options) {
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
-                this.$el.datetimepicker({
+                this.data = {
                     locale: this.$el.data('locale') || 'en',
                     format: this.$el.data('format') || 'YYYY-MM-DD HH:mm:ss',
-                    //format: 'DD.MM.YYYY HH:mm:ss',
+                    options: {
+                        weeks: core.toBoolean(this.$el.data('weeks'), true)
+                    }
+                };
+                this.$el.datetimepicker({
+                    locale: this.data.locale,
+                    format: this.data.format,
                     extraFormats: [
                         'YY-MM-DD',
                         'YY-MM-DD HH:mm',
@@ -940,20 +946,39 @@
                         'DD.MM.YYYY HH:mm',
                         'DD.MM.YYYY HH:mm ZZ',
                         'DD.MM.YYYY HH:mm:ss',
-                        'DD.MM.YYYY HH:mm:ss ZZ'
+                        'DD.MM.YYYY HH:mm:ss ZZ',
+                        'D. MMMM YYYY',
+                        'D. MMMM YYYY HH:mm',
+                        'D. MMMM YYYY HH:mm ZZ',
+                        'D MMM YYYY',
+                        'D MMM YYYY HHmm',
+                        'D MMM YYYY HHmm ZZ',
+                        'D MMM YYYY HH:mm',
+                        'D MMM YYYY HH:mm ZZ',
+                        'MMMM D, YYYY',
+                        'MMMM D, YYYY HHmm',
+                        'MMMM D, YYYY HHmm ZZ',
+                        'MMMM D, YYYY HH:mm',
+                        'MMMM D, YYYY HH:mm ZZ',
+                        'MM/DD/YYYY',
+                        'MM/DD/YYYY HHmm',
+                        'MM/DD/YYYY HHmm ZZ',
+                        'MM/DD/YYYY HH:mm',
+                        'MM/DD/YYYY HH:mm ZZ'
                     ],
-                    calendarWeeks: this.$el.data('weeks') !== 'false',
+                    calendarWeeks: this.data.options.weeks,
                     showTodayButton: true,
                     showClear: true,
                     showClose: true
                 });
+                this.datetimepicker = this.$el.data('DateTimePicker');
             },
 
             /**
              * defines the (initial) value of the input field
              */
             setValue: function (value, triggerChange) {
-                this.$el.data('DateTimePicker').date(value ? new Date(value) : null);
+                this.datetimepicker.date(value ? moment(value, this.data.format) : null);
                 this.validate();
                 if (triggerChange) {
                     this.$el.trigger('change');
