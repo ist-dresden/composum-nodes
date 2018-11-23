@@ -170,6 +170,21 @@
             },
 
             /**
+             * finalize all date before the following submit (prepare data for storing)
+             */
+            finalize: function () {
+                var c = components.const.form;
+                this.$(widgets.const.css.selector.general).each(function () {
+                    if (this.view) {
+                        if (_.isFunction(this.view.finalize)) {
+                            // prepare each widget independent
+                            this.view.finalize.apply(this.view);
+                        }
+                    }
+                });
+            },
+
+            /**
              * Submit the form of the dialog.
              */
             submitForm: function (onSuccess, onError, onComplete) {
