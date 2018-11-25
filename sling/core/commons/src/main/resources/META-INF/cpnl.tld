@@ -102,6 +102,28 @@
 
     <tag>
         <description>
+            Generates a 'div' ans support the 'test' condition
+        </description>
+        <name>div</name>
+        <tag-class>com.composum.sling.cpnl.DivTag</tag-class>
+        <body-content>JSP</body-content>
+        <attribute>
+            <name>tagName</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>test</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Object</type>
+        </attribute>
+        <dynamic-attributes>true</dynamic-attributes>
+    </tag>
+
+    <tag>
+        <description>
             Generates image elements with mapped source URLs
         </description>
         <name>image</name>
@@ -138,6 +160,7 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
+            <description>deprecated: use 'class' like a normal HTML tag</description>
             <name>classes</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
@@ -196,6 +219,7 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
+            <description>deprecated: use 'class' like a normal HTML tag</description>
             <name>classes</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
@@ -236,6 +260,7 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
+            <description>deprecated: use 'class' like a normal HTML tag</description>
             <name>classes</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
@@ -270,6 +295,7 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
+            <description>deprecated: use 'class' like a normal HTML tag</description>
             <name>classes</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
@@ -322,6 +348,7 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
+            <description>deprecated: use 'class' like a normal HTML tag</description>
             <name>classes</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
@@ -359,7 +386,7 @@
             <name>value</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
-            <type>java.lang.String</type>
+            <type>java.lang.Object</type>
         </attribute>
         <attribute>
             <name>property</name>
@@ -386,19 +413,26 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
+            <name>locale</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.util.Locale</type>
+        </attribute>
+        <attribute>
             <name>tagName</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
         <attribute>
+            <description>deprecated: use 'class' like a normal HTML tag</description>
             <name>classes</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
         <attribute>
-            <description>deprecated use 'cleasses' instead od this attribute</description>
+            <description>deprecated: use 'class' like a normal HTML tag</description>
             <name>tagClass</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
@@ -410,6 +444,7 @@
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.Object</type>
         </attribute>
+        <dynamic-attributes>true</dynamic-attributes>
     </tag>
 
     <function>

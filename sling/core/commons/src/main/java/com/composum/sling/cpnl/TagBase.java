@@ -1,3 +1,8 @@
+/*
+ * copyright (c) 2015ff IST GmbH Dresden, Germany - https://www.ist-software.com
+ *
+ * This software may be modified and distributed under the terms of the MIT license.
+ */
 package com.composum.sling.cpnl;
 
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +51,10 @@ public abstract class TagBase extends CpnlBodyTagSupport implements DynamicAttri
 
     protected String getTagName() {
         return StringUtils.isNotBlank(tagName) ? tagName : getDefaultTagName();
+    }
+
+    public String getClasses() {
+        return StringUtils.isNotBlank(this.classes) ? classes : (String) dynamicAttributes.get("class");
     }
 
     public void setClasses(String classes) {

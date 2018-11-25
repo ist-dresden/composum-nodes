@@ -1,3 +1,8 @@
+/*
+ * copyright (c) 2015ff IST GmbH Dresden, Germany - https://www.ist-software.com
+ *
+ * This software may be modified and distributed under the terms of the MIT license.
+ */
 package com.composum.sling.cpnl;
 
 import org.apache.commons.lang3.StringUtils;
@@ -14,7 +19,10 @@ import java.io.IOException;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -76,7 +84,9 @@ public class TextTag extends TagBase {
     private String propertyName;
     private boolean escape = true;
     private boolean i18n = false;
-    private Format format;
+    private Format formatter;
+    private String format;
+    private Locale locale;
     private String output;
 
     public TextTag() {
@@ -88,7 +98,9 @@ public class TextTag extends TagBase {
         this.type = Type.text;
         this.value = null;
         this.propertyName = null;
+        this.locale = null;
         this.format = null;
+        this.formatter = null;
         this.i18n = false;
         this.escape = true;
         this.output = null;
@@ -113,11 +125,12 @@ public class TextTag extends TagBase {
                 }
             }
             if (this.value != null) {
-                if (this.format != null) {
-                    this.output = this.format.format(
-                            this.format instanceof MessageFormat
+                Format formatter = getFormatter(this.value);
+                if (formatter != null) {
+                    this.output = formatter.format(
+                            formatter instanceof MessageFormat
                                     ? new String[]{String.valueOf(this.value)}
-                                    : this.value);
+                                    : this.value instanceof Calendar ? ((Calendar) this.value).getTime() : this.value);
                 } else {
                     this.output = String.valueOf(this.value);
                 }
@@ -139,6 +152,9 @@ public class TextTag extends TagBase {
     protected void renderTagStart() {
     }
 
+    /**
+     * is rendering the text and a tag around if 'tagName' is set or CSS classes are specified
+     */
     @Override
     protected void renderTagEnd() {
         try {
@@ -148,7 +164,7 @@ public class TextTag extends TagBase {
                         : this.output);
                 JspWriter writer = this.pageContext.getOut();
                 boolean renderTag = renderTag()
-                        && (StringUtils.isNotBlank(this.tagName) || StringUtils.isNotBlank(this.classes));
+                        && (StringUtils.isNotBlank(this.tagName) || StringUtils.isNotBlank(getClasses()));
                 if (renderTag) {
                     super.renderTagStart();
                 }
@@ -217,18 +233,41 @@ public class TextTag extends TagBase {
      * @param format the fmt to set
      */
     public void setFormat(String format) {
-        Pattern TEXT_FORMAT_STRING = Pattern.compile("\\{([^}]+)}(.+)$");
-        Matcher matcher = TEXT_FORMAT_STRING.matcher(format);
-        if (matcher.matches()) {
-            switch (matcher.group(1)) {
-                case "Message":
-                    this.format = new MessageFormat(matcher.group(2));
-                    break;
-                case "Date":
-                    this.format = new SimpleDateFormat(matcher.group(2));
-                    break;
+        this.format = format;
+    }
+
+    public Format getFormatter(Object value) {
+        if (formatter == null && format != null) {
+            Pattern TEXT_FORMAT_STRING = Pattern.compile("^\\{([^}]+)}(.+)$");
+            Matcher matcher = TEXT_FORMAT_STRING.matcher(format);
+            if (matcher.matches()) {
+                switch (matcher.group(1)) {
+                    case "Message":
+                        formatter = new MessageFormat(matcher.group(2), getLocale());
+                        break;
+                    case "Date":
+                        formatter = new SimpleDateFormat(matcher.group(2), getLocale());
+                        break;
+                }
+            }
+            if (formatter == null) {
+                if (value instanceof Calendar || value instanceof Date) {
+                    formatter = new SimpleDateFormat(format, getLocale());
+                }
             }
         }
+        return formatter;
+    }
+
+    public void setLocale(Locale locale) {
+        this.locale = locale;
+    }
+
+    public Locale getLocale() {
+        if (locale == null) {
+            locale = request.getLocale();
+        }
+        return locale;
     }
 
     /**
