@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
+
 public class PackageBean extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageBean.class);
@@ -110,7 +112,7 @@ public class PackageBean extends ConsoleSlingBean {
 
     @Override
     public String getUrl() {
-        return LinkUtil.getUrl(getRequest(), PackagesServlet.SERVLET_PATH + getPath());
+        return LinkUtil.getUrl(getRequest(), PackagesServlet.SERVLET_PATH + EXT_HTML + getPath());
     }
 
     @Override
@@ -297,7 +299,7 @@ public class PackageBean extends ConsoleSlingBean {
 
     public String getAcHandling() {
         AccessControlHandling acHandling = pckgDef.getAccessControlHandling();
-        return acHandling != null ? acHandling.name(): "";
+        return acHandling != null ? acHandling.name() : "";
     }
 
     public String getAcHandlingLabel() {

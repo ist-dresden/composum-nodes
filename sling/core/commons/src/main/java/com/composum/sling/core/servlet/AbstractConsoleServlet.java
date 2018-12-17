@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
+
 /**
  * A base class for a general hook (servlet) for a console view.
  */
@@ -31,12 +33,15 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
         this.bundleContext = bundleContext;
     }
 
+    protected abstract String getServletPath(BeanContext context);
+
     protected abstract Pattern getPathPattern(BeanContext context);
 
     protected abstract String getResourceType(BeanContext context);
 
     /**
      * extension point to check access rights for a console feature by feature path
+     *
      * @return the path to the console feature (content); 'null' if no check supported or check switched off
      */
     protected String getConsolePath(BeanContext context) {
@@ -81,7 +86,11 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
                 response.sendRedirect(LinkUtil.getUrl(request, getRequestPath(request)));
             }
         } else {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            if (pathInfo.equals(getServletPath(context))) {
+                response.sendRedirect(LinkUtil.getUrl(request, pathInfo + EXT_HTML));
+            } else {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            }
         }
     }
 
@@ -97,6 +106,7 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
 
     /**
      * Check access rights to the servlets path - is checking ACLs of the console path
+     *
      * @param context the current request
      * @return 'true' if access granted or access check switched off
      */
