@@ -8,25 +8,32 @@ import org.apache.felix.scr.annotations.sling.SlingServlet;
 
 import java.util.regex.Pattern;
 
+import static com.composum.sling.core.usermanagement.UserManagerServlet.SERVLET_PATH;
+
 /**
  * The general hook (servlet) for the User Manager feature provides the path '/bin/users.html/...'.
  */
 @SlingServlet(
-        paths = "/bin/users",
+        paths = SERVLET_PATH,
         methods = {"GET"}
 )
 public class UserManagerServlet extends AbstractConsoleServlet {
 
-    public static final String SERVLET_PATH = "/bin/users.html";
+    public static final String SERVLET_PATH = "/bin/users";
 
     public static final String RESOURCE_TYPE = "composum/nodes/usermgnt";
 
     public static final String CONSOLE_PATH = "/libs/composum/nodes/usermgnt/content/usermanagement";
 
-    public static final Pattern PATH_PATTERN = Pattern.compile("^(/bin/users(\\.[^/]+)?\\.html)(/.*)?$");
+    public static final Pattern PATH_PATTERN = Pattern.compile("^(" + SERVLET_PATH + "(\\.[^/]+)?\\.html)(/.*)?$");
 
     @Reference
     protected NodesConfiguration config;
+
+    @Override
+    protected String getServletPath(BeanContext context) {
+        return SERVLET_PATH;
+    }
 
     @Override
     protected Pattern getPathPattern(BeanContext context) {
