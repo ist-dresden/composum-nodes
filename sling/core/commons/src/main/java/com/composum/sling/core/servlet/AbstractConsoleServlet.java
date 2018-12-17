@@ -14,6 +14,7 @@ import org.osgi.framework.BundleContext;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -79,6 +80,8 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
                 // redirect to suffix path without console view if access not granted
                 response.sendRedirect(LinkUtil.getUrl(request, getRequestPath(request)));
             }
+        } else {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         }
     }
 
