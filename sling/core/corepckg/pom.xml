@@ -41,6 +41,32 @@
         </resources>
         <plugins>
 
+            <!-- embed the setup hook -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-bundles</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>composum-sling-core-setup</artifactId>
+                                    <outputDirectory>${project.build.directory}/vault-work/META-INF/vault/hooks</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+                <inherited>false</inherited>
+            </plugin>
+
             <plugin>
                 <groupId>com.day.jcr.vault</groupId>
                 <artifactId>content-package-maven-plugin</artifactId>
@@ -56,9 +82,12 @@
                         <filter>
                             <root>/libs/composum/nodes/install</root>
                             <includes>
-                                <include>.*/composum-sling-core-.*\.jar</include>
+                                <include>.*/composum-sling-core-jslibs.*\.jar</include>
+                                <include>.*/composum-sling-core-commons.*\.jar</include>
+                                <include>.*/composum-sling-core-console.*\.jar</include>
                                 <include>.*/composum-sling-package-manager.*\.jar</include>
                                 <include>.*/composum-sling-user-management.*\.jar</include>
+                                <include>.*/composum-sling-core-config.*\.jar</include>
                             </includes>
                         </filter>
                         <filter>
@@ -135,6 +164,11 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>composum-sling-core-config</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-sling-core-setup</artifactId>
             <version>${project.version}</version>
         </dependency>
 
