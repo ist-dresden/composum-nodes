@@ -82,8 +82,8 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
                 dispatcher.forward(request, response);
 
             } else {
-                // redirect to suffix path without console view if access not granted
-                response.sendRedirect(LinkUtil.getUrl(request, getRequestPath(request)));
+                // answer with 'forbidden' if access not granted (and give a chance for a new login)
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
             }
         } else {
             if (pathInfo.equals(getServletPath(context))) {
