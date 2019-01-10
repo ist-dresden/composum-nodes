@@ -1,6 +1,5 @@
 package com.composum.sling.nodes.service;
 
-import com.google.gson.stream.JsonReader;
 import org.junit.Test;
 
 import javax.annotation.Nonnull;
@@ -34,10 +33,10 @@ public class NodesSecurityServiceTest {
         TestService service = new TestService();
         try (
                 InputStream stream = getClass().getResourceAsStream(JAVA_RESOURCE_BASE + "acl.json");
-                Reader streamReader = new InputStreamReader(stream, UTF_8);
-                JsonReader reader = new JsonReader(streamReader)
+                Reader streamReader = new InputStreamReader(stream, UTF_8)
         ) {
-            service.addJsonAcl(null, reader);
+            //noinspection ConstantConditions
+            service.addJsonAcl(null, streamReader);
         }
     }
 }

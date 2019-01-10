@@ -5,6 +5,7 @@ import javax.annotation.Nullable;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Map;
 
 /**
@@ -53,6 +54,9 @@ public interface SecurityService {
      * @param jsonFilePath a repository path to the ACL JSON file
      */
     void addJsonAcl(@Nonnull Session session, @Nonnull String jsonFilePath)
+            throws RepositoryException, IOException;
+
+    void addJsonAcl(@Nonnull Session session, @Nonnull Reader reader)
             throws RepositoryException, IOException;
 
     void addAcl(@Nonnull Session session, @Nonnull String path,

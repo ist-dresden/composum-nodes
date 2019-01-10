@@ -49,25 +49,27 @@ public class NodesSecurityService implements SecurityService {
         if (jsonFileNode != null) {
             Property property = jsonFileNode.getNode(JcrConstants.JCR_CONTENT).getProperty(JcrConstants.JCR_DATA);
             try (InputStream stream = property.getBinary().getStream();
-                 Reader streamReader = new InputStreamReader(stream, UTF_8);
-                 JsonReader reader = new JsonReader(streamReader)) {
-                addJsonAcl(session, reader);
+                 Reader streamReader = new InputStreamReader(stream, UTF_8)) {
+                addJsonAcl(session, streamReader);
             }
         } else {
             throw new IOException("configuration file node not found (" + jsonFilePath + ")");
         }
     }
 
-    public void addJsonAcl(@Nonnull final Session session, @Nonnull final JsonReader reader)
+    @Override
+    public void addJsonAcl(@Nonnull final Session session, @Nonnull final Reader reader)
             throws RepositoryException, IOException {
-        if (reader.peek() == JsonToken.BEGIN_ARRAY) {
-            reader.beginArray();
-            while (reader.peek() != JsonToken.END_ARRAY) {
-                addAclObject(session, reader);
+        try (JsonReader jsonReader = new JsonReader(reader)) {
+            if (jsonReader.peek() == JsonToken.BEGIN_ARRAY) {
+                jsonReader.beginArray();
+                while (jsonReader.peek() != JsonToken.END_ARRAY) {
+                    addAclObject(session, jsonReader);
+                }
+                jsonReader.endArray();
+            } else {
+                addAclObject(session, jsonReader);
             }
-            reader.endArray();
-        } else {
-            addAclObject(session, reader);
         }
     }
 
