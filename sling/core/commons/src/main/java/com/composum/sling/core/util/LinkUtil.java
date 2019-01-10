@@ -14,6 +14,7 @@ import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -31,6 +32,8 @@ public class LinkUtil {
     public static final String PROP_TARGET = "sling:target";
     public static final String PROP_REDIRECT = "sling:redirect";
 
+    public static final String FORWARDED_PROTO = "X-Forwarded-Proto";
+    public static final String FORWARDED_PROTO_HTTPS = "https";
     public static final String FORWARDED_SSL_HEADER = "X-Forwarded-SSL";
     public static final String FORWARDED_SSL_ON = "on";
 
@@ -199,7 +202,12 @@ public class LinkUtil {
         if (!request.isSecure()) {
             return 80;
         }
-        return FORWARDED_SSL_ON.equalsIgnoreCase(request.getHeader(FORWARDED_SSL_HEADER)) ? 80 : 443;
+        return isForwaredSSL(request) ? 80 : 443;
+    }
+
+    public static boolean isForwaredSSL(HttpServletRequest request) {
+        return FORWARDED_SSL_ON.equalsIgnoreCase(request.getHeader(FORWARDED_SSL_HEADER)) ||
+                FORWARDED_PROTO.equalsIgnoreCase(request.getHeader(FORWARDED_PROTO_HTTPS));
     }
 
     /**
