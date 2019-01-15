@@ -20,8 +20,7 @@ import org.slf4j.LoggerFactory;
  * @author Mirko Zeibig
  *
  */
-@Component(metatype = true,
-           label = "Composum Core Sling Library Adapters",
+@Component(label = "Composum Core Sling Library Adapters",
            description = " Adapts Resources to ResourceHandles")
 @Properties({
     @Property(name = "service.description", value = "Composum Core Sling Library Adapters"),
