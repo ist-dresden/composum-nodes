@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 
 public class CoreRepositorySetupServiceTest {
 
-    public static final String JAVA_RESOURCE_BASE = "/com/composum/nodes/security/";
+    public static final String JAVA_RESOURCE_BASE = "/com/composum/sling/core/setup/";
 
     public static class TestService extends CoreRepositorySetupService {
 
