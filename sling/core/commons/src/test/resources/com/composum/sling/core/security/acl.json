@@ -4,6 +4,7 @@
     "acl": [
       {
         "principal": "everyone",
+        "groupPath": "${base}",
         "acl": [
           {
             "allow": true,
