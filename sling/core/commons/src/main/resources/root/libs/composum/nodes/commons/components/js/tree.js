@@ -26,6 +26,7 @@
             'orderedfolder': {'icon': 'fa fa-folder text-muted'},
             'package': {'icon': 'fa fa-file-archive-o'},
             'resource-package': {'icon': 'fa fa-file-archive-o'},
+            'tenant': {'icon': 'fa fa-university text-info'},
             'component': {'icon': 'fa fa-puzzle-piece text-info'},
             'container': {'icon': 'fa fa-cubes text-info'},
             'element': {'icon': 'fa fa-cube text-info'},
