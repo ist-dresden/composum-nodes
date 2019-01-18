@@ -10,79 +10,16 @@
         <relativePath>../.parent</relativePath>
     </parent>
 
-    <artifactId>composum-sling-core-setup</artifactId>
-    <packaging>jar</packaging>
+    <artifactId>composum-sling-core-setup-parent</artifactId>
+    <packaging>pom</packaging>
 
-    <name>Composum Nodes setup hook</name>
-    <description>the setup implementation code for the Core modules</description>
+    <name>Composum Nodes setup parent</name>
+    <description>setup implementation code modules</description>
 
-    <build>
-        <plugins>
+    <modules>
+        <module>util</module>
+        <module>hook</module>
+    </modules>
 
-            <!-- set main class -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.composum.sling.core.setup.SetupHook</mainClass>
-                            <addClasspath>true</addClasspath>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-
-        </plugins>
-    </build>
-
-    <dependencies>
-
-        <!-- Apache Sling -->
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.api</artifactId>
-        </dependency>
-
-        <!-- JCR API, Jackrabbit -->
-        <dependency>
-            <groupId>javax.jcr</groupId>
-            <artifactId>jcr</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>jackrabbit-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jackrabbit.vault</groupId>
-            <artifactId>org.apache.jackrabbit.vault</artifactId>
-        </dependency>
-
-        <!-- OSGi -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-        </dependency>
-
-        <!-- Logging -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-        </dependency>
-
-    </dependencies>
-    <profiles>
-
-        <profile>
-            <id>installBundle</id>
-        </profile>
-        <profile>
-            <id>installPackage</id>
-        </profile>
-        <profile>
-            <id>installTestContent</id>
-        </profile>
-
-    </profiles>
 </project>
 

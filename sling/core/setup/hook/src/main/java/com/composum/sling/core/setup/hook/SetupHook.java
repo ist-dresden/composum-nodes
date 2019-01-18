@@ -1,7 +1,8 @@
-package com.composum.sling.core.setup;
+package com.composum.sling.core.setup.hook;
 
 import org.apache.jackrabbit.vault.packaging.InstallContext;
 import org.apache.jackrabbit.vault.packaging.InstallHook;
+import org.apache.jackrabbit.vault.packaging.PackageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,7 @@ public class SetupHook implements InstallHook {
     public static final String TYPE_FOLDER = "sling:Folder";
 
     @Override
-    public void execute(InstallContext ctx) {
+    public void execute(InstallContext ctx) throws PackageException {
         //noinspection SwitchStatementWithTooFewBranches
         switch (ctx.getPhase()) {
             case INSTALLED:

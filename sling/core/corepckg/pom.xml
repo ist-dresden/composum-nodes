@@ -57,7 +57,7 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
-                                    <artifactId>composum-sling-core-setup</artifactId>
+                                    <artifactId>composum-sling-core-setup-hook</artifactId>
                                     <outputDirectory>${project.build.directory}/vault-work/META-INF/vault/hooks</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -168,7 +168,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>composum-sling-core-setup</artifactId>
+            <artifactId>composum-sling-core-setup-hook</artifactId>
             <version>${project.version}</version>
         </dependency>
 
