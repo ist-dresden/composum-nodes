@@ -140,8 +140,9 @@ public class SecurityServlet extends AbstractServiceServlet {
     //
 
     public class GetPrincipals implements ServletOperation {
-        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                final ResourceHandle resource) throws IOException, ServletException {
+        @Override
+        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -153,7 +154,8 @@ public class SecurityServlet extends AbstractServiceServlet {
                     name = path;
                 }
                 final Query q = new Query() {
-                    @Override public <T> void build(final QueryBuilder<T> builder) {
+                    @Override
+                    public <T> void build(final QueryBuilder<T> builder) {
                         builder.setCondition(builder.nameMatches(name + "%"));
                         builder.setSortOrder("@name", QueryBuilder.Direction.ASCENDING);
                         builder.setSelector(Authorizable.class);
@@ -181,8 +183,9 @@ public class SecurityServlet extends AbstractServiceServlet {
 
     public class RestrictionNames implements ServletOperation {
 
-        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                final ResourceHandle resource) throws IOException, ServletException {
+        @Override
+        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -203,8 +206,9 @@ public class SecurityServlet extends AbstractServiceServlet {
 
     public class SupportedPrivileges implements ServletOperation {
 
-        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                final ResourceHandle resource) throws IOException, ServletException {
+        @Override
+        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -229,8 +233,9 @@ public class SecurityServlet extends AbstractServiceServlet {
 
     public class ReorderOperation implements ServletOperation {
 
-        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                final ResourceHandle resource) throws IOException, ServletException {
+        @Override
+        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -254,7 +259,7 @@ public class SecurityServlet extends AbstractServiceServlet {
                         o = jrEntry;
                     }
                 }
-                if (o != null){
+                if (o != null) {
                     policy.orderBefore(o, b);
                     acManager.setPolicy(path, policy);
                     session.save();
@@ -363,6 +368,10 @@ public class SecurityServlet extends AbstractServiceServlet {
                 switch (scope) {
                     case effective:
                         policies = acManager.getEffectivePolicies(path);
+                        // FIXME: two equal sets from the ac manager on root...
+                        if ("/".equals(path) && policies.length == 2 && seemsTheSame(policies[0], policies[1])) {
+                            policies = new AccessControlPolicy[]{policies[0]};
+                        }
                         break;
                     default:
                         policies = acManager.getPolicies(path);
@@ -376,6 +385,13 @@ public class SecurityServlet extends AbstractServiceServlet {
                 LOG.error(ex.getMessage(), ex);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
             }
+        }
+
+        protected boolean seemsTheSame(AccessControlPolicy p1, AccessControlPolicy p2) {
+            return p1 instanceof JackrabbitAccessControlList &&
+                    p2 instanceof JackrabbitAccessControlList &&
+                    ((JackrabbitAccessControlList) p1).size() ==
+                            ((JackrabbitAccessControlList) p2).size();
         }
 
         protected void writePolicies(JsonWriter writer, AccessControlPolicy[] policies)
@@ -628,7 +644,7 @@ public class SecurityServlet extends AbstractServiceServlet {
     }
 
     protected boolean sameEntry(final JackrabbitAccessControlEntry jrEntry,
-            final AccessPolicyEntry entrySendFromClient) throws RepositoryException {
+                                final AccessPolicyEntry entrySendFromClient) throws RepositoryException {
         final String p1 = jrEntry.getPrincipal().getName();
         final String p2 = entrySendFromClient.principal;
         final boolean a1 = jrEntry.isAllow();
@@ -642,7 +658,7 @@ public class SecurityServlet extends AbstractServiceServlet {
     }
 
     protected boolean samePrivileges(final JackrabbitAccessControlEntry jrEntry,
-            final AccessPolicyEntry entrySendFromClient) {
+                                     final AccessPolicyEntry entrySendFromClient) {
         if (jrEntry.getPrivileges().length != entrySendFromClient.privileges.length) {
             return false;
         } else {
@@ -663,7 +679,7 @@ public class SecurityServlet extends AbstractServiceServlet {
     }
 
     protected boolean sameRestrictions(final JackrabbitAccessControlEntry jrEntry,
-            final AccessPolicyEntry entrySendFromClient) throws RepositoryException {
+                                       final AccessPolicyEntry entrySendFromClient) throws RepositoryException {
         if (jrEntry.getRestrictionNames().length != entrySendFromClient.restrictions.length) {
             return false;
         } else {
