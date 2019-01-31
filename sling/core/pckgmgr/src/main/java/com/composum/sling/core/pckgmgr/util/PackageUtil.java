@@ -77,11 +77,15 @@ public class PackageUtil {
         group, jcrpckg
     }
 
-    public static JcrPackageManager createPackageManager(SlingHttpServletRequest request) {
+    public static JcrPackageManager createPackageManager(SlingHttpServletRequest request)
+            throws RepositoryException {
         ResourceResolver resolver = request.getResourceResolver();
         Session session = resolver.adaptTo(Session.class);
-        JcrPackageManager manager = PackagingService.getPackageManager(session);
-        return manager;
+        if (session != null) {
+            return PackagingService.getPackageManager(session);
+        } else {
+            throw new RepositoryException("can't adapt resolver to session");
+        }
     }
 
     public static String getPath(SlingHttpServletRequest request) {

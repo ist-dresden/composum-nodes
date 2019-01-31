@@ -139,6 +139,7 @@ public class SecurityServlet extends AbstractServiceServlet {
     // Access Control
     //
 
+    @SuppressWarnings("Duplicates")
     public class GetPrincipals implements ServletOperation {
         @Override
         public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
@@ -181,6 +182,7 @@ public class SecurityServlet extends AbstractServiceServlet {
         }
     }
 
+    @SuppressWarnings("Duplicates")
     public class RestrictionNames implements ServletOperation {
 
         @Override
@@ -204,6 +206,7 @@ public class SecurityServlet extends AbstractServiceServlet {
         }
     }
 
+    @SuppressWarnings("Duplicates")
     public class SupportedPrivileges implements ServletOperation {
 
         @Override
@@ -231,6 +234,7 @@ public class SecurityServlet extends AbstractServiceServlet {
         }
     }
 
+    @SuppressWarnings("Duplicates")
     public class ReorderOperation implements ServletOperation {
 
         @Override
@@ -348,6 +352,7 @@ public class SecurityServlet extends AbstractServiceServlet {
     /**
      * the access rules retrieval for an JSON result of on policy list
      */
+    @SuppressWarnings("Duplicates")
     public class GetAccessPolicies implements ServletOperation {
 
         @Override
@@ -365,6 +370,7 @@ public class SecurityServlet extends AbstractServiceServlet {
                         RequestUtil.getSelector(request, PolicyScope.local));
 
                 AccessControlPolicy[] policies;
+                //noinspection SwitchStatementWithTooFewBranches
                 switch (scope) {
                     case effective:
                         policies = acManager.getEffectivePolicies(path);
@@ -430,14 +436,14 @@ public class SecurityServlet extends AbstractServiceServlet {
         }
 
         protected void writePrivileges(JsonWriter writer, AccessControlEntry entry)
-                throws IOException, RepositoryException {
+                throws IOException {
             Privilege[] privileges = entry.getPrivileges();
             writer.name("privileges");
             writePrivileges(writer, privileges);
         }
 
         protected void writePrivileges(JsonWriter writer, Privilege[] privileges)
-                throws IOException, RepositoryException {
+                throws IOException {
             writer.beginArray();
             for (Privilege privilege : privileges) {
                 writer.value(privilege.getName());
@@ -450,7 +456,12 @@ public class SecurityServlet extends AbstractServiceServlet {
             String[] restrictionNames = entry.getRestrictionNames();
             writer.name("restrictions").beginArray();
             for (String name : restrictionNames) {
-                writer.value(name + "=" + entry.getRestriction(name).getString());
+                try {
+                    Value value = entry.getRestriction(name);
+                    writer.value(name + "=" + (value != null ? value.toString() : "<null>"));
+                } catch (Exception ex) {
+                    writer.value(name + ":" + ex.toString());
+                }
             }
             writer.endArray();
         }
@@ -459,6 +470,7 @@ public class SecurityServlet extends AbstractServiceServlet {
     /**
      * the access rules retrieval for an JSON result of all policy aspects
      */
+    @SuppressWarnings("Duplicates")
     public class GetAllAccessPolicies extends GetAccessPolicies {
 
         @Override
@@ -513,6 +525,7 @@ public class SecurityServlet extends AbstractServiceServlet {
     /**
      * the access rules retrieval for an HTML table result
      */
+    @SuppressWarnings("Duplicates")
     public class GetHtmlAccessRules implements ServletOperation {
 
         @Override
@@ -549,7 +562,7 @@ public class SecurityServlet extends AbstractServiceServlet {
         }
 
         protected void writePolicies(PrintWriter writer, AccessControlPolicy[] policies, String rowCss)
-                throws IOException, RepositoryException {
+                throws RepositoryException {
             if (policies.length > 0) {
                 for (AccessControlPolicy policy : policies) {
                     writePolicy(writer, policy, rowCss);
@@ -560,7 +573,7 @@ public class SecurityServlet extends AbstractServiceServlet {
         }
 
         protected void writePolicies(PrintWriter writer, AccessControlPolicyIterator policies, String rowCss)
-                throws IOException, RepositoryException {
+                throws RepositoryException {
             if (policies.hasNext()) {
                 while (policies.hasNext()) {
                     writePolicy(writer, policies.nextAccessControlPolicy(), rowCss);
@@ -571,7 +584,7 @@ public class SecurityServlet extends AbstractServiceServlet {
         }
 
         protected void writePolicy(PrintWriter writer, AccessControlPolicy policy, String rowCss)
-                throws IOException, RepositoryException {
+                throws RepositoryException {
             if (policy instanceof JackrabbitAccessControlList) {
                 JackrabbitAccessControlList acl = (JackrabbitAccessControlList) policy;
                 for (AccessControlEntry entry : acl.getAccessControlEntries()) {
@@ -618,8 +631,7 @@ public class SecurityServlet extends AbstractServiceServlet {
             }
         }
 
-        protected void writePrivileges(PrintWriter writer, AccessControlEntry entry)
-                throws IOException, RepositoryException {
+        protected void writePrivileges(PrintWriter writer, AccessControlEntry entry) {
             Privilege[] privileges = entry.getPrivileges();
             for (int i = 0; i < privileges.length; ) {
                 writer.append(privileges[i].getName());
@@ -630,7 +642,7 @@ public class SecurityServlet extends AbstractServiceServlet {
         }
 
         protected void writeRestrictions(PrintWriter writer, JackrabbitAccessControlEntry entry)
-                throws IOException, RepositoryException {
+                throws RepositoryException {
             String[] restrictionNames = entry.getRestrictionNames();
             for (int i = 0; i < restrictionNames.length; ) {
                 writer.append(restrictionNames[i])
@@ -650,13 +662,12 @@ public class SecurityServlet extends AbstractServiceServlet {
         final boolean a1 = jrEntry.isAllow();
         final boolean a2 = entrySendFromClient.allow;
         if (p1.equals(p2) && a1 == a2) {
-            if (samePrivileges(jrEntry, entrySendFromClient) && sameRestrictions(jrEntry, entrySendFromClient)) {
-                return true;
-            }
+            return samePrivileges(jrEntry, entrySendFromClient) && sameRestrictions(jrEntry, entrySendFromClient);
         }
         return false;
     }
 
+    @SuppressWarnings("BooleanVariableAlwaysNegated")
     protected boolean samePrivileges(final JackrabbitAccessControlEntry jrEntry,
                                      final AccessPolicyEntry entrySendFromClient) {
         if (jrEntry.getPrivileges().length != entrySendFromClient.privileges.length) {
@@ -678,6 +689,7 @@ public class SecurityServlet extends AbstractServiceServlet {
         }
     }
 
+    @SuppressWarnings("BooleanVariableAlwaysNegated")
     protected boolean sameRestrictions(final JackrabbitAccessControlEntry jrEntry,
                                        final AccessPolicyEntry entrySendFromClient) throws RepositoryException {
         if (jrEntry.getRestrictionNames().length != entrySendFromClient.restrictions.length) {

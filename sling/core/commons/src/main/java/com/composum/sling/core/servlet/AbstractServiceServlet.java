@@ -24,6 +24,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * A basic class for all '/bin/{service}/path/to/resource' servlets.
@@ -49,6 +53,8 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     public static final String PARAM_URL = "url";
     public static final String PARAM_VALUE = "value";
     public static final String PARAM_VERSION = "version";
+
+    public static final String DATE_FORMAT = "yyyy-MM-DD HH:mm:ss";
 
     protected abstract boolean isEnabled();
 
@@ -164,6 +170,47 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
                 "An element with the same name exists already - use a different name!"));
         jsonWriter.endObject();
         jsonWriter.endObject();
+    }
+
+    //
+    // JSON answer helpers
+    //
+
+    public static void jsonValue(JsonWriter writer, Object value) throws IOException {
+        if (value instanceof String) {
+            writer.value((String) value);
+        } else if (value instanceof Map) {
+            Map map = (Map) value;
+            writer.beginObject();
+            for (Object key : map.keySet()) {
+                writer.name(key.toString());
+                jsonValue(writer, map.get(key));
+            }
+            writer.endObject();
+        } else if (value instanceof Object[]) {
+            writer.beginArray();
+            for (Object v : (Object[]) value) {
+                jsonValue(writer, v);
+            }
+            writer.endArray();
+        } else if (value instanceof Iterable) {
+            writer.beginArray();
+            for (Object v : (Iterable) value) {
+                jsonValue(writer, v);
+            }
+            writer.endArray();
+        } else if (value instanceof Iterator) {
+            Iterator iterator = (Iterator) value;
+            writer.beginArray();
+            while (iterator.hasNext()) {
+                jsonValue(writer, iterator.next());
+            }
+            writer.endArray();
+        } else if (value instanceof Calendar) {
+            writer.value(new SimpleDateFormat(DATE_FORMAT).format(((Calendar) value).getTime()));
+        } else {
+            writer.value(value != null ? value.toString() : null);
+        }
     }
 
     //

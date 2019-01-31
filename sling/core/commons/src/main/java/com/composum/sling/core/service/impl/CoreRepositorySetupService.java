@@ -271,7 +271,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
             throws RepositoryException {
         Node node;
         try {
-            node = session.getNode(path);
+            node = session.getNode(StringUtils.isNotBlank(path) ? path : "/");
         } catch (PathNotFoundException nf) {
             LOG.info("createNode({},{})", path, primaryType);
             Node parent = makeNodeAvailable(session, StringUtils.substringBeforeLast(path, "/"), primaryType);

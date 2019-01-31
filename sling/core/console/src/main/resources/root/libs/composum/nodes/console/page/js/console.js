@@ -490,19 +490,42 @@
              */
             selectTab: function (name, group) {
                 if (!name) {
-                    name = 'properties';
+                    name = this.currentTab || 'properties';
+                }
+                this.refreshContent(name, _.bind(function () {
+                    this.$detailTabs.find('a.active').removeClass('active');
+                    var $item = this.$detailTabs.find('a[href="#' + name + '"]');
+                    $item.addClass('active');
+                    if (!group) {
+                        group = $item.attr('data-group');
+                    }
+                    core.console.getProfile().set(this.getProfileId(), 'detailTab', group);
+                    this.currentTab = name;
+                }, this));
+            },
+
+            /**
+             * the event handler for the tab actions (button links) calls 'selectTab' with the links anchor
+             */
+            tabSelected: function (event) {
+                event.preventDefault();
+                var $action = $(event.currentTarget).closest('a');
+                var tab = $action.attr('href').substring(1);
+                this.selectTab(tab);
+                return false;
+            },
+
+            refreshContent: function (name, refreshTabState) {
+                if (!name) {
+                    name = this.currentTab || 'properties';
                 }
                 var path = this.getCurrentPath();
-                if (path) {
-                    var href = this.getTabUri(name) + window.core.encodePath(path)
+                if (name && path) {
+                    var href = this.getTabUri(name) + window.core.encodePath(path);
                     this.$detailContent.load(core.getContextUrl(href), _.bind(function () {
-                        this.$detailTabs.find('a.active').removeClass('active');
-                        var $item = this.$detailTabs.find('a[href="#' + name + '"]');
-                        $item.addClass('active');
-                        if (!group) {
-                            group = $item.attr('data-group');
+                        if (_.isFunction(refreshTabState)) {
+                            refreshTabState();
                         }
-                        core.console.getProfile().set(this.getProfileId(), 'detailTab', group);
                         // initialize the new view
                         this.viewWidget = undefined;
                         var tabTypes = this.getTabTypes();
@@ -517,17 +540,6 @@
                         }
                     }, this));
                 }
-            },
-
-            /**
-             * the event handler for the tab actions (button links) calls 'selectTab' with the links anchor
-             */
-            tabSelected: function (event) {
-                event.preventDefault();
-                var $action = $(event.currentTarget).closest('a');
-                var tab = $action.attr('href').substring(1);
-                this.selectTab(tab);
-                return false;
             }
         });
 
