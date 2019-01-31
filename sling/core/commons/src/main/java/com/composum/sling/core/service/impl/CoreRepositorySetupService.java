@@ -55,7 +55,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
 
     @Override
     public void addJsonAcl(@Nonnull final Session session, @Nonnull final String jsonFilePath,
-                           @Nullable final Map<String, String> values)
+                           @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
         Node jsonFileNode = session.getNode(jsonFilePath);
         if (jsonFileNode != null) {
@@ -71,7 +71,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
 
     @Override
     public void addJsonAcl(@Nonnull final Session session, @Nonnull final Reader reader,
-                           @Nullable final Map<String, String> values)
+                           @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
         try (JsonReader jsonReader = new JsonReader(
                 values != null ? new ValueEmbeddingReader(reader, values) : reader)) {
@@ -89,7 +89,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
 
     @Override
     public void removeJsonAcl(@Nonnull final Session session, @Nonnull final String jsonFilePath,
-                              @Nullable final Map<String, String> values)
+                              @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
         Node jsonFileNode = session.getNode(jsonFilePath);
         if (jsonFileNode != null) {
@@ -105,7 +105,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
 
     @Override
     public void removeJsonAcl(@Nonnull final Session session, @Nonnull final Reader reader,
-                              @Nullable final Map<String, String> values)
+                              @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
         try (JsonReader jsonReader = new JsonReader(
                 values != null ? new ValueEmbeddingReader(reader, values) : reader)) {

@@ -67,7 +67,7 @@ public class CoreRepositorySetupServiceTest {
                 InputStream stream = getClass().getResourceAsStream(JAVA_RESOURCE_BASE + "acl.json");
                 Reader streamReader = new InputStreamReader(stream, UTF_8)
         ) {
-            service.addJsonAcl(null, streamReader, new HashMap<String, String>() {{
+            service.addJsonAcl(null, streamReader, new HashMap<String, Object>() {{
                 put("base", "my/groups");
             }});
             assertEquals("my/groups", service.groupPath);

@@ -65,21 +65,21 @@ public interface RepositorySetupService {
      * @param jsonFilePath a repository path to the ACL JSON file
      */
     void addJsonAcl(@Nonnull Session session, @Nonnull String jsonFilePath,
-                    @Nullable Map<String, String> values)
+                    @Nullable Map<String, Object> values)
             throws RepositoryException, IOException;
 
     void addJsonAcl(@Nonnull Session session, @Nonnull Reader reader,
-                    @Nullable Map<String, String> values)
+                    @Nullable Map<String, Object> values)
             throws RepositoryException, IOException;
 
     /**
      * revert all changes made by 'addJsonAcl'... - use the same configuration file
      */
     void removeJsonAcl(@Nonnull Session session, @Nonnull String jsonFilePath,
-                       @Nullable Map<String, String> values)
+                       @Nullable Map<String, Object> values)
             throws RepositoryException, IOException;
 
     void removeJsonAcl(@Nonnull Session session, @Nonnull Reader reader,
-                       @Nullable Map<String, String> values)
+                       @Nullable Map<String, Object> values)
             throws RepositoryException, IOException;
 }

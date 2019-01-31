@@ -1,5 +1,8 @@
 package com.composum.sling.core.util;
 
+import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.api.wrappers.ValueMapDecorator;
+
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Reader;
@@ -13,14 +16,18 @@ public class ValueEmbeddingReader extends Reader {
     public static final int BUFSIZE = 512;
 
     protected final Reader reader;
-    protected final Map<String, String> values;
+    protected final ValueMap values;
 
     protected boolean eof = false;
     protected char[] buf = new char[BUFSIZE * 2]; // let place for values (max length:  BUFSIZE)
     protected int off = 0;
     protected int len = 0;
 
-    public ValueEmbeddingReader(Reader reader, Map<String, String> values) {
+    public ValueEmbeddingReader(Reader reader, Map<String, Object> values) {
+        this(reader, new ValueMapDecorator(values));
+    }
+
+    public ValueEmbeddingReader(Reader reader, ValueMap values) {
         this.reader = reader;
         this.values = values;
     }
@@ -85,7 +92,7 @@ public class ValueEmbeddingReader extends Reader {
                             }
                         }
                         if (!eof) {
-                            String value = values.get(key.toString().trim());
+                            String value = values.get(key.toString().trim(), String.class);
                             if (value != null) {
                                 value.getChars(0, value.length(), buf, len);
                                 len += value.length();

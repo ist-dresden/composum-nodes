@@ -19,7 +19,7 @@ public class ValueEmbeddingTest {
         String source = "{\"ab${1}\":\"xy${xy}z\"}";
         String result = "{\"ab22\":\"xyyxz\"}";
         ValueEmbeddingReader reader = new ValueEmbeddingReader(new StringReader(source),
-                new HashMap<String, String>() {{
+                new HashMap<String, Object>() {{
                     put("1", "22");
                     put("xy", "yx");
                 }});
@@ -31,7 +31,7 @@ public class ValueEmbeddingTest {
         String source = "{\"\\\\a\\${xx}b${1}\":\"xy${xy}z\"}x${ab";
         String result = "{\"\\a${xx}b22\":\"xyyxz\"}x${ab";
         ValueEmbeddingReader reader = new ValueEmbeddingReader(new StringReader(source),
-                new HashMap<String, String>() {{
+                new HashMap<String, Object>() {{
                     put("1", "22");
                     put("xy", "yx");
                 }});
@@ -44,7 +44,7 @@ public class ValueEmbeddingTest {
                 InputStream stream = getClass().getResourceAsStream("/com/composum/sling/core/util/with-values.json");
                 Reader streamReader = new InputStreamReader(stream, UTF_8)
         ) {
-            ValueEmbeddingReader reader = new ValueEmbeddingReader(streamReader, new HashMap<String, String>() {{
+            ValueEmbeddingReader reader = new ValueEmbeddingReader(streamReader, new HashMap<String, Object>() {{
                 put("segment", "SFTVWRBWRZTRTVRZRRZRTVHBSVERTHVRHZRDTVRDHRDVHHDRTBRHVDZVRHVHZETZVHBZEHETHVBZBH");
                 put("base", "AXEFWERGEETZVHTZJHBVZHZHCVETZFHCRWHVZCFGVECHVECHG");
                 put("key", "_");
