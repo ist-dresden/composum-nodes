@@ -1,9 +1,9 @@
 {
   "jcr:primaryType": "sling:Folder",
-  "sling:resourceType": "composum/nodes/console/query/template/set",
+  "sling:resourceType": "composum/nodes/browser/query/template/set",
   "by-types": {
     "jcr:primaryType": "nt:unstructured",
-    "sling:resourceType": "composum/nodes/console/query/template",
+    "sling:resourceType": "composum/nodes/browser/query/template",
     "jcr:title": "search resources by types",
     "group": "Nodes",
     "order": 60,
@@ -13,7 +13,7 @@
   },
   "by-resource-type": {
     "jcr:primaryType": "nt:unstructured",
-    "sling:resourceType": "composum/nodes/console/query/template",
+    "sling:resourceType": "composum/nodes/browser/query/template",
     "jcr:title": "search by resource types",
     "group": "Nodes",
     "order": 90,
@@ -23,7 +23,7 @@
   },
   "by-node-type": {
     "jcr:primaryType": "nt:unstructured",
-    "sling:resourceType": "composum/nodes/console/query/template",
+    "sling:resourceType": "composum/nodes/browser/query/template",
     "jcr:title": "search by primary or mixin type",
     "group": "Nodes",
     "order": 120,

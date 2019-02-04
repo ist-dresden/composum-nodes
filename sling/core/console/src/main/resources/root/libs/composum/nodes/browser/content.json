@@ -17,7 +17,7 @@
   "felix": {
     "jcr:primaryType": "nt:unstructured",
     "jcr:title": "Felix",
-    "sling:resourceType": "composum/nodes/console/felix",
+    "sling:resourceType": "composum/nodes/browser/felix",
     "categories": [
       "core"
     ],

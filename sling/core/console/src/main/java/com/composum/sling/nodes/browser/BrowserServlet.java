@@ -21,9 +21,9 @@ public class BrowserServlet extends AbstractConsoleServlet {
 
     public static final String SERVLET_PATH = "/bin/browser";
 
-    public static final String RESOURCE_TYPE = "composum/nodes/console/browser";
+    public static final String RESOURCE_TYPE = "composum/nodes/browser";
 
-    public static final String CONSOLE_PATH = "/libs/composum/nodes/console/content/browser";
+    public static final String CONSOLE_PATH = "/libs/composum/nodes/browser/content/browser";
 
     public static final Pattern PATH_PATTERN = Pattern.compile("^(" + SERVLET_PATH + "(\\.[^/]+)?\\.html)(/.*)?$");
 

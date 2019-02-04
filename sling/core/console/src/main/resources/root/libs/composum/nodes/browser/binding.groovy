@@ -1,4 +1,4 @@
-package root.libs.composum.nodes.console.browser
+package root.libs.composum.nodes.browser
 
 response.setContentType('text/html');
 println "<h4>Groovy Script Binding</h4>"

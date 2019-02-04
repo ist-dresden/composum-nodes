@@ -52,7 +52,7 @@
               <input name="name" class="widget property-name-widget form-control" type="text"
                      placeholder="property name" data-rules="mandatory">
             </div>
-            <sling:call script="/libs/composum/nodes/console/browser/dialogs/property-value.jsp" />
+            <sling:call script="/libs/composum/nodes/browser/dialogs/property-value.jsp" />
           </div>
 
           <div class="modal-footer buttons">

@@ -90,7 +90,7 @@
             },
 
             showExportMenu: function () {
-                core.ajaxGet('/libs/composum/nodes/console/query/export/set.html', {
+                core.ajaxGet('/libs/composum/nodes/browser/query/export/set.html', {
                         data: {
                             query: this.prepareQuery(this.$queryInput.val()),
                             filter: this.isFiltered() ? browser.tree.filter : ''
@@ -252,7 +252,7 @@
                 if (this.popover === 'templates') {
                     this.$povHook.popover('toggle');
                 } else {
-                    core.getHtml('/libs/composum/nodes/console/query/templates.html', _.bind(function (data) {
+                    core.getHtml('/libs/composum/nodes/browser/query/templates.html', _.bind(function (data) {
                         this.showPopover('templates', this.$templates.attr('title'), data);
                     }, this));
                 }

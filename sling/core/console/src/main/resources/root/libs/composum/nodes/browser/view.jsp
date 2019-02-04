@@ -5,7 +5,7 @@
 <sling:defineObjects />
 <cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
   <div class="detail-view">
-    <sling:call script="/libs/composum/nodes/console/browser/breadcrumbs.jsp" />
-    <sling:call script="/libs/composum/nodes/console/browser/views/${browser.viewType}.jsp" />
+    <sling:call script="/libs/composum/nodes/browser/breadcrumbs.jsp" />
+    <sling:call script="/libs/composum/nodes/browser/views/${browser.viewType}.jsp" />
   </div>
 </cpn:component>

@@ -11,10 +11,10 @@ public class ExportSet extends ConfigSet<ExportCfg> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExportSet.class);
 
-    public static final String EXPORT_SET_RESOURCE_TYPE = "composum/nodes/console/query/export/set";
+    public static final String EXPORT_SET_RESOURCE_TYPE = "composum/nodes/browser/query/export/set";
 
     public static final ResourceFilter EXPORT_SET_ITEM_FILTER =
-            new ResourceFilter.ResourceTypeFilter(new StringFilter.WhiteList("^composum/nodes/console/query/export$"));
+            new ResourceFilter.ResourceTypeFilter(new StringFilter.WhiteList("^composum/nodes/browser/query/export$"));
 
     public ExportSet(BeanContext context, Resource resource) {
         super(context, resource);

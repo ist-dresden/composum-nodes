@@ -1,0 +1,42 @@
+{
+  "browser": {
+    "sling:resourceType": "composum/nodes/commons/clientlib",
+    "category": [
+      "composum.core.console.browser"
+    ],
+    "order": 100,
+    "css": {
+      "jcr:primaryType": "nt:unstructured",
+      "depends": [
+        "category:composum.core.console.default"
+      ],
+      "embed": [
+        "composum/nodes/console/components/codeeditor/clientlib",
+        "composum/nodes/browser/css/nodes.css",
+        "composum/nodes/browser/css/browser.css",
+        "composum/nodes/browser/components/favorites/clientlib"
+      ]
+    },
+    "js": {
+      "jcr:primaryType": "nt:unstructured",
+      "depends": [
+        "category:composum.core.console.default",
+        "category:composum.edit.components.ace"
+      ],
+      "embed": [
+        "composum/nodes/browser/js/property.js",
+        "composum/nodes/browser/js/nodes.js",
+        "composum/nodes/browser/js/query.js",
+        "composum/nodes/browser/js/browser.js",
+        "composum/nodes/browser/js/navigation.js",
+        "composum/nodes/browser/components/favorites/clientlib",
+        "composum/nodes/browser/js/properties.js",
+        "composum/nodes/browser/js/accessPolicyEntryDialog.js",
+        "composum/nodes/browser/js/policiesTable.js",
+        "composum/nodes/browser/js/policiesTab.js",
+        "composum/nodes/browser/js/version.js",
+        "composum/nodes/browser/js/nodeview.js"
+      ]
+    }
+  }
+}

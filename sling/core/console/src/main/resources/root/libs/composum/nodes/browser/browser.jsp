@@ -15,7 +15,7 @@
                 <div class="split-pane-component left-pane">
                     <div id="browser-nav-split" class="split-pane vertical-split fixed-bottom favorites-closed">
                         <div class="split-pane-component top-pane">
-                            <sling:include resourceType="composum/nodes/console/browser/components/favorites"/>
+                            <sling:include resourceType="composum/nodes/browser/components/favorites"/>
                         </div>
                         <div class="split-pane-divider"></div>
                         <div class="split-pane-component bottom-pane">
