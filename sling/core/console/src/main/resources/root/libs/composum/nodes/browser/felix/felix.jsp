@@ -28,7 +28,7 @@
 </head>
 <body id="felix" class="console">
 <div id="ui">
-    <sling:call script="/libs/composum/nodes/console/page/dialogs.jsp"/>
+    <sling:include resourceType="/libs/composum/nodes/console/dialogs" replaceSelectors="minimal"/>
     <sling:include resourceType="composum/nodes/console/components/navbar"/>
     <div id="content-wrapper">
         <iframe width="100%" height="100%" src=""></iframe>

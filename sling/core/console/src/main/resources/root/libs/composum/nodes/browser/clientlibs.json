@@ -25,7 +25,6 @@
       ],
       "embed": [
         "composum/nodes/browser/js/property.js",
-        "composum/nodes/browser/js/nodes.js",
         "composum/nodes/browser/js/query.js",
         "composum/nodes/browser/js/browser.js",
         "composum/nodes/browser/js/navigation.js",

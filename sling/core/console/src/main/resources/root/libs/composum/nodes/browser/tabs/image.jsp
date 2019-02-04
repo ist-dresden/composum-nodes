@@ -38,7 +38,7 @@
         <div class="detail-content">
             <div class="image-frame ${browser.imageCSS}">
                 <div class="image-background"
-                     style="background-image:url(${cpn:unmappedUrl(slingRequest,'/libs/composum/nodes/console/images/image-background.png')})">
+                     style="background-image:url(${cpn:unmappedUrl(slingRequest,'/libs/composum/nodes/commons/images/image-background.png')})">
                     <img src=""/>
                 </div>
             </div>

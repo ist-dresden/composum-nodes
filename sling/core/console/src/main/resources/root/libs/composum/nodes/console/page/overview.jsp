@@ -9,7 +9,7 @@
 <cpn:clientlib type="css" path="composum/nodes/console/clientlibs/page"/>
 <body id="overview" class="console">
   <div id="ui">
-    <sling:call script="dialogs.jsp"/>
+    <sling:include resourceType="/libs/composum/nodes/console/dialogs" replaceSelectors="minimal"/>
     <sling:include resourceType="composum/nodes/console/components/navbar"/>
     <div class="content">
       <div class="row">
