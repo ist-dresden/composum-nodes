@@ -1,7 +1,7 @@
 <%@page session="false" pageEncoding="utf-8"%>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2"%>
 <sling:defineObjects />
-<sling:call script="/libs/composum/nodes/console/page/dialogs.jsp"/>
+<sling:include resourceType="/libs/composum/nodes/console/dialogs" replaceSelectors="minimal"/>
 <sling:call script="/libs/composum/nodes/usermgnt/dialogs/disableuser/user-disable.jsp"/>
 <sling:call script="/libs/composum/nodes/usermgnt/dialogs/changepassword/user-changepw.jsp"/>
 <sling:call script="/libs/composum/nodes/usermgnt/dialogs/adduser/user-create.jsp"/>

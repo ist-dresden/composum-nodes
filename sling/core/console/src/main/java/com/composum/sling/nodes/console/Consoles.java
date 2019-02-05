@@ -32,6 +32,7 @@ public class Consoles extends ConsolePage {
     public static final int ORDER_DEFAULT = 50;
 
     public static final String PROP_TARGET = "target";
+    public static final String PROP_DESCRIPTION = "description";
 
     public static final String PROP_PRECONDITION = "precondition";
     public static final String PRECONDITION_CLASS_AVAILABILITY = "class";
@@ -105,6 +106,10 @@ public class Consoles extends ConsolePage {
 
         public String getPath() {
             return handle.getPath();
+        }
+
+        public String getDescription() {
+            return handle.getProperty(PROP_DESCRIPTION, "");
         }
 
         public String getUrl() {

@@ -1,44 +1,4 @@
 {
-  "browser": {
-    "sling:resourceType": "composum/nodes/commons/clientlib",
-    "category": [
-      "composum.core.console.browser"
-    ],
-    "order": 100,
-    "css": {
-      "jcr:primaryType": "nt:unstructured",
-      "depends": [
-        "category:composum.core.console.default"
-      ],
-      "embed": [
-        "composum/nodes/console/components/codeeditor/clientlib",
-        "composum/nodes/console/browser/css/nodes.css",
-        "composum/nodes/console/browser/css/browser.css",
-        "composum/nodes/console/browser/components/favorites/clientlib"
-      ]
-    },
-    "js": {
-      "jcr:primaryType": "nt:unstructured",
-      "depends": [
-        "category:composum.core.console.default",
-        "category:composum.edit.components.ace"
-      ],
-      "embed": [
-        "composum/nodes/console/browser/js/property.js",
-        "composum/nodes/console/browser/js/nodes.js",
-        "composum/nodes/console/browser/js/query.js",
-        "composum/nodes/console/browser/js/browser.js",
-        "composum/nodes/console/browser/js/navigation.js",
-        "composum/nodes/console/browser/components/favorites/clientlib",
-        "composum/nodes/console/browser/js/properties.js",
-        "composum/nodes/console/browser/js/accessPolicyEntryDialog.js",
-        "composum/nodes/console/browser/js/policiesTable.js",
-        "composum/nodes/console/browser/js/policiesTab.js",
-        "composum/nodes/console/browser/js/version.js",
-        "composum/nodes/console/browser/js/nodeview.js"
-      ]
-    }
-  },
   "console": {
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "description": "embeds the complete set of console widgets and components",
@@ -79,8 +39,10 @@
       },
       "console": {
         "embed": [
-          "composum/nodes/console/page/js/dialogs.js",
-          "composum/nodes/console/page/js/console.js"
+          "composum/nodes/console/js/dialogs.js",
+          "composum/nodes/console/js/nodes.js",
+          "composum/nodes/console/js/console.js",
+          "composum/nodes/console/js/tree.js"
         ]
       }
     }

@@ -1,26 +1,4 @@
 {
   "jcr:primaryType": "sling:OrderedFolder",
-  "sling:resourceType": "composum/nodes/console/page",
-  "browser": {
-    "jcr:primaryType": "nt:unstructured",
-    "jcr:mixinTypes": [
-      "sling:Redirect"
-    ],
-    "jcr:title": "Browser",
-    "sling:redirect": "/bin/browser.html",
-    "categories": [
-      "core",
-      "nodes"
-    ],
-    "order": 10
-  },
-  "felix": {
-    "jcr:primaryType": "nt:unstructured",
-    "jcr:title": "Felix",
-    "sling:resourceType": "composum/nodes/console/felix",
-    "categories": [
-      "core"
-    ],
-    "order": 80
-  }
+  "sling:resourceType": "composum/nodes/console/page"
 }

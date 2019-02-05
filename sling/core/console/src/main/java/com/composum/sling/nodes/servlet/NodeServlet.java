@@ -575,7 +575,7 @@ public class NodeServlet extends NodeTreeServlet {
 
             String rendererType = request.getParameter("export");
 
-            String syntheticPath = "/libs/composum/nodes/console/query/export";
+            String syntheticPath = "/libs/composum/nodes/browser/query/export";
             SyntheticQueryResult resultResource = new SyntheticQueryResult(resolver, syntheticPath, result, filter, rendererType);
             resultResource.putValue("query", queryString);
 

@@ -1,4 +1,0 @@
-{
-  "jcr:primaryType": "sling:Folder",
-  "sling:resourceType": "composum/nodes/console/query/export/set"
-}
