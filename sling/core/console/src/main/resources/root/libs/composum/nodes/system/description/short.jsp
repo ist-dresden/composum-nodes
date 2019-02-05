@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <div class="description">
-    <cpn:link href="/libs/composum/nodes/browser/content/felix.html"><h3>Apache Sling Web Console</h3></cpn:link>
+    <cpn:link href="/libs/composum/nodes/system/content/felix.html"><h3>Apache Sling Web Console</h3></cpn:link>
     <p>The administative Web Console tools collection of the OSGi and Sling runtime system
         embedded in the Composum Console navigation (direct link:
         <cpn:link href="/system/console">/system/console</cpn:link>).</p>

@@ -63,7 +63,8 @@
                         </Export-Package>
                         <Sling-Initial-Content>
                             root/libs/composum/nodes/console;path:=/libs/composum/nodes/console;overwrite:=true,
-                            root/libs/composum/nodes/browser;path:=/libs/composum/nodes/browser;overwrite:=true
+                            root/libs/composum/nodes/browser;path:=/libs/composum/nodes/browser;overwrite:=true,
+                            root/libs/composum/nodes/system;path:=/libs/composum/nodes/system;overwrite:=true
                         </Sling-Initial-Content>
                     </instructions>
                 </configuration>

@@ -1,0 +1,14 @@
+{
+  "jcr:primaryType": "sling:OrderedFolder",
+  "sling:resourceType": "composum/nodes/console/page",
+  "felix": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Felix",
+    "description": "/libs/composum/nodes/system/description",
+    "sling:resourceType": "composum/nodes/system/felix",
+    "categories": [
+      "core"
+    ],
+    "order": 80
+  }
+}
