@@ -42,6 +42,7 @@ public class CpnlElFunctions {
 
     public static final String[][] RICH_TEXT_BASIC_ESCAPE = {
             // avoid double escape
+            {"&copy;", "&copy;"},
             {"&nbsp;", "&nbsp;"},
             {"&amp;", "&amp;"},
             {"&lt;", "&lt;"},
