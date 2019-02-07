@@ -17,6 +17,15 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>com.composum.sling.core</groupId>
+            <artifactId>composum-sling-user-management</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.sling.core</groupId>
+            <artifactId>composum-sling-core-commons</artifactId>
+        </dependency>
+
         <!-- Apache Sling -->
         <dependency>
             <groupId>org.apache.sling</groupId>

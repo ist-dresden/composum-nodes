@@ -1,5 +1,10 @@
 package com.composum.sling.core.setup.util;
 
+import com.composum.sling.core.usermanagement.core.UserManagementService;
+import org.apache.jackrabbit.api.JackrabbitSession;
+import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.jackrabbit.vault.packaging.InstallContext;
 import org.apache.jackrabbit.vault.packaging.PackageException;
 import org.osgi.framework.Bundle;
@@ -9,11 +14,59 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.RepositoryException;
+import java.util.List;
 import java.util.Map;
 
 public class SetupUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(SetupUtil.class);
+
+    public static void setupGroupsAndUsers(InstallContext ctx,
+                                           Map<String, List<String>> groups,
+                                           Map<String, List<String>> systemUsers,
+                                           Map<String, List<String>> users) {
+        UserManagementService userManagementService = getService(UserManagementService.class);
+        try {
+            JackrabbitSession session = (JackrabbitSession) ctx.getSession();
+            UserManager userManager = session.getUserManager();
+            if (groups != null) {
+                for (Map.Entry<String, List<String>> entry : groups.entrySet()) {
+                    Group group = userManagementService.getOrCreateGroup(session, userManager, entry.getKey());
+                    if (group != null) {
+                        for (String memberName : entry.getValue()) {
+                            userManagementService.assignToGroup(session, userManager, memberName, group);
+                        }
+                    }
+                }
+                session.save();
+            }
+            if (systemUsers != null) {
+                for (Map.Entry<String, List<String>> entry : systemUsers.entrySet()) {
+                    Authorizable user = userManagementService.getOrCreateUser(session, userManager, entry.getKey(), true);
+                    if (user != null) {
+                        for (String groupName : entry.getValue()) {
+                            userManagementService.assignToGroup(session, userManager, user, groupName);
+                        }
+                    }
+                }
+                session.save();
+            }
+            if (users != null) {
+                for (Map.Entry<String, List<String>> entry : users.entrySet()) {
+                    Authorizable user = userManagementService.getOrCreateUser(session, userManager, entry.getKey(), false);
+                    if (user != null) {
+                        for (String groupName : entry.getValue()) {
+                            userManagementService.assignToGroup(session, userManager, user, groupName);
+                        }
+                    }
+                }
+                session.save();
+            }
+        } catch (RepositoryException rex) {
+            LOG.error(rex.getMessage(), rex);
+        }
+    }
 
     /**
      * check a list of bundles (symbolic name, version) for the right version and active state
