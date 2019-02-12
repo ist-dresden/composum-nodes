@@ -227,40 +227,50 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                           @Nonnull final String[] privilegeKeys,
                           @Nonnull final Map restrictionKeys)
             throws RepositoryException {
-        final AccessControlManager acManager = session.getAccessControlManager();
-        final PrincipalManager principalManager = ((JackrabbitSession) session).getPrincipalManager();
-        final JackrabbitAccessControlList policies = AccessControlUtils.getAccessControlList(acManager, path);
-        final Principal principal = principalManager.getPrincipal(principalName);
-        final Privilege[] privileges = AccessControlUtils.privilegesFromNames(acManager, privilegeKeys);
-        final Map<String, Value> restrictions = new HashMap<>();
-        for (final Object key : restrictionKeys.keySet()) {
-            restrictions.put((String) key, new StringValue((String) restrictionKeys.get(key)));
+        try {
+            final AccessControlManager acManager = session.getAccessControlManager();
+            final PrincipalManager principalManager = ((JackrabbitSession) session).getPrincipalManager();
+            final JackrabbitAccessControlList policies = AccessControlUtils.getAccessControlList(acManager, path);
+            final Principal principal = principalManager.getPrincipal(principalName);
+            final Privilege[] privileges = AccessControlUtils.privilegesFromNames(acManager, privilegeKeys);
+            final Map<String, Value> restrictions = new HashMap<>();
+            for (final Object key : restrictionKeys.keySet()) {
+                restrictions.put((String) key, new StringValue((String) restrictionKeys.get(key)));
+            }
+            policies.addEntry(principal, privileges, allow, restrictions);
+            LOG.info("addAcl({},{})", principalName, Arrays.toString(privilegeKeys));
+            acManager.setPolicy(path, policies);
+        } catch (RepositoryException e) {
+            LOG.error("Error in addAcl({},{},{},{}, {}) : {}", new Object[]{path, principalName, allow, Arrays.asList(privilegeKeys), restrictionKeys, e.toString()});
+            throw e;
         }
-        policies.addEntry(principal, privileges, allow, restrictions);
-        LOG.info("addAcl({},{})", principalName, Arrays.toString(privilegeKeys));
-        acManager.setPolicy(path, policies);
     }
 
     protected void removeAcl(@Nonnull final Session session, @Nonnull final String path, @Nullable final String principal)
             throws RepositoryException {
-        final AccessControlManager acManager = session.getAccessControlManager();
-        JackrabbitAccessControlList policy = null;
         try {
-            policy = AccessControlUtils.getAccessControlList(acManager, path);
-        } catch (RepositoryException ignore) {
-        }
-        if (policy != null) {
-            for (final AccessControlEntry entry : policy.getAccessControlEntries()) {
-                final JackrabbitAccessControlEntry jrEntry = (JackrabbitAccessControlEntry) entry;
-                if (principal == null || principal.equals(jrEntry.getPrincipal().getName())) {
-                    LOG.info("removeAcl({},{})", entry.getPrincipal().getName(), Arrays.toString(entry.getPrivileges()));
-                    policy.removeAccessControlEntry(entry);
+            final AccessControlManager acManager = session.getAccessControlManager();
+            JackrabbitAccessControlList policy = null;
+            try {
+                policy = AccessControlUtils.getAccessControlList(acManager, path);
+            } catch (RepositoryException ignore) {
+            }
+            if (policy != null) {
+                for (final AccessControlEntry entry : policy.getAccessControlEntries()) {
+                    final JackrabbitAccessControlEntry jrEntry = (JackrabbitAccessControlEntry) entry;
+                    if (principal == null || principal.equals(jrEntry.getPrincipal().getName())) {
+                        LOG.info("removeAcl({},{})", entry.getPrincipal().getName(), Arrays.toString(entry.getPrivileges()));
+                        policy.removeAccessControlEntry(entry);
+                    }
+                }
+                acManager.setPolicy(path, policy);
+                if (policy.isEmpty()) {
+                    acManager.removePolicy(path, policy);
                 }
             }
-            acManager.setPolicy(path, policy);
-            if (policy.isEmpty()) {
-                acManager.removePolicy(path, policy);
-            }
+        } catch (RepositoryException e) {
+            LOG.error("Error in removeAcl({},{}) : {}", new Object[]{path, principal, e.toString()});
+            throw e;
         }
     }
 
@@ -276,6 +286,9 @@ public class CoreRepositorySetupService implements RepositorySetupService {
             LOG.info("createNode({},{})", path, primaryType);
             Node parent = makeNodeAvailable(session, StringUtils.substringBeforeLast(path, "/"), primaryType);
             node = parent.addNode(StringUtils.substringAfterLast(path, "/"), primaryType);
+        } catch (RepositoryException e) {
+            LOG.error("Error in makeNodeAvailable({},{}) : {}", new Object[]{path, primaryType, e.toString()});
+            throw e;
         }
         return node;
     }
@@ -288,6 +301,9 @@ public class CoreRepositorySetupService implements RepositorySetupService {
             LOG.info("removeNode({})", path);
             node.remove();
         } catch (PathNotFoundException ignore) {
+        } catch (RepositoryException e) {
+            LOG.error("Error in removeNode({},{}) : {}", path, e.toString());
+            throw e;
         }
     }
 
@@ -305,65 +321,85 @@ public class CoreRepositorySetupService implements RepositorySetupService {
             throw new RepositoryException("'" + id + "' exists but is not a group");
         }
         LOG.info("addGroup({},{})", id, intermediatePath);
-        authorizable = userManager.createGroup(new Principal() {
-            @Override
-            public String getName() {
-                return id;
-            }
-        }, intermediatePath);
+        try {
+            authorizable = userManager.createGroup(new Principal() {
+                @Override
+                public String getName() {
+                    return id;
+                }
+            }, intermediatePath);
         session.save();
+        } catch (RepositoryException e) {
+            LOG.error("Error in makeGroupAvailable({},{}) : {}", new Object[]{id, intermediatePath, e.toString()});
+            throw e;
+        }
         return authorizable;
     }
 
     protected void removeGroup(@Nonnull final Session session, @Nonnull final String id)
             throws RepositoryException {
-        UserManager userManager = ((JackrabbitSession) session).getUserManager();
-        Authorizable authorizable = userManager.getAuthorizable(id);
-        if (authorizable != null) {
-            if (authorizable.isGroup()) {
-                LOG.info("removeGroup({})", id);
-                authorizable.remove();
+        try {
+            UserManager userManager = ((JackrabbitSession) session).getUserManager();
+            Authorizable authorizable = userManager.getAuthorizable(id);
+            if (authorizable != null) {
+                if (authorizable.isGroup()) {
+                    LOG.info("removeGroup({})", id);
+                    authorizable.remove();
+                }
             }
+        } catch (RepositoryException e) {
+            LOG.error("Error in removeGroup({},{}) : {}", id, e.toString());
+            throw e;
         }
     }
 
     protected void makeMemberAvailable(@Nonnull final Session session,
                                        @Nonnull final String memberId, @Nonnull final List<String> groupIds)
             throws RepositoryException {
-        UserManager userManager = ((JackrabbitSession) session).getUserManager();
-        Authorizable member = userManager.getAuthorizable(memberId);
-        if (member != null) {
-            for (String groupId : groupIds) {
-                Authorizable authorizable = userManager.getAuthorizable(groupId);
-                if (authorizable != null && authorizable.isGroup()) {
-                    Group group = (Group) authorizable;
-                    if (!group.isMember(member)) {
-                        LOG.info("addMember({},{})", memberId, groupId);
-                        group.addMember(member);
-                        session.save();
+        try {
+            UserManager userManager = ((JackrabbitSession) session).getUserManager();
+            Authorizable member = userManager.getAuthorizable(memberId);
+            if (member != null) {
+                for (String groupId : groupIds) {
+                    Authorizable authorizable = userManager.getAuthorizable(groupId);
+                    if (authorizable != null && authorizable.isGroup()) {
+                        Group group = (Group) authorizable;
+                        if (!group.isMember(member)) {
+                            LOG.info("addMember({},{})", memberId, groupId);
+                            group.addMember(member);
+                            session.save();
+                        }
                     }
                 }
             }
+        } catch (RepositoryException e) {
+            LOG.error("Error in makeNodeAvailable({},{}) : {}", new Object[]{memberId, groupIds, e.toString()});
+            throw e;
         }
     }
 
     protected void removeMember(@Nonnull final Session session,
                                 @Nonnull final String memberId, @Nonnull final List<String> groupIds)
             throws RepositoryException {
-        UserManager userManager = ((JackrabbitSession) session).getUserManager();
-        Authorizable member = userManager.getAuthorizable(memberId);
-        if (member != null) {
-            for (String groupId : groupIds) {
-                Authorizable authorizable = userManager.getAuthorizable(groupId);
-                if (authorizable != null && authorizable.isGroup()) {
-                    Group group = (Group) authorizable;
-                    if (group.isMember(member)) {
-                        LOG.info("removeMember({},{})", memberId, groupId);
-                        group.removeMember(member);
-                        session.save();
+        try {
+            UserManager userManager = ((JackrabbitSession) session).getUserManager();
+            Authorizable member = userManager.getAuthorizable(memberId);
+            if (member != null) {
+                for (String groupId : groupIds) {
+                    Authorizable authorizable = userManager.getAuthorizable(groupId);
+                    if (authorizable != null && authorizable.isGroup()) {
+                        Group group = (Group) authorizable;
+                        if (group.isMember(member)) {
+                            LOG.info("removeMember({},{})", memberId, groupId);
+                            group.removeMember(member);
+                            session.save();
+                        }
                     }
                 }
             }
+        } catch (RepositoryException e) {
+            LOG.error("Error in makeNodeAvailable({},{}) : {}", new Object[]{memberId, groupIds, e.toString()});
+            throw e;
         }
     }
 }
