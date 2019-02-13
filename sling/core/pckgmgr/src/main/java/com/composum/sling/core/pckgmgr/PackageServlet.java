@@ -32,6 +32,7 @@ import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.PackageException;
+import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
@@ -102,6 +103,9 @@ public class PackageServlet extends AbstractServiceServlet {
 
     @Reference
     private JobManager jobManager;
+
+    @Reference
+    private Packaging packaging;
 
     //
     // Servlet operations
@@ -821,7 +825,7 @@ public class PackageServlet extends AbstractServiceServlet {
                     InputStream input = file.getInputStream();
                     boolean force = RequestUtil.getParameter(request, PARAM_FORCE, true);
 
-                    JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                    JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                     JcrPackage jcrPackage = manager.upload(input, force);
 
                     installPackage(request, response, manager, jcrPackage);

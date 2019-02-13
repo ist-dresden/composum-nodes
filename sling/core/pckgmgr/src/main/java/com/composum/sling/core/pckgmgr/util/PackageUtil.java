@@ -14,6 +14,7 @@ import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.jackrabbit.vault.packaging.PackagingService;
 import org.apache.jackrabbit.vault.util.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -77,12 +78,34 @@ public class PackageUtil {
         group, jcrpckg
     }
 
+    /**
+     * Don't use this but org.apache.jackrabbit.vault.packaging.Packaging#getPackageManager(javax.jcr.Session) or {@link #getPackageManager(Packaging, SlingHttpServletRequest)} since
+     * this calls {@link PackagingService#getPackageManager(Session)} which has been depreciated
+     * @deprecated use org.apache.jackrabbit.vault.packaging.Packaging#getPackageManager(javax.jcr.Session)
+     * @see org.apache.jackrabbit.vault.packaging.Packaging#getPackageManager(javax.jcr.Session) or
+     */
     public static JcrPackageManager createPackageManager(SlingHttpServletRequest request)
             throws RepositoryException {
         ResourceResolver resolver = request.getResourceResolver();
         Session session = resolver.adaptTo(Session.class);
         if (session != null) {
             return PackagingService.getPackageManager(session);
+        } else {
+            throw new RepositoryException("can't adapt resolver to session");
+        }
+    }
+
+    /**
+     * Retrieves a package manager for the JCR session.
+     *
+     * @throws RepositoryException if there is no JCR session
+     */
+    public static JcrPackageManager getPackageManager(Packaging packaging, SlingHttpServletRequest request)
+            throws RepositoryException {
+        ResourceResolver resolver = request.getResourceResolver();
+        Session session = resolver.adaptTo(Session.class);
+        if (session != null) {
+            return packaging.getPackageManager(session);
         } else {
             throw new RepositoryException("can't adapt resolver to session");
         }
