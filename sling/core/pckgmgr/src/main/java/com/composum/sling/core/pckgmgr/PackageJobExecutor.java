@@ -8,12 +8,14 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.io.ImportOptions;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.PackageException;
+import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.jackrabbit.vault.packaging.PackagingService;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -87,6 +89,8 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
 
     protected final Lock lock = new ReentrantLock(true);
 
+    @Reference
+    private Packaging packaging;
 
     @Override
     @Activate
@@ -130,7 +134,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
         public String call() throws Exception {
             lock.lock();
             try {
-                JcrPackageManager manager = PackagingService.getPackageManager(session);
+                JcrPackageManager manager = packaging.getPackageManager(session);
                 JcrPackage jcrPckg = getJcrPackage(job, manager);
                 String operation = (String) job.getProperty("operation");
                 if (StringUtils.isNotBlank(operation)) {
