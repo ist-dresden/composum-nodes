@@ -11,6 +11,7 @@ import org.apache.jackrabbit.vault.fs.io.AccessControlHandling;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
@@ -66,13 +67,13 @@ public class PackageBean extends ConsoleSlingBean {
         SlingHttpServletRequest request = context.getRequest();
         path = PackageUtil.getPath(request);
         try {
-            resource = PackageUtil.getResource(request, path);
+            pckgMgr = PackageUtil.getPackageManager(context.getService(Packaging.class), request);
+            resource = PackageUtil.getResource(pckgMgr, request, path);
         } catch (RepositoryException rex) {
             LOG.error(rex.getMessage(), rex);
         }
         super.initialize(context, resource);
         try {
-            pckgMgr = PackageUtil.createPackageManager(getRequest());
             pckg = pckgMgr.open(getNode());
             if (pckg != null) {
                 pckgDef = pckg.getDefinition();

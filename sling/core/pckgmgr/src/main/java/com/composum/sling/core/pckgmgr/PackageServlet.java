@@ -208,7 +208,8 @@ public class PackageServlet extends AbstractServiceServlet {
             Resource resource = null;
             try {
                 String path = PackageUtil.getPath(request);
-                resource = PackageUtil.getResource(request, path);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
+                resource = PackageUtil.getResource(manager, request, path);
             } catch (RepositoryException rex) {
                 LOG.error(rex.getMessage(), rex);
             }
@@ -226,7 +227,8 @@ public class PackageServlet extends AbstractServiceServlet {
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
             ResourceHandle resource)
             throws RepositoryException, IOException {
-            List<JcrPackage> jcrPackages = PackageUtil.createPackageManager(request).listPackages();
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
+            List<JcrPackage> jcrPackages = manager.listPackages();
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             writer.beginArray();
             for (JcrPackage jcrPackage : jcrPackages) {
@@ -243,7 +245,8 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
+            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(manager, request);
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             treeNode.sort();
@@ -269,7 +272,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
             if (suffix.length() > 1) {
 
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
 
                 ResourceResolver resolver = request.getResourceResolver();
                 String rootPath = manager.getPackageRoot().getPath();
@@ -318,7 +321,7 @@ public class PackageServlet extends AbstractServiceServlet {
             String name = request.getParameter(PARAM_NAME);
             String version = request.getParameter(PARAM_VERSION);
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = manager.create(group, name, version);
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
@@ -358,7 +361,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
             try {
 
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                 JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
                 if (jcrPackage != null) {
@@ -433,7 +436,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
             if (jcrPackage != null) {
@@ -453,7 +456,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
             if (jcrPackage != null) {
@@ -503,7 +506,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 InputStream input = file.getInputStream();
                 boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
 
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                 JcrPackage jcrPackage = manager.upload(input, force);
 
                 JsonWriter writer = ResponseUtil.getJsonWriter(response);
@@ -523,7 +526,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
             installPackage(request, response, manager, jcrPackage);
@@ -575,7 +578,7 @@ public class PackageServlet extends AbstractServiceServlet {
             ResourceHandle resource)
             throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
             uninstallPackage(request, response, manager, jcrPackage);
@@ -654,7 +657,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
             @Override
             void doCommand(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException {
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                 final List<JcrPackage> jcrPackages = manager.listPackages();
                 response.setStatus(HttpServletResponse.SC_OK);
                 try (Writer writer = response.getWriter()) {
@@ -681,7 +684,7 @@ public class PackageServlet extends AbstractServiceServlet {
             void doCommand(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException {
                 String name = getName(parameters);
                 String group = getGroup(parameters);
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                 final List<JcrPackage> jcrPackages = manager.listPackages();
                 boolean found = false;
                 for (JcrPackage jcrPackage : jcrPackages) {
@@ -725,7 +728,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 Session session = resolver.adaptTo(Session.class);
                 String name = getName(parameters);
                 String group = getGroup(parameters);
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                 final JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, group, name);
                 if (jcrPackage != null) {
                     String path = jcrPackage.getNode().getPath();
@@ -893,7 +896,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
             Session session = RequestUtil.getSession(request);
 
@@ -911,7 +914,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
             Session session = RequestUtil.getSession(request);
 
@@ -965,7 +968,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 throws RepositoryException {
             this.request = request;
 
-            manager = PackageUtil.createPackageManager(request);
+            manager = PackageUtil.getPackageManager(packaging, request);
             jcrPackage = PackageUtil.getJcrPackage(manager, resource);
             definition = jcrPackage.getDefinition();
 
