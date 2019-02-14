@@ -15,6 +15,7 @@ import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.Packaging;
+import org.apache.jackrabbit.vault.packaging.PackagingService;
 import org.apache.jackrabbit.vault.util.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestPathInfo;
@@ -24,6 +25,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.el.PropertyNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -80,10 +82,15 @@ public class PackageUtil {
     /**
      * Retrieves a package manager for the JCR session.
      */
-    public static JcrPackageManager getPackageManager(Packaging packaging, SlingHttpServletRequest request) {
+    @Nonnull
+    public static JcrPackageManager getPackageManager(@Nonnull Packaging packaging, @Nonnull SlingHttpServletRequest request) throws RepositoryException {
         ResourceResolver resolver = request.getResourceResolver();
         Session session = resolver.adaptTo(Session.class);
-        return packaging.getPackageManager(session);
+        if (session != null) {
+            return packaging.getPackageManager(session);
+        } else {
+            throw new RepositoryException("can't adapt resolver to session"); // should be impossible
+        }
     }
 
     public static String getPath(SlingHttpServletRequest request) {
