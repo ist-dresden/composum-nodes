@@ -25,7 +25,7 @@ public class SetupUtil {
     public static void setupGroupsAndUsers(InstallContext ctx,
                                            Map<String, List<String>> groups,
                                            Map<String, List<String>> systemUsers,
-                                           Map<String, List<String>> users) {
+                                           Map<String, List<String>> users) throws PackageException {
         UserManagementService userManagementService = getService(UserManagementService.class);
         try {
             JackrabbitSession session = (JackrabbitSession) ctx.getSession();
@@ -63,8 +63,9 @@ public class SetupUtil {
                 }
                 session.save();
             }
-        } catch (RepositoryException rex) {
+        } catch (RepositoryException | RuntimeException rex) {
             LOG.error(rex.getMessage(), rex);
+            throw new PackageException(rex);
         }
     }
 
