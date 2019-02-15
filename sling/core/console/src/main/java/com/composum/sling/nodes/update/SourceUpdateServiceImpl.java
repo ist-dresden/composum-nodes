@@ -10,13 +10,14 @@ import org.osgi.service.component.annotations.Activate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.annotation.Nonnull;
 import javax.jcr.ImportUUIDBehavior;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -28,6 +29,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 @Component(
@@ -60,16 +63,31 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         LOG.info("Trying to update {} to \n{}", resource.getPath(), content);
         Node node = resource.adaptTo(Node.class);
         Session session = node.getSession();
-        ByteArrayOutputStream sout = new ByteArrayOutputStream();
-        session.exportDocumentView(resource.getPath(), sout, false, false);
-        LOG.info("Document View:\n{}", sout.toString("UTF-8"));
         try {
-            saxParserFactory.newSAXParser().parse(new ByteArrayInputStream(content.getBytes("UTF-8")), new UpdateHandler(node));
-            SAXParser saxParser = saxParserFactory.newSAXParser();
+            UpdateHandler handler = new UpdateHandler();
+            UpdateHandler inputTreeHandler = new UpdateHandler();
+            saxParserFactory.newSAXParser().parse(new ByteArrayInputStream(content.getBytes("UTF-8")), inputTreeHandler);
+            NodeInfo importedRoot = inputTreeHandler.getRoot();
+
+            UpdateHandler existingTreeHandler = new UpdateHandler();
+            session.exportDocumentView(resource.getPath(), existingTreeHandler, false, false);
+            NodeInfo currentRoot = inputTreeHandler.getRoot();
+
             LOG.info("Now importing");
-            XMLReader xmlreader = saxParser.getXMLReader();
-            xmlreader.setContentHandler(session.getImportContentHandler(resource.getPath(), ImportUUIDBehavior.IMPORT_UUID_COLLISION_REPLACE_EXISTING));
-            xmlreader.parse(new InputSource(new ByteArrayInputStream(content.getBytes("UTF-8"))));
+//            XMLReader xmlreader = saxParserFactory.newSAXParser().getXMLReader();
+//            xmlreader.setContentHandler(session.getImportContentHandler(resource.getPath(), ImportUUIDBehavior.IMPORT_UUID_COLLISION_REPLACE_EXISTING));
+//            xmlreader.parse(new InputSource(new ByteArrayInputStream(content.getBytes("UTF-8"))));
+//            LOG.info("Have changes: {}", session.hasPendingChanges());
+
+
+            // this creates difference in boolean attributes: now string. OUCH!
+            ByteArrayOutputStream sout = new ByteArrayOutputStream();
+            session.exportDocumentView(resource.getPath(), sout, false, false);
+            LOG.info("Document View:\n{}", sout.toString("UTF-8"));
+
+            XMLReader xmlreader = saxParserFactory.newSAXParser().getXMLReader();
+            xmlreader.setContentHandler(session.getImportContentHandler(resource.getParent().getPath(), ImportUUIDBehavior.IMPORT_UUID_COLLISION_REPLACE_EXISTING));
+            xmlreader.parse(new InputSource(new ByteArrayInputStream(sout.toByteArray())));
             LOG.info("Have changes: {}", session.hasPendingChanges());
             session.save();
         } finally {
@@ -78,29 +96,61 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         }
     }
 
-    protected class UpdateHandler extends DefaultHandler {
+    protected static String attributesToString(Attributes attributes) {
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < attributes.getLength(); ++i) {
+            buf.append(attributes.getQName(i)).append("=").append(attributes.getValue(i)).append(" ");
+        }
+        return buf.toString();
+    }
 
-        protected Stack<Node> nodeStack = new Stack<>();
+    protected static class NodeInfo {
+        protected String name;
+        protected boolean modified;
+        protected boolean alreadyExists;
+        protected AttributesImpl attributes;
+        protected List<NodeInfo> children = new ArrayList<>();
 
-        public UpdateHandler(@Nonnull Node top) {
-            nodeStack.push(top);
+        @Override
+        public String toString() {
+            return name + "{" + attributesToString(attributes) + "}";
+        }
+    }
+
+    protected static class UpdateHandler extends DefaultHandler {
+
+        protected Stack<NodeInfo> nodeStack = new Stack<>();
+
+        public UpdateHandler() {
+            nodeStack.push(new NodeInfo());
+        }
+
+        public NodeInfo getRoot() {
+            List<NodeInfo> topchildren = nodeStack.peek().children;
+            if (topchildren.isEmpty() || topchildren.size() > 1)
+                throw new IllegalStateException("Bug: wrong number of roots: " + topchildren);
+            return topchildren.get(0);
         }
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-            StringBuilder buf = new StringBuilder();
-            for (int i = 0; i < attributes.getLength(); ++i) {
+            for (int i = 0; i < attributes.getLength(); ++i) { // sanity check of attributes
                 if (!"CDATA".equals(attributes.getType(i))) {
                     throw new SAXException("Unknown attribute type " + attributes.getType(i) + " of " + attributes.getQName(i) + "=" + attributes.getValue(i));
                 }
-                buf.append(attributes.getQName(i)).append("=").append(attributes.getValue(i)).append(" ");
             }
-            LOG.info("startElement({},{}", qName, buf);
+            NodeInfo child = new NodeInfo();
+            child.name = qName;
+            child.attributes = new AttributesImpl(attributes);
+            nodeStack.peek().children.add(child);
+            nodeStack.push(child);
+            LOG.info("startElement({})", child);
         }
 
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
             LOG.info("endElement({})", qName);
+            nodeStack.pop();
         }
 
         @Override
