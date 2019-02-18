@@ -12,7 +12,9 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Calendar;
 
-/** Various internal functionality about client libraries. */
+/**
+ * Various internal functionality about client libraries.
+ */
 public interface ClientlibService {
 
     String ENCODING_GZIP = "gzip";
@@ -64,6 +66,15 @@ public interface ClientlibService {
      */
     void deliverContent(ResourceResolver resolver, ClientlibRef clientlibRef, boolean minified, OutputStream
             outputStream, String encoding) throws IOException, RepositoryException;
+
+    /**
+     * Checks that all clientlib items are anonymously readable, and logs and returns a human readable description
+     * of the results. If that's not the case, this can cause a permanent recalculation of the clientlibs content, or, even worse, break the rendering.
+     *
+     * @param force if false, the check is done only if the last run was more than an hour ago. If true, it's done in any case.
+     * @return null if everything is OK, otherwise a description of the problems
+     */
+    String verifyClientlibPermissions(boolean force);
 
     class ClientlibInfo {
         public Long size;

@@ -109,6 +109,7 @@ public class DefaultClientlibService implements ClientlibService {
         processorMap.put(Clientlib.Type.js, javascriptProcessor);
         processorMap.put(Clientlib.Type.css, getClientlibConfig().getMapClientlibURLs() ? new ProcessorPipeline(new
                 CssUrlMapper(), cssProcessor) : cssProcessor);
+        verifyClientlibPermissions(true);
     }
 
     @Deactivate
@@ -554,6 +555,8 @@ public class DefaultClientlibService implements ClientlibService {
         } else { // abort the request rather than delivering faulty data
             throw new FileNotFoundException("No cached file found for " + clientlibRef);
         }
+
+        verifyClientlibPermissions(false); // not part of functionality - just ensure it's checked once in a while.
     }
 
     /**
@@ -588,6 +591,46 @@ public class DefaultClientlibService implements ClientlibService {
         } catch (RepositoryException rex) {
             if (logwarning) LOG.warn(rex.getMessage(), rex);
         }
+    }
+
+    /**
+     * XPath Query that matches all clientlib descriptor resources.
+     */
+    public static final String QUERY_CLIENTLIB_PARTS = "/jcr:root/(apps|libs)//*[sling:resourceType='composum/nodes/commons/clientlib']//*";
+
+    private long lastPermissionCheck = Long.MIN_VALUE;
+
+    @Override
+    public String verifyClientlibPermissions(boolean force) {
+        StringBuilder buf = new StringBuilder();
+        if (force || lastPermissionCheck < System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)) {
+            lastPermissionCheck = System.currentTimeMillis();
+            ResourceResolver anonymousResolver = null;
+            ResourceResolver administrativeResolver = null;
+            try {
+                anonymousResolver = resolverFactory.getResourceResolver(null);
+                administrativeResolver = createAdministrativeResolver();
+                Iterator<Resource> it = administrativeResolver.findResources(QUERY_CLIENTLIB_PARTS, Query.XPATH);
+                while (it.hasNext()) {
+                    Resource clientlibElement = it.next();
+                    if (anonymousResolver.getResource(clientlibElement.getPath()) == null) {
+                        buf.append("Cannot anonymously read ").append(clientlibElement.getPath()).append("\n");
+                    }
+                }
+            } catch (LoginException e) {
+                buf.append("Cannot create anonymous resolver - " + e);
+                LOG.error("Cannot create anonymous resolver - " + e, e);
+            } catch (Exception e) {
+                LOG.error("Error checking clientlibs", e);
+            } finally {
+                if (buf.length() > 0) {
+                    LOG.error("Anonymously unreadable clientlib elements might endanger consistency and performance:\n{}", buf);
+                }
+                if (null != administrativeResolver) administrativeResolver.close();
+                if (null != anonymousResolver) anonymousResolver.close();
+            }
+        }
+        return buf.length() == 0 ? null : buf.toString();
     }
 
 }
