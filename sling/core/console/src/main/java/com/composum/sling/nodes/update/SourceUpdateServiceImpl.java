@@ -1,8 +1,10 @@
 package com.composum.sling.nodes.update;
 
 import com.composum.sling.core.util.ResourceUtil;
+import org.apache.commons.collections.ComparatorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.resource.*;
@@ -82,39 +84,50 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
     }
 
     @Override
-    public void updateFromZip(ResourceResolver resolver, InputStream zipInputStream) throws IOException, RepositoryException, TransformerException {
+    public void updateFromZip(ResourceResolver resolver, InputStream rawZipInputStream) throws IOException, RepositoryException, TransformerException {
         Session session = resolver.adaptTo(Session.class);
         Resource tmpdir = makeTempdir(resolver);
         String tmpPath = tmpdir.getPath();
 
-        ZipInputStream zip = new ZipInputStream(new BufferedInputStream(zipInputStream));
-        ZipEntry entry;
+        ZipInputStream zip = new ZipInputStream(new BufferedInputStream(rawZipInputStream));
         try {
-            while ((entry = zip.getNextEntry()) != null) {
-                if (!entry.isDirectory()) {
-                    String path = entry.getName();
+            List<Pair<String, byte[]>> imports = new ArrayList<>();
+            ZipEntry zipEntry;
+            while ((zipEntry = zip.getNextEntry()) != null) {
+                if (!zipEntry.isDirectory()) {
+                    String path = zipEntry.getName();
                     if (!path.startsWith("content")) {
-                        LOG.error("Ignoring entry with path not content: " + path);
+                        LOG.error("Ignoring zipEntry with path not content: " + path);
                     } else if (!path.endsWith("/.content.xml")) {
-                        throw new IOException("Unknown entry that's not a .content.xml: " + path);
+                        throw new IOException("Unknown zipEntry that's not a .content.xml: " + path);
                     } else {
-                        String entryPath = ResourceUtil.getParent(tmpPath + "/" + path); // remove .content.xml
-                        Resource parentResource = ResourceUtil.getOrCreateResource(resolver, ResourceUtil.getParent(entryPath), TYPE_SLING_FOLDER);
-                        LOG.info("entry {} parent {}", entryPath, parentResource.getPath());
+                        String entryPath = ResourceUtil.getParent(path); // remove .content.xml
                         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        // Copy contents of entry into temporary stream, since otherwise the whole zip is closed
-                        // due to braindead Java ZipInputStream design.
                         IOUtils.copy(zip, bos);
-                        unpackXmlIntoDir(new ByteArrayInputStream(bos.toByteArray()), parentResource, session);
-                        try {
-                            LOG.info("Mv {} to {}", parentResource.getPath() + "/jcr:root", entryPath);
-                            session.move(parentResource.getPath() + "/jcr:root", entryPath);
-                        } catch (ItemExistsException e) {
-                            LOG.error(entry.getName(), e);
-                        }
+                        imports.add(Pair.of(entryPath, bos.toByteArray()));
                     }
                 }
                 zip.closeEntry();
+            }
+            Collections.sort(imports, new Comparator<Pair<String, byte[]>>() {
+                // sort by length of path - thus, parent nodes come before subnodes.
+                @Override
+                public int compare(Pair<String, byte[]> o1, Pair<String, byte[]> o2) {
+                    return ComparatorUtils.naturalComparator().compare(o1.getKey().length(), o2.getKey().length());
+                }
+            });
+            for (Pair<String, byte[]> entry : imports) {
+                String entryPath = tmpPath + "/" + entry.getKey();
+                Resource parentResource = ResourceUtil.getOrCreateResource(resolver, ResourceUtil.getParent(entryPath), TYPE_SLING_FOLDER);
+                LOG.info("zipEntry {} parent {}", entryPath, parentResource.getPath());
+                LOG.info("content {}", new String(entry.getValue()));
+                unpackXmlIntoDir(new ByteArrayInputStream(entry.getValue()), parentResource, session);
+                try {
+                    LOG.info("Mv {} to {}", parentResource.getPath() + "/jcr:root", entryPath);
+                    session.move(parentResource.getPath() + "/jcr:root", entryPath);
+                } catch (ItemExistsException e) {
+                    LOG.error(entry.getKey(), e);
+                }
             }
             LOG.info("Have changes: {}", session.hasPendingChanges());
             session.save();
