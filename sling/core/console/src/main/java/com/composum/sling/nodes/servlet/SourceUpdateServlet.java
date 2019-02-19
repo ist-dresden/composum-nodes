@@ -26,6 +26,7 @@ import javax.jcr.RepositoryException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import java.io.IOException;
 
 
@@ -110,7 +111,7 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
                         break;
                 }
 
-            } catch (RepositoryException | SAXException | ParserConfigurationException ex) {
+            } catch (RepositoryException | SAXException | ParserConfigurationException | TransformerException ex) {
                 throw new ServletException(ex);
             }
 

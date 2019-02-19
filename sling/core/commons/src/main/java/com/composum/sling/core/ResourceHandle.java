@@ -20,6 +20,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceWrapper;
 import org.apache.sling.api.resource.ValueMap;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
@@ -52,6 +53,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
     // initialized attributes
 
     protected final Resource resource;
+    @Nonnull
     protected final ValueMap properties;
 
     // attributes retrieved on demand
@@ -121,6 +123,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
         return getProperty(key, String.class);
     }
 
+    @Nonnull
     public ValueMap getProperties() {
         return properties;
     }
@@ -296,6 +299,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
      * retrieves the primary type of the resources node; is using the 'getPrimaryType()' method
      * if the wrapped resource is a JcrResource.
      */
+    @Override
     public String getPrimaryType() {
         return resource instanceof JcrResource
                 ? ((JcrResource) resource).getPrimaryType()

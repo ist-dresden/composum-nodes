@@ -8,6 +8,5 @@ clear
 # curl -i -u admin:admin -v "http://localhost:9090/bin/cpm/nodes/debug/sourceupload.xml/content/test/composum/pages/intermediate/site/home/subsite"
 
 # Actual POST
-curl -u admin:admin -v -F "file=@$COMPOSUM/private/sling/prototype/test/src/main/content/jcr_root/content/test/composum/pages/intermediate/site/home/subsite/.content.xml" "http://localhost:9090/bin/cpm/nodes/debug/sourceupload.xml/content/test/composum/pages/intermediate/site/home/subsite"
-
+curl -u admin:admin -v -F "file=@/Users/hps/Library/Preferences/IntelliJIdea2018.3/scratches/scratch_1.xml" "http://localhost:9090/bin/cpm/nodes/debug/sourceupload.xml/content/test/composum/pages/intermediate/site/home/subsite"
 
