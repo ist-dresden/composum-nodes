@@ -121,7 +121,7 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
                     break;
             }
 
-        } catch (RepositoryException | SAXException | ParserConfigurationException | TransformerException ex) {
+        } catch (RepositoryException | SAXException | ParserConfigurationException | TransformerException | RuntimeException ex) {
             throw new ServletException(ex);
         }
 

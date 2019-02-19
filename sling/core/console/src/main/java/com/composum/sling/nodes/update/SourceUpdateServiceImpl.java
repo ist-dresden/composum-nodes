@@ -13,10 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import javax.annotation.Nonnull;
-import javax.jcr.ImportUUIDBehavior;
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
+import javax.jcr.*;
 import javax.jcr.nodetype.NodeDefinition;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
@@ -91,20 +88,30 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         String tmpPath = tmpdir.getPath();
 
         ZipInputStream zip = new ZipInputStream(new BufferedInputStream(zipInputStream));
+        ZipEntry entry;
         try {
-            ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
                 if (!entry.isDirectory()) {
                     String path = entry.getName();
                     if (!path.startsWith("content")) {
                         LOG.error("Ignoring entry with path not content: " + path);
+                    } else if (!path.endsWith("/.content.xml")) {
+                        throw new IOException("Unknown entry that's not a .content.xml: " + path);
                     } else {
-                        Resource resource = ResourceUtil.getOrCreateResource(resolver, tmpPath + "/" + path, TYPE_SLING_FOLDER);
+                        String entryPath = ResourceUtil.getParent(tmpPath + "/" + path); // remove .content.xml
+                        Resource parentResource = ResourceUtil.getOrCreateResource(resolver, ResourceUtil.getParent(entryPath), TYPE_SLING_FOLDER);
+                        LOG.info("entry {} parent {}", entryPath, parentResource.getPath());
                         ByteArrayOutputStream bos = new ByteArrayOutputStream();
                         // Copy contents of entry into temporary stream, since otherwise the whole zip is closed
                         // due to braindead Java ZipInputStream design.
                         IOUtils.copy(zip, bos);
-                        unpackXmlIntoDir(new ByteArrayInputStream(bos.toByteArray()), resource, session);
+                        unpackXmlIntoDir(new ByteArrayInputStream(bos.toByteArray()), parentResource, session);
+                        try {
+                            LOG.info("Mv {} to {}", parentResource.getPath() + "/jcr:root", entryPath);
+                            session.move(parentResource.getPath() + "/jcr:root", entryPath);
+                        } catch (ItemExistsException e) {
+                            LOG.error(entry.getName(), e);
+                        }
                     }
                 }
                 zip.closeEntry();
@@ -112,6 +119,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             LOG.info("Have changes: {}", session.hasPendingChanges());
             session.save();
         } finally {
+            session.save(); // XXX FIXME
             zip.close();
             LOG.info("Have changes (2): {}", session.hasPendingChanges());
             session.refresh(false); // discard - if it went OK it's already saved.
