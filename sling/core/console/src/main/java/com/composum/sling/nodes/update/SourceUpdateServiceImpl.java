@@ -1,10 +1,10 @@
 package com.composum.sling.nodes.update;
 
-import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.util.ResourceUtil;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.*;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
@@ -23,12 +23,13 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.*;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
-import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_LAST_MODIFIED;
+import static com.composum.sling.core.util.ResourceUtil.*;
+
 
 @Component(
         label = "Composum Source Update Service",
@@ -64,29 +65,78 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         ResourceResolver resolver = resource.getResourceResolver();
         Node node = resource.adaptTo(Node.class);
         Session session = node.getSession();
+        Resource tmpdir = makeTempdir(resolver);
+        String tmpPath = tmpdir.getPath();
         try {
-            Resource vartmp = resolver.getResource("/var/tmp");
-            if (null == vartmp)
-                vartmp = resolver.create(resolver.getResource("/var"), "tmp", Collections.<String, Object>singletonMap(JcrConstants.JCR_PRIMARYTYPE, JcrConstants.NT_UNSTRUCTURED));
-            Resource tmpdir = resolver.create(vartmp, UUID.randomUUID().toString(), Collections.<String, Object>singletonMap(JcrConstants.JCR_PRIMARYTYPE, JcrConstants.NT_UNSTRUCTURED));
+            unpackXmlIntoDir(inputStream, tmpdir, session);
 
-            InputStream xslt = getClass().getResourceAsStream("/bundled/sourceupdate/removemetadata.xslt");
+            Resource newroot = tmpdir.listChildren().next();
+            equalize(newroot, resource, session, resolver);
+
+            session.save();
+        } finally {
+            inputStream.close();
+            LOG.info("Have changes (2): {}", session.hasPendingChanges());
+            session.refresh(false); // discard - if it went OK it's already saved.
+            if (resolver.getResource(tmpPath) != null)
+                session.removeItem(tmpdir.getPath());
+            session.save();
+        }
+    }
+
+    @Override
+    public void updateFromZip(ResourceResolver resolver, InputStream zipInputStream) throws IOException, RepositoryException, TransformerException {
+        Session session = resolver.adaptTo(Session.class);
+        Resource tmpdir = makeTempdir(resolver);
+        String tmpPath = tmpdir.getPath();
+
+        ZipInputStream zip = new ZipInputStream(new BufferedInputStream(zipInputStream));
+        try {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (!entry.isDirectory()) {
+                    String path = entry.getName();
+                    if (!path.startsWith("content")) {
+                        LOG.error("Ignoring entry with path not content: " + path);
+                    } else {
+                        Resource resource = ResourceUtil.getOrCreateResource(resolver, tmpPath + "/" + path, TYPE_SLING_FOLDER);
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        // Copy contents of entry into temporary stream, since otherwise the whole zip is closed
+                        // due to braindead Java ZipInputStream design.
+                        IOUtils.copy(zip, bos);
+                        unpackXmlIntoDir(new ByteArrayInputStream(bos.toByteArray()), resource, session);
+                    }
+                }
+                zip.closeEntry();
+            }
+            LOG.info("Have changes: {}", session.hasPendingChanges());
+            session.save();
+        } finally {
+            zip.close();
+            LOG.info("Have changes (2): {}", session.hasPendingChanges());
+            session.refresh(false); // discard - if it went OK it's already saved.
+            // if (resolver.getResource(tmpPath) != null)
+            // session.removeItem(tmpdir.getPath());
+            session.save();
+        }
+    }
+
+    protected void unpackXmlIntoDir(@Nonnull InputStream inputStream, Resource dir, Session session) throws RepositoryException, TransformerException, IOException {
+        InputStream xslt = getClass().getResourceAsStream("/bundled/sourceupdate/removemetadata.xslt");
+        try {
             Transformer transformer = transformerFactory.newTransformer(new StreamSource(xslt));
             Source source = new StreamSource(inputStream);
 
-            Result result = new SAXResult(session.getImportContentHandler(tmpdir.getPath(), ImportUUIDBehavior.IMPORT_UUID_COLLISION_REPLACE_EXISTING));
+            Result result = new SAXResult(session.getImportContentHandler(dir.getPath(), ImportUUIDBehavior.IMPORT_UUID_COLLISION_REPLACE_EXISTING));
             transformer.transform(source, result);
-
-            Resource newroot = tmpdir.listChildren().next();
-
-            equalize(newroot, resource, session, resolver);
-
-            session.removeItem(newroot.getPath());
-            session.save();
         } finally {
-            LOG.info("Have changes (2): {}", session.hasPendingChanges());
-            session.refresh(false); // XXX or save.
+            xslt.close();
         }
+    }
+
+    protected Resource makeTempdir(ResourceResolver resolver) throws PersistenceException, RepositoryException {
+        String path = "/var/tmp/" + UUID.randomUUID().toString();
+        return ResourceUtil.getOrCreateResource(resolver, path, TYPE_SLING_FOLDER);
     }
 
     // XXX unclear: what about changed resource types / mixins?
