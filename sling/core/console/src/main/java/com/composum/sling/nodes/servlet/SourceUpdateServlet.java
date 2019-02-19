@@ -37,11 +37,12 @@ import java.io.IOException;
  * be ignored.
  * <p>
  * FIXME correct path? (Is it neccesary to set permissions somewhere?)
+ * FIXME implement AbstractServiceServlet .
  */
 @SlingServlet(
         paths = "/bin/cpm/nodes/debug/sourceupload",
         methods = {HttpConstants.METHOD_GET, HttpConstants.METHOD_POST},
-        extensions = "xml"
+        extensions = {"xml", "zip"}
 )
 public class SourceUpdateServlet extends SlingAllMethodsServlet {
 
@@ -82,41 +83,47 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
             return;
         }
 
-        Resource resource = null;
+        RequestParameterMap parameters = request.getRequestParameterMap();
+        RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
         RequestPathInfo pathInfo = request.getRequestPathInfo();
-        String resourcePath = pathInfo.getSuffix();
-        if (StringUtils.isNotBlank(resourcePath)) {
-            ResourceResolver resolver = request.getResourceResolver();
-            resource = resolver.getResource(resourcePath);
-        }
 
-        if (resource != null && !ResourceUtil.isNonExistingResource(resource)) {
+        try {
+            switch (pathInfo.getExtension()) {
 
-            try {
-                String name = resource.getName();
-                switch (pathInfo.getExtension()) {
+                // a single page or a node in its XML source representation
+                case "xml":
+                    Resource resource = null;
+                    String resourcePath = pathInfo.getSuffix();
+                    if (StringUtils.isNotBlank(resourcePath)) {
+                        ResourceResolver resolver = request.getResourceResolver();
+                        resource = resolver.getResource(resourcePath);
+                    }
+                    String name = resource.getName();
 
-                    // a single page or a node in its XML source representation
-                    case "xml":
-                        RequestParameterMap parameters = request.getRequestParameterMap();
-                        RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
+                    if (resource != null && !ResourceUtil.isNonExistingResource(resource)) {
 
                         sourceUpdateService.updateFromXml(resource, file.getInputStream());
 
                         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                         break;
+                    } else {
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    }
 
-                    default:
-                        response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-                        break;
-                }
+                case "zip":
+                    sourceUpdateService.updateFromZip(request.getResourceResolver(), file.getInputStream());
 
-            } catch (RepositoryException | SAXException | ParserConfigurationException | TransformerException ex) {
-                throw new ServletException(ex);
+                    response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                    break;
+
+                default:
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                    break;
             }
 
-        } else {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        } catch (RepositoryException | SAXException | ParserConfigurationException | TransformerException ex) {
+            throw new ServletException(ex);
         }
+
     }
 }
