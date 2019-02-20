@@ -9,6 +9,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.jackrabbit.vault.fs.io.Archive;
+import org.apache.jackrabbit.vault.fs.io.Importer;
+import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
 import org.apache.sling.api.resource.*;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
@@ -94,11 +97,20 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         Resource tmpdir = makeTempdir(resolver);
         String tmpPath = tmpdir.getPath();
 
-        ZipInputStream zip = new ZipInputStream(new BufferedInputStream(rawZipInputStream));
         try {
-            List<Pair<String, byte[]>> imports = readZipContents(zip);
-            sortZipContents(imports);
-            unpackIntoTemporaryPath(resolver, session, tmpPath, imports);
+            Importer importer = new Importer();
+            MemoryArchive archive = new MemoryArchive(false);
+            archive.run(rawZipInputStream);
+            importer.run(archive, tmpdir.adaptTo(Node.class));
+        } catch (IOException | RepositoryException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException(e);
+        } finally {
+            rawZipInputStream.close();
+        }
+
+        try {
             Resource topnode = tmpdir;
             while (IteratorUtils.toList(topnode.listChildren()).size() == 1) topnode = topnode.listChildren().next();
             String nodePath = topnode.getPath().substring(tmpPath.length());
@@ -111,7 +123,6 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             session.save();
         } finally {
             session.save(); // XXX FIXME remove this
-            zip.close();
             LOG.info("Have changes (2): {}", session.hasPendingChanges());
             session.refresh(false); // discard - if it went OK it's already saved.
             // if (resolver.getResource(tmpPath) != null)
