@@ -22,6 +22,18 @@ public class SetupUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(SetupUtil.class);
 
+    /**
+     * Creates or updates a set of groups, users and system users
+     *
+     * @param ctx         the installation context
+     * @param groups      map of group names (including path, e.g. composum/plaform/composum-platform-users) to list of
+     *                    users (have to exist already)
+     * @param systemUsers map of system user names (including path, e.g. system/composum/platform/composum-platform-service)
+     *                    to list of group names (without path). The groups have to exist already, or be created with parameter groups
+     * @param users       map of user names (including path) to list of group names (without path). The groups
+     *                    have to exist already, or be created with parameter groups
+     * @throws PackageException
+     */
     public static void setupGroupsAndUsers(InstallContext ctx,
                                            Map<String, List<String>> groups,
                                            Map<String, List<String>> systemUsers,
