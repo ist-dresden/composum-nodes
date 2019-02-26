@@ -281,7 +281,7 @@ public class PackageBean extends ConsoleSlingBean {
             try {
                 String path = PackageUtil.getThumbnailPath(pckgDef);
                 if (StringUtils.isNotBlank(path)) {
-                    builder.append(LinkUtil.getUrl(request, path));
+                    builder.append(LinkUtil.getUrl(getRequest(), path));
                 }
             } catch (RepositoryException rex) {
                 LOG.error(rex.getMessage(), rex);

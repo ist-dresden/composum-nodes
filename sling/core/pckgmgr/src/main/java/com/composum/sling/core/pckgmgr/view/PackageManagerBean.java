@@ -33,7 +33,7 @@ public class PackageManagerBean extends ConsoleSlingBean {
         if (type == null) {
             JcrPackageManager manager = null;
             try {
-                manager = PackageUtil.getPackageManager(context.getService(Packaging.class), request);
+                manager = PackageUtil.getPackageManager(context.getService(Packaging.class), getRequest());
                 type = PackageUtil.getTreeType(manager, getRequest(), getPath());
             } catch (RepositoryException rex) {
                 LOG.error(rex.toString());
@@ -50,8 +50,8 @@ public class PackageManagerBean extends ConsoleSlingBean {
     public List<PackageUtil.PackageItem> getCurrentGroupPackages() {
         List<PackageUtil.PackageItem> items = new ArrayList<>();
         try {
-            JcrPackageManager manager = PackageUtil.getPackageManager(context.getService(Packaging.class), request);
-            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(manager, request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(context.getService(Packaging.class), getRequest());
+            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(manager, getRequest());
             for (PackageUtil.TreeItem item : treeNode) {
                 if (item instanceof PackageUtil.PackageItem) {
                     if (((PackageUtil.PackageItem) item).getDefinition() != null) {
