@@ -201,36 +201,42 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         ModifiableValueMap newvalues = resource.adaptTo(ModifiableValueMap.class);
         if (newvalues == null) throw new IllegalArgumentException("Node not modifiable: " + resource.getPath());
 
-        for (Map.Entry<String, Object> entry : templatevalues.entrySet()) {
-            if (!ignoredMetadataAttributes.contains(entry.getKey()) &&
-                    ObjectUtils.notEqual(entry.getValue(), newvalues.get(entry.getKey()))) {
-                thisNodeChanged = true;
-                newvalues.put(entry.getKey(), entry.getValue());
+        try {
+            for (Map.Entry<String, Object> entry : templatevalues.entrySet()) {
+                if (!ignoredMetadataAttributes.contains(entry.getKey()) &&
+                        ObjectUtils.notEqual(entry.getValue(), newvalues.get(entry.getKey()))) {
+                    thisNodeChanged = true;
+                    newvalues.put(entry.getKey(), entry.getValue());
+                }
             }
-        }
 
-        for (String key : newvalues.keySet()) {
-            if (!ignoredMetadataAttributes.contains(key) && !templatevalues.containsKey(key)) {
-                thisNodeChanged = true;
-                newvalues.remove(key);
+            for (Iterator<String> keyIterator = newvalues.keySet().iterator(); keyIterator.hasNext(); ) {
+                String key = keyIterator.next();
+                if (!ignoredMetadataAttributes.contains(key) && !templatevalues.containsKey(key)) {
+                    thisNodeChanged = true;
+                    keyIterator.remove();
+                }
             }
-        }
 
-        for (Resource child : resource.getChildren()) { // XXX are there equally named children somewhere?
-            Resource templateChild = templateresource.getChild(child.getName());
-            if (templateChild == null) {
-                thisNodeChanged = true;
-                resource.getResourceResolver().delete(child);
-            } else {
-                equalize(templateChild, child, session, resolver);
+            for (Resource child : resource.getChildren()) { // XXX are there equally named children somewhere?
+                Resource templateChild = templateresource.getChild(child.getName());
+                if (templateChild == null) {
+                    thisNodeChanged = true;
+                    resource.getResourceResolver().delete(child);
+                } else {
+                    equalize(templateChild, child, session, resolver);
+                }
             }
-        }
 
-        for (Resource templateChild : templateresource.getChildren()) {
-            if (null == resource.getChild(templateChild.getName())) {
-                session.move(templateChild.getPath(), resource.getPath() + "/" + templateChild.getName());
-                thisNodeChanged = true;
+            for (Resource templateChild : templateresource.getChildren()) {
+                if (null == resource.getChild(templateChild.getName())) {
+                    session.move(templateChild.getPath(), resource.getPath() + "/" + templateChild.getName());
+                    thisNodeChanged = true;
+                }
             }
+        } catch (PersistenceException | RepositoryException | RuntimeException e) {
+            LOG.error("Error at {} : {}", resource.getPath(), e.toString());
+            throw e;
         }
 
         NodeDefinition definition = resource.adaptTo(Node.class).getDefinition();
