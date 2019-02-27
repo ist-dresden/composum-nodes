@@ -124,11 +124,9 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             LOG.info("Have changes: {}", session.hasPendingChanges());
             session.save();
         } finally {
-            session.save(); // XXX FIXME remove this
-            LOG.info("Have changes (2): {}", session.hasPendingChanges());
             session.refresh(false); // discard - if it went OK it's already saved.
-            // if (resolver.getResource(tmpPath) != null)
-            // session.removeItem(tmpdir.getPath());
+            if (resolver.getResource(tmpPath) != null)
+                session.removeItem(tmpdir.getPath());
             session.save();
         }
     }
@@ -202,6 +200,9 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         ValueMap templatevalues = ResourceUtil.getValueMap(templateresource);
         ModifiableValueMap newvalues = resource.adaptTo(ModifiableValueMap.class);
         if (newvalues == null) throw new IllegalArgumentException("Node not modifiable: " + resource.getPath());
+        Node node = resource.adaptTo(Node.class);
+        NodeDefinition definition = node.getDefinition();
+        if (definition.allowsSameNameSiblings()) checkForSamenameSiblings(templateresource, resource);
 
         try {
             for (Map.Entry<String, Object> entry : templatevalues.entrySet()) {
@@ -230,21 +231,23 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                 }
             }
 
+            // save reference order here, since we might move some nodes
+            List<Resource> templatechildren = IteratorUtils.toList(templateresource.listChildren());
+
             for (Resource templateChild : templateresource.getChildren()) {
                 if (null == resource.getChild(templateChild.getName())) {
                     session.move(templateChild.getPath(), resource.getPath() + "/" + templateChild.getName());
                     thisNodeChanged = true;
                 }
             }
+
+            if (node.getPrimaryNodeType().hasOrderableChildNodes())
+                ensureSameOrdering(session, templateresource, templatechildren, resource);
+
         } catch (PersistenceException | RepositoryException | RuntimeException e) {
             LOG.error("Error at {} : {}", resource.getPath(), e.toString());
             throw e;
         }
-
-        NodeDefinition definition = resource.adaptTo(Node.class).getDefinition();
-        if (definition.allowsSameNameSiblings()) checkForSamenameSiblings(templateresource, resource);
-        if (definition.getDeclaringNodeType().hasOrderableChildNodes())
-            LOG.warn("Orderable subnodes not supported yet: " + resource.getResourceType() + " at " + resource.getPath());
 
         if (thisNodeChanged) {
             Resource modifcandidate = resource;
@@ -252,6 +255,23 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                 modifcandidate = modifcandidate.getParent();
             if (modifcandidate != null) {
                 newvalues.put(PROP_LAST_MODIFIED, Calendar.getInstance());
+            }
+        }
+    }
+
+    private void ensureSameOrdering(Session session, Resource templateresource, List<Resource> templatechildren, Resource resource) throws RepositoryException {
+        Node node = Objects.requireNonNull(resource.adaptTo(Node.class));
+        List<Resource> resourcechildren = IteratorUtils.toList(resource.listChildren());
+        if (templatechildren.size() != resourcechildren.size())
+            throw new IllegalStateException("Bug: template and resource of " + resource.getPath() +
+                    " should have same size now but have " + templatechildren.size() + " and " + resourcechildren.size());
+        if (resourcechildren.size() < 2) return;
+        Map<String, Resource> nameToNode = new HashMap<>();
+        for (Resource child : resourcechildren) nameToNode.put(child.getName(), child);
+        for (int i = 0; i < resourcechildren.size(); ++i) {
+            if (!StringUtils.equals(resourcechildren.get(i).getName(), templatechildren.get(i).getName())) {
+                node.orderBefore(templatechildren.get(i).getName(), resourcechildren.get(i).getName());
+                resourcechildren = IteratorUtils.toList(resource.listChildren());
             }
         }
     }
