@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.fs.io.Importer;
 import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
 import org.apache.sling.api.resource.*;
@@ -30,7 +29,10 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.*;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -218,7 +220,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                 }
             }
 
-            for (Resource child : resource.getChildren()) { // XXX are there equally named children somewhere?
+            for (Resource child : resource.getChildren()) { // TODO are there equally named children somewhere?
                 Resource templateChild = templateresource.getChild(child.getName());
                 if (templateChild == null) {
                     thisNodeChanged = true;
@@ -240,7 +242,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         }
 
         NodeDefinition definition = resource.adaptTo(Node.class).getDefinition();
-        if (definition.allowsSameNameSiblings()) LOG.warn("Same name siblings in " + resource.getPath());
+        if (definition.allowsSameNameSiblings()) checkForSamenameSiblings(templateresource, resource);
         if (definition.getDeclaringNodeType().hasOrderableChildNodes())
             LOG.warn("Orderable subnodes not supported yet: " + resource.getResourceType() + " at " + resource.getPath());
 
@@ -250,6 +252,23 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                 modifcandidate = modifcandidate.getParent();
             if (modifcandidate != null) {
                 newvalues.put(PROP_LAST_MODIFIED, Calendar.getInstance());
+            }
+        }
+    }
+
+    private void checkForSamenameSiblings(Resource templateresource, @Nonnull Resource resource) throws IllegalArgumentException {
+        for (Resource checkedResource : Arrays.asList(templateresource, resource)) {
+            Set<String> nodenames = new HashSet<>();
+            for (Resource child : templateresource.getChildren()) {
+                if (nodenames.contains(child.getName()))
+                    throw new IllegalArgumentException("Equally named children not supported yet: existing resource " + templateresource.getPath() + " has two " + child.getName());
+                nodenames.add(child.getName());
+            }
+            nodenames.clear();
+            for (Resource child : resource.getChildren()) {
+                if (nodenames.contains(child.getName()))
+                    throw new IllegalArgumentException("Equally named children not supported yet: imported resource " + resource.getPath() + " has two " + child.getName());
+                nodenames.add(child.getName());
             }
         }
     }
