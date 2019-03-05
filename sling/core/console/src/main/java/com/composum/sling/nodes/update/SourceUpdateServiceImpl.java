@@ -16,20 +16,15 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 import javax.annotation.Nonnull;
-import javax.jcr.ImportUUIDBehavior;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeDefinition;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
-import javax.xml.transform.*;
-import javax.xml.transform.sax.SAXResult;
-import javax.xml.transform.stream.StreamSource;
-import java.io.ByteArrayInputStream;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,35 +59,11 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             "jcr:versionHistory", "jcr:predecessors", "jcr:mergeFailed", "jcr:mergeFailed", "jcr:configuration"));
 
     /**
-     * Make node equivalent to an XML document. General strategy: we update the attributes of all nodes according to the XML document,
+     * Make subtree equivalent to a ZIP in vault format. General strategy: we update the attributes of all nodes according to the XML documents,
      * creating nonexistent nodes along the way, and make node which nodes were present, and which were changed.
      * In a second pass, we recurse through the JCR tree again, delete nodes that were not present and update the lastModified
      * properties of nodes, below which there were changes.
      */
-    @Override
-    public void updateFromXml(@Nonnull Resource resource, @Nonnull InputStream inputStream) throws RepositoryException, IOException, ParserConfigurationException, SAXException, TransformerException {
-        ResourceResolver resolver = resource.getResourceResolver();
-        Node node = resource.adaptTo(Node.class);
-        Session session = node.getSession();
-        Resource tmpdir = makeTempdir(resolver);
-        String tmpPath = tmpdir.getPath();
-        try {
-            unpackXmlIntoDir(inputStream, tmpdir, session);
-
-            Resource newroot = tmpdir.listChildren().next();
-            equalize(newroot, resource, session, resolver);
-
-            session.save();
-        } finally {
-            inputStream.close();
-            LOG.info("Have changes (2): {}", session.hasPendingChanges());
-            session.refresh(false); // discard - if it went OK it's already saved.
-            if (resolver.getResource(tmpPath) != null)
-                session.removeItem(tmpdir.getPath());
-            session.save();
-        }
-    }
-
     @Override
     public void updateFromZip(ResourceResolver resolver, InputStream rawZipInputStream) throws IOException, RepositoryException, TransformerException {
         Session session = resolver.adaptTo(Session.class);
@@ -131,17 +102,6 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         }
     }
 
-    protected void unpackIntoTemporaryPath(ResourceResolver resolver, Session session, String tmpPath, List<Pair<String, byte[]>> imports) throws RepositoryException, TransformerException, IOException {
-        for (Pair<String, byte[]> entry : imports) {
-            String entryPath = tmpPath + "/" + entry.getKey();
-            Resource parentResource = ResourceUtil.getOrCreateResource(resolver, ResourceUtil.getParent(entryPath), TYPE_SLING_FOLDER);
-            LOG.info("zipEntry {} parent {}", entryPath, parentResource.getPath());
-            LOG.info("content {}", new String(entry.getValue()));
-            unpackXmlIntoDir(new ByteArrayInputStream(entry.getValue()), parentResource, session);
-            session.move(parentResource.getPath() + "/jcr:root", entryPath);
-        }
-    }
-
     protected void sortZipContents(List<Pair<String, byte[]>> imports) {
         Collections.sort(imports, new Comparator<Pair<String, byte[]>>() {
             // sort by length of path - thus, parent nodes come before subnodes.
@@ -172,19 +132,6 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             zip.closeEntry();
         }
         return imports;
-    }
-
-    protected void unpackXmlIntoDir(@Nonnull InputStream inputStream, Resource dir, Session session) throws RepositoryException, TransformerException, IOException {
-        InputStream xslt = getClass().getResourceAsStream("/bundled/sourceupdate/removemetadata.xslt");
-        try {
-            Transformer transformer = transformerFactory.newTransformer(new StreamSource(xslt));
-            Source source = new StreamSource(inputStream);
-
-            Result result = new SAXResult(session.getImportContentHandler(dir.getPath(), ImportUUIDBehavior.IMPORT_UUID_COLLISION_REPLACE_EXISTING));
-            transformer.transform(source, result);
-        } finally {
-            xslt.close();
-        }
     }
 
     protected Resource makeTempdir(ResourceResolver resolver) throws PersistenceException, RepositoryException {

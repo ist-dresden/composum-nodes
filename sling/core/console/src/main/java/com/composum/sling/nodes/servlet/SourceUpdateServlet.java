@@ -29,6 +29,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
 
+import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
+
 
 /**
  * Modifies JCR content according to a given XML or ZIP of XMLs while preserving / updating metadata like versioning
@@ -36,13 +38,14 @@ import java.io.IOException;
  * jcr:lastModified, which are removed there, will just be updated here - if they occur in our input, they'll
  * be ignored.
  * <p>
- * FIXME correct path? (Is it neccesary to set permissions somewhere?)
- * FIXME implement AbstractServiceServlet .
+ * TODO: perhaps implement AbstractServiceServlet or some other baseclass?
+ * <p>
+ * TODO: keep cpp:MetaData unchanged
  */
 @SlingServlet(
-        paths = "/bin/cpm/nodes/debug/sourceupload",
-        methods = {HttpConstants.METHOD_GET, HttpConstants.METHOD_POST},
-        extensions = {"xml", "zip"}
+        paths = "/bin/cpm/nodes/sourceupload",
+        methods = METHOD_POST,
+        extensions = {"zip"}
 )
 public class SourceUpdateServlet extends SlingAllMethodsServlet {
 
@@ -63,21 +66,13 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
 
     protected boolean isEnabled() {
         // FIXME implement
-        // return nodesConfig.isEnabled(this);
+        // return nodesConfig.isEnabled(this); ?
         return true;
-    }
-
-    @Override
-    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response) throws ServletException, IOException {
-        LOG.error("DOGET");
-        throw new UnsupportedOperationException("Not implemented yet: SourceUpdateServlet.doGet");
     }
 
     @Override
     protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
-        LOG.error("DOPOST");
-
         if (!isEnabled()) {
             response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             return;
@@ -90,26 +85,6 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
         try {
             switch (pathInfo.getExtension()) {
 
-                // a single page or a node in its XML source representation
-                case "xml":
-                    Resource resource = null;
-                    String resourcePath = pathInfo.getSuffix();
-                    if (StringUtils.isNotBlank(resourcePath)) {
-                        ResourceResolver resolver = request.getResourceResolver();
-                        resource = resolver.getResource(resourcePath);
-                    }
-                    String name = resource.getName();
-
-                    if (resource != null && !ResourceUtil.isNonExistingResource(resource)) {
-
-                        sourceUpdateService.updateFromXml(resource, file.getInputStream());
-
-                        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                        break;
-                    } else {
-                        response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                    }
-
                 case "zip":
                     sourceUpdateService.updateFromZip(request.getResourceResolver(), file.getInputStream());
 
@@ -121,7 +96,7 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
                     break;
             }
 
-        } catch (RepositoryException | SAXException | ParserConfigurationException | TransformerException | RuntimeException ex) {
+        } catch (RepositoryException | TransformerException | RuntimeException ex) {
             throw new ServletException(ex);
         }
 
