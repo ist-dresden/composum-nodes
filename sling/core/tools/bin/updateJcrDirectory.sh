@@ -43,4 +43,4 @@ zip -r $TMPFIL $path
 # the parameter :operation=updatetree currently serves no purpose but to sneakily prevent the Sling POST servlet to
 # create a node at /bin/cpm/... when the servlet is present.
 
-curl -u $CPM_ADMINUSER:$CPM_ADMINPASSWD -v -F "file=@$TMPFIL" http://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/sourceuploadXX.zip
+curl -u $CPM_ADMINUSER:$CPM_ADMINPASSWD -v -F "file=@$TMPFIL" http://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/sourceupload.zip
