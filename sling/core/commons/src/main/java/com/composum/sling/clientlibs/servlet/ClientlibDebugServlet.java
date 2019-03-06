@@ -38,11 +38,13 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  */
 @SlingServlet(
         methods = HttpConstants.METHOD_GET,
-        paths = "/bin/cpm/nodes/debug/clientlibstructure"
+        paths = ClientlibDebugServlet.PATH
 )
 public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientlibDebugServlet.class);
+
+    public static final String PATH = "/bin/cpm/nodes/debug/clientlibstructure";
 
     @Reference
     private ClientlibService clientlibService;
@@ -50,17 +52,26 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
     protected void printUsage(SlingHttpServletRequest request, PrintWriter writer) {
         String url = request.getRequestURL().toString().replaceAll("\\.[^/]+$", "") + ".css.html";
         writer.println("<h2>Usage:</h2>");
-        writer.println("Please give the type of the client library as extension and one or more");
+        writer.println("Please give the type of the client library as selector and one or more");
         writer.println("client libraries or -categories as parameter lib. Some examples:<ul>");
         printLinkItem(writer, url + "?lib=category:composum.core.console.browser");
         printLinkItem(writer, url + "?lib=/libs/composum/nodes/console/clientlibs/base");
         printLinkItem(writer, url + "?lib=composum/nodes/console/clientlibs/base");
         writer.println("</ul>This prints the files and other included client libraries.");
         writer.println("It does not check for duplicated elements, as the normal rendering process does.</p>");
-        writer.println("This prints all libraries of the type given as extension:<ul>");
+        writer.println("This prints all libraries of the type given as selector, selector <code>all</code> prints all:<ul>");
         printLinkItem(writer, url);
         writer.println("</ul>");
         writer.flush();
+    }
+
+    protected void printVerification(SlingHttpServletRequest request, PrintWriter writer) {
+        String verificationResults = clientlibService.verifyClientlibPermissions(true);
+        if (StringUtils.isNotBlank(verificationResults)) {
+            writer.println("<hr/><h2>Permission warnings:</h2><pre>");
+            writer.println(verificationResults);
+            writer.println("</pre>");
+        }
     }
 
     protected void printLinkItem(PrintWriter writer, String url) {
@@ -77,6 +88,7 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
         String typeString = request.getRequestPathInfo().getSelectorString();
         if (isBlank(typeString) || null == request.getParameter("lib")) {
             printUsage(request, writer);
+            printVerification(request, writer);
             if (isNotBlank(typeString)) printAllLibs(request, writer, typeString);
             return;
         }
@@ -97,7 +109,11 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
 
     private void printAllLibs(SlingHttpServletRequest request, PrintWriter writer, String typeString) throws
             ServletException, IOException {
-        try {
+        if ("all".equalsIgnoreCase(typeString)) {
+            for (Clientlib.Type type : Clientlib.Type.values()) {
+                printAllLibs(request, writer, type.name());
+            }
+        } else try {
             ResourceResolver resolver = request.getResourceResolver();
             QueryManager querymanager = resolver.adaptTo(Session.class).getWorkspace()
                     .getQueryManager();
@@ -120,13 +136,14 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
         ClientlibElement clientlib = clientlibService.resolve(ref, request.getResourceResolver());
         String normalizedPath = normalizePath(ref, clientlib, request.getResourceResolver());
         StringBuilder categories = new StringBuilder();
+        String url = request.getRequestURL().toString().replaceAll("\\.[^/]+$", "") + "." + ref.type.name() + ".html";
         if (clientlib instanceof Clientlib) {
             Clientlib thelib = (Clientlib) clientlib;
             if (thelib.getCategories().isEmpty()) categories.append(" (no categories)");
             else {
                 categories.append(" (in categories ");
                 for (String cat : thelib.getCategories()) {
-                    categories.append("<a href=\"").append(request.getRequestURL())
+                    categories.append("<a href=\"").append(url)
                             .append("?lib=category:").append(cat).append("\">").append(cat).append("</a>");
                 }
                 categories.append(")");
@@ -134,7 +151,7 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
         }
         Validate.notNull(clientlib, "Not found: " + ref);
         writer.println("<hr/>");
-        writer.println("<h2>Structure of <a href=\"" + request.getRequestURL() + "?lib=" + normalizedPath + "\">" +
+        writer.println("<h2>Structure of <a href=\"" + url + "?lib=" + normalizedPath + "\">" +
                 ref + "</a>" + categories + "</h2>");
         writer.println("<code>&lt;cpn:clientlib type=\"" + ref.type.name() + "\" path=\"" + normalizedPath +
                 "\"/&gt;</code><br/><hr/><pre>");
