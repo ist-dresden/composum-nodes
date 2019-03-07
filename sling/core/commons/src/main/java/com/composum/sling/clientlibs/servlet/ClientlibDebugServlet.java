@@ -91,8 +91,8 @@ public class ClientlibDebugServlet extends HttpServlet {
         writer.flush();
     }
 
-    protected void printVerification(PrintWriter writer, Type type) {
-        String verificationResults = clientlibService.verifyClientlibPermissions(type, true);
+    protected void printVerification(PrintWriter writer, Type type, ResourceResolver resolver) {
+        String verificationResults = clientlibService.verifyClientlibPermissions(type, true, resolver);
         if (StringUtils.isNotBlank(verificationResults)) {
             writer.println("<hr/><h2>Permission warnings:</h2><pre>");
             writer.println(verificationResults);
@@ -163,7 +163,7 @@ public class ClientlibDebugServlet extends HttpServlet {
             printForm(request, writer, requestedType);
 
             List<Type> printTypes = requestedType == null ? Arrays.asList(Type.values()) : Collections.singletonList(requestedType);
-            printVerification(writer, requestedType);
+            printVerification(writer, requestedType, StringUtils.isNotBlank(impersonation) ? resolver : null);
 
             for (Type type : printTypes) {
                 if (StringUtils.isBlank(request.getParameter(REQUEST_PARAM_LIB)))
