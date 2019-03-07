@@ -27,7 +27,7 @@ public class ClientlibExternalUri implements ClientlibElement {
      * since external references are never embedded.
      */
     @Override
-    public void accept(ClientlibVisitor visitor, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent) throws IOException, RepositoryException {
+    public void accept(ClientlibVisitor visitor, ClientlibVisitor.VisitorMode mode, ClientlibResourceFolder parent) {
         visitor.visit(this, ClientlibVisitor.VisitorMode.DEPENDS, parent);
     }
 
@@ -46,4 +46,9 @@ public class ClientlibExternalUri implements ClientlibElement {
         return new ClientlibRef(link.type, link.path, false, link.properties);
     }
 
+
+    @Override
+    public String toString() {
+        return link.toString();
+    }
 }

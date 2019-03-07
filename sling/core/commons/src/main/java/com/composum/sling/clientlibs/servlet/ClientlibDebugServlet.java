@@ -6,13 +6,12 @@ import com.composum.sling.clientlibs.processor.AbstractClientlibVisitor;
 import com.composum.sling.clientlibs.service.ClientlibService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.*;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -26,10 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,12 +49,25 @@ import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
 })
 public class ClientlibDebugServlet extends HttpServlet {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientlibDebugServlet.class);
-
     /**
      * Extracts the (single) selector from a URL.
      */
     protected static final Pattern SELECTOR_REGEX = Pattern.compile(".*\\.([^.]+)\\.html");
+
+    /**
+     * Request parameter to restrict output to one library
+     */
+    protected static final String REQUEST_PARAM_LIB = "lib";
+
+    /**
+     * Request parameter to check permissions / view clientlibs for one user.
+     */
+    protected static final String REQUEST_PARAM_IMPERSONATE = "impersonate";
+
+    /**
+     * Request parameter that overrides the type selector, when used from the form.
+     */
+    protected static final String REQUEST_PARAM_TYPE = "type";
 
     @Reference
     private ClientlibService clientlibService;
@@ -66,23 +75,23 @@ public class ClientlibDebugServlet extends HttpServlet {
     @Reference
     private ResourceResolverFactory resolverFactory;
 
-    protected void printUsage(HttpServletRequest request, PrintWriter writer) {
+    protected void printUsage(HttpServletRequest request, PrintWriter writer, String impersonationparam) {
         String url = request.getRequestURL().toString().replaceAll("\\.[^/]+$", "") + ".css.html";
         writer.println("<h2>Usage:</h2>");
         writer.println("Please give the type of the client library as selector and one or more");
         writer.println("client libraries or -categories as parameter lib. Some examples:<ul>");
-        printLinkItem(writer, url + "?lib=category:composum.core.console.browser");
-        printLinkItem(writer, url + "?lib=/libs/composum/nodes/console/clientlibs/base");
-        printLinkItem(writer, url + "?lib=composum/nodes/console/clientlibs/base");
+        printLinkItem(writer, url + "?lib=category:composum.core.console.browser", impersonationparam);
+        printLinkItem(writer, url + "?lib=/libs/composum/nodes/console/clientlibs/base", impersonationparam);
+        printLinkItem(writer, url + "?lib=composum/nodes/console/clientlibs/base", impersonationparam);
         writer.println("</ul>This prints the files and other included client libraries.");
         writer.println("It does not check for duplicated elements, as the normal rendering process does.</p>");
         writer.println("This prints all libraries of the type given as selector, no selector prints all:<ul>");
-        printLinkItem(writer, url);
+        printLinkItem(writer, url, impersonationparam);
         writer.println("</ul>");
         writer.flush();
     }
 
-    protected void printVerification(HttpServletRequest request, PrintWriter writer, Type type) {
+    protected void printVerification(PrintWriter writer, Type type) {
         String verificationResults = clientlibService.verifyClientlibPermissions(type, true);
         if (StringUtils.isNotBlank(verificationResults)) {
             writer.println("<hr/><h2>Permission warnings:</h2><pre>");
@@ -91,87 +100,122 @@ public class ClientlibDebugServlet extends HttpServlet {
         }
     }
 
-    protected void printLinkItem(PrintWriter writer, String url) {
-        writer.println("<li><a href=\"" + url + "\">" + url + "</a></li>");
+    protected void printForm(HttpServletRequest request, PrintWriter writer, Type type) {
+        writer.println("<form action=\"" + request.getRequestURL() + "\" method=\"get\">");
+        writer.println("Type: <select name=\"type\"> <option value=\"\">All</option>");
+        for (Type selectType : Type.values()) {
+            writer.print("        <option value=\"" + selectType.name() + "\"");
+            if (selectType == type) writer.print(" selected ");
+            writer.print(">" + selectType.name());
+            writer.println("</option>");
+        }
+        writer.println("</select>");
+        writer.print(" Library: <input type=\"text\" name=\"" + REQUEST_PARAM_LIB + "\" value=\"");
+        String lib = request.getParameter(REQUEST_PARAM_LIB);
+        if (lib != null) writer.print(lib);
+        writer.println("\">\n");
+        writer.print(" Impersonate:\n <input type=\"text\" name=\"" + REQUEST_PARAM_IMPERSONATE + "\" value=\"");
+        String impersonate = request.getParameter(REQUEST_PARAM_IMPERSONATE);
+        if (StringUtils.isNotBlank(impersonate)) writer.print(impersonate);
+        writer.println("\">");
+        writer.println("<input type=\"submit\" value=\"Submit\">\n </form>\n");
+    }
+
+    protected void printLinkItem(PrintWriter writer, String url, String impersonationparam) {
+        writer.println("<li><a href=\"" + url + impersonationparam + "\">" + url + "</a></li>");
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("text/html");
+        PrintWriter writer = response.getWriter();
+
         ResourceResolver resolverToClose = null;
         ResourceResolver resolver;
-        if (request instanceof SlingHttpServletRequest) {
+        String impersonation = request.getParameter(REQUEST_PARAM_IMPERSONATE);
+        String impersonationParam = StringUtils.isNotBlank(impersonation) ? "&" + REQUEST_PARAM_IMPERSONATE + "=" + impersonation.trim() : "";
+        if (request instanceof SlingHttpServletRequest && StringUtils.isBlank(impersonation)) {
             resolver = ((SlingHttpServletRequest) request).getResourceResolver();
         } else {
             try {
-                resolver = resolverFactory.getAdministrativeResourceResolver(null);
+                Map authenticationInfo = StringUtils.isNotBlank(impersonation) ?
+                        new HashMap(Collections.singletonMap(ResourceResolverFactory.USER_IMPERSONATION, impersonation))
+                        : null;
+                resolver = resolverFactory.getAdministrativeResourceResolver(authenticationInfo);
                 resolverToClose = resolver;
             } catch (LoginException e) {
-                throw new ServletException(e);
+                writer.println("Could not login as " + impersonation);
+                return;
             }
         }
 
         try {
             response.setContentType("text/html");
-            PrintWriter writer = response.getWriter();
-            writer.println("<html><body><h1>Rough structure of client libraries</h1>");
+            writer.print("<html><body><h1>Rough structure of client libraries");
+            if (StringUtils.isNotBlank(impersonation))
+                writer.print(" as seen from " + resolver.getUserID());
+            writer.println("</h1>");
 
             Type requestedType = requestedClientlibType(request);
-            if (requestedType == null && null == request.getParameter("lib")) {
-                printUsage(request, writer);
+            if (requestedType == null && null == request.getParameter(REQUEST_PARAM_LIB)) {
+                printUsage(request, writer, impersonationParam);
             }
+            printForm(request, writer, requestedType);
 
             List<Type> printTypes = requestedType == null ? Arrays.asList(Type.values()) : Collections.singletonList(requestedType);
-            printVerification(request, writer, requestedType);
+            printVerification(writer, requestedType);
 
             for (Type type : printTypes) {
-                if (request.getParameter("lib") == null)
-                    printAllLibs(request, writer, type, resolver);
-                else for (String lib : request.getParameterValues("lib")) {
-                    ClientlibRef ref = null;
+                if (StringUtils.isBlank(request.getParameter(REQUEST_PARAM_LIB)))
+                    printAllLibs(request, writer, type, resolver, impersonationParam);
+                else for (String lib : request.getParameterValues(REQUEST_PARAM_LIB)) {
+                    ClientlibRef ref;
                     if (lib.startsWith(PREFIX_CATEGORY)) {
                         ref = ClientlibRef.forCategory(type, lib.substring(PREFIX_CATEGORY.length()), false, null);
                     } else {
                         ref = new ClientlibRef(type, lib, false, null);
                     }
-                    displayClientlibStructure(request, writer, ref, resolver);
+                    displayClientlibStructure(request, writer, ref, resolver, impersonationParam);
                 }
             }
 
             writer.println("<hr/></body></html>");
         } finally {
             if (null != resolverToClose) resolverToClose.close();
+            writer.close();
         }
     }
 
     protected Type requestedClientlibType(HttpServletRequest request) {
+        Type type = null;
         String uri = request.getRequestURI();
         Matcher matcher = SELECTOR_REGEX.matcher(uri);
-        if (matcher.matches()) {
-            Type type = Type.valueOf(matcher.group(1));
-        }
-        return null;
+        if (matcher.matches())
+            type = Type.valueOf(matcher.group(1));
+        if (StringUtils.isNotBlank(request.getParameter(REQUEST_PARAM_TYPE)))
+            type = Type.valueOf(request.getParameter(REQUEST_PARAM_TYPE));
+        return type;
     }
 
-    private void printAllLibs(HttpServletRequest request, PrintWriter writer, Type type, ResourceResolver resolver) throws
+    private void printAllLibs(HttpServletRequest request, PrintWriter writer, Type type, ResourceResolver resolver, String impersonationParam) throws
             ServletException, IOException {
         try {
             QueryManager querymanager = resolver.adaptTo(Session.class).getWorkspace()
                     .getQueryManager();
             String statement = "//element(*)[sling:resourceType='composum/nodes/commons/clientlib']/" + type.name() +
-                    "/..";
-            NodeIterator clientlibs = null;
-            clientlibs = querymanager.createQuery(statement, Query.XPATH).execute().getNodes();
+                    "/..  order by path";
+            NodeIterator clientlibs = querymanager.createQuery(statement, Query.XPATH).execute().getNodes();
             while (clientlibs.hasNext())
                 displayClientlibStructure(request, writer,
                         new Clientlib(type, resolver.getResource(clientlibs.nextNode()
-                                .getPath())).getRef(), resolver);
+                                .getPath())).getRef(), resolver, impersonationParam);
 
         } catch (RepositoryException e) {
             throw new ServletException(e);
         }
     }
 
-    private void displayClientlibStructure(HttpServletRequest request, PrintWriter writer, ClientlibRef ref, ResourceResolver resolver)
+    private void displayClientlibStructure(HttpServletRequest request, PrintWriter writer, ClientlibRef ref, ResourceResolver resolver, String impersonationparam)
             throws IOException, ServletException {
         ClientlibElement clientlib = clientlibService.resolve(ref, resolver);
         String normalizedPath = normalizePath(ref, clientlib, resolver);
@@ -185,14 +229,15 @@ public class ClientlibDebugServlet extends HttpServlet {
                 categories.append(" (in categories ");
                 for (String cat : thelib.getCategories()) {
                     categories.append("<a href=\"").append(url)
-                            .append("?lib=category:").append(cat).append("\">").append(cat).append("</a>");
+                            .append("?lib=category:").append(cat).append(impersonationparam)
+                            .append("\">").append(cat).append("</a>");
                 }
                 categories.append(")");
             }
         }
         Validate.notNull(clientlib, "Not found: " + ref);
         writer.println("<hr/>");
-        writer.println("<h2>Structure of <a href=\"" + url + "?lib=" + normalizedPath + "\">" +
+        writer.println("<h2>Structure of <a href=\"" + url + "?lib=" + normalizedPath + impersonationparam + "\">" +
                 ref + "</a>" + categories + "</h2>");
         writer.println("<code>&lt;cpn:clientlib type=\"" + ref.type.name() + "\" path=\"" + normalizedPath +
                 "\"/&gt;</code><br/><hr/><pre>");
