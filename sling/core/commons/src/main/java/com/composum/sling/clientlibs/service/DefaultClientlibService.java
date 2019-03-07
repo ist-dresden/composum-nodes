@@ -109,7 +109,7 @@ public class DefaultClientlibService implements ClientlibService {
         processorMap.put(Clientlib.Type.js, javascriptProcessor);
         processorMap.put(Clientlib.Type.css, getClientlibConfig().getMapClientlibURLs() ? new ProcessorPipeline(new
                 CssUrlMapper(), cssProcessor) : cssProcessor);
-        verifyClientlibPermissions(true);
+        verifyClientlibPermissions(null, true);
     }
 
     @Deactivate
@@ -562,7 +562,7 @@ public class DefaultClientlibService implements ClientlibService {
             throw new FileNotFoundException("No cached file found for " + clientlibRef);
         }
 
-        verifyClientlibPermissions(false); // not part of functionality - just ensure it's checked once in a while.
+        verifyClientlibPermissions(null, false); // not part of functionality - just ensure it's checked once in a while.
     }
 
     /**
@@ -602,19 +602,21 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     /**
-     * XPath Query that matches all clientlib descriptor resources.
+     * XPath Query that matches all clientlibs.
      */
-    public static final String QUERY_CLIENTLIB_PARTS = "/jcr:root/(apps|libs)//*[sling:resourceType='composum/nodes/commons/clientlib']//*";
+    protected static final String QUERY_CLIENTLIBS = "/jcr:root/(apps|libs)//*[sling:resourceType='composum/nodes/commons/clientlib']";
 
     /**
-     * Xpath Query that matches all clientlib folders referencing other stuff.
+     * Xpath Query suffix for a query that matches all clientlib folders referencing other stuff.
      */
-    public static final String QUERY_CLIENTLIB_REFERENCERS = "/jcr:root/(apps|libs)//*[sling:resourceType='composum/nodes/commons/clientlib']//*[embed or depends]";
+    protected static final String QUERY_SUFFIX_REFERENCERS = "[embed or depends]";
 
     private long lastPermissionCheck = Long.MIN_VALUE;
 
     @Override
-    public String verifyClientlibPermissions(boolean force) {
+    public String verifyClientlibPermissions(Type requestedtype, boolean force) {
+        String querySuffix = requestedtype != null ? "/" + requestedtype.name() + "//*" : "//*";
+
         StringBuilder buf = new StringBuilder();
         if (force || lastPermissionCheck < System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)) {
             lastPermissionCheck = System.currentTimeMillis();
@@ -623,7 +625,7 @@ public class DefaultClientlibService implements ClientlibService {
             try {
                 anonymousResolver = resolverFactory.getResourceResolver(null);
                 administrativeResolver = createAdministrativeResolver();
-                Iterator<Resource> it = administrativeResolver.findResources(QUERY_CLIENTLIB_PARTS, Query.XPATH);
+                Iterator<Resource> it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix, Query.XPATH);
                 while (it.hasNext()) {
                     Resource clientlibElement = it.next();
                     if (anonymousResolver.getResource(clientlibElement.getPath()) == null) {
@@ -631,7 +633,7 @@ public class DefaultClientlibService implements ClientlibService {
                     }
                 }
 
-                it = administrativeResolver.findResources(QUERY_CLIENTLIB_REFERENCERS, Query.XPATH);
+                it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + QUERY_SUFFIX_REFERENCERS, Query.XPATH);
                 while (it.hasNext()) {
                     Resource clientlibElement = it.next();
                     Resource clientlibFolderResource = clientlibElement;
