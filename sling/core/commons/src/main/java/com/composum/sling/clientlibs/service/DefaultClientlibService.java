@@ -390,11 +390,20 @@ public class DefaultClientlibService implements ClientlibService {
                 }
                 element = resolve(clientlibRef, adminResolver);
 
-                UpdateTimeVisitor updateTimeVisitor = new UpdateTimeVisitor(element, this, request
-                        .getResourceResolver());
+                UpdateTimeVisitor updateTimeVisitor = new UpdateTimeVisitor(element, this, adminResolver);
                 updateTimeVisitor.execute();
                 final String hash = updateTimeVisitor.getHash();
                 String cacheFileHash = cacheFile.getContent().getProperty(PROP_HASH);
+
+                if (!StringUtils.equals(requestedHash, hash)) { // safety check to avoid continual up to date checks
+                    UpdateTimeVisitor updateTimeVisitorAsUser = new UpdateTimeVisitor(element, this, request.getResourceResolver());
+                    updateTimeVisitorAsUser.execute();
+                    if (!StringUtils.equals(hash, updateTimeVisitorAsUser.getHash())) {
+                        LOG.error("Clientlib hash for {} as {} and admin disagree - " +
+                                        "likely permission problem that results in performance problems",
+                                request.getUserPrincipal(), clientlibRef);
+                    }
+                }
 
                 boolean refreshNeeded = refreshForced || !hash.equals(cacheFileHash);
                 // if the clientlib seems newer than the clientlib last modified, we rather regenerate things, too.
@@ -684,7 +693,10 @@ public class DefaultClientlibService implements ClientlibService {
                 buf.append("Permission problem: resource different for admin and anonymous for ")
                         .append(ref.toString())
                         .append(" : ").append(resourceAsAdmin.getPath())
-                        .append(" vs. ").append(resourceAsAnonymous.getPath());
+                        .append(" vs. ").append(resourceAsAnonymous.getPath())
+                        .append("\n");
+            } else if (new FileHandle(resourceAsAdmin).isValid() && !new FileHandle(resourceAsAnonymous).isValid()) {
+                buf.append("Content resource not readable: ").append(resourceAsAdmin.getPath()).append("\n");
             }
         }
     }
