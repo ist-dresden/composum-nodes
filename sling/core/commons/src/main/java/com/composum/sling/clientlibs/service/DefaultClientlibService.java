@@ -109,7 +109,7 @@ public class DefaultClientlibService implements ClientlibService {
         processorMap.put(Clientlib.Type.js, javascriptProcessor);
         processorMap.put(Clientlib.Type.css, getClientlibConfig().getMapClientlibURLs() ? new ProcessorPipeline(new
                 CssUrlMapper(), cssProcessor) : cssProcessor);
-        verifyClientlibPermissions(null, true);
+        verifyClientlibPermissions(null, true, null);
     }
 
     @Deactivate
@@ -395,11 +395,12 @@ public class DefaultClientlibService implements ClientlibService {
                 final String hash = updateTimeVisitor.getHash();
                 String cacheFileHash = cacheFile.getContent().getProperty(PROP_HASH);
 
-                if (!StringUtils.equals(requestedHash, hash)) { // safety check to avoid continual up to date checks
+                if (!StringUtils.equals(requestedHash, hash)) {
+                    // safety check to make sure continual up to date checks because of wrong permissions get noticed
                     UpdateTimeVisitor updateTimeVisitorAsUser = new UpdateTimeVisitor(element, this, request.getResourceResolver());
                     updateTimeVisitorAsUser.execute();
                     if (!StringUtils.equals(hash, updateTimeVisitorAsUser.getHash())) {
-                        LOG.error("Clientlib hash for {} as {} and admin disagree - " +
+                        LOG.warn("Clientlib hash for {} as {} and admin disagree - " +
                                         "likely permission problem that results in performance problems",
                                 request.getUserPrincipal(), clientlibRef);
                     }
@@ -571,7 +572,7 @@ public class DefaultClientlibService implements ClientlibService {
             throw new FileNotFoundException("No cached file found for " + clientlibRef);
         }
 
-        verifyClientlibPermissions(null, false); // not part of functionality - just ensure it's checked once in a while.
+        verifyClientlibPermissions(null, false, null); // not part of functionality - just ensure it's checked once in a while.
     }
 
     /**
@@ -623,16 +624,17 @@ public class DefaultClientlibService implements ClientlibService {
     private long lastPermissionCheck = Long.MIN_VALUE;
 
     @Override
-    public String verifyClientlibPermissions(Type requestedtype, boolean force) {
+    public String verifyClientlibPermissions(Type requestedtype, boolean force, ResourceResolver resolver) {
         String querySuffix = requestedtype != null ? "/" + requestedtype.name() + "//*" : "//*";
 
         StringBuilder buf = new StringBuilder();
         if (force || lastPermissionCheck < System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)) {
             lastPermissionCheck = System.currentTimeMillis();
-            ResourceResolver anonymousResolver = null;
+            ResourceResolver anonymousResolver = resolver;
             ResourceResolver administrativeResolver = null;
             try {
-                anonymousResolver = resolverFactory.getResourceResolver(null);
+                if (anonymousResolver == null)
+                    anonymousResolver = resolverFactory.getResourceResolver(null);
                 administrativeResolver = createAdministrativeResolver();
                 Iterator<Resource> it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + " order by path", Query.XPATH);
                 while (it.hasNext()) {
@@ -676,7 +678,8 @@ public class DefaultClientlibService implements ClientlibService {
                     LOG.error("Anonymously unreadable clientlib elements might endanger consistency and performance:\n{}", buf);
                 }
                 if (null != administrativeResolver) administrativeResolver.close();
-                if (null != anonymousResolver) anonymousResolver.close();
+                if (resolver == null) if (null != anonymousResolver)
+                    anonymousResolver.close(); // else it's just resolver coming from outside
             }
         }
         return buf.length() == 0 ? null : buf.toString();
