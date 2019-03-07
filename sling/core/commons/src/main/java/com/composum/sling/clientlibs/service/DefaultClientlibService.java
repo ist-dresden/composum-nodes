@@ -625,7 +625,7 @@ public class DefaultClientlibService implements ClientlibService {
             try {
                 anonymousResolver = resolverFactory.getResourceResolver(null);
                 administrativeResolver = createAdministrativeResolver();
-                Iterator<Resource> it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix, Query.XPATH);
+                Iterator<Resource> it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + " order by path", Query.XPATH);
                 while (it.hasNext()) {
                     Resource clientlibElement = it.next();
                     if (anonymousResolver.getResource(clientlibElement.getPath()) == null) {
@@ -633,7 +633,7 @@ public class DefaultClientlibService implements ClientlibService {
                     }
                 }
 
-                it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + QUERY_SUFFIX_REFERENCERS, Query.XPATH);
+                it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + QUERY_SUFFIX_REFERENCERS + " order by path", Query.XPATH);
                 while (it.hasNext()) {
                     Resource clientlibElement = it.next();
                     Resource clientlibFolderResource = clientlibElement;
