@@ -386,6 +386,114 @@
             }
         });
 
+        components.FormDialog = components.Dialog.extend({
+
+            initialize: function (options) {
+                core.components.Dialog.prototype.initialize.apply(this, [options]);
+                this.form = core.getWidget(this.el, "form", core.components.FormWidget);
+                this.validationHints = [];
+                this.initView();
+                this.initSubmit();
+                this.$el.on('hidden.bs.modal', _.bind(this.onClose, this));
+            },
+
+            initSubmit: function () {
+                this.$('form').on('submit', _.bind(this.onSubmit, this));
+            },
+
+            initView: function () {
+            },
+
+            validationReset: function () {
+                this.$alert.addClass('alert-hidden');
+                this.$alert.html('');
+                this.validationHints = [];
+                this.form.validationReset();
+            },
+
+            onValidationFault: function () {
+            },
+
+            message: function (type, label, message, hint) {
+                if (message) {
+                    this.alert(type, '<div class="text-danger"><span class="label">' + label
+                        + '</span><span class="message">'
+                        + message + (hint ? " (" + hint + ")" : '') + '</span></div>');
+                }
+            },
+
+            hintsMessage: function (level) {
+                this.messages(level ? level : 'warning', this.validationHints.length < 1
+                    ? 'validation error' : undefined, this.validationHints);
+            },
+
+            validationHint: function (type, label, message, hint) {
+                if (message) {
+                    this.validationHints.push({level: type, label: label, text: message, hint: hint});
+                }
+            },
+
+            validateForm: function () {
+                this.validationReset();
+                return this.form.validate(_.bind(function (type, label, message, hint) {
+                    this.validationHint(type, label, message, hint)
+                }, this));
+            },
+
+            /**
+             * the validation strategy with support for an asynchronous validation call
+             * @param onSuccess called after successful validation
+             * @param onError called if a validation fault registered
+             */
+            doValidate: function (onSuccess, onError) {
+                if (this.validateForm()) {
+                    onSuccess();
+                } else {
+                    onError();
+                }
+            },
+
+            /**
+             * triggered if the submit button is clicked or activated somewhere else
+             */
+            onSubmit: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                this.form.prepare();
+                this.doValidate(_.bind(function () {
+                    this.form.finalize();
+                    this.doSubmit(_.bind(function (result) {
+                            if (_.isObject(result) && _.isObject(result.response)) {
+                                var response = result.response;
+                                var messages = result.messages;
+                                core.messages(response.level, response.text, messages);
+                            }
+                        }, this)
+                    );
+                }, this), _.bind(function () {
+                    this.messages('warning', this.validationHints.length < 1 ? 'validation error' : undefined,
+                        this.validationHints);
+                    this.onValidationFault();
+                }, this));
+                return false;
+            },
+
+            onClose: function (event) {
+                this.$el.remove();
+            }
+        });
+
+        core.showFormDialog = function (viewType, html) {
+            var $body = $('body');
+            $body.append(html);
+            var $dialog = $body.children(':last-child');
+            var dialog = core.getWidget($body, $dialog[0], viewType);
+            if (dialog) {
+                dialog.show();
+            }
+        };
+
     })(core.components);
 
 })(window.core);
