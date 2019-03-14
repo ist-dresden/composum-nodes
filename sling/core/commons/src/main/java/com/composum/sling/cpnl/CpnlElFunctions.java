@@ -37,7 +37,9 @@ public class CpnlElFunctions {
     public static final String[] QTYPE_ESC = new String[]{"&quot;", "&apos;"};
 
     public static final String[] RICH_TEXT_TAGS = new String[]{
-            "p", "br", "a", "ul", "li", "ol", "strong", "em", "u", "b", "i", "strike", "sub", "sup"
+            "p", "br", "a", "ul", "li", "ol", "dl", "dt", "dd",
+            "strong", "em", "u", "b", "i", "strike", "sub", "sup",
+            "table", "thead", "tbody", "tr", "th", "td"
     };
 
     public static final String[][] RICH_TEXT_BASIC_ESCAPE = {

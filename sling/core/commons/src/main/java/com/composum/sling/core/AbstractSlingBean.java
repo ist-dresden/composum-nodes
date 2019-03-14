@@ -266,7 +266,10 @@ public abstract class AbstractSlingBean implements SlingBean {
 
     public RequestHandle getRequest() {
         if (request == null) {
-            request = RequestHandle.use(context.getRequest());
+            SlingHttpServletRequest req = context.getRequest();
+            if (req != null){
+                request = RequestHandle.use(req);
+            }
         }
         return request;
     }

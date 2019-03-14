@@ -720,7 +720,7 @@ public interface BeanContext extends Adaptable {
      */
     class Wrapper implements BeanContext {
 
-        protected final BeanContext beanContext;
+        protected BeanContext beanContext;
         protected final ResourceResolver resolver;
         protected final Resource resource;
 
