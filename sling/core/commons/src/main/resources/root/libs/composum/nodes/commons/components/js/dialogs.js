@@ -467,7 +467,11 @@
                             if (_.isObject(result) && _.isObject(result.response)) {
                                 var response = result.response;
                                 var messages = result.messages;
-                                core.messages(response.level, response.text, messages);
+                                if (_.isArray(messages) && messages.length > 0) {
+                                    core.messages(response.level, response.text, messages);
+                                } else {
+                                    core.alert(response.level, response.title, response.text);
+                                }
                             }
                         }, this)
                     );
