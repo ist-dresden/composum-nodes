@@ -1,15 +1,18 @@
 package com.composum.sling.nodes.servlet;
 
-import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
+import com.composum.sling.core.service.VersionCheckinPreprocessor;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
 import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -19,6 +22,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -58,7 +62,11 @@ public class VersionServlet extends AbstractServiceServlet {
     @Reference
     private NodesConfiguration coreConfig;
 
-    @Override protected boolean isEnabled() {
+    @Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE)
+    private volatile List<VersionCheckinPreprocessor> checkinPreprocessors;
+
+    @Override
+    protected boolean isEnabled() {
         return coreConfig.isEnabled(this);
     }
 
@@ -86,19 +94,40 @@ public class VersionServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json, Operation.configuration, new CreateConfiguration());
     }
 
-    @Override protected ServletOperationSet getOperations() {
+    @Override
+    protected ServletOperationSet getOperations() {
         return operations;
+    }
+
+
+    /**
+     * If there are checkin preprocessors, these are called. Used always before a checkin.
+     */
+    protected void callCheckinPreprocessors(SlingHttpServletRequest request, ResourceResolver resolver, JackrabbitSession session, String path) {
+        List<VersionCheckinPreprocessor> processors = checkinPreprocessors; // save locally since volatile
+        if (processors != null && !processors.isEmpty()) {
+            ResourceHandle checkedinResource = ResourceHandle.use(resolver.getResource(path));
+            for (VersionCheckinPreprocessor preprocessor : processors) {
+                try {
+                    preprocessor.beforeCheckin(request, session, checkedinResource);
+                } catch (RepositoryException e) {
+                    LOG.error("Error preprocessing for checkin on " + path, e);
+                }
+            }
+        }
     }
 
     static class VersionEntry {
         String versionName;
         String date;
         List<String> labels = new ArrayList<>();
+
         VersionEntry(String versionName, String date) {
             this.versionName = versionName;
             this.date = date;
         }
     }
+
     static class Param {
         String version;
         String label;
@@ -119,8 +148,9 @@ public class VersionServlet extends AbstractServiceServlet {
 
     public static class RestoreVersion implements ServletOperation {
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        @Override
+        public void doIt(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response,
+                         ResourceHandle resource) throws RepositoryException, IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -141,8 +171,9 @@ public class VersionServlet extends AbstractServiceServlet {
 
     public static class DeleteVersion implements ServletOperation {
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        @Override
+        public void doIt(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response,
+                         ResourceHandle resource) throws RepositoryException, IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -164,8 +195,9 @@ public class VersionServlet extends AbstractServiceServlet {
 
     public static class CreateConfiguration implements ServletOperation {
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        @Override
+        public void doIt(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response,
+                         ResourceHandle resource) throws RepositoryException, IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -182,14 +214,15 @@ public class VersionServlet extends AbstractServiceServlet {
 
     public static class CreateActivity implements ServletOperation {
 
-        @Override public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        @Override
+        public void doIt(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response,
+                         ResourceHandle resource) throws RepositoryException, IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
                 final String activity = AbstractServiceServlet.getPath(request);
                 final VersionManager versionManager = session.getWorkspace().getVersionManager();
-                versionManager.createActivity(activity.startsWith("/")?activity.substring(1):activity);
+                versionManager.createActivity(activity.startsWith("/") ? activity.substring(1) : activity);
                 ResponseUtil.writeEmptyArray(response);
             } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
@@ -199,8 +232,9 @@ public class VersionServlet extends AbstractServiceServlet {
     }
 
     public static class DeleteLabel implements ServletOperation {
-        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                final ResourceHandle resource) throws IOException, ServletException {
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -222,8 +256,9 @@ public class VersionServlet extends AbstractServiceServlet {
     }
 
     public static class AddLabel implements ServletOperation {
-        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                final ResourceHandle resource) throws IOException, ServletException {
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -245,8 +280,9 @@ public class VersionServlet extends AbstractServiceServlet {
     }
 
     public static class GetLabels implements ServletOperation {
-        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                final ResourceHandle resource) throws IOException, ServletException {
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final Node node = resource.adaptTo(Node.class);
                 if (node == null) {
@@ -284,8 +320,9 @@ public class VersionServlet extends AbstractServiceServlet {
     }
 
     public static class GetVersions implements ServletOperation {
-        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                final ResourceHandle resource) throws IOException, ServletException {
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final Node node = resource.adaptTo(Node.class);
                 if (node == null) {
@@ -341,8 +378,9 @@ public class VersionServlet extends AbstractServiceServlet {
 
     public static class CheckoutOperation implements ServletOperation {
 
-        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                final ResourceHandle resource) throws IOException, ServletException {
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -357,15 +395,17 @@ public class VersionServlet extends AbstractServiceServlet {
         }
     }
 
-    public static class CheckinOperation implements ServletOperation {
+    public class CheckinOperation implements ServletOperation {
 
-        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                final ResourceHandle resource) throws IOException, ServletException {
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
                 final String path = AbstractServiceServlet.getPath(request);
                 final VersionManager versionManager = session.getWorkspace().getVersionManager();
+                callCheckinPreprocessors(request, resolver, session, path);
                 versionManager.checkin(path);
                 ResponseUtil.writeEmptyArray(response);
             } catch (final RepositoryException ex) {
@@ -375,15 +415,17 @@ public class VersionServlet extends AbstractServiceServlet {
         }
     }
 
-    public static class CheckpointOperation implements ServletOperation {
+    public class CheckpointOperation implements ServletOperation {
 
-        @Override public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                final ResourceHandle resource) throws IOException, ServletException {
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response,
+                         final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
                 final String path = AbstractServiceServlet.getPath(request);
                 final VersionManager versionManager = session.getWorkspace().getVersionManager();
+                callCheckinPreprocessors(request, resolver, session, path);
                 if (versionManager.isCheckedOut(path)) {
                     versionManager.checkpoint(path);
                 }
