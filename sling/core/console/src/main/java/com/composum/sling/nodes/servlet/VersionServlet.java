@@ -131,25 +131,6 @@ public class VersionServlet extends AbstractServiceServlet {
         }
     }
 
-    /**
-     * If there are checkin preprocessors, the {@link VersionCheckinPreprocessor#afterCheckin(SlingHttpServletRequest, JackrabbitSession, VersionManager, ResourceHandle)}
-     * are called . Used always before a checkin.
-     */
-    protected void callAfterCheckinProcessing(SlingHttpServletRequest request, ResourceResolver resolver, JackrabbitSession session, VersionManager versionManager, String path) throws ServletException {
-        List<VersionCheckinPreprocessor> processors = versionCheckinPreprocessors; // save locally since volatile
-        if (processors != null && !processors.isEmpty()) {
-            ResourceHandle checkedinResource = ResourceHandle.use(resolver.getResource(path));
-            for (VersionCheckinPreprocessor preprocessor : processors) {
-                try {
-                    preprocessor.afterCheckin(request, session, versionManager, checkedinResource);
-                } catch (RepositoryException | PersistenceException e) {
-                    LOG.error("Error in afterCheckin for " + path, e);
-                    throw new ServletException(e);
-                }
-            }
-        }
-    }
-
     static class VersionEntry {
         String versionName;
         String date;
@@ -440,7 +421,6 @@ public class VersionServlet extends AbstractServiceServlet {
                 final VersionManager versionManager = session.getWorkspace().getVersionManager();
                 callBeforeCheckinProcessing(request, resolver, session, versionManager, path);
                 versionManager.checkin(path);
-                callAfterCheckinProcessing(request, resolver, session, versionManager, path);
                 ResponseUtil.writeEmptyArray(response);
             } catch (final RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
@@ -462,7 +442,6 @@ public class VersionServlet extends AbstractServiceServlet {
                 if (versionManager.isCheckedOut(path)) {
                     callBeforeCheckinProcessing(request, resolver, session, versionManager, path);
                     versionManager.checkpoint(path);
-                    callAfterCheckinProcessing(request, resolver, session, versionManager, path);
                 }
                 ResponseUtil.writeEmptyArray(response);
             } catch (final RepositoryException ex) {
