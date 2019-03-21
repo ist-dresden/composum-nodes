@@ -386,15 +386,40 @@
             }
         });
 
-        components.FormDialog = components.Dialog.extend({
+        components.LoadedDialog = components.Dialog.extend({
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
+                this.$el.on('hidden.bs.modal', _.bind(this.onClose, this));
+            },
+
+            resetOnShown: function () {
+                // the loaded dialog should contain all values after load - prevent from reset
+            },
+
+            onClose: function (event) {
+                this.$el.remove();
+            }
+        });
+
+        core.showLoadedDialog = function (viewType, html) {
+            var $body = $('body');
+            $body.append(html);
+            var $dialog = $body.children(':last-child');
+            var dialog = core.getWidget($body, $dialog[0], viewType);
+            if (dialog) {
+                dialog.show();
+            }
+        };
+
+        components.FormDialog = components.LoadedDialog.extend({
+
+            initialize: function (options) {
+                core.components.LoadedDialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, "form", core.components.FormWidget);
                 this.validationHints = [];
                 this.initView();
                 this.initSubmit();
-                this.$el.on('hidden.bs.modal', _.bind(this.onClose, this));
             },
 
             initSubmit: function () {
@@ -481,21 +506,11 @@
                     this.onValidationFault();
                 }, this));
                 return false;
-            },
-
-            onClose: function (event) {
-                this.$el.remove();
             }
         });
 
         core.showFormDialog = function (viewType, html) {
-            var $body = $('body');
-            $body.append(html);
-            var $dialog = $body.children(':last-child');
-            var dialog = core.getWidget($body, $dialog[0], viewType);
-            if (dialog) {
-                dialog.show();
-            }
+            core.showLoadedDialog(viewType, html);
         };
 
     })(core.components);
