@@ -307,7 +307,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
     }
 
     /**
-     * check the node type or the resource type
+     * Checks whether any of the resource's primary type, super types, sling resource type and supertypes is {resourceType}.
      */
     public boolean isOfType(String type) {
         return ResourceUtil.isResourceType(getResource(), type);
@@ -406,6 +406,9 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
         }
     }
 
+    /**
+     * Returns the {distance}-th parent - getParent(1) is just getParent().
+     */
     public ResourceHandle getParent(int distance) {
         ResourceHandle parent = this;
         while (distance > 0 && parent != null && parent.isValid()) {
