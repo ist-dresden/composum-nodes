@@ -139,14 +139,17 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         return ResourceUtil.getOrCreateResource(resolver, path, TYPE_SLING_FOLDER);
     }
 
-    // XXX unclear: what about changed resource types / mixins?
-    // XXX resource ordering...
     private void equalize(@Nonnull Resource templateresource, @Nonnull Resource resource, Session session, ResourceResolver resolver)
             throws PersistenceException, RepositoryException {
         boolean thisNodeChanged = false;
         ValueMap templatevalues = ResourceUtil.getValueMap(templateresource);
         ModifiableValueMap newvalues = resource.adaptTo(ModifiableValueMap.class);
         if (newvalues == null) throw new IllegalArgumentException("Node not modifiable: " + resource.getPath());
+
+        // first copy type information since this changes attributes
+        newvalues.put(PROP_PRIMARY_TYPE, templatevalues.get(PROP_PRIMARY_TYPE));
+        newvalues.put(PROP_MIXINTYPES, templatevalues.get(PROP_MIXINTYPES, new String[0]));
+
         Node node = resource.adaptTo(Node.class);
         NodeDefinition definition = node.getDefinition();
         if (definition.allowsSameNameSiblings()) checkForSamenameSiblings(templateresource, resource);
