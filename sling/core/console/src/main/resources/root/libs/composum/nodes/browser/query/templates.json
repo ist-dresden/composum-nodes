@@ -29,5 +29,14 @@
     "order": 120,
     "jcr:description": "\u003cp\u003eis searching all nodes with matching node type\u003c/p\u003e",
     "xpath": "/jcr:root${root_path.path}//*[@jcr:primaryType\u003d\u0027${type}\u0027 or @jcr:mixinTypes\u003d\u0027${type}\u0027]"
+  },
+  "by-uuid": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "composum/nodes/browser/query/template",
+    "jcr:title": "search by jcr:uuid",
+    "group": "Nodes",
+    "order": 120,
+    "jcr:description": "\u003cp\u003eis searching for a node with a specific uuid\u003c/p\u003e",
+    "xpath": "/jcr:root//*[@jcr:uuid\u003d\u0027${uuid}\u0027]"
   }
 }
