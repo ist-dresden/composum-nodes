@@ -4,6 +4,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
 
+import javax.annotation.Nullable;
 import java.util.concurrent.Callable;
 
 /**
@@ -104,6 +105,7 @@ public abstract class JobMonitor implements Callable<Boolean> {
         return goalReached();
     }
 
+    @Nullable
     public JobFacade getJob() {
         return JobUtil.getJobById(jobManager, resolver, jobId);
     }

@@ -6,6 +6,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -22,6 +23,7 @@ import static com.composum.sling.core.concurrent.AbstractJobExecutor.JOB_OUTFILE
  */
 public class JobUtil {
 
+    @Nullable
     public static JobFacade getJobById(JobManager jobManager, ResourceResolver resolver, String jobId) {
         Job job = jobManager.getJobById(jobId);
         if (job == null) {
@@ -31,6 +33,7 @@ public class JobUtil {
                 final Resource audit = resources.next();
                 return new JobFacade.AuditJob(audit);
             }
+            return null;
         }
         return new JobFacade.EventJob(job);
     }
