@@ -10,6 +10,7 @@ import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.jcr.base.util.AccessControlUtil;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -506,4 +507,11 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
     public static Binary getBinaryData(Resource resource) {
         return PropertyUtil.getBinaryData(resource.adaptTo(Node.class));
     }
+
+    /** Returns the path of a resource, or null if it is null. For use e.g. in logging statements. */
+    @Nullable
+    public static String getPath(@Nullable Resource resource) {
+        return resource != null ? resource.getPath() : null;
+    }
+
 }
