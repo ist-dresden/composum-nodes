@@ -489,23 +489,26 @@
                 this.doValidate(_.bind(function () {
                     this.form.finalize();
                     this.doSubmit(_.bind(function (result) {
-                            if (_.isObject(result) && _.isObject(result.response)) {
-                                var response = result.response;
-                                var messages = result.messages;
-                                if (_.isArray(messages) && messages.length > 0) {
-                                    core.messages(response.level, response.text, messages);
-                                } else {
-                                    core.alert(response.level, response.title, response.text);
-                                }
-                            }
-                        }, this)
-                    );
+                        this.showResult(result);
+                    }, this));
                 }, this), _.bind(function () {
                     this.messages('warning', this.validationHints.length < 1 ? 'validation error' : undefined,
                         this.validationHints);
                     this.onValidationFault();
                 }, this));
                 return false;
+            },
+
+            showResult: function (result) {
+                if (_.isObject(result) && _.isObject(result.response)) {
+                    var response = result.response;
+                    var messages = result.messages;
+                    if (_.isArray(messages) && messages.length > 0) {
+                        core.messages(response.level, response.text, messages);
+                    } else {
+                        core.alert(response.level, response.title, response.text);
+                    }
+                }
             }
         });
 
