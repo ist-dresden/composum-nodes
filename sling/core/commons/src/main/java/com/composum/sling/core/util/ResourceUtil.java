@@ -10,13 +10,9 @@ import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.jcr.base.util.AccessControlUtil;
 import org.slf4j.Logger;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.jcr.Binary;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
+import javax.jcr.*;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
@@ -359,11 +355,20 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
         return false;
     }
 
+    /**
+     * Returns an array of two elements for a nontrivial path (containing /): the parent path and the name.
+     * If it doesn't contain a / , the result has null in the first place.
+     */
     public static String[] splitPathAndName(String path) {
         String[] result = new String[2];
         int nameSeparator = path.lastIndexOf('/');
-        result[0] = path.substring(0, nameSeparator);
-        result[1] = path.substring(nameSeparator + 1);
+        if (nameSeparator > 0) {
+            result[0] = path.substring(0, nameSeparator);
+            result[1] = path.substring(nameSeparator + 1);
+        } else {
+            result[0] = null;
+            result[1] = path;
+        }
         return result;
     }
 
@@ -508,10 +513,32 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
         return PropertyUtil.getBinaryData(resource.adaptTo(Node.class));
     }
 
-    /** Returns the path of a resource, or null if it is null. For use e.g. in logging statements. */
+    /**
+     * Returns the path of a resource, or null if it is null. For use e.g. in logging statements.
+     * Caution when using UUIDs - they do not work on all resolvers and break on imports/exports.
+     */
     @Nullable
     public static String getPath(@Nullable Resource resource) {
         return resource != null ? resource.getPath() : null;
+    }
+
+    /** Finds a mix:referenceable by it's jcr:uuid. */
+    @Nullable
+    public static Resource getByUuid(@Nonnull ResourceResolver resolver, @Nullable String uuid) throws RepositoryException {
+        if (StringUtils.isBlank(uuid)) return null;
+        Resource result = null;
+        Session session = resolver.adaptTo(Session.class);
+        if (session != null) {
+            try {
+                Node node = session.getNodeByIdentifier(uuid);
+                result = resolver.getResource(node.getPath());
+            } catch (ItemNotFoundException e) { // OK.
+                LOG.debug("Node not found by uuid {}", uuid);
+            }
+        } else {
+            throw new RepositoryException("Cannot get JCR Session from resolver " + resolver);
+        }
+        return result;
     }
 
 }
