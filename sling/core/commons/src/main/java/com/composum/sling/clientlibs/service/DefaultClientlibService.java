@@ -399,8 +399,8 @@ public class DefaultClientlibService implements ClientlibService {
                     UpdateTimeVisitor updateTimeVisitorAsUser = new UpdateTimeVisitor(element, this, request.getResourceResolver());
                     updateTimeVisitorAsUser.execute();
                     if (!StringUtils.equals(hash, updateTimeVisitorAsUser.getHash())) {
-                        LOG.warn("Clientlib hash for {} as {} and admin disagree - " +
-                                        "likely permission problem that results in performance problems",
+                        LOG.error("Clientlib hash for {} as {} and admin disagree - " +
+                                        "likely a permission problem that results in performance problems",
                                 request.getUserPrincipal(), clientlibRef);
                     }
                 }

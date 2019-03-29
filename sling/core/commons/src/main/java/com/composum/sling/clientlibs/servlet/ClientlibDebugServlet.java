@@ -4,6 +4,7 @@ import com.composum.sling.clientlibs.handle.*;
 import com.composum.sling.clientlibs.handle.Clientlib.Type;
 import com.composum.sling.clientlibs.processor.AbstractClientlibVisitor;
 import com.composum.sling.clientlibs.service.ClientlibService;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.felix.scr.annotations.Properties;
@@ -44,7 +45,8 @@ import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
 @Properties({
         @Property(name = "felix.webconsole.label", value = "clientlibs"),
         @Property(name = "felix.webconsole.title", value = "Composum Client Libraries"),
-        @Property(name = "felix.webconsole.category", value = "Status"),
+        @Property(name = "felix.webconsole.category", value = "Composum"),
+        @Property(name = "felix.webconsole.css", value = "clientlibs/" + ClientlibDebugServlet.LOC_CSS),
         @Property(name = "sling.servlet.paths", value = "/bin/cpm/nodes/debug/clientlibstructure"),
 })
 public class ClientlibDebugServlet extends HttpServlet {
@@ -69,6 +71,9 @@ public class ClientlibDebugServlet extends HttpServlet {
      */
     protected static final String REQUEST_PARAM_TYPE = "type";
 
+    /** Location for the CSS. */
+    protected static final String LOC_CSS = "slingconsole/clientlibplugin.css";
+
     @Reference
     private ClientlibService clientlibService;
 
@@ -77,7 +82,7 @@ public class ClientlibDebugServlet extends HttpServlet {
 
     protected void printUsage(HttpServletRequest request, PrintWriter writer, String impersonationparam) {
         String url = request.getRequestURL().toString().replaceAll("\\.[^/]+$", "") + ".css.html";
-        writer.println("<h2>Usage:</h2>");
+        writer.println("<h3>Usage:</h3>");
         writer.println("Please give the type of the client library as selector and one or more");
         writer.println("client libraries or -categories as parameter lib. Some examples:<ul>");
         printLinkItem(writer, url + "?lib=category:composum.core.console.browser", impersonationparam);
@@ -94,7 +99,7 @@ public class ClientlibDebugServlet extends HttpServlet {
     protected void printVerification(PrintWriter writer, Type type, ResourceResolver resolver) {
         String verificationResults = clientlibService.verifyClientlibPermissions(type, true, resolver);
         if (StringUtils.isNotBlank(verificationResults)) {
-            writer.println("<hr/><h2>Permission warnings:</h2><pre>");
+            writer.println("<hr/><h3>Permission warnings:</h3><pre>");
             writer.println(verificationResults);
             writer.println("</pre>");
         }
@@ -127,6 +132,12 @@ public class ClientlibDebugServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        if (request.getRequestURI().endsWith(LOC_CSS)) {
+            response.setContentType("text/css");
+            IOUtils.copy(getClass().getClassLoader().getResourceAsStream("/" + LOC_CSS),
+                    response.getOutputStream());
+            return;
+        }
         response.setContentType("text/html");
         PrintWriter writer = response.getWriter();
 
@@ -151,10 +162,10 @@ public class ClientlibDebugServlet extends HttpServlet {
 
         try {
             response.setContentType("text/html");
-            writer.print("<html><body><h1>Rough structure of client libraries");
+            writer.print("<html><body><h2>Rough structure of client libraries");
             if (StringUtils.isNotBlank(impersonation))
                 writer.print(" as seen from " + resolver.getUserID());
-            writer.println("</h1>");
+            writer.println("</h2>");
 
             Type requestedType = requestedClientlibType(request);
             if (requestedType == null && null == request.getParameter(REQUEST_PARAM_LIB)) {
@@ -237,8 +248,8 @@ public class ClientlibDebugServlet extends HttpServlet {
         }
         Validate.notNull(clientlib, "Not found: " + ref);
         writer.println("<hr/>");
-        writer.println("<h2>Structure of <a href=\"" + url + "?lib=" + normalizedPath + impersonationparam + "\">" +
-                ref + "</a>" + categories + "</h2>");
+        writer.println("<h3>Structure of <a href=\"" + url + "?lib=" + normalizedPath + impersonationparam + "\">" +
+                ref + "</a>" + categories + "</h3>");
         writer.println("<code>&lt;cpn:clientlib type=\"" + ref.type.name() + "\" path=\"" + normalizedPath +
                 "\"/&gt;</code><br/><hr/><pre>");
         try {
