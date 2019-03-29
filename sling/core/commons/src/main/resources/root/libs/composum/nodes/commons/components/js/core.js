@@ -828,7 +828,7 @@
         }
     });
 
-    window.core.SlingUrl = function (url) {
+    window.core.SlingUrl = function (url, parameters) {
         this.url = url;
         var parts = window.core.const.url.sling.exec(url);
         this.scheme = parts[2];
@@ -844,7 +844,7 @@
         this.selectors = parts[9] ? parts[9].split('.') : [];
         this.extension = parts[10];
         this.suffix = parts[11];
-        this.parameters = {};
+        this.parameters = parameters || {};
         if (parts[13]) {
             var params = parts[13].split("&");
             for (var i = 0; i < params.length; i++) {
@@ -889,7 +889,7 @@
                 this.url += this.path;
             }
             if (_.isArray(this.selectors) && this.selectors.length > 0) {
-                this.url += this.selectors.join('.');
+                this.url += '.' + this.selectors.join('.');
             }
             if (this.extension) {
                 this.url += '.' + this.extension;

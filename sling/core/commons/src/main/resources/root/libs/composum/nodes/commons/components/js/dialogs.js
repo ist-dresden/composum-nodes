@@ -386,15 +386,40 @@
             }
         });
 
-        components.FormDialog = components.Dialog.extend({
+        components.LoadedDialog = components.Dialog.extend({
 
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
+                this.$el.on('hidden.bs.modal', _.bind(this.onClose, this));
+            },
+
+            resetOnShown: function () {
+                // the loaded dialog should contain all values after load - prevent from reset
+            },
+
+            onClose: function (event) {
+                this.$el.remove();
+            }
+        });
+
+        core.showLoadedDialog = function (viewType, html, initView, callback) {
+            var $body = $('body');
+            $body.append(html);
+            var $dialog = $body.children(':last-child');
+            var dialog = core.getWidget($body, $dialog[0], viewType);
+            if (dialog) {
+                dialog.show(initView, callback);
+            }
+        };
+
+        components.FormDialog = components.LoadedDialog.extend({
+
+            initialize: function (options) {
+                core.components.LoadedDialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, "form", core.components.FormWidget);
                 this.validationHints = [];
                 this.initView();
                 this.initSubmit();
-                this.$el.on('hidden.bs.modal', _.bind(this.onClose, this));
             },
 
             initSubmit: function () {
@@ -464,17 +489,8 @@
                 this.doValidate(_.bind(function () {
                     this.form.finalize();
                     this.doSubmit(_.bind(function (result) {
-                            if (_.isObject(result) && _.isObject(result.response)) {
-                                var response = result.response;
-                                var messages = result.messages;
-                                if (_.isArray(messages) && messages.length > 0) {
-                                    core.messages(response.level, response.text, messages);
-                                } else {
-                                    core.alert(response.level, response.title, response.text);
-                                }
-                            }
-                        }, this)
-                    );
+                        this.showResult(result);
+                    }, this));
                 }, this), _.bind(function () {
                     this.messages('warning', this.validationHints.length < 1 ? 'validation error' : undefined,
                         this.validationHints);
@@ -483,19 +499,21 @@
                 return false;
             },
 
-            onClose: function (event) {
-                this.$el.remove();
+            showResult: function (result) {
+                if (_.isObject(result) && _.isObject(result.response)) {
+                    var response = result.response;
+                    var messages = result.messages;
+                    if (_.isArray(messages) && messages.length > 0) {
+                        core.messages(response.level, response.text, messages);
+                    } else {
+                        core.alert(response.level, response.title, response.text);
+                    }
+                }
             }
         });
 
-        core.showFormDialog = function (viewType, html) {
-            var $body = $('body');
-            $body.append(html);
-            var $dialog = $body.children(':last-child');
-            var dialog = core.getWidget($body, $dialog[0], viewType);
-            if (dialog) {
-                dialog.show();
-            }
+        core.showFormDialog = function (viewType, html, initView, callback) {
+            core.showLoadedDialog(viewType, html, initView, callback);
         };
 
     })(core.components);

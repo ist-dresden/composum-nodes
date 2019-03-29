@@ -88,7 +88,7 @@
 
             logout: function (event) {
                 event.preventDefault();
-                core.getHtml('/system/sling/logout.html', undefined, undefined, _.bind(function (data) {
+                core.getHtml('/system/sling/logout.html?logout=true&GLO=true', undefined, undefined, _.bind(function (data) {
                     this.hide();
                     core.initPermissions();
                 }, this));
@@ -515,14 +515,14 @@
                 return false;
             },
 
-            refreshContent: function (name, refreshTabState) {
+            refreshContent: function (name, refreshTabState, parameters) {
                 if (!name) {
                     name = this.currentTab || 'properties';
                 }
                 var path = this.getCurrentPath();
                 if (name && path) {
-                    var href = this.getTabUri(name) + window.core.encodePath(path);
-                    this.$detailContent.load(core.getContextUrl(href), _.bind(function () {
+                    var uri = new core.SlingUrl(this.getTabUri(name) + window.core.encodePath(path), parameters);
+                    this.$detailContent.load(core.getContextUrl(uri.build()), _.bind(function () {
                         if (_.isFunction(refreshTabState)) {
                             refreshTabState();
                         }

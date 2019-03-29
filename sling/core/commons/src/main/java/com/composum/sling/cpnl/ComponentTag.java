@@ -2,6 +2,8 @@ package com.composum.sling.cpnl;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.SlingBean;
+import com.composum.sling.core.bean.BeanFactory;
+import com.composum.sling.core.bean.SlingBeanFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.osgi.framework.InvalidSyntaxException;
@@ -182,6 +184,13 @@ public class ComponentTag extends CpnlBodyTagSupport {
         SlingBean component = null;
         Class<? extends SlingBean> type = getComponentType();
         if (type != null) {
+            BeanFactory factoryRule = type.getAnnotation(BeanFactory.class);
+            if (factoryRule != null) {
+                SlingBeanFactory factory = context.getService(factoryRule.serviceClass());
+                if (factory != null) {
+                    return factory.createBean(context, getModelResource(context), type);
+                }
+            }
             BeanContext baseContext = context.withResource(getModelResource(context));
             component = baseContext.adaptTo(type);
             injectServices(component);
