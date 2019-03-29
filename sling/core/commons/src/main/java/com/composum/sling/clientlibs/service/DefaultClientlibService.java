@@ -109,7 +109,6 @@ public class DefaultClientlibService implements ClientlibService {
         processorMap.put(Clientlib.Type.js, javascriptProcessor);
         processorMap.put(Clientlib.Type.css, getClientlibConfig().getMapClientlibURLs() ? new ProcessorPipeline(new
                 CssUrlMapper(), cssProcessor) : cssProcessor);
-        verifyClientlibPermissions(null, true, null);
     }
 
     @Deactivate
@@ -571,8 +570,6 @@ public class DefaultClientlibService implements ClientlibService {
         } else { // abort the request rather than delivering faulty data
             throw new FileNotFoundException("No cached file found for " + clientlibRef);
         }
-
-        verifyClientlibPermissions(null, false, null); // not part of functionality - just ensure it's checked once in a while.
     }
 
     /**
@@ -630,17 +627,17 @@ public class DefaultClientlibService implements ClientlibService {
         StringBuilder buf = new StringBuilder();
         if (force || lastPermissionCheck < System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)) {
             lastPermissionCheck = System.currentTimeMillis();
-            ResourceResolver anonymousResolver = resolver;
+            ResourceResolver checkResolver = resolver;
             ResourceResolver administrativeResolver = null;
             try {
-                if (anonymousResolver == null)
-                    anonymousResolver = resolverFactory.getResourceResolver(null);
+                if (checkResolver == null)
+                    checkResolver = resolverFactory.getResourceResolver(null);
                 administrativeResolver = createAdministrativeResolver();
                 Iterator<Resource> it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + " order by path", Query.XPATH);
                 while (it.hasNext()) {
                     Resource clientlibElement = it.next();
-                    if (anonymousResolver.getResource(clientlibElement.getPath()) == null) {
-                        buf.append("Cannot anonymously read ").append(clientlibElement.getPath()).append("\n");
+                    if (checkResolver.getResource(clientlibElement.getPath()) == null) {
+                        buf.append("Cannot be read from given resolver ").append(clientlibElement.getPath()).append("\n");
                     }
                 }
 
@@ -660,26 +657,23 @@ public class DefaultClientlibService implements ClientlibService {
                     if (type != null) {
                         ClientlibResourceFolder resourceFolder = new ClientlibResourceFolder(type, clientlibElement);
                         for (ClientlibRef ref : resourceFolder.getDependencies()) {
-                            verifyRef(ref, administrativeResolver, anonymousResolver, buf);
+                            verifyRef(ref, administrativeResolver, checkResolver, buf);
                         }
                         for (ClientlibRef ref : resourceFolder.getEmbedded()) {
-                            verifyRef(ref, administrativeResolver, anonymousResolver, buf);
+                            verifyRef(ref, administrativeResolver, checkResolver, buf);
                         }
                     }
                 }
 
             } catch (LoginException e) {
-                buf.append("Cannot create anonymous resolver - " + e);
-                LOG.error("Cannot create anonymous resolver - " + e, e);
+                buf.append("Cannot create anonymous or administrative resolver - " + e);
+                LOG.error("Cannot create anonymous or administrative resolver - " + e, e);
             } catch (Exception e) {
                 LOG.error("Error checking clientlibs", e);
             } finally {
-                if (buf.length() > 0) {
-                    LOG.error("Anonymously unreadable clientlib elements might endanger consistency and performance:\n{}", buf);
-                }
                 if (null != administrativeResolver) administrativeResolver.close();
-                if (resolver == null) if (null != anonymousResolver)
-                    anonymousResolver.close(); // else it's just resolver coming from outside
+                if (resolver == null) if (null != checkResolver)
+                    checkResolver.close(); // else it's just resolver coming from outside
             }
         }
         return buf.length() == 0 ? null : buf.toString();

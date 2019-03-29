@@ -68,7 +68,7 @@ public interface ClientlibService {
             outputStream, String encoding) throws IOException, RepositoryException;
 
     /**
-     * Checks that all clientlib items are anonymously readable, and logs and returns a human readable description
+     * Checks that all clientlib items are readable from the given resolver and returns a human readable description
      * of the results. If that's not the case, this can cause a permanent recalculation of the clientlibs content, or, even worse, break the rendering.
      *
      * @param type     if not null, only clientlibs / files of that type are checked
