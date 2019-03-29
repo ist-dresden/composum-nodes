@@ -4,6 +4,7 @@ import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.sling.api.resource.Resource;
 
+import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -73,10 +74,12 @@ public class ClientlibResourceFolder implements ClientlibElement {
         return optional;
     }
 
+    @Nonnull
     public List<ClientlibRef> getDependencies() {
         return getClientlib2Refs(PROP_DEPENDS);
     }
 
+    @Nonnull
     public List<ClientlibRef> getEmbedded() {
         return getClientlib2Refs(PROP_EMBED);
     }
@@ -86,6 +89,7 @@ public class ClientlibResourceFolder implements ClientlibElement {
         return type;
     }
 
+    @Nonnull
     protected List<ClientlibRef> getClientlib2Refs(String property) {
         List<ClientlibRef> res = new ArrayList<>();
         for (String rule : resource.getProperty(property, new String[0])) {
@@ -94,7 +98,9 @@ public class ClientlibResourceFolder implements ClientlibElement {
         return res;
     }
 
-    /** Returns all children - either {@link ClientlibResourceFolder} as well, or {@link ClientlibFile} . */
+    /**
+     * Returns all children - either {@link ClientlibResourceFolder} as well, or {@link ClientlibFile} .
+     */
     public List<ClientlibElement> getChildren() {
         List<ClientlibElement> children = new ArrayList<>();
         for (Resource child : resource.getChildren()) {
@@ -121,7 +127,9 @@ public class ClientlibResourceFolder implements ClientlibElement {
         return additionalProperties;
     }
 
-    /** Distinguishes file resources from resource folders: child is considered a resource folder if this is false. */
+    /**
+     * Distinguishes file resources from resource folders: child is considered a resource folder if this is false.
+     */
     public static boolean isFile(Resource resource) {
         return resource.isResourceType(ResourceUtil.TYPE_FILE) ||
                 resource.isResourceType(ResourceUtil.TYPE_LINKED_FILE);
@@ -155,13 +163,17 @@ public class ClientlibResourceFolder implements ClientlibElement {
         return result;
     }
 
-    /** Not supported. */
+    /**
+     * Not supported.
+     */
     @Override
     public ClientlibLink makeLink() {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** Not supported. */
+    /**
+     * Not supported.
+     */
     @Override
     public ClientlibRef getRef() {
         throw new UnsupportedOperationException("Not implemented.");
