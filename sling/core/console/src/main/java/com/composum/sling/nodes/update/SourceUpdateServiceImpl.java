@@ -1,0 +1,249 @@
+package com.composum.sling.nodes.update;
+
+import com.composum.sling.core.util.ResourceUtil;
+import org.apache.commons.collections.ComparatorUtils;
+import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Service;
+import org.apache.jackrabbit.vault.fs.io.Importer;
+import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
+import org.apache.sling.api.resource.*;
+import org.osgi.framework.BundleContext;
+import org.osgi.service.component.annotations.Activate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.nodetype.NodeDefinition;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import static com.composum.sling.core.util.ResourceUtil.*;
+
+
+@Component(
+        label = "Composum Source Update Service",
+        description = "service to update content trees from XML"
+)
+@Service(SourceUpdateService.class)
+public class SourceUpdateServiceImpl implements SourceUpdateService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SourceUpdateServiceImpl.class);
+
+    private SAXParserFactory saxParserFactory;
+    private TransformerFactory transformerFactory;
+
+    @Activate
+    private void activate(final BundleContext bundleContext) {
+        saxParserFactory = SAXParserFactory.newInstance();
+        saxParserFactory.setNamespaceAware(true);
+        transformerFactory = TransformerFactory.newInstance();
+    }
+
+    private static final Collection<String> ignoredMetadataAttributes = new HashSet<>(Arrays.asList("jcr:uuid", "jcr:lastModified",
+            "jcr:lastModifiedBy", "jcr:created", "jcr:createdBy", "jcr:isCheckedOut", "jcr:baseVersion",
+            "jcr:versionHistory", "jcr:predecessors", "jcr:mergeFailed", "jcr:mergeFailed", "jcr:configuration"));
+
+    /**
+     * Make subtree equivalent to a ZIP in vault format. General strategy: we update the attributes of all nodes according to the XML documents,
+     * creating nonexistent nodes along the way, and make node which nodes were present, and which were changed.
+     * In a second pass, we recurse through the JCR tree again, delete nodes that were not present and update the lastModified
+     * properties of nodes, below which there were changes.
+     */
+    @Override
+    public void updateFromZip(ResourceResolver resolver, InputStream rawZipInputStream) throws IOException, RepositoryException, TransformerException {
+        Session session = resolver.adaptTo(Session.class);
+        Resource tmpdir = makeTempdir(resolver);
+        String tmpPath = tmpdir.getPath();
+
+        try {
+            Importer importer = new Importer();
+            MemoryArchive archive = new MemoryArchive(false);
+            archive.run(rawZipInputStream);
+            importer.run(archive, tmpdir.adaptTo(Node.class));
+        } catch (IOException | RepositoryException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException(e);
+        } finally {
+            rawZipInputStream.close();
+        }
+
+        try {
+            Resource topnode = tmpdir;
+            while (IteratorUtils.toList(topnode.listChildren()).size() == 1) topnode = topnode.listChildren().next();
+            String nodePath = topnode.getPath().substring(tmpPath.length());
+            if (nodePath.startsWith("/content") && StringUtils.countMatches(nodePath, "/") < 3)
+                throw new IllegalArgumentException("Suspicious / short root path: " + nodePath);
+            Resource resource = resolver.getResource(nodePath);
+            equalize(topnode, resource, session, resolver);
+
+            LOG.info("Have changes: {}", session.hasPendingChanges());
+            session.save();
+        } finally {
+            session.refresh(false); // discard - if it went OK it's already saved.
+            if (resolver.getResource(tmpPath) != null)
+                session.removeItem(tmpdir.getPath());
+            session.save();
+        }
+    }
+
+    protected void sortZipContents(List<Pair<String, byte[]>> imports) {
+        Collections.sort(imports, new Comparator<Pair<String, byte[]>>() {
+            // sort by length of path - thus, parent nodes come before subnodes.
+            @Override
+            public int compare(Pair<String, byte[]> o1, Pair<String, byte[]> o2) {
+                return ComparatorUtils.naturalComparator().compare(o1.getKey().length(), o2.getKey().length());
+            }
+        });
+    }
+
+    protected List<Pair<String, byte[]>> readZipContents(ZipInputStream zip) throws IOException {
+        List<Pair<String, byte[]>> imports = new ArrayList<>();
+        ZipEntry zipEntry;
+        while ((zipEntry = zip.getNextEntry()) != null) {
+            if (!zipEntry.isDirectory()) {
+                String path = zipEntry.getName();
+                if (!path.startsWith("content")) {
+                    LOG.error("Ignoring zipEntry with path not content: " + path);
+                } else if (!path.endsWith("/.content.xml")) {
+                    throw new IOException("Unknown zipEntry that's not a .content.xml: " + path);
+                } else {
+                    String entryPath = ResourceUtil.getParent(path); // remove .content.xml
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    IOUtils.copy(zip, bos);
+                    imports.add(Pair.of(entryPath, bos.toByteArray()));
+                }
+            }
+            zip.closeEntry();
+        }
+        return imports;
+    }
+
+    protected Resource makeTempdir(ResourceResolver resolver) throws PersistenceException, RepositoryException {
+        String path = "/var/tmp/" + UUID.randomUUID().toString();
+        return ResourceUtil.getOrCreateResource(resolver, path, TYPE_SLING_FOLDER);
+    }
+
+    private void equalize(@Nonnull Resource templateresource, @Nonnull Resource resource, Session session, ResourceResolver resolver)
+            throws PersistenceException, RepositoryException {
+        boolean thisNodeChanged = false;
+        ValueMap templatevalues = ResourceUtil.getValueMap(templateresource);
+        ModifiableValueMap newvalues = resource.adaptTo(ModifiableValueMap.class);
+        if (newvalues == null) throw new IllegalArgumentException("Node not modifiable: " + resource.getPath());
+
+        // first copy type information since this changes attributes
+        newvalues.put(PROP_PRIMARY_TYPE, templatevalues.get(PROP_PRIMARY_TYPE));
+        String[] mixins = templatevalues.get(PROP_MIXINTYPES, new String[0]);
+        if (mixins.length > 0)
+            newvalues.put(PROP_MIXINTYPES, mixins);
+        else
+            newvalues.remove(PROP_MIXINTYPES);
+
+        Node node = resource.adaptTo(Node.class);
+        NodeDefinition definition = node.getDefinition();
+        if (definition.allowsSameNameSiblings()) checkForSamenameSiblings(templateresource, resource);
+
+        try {
+            for (Map.Entry<String, Object> entry : templatevalues.entrySet()) {
+                if (!ignoredMetadataAttributes.contains(entry.getKey()) &&
+                        ObjectUtils.notEqual(entry.getValue(), newvalues.get(entry.getKey()))) {
+                    thisNodeChanged = true;
+                    newvalues.put(entry.getKey(), entry.getValue());
+                }
+            }
+
+            for (String key : new HashSet<String>(newvalues.keySet())) {
+                if (!ignoredMetadataAttributes.contains(key) && !templatevalues.containsKey(key)) {
+                    thisNodeChanged = true;
+                    newvalues.remove(key);
+                }
+            }
+
+            for (Resource child : resource.getChildren()) { // TODO are there equally named children somewhere?
+                Resource templateChild = templateresource.getChild(child.getName());
+                if (templateChild == null) {
+                    thisNodeChanged = true;
+                    resource.getResourceResolver().delete(child);
+                } else {
+                    equalize(templateChild, child, session, resolver);
+                }
+            }
+
+            // save reference order here, since we might move some nodes
+            List<Resource> templatechildren = IteratorUtils.toList(templateresource.listChildren());
+
+            for (Resource templateChild : templateresource.getChildren()) {
+                if (null == resource.getChild(templateChild.getName())) {
+                    session.move(templateChild.getPath(), resource.getPath() + "/" + templateChild.getName());
+                    thisNodeChanged = true;
+                }
+            }
+
+            if (node.getPrimaryNodeType().hasOrderableChildNodes())
+                ensureSameOrdering(session, templateresource, templatechildren, resource);
+
+        } catch (PersistenceException | RepositoryException | RuntimeException e) {
+            LOG.error("Error at {} : {}", resource.getPath(), e.toString());
+            throw e;
+        }
+
+        if (thisNodeChanged) {
+            Resource modifcandidate = resource;
+            while (modifcandidate != null && !modifcandidate.isResourceType(TYPE_LAST_MODIFIED))
+                modifcandidate = modifcandidate.getParent();
+            if (modifcandidate != null) {
+                newvalues.put(PROP_LAST_MODIFIED, Calendar.getInstance());
+            }
+        }
+    }
+
+    private void ensureSameOrdering(Session session, Resource templateresource, List<Resource> templatechildren, Resource resource) throws RepositoryException {
+        Node node = Objects.requireNonNull(resource.adaptTo(Node.class));
+        List<Resource> resourcechildren = IteratorUtils.toList(resource.listChildren());
+        if (templatechildren.size() != resourcechildren.size())
+            throw new IllegalStateException("Bug: template and resource of " + resource.getPath() +
+                    " should have same size now but have " + templatechildren.size() + " and " + resourcechildren.size());
+        if (resourcechildren.size() < 2) return;
+        Map<String, Resource> nameToNode = new HashMap<>();
+        for (Resource child : resourcechildren) nameToNode.put(child.getName(), child);
+        for (int i = 0; i < resourcechildren.size(); ++i) {
+            if (!StringUtils.equals(resourcechildren.get(i).getName(), templatechildren.get(i).getName())) {
+                node.orderBefore(templatechildren.get(i).getName(), resourcechildren.get(i).getName());
+                resourcechildren = IteratorUtils.toList(resource.listChildren());
+            }
+        }
+    }
+
+    private void checkForSamenameSiblings(Resource templateresource, @Nonnull Resource resource) throws IllegalArgumentException {
+        for (Resource checkedResource : Arrays.asList(templateresource, resource)) {
+            Set<String> nodenames = new HashSet<>();
+            for (Resource child : templateresource.getChildren()) {
+                if (nodenames.contains(child.getName()))
+                    throw new IllegalArgumentException("Equally named children not supported yet: existing resource " + templateresource.getPath() + " has two " + child.getName());
+                nodenames.add(child.getName());
+            }
+            nodenames.clear();
+            for (Resource child : resource.getChildren()) {
+                if (nodenames.contains(child.getName()))
+                    throw new IllegalArgumentException("Equally named children not supported yet: imported resource " + resource.getPath() + " has two " + child.getName());
+                nodenames.add(child.getName());
+            }
+        }
+    }
+
+}
