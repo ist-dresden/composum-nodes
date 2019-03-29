@@ -55,6 +55,7 @@
                             org.apache.jackrabbit.vault.*;version="[2.4.0,4)",
                             org.apache.sling.event.jobs.consumer.*;version="[1.1,3)",
                             org.apache.sling.event.jobs.*;version="[1.3,3)",
+                            !javax.annotation,
                             *
                         </Import-Package>
                         <Export-Package>
@@ -181,6 +182,11 @@
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+        </dependency>
+
 
     </dependencies>
     <profiles>

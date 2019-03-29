@@ -40,7 +40,7 @@ public class SetupHook implements InstallHook {
         }
     }
 
-    protected void moveClientlibsRoot(InstallContext ctx) {
+    protected void moveClientlibsRoot(InstallContext ctx) throws PackageException {
         try {
             Session session = ctx.getSession();
             try {
@@ -75,8 +75,9 @@ public class SetupHook implements InstallHook {
                     session.save();
                 }
             }
-        } catch (RepositoryException ex) {
+        } catch (RepositoryException | RuntimeException ex) {
             LOG.error(ex.getMessage(), ex);
+            throw new PackageException(ex);
         }
     }
 }
