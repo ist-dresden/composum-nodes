@@ -148,7 +148,11 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
 
         // first copy type information since this changes attributes
         newvalues.put(PROP_PRIMARY_TYPE, templatevalues.get(PROP_PRIMARY_TYPE));
-        newvalues.put(PROP_MIXINTYPES, templatevalues.get(PROP_MIXINTYPES, new String[0]));
+        String[] mixins = templatevalues.get(PROP_MIXINTYPES, new String[0]);
+        if (mixins.length > 0)
+            newvalues.put(PROP_MIXINTYPES, mixins);
+        else
+            newvalues.remove(PROP_MIXINTYPES);
 
         Node node = resource.adaptTo(Node.class);
         NodeDefinition definition = node.getDefinition();
@@ -163,11 +167,10 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                 }
             }
 
-            for (Iterator<String> keyIterator = newvalues.keySet().iterator(); keyIterator.hasNext(); ) {
-                String key = keyIterator.next();
+            for (String key : new HashSet<String>(newvalues.keySet())) {
                 if (!ignoredMetadataAttributes.contains(key) && !templatevalues.containsKey(key)) {
                     thisNodeChanged = true;
-                    keyIterator.remove();
+                    newvalues.remove(key);
                 }
             }
 
