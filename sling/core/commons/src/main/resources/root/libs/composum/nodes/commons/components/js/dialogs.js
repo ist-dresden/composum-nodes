@@ -402,13 +402,13 @@
             }
         });
 
-        core.showLoadedDialog = function (viewType, html) {
+        core.showLoadedDialog = function (viewType, html, initView, callback) {
             var $body = $('body');
             $body.append(html);
             var $dialog = $body.children(':last-child');
             var dialog = core.getWidget($body, $dialog[0], viewType);
             if (dialog) {
-                dialog.show();
+                dialog.show(initView, callback);
             }
         };
 
@@ -512,8 +512,8 @@
             }
         });
 
-        core.showFormDialog = function (viewType, html) {
-            core.showLoadedDialog(viewType, html);
+        core.showFormDialog = function (viewType, html, initView, callback) {
+            core.showLoadedDialog(viewType, html, initView, callback);
         };
 
     })(core.components);
