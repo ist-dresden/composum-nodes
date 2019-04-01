@@ -6,6 +6,8 @@ import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.concurrent.LazyCreationService;
 import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.util.ResourceUtil;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.SetUtils;
 import org.apache.commons.collections.map.LRUMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +19,7 @@ import org.apache.sling.api.resource.*;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -614,87 +617,146 @@ public class DefaultClientlibService implements ClientlibService {
     protected static final String QUERY_CLIENTLIBS = "/jcr:root/(apps|libs)//*[sling:resourceType='composum/nodes/commons/clientlib']";
 
     /**
-     * Xpath Query suffix for a query that matches all clientlib folders referencing other stuff.
+     * Xpath Query suffix for a query that matches all clientlib folders referencing other stuff: {@value #QUERY_SUFFIX_REFERENCERS}.
      */
     protected static final String QUERY_SUFFIX_REFERENCERS = "[embed or depends]";
 
-    private long lastPermissionCheck = Long.MIN_VALUE;
-
     @Override
-    public String verifyClientlibPermissions(Type requestedtype, boolean force, ResourceResolver resolver) {
-        String querySuffix = requestedtype != null ? "/" + requestedtype.name() + "//*" : "//*";
+    @Nullable
+    public String verifyClientlibPermissions(@Nullable Clientlib.Type requestedType, @Nullable ResourceResolver userResolver, boolean onlyErrors) {
+        String querySuffix = requestedType != null ? "/" + requestedType.name() + "//*" : "//*";
+        String onlyClientlibQuerySuffix = requestedType != null ? "/" + requestedType.name() + "/.." : "";
 
         StringBuilder buf = new StringBuilder();
-        if (force || lastPermissionCheck < System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)) {
-            lastPermissionCheck = System.currentTimeMillis();
-            ResourceResolver checkResolver = resolver;
-            ResourceResolver administrativeResolver = null;
-            try {
-                if (checkResolver == null)
-                    checkResolver = resolverFactory.getResourceResolver(null);
-                administrativeResolver = createAdministrativeResolver();
-                Iterator<Resource> it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + " order by path", Query.XPATH);
-                while (it.hasNext()) {
-                    Resource clientlibElement = it.next();
-                    if (checkResolver.getResource(clientlibElement.getPath()) == null) {
-                        buf.append("Cannot be read from given resolver ").append(clientlibElement.getPath()).append("\n");
-                    }
-                }
+        ResourceResolver impersonationResolver = userResolver;
+        ResourceResolver administrativeResolver = null;
+        try {
+            if (impersonationResolver == null)
+                impersonationResolver = resolverFactory.getResourceResolver(null);
+            administrativeResolver = createAdministrativeResolver();
+            List<String> unreachablePaths = new ArrayList<>();
+            Iterator<Resource> it = administrativeResolver.findResources(QUERY_CLIENTLIBS + onlyClientlibQuerySuffix + " order by path", Query.XPATH);
 
-                it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + QUERY_SUFFIX_REFERENCERS + " order by path", Query.XPATH);
-                while (it.hasNext()) {
-                    Resource clientlibElement = it.next();
-                    Resource clientlibFolderResource = clientlibElement;
-                    while (!clientlibFolderResource.getParent().isResourceType(RESOURCE_TYPE)) {
-                        clientlibFolderResource = clientlibFolderResource.getParent();
-                    }
-                    Type type = null;
-                    try {
-                        type = Type.valueOf(clientlibFolderResource.getName());
-                    } catch (IllegalArgumentException e) { // very unusual case - folder name other than type?
-                        LOG.info("Cannot recognize type of {}", clientlibElement.getPath());
-                    }
-                    if (type != null) {
-                        ClientlibResourceFolder resourceFolder = new ClientlibResourceFolder(type, clientlibElement);
-                        for (ClientlibRef ref : resourceFolder.getDependencies()) {
-                            verifyRef(ref, administrativeResolver, checkResolver, buf);
-                        }
-                        for (ClientlibRef ref : resourceFolder.getEmbedded()) {
-                            verifyRef(ref, administrativeResolver, checkResolver, buf);
-                        }
-                    }
+            // Check clientlibraries themselves and their categories
+            Set<String> categoriesWithReachableClientlibs = new HashSet<>();
+            Set<String> categoriesWithUnreachableClientlibs = new HashSet<>();
+            while (it.hasNext()) {
+                Resource clientlibElement = it.next();
+                List<String> categories = Arrays.asList(ResourceHandle.use(clientlibElement).getProperty(PROP_CATEGORY, new String[0]));
+                if (impersonationResolver.getResource(clientlibElement.getPath()) == null) {
+                    unreachablePaths.add(clientlibElement.getPath());
+                    categoriesWithUnreachableClientlibs.addAll(categories);
+                } else {
+                    categoriesWithReachableClientlibs.addAll(categories);
                 }
-
-            } catch (LoginException e) {
-                buf.append("Cannot create anonymous or administrative resolver - " + e);
-                LOG.error("Cannot create anonymous or administrative resolver - " + e, e);
-            } catch (Exception e) {
-                LOG.error("Error checking clientlibs", e);
-            } finally {
-                if (null != administrativeResolver) administrativeResolver.close();
-                if (resolver == null) if (null != checkResolver)
-                    checkResolver.close(); // else it's just resolver coming from outside
             }
+            Collection troubledCategories = CollectionUtils.intersection(categoriesWithReachableClientlibs, categoriesWithUnreachableClientlibs);
+            if (!troubledCategories.isEmpty())
+                buf.append("ERROR: Categories with both readable AND unreadable elements: ").append(troubledCategories).append("\n");
+
+            // look for unreadable elements of readable client libraries -> error
+            it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + " order by path", Query.XPATH);
+            while (it.hasNext()) {
+                Resource clientlibElement = it.next();
+                if (impersonationResolver.getResource(clientlibElement.getPath()) == null) {
+                    if (!isReachableFrom(unreachablePaths, clientlibElement.getPath())) {
+                        // clientlibs are already there -> this element is surprisingly unreadable.
+                        buf.append("ERROR: unreadable element of readable client library: ")
+                                .append(clientlibElement.getPath()).append("\n");
+                    }
+                    unreachablePaths.add(clientlibElement.getPath());
+                }
+            }
+            unreachablePaths = removeChildren(unreachablePaths);
+            if (!onlyErrors && !unreachablePaths.isEmpty())
+                buf.insert(0, "INFO: Unreadable for this user: " + unreachablePaths + "\n");
+
+            // look for unreadable references of readable elements
+            it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + QUERY_SUFFIX_REFERENCERS + " order by path", Query.XPATH);
+            while (it.hasNext()) {
+                Resource clientlibElement = it.next();
+                if (isReachableFrom(unreachablePaths, clientlibElement.getPath()))
+                    continue;
+                Resource clientlibFolderResource = clientlibElement;
+                while (!clientlibFolderResource.getParent().isResourceType(RESOURCE_TYPE)) {
+                    clientlibFolderResource = clientlibFolderResource.getParent();
+                }
+                Type type = null;
+                try {
+                    type = Type.valueOf(clientlibFolderResource.getName());
+                } catch (IllegalArgumentException e) { // very unusual case - folder name other than type?
+                    buf.append("WARN: Cannot recognize type of ").append(clientlibElement.getPath()).append("\n");
+                }
+                if (type != null) {
+                    ClientlibResourceFolder resourceFolder = new ClientlibResourceFolder(type, clientlibElement);
+                    for (ClientlibRef ref : resourceFolder.getDependencies()) {
+                        verifyRef(resourceFolder, ref, administrativeResolver, impersonationResolver, buf);
+                    }
+                    for (ClientlibRef ref : resourceFolder.getEmbedded()) {
+                        verifyRef(resourceFolder, ref, administrativeResolver, impersonationResolver, buf);
+                    }
+                }
+            }
+        } catch (LoginException e) {
+            buf.append("Cannot create anonymous or administrative resolver - " + e);
+            LOG.error("Cannot create anonymous or administrative resolver - " + e, e);
+        } catch (Exception e) {
+            LOG.error("Error checking clientlibs", e);
+        } finally {
+            if (null != administrativeResolver) administrativeResolver.close();
+            if (userResolver == null && null != impersonationResolver)
+                impersonationResolver.close(); // else it's just resolver coming from outside
         }
         return buf.length() == 0 ? null : buf.toString();
     }
 
-    private void verifyRef(ClientlibRef ref, ResourceResolver administrativeResolver, ResourceResolver anonymousResolver, StringBuilder buf) {
+    /** For each path contained here, remove all paths that are children of it, thus removing consequential errors. */
+    protected List<String> removeChildren(List<String> unreachablePaths) {
+        Collections.sort(unreachablePaths); // ancestors appear before children
+        List<String> result = new ArrayList<>();
+        for (String path : unreachablePaths) {
+            if (!isReachableFrom(result, path))
+                result.add(path);
+        }
+        return result;
+    }
+
+    protected boolean isReachableFrom(List<String> paths, String path) {
+        for (String ancestorPath : paths)
+            if (isAncestorOrSelf(ancestorPath, path))
+                return true;
+        return false;
+    }
+
+    /** Returns true if the parent is an {ancestor} of the {resource} (and both are not null, of course. */
+    protected boolean isAncestorOrSelf(@Nullable String parentPath, @Nullable String childPath) {
+        return parentPath != null && childPath != null && (
+                parentPath.equals(childPath) ||
+                        childPath.startsWith(parentPath + "/")
+        );
+    }
+
+    private void verifyRef(ClientlibResourceFolder resourceFolder, ClientlibRef ref, ResourceResolver administrativeResolver, ResourceResolver userResolver, StringBuilder buf) {
         if (ref.isCategory() || ref.isExternalUri()) return;
         Resource resourceAsAdmin = retrieveResource(ref.path, administrativeResolver);
         if (resourceAsAdmin != null) {
-            Resource resourceAsAnonymous = retrieveResource(ref.path, anonymousResolver);
-            if (resourceAsAnonymous == null) {
-                buf.append("Cannot anonymously read ").append(resourceAsAdmin.getPath()).append("\n");
-            } else if (!resourceAsAdmin.getPath().equals(resourceAsAnonymous.getPath())) {
-                buf.append("Permission problem: resource different for admin and anonymous for ")
+            Resource resourceAsUser = retrieveResource(ref.path, userResolver);
+            if (resourceAsUser == null) {
+                buf.append("ERROR: unreadable reference ").append(resourceAsAdmin.getPath())
+                        .append(" of readable client library resource folder ").append(resourceFolder.resource.getPath())
+                        .append("\n");
+            } else if (!resourceAsAdmin.getPath().equals(resourceAsUser.getPath())) {
+                buf.append("ERROR: Permission problem: resource different for admin and anonymous for ")
                         .append(ref.toString())
                         .append(" : ").append(resourceAsAdmin.getPath())
-                        .append(" vs. ").append(resourceAsAnonymous.getPath())
+                        .append(" vs. ").append(resourceAsUser.getPath())
                         .append("\n");
-            } else if (new FileHandle(resourceAsAdmin).isValid() && !new FileHandle(resourceAsAnonymous).isValid()) {
-                buf.append("Content resource not readable: ").append(resourceAsAdmin.getPath()).append("\n");
+            } else if (new FileHandle(resourceAsAdmin).isValid() && !new FileHandle(resourceAsUser).isValid()) {
+                buf.append("ERROR: Content resource not readable: ").append(resourceAsAdmin.getPath()).append("\n");
             }
+        } else if (!resourceFolder.getOptional()) {
+            buf.append("ERROR: can't find element ").append(ref.path)
+                    .append(" of resource folder ").append(resourceFolder.resource.getPath()).append("\n");
         }
     }
 

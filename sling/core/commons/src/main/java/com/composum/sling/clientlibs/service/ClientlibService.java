@@ -6,6 +6,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
+import javax.annotation.Nullable;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -68,15 +69,23 @@ public interface ClientlibService {
             outputStream, String encoding) throws IOException, RepositoryException;
 
     /**
-     * Checks that all clientlib items are readable from the given resolver and returns a human readable description
-     * of the results. If that's not the case, this can cause a permanent recalculation of the clientlibs content, or, even worse, break the rendering.
+     * Generates a human readable descriptions of inconsistencies of the client libraries wrt. the given resolver
+     * (or an anonymous resolver, of none is given).
+     * Checks for each client library readable for the given resolver, that all elements of these client libraries
+     * and the files referenced from them are readable, too. Also we check that for all categories either all
+     * client libraries with this reference are readable, or none of them.
+     * All these are errors, since if that's not the case, this can cause a permanent recalculation of the clientlibs content,
+     * or, even worse, break the rendering.
+     * If {onlyErrors} is false, we also include informational messages about all unreadable libraries.
+     *
      *
      * @param type     if not null, only clientlibs / files of that type are checked
-     * @param force    if false, the check is done only if the last run was more than an hour ago. If true, it's done in any case.
      * @param resolver if not null, we use this resolver instead of an anonymous resolver to check readability
+     * @param onlyErrors if true, we skip informational messages
      * @return null if everything is OK, otherwise a description of the problems
      */
-    String verifyClientlibPermissions(Clientlib.Type type, boolean force, ResourceResolver resolver);
+    @Nullable
+    String verifyClientlibPermissions(@Nullable Clientlib.Type type, @Nullable ResourceResolver resolver, boolean onlyErrors);
 
     class ClientlibInfo {
         public Long size;
