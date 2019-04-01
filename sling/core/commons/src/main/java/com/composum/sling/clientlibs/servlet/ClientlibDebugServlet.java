@@ -1,10 +1,13 @@
 package com.composum.sling.clientlibs.servlet;
 
+import aQute.lib.osgi.Clazz;
 import com.composum.sling.clientlibs.handle.*;
 import com.composum.sling.clientlibs.handle.Clientlib.Type;
 import com.composum.sling.clientlibs.processor.AbstractClientlibVisitor;
 import com.composum.sling.clientlibs.service.ClientlibService;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.collections.SetUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -12,6 +15,7 @@ import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.*;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 
@@ -77,10 +81,10 @@ public class ClientlibDebugServlet extends HttpServlet {
     protected static final String LOC_CSS = "slingconsole/clientlibplugin.css";
 
     @Reference
-    private ClientlibService clientlibService;
+    protected ClientlibService clientlibService;
 
     @Reference
-    private ResourceResolverFactory resolverFactory;
+    protected ResourceResolverFactory resolverFactory;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -98,6 +102,7 @@ public class ClientlibDebugServlet extends HttpServlet {
         processor.request = request;
 
         String impersonation = request.getParameter(REQUEST_PARAM_IMPERSONATE);
+        processor.impersonation = impersonation;
         processor.impersonationParam = StringUtils.isNotBlank(impersonation) ? "&" + REQUEST_PARAM_IMPERSONATE + "=" + impersonation.trim() : "";
         try {
             processor.adminResolver = resolverFactory.getAdministrativeResourceResolver(null);
@@ -180,6 +185,7 @@ public class ClientlibDebugServlet extends HttpServlet {
         PrintWriter writer;
         ResourceResolver adminResolver;
         ResourceResolver impersonationResolver;
+        String impersonation;
         String impersonationParam;
 
         protected void printUsage() {
@@ -224,42 +230,35 @@ public class ClientlibDebugServlet extends HttpServlet {
         }
 
         protected void printVerification() {
-            String verificationResults = clientlibService.verifyClientlibPermissions(type, true, impersonationResolver);
+            String verificationResults = clientlibService.verifyClientlibPermissions(type, impersonationResolver, false);
             if (StringUtils.isNotBlank(verificationResults)) {
-                writer.println("<hr/><h3>Permission warnings:</h3><pre>");
+                writer.println("<hr/><h3>Permission information / errors for " +
+                        StringUtils.defaultIfBlank(impersonation, "anonymous") +
+                        ":</h3><pre>");
                 writer.println(verificationResults);
                 writer.println("</pre>");
             }
         }
 
-        private void printAllLibs() throws ServletException, IOException {
+        /** Prints all client libraries readable for the impersonation user. */
+        protected void printAllLibs() throws ServletException, IOException {
             try {
                 QueryManager querymanager = adminResolver.adaptTo(Session.class).getWorkspace()
                         .getQueryManager();
                 String statement = "//element(*)[sling:resourceType='composum/nodes/commons/clientlib']/" + type.name() +
                         "/..  order by path";
-                NodeIterator clientlibsIterator = querymanager.createQuery(statement, Query.XPATH).execute().getNodes();
-                List<Node> clientlibs = IteratorUtils.toList(clientlibsIterator);
-                Collections.sort(clientlibs, new Comparator<Node>() {
-                    @Override
-                    public int compare(Node o1, Node o2) {
-                        try {
-                            return o1.getPath().compareTo(o2.getPath());
-                        } catch (RepositoryException e) { // can't happen, so we'd want to know.
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-                for (Node clientlib : clientlibs)
-                    displayClientlibStructure(new Clientlib(type, adminResolver.getResource(clientlib.getPath())).getRef());
-
-            } catch (RepositoryException e) {
+                List<Resource> clientlibs = IteratorUtils.toList(adminResolver.findResources(statement, Query.XPATH));
+                for (Resource clientlibResource : clientlibs) {
+                    if (impersonationResolver.getResource(clientlibResource.getPath()) != null)
+                        displayClientlibStructure(new Clientlib(type, clientlibResource).getRef());
+                }
+            } catch (RepositoryException e) { // shouldn't happen
                 throw new ServletException(e);
             }
         }
 
         /** Displays the structure of one clientlib as seen from the adminResolver - it's rendered like that, anyway. */
-        private void displayClientlibStructure(ClientlibRef ref) throws IOException, ServletException {
+        protected void displayClientlibStructure(ClientlibRef ref) throws IOException, ServletException {
             ClientlibElement clientlib = clientlibService.resolve(ref, adminResolver);
             String normalizedPath = normalizePath(ref, clientlib);
             StringBuilder categories = new StringBuilder();
@@ -296,7 +295,7 @@ public class ClientlibDebugServlet extends HttpServlet {
         }
 
         /** Returns the path as it would be in a clientlib reference: relative to search path or a category link */
-        private String normalizePath(ClientlibRef ref, ClientlibElement clientlib) {
+        protected String normalizePath(ClientlibRef ref, ClientlibElement clientlib) {
             if (ref.isCategory())
                 return "category:" + ref.category;
             if (!ref.path.startsWith("/"))
