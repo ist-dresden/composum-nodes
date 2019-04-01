@@ -1,3 +1,66 @@
+
+/* general  */
+
+button {
+    padding: 4px 6px;
+}
+
+fieldset {
+    border: 1px solid #aaa;
+}
+
+.invisible {
+    visibility: hidden;
+}
+
+.hidden {
+    display: none;
+}
+
+.alert-hidden {
+    display: none;
+}
+
+.align-left {
+    float: left;
+}
+
+.align-right {
+    float: right;
+}
+
+.align-right label {
+    margin-right: 5px;
+}
+
+.align-right .dropdown-menu {
+    right: 0;
+    left: auto;
+}
+
+.action-bar {
+    margin-right: 0;
+    padding: 5px;
+}
+
+.action-bar .btn span.label {
+    display: none;
+}
+
+.action-bar label {
+    margin: 0;
+    line-height: 30px;
+    color: #888;
+}
+
+.modal-body > .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.modal-content > .widget-form {
+    margin-bottom: 0;
+}
+
 /**
  * Checkbox
  */
