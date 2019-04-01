@@ -4,6 +4,7 @@ import com.composum.sling.clientlibs.handle.*;
 import com.composum.sling.clientlibs.handle.Clientlib.Type;
 import com.composum.sling.clientlibs.processor.AbstractClientlibVisitor;
 import com.composum.sling.clientlibs.service.ClientlibService;
+import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -14,6 +15,7 @@ import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 
+import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -215,11 +217,21 @@ public class ClientlibDebugServlet extends HttpServlet {
                     .getQueryManager();
             String statement = "//element(*)[sling:resourceType='composum/nodes/commons/clientlib']/" + type.name() +
                     "/..  order by path";
-            NodeIterator clientlibs = querymanager.createQuery(statement, Query.XPATH).execute().getNodes();
-            while (clientlibs.hasNext())
+            NodeIterator clientlibsIterator = querymanager.createQuery(statement, Query.XPATH).execute().getNodes();
+            List<Node> clientlibs = IteratorUtils.toList(clientlibsIterator);
+            Collections.sort(clientlibs, new Comparator<Node>() {
+                @Override
+                public int compare(Node o1, Node o2) {
+                    try {
+                        return o1.getPath().compareTo(o2.getPath());
+                    } catch (RepositoryException e) { // can't happen, so we'd want to know.
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+            for (Node clientlib : clientlibs)
                 displayClientlibStructure(request, writer,
-                        new Clientlib(type, resolver.getResource(clientlibs.nextNode()
-                                .getPath())).getRef(), resolver, impersonationParam);
+                        new Clientlib(type, resolver.getResource(clientlib.getPath())).getRef(), resolver, impersonationParam);
 
         } catch (RepositoryException e) {
             throw new ServletException(e);
