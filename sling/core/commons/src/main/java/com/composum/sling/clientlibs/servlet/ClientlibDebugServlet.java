@@ -109,7 +109,7 @@ public class ClientlibDebugServlet extends HttpServlet {
 
     protected void printForm(HttpServletRequest request, PrintWriter writer, Type type) {
         writer.println("<form action=\"" + request.getRequestURL() + "\" method=\"get\">");
-        writer.println("Type: <select name=\"type\"> <option value=\"\">All</option>");
+        writer.println("Type: <select name=\"type\"> <option value=\"all\">All</option>");
         for (Type selectType : Type.values()) {
             writer.print("        <option value=\"" + selectType.name() + "\"");
             if (selectType == type) writer.print(" selected ");
@@ -164,7 +164,7 @@ public class ClientlibDebugServlet extends HttpServlet {
 
         try {
             response.setContentType("text/html");
-            writer.print("<html><body><h2>Rough structure of client libraries");
+            writer.print("<html><body><h2>Structure of client libraries");
             if (StringUtils.isNotBlank(impersonation))
                 writer.print(" as seen from " + resolver.getUserID());
             writer.println("</h2>");
@@ -205,8 +205,10 @@ public class ClientlibDebugServlet extends HttpServlet {
         Matcher matcher = SELECTOR_REGEX.matcher(uri);
         if (matcher.matches())
             type = Type.valueOf(matcher.group(1));
-        if (StringUtils.isNotBlank(request.getParameter(REQUEST_PARAM_TYPE)))
-            type = Type.valueOf(request.getParameter(REQUEST_PARAM_TYPE));
+        String typeParameter = request.getParameter(REQUEST_PARAM_TYPE);
+        if (StringUtils.isNotBlank(typeParameter)) {
+            type = "all".equalsIgnoreCase(typeParameter) ? null : Type.valueOf(typeParameter);
+        }
         return type;
     }
 
@@ -250,7 +252,10 @@ public class ClientlibDebugServlet extends HttpServlet {
             if (thelib.getCategories().isEmpty()) categories.append(" (no categories)");
             else {
                 categories.append(" (in categories ");
+                boolean first = true;
                 for (String cat : thelib.getCategories()) {
+                    if (!first) categories.append(", ");
+                    first = false;
                     categories.append("<a href=\"").append(url)
                             .append("?lib=category:").append(cat).append(impersonationparam)
                             .append("\">").append(cat).append("</a>");
