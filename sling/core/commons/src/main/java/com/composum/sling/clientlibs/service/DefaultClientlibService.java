@@ -754,7 +754,7 @@ public class DefaultClientlibService implements ClientlibService {
             } else if (new FileHandle(resourceAsAdmin).isValid() && !new FileHandle(resourceAsUser).isValid()) {
                 buf.append("ERROR: Content resource not readable: ").append(resourceAsAdmin.getPath()).append("\n");
             }
-        } else {
+        } else if (!resourceFolder.getOptional()) {
             buf.append("ERROR: can't find element ").append(ref.path)
                     .append(" of resource folder ").append(resourceFolder.resource.getPath()).append("\n");
         }
