@@ -5,9 +5,9 @@ import com.composum.sling.clientlibs.processor.*;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.concurrent.LazyCreationService;
 import com.composum.sling.core.concurrent.SequencerService;
+import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.SetUtils;
 import org.apache.commons.collections.map.LRUMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +19,7 @@ import org.apache.sling.api.resource.*;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -87,6 +88,12 @@ public class DefaultClientlibService implements ClientlibService {
     @Reference
     protected GzipProcessor gzipProcessor;
 
+    @Reference(referenceInterface = ClientlibPermissionPlugin.class,
+            cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE, policy = ReferencePolicy.DYNAMIC,
+            bind = "bindPermissionPlugin", unbind = "unbindPermissionPlugin"
+    )
+    protected final List<ClientlibPermissionPlugin> permissionPlugins = new CopyOnWriteArrayList<>();
+
     protected ThreadPoolExecutor executorService = null;
 
     protected EnumMap<Clientlib.Type, ClientlibRenderer> rendererMap;
@@ -98,6 +105,16 @@ public class DefaultClientlibService implements ClientlibService {
      * DOS attack by retrieving random categories.
      */
     protected final LRUMap /*String, Pair<Long, List<String>>*/ categoryToPathCache = new LRUMap(100);
+
+    protected synchronized void bindPermissionPlugin(ClientlibPermissionPlugin permissionPlugin) {
+        permissionPlugins.add(permissionPlugin);
+        categoryToPathCache.clear();
+    }
+
+    protected synchronized void unbindPermissionPlugin(ClientlibPermissionPlugin permissionPlugin) {
+        permissionPlugins.remove(permissionPlugin);
+        categoryToPathCache.clear();
+    }
 
     @Modified
     @Activate
@@ -286,6 +303,7 @@ public class DefaultClientlibService implements ClientlibService {
     protected List<Resource> retrieveResourcesForCategoryUncached(String category, ResourceResolver resolver) {
         List<Resource> resources = new ArrayList<>();
         Set<String> foundlibs = new HashSet<>();
+        List<ResourceFilter> permissionFilters = getCategoryPermissionFilters(category);
         for (String searchPathElement : resolver.getSearchPath()) {
             String xpath = "/jcr:root" + searchPathElement.replaceFirst("/+$", "") + "//element(*," +
                     TYPE_SLING_FOLDER + ")" + "[@" + PROP_RESOURCE_TYPE + "='" + RESOURCE_TYPE + "'" + " and @" +
@@ -295,14 +313,35 @@ public class DefaultClientlibService implements ClientlibService {
                 ResourceHandle handle = ResourceHandle.use(foundResource);
                 String libPath = handle.getPath();
                 String key = libPath.substring(libPath.indexOf(searchPathElement) + searchPathElement.length());
-                if (!foundlibs.contains(key)) { // first wins - e.g. /apps shadows /libs
+                if (!foundlibs.contains(key) && isClientlibPermitted(permissionFilters, handle)) { // first wins - e.g. /apps shadows /libs
                     foundlibs.add(key);
-                    resources.add(foundResource);
+                    resources.add(handle);
                 }
             }
         }
         Collections.sort(resources, orderResourceComparator);
         return resources;
+    }
+
+    /** Retrieves the {@link ResourceFilter}s for a category from all {@link ClientlibPermissionPlugin}s. */
+    @Nonnull
+    protected List<ResourceFilter> getCategoryPermissionFilters(String category) {
+        List<ResourceFilter> result = new ArrayList<>();
+        if (permissionPlugins != null) {
+            for (ClientlibPermissionPlugin plugin : permissionPlugins) {
+                result.add(plugin.categoryFilter(category));
+            }
+        }
+        return result;
+    }
+
+    /** Checks whether a clientlib matches all {@link ResourceFilter}s for the given category. */
+    protected boolean isClientlibPermitted(@Nonnull List<ResourceFilter> filters, Resource clientlibResource) {
+        boolean permitted = true;
+        for (ResourceFilter filter : filters) {
+            permitted = permitted && filter.accept(clientlibResource);
+        }
+        return permitted;
     }
 
     /**
