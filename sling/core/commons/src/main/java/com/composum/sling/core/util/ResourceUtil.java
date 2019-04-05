@@ -4,6 +4,7 @@ import com.composum.sling.core.JcrResource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingConstants;
+import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -17,13 +18,14 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- *
+ * A collection of loads of utilities dealing with {@link Resource}s.
  */
 public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
 
@@ -522,7 +524,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
         return resource != null ? resource.getPath() : null;
     }
 
-    /** Finds a mix:referenceable by it's jcr:uuid. */
+    /** Finds a mix:referenceable by its jcr:uuid. */
     @Nullable
     public static Resource getByUuid(@Nonnull ResourceResolver resolver, @Nullable String uuid) throws RepositoryException {
         if (StringUtils.isBlank(uuid)) return null;
@@ -539,6 +541,33 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
             throw new RepositoryException("Cannot get JCR Session from resolver " + resolver);
         }
         return result;
+    }
+
+    /** Finds the referenced node from a property of type REFERENCE, WEAKREFERENCE or PATH or convertable to that. */
+    @Nullable
+    public static Resource getReferredResource(@Nullable Resource propertyResource) throws RepositoryException {
+        if (propertyResource == null) return null;
+        Property property = propertyResource.adaptTo(Property.class);
+        Node node = property != null ? property.getNode() : null;
+        String path = node != null ? node.getPath() : null;
+        return path != null ? propertyResource.getResourceResolver().getResource(path) : null;
+    }
+
+    /**
+     * Adds a mixin if it isn't there already.
+     *
+     * @return true if we needed to add the mixin.
+     */
+    public static boolean addMixin(@Nonnull Resource resource, @Nonnull String mixin) {
+        if (!isResourceType(resource, mixin)) {
+            ModifiableValueMap vm = resource.adaptTo(ModifiableValueMap.class);
+            String[] mixins = vm.get(PROP_MIXINTYPES, new String[0]);
+            List<String> newMixins = new ArrayList<String>(Arrays.asList(mixins));
+            newMixins.add(mixin);
+            vm.put(PROP_MIXINTYPES, newMixins.toArray(new String[newMixins.size()]));
+            return true;
+        }
+        return false;
     }
 
 }

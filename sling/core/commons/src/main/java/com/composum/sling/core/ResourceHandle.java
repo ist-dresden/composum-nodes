@@ -21,6 +21,7 @@ import org.apache.sling.api.resource.ResourceWrapper;
 import org.apache.sling.api.resource.ValueMap;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
@@ -389,6 +390,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
         return StringUtils.isNotBlank(title) ? title : getResourceName();
     }
 
+    @Nullable
     @Override
     public ResourceHandle getParent() {
         if (resource != null) {
@@ -409,6 +411,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
     /**
      * Returns the {distance}-th parent - getParent(1) is just getParent().
      */
+    @Nullable
     public ResourceHandle getParent(int distance) {
         ResourceHandle parent = this;
         while (distance > 0 && parent != null && parent.isValid()) {

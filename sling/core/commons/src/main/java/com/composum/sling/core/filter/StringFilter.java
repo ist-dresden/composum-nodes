@@ -17,8 +17,6 @@ import java.util.regex.Pattern;
  */
 public interface StringFilter {
 
-    Logger LOG = LoggerFactory.getLogger(StringFilter.class);
-
     /**
      * the core function of a filters says: this value is appropriate or not
      *
@@ -190,7 +188,7 @@ public interface StringFilter {
     }
 
     /**
-     * The 'WhiteList' is a pattern based filter which accepts all values matching to one of it's patterns.
+     * The 'WhiteList' is a pattern based filter which accepts all values matching to one of its patterns.
      */
     class WhiteList extends PatternList {
 
@@ -255,7 +253,7 @@ public interface StringFilter {
     }
 
     /**
-     * The 'BlackList' is a pattern based filter which accepts all values NOT matching to one of it's patterns.
+     * The 'BlackList' is a pattern based filter which accepts all values NOT matching to one of its patterns.
      */
     class BlackList extends PatternList {
 

@@ -27,8 +27,6 @@ import static com.composum.sling.core.filter.NodeTypeFilters.NODE_TYPE_PREFIX;
  */
 public interface ResourceFilter {
 
-    Logger LOG = LoggerFactory.getLogger(ResourceFilter.class);
-
     Pattern SIMPLE_ARRAY_PATTERN = Pattern.compile("^([+-])\\[(.*)\\]$");
 
     /**
