@@ -106,7 +106,7 @@ public class AbstractClientlibTest {
                         resolverFactory = context.getService(ResourceResolverFactory.class);
                         sequencer = sequencerService;
                         lazyCreationService = creationService;
-                        permissionPlugins = Arrays.asList(permissionPlugin);
+                        permissionPlugins.add(permissionPlugin);
                         activate(context.componentContext());
                     }
                 });
