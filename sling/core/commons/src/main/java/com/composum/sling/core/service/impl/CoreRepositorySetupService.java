@@ -373,7 +373,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                 }
             }
         } catch (RepositoryException e) {
-            LOG.error("Error in makeNodeAvailable({},{}) : {}", new Object[]{memberId, groupIds, e.toString()});
+            LOG.error("Error in makeMemberAvailable({},{}) : {}", new Object[]{memberId, groupIds, e.toString()});
             throw e;
         }
     }
@@ -398,7 +398,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                 }
             }
         } catch (RepositoryException e) {
-            LOG.error("Error in makeNodeAvailable({},{}) : {}", new Object[]{memberId, groupIds, e.toString()});
+            LOG.error("Error in removeMember({},{}) : {}", new Object[]{memberId, groupIds, e.toString()});
             throw e;
         }
     }
