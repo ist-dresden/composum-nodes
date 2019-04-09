@@ -16,12 +16,14 @@ public class ValueEmbeddingTest {
 
     @Test
     public void testJsonScript() throws Exception {
-        String source = "{\"ab${1}\":\"xy${xy}z\"}";
-        String result = "{\"ab22\":\"xyyxz\"}";
+        String source = "{\"ab${1}\":\"xy${xy}z\",\"x\":\"${read}\"}";
+        String result = "{\"ab22\":\"xyyxz\",\"x\":\"reader content - !reader embedded in reader!\"}";
         ValueEmbeddingReader reader = new ValueEmbeddingReader(new StringReader(source),
                 new HashMap<String, Object>() {{
                     put("1", "22");
                     put("xy", "yx");
+                    put("read", new StringReader("reader content - ${embedded}"));
+                    put("embedded", new StringReader("!reader embedded in reader!"));
                 }});
         assertEquals(result, IOUtils.toString(reader));
     }
@@ -48,6 +50,9 @@ public class ValueEmbeddingTest {
                 put("segment", "SFTVWRBWRZTRTVRZRRZRTVHBSVERTHVRHZRDTVRDHRDVHHDRTBRHVDZVRHVHZETZVHBZEHETHVBZBH");
                 put("base", "AXEFWERGEETZVHTZJHBVZHZHCVETZFHCRWHVZCFGVECHVECHG");
                 put("key", "_");
+                put("aaa", "_AAA_");
+                put("bbb", "_BBB_");
+                put("read", new StringReader("--- this is a readers content ---"));
             }});
             String result = IOUtils.toString(reader);
             System.out.println(result);

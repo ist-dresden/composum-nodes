@@ -29,7 +29,8 @@
             "x5": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
             "x6": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
             "x7": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt"
-          },
+          }
+        },
         {
           "x1": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
           "ab": {
@@ -44,5 +45,6 @@
         }
       ]
     }
-  ]
+  ],
+  "embedded": "${resource:/com/composum/sling/core/util/for-embedding.txt}"
 }
