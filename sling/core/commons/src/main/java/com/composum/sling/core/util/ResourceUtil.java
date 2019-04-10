@@ -359,16 +359,20 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
 
     /**
      * Returns an array of two elements for a nontrivial path (containing /): the parent path and the name.
+     * The parent of a toplevel node like "/var" is returned as "/".
      * If it doesn't contain a / , the result has null in the first place.
      */
-    public static String[] splitPathAndName(String path) {
+    @Nonnull
+    public static String[] splitPathAndName(@Nonnull String path) {
         String[] result = new String[2];
         int nameSeparator = path.lastIndexOf('/');
-        if (nameSeparator > 0) {
+        if (nameSeparator >= 0) {
             result[0] = path.substring(0, nameSeparator);
             result[1] = path.substring(nameSeparator + 1);
+            if (result[0].isEmpty()) // absolute path at toplevel, like /var
+                result[0] = "/";
         } else {
-            result[0] = null;
+            result[0] = null; // unclear what to return here - null or "" .
             result[1] = path;
         }
         return result;
