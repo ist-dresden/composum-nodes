@@ -302,7 +302,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
             node.remove();
         } catch (PathNotFoundException ignore) {
         } catch (RepositoryException e) {
-            LOG.error("Error in removeNode({},{}) : {}", path, e.toString());
+            LOG.error("Error in removeNode({}) : {}", path, e.toString());
             throw e;
         }
     }

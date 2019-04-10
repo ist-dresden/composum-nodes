@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.Locale;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
@@ -16,16 +17,21 @@ public class ValueEmbeddingTest {
 
     @Test
     public void testJsonScript() throws Exception {
-        String source = "{\"ab${1}\":\"xy${xy}z\",\"x\":\"${read}\"}";
-        String result = "{\"ab22\":\"xyyxz\",\"x\":\"reader content - !reader embedded in reader!\"}";
-        ValueEmbeddingReader reader = new ValueEmbeddingReader(new StringReader(source),
-                new HashMap<String, Object>() {{
-                    put("1", "22");
-                    put("xy", "yx");
-                    put("read", new StringReader("reader content - ${embedded}"));
-                    put("embedded", new StringReader("!reader embedded in reader!"));
-                }});
-        assertEquals(result, IOUtils.toString(reader));
+        String source = "{\"ab${1;=%+8.3f}\":\"xy${xy}z\",\"x\":\"${read}\"}";
+        ValueEmbeddingReader reader;
+        reader = new ValueEmbeddingReader(new StringReader(source), new HashMap<String, Object>() {{
+            put("1", 22.03f);
+            put("xy", "yx");
+            put("read", new StringReader("reader content - ${embedded}"));
+            put("embedded", new StringReader(   "!reader embedded in reader!"));
+        }}, Locale.GERMAN, getClass());
+        assertEquals("{\"ab= +22,030\":\"xyyxz\",\"x\":\"reader content - !reader embedded in reader!\"}",
+                IOUtils.toString(reader));
+        reader = new ValueEmbeddingReader(new StringReader(source), new HashMap<String, Object>() {{
+            put("xy", "yx");
+            put("read", new StringReader("reader content - ${embedded}"));
+        }}, Locale.GERMAN, getClass());
+        assertEquals("{\"ab\":\"xyyxz\",\"x\":\"reader content - \"}", IOUtils.toString(reader));
     }
 
     @Test
