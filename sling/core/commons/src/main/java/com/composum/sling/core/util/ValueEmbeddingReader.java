@@ -25,6 +25,7 @@ public class ValueEmbeddingReader extends Reader {
 
     protected final Reader reader;
     protected final ValueMap values;
+    protected final Class resourceContext;
 
     protected boolean eof = false;
     protected char[] buf = new char[BUFSIZE * 2]; // let place for values (max length:  BUFSIZE)
@@ -33,14 +34,40 @@ public class ValueEmbeddingReader extends Reader {
 
     private transient Reader embed;
 
+    /**
+     * @param reader the text to read - probably with embedded value placeholders
+     * @param values the set of available placeholders
+     */
     public ValueEmbeddingReader(Reader reader, Map<String, Object> values) {
-        this(reader, new ValueMapDecorator(values));
+        this(reader, new ValueMapDecorator(values), values.getClass());
     }
 
+    /**
+     * @param reader the text to read - probably with embedded value placeholders
+     * @param values the set of available placeholders
+     * @param resourceContext the context class for resource loading
+     */
+    public ValueEmbeddingReader(Reader reader, Map<String, Object> values, Class resourceContext) {
+        this(reader, new ValueMapDecorator(values), resourceContext);
+    }
+
+    /**
+     * @param reader the text to read - probably with embedded value placeholders
+     * @param values the set of available placeholders
+     */
     public ValueEmbeddingReader(Reader reader, ValueMap values) {
+        this(reader, values, values.getClass());
+    }
+
+    /**
+     * @param reader the text to read - probably with embedded value placeholders
+     * @param values the set of available placeholders
+     * @param resourceContext the context class for resource loading
+     */
+    public ValueEmbeddingReader(Reader reader, ValueMap values, Class resourceContext) {
         this.reader = reader;
         this.values = values;
-        this.embed = null;
+        this.resourceContext = resourceContext;
     }
 
     @Override
@@ -120,7 +147,7 @@ public class ValueEmbeddingReader extends Reader {
                         if (!eof) {
                             String name = key.toString().trim();
                             if (name.startsWith(TYPE_RESOURE)) {
-                                InputStream stream = getClass().getResourceAsStream(
+                                InputStream stream = resourceContext.getResourceAsStream(
                                         name.substring(TYPE_RESOURE.length()));
                                 if (stream != null) {
                                     // recursive embedding of a resource file with the given value set
