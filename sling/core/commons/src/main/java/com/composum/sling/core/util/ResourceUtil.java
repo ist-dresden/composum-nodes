@@ -519,15 +519,6 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
         return PropertyUtil.getBinaryData(resource.adaptTo(Node.class));
     }
 
-    /**
-     * Returns the path of a resource, or null if it is null. For use e.g. in logging statements.
-     * Caution when using UUIDs - they do not work on all resolvers and break on imports/exports.
-     */
-    @Nullable
-    public static String getPath(@Nullable Resource resource) {
-        return resource != null ? resource.getPath() : null;
-    }
-
     /** Finds a mix:referenceable by its jcr:uuid. */
     @Nullable
     public static Resource getByUuid(@Nonnull ResourceResolver resolver, @Nullable String uuid) throws RepositoryException {
@@ -555,23 +546,6 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
         Node node = property != null ? property.getNode() : null;
         String path = node != null ? node.getPath() : null;
         return path != null ? propertyResource.getResourceResolver().getResource(path) : null;
-    }
-
-    /**
-     * Adds a mixin if it isn't there already.
-     *
-     * @return true if we needed to add the mixin.
-     */
-    public static boolean addMixin(@Nonnull Resource resource, @Nonnull String mixin) {
-        if (!isResourceType(resource, mixin)) {
-            ModifiableValueMap vm = resource.adaptTo(ModifiableValueMap.class);
-            String[] mixins = vm.get(PROP_MIXINTYPES, new String[0]);
-            List<String> newMixins = new ArrayList<String>(Arrays.asList(mixins));
-            newMixins.add(mixin);
-            vm.put(PROP_MIXINTYPES, newMixins.toArray(new String[newMixins.size()]));
-            return true;
-        }
-        return false;
     }
 
 }

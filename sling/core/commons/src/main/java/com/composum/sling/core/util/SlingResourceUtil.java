@@ -1,6 +1,13 @@
 package com.composum.sling.core.util;
 
+import org.apache.sling.api.resource.ModifiableValueMap;
+import org.apache.sling.api.resource.Resource;
+
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A set of utility functions related to the handling of Sling Resources, without going down to JCR specifics.
@@ -37,5 +44,31 @@ public class SlingResourceUtil {
         if (result == null)
             throw new IllegalArgumentException("Path of supposed child is not really a child path of parent: parent=" + parent + " , child=" + child);
         return result;
+    }
+
+    /**
+     * Returns the path of a resource, or null if it is null. For use e.g. in logging statements.
+     * Caution when using UUIDs - they do not work on all resolvers and break on imports/exports.
+     */
+    @Nullable
+    public static String getPath(@Nullable Resource resource) {
+        return resource != null ? resource.getPath() : null;
+    }
+
+    /**
+     * Adds a mixin if it isn't there already.
+     *
+     * @return true if we needed to add the mixin.
+     */
+    public static boolean addMixin(@Nonnull Resource resource, @Nonnull String mixin) {
+        if (!ResourceUtil.isResourceType(resource, mixin)) {
+            ModifiableValueMap vm = resource.adaptTo(ModifiableValueMap.class);
+            String[] mixins = vm.get(ResourceUtil.PROP_MIXINTYPES, new String[0]);
+            List<String> newMixins = new ArrayList<String>(Arrays.asList(mixins));
+            newMixins.add(mixin);
+            vm.put(ResourceUtil.PROP_MIXINTYPES, newMixins.toArray(new String[newMixins.size()]));
+            return true;
+        }
+        return false;
     }
 }
