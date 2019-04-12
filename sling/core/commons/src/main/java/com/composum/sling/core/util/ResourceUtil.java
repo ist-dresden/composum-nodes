@@ -4,7 +4,6 @@ import com.composum.sling.core.JcrResource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingConstants;
-import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -18,7 +17,6 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -27,48 +25,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * A collection of loads of utilities dealing with {@link Resource}s.
  */
-public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil {
+public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil implements CoreConstants {
 
     private static final Logger LOG = getLogger(ResourceUtil.class);
-
-    public static final String PROP_RESOURCE_TYPE =
-            SlingConstants.NAMESPACE_PREFIX + ":" + SlingConstants.PROPERTY_RESOURCE_TYPE;
-    public static final String PROP_RESOURCE_SUPER_TYPE =
-            SlingConstants.NAMESPACE_PREFIX + ":" + SlingConstants.PROPERTY_RESOURCE_SUPER_TYPE;
-    public static final String CONTENT_NODE = "jcr:content";
-
-    public static final String TYPE_OAKINDEX = "oak:QueryIndexDefinition";
-    public static final String TYPE_FOLDER = "nt:folder";
-    public static final String TYPE_FILE = "nt:file";
-    public static final String TYPE_LINKED_FILE = "nt:linkedFile";
-    public static final String TYPE_RESOURCE = "nt:resource";
-    public static final String TYPE_UNSTRUCTURED = "nt:unstructured";
-
-    public static final String TYPE_SLING_RESOURCE = "sling:Resource";
-    public static final String TYPE_SLING_FOLDER = "sling:Folder";
-    public static final String TYPE_SLING_ORDERED_FOLDER = "sling:OrderedFolder";
-
-    public static final String TYPE_LOCKABLE = "mix:lockable";
-    public static final String TYPE_ORDERABLE = "mix:orderable";
-    public static final String TYPE_REFERENCEABLE = "mix:referenceable";
-    public static final String TYPE_LAST_MODIFIED = "mix:lastModified";
-    public static final String TYPE_CREATED = "mix:created";
-    public static final String TYPE_TITLE = "mix:title";
-    public static final String TYPE_VERSIONABLE = "mix:versionable";
-
-    public static final String PROP_UUID = "jcr:uuid";
-    public static final String PROP_TITLE = "jcr:title";
-    public static final String PROP_DESCRIPTION = "jcr:description";
-
-    public static final String PROP_DATA = "jcr:data";
-    public static final String PROP_MIME_TYPE = "jcr:mimeType";
-    public static final String PROP_ENCODING = "jcr:encoding";
-    public static final String PROP_PRIMARY_TYPE = "jcr:primaryType";
-    public static final String PROP_MIXINTYPES = "jcr:mixinTypes";
-    public static final String PROP_JCR_CONTENT = "jcr:content";
-    public static final String PROP_CREATED = "jcr:created";
-    public static final String PROP_LAST_MODIFIED = "jcr:lastModified";
-    public static final String PROP_FILE_REFERENCE = "fileReference";
 
     /**
      * retrieves all children of one of a type from a type set (node type or resource type)

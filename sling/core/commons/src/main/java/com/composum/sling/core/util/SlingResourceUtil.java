@@ -47,6 +47,24 @@ public class SlingResourceUtil {
     }
 
     /**
+     * Checks whether {descendant} is the same path as parent node or a path of a descendant of the parent node. (We don't check
+     * whether the resources exist - just check the paths.
+     *
+     * @param parent     the parent or null
+     * @param descendant the descendant or null
+     * @return true if descendant is a descendant of parent , false if any is null.
+     */
+    public static boolean isSameOrDescendant(@Nullable String parent, @Nullable String descendant) {
+        if (parent == null || descendant == null) return false;
+        if (parent.equals(descendant)) return true;
+        if (descendant.startsWith(parent + '/')) return true;
+        String parentNormalized = ResourceUtil.normalize(parent);
+        String childNormalized = ResourceUtil.normalize(descendant);
+        if (parentNormalized.equals(childNormalized) || childNormalized.startsWith(parentNormalized + '/')) return true;
+        return false;
+    }
+
+    /**
      * Returns the path of a resource, or null if it is null. For use e.g. in logging statements.
      * Caution when using UUIDs - they do not work on all resolvers and break on imports/exports.
      */
@@ -71,4 +89,5 @@ public class SlingResourceUtil {
         }
         return false;
     }
+
 }
