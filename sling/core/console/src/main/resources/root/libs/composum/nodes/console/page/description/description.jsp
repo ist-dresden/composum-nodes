@@ -13,15 +13,7 @@
             The content within the available tools can also vary according to the rights of the current user.</p>
         <div class="overview">
             <h4 class="section">Available Tools</h4>
-            <div class="overview_list">
-                <c:forEach items="${model.consoles}" var="console">
-                    <div>
-                        <c:if test="${not empty console.description}">
-                            <sling:include path="${console.description}" replaceSelectors="short"/>
-                        </c:if>
-                    </div>
-                </c:forEach>
-            </div>
+            <sling:call script="consoles.jsp"/>
         </div>
     </div>
 </cpn:component>
