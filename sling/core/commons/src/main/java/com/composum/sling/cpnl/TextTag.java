@@ -18,14 +18,10 @@ import javax.servlet.jsp.JspWriter;
 import java.io.IOException;
 import java.text.Format;
 import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class TextTag extends TagBase {
 
@@ -238,23 +234,7 @@ public class TextTag extends TagBase {
 
     public Format getFormatter(Object value) {
         if (formatter == null && format != null) {
-            Pattern TEXT_FORMAT_STRING = Pattern.compile("^\\{([^}]+)}(.+)$");
-            Matcher matcher = TEXT_FORMAT_STRING.matcher(format);
-            if (matcher.matches()) {
-                switch (matcher.group(1)) {
-                    case "Message":
-                        formatter = new MessageFormat(matcher.group(2), getLocale());
-                        break;
-                    case "Date":
-                        formatter = new SimpleDateFormat(matcher.group(2), getLocale());
-                        break;
-                }
-            }
-            if (formatter == null) {
-                if (value instanceof Calendar || value instanceof Date) {
-                    formatter = new SimpleDateFormat(format, getLocale());
-                }
-            }
+            formatter = CpnlElFunctions.getFormatter(getLocale(), format, value != null ? value.getClass() : null);
         }
         return formatter;
     }

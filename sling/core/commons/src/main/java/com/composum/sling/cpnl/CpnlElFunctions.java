@@ -1,7 +1,9 @@
 package com.composum.sling.cpnl;
 
 import com.composum.sling.core.RequestBundle;
+import com.composum.sling.core.util.FormatterFormat;
 import com.composum.sling.core.util.LinkUtil;
+import com.composum.sling.core.util.LoggerFormat;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.translate.AggregateTranslator;
@@ -13,10 +15,18 @@ import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Writer;
+import java.text.Format;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -335,5 +345,45 @@ public class CpnlElFunctions {
      */
     public static String cdata(String value) {
         return value != null ? "<![CDATA[" + value + "]]>" : null;
+    }
+
+    /**
+     * Creates the formatter for a describing string rule
+     *
+     * @param locale the local to use for formatting
+     * @param format the format string rule
+     * @param type   the optional value type
+     * @return the Format instance
+     */
+    public static Format getFormatter(@Nonnull final Locale locale, @Nonnull final String format,
+                                      @Nullable final Class<?>... type) {
+        Format formatter = null;
+        Pattern TEXT_FORMAT_STRING = Pattern.compile("^\\{([^}]+)}(.+)$");
+        Matcher matcher = TEXT_FORMAT_STRING.matcher(format);
+        if (matcher.matches()) {
+            switch (matcher.group(1)) {
+                case "Message":
+                    formatter = new MessageFormat(matcher.group(2), locale);
+                    break;
+                case "Date":
+                    formatter = new SimpleDateFormat(matcher.group(2), locale);
+                    break;
+                case "String":
+                    formatter = new FormatterFormat(matcher.group(2), locale);
+                    break;
+                default:
+                case "Log":
+                    formatter = new LoggerFormat(matcher.group(2));
+                    break;
+            }
+        } else {
+            if (type != null && type.length == 1 && type[0] != null &&
+                    (Calendar.class.isAssignableFrom(type[0]) || Date.class.isAssignableFrom(type[0]))) {
+                formatter = new SimpleDateFormat(format, locale);
+            } else {
+                formatter = new LoggerFormat(format);
+            }
+        }
+        return formatter;
     }
 }
