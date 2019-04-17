@@ -9,6 +9,7 @@
             richtext: {
                 editorSelector: '.rich-editor',
                 defaultOptions: {
+                    semantic: true,
                     btns: [
                         ['bold', 'italic', 'underline', 'strikethrough', 'code'],
                         ['superscript', 'subscript'], ['removeformat'],
@@ -93,7 +94,10 @@
                 var selection = document.getSelection();
                 if (selection) {
                     var anchor = selection.anchorNode;
-                    if (tag[2] === anchor.tagName || tag[2] === (anchor = anchor.parentElement).tagName) {
+                    while (anchor.tagName !== tag[2] && anchor.tagName !== 'P' && anchor.tagName !== 'DIV') {
+                        anchor = anchor.parentElement;
+                    }
+                    if (tag[2] === anchor.tagName) {
                         var content = $(anchor).html();
                         selection.removeAllRanges();
                         var range = document.createRange();
