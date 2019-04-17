@@ -48,7 +48,7 @@ public class CpnlElFunctions {
 
     public static final String[] RICH_TEXT_TAGS = new String[]{
             "p", "br", "a", "ul", "li", "ol", "dl", "dt", "dd",
-            "strong", "em", "u", "b", "i", "strike", "sub", "sup",
+            "strong", "em", "u", "b", "i", "strike", "sub", "sup", "code",
             "table", "thead", "tbody", "tr", "th", "td"
     };
 

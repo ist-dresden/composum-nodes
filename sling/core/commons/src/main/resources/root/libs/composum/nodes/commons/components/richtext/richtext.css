@@ -51,6 +51,10 @@
     border-bottom: 1px solid #ccc;
 }
 
+.composum-widgets-richtext .trumbowyg-button-pane .fa-custom-button {
+    line-height: 32px;
+}
+
 .composum-widgets-richtext .trumbowyg-modal-box {
     padding-bottom: 7px;
     text-align: left;
