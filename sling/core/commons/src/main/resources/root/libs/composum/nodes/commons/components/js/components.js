@@ -362,22 +362,22 @@
             },
 
             getValue: function () {
-                return this.$el.val();
+                return this.$input.val();
             },
 
             setValue: function (value, triggerChange) {
-                this.$el.val(value);
+                this.$input.val(value);
                 if (triggerChange) {
                     this.$el.trigger('change');
                 }
             },
 
             reset: function () {
-                this.$el.selectedIndex = -1;
+                this.$input.val(undefined);
             },
 
             setOptions: function (options) {
-                this.$el.html('');
+                this.$input.html('');
                 if (_.isArray(options)) {
                     options.forEach(function (option) {
                         if (_.isObject(option)) {
