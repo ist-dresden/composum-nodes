@@ -56,11 +56,12 @@ public class SlingResourceUtil {
      */
     public static boolean isSameOrDescendant(@Nullable String parent, @Nullable String descendant) {
         if (parent == null || descendant == null) return false;
-        if (parent.equals(descendant)) return true;
+        if (parent.equals(descendant) || parent.equals("/")) return true;
         if (descendant.startsWith(parent + '/')) return true;
         String parentNormalized = ResourceUtil.normalize(parent);
-        String childNormalized = ResourceUtil.normalize(descendant);
-        if (parentNormalized.equals(childNormalized) || childNormalized.startsWith(parentNormalized + '/')) return true;
+        String descendantNormalized = ResourceUtil.normalize(descendant);
+        if (parentNormalized.equals(descendantNormalized) || parentNormalized.equals("/")
+                || descendantNormalized.startsWith(parentNormalized + '/')) return true;
         return false;
     }
 
