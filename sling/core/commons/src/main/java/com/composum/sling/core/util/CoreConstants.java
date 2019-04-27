@@ -61,4 +61,5 @@ public interface CoreConstants extends JcrConstants {
     String PROP_FILE_REFERENCE = "fileReference";
 
     String JCR_LASTMODIFIED_BY = "jcr:lastModifiedBy";
+    String JCR_CREATED_BY = "jcr:createdBy";
 }
