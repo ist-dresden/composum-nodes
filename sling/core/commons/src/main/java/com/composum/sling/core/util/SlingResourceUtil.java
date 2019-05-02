@@ -1,13 +1,14 @@
 package com.composum.sling.core.util;
 
+import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.collections.Transformer;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * A set of utility functions related to the handling of Sling Resources, without going down to JCR specifics.
@@ -60,9 +61,8 @@ public class SlingResourceUtil {
         if (descendant.startsWith(parent + '/')) return true;
         String parentNormalized = ResourceUtil.normalize(parent);
         String descendantNormalized = ResourceUtil.normalize(descendant);
-        if (parentNormalized.equals(descendantNormalized) || parentNormalized.equals("/")
-                || descendantNormalized.startsWith(parentNormalized + '/')) return true;
-        return false;
+        return parentNormalized.equals(descendantNormalized) || parentNormalized.equals("/")
+                || descendantNormalized.startsWith(parentNormalized + '/');
     }
 
     /**
@@ -79,6 +79,7 @@ public class SlingResourceUtil {
      *
      * @return true if we needed to add the mixin.
      */
+    @CheckForNull
     public static boolean addMixin(@Nonnull Resource resource, @Nonnull String mixin) {
         if (!ResourceUtil.isResourceType(resource, mixin)) {
             ModifiableValueMap vm = resource.adaptTo(ModifiableValueMap.class);
@@ -89,6 +90,45 @@ public class SlingResourceUtil {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Returns an iterator that goes through all descendants of a resource, parents come before their children.
+     *
+     * @param resource a resource or null
+     * @return an iterable running through the descendants, not null
+     */
+    @Nonnull
+    public static Iterable<Resource> descendants(@Nullable final Resource resource) {
+        // this is awful because we are stuck at Java 7 for now. With Java 8 Streams this is way easier.
+        if (resource == null) return Collections.emptyList();
+        return new Iterable<Resource>() {
+            @Nonnull
+            @SuppressWarnings("unchecked")
+            @Override
+            public Iterator<Resource> iterator() {
+                Transformer descendantsTransformer = new Transformer() {
+                    @Override
+                    public Object transform(Object input) {
+                        if (input instanceof Resource) {
+                            return IteratorUtils.chainedIterator(
+                                    // we wrap the resource into Object[] so that it doesn't get its children read again
+                                    IteratorUtils.singletonIterator(new Object[]{input}),
+                                    ((Resource) input).listChildren());
+                        }
+                        return input;
+                    }
+                };
+                return IteratorUtils.transformedIterator(IteratorUtils.objectGraphIterator(resource, descendantsTransformer),
+                        new Transformer() {
+                            @Override
+                            public Object transform(Object input) {
+                                return ((Object[]) input)[0];
+                            }
+                        });
+            }
+
+        };
     }
 
 }
