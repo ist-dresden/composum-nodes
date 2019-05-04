@@ -138,7 +138,7 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
         }
 
         @Override
-        public void writePrologue() throws IOException {
+        public void writePrologue() {
         }
 
         @Override
@@ -219,8 +219,7 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
             super(response, finalizedIndicator);
         }
 
-        public JsonTracking(JsonWriter writer, Pattern finalizedIndicator)
-                throws IOException {
+        public JsonTracking(JsonWriter writer, Pattern finalizedIndicator) {
             super(writer, finalizedIndicator);
         }
 
@@ -303,8 +302,7 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
             super(response, finalizedIndicator);
         }
 
-        public HtmlTracking(Writer writer, Pattern finalizedIndicator)
-                throws IOException {
+        public HtmlTracking(Writer writer, Pattern finalizedIndicator) {
             super(writer, finalizedIndicator);
         }
 
