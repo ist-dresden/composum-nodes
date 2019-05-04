@@ -4,7 +4,7 @@ import com.composum.sling.core.RequestBundle;
 import com.composum.sling.core.util.FormatterFormat;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.LoggerFormat;
-import org.apache.commons.lang3.StringEscapeUtils;
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.translate.AggregateTranslator;
 import org.apache.commons.lang3.text.translate.CharSequenceTranslator;
@@ -249,7 +249,9 @@ public class CpnlElFunctions {
      * @return the HTML escaped text of the value
      */
     public static String text(String value) {
-        return value != null ? StringEscapeUtils.escapeHtml4(value) : value;
+        return value != null
+                ? /* StringEscapeUtils.escapeHtml4(value) */ XSS.api().encodeForHTML(value)
+                : value;
     }
 
     /**
@@ -334,7 +336,9 @@ public class CpnlElFunctions {
      * @return the Script escaped code of the value
      */
     public static String script(String value) {
-        return value != null ? StringEscapeUtils.escapeEcmaScript(value) : value;
+        return value != null
+                ? /* StringEscapeUtils.escapeEcmaScript(value) */ XSS.api().encodeForJSString(value)
+                : value;
     }
 
     /**
