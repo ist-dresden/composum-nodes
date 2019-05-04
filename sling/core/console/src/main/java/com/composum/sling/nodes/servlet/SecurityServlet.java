@@ -1,5 +1,6 @@
 package com.composum.sling.nodes.servlet;
 
+import com.composum.sling.cpnl.CpnlElFunctions;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
@@ -48,6 +49,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import static com.composum.sling.core.mapping.MappingRules.CHARSET;
 
 /**
  * The service servlet to retrieve all general system settings.
@@ -374,7 +377,7 @@ public class SecurityServlet extends AbstractServiceServlet {
                 switch (scope) {
                     case effective:
                         policies = acManager.getEffectivePolicies(path);
-                        // FIXME: two equal sets from the ac manager on root...
+                        // two equal sets from the ac manager on root...
                         if ("/".equals(path) && policies.length == 2 && seemsTheSame(policies[0], policies[1])) {
                             policies = new AccessControlPolicy[]{policies[0]};
                         }
@@ -539,6 +542,7 @@ public class SecurityServlet extends AbstractServiceServlet {
                 AccessControlManager acManager = session.getAccessControlManager();
 
                 String path = AbstractServiceServlet.getPath(request);
+                response.setContentType("text/html;charset=" + CHARSET); // XSS? - checked (2019-05-04)
 
                 AccessControlPolicy[] policies;
 
@@ -590,8 +594,9 @@ public class SecurityServlet extends AbstractServiceServlet {
                 for (AccessControlEntry entry : acl.getAccessControlEntries()) {
                     JackrabbitAccessControlEntry jrEntry = (JackrabbitAccessControlEntry) entry;
                     writer.append("<tr class=\"").append(rowCss).append("\">");
-                    writer.append("<td class=\"principal\">").append(entry.getPrincipal().getName()).append("</td>");
-                    writer.append("<td class=\"path\">").append(acl.getPath()).append("</td>");
+                    writer.append("<td class=\"principal\">")
+                            .append(CpnlElFunctions.text(entry.getPrincipal().getName())).append("</td>");
+                    writer.append("<td class=\"path\">").append(CpnlElFunctions.path(acl.getPath())).append("</td>");
                     writer.append("<td class=\"type ")
                             .append(jrEntry.isAllow() ? "allow" : "deny")
                             .append("\">")
@@ -609,7 +614,8 @@ public class SecurityServlet extends AbstractServiceServlet {
                 AccessControlList acl = (AccessControlList) policy;
                 for (AccessControlEntry entry : acl.getAccessControlEntries()) {
                     writer.append("<tr class=\"").append(rowCss).append("\">");
-                    writer.append("<td class=\"principal\">").append(entry.getPrincipal().getName()).append("</td>");
+                    writer.append("<td class=\"principal\">")
+                            .append(CpnlElFunctions.text(entry.getPrincipal().getName())).append("</td>");
                     writer.append("<td class=\"path\">").append("").append("</td>");
                     writer.append("<td class=\"type\">").append("</td>");
                     writer.append("<td class=\"privileges\">");
