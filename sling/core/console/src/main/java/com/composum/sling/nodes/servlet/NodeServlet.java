@@ -21,7 +21,6 @@ import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
@@ -81,6 +80,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.composum.sling.core.mapping.MappingRules.CHARSET;
 
 /**
  * The JCR nodes service servlet to walk though and modify the entire hierarchy.
@@ -295,8 +296,7 @@ public class NodeServlet extends NodeTreeServlet {
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            response.setContentType(MappingRules.CHARSET.name());
-            response.setContentType("text/html;charset=" + MappingRules.CHARSET.name());
+            response.setContentType("text/html;charset=" + CHARSET); // XSS? - checked (2019-05-04)
             Writer writer = response.getWriter();
             response.setStatus(HttpServletResponse.SC_OK);
 
@@ -429,7 +429,7 @@ public class NodeServlet extends NodeTreeServlet {
         protected void writeError(SlingHttpServletResponse response, String queryString, Exception ex)
                 throws IOException {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                    "query: '" + queryString + "' (" + ex.getMessage() + ")");
+                    "query: '" + CpnlElFunctions.text(queryString) + "' (" + ex.getMessage() + ")"); // XSS? - checked (2019-05-04)
         }
     }
 
@@ -465,7 +465,7 @@ public class NodeServlet extends NodeTreeServlet {
             writer.endArray();
 
             writer.name("summary").beginObject();
-            writer.name("query").value(queryString);
+            writer.name("query").value(CpnlElFunctions.script(queryString)); // XSS? - checked (2019-05-04)
             writer.name("count").value(count);
             writer.name("limit").value(nodesConfig.getQueryResultLimit());
             writer.endObject();
@@ -484,6 +484,7 @@ public class NodeServlet extends NodeTreeServlet {
 
             PrintWriter writer = response.getWriter();
             response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentType("text/html;charset=" + CHARSET); // XSS? - checked (2019-05-04)
 
             TreeNodeStrategy nodeStrategy = new DefaultTreeNodeStrategy(getNodeFilter(request));
             NodeIterator iterator = result.getNodes();
@@ -523,13 +524,13 @@ public class NodeServlet extends NodeTreeServlet {
                             .append("\"><span></span></td>");
                     writer.append("<td class=\"id\">").append(resource.getId()).append("</td>");
                     writer.append("<td class=\"name\">")
-                            .append(StringEscapeUtils.escapeHtml4(resource.getName())).append("</td>");
+                            .append(CpnlElFunctions.text(resource.getName())).append("</td>");
                     writer.append("<td class=\"text\">")
-                            .append(StringEscapeUtils.escapeHtml4(getNodeLabel(resource, LabelType.title)))
+                            .append(CpnlElFunctions.text(getNodeLabel(resource, LabelType.title)))
                             .append("</td>");
                     writer.append("<td class=\"path\"><a href=\"")
-                            .append(StringEscapeUtils.escapeHtml4(path)).append("\">")
-                            .append(StringEscapeUtils.escapeHtml4(path)).append("</a></td>");
+                            .append(CpnlElFunctions.text(path)).append("\">")
+                            .append(CpnlElFunctions.text(path)).append("</a></td>");
                     writer.append("<td class=\"type\">").append(resource.getPrimaryType()).append("</td>");
                     writer.append("</tr>");
                     count++;
@@ -550,8 +551,8 @@ public class NodeServlet extends NodeTreeServlet {
                                     PrintWriter writer, String cssClasses) {
             writer.append("<tr class=\"").append(cssClasses).append("\">");
             writer.append("<td class=\"icon\" data-type=\"summary\" rowspan=\"2\"><span></span></td>");
-            writer.append("<td class=\"message\" colspan=\"5\">").append(message)
-                    .append("<br/>query: '").append(queryString).append("'</td>");
+            writer.append("<td class=\"message\" colspan=\"5\">").append(CpnlElFunctions.text(message))
+                    .append("<br/>query: '").append(CpnlElFunctions.text(queryString)).append("'</td>"); // XSS! (2019-05-04)
             writer.append("</tr>");
         }
 
@@ -623,6 +624,7 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ReferenceOperation implements ServletOperation {
 
         @Override
+        @SuppressWarnings("Duplicates")
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
@@ -671,6 +673,7 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ResolveOperation implements ServletOperation {
 
         @Override
+        @SuppressWarnings("Duplicates")
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
@@ -812,13 +815,9 @@ public class NodeServlet extends NodeTreeServlet {
                 response.setContentLength((int) binary.getSize());
                 response.setStatus(HttpServletResponse.SC_OK);
 
-                InputStream input = binary.getStream();
-                BufferedInputStream buffered = new BufferedInputStream(input);
-                try {
+                try (InputStream input = binary.getStream();
+                     BufferedInputStream buffered = new BufferedInputStream(input)) {
                     IOUtils.copy(buffered, response.getOutputStream());
-                } finally {
-                    buffered.close();
-                    input.close();
                 }
 
             } catch (RepositoryException ex) {
@@ -840,7 +839,7 @@ public class NodeServlet extends NodeTreeServlet {
     protected class DownloadBinaryOperation extends LoadBinaryOperation {
 
         @Override
-
+        @SuppressWarnings("Duplicates")
         protected void prepareResponse(SlingHttpServletResponse response, ResourceHandle resource) {
             super.prepareResponse(response, resource);
 
@@ -1369,7 +1368,7 @@ public class NodeServlet extends NodeTreeServlet {
             if (file != null) {
                 InputStream input = file.getInputStream();
                 reader = new BufferedReader(
-                        new InputStreamReader(input, MappingRules.CHARSET.name()));
+                        new InputStreamReader(input, CHARSET.name()));
             }
             return reader;
         }
@@ -1382,7 +1381,7 @@ public class NodeServlet extends NodeTreeServlet {
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            request.setCharacterEncoding(MappingRules.CHARSET.name());
+            request.setCharacterEncoding(CHARSET.name());
             Reader reader = getReader(request);
 
             if (reader != null) {
