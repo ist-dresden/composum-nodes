@@ -595,7 +595,11 @@
                         if (this.log.getLevel() <= log.levels.TRACE) {
                             this.log.trace(tree.nodeIdPrefix + 'tree.nodeData(' + url + '): ' + JSON.stringify(result));
                         }
-                        callback.call(tree.$jstree, result);
+                        try { // TODO; interim 'fix' for an unexpected exception from 'jstree' during initialization
+                            callback.call(tree.$jstree, result);
+                        } catch (err) {
+                            this.log.warn(err.message);
+                        }
                     }, this)
                 );
             },
