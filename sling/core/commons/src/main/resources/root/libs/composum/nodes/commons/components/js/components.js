@@ -393,6 +393,67 @@
         widgets.register('.widget.select-widget', components.SelectWidget);
 
         /**
+         * the behaviour of a table with rows containing a checkbox to implement a multiple selection
+         */
+        components.TableSelectWidget = components.SelectWidget.extend({
+
+            initialize: function (options) {
+                components.SelectWidget.prototype.initialize.apply(this, [options]);
+                this.$items = this.$('tbody tr');
+                this.$items.click(_.bind(this.toggleElement, this));
+                this.$('thead tr input[type="checkbox"]').change(_.bind(this.toggleAll, this));
+            },
+
+            isNotEmpty: function () {
+                return this.$items.length > 0;
+            },
+
+            toggleElement: function (event) {
+                event.preventDefault();
+                var $row = $(event.currentTarget);
+                var $checkbox = $row.find('input[type="checkbox"]');
+                $checkbox.prop('checked', !$checkbox.prop('checked'));
+                return false;
+            },
+
+            toggleAll: function (event) {
+                var $checkbox = $(event.currentTarget);
+                var value = $checkbox.prop('checked');
+                this.$('tbody tr input[type="checkbox"]').prop('checked', value);
+                return false;
+            },
+
+            // SelectWidget
+
+            retrieveInput: function () {
+                return this.$('input[type="checkbox"]');
+            },
+
+            getValue: function () {
+                var value = [];
+                this.$('input[type="checkbox"]:checked').each(_.bind(function (i, el) {
+                    value.push($(el).attr('value'))
+                }, this));
+                return value;
+            },
+
+            setValue: function (value, triggerChange) {
+                if (!_.isArray(value)) {
+                    value = [value];
+                }
+                this.$('input[type="checkbox"]').prop('checked', false);
+                value.forEach(_.bind(function (val) {
+                    this.$('input[type="checkbox"][value="' + val + '"]').prop('checked', true);
+                }, this));
+                if (triggerChange) {
+                    this.$el.trigger('change');
+                }
+            }
+        });
+
+        widgets.register('.widget.table-select-widget', components.TableSelectWidget);
+
+        /**
          * the 'text-field-widget' (window.core.components.TextFieldWidget)
          *
          * this is the basic class ('superclass') of all text input field based widgets; it is also usable
