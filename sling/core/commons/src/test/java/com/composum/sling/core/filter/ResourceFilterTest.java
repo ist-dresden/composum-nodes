@@ -16,6 +16,7 @@ import com.composum.sling.core.util.JsonTest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.SyntheticResource;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,7 +26,7 @@ import javax.jcr.nodetype.NodeType;
 
 import static org.easymock.EasyMock.*;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 /**
  * some short tests for the ResourceFilter implementation
@@ -67,9 +68,14 @@ public class ResourceFilterTest {
             ResourceFilter.FilterSet.Rule.or,
             ResourceFilter.FOLDER, NAME_FILTER, PAGE_FILTER);
 
+    public static final ResourceFilter ALL_FILTER = ResourceFilter.ALL;
+
     public static final ResourceFilter AND_RULE_SET = ResourceFilterMapping.fromString(
             "and{Name(+'^.*test$'),PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$'),Path(+'^/content/test,.*/mocked/.*'),ResourceType(+'components/mock')}"
     );
+
+    public static final ResourceFilter NONE_RULE_SET = new ResourceFilter.FilterSet(ResourceFilter.FilterSet.Rule.none,
+            new ResourceFilter.TypeFilter("nt:unstructured"));
 
     protected Resource matchesResource;
     protected Resource notMatchesResource;
@@ -90,6 +96,7 @@ public class ResourceFilterTest {
         expect(resource.getPath()).andReturn(node.getPath()).anyTimes();
         expect(resource.getResourceType()).andReturn("test/components/mock").anyTimes();
         expect(resource.isResourceType("nt:folder")).andReturn(true).anyTimes();
+        expect(resource.isResourceType("nt:unstructured")).andReturn(false).anyTimes();
         replay(resource);
         ResourceResolver resolver = createMock(ResourceResolver.class);
         expect(resolver.getSearchPath()).andReturn(new String[0]).anyTimes();
@@ -104,21 +111,24 @@ public class ResourceFilterTest {
         assertThat(PAGE_FILTER.accept(matchesResource), is(true));
         assertThat(PATH_FILTER.accept(matchesResource), is(true));
         assertThat(RESOURCE_TYPE_FILTER.accept(matchesResource), is(true));
+        assertThat(TYPE_FILTER.accept(matchesResource), is(true));
         assertThat(FIRST_RULE_SET.accept(matchesResource), is(false));
         assertThat(LAST_RULE_SET.accept(matchesResource), is(false));
         assertThat(OR_RULE_SET.accept(matchesResource), is(true));
         assertThat(AND_RULE_SET.accept(matchesResource), is(true));
-        assertThat(TYPE_FILTER.accept(matchesResource), is(true));
+        assertThat(ALL_FILTER.accept(matchesResource), is(true));
+        assertThat(NONE_RULE_SET.accept(matchesResource), is(true));
 
         assertThat(NAME_FILTER.accept(notMatchesResource), is(false));
         assertThat(PAGE_FILTER.accept(notMatchesResource), is(false));
         assertThat(PATH_FILTER.accept(notMatchesResource), is(false));
         assertThat(RESOURCE_TYPE_FILTER.accept(notMatchesResource), is(false));
+        assertThat(TYPE_FILTER.accept(notMatchesResource), is(false));
         assertThat(FIRST_RULE_SET.accept(notMatchesResource), is(false));
         assertThat(LAST_RULE_SET.accept(notMatchesResource), is(false));
         assertThat(OR_RULE_SET.accept(notMatchesResource), is(false));
         assertThat(AND_RULE_SET.accept(notMatchesResource), is(false));
-        assertThat(TYPE_FILTER.accept(notMatchesResource), is(false));
+        assertThat(NONE_RULE_SET.accept(notMatchesResource), is(false));
     }
 
     @Test
@@ -138,12 +148,17 @@ public class ResourceFilterTest {
         checkStringRepresentation(PAGE_FILTER, "PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$')");
         checkStringRepresentation(PATH_FILTER, "Path(+'^/content/test,.*/mocked/.*')");
         checkStringRepresentation(RESOURCE_TYPE_FILTER, "ResourceType(+'components/mock')");
+        checkStringRepresentation(TYPE_FILTER, "Type(+[nt:folder])");
         checkStringRepresentation(OR_RULE_SET,
                 "or{Folder(),Name(+'^.*test$'),PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$')}");
         checkStringRepresentation(AND_RULE_SET,
                 "and{Name(+'^.*test$'),PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$')," +
                         "Path(+'^/content/test,.*/mocked/.*'),ResourceType(+'components/mock')}");
-        checkStringRepresentation(TYPE_FILTER, "Type(+[nt:folder])");
+        checkStringRepresentation(NONE_RULE_SET, "none{Type(+[nt:unstructured])}");
+
+        // ALL_FILTER matches notMatchesResource, wo we have to check separately:
+        assertThat(ResourceFilterMapping.toString(ALL_FILTER), is("All()"));
+        assertThat(ResourceFilterMapping.fromString("All()"), CoreMatchers.<ResourceFilter>instanceOf(ResourceFilter.AllFilter.class));
     }
 
     /** Verifies that the string representation is as expected and that it can be deserialized again and behaves the

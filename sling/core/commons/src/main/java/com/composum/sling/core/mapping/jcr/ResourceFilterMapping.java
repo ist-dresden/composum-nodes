@@ -36,7 +36,7 @@ public class ResourceFilterMapping {
     //
 
     public static final Pattern FILTER_SET_PATTERN = Pattern.compile(
-            "^(and|or|first|last|tree)\\{(.+)\\}$"
+            "^(and|or|first|last|tree|none)\\{(.+)\\}$"
     );
     public static final Pattern STRING_PATTERN = Pattern.compile(
             "^(Name|Path|Type|PrimaryType|MixinType|ResourceType|MimeType|All|Folder)\\((.*)\\)$"

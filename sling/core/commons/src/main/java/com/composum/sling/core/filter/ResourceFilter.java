@@ -480,9 +480,10 @@ public interface ResourceFilter {
          * - first: the first appropriate filter determines the result
          * - last:  the last appropriate filter determines the result
          * - tree:  the first is the target filter, the next are for intermediate resources
+         * - none:  no pattern in the set accepts a value
          */
         public enum Rule {
-            and, or, first, last, tree
+            and, or, first, last, tree, none
         }
 
         /** the selected combination rule for this filter set */
@@ -582,6 +583,13 @@ public interface ResourceFilter {
                         }
                     }
                     return set.size() > 0;
+                case none:
+                    for (ResourceFilter filter : set) {
+                        if (filter.accept(resource)) {
+                            return false;
+                        }
+                    }
+                    return true;
                 case first:
                     for (ResourceFilter filter : set) {
                         if (filter.accept(resource) && !filter.isRestriction()) {
@@ -635,6 +643,16 @@ public interface ResourceFilter {
                         for (ResourceFilter filter : set) {
                             if (filter.isRestriction()) {
                                 restriction = true;
+                                break;
+                            }
+                        }
+                        break;
+                    case none:
+                        restriction = true;
+                        // return 'false' if one filter in the set is a 'restriction'
+                        for (ResourceFilter filter : set) {
+                            if (filter.isRestriction()) {
+                                restriction = false;
                                 break;
                             }
                         }
