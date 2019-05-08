@@ -179,4 +179,19 @@ public class ResourceFilterTest {
         assertThat(ResourceFilterMapping.toString(filter), is(stringRep));
     }
 
+    @Test
+    public void testSomeDetailsOnLast() {
+        ResourceFilter.FilterSet filter = new ResourceFilter.FilterSet(ResourceFilter.FilterSet.Rule.last, NAME_FILTER);
+        assertThat(filter.accept(matchesResource), is(true));
+        assertThat(filter.accept(notMatchesResource), is(false));
+
+        filter = new ResourceFilter.FilterSet(ResourceFilter.FilterSet.Rule.last, NAME_FILTER, NAME_FILTER);
+        assertThat(filter.accept(matchesResource), is(true));
+        assertThat(filter.accept(notMatchesResource), is(false));
+
+        filter = new ResourceFilter.FilterSet(ResourceFilter.FilterSet.Rule.last, new ResourceFilter[0]);
+        assertThat(filter.accept(matchesResource), is(false));
+        assertThat(filter.accept(notMatchesResource), is(false));
+    }
+
 }

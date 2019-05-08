@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -188,7 +189,8 @@ public interface StringFilter {
     }
 
     /**
-     * The 'WhiteList' is a pattern based filter which accepts all values matching to one of its patterns.
+     * The 'WhiteList' is a pattern based filter which accepts all values that contain a substring matching one of its patterns
+     * (see {@link Matcher#find()}).
      */
     class WhiteList extends PatternList {
 
@@ -253,7 +255,8 @@ public interface StringFilter {
     }
 
     /**
-     * The 'BlackList' is a pattern based filter which accepts all values NOT matching to one of its patterns.
+     * The 'BlackList' is a pattern based filter which accepts all values NOT containing a substring matching to one of its patterns
+     * (see {@link Matcher#find()}).
      */
     class BlackList extends PatternList {
 

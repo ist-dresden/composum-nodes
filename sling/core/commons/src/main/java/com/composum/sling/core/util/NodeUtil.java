@@ -73,7 +73,7 @@ public class NodeUtil {
     }
 
     /**
-     * FIXME(rw,2015-04-22) not useful in the core layer
+     * TODO(rw,2015-04-22) not useful in the core layer
      *
      * @param name
      * @return

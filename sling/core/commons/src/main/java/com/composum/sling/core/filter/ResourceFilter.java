@@ -6,6 +6,7 @@ import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
@@ -38,19 +39,22 @@ public interface ResourceFilter {
     boolean accept(Resource resource);
 
     /**
-     * This is a hint for filter sets and signals that
-     * the filter primary restricts values (is a 'blacklist) or not
+     * This is a hint for {@link FilterSet}s that signals that
+     * the filter primary restricts values (is a blacklist) or not (is a whitelist).
      *
      * @return 'true' if this filter excludes objects
      */
     boolean isRestriction();
 
     /**
-     * to build a rebuildable string view of the filter
+     * This constructs a rebuildable String view of the filter: {@link ResourceFilterMapping#toString(ResourceFilter)}
+     * uses this method to construct that view, {@link ResourceFilterMapping#fromString(String)} implements the inverse
+     * function to reconstruct the filter from the String view.
      *
-     * @param builder
+     * @param builder here the string representation is appended.
+     * @see ResourceFilterMapping
      */
-    void toString(StringBuilder builder);
+    void toString(@Nonnull StringBuilder builder);
 
     /** the predefined filter instance which accepts each string value */
     ResourceFilter ALL = new AllFilter();
@@ -63,13 +67,18 @@ public interface ResourceFilter {
      * Base class for all ResourceFilters, extend this instead of implementing {@link ResourceFilter} to make it easier to extend the interface.
      */
     abstract class AbstractResourceFilter implements ResourceFilter {
-        /** Uses {@link ResourceFilter#toString(StringBuilder)} to create a String representation. */
+
+        /**
+         * Human readable String representation for debugging purposes: this
+         * default implementation uses {@link ResourceFilter#toString(StringBuilder)}.
+         */
         @Override
         public String toString() {
             StringBuilder buf = new StringBuilder();
             toString(buf);
             return buf.toString();
         }
+
     }
 
     /**
@@ -475,15 +484,44 @@ public interface ResourceFilter {
 
         /**
          * the combination rule options:
-         * - and:   each pattern in the set must accept a value
-         * - or:    only one pattern in the set must accept a value
-         * - first: the first appropriate filter determines the result
-         * - last:  the last appropriate filter determines the result
-         * - tree:  the first is the target filter, the next are for intermediate resources
-         * - none:  no pattern in the set accepts a value
+         * - {@link Rule#and}:   each pattern in the set must accept a value
+         * - {@link Rule#or}:    at least one pattern in the set must accept a value
+         * - {@link Rule#first}: the first appropriate filter determines the result
+         * - {@link Rule#last}:  the last appropriate filter determines the result
+         * - {@link Rule#tree}:  used for the filtering of trees of resources - the first is the primary target filter, the next are for intermediate resources that need to be shown just to have all targets show up.
+         * - {@link Rule#none}:  no pattern in the set accepts a value. With one argument this is a simple negation.
          */
         public enum Rule {
-            and, or, first, last, tree, none
+            /** each pattern in the set must accept a value */
+            and,
+            /** at least one pattern in the set must accept a value */
+            or,
+            /**
+             * The first appropriate filter determines the result:
+             * if it is a {@link ResourceFilter#isRestriction()} (blacklist) that does
+             * {@link ResourceFilter#accept(Resource)} a resource, or if it is
+             * not a {@link ResourceFilter#isRestriction()} (whitelist) but does
+             * {@link ResourceFilter#accept(Resource)} a resource.
+             */
+            first,
+            /**
+             * the last appropriate filter determines the result: :
+             * if it is a {@link ResourceFilter#isRestriction()} (blacklist) that does
+             * {@link ResourceFilter#accept(Resource)} a resource, or if it is
+             * not a {@link ResourceFilter#isRestriction()} (whitelist) but does
+             * {@link ResourceFilter#accept(Resource)} a resource.
+             */
+            last,
+            /**
+             * Used for filtering of trees: the first filter is the primary target filter, the additional filters
+             * are filters whose sole goal is to have intermediate resources show up in the tree.
+             * It's {@link #accept(Resource)} semantics is like {@link Rule#or},
+             * but it's possible to distinguish with {@link #isIntermediate(Resource)} whether the primary
+             * target filter was matched, or just one of the intermediate resources filters.
+             */
+            tree,
+            /** no pattern in the set accepts a value. With one argument this is a simple negation. */
+            none
         }
 
         /** the selected combination rule for this filter set */
@@ -601,25 +639,28 @@ public interface ResourceFilter {
                     }
                     return false;
                 case last:
-                    boolean result = false;
-                    for (ResourceFilter filter : set) {
+                    for (int i = set.size() - 1; i >= 0; --i) {
+                        ResourceFilter filter = set.get(i);
                         if (filter.accept(resource) && !filter.isRestriction()) {
-                            result = true;
+                            return true;
                         }
                         if (!filter.accept(resource) && filter.isRestriction()) {
-                            result = false;
+                            return false;
                         }
                     }
-                    return result;
+                    return false;
             }
             return isRestriction();
         }
 
         /**
-         * it's difficult to determine a right value for such a set
+         * This implements a heuristic whether the filter is a blacklist or whitelist, but <b>caution</b>: for {@link FilterSet}s
+         * this is not well defined: please don't rely on this. That is: it's sensible to avoid
+         * putting FilterSets into other FilterSet with rules 'first' or 'last' that depend on this - perhaps with the exception of FilterSets with rule 'none' and one argument.
          *
-         * @return 'true', if one element in the set defines a restriction
-         * and the combination rule is 'and' or 'first', otherwise 'false'
+         * @return true for 'or' and 'last' if each of the filters is a restriction,
+         * for 'and' and 'first' if one of the filters is a restriction,
+         * for 'none' if none of the filters is a restriction, for 'tree' if the first filter is a restriction.
          */
         @Override
         public boolean isRestriction() {
@@ -649,7 +690,7 @@ public interface ResourceFilter {
                         break;
                     case none:
                         restriction = true;
-                        // return 'false' if one filter in the set is a 'restriction'
+                        // return 'false' if one filter in the set is a 'restriction', otherwise true
                         for (ResourceFilter filter : set) {
                             if (filter.isRestriction()) {
                                 restriction = false;
