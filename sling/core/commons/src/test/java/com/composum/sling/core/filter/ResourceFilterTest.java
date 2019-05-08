@@ -14,6 +14,7 @@ import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
 import com.composum.sling.core.mapping.json.ResourceFilterTypeAdapter;
 import com.composum.sling.core.util.JsonTest;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.SyntheticResource;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +49,9 @@ public class ResourceFilterTest {
                     "^/content/test",
                     ".*/mocked/.*"));
 
-    public static final ResourceFilter TYPE_FILTER = new ResourceFilter.ResourceTypeFilter(
+    public static final ResourceFilter TYPE_FILTER = new ResourceFilter.TypeFilter("nt:folder");
+
+    public static final ResourceFilter RESOURCE_TYPE_FILTER = new ResourceFilter.ResourceTypeFilter(
             new StringFilter.WhiteList(
                     "components/mock"));
 
@@ -86,9 +89,13 @@ public class ResourceFilterTest {
         expect(resource.getName()).andReturn(node.getName()).anyTimes();
         expect(resource.getPath()).andReturn(node.getPath()).anyTimes();
         expect(resource.getResourceType()).andReturn("test/components/mock").anyTimes();
+        expect(resource.isResourceType("nt:folder")).andReturn(true).anyTimes();
         replay(resource);
+        ResourceResolver resolver = createMock(ResourceResolver.class);
+        expect(resolver.getSearchPath()).andReturn(new String[0]).anyTimes();
+        replay(resolver);
         matchesResource = resource;
-        notMatchesResource = new SyntheticResource(null, "/nowhere", "nt:folder");
+        notMatchesResource = new SyntheticResource(resolver, "/nowhere", "nt:unstructured");
     }
 
     @Test
@@ -96,20 +103,22 @@ public class ResourceFilterTest {
         assertThat(NAME_FILTER.accept(matchesResource), is(true));
         assertThat(PAGE_FILTER.accept(matchesResource), is(true));
         assertThat(PATH_FILTER.accept(matchesResource), is(true));
-        assertThat(TYPE_FILTER.accept(matchesResource), is(true));
+        assertThat(RESOURCE_TYPE_FILTER.accept(matchesResource), is(true));
         assertThat(FIRST_RULE_SET.accept(matchesResource), is(false));
         assertThat(LAST_RULE_SET.accept(matchesResource), is(false));
         assertThat(OR_RULE_SET.accept(matchesResource), is(true));
         assertThat(AND_RULE_SET.accept(matchesResource), is(true));
+        assertThat(TYPE_FILTER.accept(matchesResource), is(true));
 
         assertThat(NAME_FILTER.accept(notMatchesResource), is(false));
         assertThat(PAGE_FILTER.accept(notMatchesResource), is(false));
         assertThat(PATH_FILTER.accept(notMatchesResource), is(false));
-        assertThat(TYPE_FILTER.accept(notMatchesResource), is(false));
+        assertThat(RESOURCE_TYPE_FILTER.accept(notMatchesResource), is(false));
         assertThat(FIRST_RULE_SET.accept(notMatchesResource), is(false));
         assertThat(LAST_RULE_SET.accept(notMatchesResource), is(false));
         assertThat(OR_RULE_SET.accept(notMatchesResource), is(false));
         assertThat(AND_RULE_SET.accept(notMatchesResource), is(false));
+        assertThat(TYPE_FILTER.accept(notMatchesResource), is(false));
     }
 
     @Test
@@ -117,7 +126,7 @@ public class ResourceFilterTest {
         JsonTest.testWriteReadWriteEquals(NAME_FILTER, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(PAGE_FILTER, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(PATH_FILTER, ResourceFilterTypeAdapter.GSON);
-        JsonTest.testWriteReadWriteEquals(TYPE_FILTER, ResourceFilterTypeAdapter.GSON);
+        JsonTest.testWriteReadWriteEquals(RESOURCE_TYPE_FILTER, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(FIRST_RULE_SET, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(OR_RULE_SET, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(AND_RULE_SET, ResourceFilterTypeAdapter.GSON);
@@ -128,18 +137,20 @@ public class ResourceFilterTest {
         checkStringRepresentation(NAME_FILTER, "Name(+'^.*test$')");
         checkStringRepresentation(PAGE_FILTER, "PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$')");
         checkStringRepresentation(PATH_FILTER, "Path(+'^/content/test,.*/mocked/.*')");
-        checkStringRepresentation(TYPE_FILTER, "ResourceType(+'components/mock')");
+        checkStringRepresentation(RESOURCE_TYPE_FILTER, "ResourceType(+'components/mock')");
         checkStringRepresentation(OR_RULE_SET,
                 "or{Folder(),Name(+'^.*test$'),PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$')}");
         checkStringRepresentation(AND_RULE_SET,
                 "and{Name(+'^.*test$'),PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$')," +
                         "Path(+'^/content/test,.*/mocked/.*'),ResourceType(+'components/mock')}");
+        checkStringRepresentation(TYPE_FILTER, "Type(+[nt:folder])");
     }
 
     /** Verifies that the string representation is as expected and that it can be deserialized again and behaves the
      * same . */
     private void checkStringRepresentation(ResourceFilter filter, String expectedStringRep) {
         String stringRep = ResourceFilterMapping.toString(filter);
+        assertThat(stringRep, is(expectedStringRep));
         ResourceFilter deserializedFilter = ResourceFilterMapping.fromString(stringRep);
 
         assertThat(filter.accept(matchesResource), is(true));

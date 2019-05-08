@@ -5,8 +5,6 @@ import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -24,6 +22,8 @@ import static com.composum.sling.core.filter.NodeTypeFilters.NODE_TYPE_PREFIX;
  * A ResourceFilter is useful to describe a general way to define scopes in resource hierarchy.
  * Such a filter accepts only resources which properties are matching to filter patterns.
  * These filters can be combined in filter sets with various combination rules.
+ * <p>
+ * Do not implement this directly, but extend {@link AbstractResourceFilter}.
  */
 public interface ResourceFilter {
 
@@ -58,10 +58,24 @@ public interface ResourceFilter {
     /** the predefined filter instance for folders */
     ResourceFilter FOLDER = new FolderFilter();
 
+
+    /**
+     * Base class for all ResourceFilters, extend this instead of implementing {@link ResourceFilter} to make it easier to extend the interface.
+     */
+    abstract class AbstractResourceFilter implements ResourceFilter {
+        /** Uses {@link ResourceFilter#toString(StringBuilder)} to create a String representation. */
+        @Override
+        public String toString() {
+            StringBuilder buf = new StringBuilder();
+            toString(buf);
+            return buf.toString();
+        }
+    }
+
     /**
      * the 'all enabled' implementation: filters nothing, each value is appropriate
      */
-    final class AllFilter implements ResourceFilter {
+    final class AllFilter extends AbstractResourceFilter {
 
         @Override
         public boolean accept(Resource resource) {
@@ -97,7 +111,7 @@ public interface ResourceFilter {
     /**
      * a general type checking filter
      */
-    class TypeFilter implements ResourceFilter {
+    class TypeFilter extends AbstractResourceFilter {
 
         protected List<String> typeNames;
         protected boolean restriction = false;
@@ -143,17 +157,19 @@ public interface ResourceFilter {
 
         @Override
         public void toString(StringBuilder builder) {
+            builder.append("Type(");
             builder.append(restriction ? '-' : '+');
             builder.append('[');
             builder.append(StringUtils.join(typeNames, ","));
             builder.append(']');
+            builder.append(")");
         }
     }
 
     /**
      * the abstract base for all filters which are using string patterns (StringFilters)
      */
-    abstract class PatternFilter implements ResourceFilter {
+    abstract class PatternFilter extends AbstractResourceFilter {
 
         /** the filter instance for the value */
         protected StringFilter filter;
@@ -455,7 +471,7 @@ public interface ResourceFilter {
     /**
      * An implementation to combine ResourceFilters to complex rules.
      */
-    class FilterSet implements ResourceFilter {
+    class FilterSet extends AbstractResourceFilter {
 
         /**
          * the combination rule options:

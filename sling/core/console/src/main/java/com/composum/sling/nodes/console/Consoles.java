@@ -47,7 +47,7 @@ public class Consoles extends ConsolePage {
     public static final String CONTENT_QUERY_BASE = "/jcr:root";
     public static final String CONTENT_QUERY_RULE = "/content[@sling:resourceType='composum/nodes/console/page']";
 
-    public class ConsoleFilter implements ResourceFilter {
+    public class ConsoleFilter extends ResourceFilter.AbstractResourceFilter {
 
         private final List<String> selectors;
 

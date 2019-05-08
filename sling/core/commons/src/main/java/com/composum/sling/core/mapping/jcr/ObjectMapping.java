@@ -24,7 +24,7 @@ public class ObjectMapping {
     /**
      * accepts all resources which can be mapped to object by this mapper
      */
-    public static class ObjectFilter implements ResourceFilter {
+    public static class ObjectFilter extends ResourceFilter.AbstractResourceFilter {
 
         @Override
         public boolean accept(Resource resource) {
