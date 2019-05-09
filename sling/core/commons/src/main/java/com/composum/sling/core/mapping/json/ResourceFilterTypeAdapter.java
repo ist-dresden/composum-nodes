@@ -150,7 +150,7 @@ public class ResourceFilterTypeAdapter {
 
     public static class TypeFilterAdapter extends GeneralAdapter {
 
-        enum JsonValues {type, filter}
+        enum JsonValues {type, filter, restriction}
 
         protected transient String filter = null;
 
@@ -158,9 +158,12 @@ public class ResourceFilterTypeAdapter {
 
         @Override
         protected void writeValues(JsonWriter writer, ResourceFilter value) throws IOException {
+            ResourceFilter.TypeFilter typeFilter = (ResourceFilter.TypeFilter) value;
             super.writeValues(writer, value);
             writer.name(JsonValues.filter.name());
-            writer.value(value.toString());
+            StringBuilder buf = new StringBuilder();
+            typeFilter.typeNamesToString(buf);
+            writer.value(buf.toString());
         }
 
         // read

@@ -136,10 +136,14 @@ public class ResourceFilterTest {
         JsonTest.testWriteReadWriteEquals(NAME_FILTER, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(PAGE_FILTER, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(PATH_FILTER, ResourceFilterTypeAdapter.GSON);
+        JsonTest.testWriteReadWriteEquals(ALL_FILTER, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(RESOURCE_TYPE_FILTER, ResourceFilterTypeAdapter.GSON);
+        JsonTest.testWriteReadWriteEquals(TYPE_FILTER, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(FIRST_RULE_SET, ResourceFilterTypeAdapter.GSON);
+        JsonTest.testWriteReadWriteEquals(LAST_RULE_SET, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(OR_RULE_SET, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(AND_RULE_SET, ResourceFilterTypeAdapter.GSON);
+        JsonTest.testWriteReadWriteEquals(NONE_RULE_SET, ResourceFilterTypeAdapter.GSON);
     }
 
     @Test
@@ -177,6 +181,7 @@ public class ResourceFilterTest {
         assertThat(deserializedFilter.getClass().getName(), is(filter.getClass().getName()));
 
         assertThat(ResourceFilterMapping.toString(filter), is(stringRep));
+        assertThat(ResourceFilterMapping.toString(deserializedFilter), is(stringRep));
     }
 
     @Test

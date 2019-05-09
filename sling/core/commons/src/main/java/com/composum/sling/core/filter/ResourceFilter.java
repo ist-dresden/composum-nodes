@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
@@ -122,6 +123,7 @@ public interface ResourceFilter {
      */
     class TypeFilter extends AbstractResourceFilter {
 
+        @Nonnull
         protected List<String> typeNames;
         protected boolean restriction = false;
 
@@ -138,8 +140,8 @@ public interface ResourceFilter {
             typeNames = Arrays.asList(StringUtils.split(names, ","));
         }
 
-        public TypeFilter(List<String> names, boolean restriction) {
-            typeNames = names;
+        public TypeFilter(@Nullable List<String> names, boolean restriction) {
+            typeNames = names != null ? Collections.unmodifiableList(new ArrayList<>(names)) : Collections.<String>emptyList();
             this.restriction = restriction;
         }
 
@@ -167,11 +169,16 @@ public interface ResourceFilter {
         @Override
         public void toString(StringBuilder builder) {
             builder.append("Type(");
+            typeNamesToString(builder);
+            builder.append(")");
+        }
+
+        /** Writes the typenames in a format parseable with TypeFilter{@link #TypeFilter(List, boolean)}. */
+        public void typeNamesToString(StringBuilder builder) {
             builder.append(restriction ? '-' : '+');
             builder.append('[');
             builder.append(StringUtils.join(typeNames, ","));
             builder.append(']');
-            builder.append(")");
         }
     }
 
@@ -381,7 +388,7 @@ public interface ResourceFilter {
 
     /**
      * A ResourceFilter implementation which checks the 'sling:resourceType'
-     * of a resource using a StringFilter for the type values.
+     * of a resource or its content node using a StringFilter for the type values.
      */
     class ResourceTypeFilter extends PatternFilter {
 
@@ -396,7 +403,7 @@ public interface ResourceFilter {
 
         /**
          * Accepts a resource if their sling resource type matches to the used StringFilter;
-         * uses a child 'jcr:content' if no resource type is specified for teh resource itself.
+         * uses a child 'jcr:content' if no resource type is specified for the resource itself.
          *
          * @param resource the resource object to check
          * @return 'true', if the filter matches
