@@ -2,19 +2,20 @@ package com.composum.sling.core.filter;
 
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
+import com.composum.sling.core.util.CoreConstants;
 import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.util.SlingResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,11 +38,14 @@ public interface ResourceFilter {
      * @param resource the resource object to check
      * @return 'true' if the resource matches
      */
-    boolean accept(Resource resource);
+    boolean accept(@Nullable Resource resource);
 
     /**
-     * This is a hint for {@link FilterSet}s that signals that
+     * "Is a blacklist": this is a hint for {@link FilterSet}s that signals that
      * the filter primary restricts values (is a blacklist) or not (is a whitelist).
+     * <p>
+     * Basic idea: whitelist (restriction = false) is something that matches nothing except specified values,
+     * blacklist (restriction = true) is something that matches everything except specified values (restricts the set of everything).
      *
      * @return 'true' if this filter excludes objects
      */
@@ -57,7 +61,7 @@ public interface ResourceFilter {
      */
     void toString(@Nonnull StringBuilder builder);
 
-    /** the predefined filter instance which accepts each string value */
+    /** The predefined filter instance which accepts each resource (but fails if it's null). */
     ResourceFilter ALL = new AllFilter();
 
     /** the predefined filter instance for folders */
@@ -83,7 +87,7 @@ public interface ResourceFilter {
     }
 
     /**
-     * the 'all enabled' implementation: filters nothing, each value is appropriate
+     * the 'all enabled' implementation: filters nothing, each value is appropriate (except null values).
      */
     final class AllFilter extends AbstractResourceFilter {
 
@@ -92,9 +96,10 @@ public interface ResourceFilter {
             return resource != null;
         }
 
+        /** This counts as empty blacklist - that is, this returns true. */
         @Override
         public boolean isRestriction() {
-            return false;
+            return true;
         }
 
         @Override
@@ -727,6 +732,74 @@ public interface ResourceFilter {
                 }
             }
             builder.append("}");
+        }
+    }
+
+    /**
+     * A filter which checks that the {@value com.composum.sling.core.util.CoreConstants#CONTENT_NODE}s of resources
+     * satisfy given properties. It takes two {@link ResourceFilter}s as arguments: 'applicable' to determine when
+     * this filter should be applied to a node, and 'contentNodeFilter' that determines the properties the content node
+     * has to satisfy. If 'applicable' is a restriction (is a blacklist), all nodes that do not match 'applicable' are included, anyway,
+     * but if it's not a restriction (is a whitelist), all nodes not matching 'applicable' are not included.
+     */
+    class ContentNodeFilter extends AbstractResourceFilter {
+
+        private static final Logger LOG = LoggerFactory.getLogger(ContentNodeFilter.class);
+
+        private final ResourceFilter applicableFilter;
+        private final ResourceFilter contentNodeFilter;
+
+        /**
+         * Constructs a {@link ContentNodeFilter} - for documentation see there.
+         *
+         * @param applicableFilter  the filter that determines to which node's content node the 'contentNodeFilter' should be applied
+         * @param contentNodeFilter the filter the content nodes of the resources matching applicableFilter have to match
+         */
+        public ContentNodeFilter(@Nonnull ResourceFilter applicableFilter, @Nonnull ResourceFilter contentNodeFilter) {
+            this.applicableFilter = Objects.requireNonNull(applicableFilter);
+            this.contentNodeFilter = Objects.requireNonNull(contentNodeFilter);
+        }
+
+        /** See {@link ContentNodeFilter} for details when this matches. */
+        @Override
+        public boolean accept(Resource resource) {
+            boolean applicable = applicableFilter.accept(resource);
+            Resource contentNode = applicable && resource != null ? resource.getChild(CoreConstants.CONTENT_NODE) : null;
+            boolean result;
+            if (applicableFilter.isRestriction()) { // blacklist: we filter out stuff that has a broken content node
+                result = !applicable || contentNodeFilter.accept(contentNode);
+            } else { // whitelist: we only want stuff that has an OK content node
+                result = applicable && contentNodeFilter.accept(contentNode);
+            }
+            if (LOG.isTraceEnabled())
+                LOG.trace("accept {} = {} , applicable {}", new Object[]{SlingResourceUtil.getPath(resource), result, applicable});
+            return result;
+        }
+
+        /** The filter that determines to which node's content node the 'contentNodeFilter' should be applied. */
+        public ResourceFilter getApplicableFilter() {
+            return applicableFilter;
+        }
+
+        /** The filter the content nodes of the resources matching applicableFilter have to match. */
+        public ResourceFilter getContentNodeFilter() {
+            return contentNodeFilter;
+        }
+
+        /** Same as {@link #getApplicableFilter()}'s {@link ResourceFilter#isRestriction()}. */
+        @Override
+        public boolean isRestriction() {
+            return applicableFilter.isRestriction();
+        }
+
+        /** Generates an external representation. Caution: there is currently no way to deserialize this. */
+        @Override
+        public void toString(@Nonnull StringBuilder builder) {
+            builder.append("ContentNodeFilter(");
+            applicableFilter.toString(builder);
+            builder.append(",");
+            contentNodeFilter.toString(builder);
+            builder.append(")");
         }
     }
 }
