@@ -533,7 +533,17 @@ public interface ResourceFilter {
              */
             tree,
             /** no pattern in the set accepts a value. With one argument this is a simple negation. */
-            none
+            none;
+
+            /**
+             * Combines a set of filter instances by this combination rule. Convenience method wrapping FilterSet{@link #FilterSet(Rule, ResourceFilter...)}.
+             *
+             * @param filters the set of combined filters
+             */
+            public FilterSet of(ResourceFilter... filters) {
+                return new FilterSet(this, filters);
+            }
+
         }
 
         /** the selected combination rule for this filter set */
@@ -739,8 +749,9 @@ public interface ResourceFilter {
      * A filter which checks that the {@value com.composum.sling.core.util.CoreConstants#CONTENT_NODE}s of resources
      * satisfy given properties. It takes two {@link ResourceFilter}s as arguments: 'applicable' to determine when
      * this filter should be applied to a node, and 'contentNodeFilter' that determines the properties the content node
-     * has to satisfy. If 'applicable' is a restriction (is a blacklist), all nodes that do not match 'applicable' are included, anyway,
-     * but if it's not a restriction (is a whitelist), all nodes not matching 'applicable' are not included.
+     * has to satisfy. It is also configurable via argument to work as a restriction - if it is a restriction (it is a blacklist),
+     * all nodes that do not match 'applicable' are included, anyway,
+     * but if it's not a restriction (it is a whitelist), all nodes not matching 'applicable' are not included.
      */
     class ContentNodeFilter extends AbstractResourceFilter {
 
@@ -748,14 +759,17 @@ public interface ResourceFilter {
 
         private final ResourceFilter applicableFilter;
         private final ResourceFilter contentNodeFilter;
+        private final boolean restriction;
 
         /**
          * Constructs a {@link ContentNodeFilter} - for documentation see there.
          *
+         * @param restriction whether it should work as a restriction
          * @param applicableFilter  the filter that determines to which node's content node the 'contentNodeFilter' should be applied
          * @param contentNodeFilter the filter the content nodes of the resources matching applicableFilter have to match
          */
-        public ContentNodeFilter(@Nonnull ResourceFilter applicableFilter, @Nonnull ResourceFilter contentNodeFilter) {
+        public ContentNodeFilter(boolean restriction, @Nonnull ResourceFilter applicableFilter, @Nonnull ResourceFilter contentNodeFilter) {
+            this.restriction = restriction;
             this.applicableFilter = Objects.requireNonNull(applicableFilter);
             this.contentNodeFilter = Objects.requireNonNull(contentNodeFilter);
         }
@@ -766,7 +780,7 @@ public interface ResourceFilter {
             boolean applicable = applicableFilter.accept(resource);
             Resource contentNode = applicable && resource != null ? resource.getChild(CoreConstants.CONTENT_NODE) : null;
             boolean result;
-            if (applicableFilter.isRestriction()) { // blacklist: we filter out stuff that has a broken content node
+            if (restriction) { // blacklist: we filter out stuff that has a broken content node
                 result = !applicable || contentNodeFilter.accept(contentNode);
             } else { // whitelist: we only want stuff that has an OK content node
                 result = applicable && contentNodeFilter.accept(contentNode);
@@ -786,16 +800,17 @@ public interface ResourceFilter {
             return contentNodeFilter;
         }
 
-        /** Same as {@link #getApplicableFilter()}'s {@link ResourceFilter#isRestriction()}. */
+        /** Whether it is configured to work as a restriction. */
         @Override
         public boolean isRestriction() {
-            return applicableFilter.isRestriction();
+            return restriction;
         }
 
         /** Generates an external representation. Caution: there is currently no way to deserialize this. */
         @Override
         public void toString(@Nonnull StringBuilder builder) {
             builder.append("ContentNodeFilter(");
+            builder.append(restriction ? "-," : "+,");
             applicableFilter.toString(builder);
             builder.append(",");
             contentNodeFilter.toString(builder);
