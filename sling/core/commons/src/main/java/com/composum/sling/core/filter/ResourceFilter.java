@@ -756,6 +756,7 @@ public interface ResourceFilter {
     class ContentNodeFilter extends AbstractResourceFilter {
 
         private static final Logger LOG = LoggerFactory.getLogger(ContentNodeFilter.class);
+        private static final Pattern ARGUMENT_PATTERN = Pattern.compile("([-+]),(.+)=jcr:content=>(.+)");
 
         private final ResourceFilter applicableFilter;
         private final ResourceFilter contentNodeFilter;
@@ -772,6 +773,21 @@ public interface ResourceFilter {
             this.restriction = restriction;
             this.applicableFilter = Objects.requireNonNull(applicableFilter);
             this.contentNodeFilter = Objects.requireNonNull(contentNodeFilter);
+        }
+
+        /**
+         * Used to reconstruct from serialization - {@link ResourceFilterMapping#fromString(String)}.
+         *
+         * @see ResourceFilterMapping#fromString(String)
+         * @see #toString(StringBuilder)
+         */
+        public ContentNodeFilter(@Nonnull String filterData) {
+            Matcher m = ARGUMENT_PATTERN.matcher(filterData);
+            if (!m.matches())
+                throw new IllegalArgumentException("Cannot parse arguments from \"" + filterData + "\"");
+            restriction = "-".equals(m.group(1));
+            applicableFilter = ResourceFilterMapping.fromString(m.group(2));
+            contentNodeFilter = ResourceFilterMapping.fromString(m.group(3));
         }
 
         /** See {@link ContentNodeFilter} for details when this matches. */
@@ -809,10 +825,10 @@ public interface ResourceFilter {
         /** Generates an external representation. Caution: there is currently no way to deserialize this. */
         @Override
         public void toString(@Nonnull StringBuilder builder) {
-            builder.append("ContentNodeFilter(");
+            builder.append("ContentNode(");
             builder.append(restriction ? "-," : "+,");
             applicableFilter.toString(builder);
-            builder.append(",");
+            builder.append("=jcr:content=>"); // special marker to be able to separate filters easily via regex. Don't nest ContentNodeFilters. :-)
             contentNodeFilter.toString(builder);
             builder.append(")");
         }
