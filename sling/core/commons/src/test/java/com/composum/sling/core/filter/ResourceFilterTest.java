@@ -26,6 +26,7 @@ import javax.jcr.nodetype.NodeType;
 
 import static org.easymock.EasyMock.*;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -166,6 +167,8 @@ public class ResourceFilterTest {
         // ALL_FILTER matches notMatchesResource, wo we have to check separately:
         assertThat(ResourceFilterMapping.toString(ALL_FILTER), is("All()"));
         assertThat(ResourceFilterMapping.fromString("All()"), CoreMatchers.<ResourceFilter>instanceOf(ResourceFilter.AllFilter.class));
+
+        assertThat(ResourceFilterMapping.fromString(""), sameInstance(ResourceFilter.ALL));
     }
 
     /** Verifies that the string representation is as expected and that it can be deserialized again and behaves the
@@ -217,6 +220,16 @@ public class ResourceFilterTest {
         String stringRep2 = ResourceFilterMapping.toString(deserializedFilter);
         assertThat(stringRep2, is(stringRep));
         assertThat(deserializedFilter.accept(notMatchesResource), is(true));
+    }
+
+    /** An really evil filter that broke the old parsing without nested parentheses check - works now. */
+    @Test
+    public void parenthesesNestingWorks() {
+        ResourceFilter filter = ResourceFilter.FilterSet.Rule.and.of(AND_RULE_SET, new ResourceFilter.ContentNodeFilter(true, AND_RULE_SET, AND_RULE_SET), AND_RULE_SET);
+        String stringRep = ResourceFilterMapping.toString(filter);
+        ResourceFilter deserializedFilter = ResourceFilterMapping.fromString(stringRep);
+        String stringRep2 = ResourceFilterMapping.toString(deserializedFilter);
+        assertThat(stringRep2, is(stringRep));
     }
 
 }
