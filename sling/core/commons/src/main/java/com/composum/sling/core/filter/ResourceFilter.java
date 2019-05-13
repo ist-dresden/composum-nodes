@@ -145,6 +145,13 @@ public interface ResourceFilter {
             typeNames = Arrays.asList(StringUtils.split(names, ","));
         }
 
+        /**
+         * Constructs a filter that blacklists or whitelists resources of the given primary and mixin types.
+         *
+         * @param names       a set of node types
+         * @param restriction if true, the filter matches for all nodes except those that have one of the given types (blacklist),
+         *                    if false, the filter matches for all nodes that have one of the given types (whitelist)
+         */
         public TypeFilter(@Nullable List<String> names, boolean restriction) {
             typeNames = names != null ? Collections.unmodifiableList(new ArrayList<>(names)) : Collections.<String>emptyList();
             this.restriction = restriction;
@@ -537,10 +544,24 @@ public interface ResourceFilter {
 
             /**
              * Combines a set of filter instances by this combination rule. Convenience method wrapping FilterSet{@link #FilterSet(Rule, ResourceFilter...)}.
+             * We also throw in a little simplification of {@link FilterSet}s of {@link FilterSet}s, if that seems sensible.
              *
              * @param filters the set of combined filters
              */
             public FilterSet of(ResourceFilter... filters) {
+                if (this.equals(and) || this.equals(or)) {
+                    // simplify if we have an 'and' of 'and's or 'or' of 'or's.
+                    List<ResourceFilter> flattenedFilters = new ArrayList<>();
+                    for (ResourceFilter filter : filters) {
+                        if (filter instanceof FilterSet && ((FilterSet) filter).rule.equals(this) ||
+                                this.equals(none) && ((FilterSet) filter).rule.equals(or)
+                        ) {
+                            flattenedFilters.addAll(((FilterSet) filter).getSet());
+                        } else
+                            flattenedFilters.add(filter);
+                    }
+                    return new FilterSet(this, flattenedFilters);
+                }
                 return new FilterSet(this, filters);
             }
 
