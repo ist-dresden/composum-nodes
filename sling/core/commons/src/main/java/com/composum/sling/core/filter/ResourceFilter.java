@@ -128,6 +128,8 @@ public interface ResourceFilter {
      */
     class TypeFilter extends AbstractResourceFilter {
 
+        private static final Logger LOG = LoggerFactory.getLogger(TypeFilter.class);
+
         @Nonnull
         protected List<String> typeNames;
         protected boolean restriction = false;
@@ -146,7 +148,8 @@ public interface ResourceFilter {
         }
 
         /**
-         * Constructs a filter that blacklists or whitelists resources of the given primary and mixin types.
+         * Constructs a filter that blacklists or whitelists resources of the given sling resourceType / resourceSuperTypes,
+         * JCR node / mixin types, or {@link NodeTypeFilters}.
          *
          * @param names       a set of node types
          * @param restriction if true, the filter matches for all nodes except those that have one of the given types (blacklist),
@@ -159,12 +162,22 @@ public interface ResourceFilter {
 
         @Override
         public boolean accept(Resource resource) {
+            if (resource == null) return restriction;
             for (String type : typeNames) {
                 if (type.startsWith(NODE_TYPE_PREFIX)) {
                     if (NodeTypeFilters.accept(resource, type)) {
                         return !restriction;
                     }
                 } else {
+                    if (!StringUtils.contains(type, "/")) {
+                        try {
+                            Node node = resource.adaptTo(Node.class);
+                            if (node != null && node.isNodeType(type))
+                                return !restriction;
+                        } catch (RepositoryException e) {
+                            LOG.error("Error checking node type for " + resource.getPath(), e);
+                        }
+                    }
                     if (resource.isResourceType(type)) {
                         return !restriction;
                     }
@@ -337,17 +350,18 @@ public interface ResourceFilter {
     }
 
     /**
-     * A ResourceFilter implementation which checks the 'jcr:mixinTypes'
-     * of a resource using a StringFilter for the type values.
+     * A ResourceFilter implementation which checks for JCR nodetypes similar to {@link Node#isNodeType(String)} -
+     * both primary type and all direct and inherited mixin types are checket against the filters.
+     * Can work as a blacklist (restriction) or whitelist, depending on the filter.
      */
-    class MixinTypeFilter extends PatternFilter {
+    class NodeTypeFilter extends PatternFilter {
 
         /**
          * The constructor based on a StringFilter for the resources mixin types.
          *
          * @param filter the string filter (or a filter set) to use
          */
-        public MixinTypeFilter(StringFilter filter) {
+        public NodeTypeFilter(StringFilter filter) {
             this.filter = filter;
         }
 
@@ -363,22 +377,23 @@ public interface ResourceFilter {
                 Node node = resource.adaptTo(Node.class);
                 if (node != null) {
                     try {
-                        NodeType[] mixinTypes = node.getMixinNodeTypes();
-                        if (filter.isRestriction()) {
-                            for (NodeType mixinType : mixinTypes) {
-                                if (!filter.accept(mixinType.getName())) {
-                                    return false;
-                                }
-                            }
-                            return true;
-                        } else {
-                            for (NodeType mixinType : mixinTypes) {
-                                if (filter.accept(mixinType.getName())) {
-                                    return true;
-                                }
-                            }
-                            return false;
+                        NodeType primaryNodeType = node.getPrimaryNodeType();
+                        if (filter.isRestriction() != filter.accept(primaryNodeType.getName()))
+                            return !filter.isRestriction();
+                        for (NodeType primarySuperType : primaryNodeType.getSupertypes()) {
+                            if (filter.isRestriction() != filter.accept(primarySuperType.getName()))
+                                return !filter.isRestriction();
                         }
+                        NodeType[] mixinTypes = node.getMixinNodeTypes();
+                        for (NodeType mixinType : mixinTypes) {
+                            if (filter.isRestriction() != filter.accept(mixinType.getName()))
+                                return !filter.isRestriction();
+                            for (NodeType mixinSuperType : mixinType.getSupertypes()) {
+                                if (filter.isRestriction() != filter.accept(mixinSuperType.getName()))
+                                    return !filter.isRestriction();
+                            }
+                        }
+                        return filter.isRestriction();
                     } catch (RepositoryException e) {
                         // ok, its possible that mixin types are not available (synthetic resource)
                     }
@@ -388,11 +403,11 @@ public interface ResourceFilter {
         }
 
         /**
-         * Returns the string representation of the filter itself [MixinType('filter')]
+         * Returns the string representation of the filter itself [NodeType('filter')]
          */
         @Override
         public void toString(StringBuilder builder) {
-            builder.append("MixinType(");
+            builder.append("NodeType(");
             super.toString(builder);
             builder.append(")");
         }

@@ -142,7 +142,7 @@ public class ObjectMapping {
         TO_RESOURCE_STRATEGIES = new HashMap<>();
         TO_RESOURCE_STRATEGIES.put(ResourceFilter.FilterSet.class, RESOURCE_FILTER_STRATEGY);
         TO_RESOURCE_STRATEGIES.put(ResourceFilter.ResourceTypeFilter.class, RESOURCE_FILTER_STRATEGY);
-        TO_RESOURCE_STRATEGIES.put(ResourceFilter.MixinTypeFilter.class, RESOURCE_FILTER_STRATEGY);
+        TO_RESOURCE_STRATEGIES.put(ResourceFilter.NodeTypeFilter.class, RESOURCE_FILTER_STRATEGY);
         TO_RESOURCE_STRATEGIES.put(ResourceFilter.PrimaryTypeFilter.class, RESOURCE_FILTER_STRATEGY);
         TO_RESOURCE_STRATEGIES.put(ResourceFilter.PathFilter.class, RESOURCE_FILTER_STRATEGY);
         TO_RESOURCE_STRATEGIES.put(ResourceFilter.NameFilter.class, RESOURCE_FILTER_STRATEGY);

@@ -46,6 +46,9 @@ public class ResourceFilterTest {
             new StringFilter.BlackList(
                     "^(nt|sling):.*[Ff]older$"));
 
+    public static final ResourceFilter NODE_TYPE_FILTER = new ResourceFilter.NodeTypeFilter(
+            new StringFilter.WhiteList("nt:folder"));
+
     public static final ResourceFilter PATH_FILTER = new ResourceFilter.PathFilter(
             new StringFilter.WhiteList(
                     "^/content/test",
@@ -92,6 +95,9 @@ public class ResourceFilterTest {
         expect(node.getPrimaryNodeType()).andReturn(nodeType).anyTimes();
         expect(node.getName()).andReturn("resource-test").anyTimes();
         expect(node.getPath()).andReturn("/content/test/mocked/resource-test").anyTimes();
+        expect(node.isNodeType("nt:folder")).andReturn(true).anyTimes();
+        expect(node.isNodeType("nt:unstructured")).andReturn(false).anyTimes();
+        expect(node.getMixinNodeTypes()).andReturn(new NodeType[0]).anyTimes();
         replay(node);
         Resource resource = createMock(Resource.class);
         expect(resource.adaptTo(Node.class)).andReturn(node).anyTimes();
@@ -115,6 +121,7 @@ public class ResourceFilterTest {
         assertThat(PATH_FILTER.accept(matchesResource), is(true));
         assertThat(RESOURCE_TYPE_FILTER.accept(matchesResource), is(true));
         assertThat(TYPE_FILTER.accept(matchesResource), is(true));
+        assertThat(NODE_TYPE_FILTER.accept(matchesResource), is(true));
         assertThat(FIRST_RULE_SET.accept(matchesResource), is(false));
         assertThat(LAST_RULE_SET.accept(matchesResource), is(false));
         assertThat(OR_RULE_SET.accept(matchesResource), is(true));
@@ -127,6 +134,7 @@ public class ResourceFilterTest {
         assertThat(PATH_FILTER.accept(notMatchesResource), is(false));
         assertThat(RESOURCE_TYPE_FILTER.accept(notMatchesResource), is(false));
         assertThat(TYPE_FILTER.accept(notMatchesResource), is(false));
+        assertThat(NODE_TYPE_FILTER.accept(notMatchesResource), is(false));
         assertThat(FIRST_RULE_SET.accept(notMatchesResource), is(false));
         assertThat(LAST_RULE_SET.accept(notMatchesResource), is(false));
         assertThat(OR_RULE_SET.accept(notMatchesResource), is(false));
@@ -142,6 +150,7 @@ public class ResourceFilterTest {
         JsonTest.testWriteReadWriteEquals(ALL_FILTER, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(RESOURCE_TYPE_FILTER, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(TYPE_FILTER, ResourceFilterTypeAdapter.GSON);
+        JsonTest.testWriteReadWriteEquals(NODE_TYPE_FILTER, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(FIRST_RULE_SET, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(LAST_RULE_SET, ResourceFilterTypeAdapter.GSON);
         JsonTest.testWriteReadWriteEquals(OR_RULE_SET, ResourceFilterTypeAdapter.GSON);
@@ -157,6 +166,7 @@ public class ResourceFilterTest {
         checkStringRepresentation(PATH_FILTER, "Path(+'^/content/test,.*/mocked/.*')");
         checkStringRepresentation(RESOURCE_TYPE_FILTER, "ResourceType(+'components/mock')");
         checkStringRepresentation(TYPE_FILTER, "Type(+[nt:folder])");
+        checkStringRepresentation(NODE_TYPE_FILTER, "NodeType(+'nt:folder')");
         checkStringRepresentation(OR_RULE_SET,
                 "or{Folder(),Name(+'^.*test$'),PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$')}");
         checkStringRepresentation(AND_RULE_SET,

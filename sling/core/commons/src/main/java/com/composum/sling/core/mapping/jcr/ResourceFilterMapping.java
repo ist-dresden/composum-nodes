@@ -39,7 +39,7 @@ public class ResourceFilterMapping {
             "^(and|or|first|last|tree|none)\\{(.+)\\}$"
     );
     public static final Pattern STRING_PATTERN = Pattern.compile(
-            "^(Name|Path|Type|PrimaryType|MixinType|ResourceType|MimeType|All|Folder|ContentNode)\\((.*)\\)$"
+            "^(Name|Path|Type|PrimaryType|NodeType|ResourceType|MimeType|All|Folder|ContentNode)\\((.*)\\)$"
     );
     /**
      * Absolutely ingenious regex by @DrRegex that matches strings with balanced parentheses of arbitrary nesting,
@@ -157,7 +157,7 @@ public class ResourceFilterMapping {
         STRATEGY_MAP = new HashMap<>();
         STRATEGY_MAP.put(ResourceFilter.FilterSet.class, new FilterSetStrategy());
         STRATEGY_MAP.put(ResourceFilter.PrimaryTypeFilter.class, new PatternFilterStrategy());
-        STRATEGY_MAP.put(ResourceFilter.MixinTypeFilter.class, new PatternFilterStrategy());
+        STRATEGY_MAP.put(ResourceFilter.NodeTypeFilter.class, new PatternFilterStrategy());
         STRATEGY_MAP.put(ResourceFilter.MimeTypeFilter.class, new PatternFilterStrategy());
         STRATEGY_MAP.put(ResourceFilter.ResourceTypeFilter.class, new PatternFilterStrategy());
         STRATEGY_MAP.put(ResourceFilter.PathFilter.class, new PatternFilterStrategy());

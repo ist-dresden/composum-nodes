@@ -35,7 +35,7 @@ public class ResourceFilterTypeAdapter {
         builder.registerTypeAdapter(ResourceFilter.NameFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.PathFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.PrimaryTypeFilter.class, new PatternFilterAdapter());
-        builder.registerTypeAdapter(ResourceFilter.MixinTypeFilter.class, new PatternFilterAdapter());
+        builder.registerTypeAdapter(ResourceFilter.NodeTypeFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.ResourceTypeFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.MimeTypeFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.FolderFilter.class, new PredefinedFilterAdapter(ResourceFilter.FOLDER));
