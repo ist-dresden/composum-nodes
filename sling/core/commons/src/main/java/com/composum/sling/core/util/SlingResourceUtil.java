@@ -1,7 +1,9 @@
 package com.composum.sling.core.util;
 
+import com.composum.sling.core.ResourceHandle;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.collections.Transformer;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 
@@ -65,13 +67,22 @@ public class SlingResourceUtil {
                 || descendantNormalized.startsWith(parentNormalized + '/');
     }
 
-    /**
-     * Returns the path of a resource, or null if it is null. For use e.g. in logging statements.
-     * Caution when using UUIDs - they do not work on all resolvers and break on imports/exports.
-     */
+    /** Returns the path of a resource, or null if it is null. For use e.g. in logging statements. */
     @Nullable
     public static String getPath(@Nullable Resource resource) {
         return resource != null ? resource.getPath() : null;
+    }
+
+    /** Returns the list of paths of a number of resources. For use e.g. in logging statements. */
+    @Nonnull
+    public static List<String> getPaths(@Nullable List<Resource> resources) {
+        List<String> paths = new ArrayList<>();
+        if (resources != null) {
+            for (Resource resource : resources) {
+                paths.add(getPath(resource));
+            }
+        }
+        return paths;
     }
 
     /**

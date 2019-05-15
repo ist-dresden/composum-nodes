@@ -37,15 +37,18 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
     /**
      * The 'adaptTo' like wrapping helper.
      *
+     * @param resource the wrapped resource. We explicitly allow null here to avoid many null checks though many ResourceWrapper methods throw a NPE then,
+     *                 but you need to make sure that you check {@link #isValid()} if that's possible.
      * @return the wrapped resource (may be resource itself if it is a ResourceHandle), not null
      */
-    public static ResourceHandle use(Resource resource) {
+    @Nonnull
+    public static ResourceHandle use(@Nullable Resource resource) {
         return resource instanceof ResourceHandle
                 ? ((ResourceHandle) resource) : new ResourceHandle(resource);
     }
 
     /** the universal validation test */
-    public static boolean isValid(Resource resource) {
+    public static boolean isValid(@Nullable Resource resource) {
         return resource instanceof ResourceHandle
                 ? ((ResourceHandle) resource).isValid()
                 : resource != null && resource.getResourceResolver().getResource(resource.getPath()) != null;
