@@ -66,10 +66,6 @@
 .jstree-anchor > .jstree-themeicon-hidden {
   display: none;
 }
-.jstree-hidden,
-.jstree-node.jstree-hidden {
-  display: none;
-}
 .jstree-rtl .jstree-anchor {
   padding: 0 1px 0 4px;
 }
@@ -312,11 +308,6 @@
   border-radius: 3px;
   box-shadow: inset 0 0 1px #76b6ec;
 }
-.jstree-default .jstree-context {
-  background: #76b6ec;
-  border-radius: 2px;
-  box-shadow: inset 0 0 1px #76b6ec;
-}
 .jstree-proton .jstree-clicked {
   background: #3392e3;
   color: #ffffff;
@@ -488,15 +479,6 @@ filter: gray;
 .jstree-proton .jstree-anchor > .jstree-undetermined:hover {
   background-position: -197px -37px;
 }
-.jstree-proton .jstree-checkbox-disabled {
-  opacity: 0.8;
-  filter: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'jstree-grayscale\'><feColorMatrix type=\'matrix\' values=\'0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0 0 0 1 0\'/></filter></svg>#jstree-grayscale");
-  /* Firefox 10+ */
-  filter: gray;
-  /* IE6-9 */
-  -webkit-filter: grayscale(100%);
-  /* Chrome 19+ & Safari 6+ */
-}
 .jstree-proton > .jstree-striped {
   background-size: auto 44px;
 }
@@ -569,17 +551,6 @@ filter: gray;
 }
 #jstree-dnd.jstree-proton .jstree-er {
   background-position: -37px -69px;
-}
-.jstree-default .jstree-ellipsis {
-  overflow: hidden;
-}
-.jstree-proton .jstree-ellipsis .jstree-anchor {
-  width: calc(100% - 29px);
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-.jstree-proton .jstree-ellipsis.jstree-no-icons .jstree-anchor {
-  width: calc(100% - 5px);
 }
 .jstree-proton.jstree-rtl .jstree-node {
   background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAACAQMAAAB49I5GAAAABlBMVEUAAAAdHRvEkCwcAAAAAXRSTlMAQObYZgAAAAxJREFUCNdjAAMOBgAAGAAJMwQHdQAAAABJRU5ErkJggg==");
@@ -676,15 +647,6 @@ filter: gray;
 }
 .jstree-proton-small .jstree-anchor > .jstree-undetermined:hover {
   background-position: -199px -39px;
-}
-.jstree-proton-small .jstree-checkbox-disabled {
-  opacity: 0.8;
-  filter: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'jstree-grayscale\'><feColorMatrix type=\'matrix\' values=\'0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0 0 0 1 0\'/></filter></svg>#jstree-grayscale");
-  /* Firefox 10+ */
-  filter: gray;
-  /* IE6-9 */
-  -webkit-filter: grayscale(100%);
-  /* Chrome 19+ & Safari 6+ */
 }
 .jstree-proton-small > .jstree-striped {
   background-size: auto 36px;
@@ -855,15 +817,6 @@ filter: gray;
 .jstree-proton-large .jstree-anchor > .jstree-undetermined:hover {
   background-position: -192px -32px;
 }
-.jstree-proton-large .jstree-checkbox-disabled {
-  opacity: 0.8;
-  filter: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'jstree-grayscale\'><feColorMatrix type=\'matrix\' values=\'0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0 0 0 1 0\'/></filter></svg>#jstree-grayscale");
-  /* Firefox 10+ */
-  filter: gray;
-  /* IE6-9 */
-  -webkit-filter: grayscale(100%);
-  /* Chrome 19+ & Safari 6+ */
-}
 .jstree-proton-large > .jstree-striped {
   background-size: auto 64px;
 }
@@ -936,17 +889,6 @@ filter: gray;
 }
 #jstree-dnd.jstree-proton-large .jstree-er {
   background-position: -32px -64px;
-}
-.jstree-proton-large .jstree-ellipsis {
-  overflow: hidden;
-}
-.jstree-proton-large .jstree-ellipsis .jstree-anchor {
-  width: calc(100% - 37px);
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-.jstree-proton-large .jstree-ellipsis.jstree-no-icons .jstree-anchor {
-  width: calc(100% - 5px);
 }
 .jstree-proton-large.jstree-rtl .jstree-node {
   background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAACAQMAAAAD0EyKAAAABlBMVEUAAAAdHRvEkCwcAAAAAXRSTlMAQObYZgAAAAxJREFUCNdjgIIGBgABCgCBvVLXcAAAAABJRU5ErkJggg==");

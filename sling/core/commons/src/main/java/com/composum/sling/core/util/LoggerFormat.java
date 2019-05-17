@@ -31,4 +31,8 @@ public class LoggerFormat extends Format {
     public Object parseObject(final String source, @Nonnull final ParsePosition pos) {
         throw new UnsupportedOperationException("output formatter only");
     }
+
+    public static String format(String message, Object... values) {
+        return MessageFormatter.format(message, values).getMessage();
+    }
 }
