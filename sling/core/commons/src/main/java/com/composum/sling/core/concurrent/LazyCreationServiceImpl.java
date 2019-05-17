@@ -2,6 +2,7 @@ package com.composum.sling.core.concurrent;
 
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
@@ -410,8 +411,11 @@ public class LazyCreationServiceImpl implements LazyCreationService {
      */
     protected Resource safeCreateParent(ResourceResolver adminResolver, String path, int level,
                                         ParentCreationStrategy parentCreationStrategy) throws RepositoryException {
+        if ("/".equals(path))
+            return adminResolver.getResource("/");
+
         String[] separated = com.composum.sling.core.util.ResourceUtil.splitPathAndName(path);
-        String parentPath = "".equals(separated[0]) ? "/" : separated[0];
+        String parentPath = separated[0];
         SequencerService.Token token = sequencer.acquire(path);
         try {
             refreshSession(adminResolver, false);

@@ -35,7 +35,7 @@ public class ResourceFilterTypeAdapter {
         builder.registerTypeAdapter(ResourceFilter.NameFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.PathFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.PrimaryTypeFilter.class, new PatternFilterAdapter());
-        builder.registerTypeAdapter(ResourceFilter.MixinTypeFilter.class, new PatternFilterAdapter());
+        builder.registerTypeAdapter(ResourceFilter.NodeTypeFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.ResourceTypeFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.MimeTypeFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.FolderFilter.class, new PredefinedFilterAdapter(ResourceFilter.FOLDER));
@@ -150,7 +150,7 @@ public class ResourceFilterTypeAdapter {
 
     public static class TypeFilterAdapter extends GeneralAdapter {
 
-        enum JsonValues {type, filter}
+        enum JsonValues {type, filter, restriction}
 
         protected transient String filter = null;
 
@@ -158,9 +158,12 @@ public class ResourceFilterTypeAdapter {
 
         @Override
         protected void writeValues(JsonWriter writer, ResourceFilter value) throws IOException {
+            ResourceFilter.TypeFilter typeFilter = (ResourceFilter.TypeFilter) value;
             super.writeValues(writer, value);
             writer.name(JsonValues.filter.name());
-            writer.value(value.toString());
+            StringBuilder buf = new StringBuilder();
+            typeFilter.typeNamesToString(buf);
+            writer.value(buf.toString());
         }
 
         // read
