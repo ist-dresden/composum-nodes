@@ -80,8 +80,8 @@
     },
     "link-path": {
       "jcr:primaryType": "sling:MessageEntry",
-      "sling:key": "Link (Content Path)",
-      "sling:message": "Link (Inhaltspfad)"
+      "sling:key": "Link (Content Path or external URL)",
+      "sling:message": "Link (Inhaltspfad oder externe URL)"
     },
     "link-target": {
       "jcr:primaryType": "sling:MessageEntry",

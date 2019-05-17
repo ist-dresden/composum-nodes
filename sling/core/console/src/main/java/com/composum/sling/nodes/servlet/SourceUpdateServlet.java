@@ -86,7 +86,7 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
             switch (pathInfo.getExtension()) {
 
                 case "zip":
-                    sourceUpdateService.updateFromZip(request.getResourceResolver(), file.getInputStream());
+                    sourceUpdateService.updateFromZip(request.getResourceResolver(), file.getInputStream(), pathInfo.getSuffix());
 
                     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                     break;

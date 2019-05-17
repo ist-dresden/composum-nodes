@@ -59,16 +59,19 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             "jcr:versionHistory", "jcr:predecessors", "jcr:mergeFailed", "jcr:mergeFailed", "jcr:configuration"));
 
     /**
+     * {@inheritDoc}
+     * <p>
      * Make subtree equivalent to a ZIP in vault format. General strategy: we update the attributes of all nodes according to the XML documents,
      * creating nonexistent nodes along the way, and make node which nodes were present, and which were changed.
      * In a second pass, we recurse through the JCR tree again, delete nodes that were not present and update the lastModified
      * properties of nodes, below which there were changes.
      */
     @Override
-    public void updateFromZip(ResourceResolver resolver, InputStream rawZipInputStream) throws IOException, RepositoryException, TransformerException {
+    public void updateFromZip(@Nonnull ResourceResolver resolver, @Nonnull InputStream rawZipInputStream, @Nonnull String nodePath)
+            throws IOException, RepositoryException, TransformerException {
         Session session = resolver.adaptTo(Session.class);
         Resource tmpdir = makeTempdir(resolver);
-        String tmpPath = tmpdir.getPath();
+        final String tmpPath = tmpdir.getPath();
 
         try {
             Importer importer = new Importer();
@@ -84,12 +87,14 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         }
 
         try {
-            Resource topnode = tmpdir;
-            while (IteratorUtils.toList(topnode.listChildren()).size() == 1) topnode = topnode.listChildren().next();
-            String nodePath = topnode.getPath().substring(tmpPath.length());
-            if (nodePath.startsWith("/content") && StringUtils.countMatches(nodePath, "/") < 3)
+            Resource topnode = tmpdir.getChild(nodePath.replaceFirst("^/+", ""));
+            if (topnode == null)
+                throw new IllegalArgumentException("Archive does not contain given root path " + nodePath);
+            if (!nodePath.startsWith("/content") || StringUtils.countMatches(nodePath, "/") < 3)
                 throw new IllegalArgumentException("Suspicious / short root path: " + nodePath);
             Resource resource = resolver.getResource(nodePath);
+            if (resource == null)
+                throw new IllegalArgumentException("Node does not exist, so we cannot update it: " + nodePath);
             equalize(topnode, resource, session, resolver);
 
             LOG.info("Have changes: {}", session.hasPendingChanges());

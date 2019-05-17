@@ -127,7 +127,7 @@ public class SystemServlet extends AbstractServiceServlet {
     //
 
     /** the general filter for mixin types */
-    public static class MixinTypesFilter implements ResourceFilter {
+    public static class MixinTypesFilter extends ResourceFilter.AbstractResourceFilter {
 
         @Override
         public boolean accept(Resource resource) {
