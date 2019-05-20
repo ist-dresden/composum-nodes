@@ -1,0 +1,15 @@
+{
+  "sling:resourceType": "composum/nodes/commons/clientlib",
+  "css": {
+    "jcr:primaryType": "nt:unstructured",
+    "embed": [
+      "jslibs/highlight/9.15.6/styles/tomorrow.css"
+    ]
+  },
+  "js": {
+    "jcr:primaryType": "nt:unstructured",
+    "embed": [
+      "jslibs/highlight/9.15.6/highlight.min.js"
+    ]
+  }
+}
