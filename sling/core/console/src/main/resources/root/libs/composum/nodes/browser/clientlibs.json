@@ -8,7 +8,7 @@
     "css": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "category:composum.core.console.default"
+        "category:composum.core.console.base"
       ],
       "embed": [
         "composum/nodes/console/components/codeeditor/clientlib",
@@ -20,10 +20,13 @@
     "js": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "category:composum.core.console.default",
+        "jslibs/jquery/2.2.4/jquery.js",
+        "category:composum.core.console.base",
+        "jslibs/x-editable/1.5.3/bootstrap3-editable/js/bootstrap-editable.js",
         "category:composum.edit.components.ace"
       ],
       "embed": [
+        "composum/nodes/browser/js/x-editable.js",
         "composum/nodes/browser/js/property.js",
         "composum/nodes/browser/js/query.js",
         "composum/nodes/browser/js/browser.js",
