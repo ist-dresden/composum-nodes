@@ -59,7 +59,7 @@
         "jslibs/bootstrap-colorpicker/3.1.2/css/bootstrap-colorpicker.css",
         "jslibs/bootstrap-fileinput/5.0.3/css/fileinput.css",
         "jslibs/split-pane/1.0.0/split-pane.css",
-        "jslibs/trumbowyg/2.17.0/ui/trumbowyg.css",
+        "jslibs/trumbowyg/2.3.0/ui/trumbowyg.css",
         "composum/nodes/commons/components/clientlibs/components",
         "composum/nodes/console/page/css/console.css"
       ]
@@ -98,7 +98,7 @@
           "jslibs/bootstrap-fileinput/5.0.3/js/fileinput.js",
           "jslibs/split-pane/1.0.0/split-pane.js",
           "jslibs/jstree/3.3.8/jstree.js",
-          "jslibs/trumbowyg/2.17.0/trumbowyg.js"
+          "jslibs/trumbowyg/2.3.0/trumbowyg.js"
         ]
       },
       "components": {
