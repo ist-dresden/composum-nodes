@@ -16,6 +16,12 @@
                     error: 'danger',
                     warn: 'warning'
                 }
+            },
+            translate: {
+                uri: {
+                    object: '/bin/cpm/core/translate.object.json',
+                    status: '/bin/cpm/core/translate.status.json'
+                }
             }
         };
 
@@ -423,6 +429,13 @@
             }
         };
 
+        /**
+         * a FormDialog supports validation before submit
+         * uses a 'config' attribute:
+         * config {
+         *     validationUrl: a function or value for validation roundtrip and i18n translation of validation messages
+         * }
+         */
         components.FormDialog = components.LoadedDialog.extend({
 
             initialize: function (options) {
@@ -431,6 +444,16 @@
                 this.validationHints = [];
                 this.initView();
                 this.initSubmit();
+            },
+
+            getConfig: function () {
+                return _.extend({
+                    validationUrl: components.const.dialog.translate.uri.status
+                }, this.config);
+            },
+
+            dialogData: function () {
+                return {};
             },
 
             initSubmit: function () {
@@ -477,15 +500,51 @@
             },
 
             /**
-             * the validation strategy with support for an asynchronous validation call
+             * @returns {{dialog: (*|{}), messages: Array}} the data for a validation roundtrip
+             */
+            validationData: function () {
+                return {
+                    dialog: this.dialogData(),
+                    messages: this.validationHints
+                };
+            },
+
+            /**
+             * the validation strategy with support for an asynchronous validation call;
+             * if a validationUrl configuration is supported a PUT request with the current validation hints is sent
+             * via PUT to that url for extended validation and/or validation hints i18n translation
              * @param onSuccess called after successful validation
              * @param onError called if a validation fault registered
              */
             doValidate: function (onSuccess, onError) {
-                if (this.validateForm()) {
-                    onSuccess();
+                var valid = this.validateForm();
+                var config = this.getConfig();
+                if (config.validationUrl) {
+                    var url = _.isFunction(config.validationUrl) ? config.validationUrl() : config.validationUrl;
+                    core.ajaxPut(url, JSON.stringify(this.validationData()), {
+                            dataType: 'json'
+                        }, undefined, undefined,
+                        _.bind(function (xhr) {
+                            var result = xhr.responseJSON;
+                            if (result) {
+                                if (result.messages) {
+                                    this.validationHints = result.messages;
+                                }
+                                if (result.success) {
+                                    onSuccess();
+                                } else {
+                                    onError();
+                                }
+                            } else {
+                                this.onError(xhr);
+                            }
+                        }, this))
                 } else {
-                    onError();
+                    if (valid) {
+                        onSuccess();
+                    } else {
+                        onError();
+                    }
                 }
             },
 
