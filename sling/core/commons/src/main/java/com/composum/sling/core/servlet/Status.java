@@ -9,6 +9,7 @@ import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -232,5 +233,55 @@ public class Status {
         response.setStatus(getStatus());
         response.setContentType("application/json; charset=UTF-8");
         toJson(writer);
+    }
+
+    /** Shortcut: if you want to log the same message to a logger as you want to present to the user - call the methods here. */
+    @Nonnull
+    public StatusWithLogging withLogging(@Nonnull Logger logger) {
+        return new StatusWithLogging(logger);
+    }
+
+    public class StatusWithLogging {
+        @Nonnull
+        private final Logger logger;
+
+        public StatusWithLogging(@Nonnull Logger logger) {
+            this.logger = logger;
+        }
+
+        public void info(@Nonnull String text, Object... args) {
+            Status.this.info(text, args);
+            logger.info(text, args);
+        }
+
+        public void warn(@Nonnull String text, Object... args) {
+            Status.this.warn(text, args);
+            logger.warn(text, args);
+        }
+
+        public void warn(@Nonnull String target, @Nonnull String text, Object... args) {
+            Status.this.warn(target, text, args);
+            logger.warn(text, args);
+        }
+
+        public void warn(@Nonnull String context, @Nonnull String target, @Nonnull String text, Object... args) {
+            Status.this.warn(context, target, text, args);
+            logger.warn(text, args);
+        }
+
+        public void error(@Nonnull String text, Object... args) {
+            Status.this.error(text, args);
+            logger.error(text, args);
+        }
+
+        public void error(@Nonnull String target, @Nonnull String text, Object... args) {
+            Status.this.error(target, text, args);
+            logger.error(text, args);
+        }
+
+        public void error(@Nonnull String context, @Nonnull String target, @Nonnull String text, Object... args) {
+            Status.this.error(context, target, text, args);
+            logger.error(text, args);
+        }
     }
 }
