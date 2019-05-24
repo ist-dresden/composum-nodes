@@ -222,7 +222,7 @@
                 core.ajaxPut(url, JSON.stringify(data), {
                         dataType: 'json'
                     },
-                    onSuccess, _.bind(this.onError), _.bind(function (xhr) {
+                    onSuccess, _.bind(this.onError, this), _.bind(function (xhr) {
                         if (xhr.status >= 200 && xhr.status < 299) {
                             if (xhr.status === 200 && _.isFunction(onSuccess)) {
                                 onSuccess(xhr);
