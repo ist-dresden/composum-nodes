@@ -1056,10 +1056,12 @@ public class NodeServlet extends NodeTreeServlet {
                             response.setStatus(HttpServletResponse.SC_ACCEPTED);
                             jsonWriter.beginObject();
                             jsonWriter.name("success").value(true);
-                            jsonWriter.name("response").beginObject();
+                            jsonWriter.name("messages").beginArray();
+                            jsonWriter.beginObject();
                             jsonWriter.name("level").value("info");
                             jsonWriter.name("text").value(CpnlElFunctions.i18n(request, "no modification"));
                             jsonWriter.endObject();
+                            jsonWriter.endArray();
                             jsonWriter.endObject();
                         }
 

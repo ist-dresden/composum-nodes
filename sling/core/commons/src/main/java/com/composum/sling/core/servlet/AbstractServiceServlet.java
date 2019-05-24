@@ -227,11 +227,13 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
         jsonWriter.beginObject();
         jsonWriter.name("success").value(false);
-        jsonWriter.name("response").beginObject();
+        jsonWriter.name("messages").beginArray();
+        jsonWriter.beginObject();
         jsonWriter.name("level").value("warn");
         jsonWriter.name("text").value(CpnlElFunctions.i18n(request,
                 "An element with the same name exists already - use a different name!"));
         jsonWriter.endObject();
+        jsonWriter.endArray();
         jsonWriter.endObject();
     }
 

@@ -38,6 +38,21 @@
   },
   "label": {
     "jcr:primaryType": "sling:Folder",
+    "warning": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Warning",
+      "sling:message": "Warnung"
+    },
+    "error": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Error",
+      "sling:message": "Fehler"
+    },
+    "result": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Result",
+      "sling:message": "Ergebnis"
+    },
     "alert": {
       "jcr:primaryType": "sling:MessageEntry",
       "sling:key": "Alert",

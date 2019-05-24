@@ -174,12 +174,12 @@
                         }
                         this.hide();
                     }, this),
-                    _.bind(function (result) {
+                    _.bind(function (xhr) {
                         if (_.isFunction(onError)) {
-                            onError(result);
+                            onError(xhr);
                         } else {
-                            if (onError === undefined || onError) {
-                                this.errorMessage("Error", result);
+                            if (onError === undefined || onError /* maybe 'false' */) {
+                                this.onError(xhr);
                             }
                         }
                     }, this),
@@ -205,12 +205,12 @@
                         }
                         this.hide();
                     }, this),
-                    _.bind(function (result) {
+                    _.bind(function (xhr) {
                         if (_.isFunction(onError)) {
-                            onError(result);
+                            onError(xhr);
                         } else {
-                            if (onError === undefined || onError) {
-                                this.errorMessage("Error", result);
+                            if (onError === undefined || onError /* maybe 'false' */) {
+                                this.onError(xhr);
                             }
                         }
                     }, this),
@@ -220,24 +220,35 @@
 
             submitPUT: function (label, url, data, onSuccess) {
                 core.ajaxPut(url, JSON.stringify(data), {
-                    dataType: 'json'
-                }, onSuccess, undefined, _.bind(function (result) {
-                    if (result.status >= 200 && result.status < 299) {
-                        if (result.status === 200 && _.isFunction(onSuccess)) {
-                            onSuccess(result);
-                            this.hide();
-                        } else {
-                            var detail = result.responseJSON;
-                            if (result.status !== 200 && _.isObject(detail) && detail.response) {
-                                this.messages(detail.response.level, detail.response.text, detail.messages);
-                            } else {
+                        dataType: 'json'
+                    },
+                    onSuccess, _.bind(this.onError), _.bind(function (xhr) {
+                        if (xhr.status >= 200 && xhr.status < 299) {
+                            if (xhr.status === 200 && _.isFunction(onSuccess)) {
+                                onSuccess(xhr);
                                 this.hide();
+                            } else {
+                                var detail = xhr.responseJSON;
+                                if (xhr.status !== 200 && _.isObject(detail) && detail.messages) {
+                                    this.onError(xhr, label);
+                                } else {
+                                    this.hide();
+                                }
                             }
+                        } else {
+                            this.onError(xhr, label);
                         }
-                    } else {
-                        this.errorMessage(label, result);
-                    }
-                }, this));
+                    }, this));
+            },
+
+            onError: function (xhr, title) {
+                if (xhr.responseJSON && xhr.responseJSON.messages) {
+                    var status = xhr.responseJSON;
+                    this.messages(status.success ? (status.warning ? 'warn' : 'info') : 'error',
+                        status.title || title, status.messages);
+                } else {
+                    this.errorMessage(title ? title : "Error", core.resultMessage(xhr));
+                }
             },
 
             errorMessage: function (message, result) {
