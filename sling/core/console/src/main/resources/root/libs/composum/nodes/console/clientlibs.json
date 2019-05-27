@@ -147,7 +147,7 @@
         "composum/nodes/commons/components/js/components.js",
         "composum/nodes/commons/components/js/codeEditor.js",
         "composum/nodes/commons/components/js/multiform.js",
-        "composum/nodes/console/page/js/console.js",
+        "composum/nodes/console/js/console.js",
         "composum/nodes/console/components/codeeditor/clientlib"
       ]
     }
