@@ -6,6 +6,7 @@ import com.composum.sling.nodes.servlet.NodeServlet;
 import com.composum.sling.nodes.servlet.PropertyServlet;
 import com.composum.sling.nodes.servlet.SecurityServlet;
 import com.composum.sling.nodes.servlet.SourceServlet;
+import com.composum.sling.nodes.servlet.SourceUpdateServlet;
 import com.composum.sling.nodes.servlet.VersionServlet;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -165,6 +166,14 @@ public class NodesConfigImpl implements NodesConfiguration {
     private boolean sourceServletEnabled;
 
     @Property(
+            name = SOURCE_UPDATE_SERVLET_ENABLED,
+            label = "Source Update Servlet",
+            description = "the general on/off switch for the services of the Source Update Servlet",
+            boolValue = true
+    )
+    private boolean sourceUpdateServletEnabled;
+
+    @Property(
             name = USER_MANAGEMENT_SERVLET_ENABLED,
             label = "User Management Servlet",
             description = "the general on/off switch for the services of the User Management Servlet",
@@ -225,6 +234,7 @@ public class NodesConfigImpl implements NodesConfiguration {
         return sourceNodesFilter;
     }
 
+    @Override
     public Dictionary getProperties() {
         return properties;
     }
@@ -267,6 +277,8 @@ public class NodesConfigImpl implements NodesConfiguration {
                 (Boolean) properties.get(VERSION_SERVLET_ENABLED));
         enabledServlets.put(SourceServlet.class.getSimpleName(), sourceServletEnabled =
                 (Boolean) properties.get(SOURCE_SERVLET_ENABLED));
+        enabledServlets.put(SourceUpdateServlet.class.getSimpleName(), sourceUpdateServletEnabled =
+                (Boolean) properties.get(SOURCE_UPDATE_SERVLET_ENABLED));
         enabledServlets.put("UserManagementServlet", userManagementServletEnabled =
                 (Boolean) properties.get(USER_MANAGEMENT_SERVLET_ENABLED));
     }

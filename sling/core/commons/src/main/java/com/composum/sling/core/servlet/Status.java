@@ -320,7 +320,10 @@ public class Status {
         toJson(writer);
     }
 
-    /** Shortcut: if you want to log the same message to a logger as you want to present to the user - call the methods here. */
+    /**
+     * Shortcut: if you want to log the same message to a logger as you want to present to the user - call the methods here.
+     * E.g. <code>status.withLogging(LOG).error("Some error happened in {}", path);</code>.
+     */
     @Nonnull
     public StatusWithLogging withLogging(@Nonnull Logger logger) {
         return new StatusWithLogging(logger);
