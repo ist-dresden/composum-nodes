@@ -3,6 +3,7 @@ package com.composum.sling.clientlibs.servlet;
 import org.apache.commons.collections.ComparatorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.TypeUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
@@ -19,9 +20,16 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -34,6 +42,7 @@ import java.util.regex.Pattern;
  * Use with graphviz tools http://graphviz.org/ e.g. with <br/> <code>
  * curl -u admin:admin 'http://localhost:9090/system/console/servicegraph.dot?classregex=%5Ecom.composum&type=dotty&bundle=true' | ccomps -x | unflatten -f -l 6 -c 3 | dot | gvpack | neato -Tpng -n2  > $TMPDIR/services.png ; open $TMPDIR/services.png
  * </code>
+ *
  * @see "https://github.com/magjac/d3-graphviz"
  */
 @Component(label = "Composum Service Graph Webconsole Plugin",
@@ -104,7 +113,7 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
             response.setContentType("text/html");
             writeForm(writer, request, classRegex);
             if (isGraph) {
-                writer.println("You can scroll around the graph by dragging it with the mouse. Within the graph, the scroll wheel works as zoom in / zoom out.");
+                writer.println("You can scroll around the graph by dragging it with the mouse. Within the graph, the scroll wheel works as zoom in / zoom out. <button onclick='maximizeGraph();'>Maximize graph</button>");
                 writer.println("<div id=\"graph\" style=\"text-align: center;\"></div>\n");
             }
             writer.println("<pre id=\"digraph\">");
@@ -174,8 +183,11 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
                     "<script src=\"https://unpkg.com/viz.js@1.8.0/viz.js\" type=\"javascript/worker\"></script>\n" +
                     "<script src=\"https://unpkg.com/d3-graphviz@1.4.0/build/d3-graphviz.min.js\"></script>\n" +
                     "<script>\n" +
-                    "dot = document.getElementById('digraph').innerText;\n" +
-                    "d3.select(\"#graph\").graphviz().fade(false).renderDot(dot);\n" +
+                    "    dot = document.getElementById('digraph').innerText;\n" +
+                    "    d3.select(\"#graph\").graphviz().renderDot(dot);\n" +
+                    "    function maximizeGraph() {" +
+                    "        $('svg').css('width', window.innerWidth).css('height',window.innerHeight).css('position','fixed').css('left',0).css('top',0)" +
+                    "    }\n" +
                     "</script>");
             writer.println("</html>");
         }
@@ -216,21 +228,25 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
                     continue;
 
                 Class<?> serviceOrSuper = clazz;
-                Set<String> refFields = new TreeSet<>();
+                List<Class> referredClasses = new ArrayList<>();
                 while (serviceOrSuper != null) {
                     for (Field field : serviceOrSuper.getDeclaredFields()) {
-                        Class<?> fieldClass = field.getType();
-                        if (classPattern.matcher(fieldClass.getName()).find()) {
-                            for (Class<?> serviceClass : classIdx.values()) {
-                                if (fieldClass.isAssignableFrom(serviceClass)) {
-                                    refFields.add(serviceClass.getName());
-                                    break;
-                                }
-                            }
-                        }
+                        collectReferredClasses(field.getGenericType(), referredClasses, new HashSet<Type>());
                     }
                     serviceOrSuper = serviceOrSuper.getSuperclass();
                 }
+                Set<String> refFields = new TreeSet<>();
+                for (Class referredClass : referredClasses) {
+                    if (classPattern.matcher(referredClass.getName()).find()) {
+                        for (Class<?> serviceClass : classIdx.values()) {
+                            if (referredClass.isAssignableFrom(serviceClass)) {
+                                refFields.add(serviceClass.getName());
+                                break;
+                            }
+                        }
+                    }
+                }
+
 
                 for (String field : refFields) {
                     writer.println("        \"" + shortnames.get(clazz.getName()) + "\" -> \"" + shortnames.get(field) + "\";");
@@ -239,6 +255,36 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
 
             if (showBundles) {
                 writer.println("    }");
+            }
+        }
+    }
+
+    protected static void collectReferredClasses(Type type, List<Class> referredClasses, Set<Type> visited) {
+        if (visited.contains(type) || type == null) return; // infinite recursion brake
+        visited.add(type);
+
+        if (type instanceof Class) {
+            Class clazz = (Class) type;
+            if (clazz.isArray()) {
+                referredClasses.add(clazz.getComponentType());
+            } else {
+                referredClasses.add(clazz);
+                collectReferredClasses(clazz.getGenericSuperclass(), referredClasses, visited);
+                for (Type genericInterface : clazz.getGenericInterfaces()) {
+                    collectReferredClasses(genericInterface, referredClasses, visited);
+                }
+            }
+        }
+        if (type instanceof GenericArrayType) {
+            GenericArrayType arrayType = (GenericArrayType) type;
+            collectReferredClasses(TypeUtils.getArrayComponentType(arrayType), referredClasses, visited);
+        }
+        if (type instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) type;
+            collectReferredClasses(parameterizedType.getRawType(), referredClasses, visited);
+            collectReferredClasses(parameterizedType.getOwnerType(), referredClasses, visited);
+            for (Type typeArgument : TypeUtils.getTypeArguments(parameterizedType).values()) {
+                collectReferredClasses(typeArgument, referredClasses, visited);
             }
         }
     }
