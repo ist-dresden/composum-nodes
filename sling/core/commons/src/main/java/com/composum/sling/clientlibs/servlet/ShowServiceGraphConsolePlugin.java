@@ -77,7 +77,8 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
 
     protected void writeForm(PrintWriter writer, HttpServletRequest request, String classRegex) {
         writer.println("<html><body><h2>Service reference structure</h2>");
-        writer.println("<p>This shows the structure of the service crossreferences of a part of the application(s).</p>");
+        writer.println("<p>This shows the structure of the service crossreferences of a part of the application(s). Please be aware that this is not 100% complete - " +
+                "it reconstructs the usage by the types of the fields of the services as read out by Java reflection.</p>");
         writer.println("<form action=\"" + request.getRequestURL() + "\" method=\"get\">");
         writer.println("Show services with classnames matching regex: <input type=\"text\" size=\"80\" name=\"classregex\" value=\"" + classRegex + "\">\n" +
                 "<br>\n" +
