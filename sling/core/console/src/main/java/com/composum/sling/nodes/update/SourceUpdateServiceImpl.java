@@ -179,7 +179,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                 }
             }
 
-            for (Resource child : resource.getChildren()) { // TODO are there equally named children somewhere?
+            for (Resource child : resource.getChildren()) {
                 Resource templateChild = templateresource.getChild(child.getName());
                 if (templateChild == null) {
                     thisNodeChanged = true;

@@ -52,7 +52,7 @@ public class DefaultClientlibService implements ClientlibService {
      * Property at content node of cache files that contains the hash value usable as etag that determines the
      * current content of the client library and changes on each added / updated file.
      */
-    public static final String PROP_HASH = ResourceUtil.PROP_DESCRIPTION; // TODO abused for now
+    public static final String PROP_HASH = ResourceUtil.PROP_DESCRIPTION;
 
     public static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
 
