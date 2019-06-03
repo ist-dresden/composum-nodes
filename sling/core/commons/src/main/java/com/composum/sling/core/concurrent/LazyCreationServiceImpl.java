@@ -2,7 +2,6 @@ package com.composum.sling.core.concurrent;
 
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
@@ -10,17 +9,27 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingException;
 import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.resource.*;
+import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.slf4j.Logger;
 
-import javax.jcr.*;
+import javax.jcr.ItemExistsException;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.lock.Lock;
 import javax.jcr.lock.LockException;
 import javax.jcr.lock.LockManager;
 import java.util.Calendar;
 import java.util.Map;
 
-import static com.composum.sling.core.util.ResourceUtil.*;
+import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_CREATED;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_LAST_MODIFIED;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_LOCKABLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -257,7 +266,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
                 Thread.sleep(waitStep);
             } catch (InterruptedException e) {
             }
-            // sequencer shouldn't be neccesary but we got simultaneous locks by several threads in some cases.
+            // We need sequencer because the JCR locking doesn't seem to distinguish between sessions on one instance, or something. Hard to test.
             SequencerService.Token token = sequencer.acquire(path);
             try {
                 refreshSession(adminResolver, false);

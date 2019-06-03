@@ -52,9 +52,12 @@ public class DefaultClientlibService implements ClientlibService {
      * Property at content node of cache files that contains the hash value usable as etag that determines the
      * current content of the client library and changes on each added / updated file.
      */
-    public static final String PROP_HASH = ResourceUtil.PROP_DESCRIPTION; // TODO abused for now
+    public static final String PROP_HASH = ResourceUtil.PROP_DESCRIPTION;
 
     public static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
+
+    /** Top node for the category cache within the {@link ClientlibConfiguration#getCacheRoot()}. */
+    protected static final String CATEGORYCACHE = "categorycache";
 
     static {
         CRUD_CACHE_FOLDER_PROPS = new HashMap<>();
@@ -623,7 +626,7 @@ public class DefaultClientlibService implements ClientlibService {
     protected String getCachePath(ClientlibRef ref, boolean minified, String encoding) {
         String cacheRoot = clientlibConfig.getCacheRoot();
         String cacheKey;
-        cacheKey = ref.isCategory() ? "/categorycache/" + ref.category : ref.path;
+        cacheKey = ref.isCategory() ? "/" + CATEGORYCACHE + "/" + ref.category : ref.path;
         if (StringUtils.isNotBlank(encoding)) {
             cacheKey += '.' + encoding.trim();
         }
@@ -747,6 +750,25 @@ public class DefaultClientlibService implements ClientlibService {
                 impersonationResolver.close(); // else it's just resolver coming from outside
         }
         return buf.length() == 0 ? null : buf.toString();
+    }
+
+    @Override
+    public void clearCache(ResourceResolver resolver) throws PersistenceException {
+        LOG.info("Clear cache requested.");
+        String cacheRootPath = clientlibConfig.getCacheRoot();
+        Resource cacheRoot = resolver.getResource(cacheRootPath);
+        List<String> subpaths = new ArrayList<>();
+        subpaths.addAll(Arrays.asList(resolver.getSearchPath()));
+        subpaths.add(CATEGORYCACHE);
+        for (String child : subpaths) {
+            Resource childResource = cacheRoot.getChild(StringUtils.removeStart(child, "/"));
+            if (childResource != null) {
+                if (StringUtils.countMatches(childResource.getPath(), "/") < 3) // safety check
+                    throw new IllegalArgumentException("Suspicious path for clientlib cache to delete: " + childResource.getPath());
+                LOG.info("Deleting {}", childResource.getPath());
+                resolver.delete(childResource);
+            }
+        }
     }
 
     /** For each path contained here, remove all paths that are children of it, thus removing consequential errors. */

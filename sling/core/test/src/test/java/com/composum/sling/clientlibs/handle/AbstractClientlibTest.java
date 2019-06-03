@@ -93,7 +93,7 @@ public class AbstractClientlibTest {
                     public boolean getUseMinifiedFiles() {
                         return AbstractClientlibTest.this.useMinifiedFiles;
                     }
-                }); // TODO: how to use properties?
+                });
 
         ServletContext servletContext = Mockito.mock(ServletContext.class);
         BeanContext beanContext = new BeanContext.Servlet(servletContext, context.bundleContext(), context.request(),

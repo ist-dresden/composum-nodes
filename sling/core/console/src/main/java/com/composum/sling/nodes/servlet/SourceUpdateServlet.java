@@ -36,11 +36,9 @@ import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
  * Modifies JCR content according to a given XML or ZIP of XMLs while preserving / updating metadata like versioning
  * information and metadata. This is a kind of opposite operation as the {@link SourceServlet}: the nodes like
  * jcr:lastModified, which are removed there, will just be updated here - if they occur in our input, they'll
- * be ignored.
+ * be ignored. This is somewhat in beta stage - use at your own risk.
  * <p>
- * TODO: perhaps implement AbstractServiceServlet or some other baseclass?
- * <p>
- * TODO: keep cpp:MetaData unchanged
+ * TODO: perhaps keep special nodes like cpp:MetaData (used for statistics) unchanged
  */
 @SlingServlet(
         paths = "/bin/cpm/nodes/sourceupload",
@@ -65,9 +63,7 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
     }
 
     protected boolean isEnabled() {
-        // FIXME implement
-        // return nodesConfig.isEnabled(this); ?
-        return true;
+        return nodesConfig.isEnabled(this);
     }
 
     @Override

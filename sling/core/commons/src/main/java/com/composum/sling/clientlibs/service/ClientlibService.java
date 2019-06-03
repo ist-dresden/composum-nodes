@@ -1,8 +1,13 @@
 package com.composum.sling.clientlibs.service;
 
-import com.composum.sling.clientlibs.handle.*;
+import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.handle.ClientlibCategory;
+import com.composum.sling.clientlibs.handle.ClientlibElement;
+import com.composum.sling.clientlibs.handle.ClientlibLink;
+import com.composum.sling.clientlibs.handle.ClientlibRef;
 import com.composum.sling.clientlibs.processor.RendererContext;
 import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
@@ -86,6 +91,13 @@ public interface ClientlibService {
      */
     @Nullable
     String verifyClientlibPermissions(@Nullable Clientlib.Type type, @Nullable ResourceResolver resolver, boolean onlyErrors);
+
+    /**
+     * Clears the whole cache for all clientlibs. Obviously something to used sparingly.
+     *
+     * @param resolver the resolver to use.
+     */
+    void clearCache(ResourceResolver resolver) throws PersistenceException;
 
     class ClientlibInfo {
         public Long size;

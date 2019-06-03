@@ -72,3 +72,7 @@ body {
     margin: 8px;
 }
 
+svg {
+    border-style: groove;
+    background-color: white;
+}
