@@ -216,13 +216,17 @@
                 // scan 'data-pattern' attribute
                 var pattern = $element.data('pattern');
                 if (pattern) {
-                    this.rules = _.extend(this.rules || {}, {
-                        pattern: pattern.indexOf('/') === 0
-                            // use '/.../ig' to specify pattern and flags
-                            ? eval(pattern)
-                            // pure strings can not have additional flags...
-                            : new RegExp(pattern)
-                    });
+                    try {
+                        this.rules = _.extend(this.rules || {}, {
+                            pattern: pattern.indexOf('/') === 0
+                                // use '/.../ig' to specify pattern and flags
+                                ? eval(pattern)
+                                // pure strings can not have additional flags...
+                                : new RegExp(pattern)
+                        });
+                    } catch (ex) {
+                        core.log.error("invalid pattern: " + ex);
+                    }
                     var patternHint = $element.data('pattern-hint');
                     if (patternHint) {
                         this.rules.patternHint = patternHint;
