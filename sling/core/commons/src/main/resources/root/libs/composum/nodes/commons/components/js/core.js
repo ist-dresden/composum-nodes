@@ -225,7 +225,7 @@
                                 : new RegExp(pattern)
                         });
                     } catch (ex) {
-                        core.log.error("invalid pattern: " + ex);
+                        core.log.error("widget[" + this.name + "]: " + ex);
                     }
                     var patternHint = $element.data('pattern-hint');
                     if (patternHint) {
