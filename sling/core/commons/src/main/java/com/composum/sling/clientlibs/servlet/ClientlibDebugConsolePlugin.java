@@ -50,7 +50,7 @@ import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
 
 /**
  * Prints a rough overview over the structure of the client library, incl. dependent or embedded client libraries.
- * URL e.g. http://localhost:9090/bin/cpm/nodes/debug/clientlibstructure.css.html
+ * Works as a Sling Console plugin.
  *
  * @author Hans-Peter Stoerr
  * @since 10/2017
@@ -62,10 +62,9 @@ import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
         @Property(name = "felix.webconsole.label", value = "clientlibs"),
         @Property(name = "felix.webconsole.title", value = "Composum Client Libraries"),
         @Property(name = "felix.webconsole.category", value = "Composum"),
-        @Property(name = "felix.webconsole.css", value = "clientlibs/" + ClientlibDebugServlet.LOC_CSS),
-        @Property(name = "sling.servlet.paths", value = "/bin/cpm/nodes/debug/clientlibstructure"),
+        @Property(name = "felix.webconsole.css", value = "clientlibs/" + ClientlibDebugConsolePlugin.LOC_CSS),
 })
-public class ClientlibDebugServlet extends HttpServlet {
+public class ClientlibDebugConsolePlugin extends HttpServlet {
 
     /**
      * Extracts the (single) selector from a URL.
@@ -87,14 +86,24 @@ public class ClientlibDebugServlet extends HttpServlet {
      */
     protected static final String REQUEST_PARAM_TYPE = "type";
 
+    /**
+     * Request parameter that triggers clearing the clientlib cache. Obviously something to be used sparingly.
+     */
+    protected static final String REQUEST_PARAM_CLEAR_CACHE = "clearCache";
+
     /** Location for the CSS. */
-    protected static final String LOC_CSS = "slingconsole/clientlibplugin.css";
+    protected static final String LOC_CSS = "slingconsole/composumplugin.css";
 
     @Reference
     protected ClientlibService clientlibService;
 
     @Reference
     protected ResourceResolverFactory resolverFactory;
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doGet(req, resp);
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -104,40 +113,26 @@ public class ClientlibDebugServlet extends HttpServlet {
                     response.getOutputStream());
             return;
         }
-        response.setContentType("text/html"); // XSS? - checked (2019-05-04)
-        final Processor processor = new Processor();
-
-        PrintWriter writer = response.getWriter();
-        processor.writer = response.getWriter();
-        processor.request = request;
 
         String impersonation = request.getParameter(REQUEST_PARAM_IMPERSONATE);
-        processor.impersonation = impersonation;
-        processor.impersonationParam = StringUtils.isNotBlank(impersonation) ? "&" + REQUEST_PARAM_IMPERSONATE + "=" + impersonation.trim() : "";
+        PrintWriter writer = response.getWriter();
+        final Processor processor = new Processor(request, impersonation, writer);
         try {
-            processor.adminResolver = resolverFactory.getAdministrativeResourceResolver(null);
-        } catch (LoginException e) {
-            throw new ServletException("Cannot get administrative resolver");
-        }
-        if (StringUtils.isBlank(impersonation)) {
-            try {
-                processor.impersonationResolver = resolverFactory.getResourceResolver(null);
-            } catch (LoginException e) { // impossible - so we want to know about it.
-                throw new ServletException("Cannot get anonymous resolver");
-            }
-        } else {
-            try {
-                Map authenticationInfo = StringUtils.isNotBlank(impersonation) ?
-                        new HashMap(Collections.singletonMap(ResourceResolverFactory.USER_IMPERSONATION, impersonation))
-                        : null;
-                processor.impersonationResolver = resolverFactory.getAdministrativeResourceResolver(authenticationInfo);
-            } catch (LoginException e) {
-                writer.println("Could not login as " + impersonation);
+            initResolvers(processor, impersonation);
+
+            if (StringUtils.isNotBlank(request.getParameter(REQUEST_PARAM_CLEAR_CACHE))) {
+                clientlibService.clearCache(processor.adminResolver);
+                String location = request.getRequestURI() + "?" + request.getQueryString().replaceAll(REQUEST_PARAM_CLEAR_CACHE, REQUEST_PARAM_CLEAR_CACHE + "Done");
+                processor.adminResolver.commit();
+                response.sendRedirect(location);
                 return;
             }
-        }
+            if (StringUtils.isNotBlank(request.getParameter(REQUEST_PARAM_CLEAR_CACHE + "Done"))) {
+                writer.println("<br><br><br><h3>The complete clientlib cache was cleared.</h3><br>");
+            }
 
-        try {
+            response.setContentType("text/html"); // XSS? - checked (2019-05-04)
+
             writer.print("<html><body><h2>Structure of client libraries");
             if (StringUtils.isNotBlank(impersonation))
                 writer.print(" as seen from " + processor.impersonationResolver.getUserID());
@@ -168,9 +163,36 @@ public class ClientlibDebugServlet extends HttpServlet {
 
             writer.println("<hr/></body></html>");
         } finally {
-            processor.adminResolver.close();
-            processor.impersonationResolver.close();
+            if (null != processor.adminResolver) processor.adminResolver.close();
+            if (null != processor.impersonationResolver) processor.impersonationResolver.close();
             writer.close();
+        }
+    }
+
+    protected void initResolvers(Processor processor, String impersonation) throws ServletException {
+        try {
+            processor.adminResolver = resolverFactory.getAdministrativeResourceResolver(null);
+        } catch (LoginException e) {
+            processor.writer.println("Cannot get administrative resolver");
+            throw new ServletException("Cannot get administrative resolver");
+        }
+        if (StringUtils.isBlank(impersonation)) {
+            try {
+                processor.impersonationResolver = resolverFactory.getResourceResolver(null);
+            } catch (LoginException e) { // impossible - so we want to know about it.
+                processor.writer.println("Cannot get anonymous resolver");
+                throw new ServletException("Cannot get anonymous resolver");
+            }
+        } else {
+            try {
+                Map authenticationInfo = StringUtils.isNotBlank(impersonation) ?
+                        new HashMap(Collections.singletonMap(ResourceResolverFactory.USER_IMPERSONATION, impersonation))
+                        : null;
+                processor.impersonationResolver = resolverFactory.getAdministrativeResourceResolver(authenticationInfo);
+            } catch (LoginException e) {
+                processor.writer.println("Could not login as " + impersonation);
+                throw new ServletException("Could not login as " + impersonation);
+            }
         }
     }
 
@@ -197,6 +219,13 @@ public class ClientlibDebugServlet extends HttpServlet {
         ResourceResolver impersonationResolver;
         String impersonation;
         String impersonationParam;
+
+        public Processor(HttpServletRequest request, String impersonation, PrintWriter writer) {
+            this.request = request;
+            this.impersonation = impersonation;
+            this.impersonationParam = StringUtils.isNotBlank(impersonation) ? "&" + REQUEST_PARAM_IMPERSONATE + "=" + impersonation.trim() : "";
+            this.writer = writer;
+        }
 
         protected void printUsage() {
             String url = request.getRequestURL().toString().replaceAll("\\.[^/]+$", "") + ".css.html";
@@ -236,7 +265,9 @@ public class ClientlibDebugServlet extends HttpServlet {
             String impersonate = request.getParameter(REQUEST_PARAM_IMPERSONATE);
             if (StringUtils.isNotBlank(impersonate)) writer.print(impersonate);
             writer.println("\">");
-            writer.println("<input type=\"submit\" value=\"Submit\">\n </form>\n");
+            writer.println("<input type=\"submit\" value=\"Submit\">\n");
+            writer.println("<br><br><input type=\"submit\" title=\"This shouldn't normally be neccesary - use with caution - all used client libraries have to be rendered again.\" name=\"clearCache\" value=\"Clear the whole Clientlib Cache\">\n");
+            writer.println("</form>\n");
         }
 
         protected void printVerification() {

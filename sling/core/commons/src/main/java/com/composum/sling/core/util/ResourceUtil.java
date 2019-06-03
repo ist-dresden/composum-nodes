@@ -171,7 +171,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
     /**
      * Checks whether any of the resource's primary type, super types, sling resource type and supertypes is {resourceType}.
      */
-    public static boolean isResourceType(Resource resource, String resourceType) {
+    public static boolean isResourceType(@Nullable Resource resource, String resourceType) {
         return (resource != null && (resource.isResourceType(resourceType)
                 || isPrimaryType(resource, resourceType) || isNodeType(resource, resourceType)));
     }

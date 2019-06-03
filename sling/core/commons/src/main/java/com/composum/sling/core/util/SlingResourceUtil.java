@@ -1,16 +1,18 @@
 package com.composum.sling.core.util;
 
-import com.composum.sling.core.ResourceHandle;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * A set of utility functions related to the handling of Sling Resources, without going down to JCR specifics.
@@ -20,33 +22,41 @@ import java.util.*;
 public class SlingResourceUtil {
 
     /**
-     * Returns the relative path that leads from parent to child.
-     * TODO: perhaps extend this to creating relative paths also when child isn't in subtree?
+     * Returns the shortest relative path that leads from a node to another node.
+     * Postcondition: <code>ResourceUtil.normalize(node + "/" + result), is(ResourceUtil.normalize(other))</code>.
      *
-     * @param parent the parent
-     * @param child  a path of a child of parent
-     * @return the path from which the child can be read from parent - e.g. with {@link org.apache.sling.api.resource.Resource#getChild(String)}. If parent and child are the same, this is empty.
-     * @throws IllegalArgumentException if the child isn't a child of parent.
+     * @param node the parent
+     * @param other  a path of a child of parent
+     * @return the path from which other can be read from node - e.g. with {@link org.apache.sling.api.resource.Resource#getChild(String)}. If node and other are the same, this is empty.
+     * @throws IllegalArgumentException in those cases where there is no sensible answer: one of the paths is empty or one absolute and one relative path
      */
-    public static String relativePath(@Nonnull String parent, @Nonnull String child) {
-        String result = null;
-        if (parent.equals(child)) {
-            result = "";
-        } else if (child.startsWith(parent + '/')) {
-            result = child.substring(parent.length() + 1);
+    public static String relativePath(@Nonnull String node, @Nonnull String other) {
+        node = node != null ? ResourceUtil.normalize(node) : node;
+        other = other != null ? ResourceUtil.normalize(other) : other;
+        //noinspection IfStatementWithTooManyBranches,OverlyComplexBooleanExpression
+        if (StringUtils.isBlank(node) || StringUtils.isBlank(other)
+                || (StringUtils.startsWith(node, "/") && !StringUtils.startsWith(other, "/"))
+                || (!StringUtils.startsWith(node, "/") && StringUtils.startsWith(other, "/"))
+        ) { // no sensible answer here
+            throw new IllegalArgumentException("Invalid path: node=" + node + " , other=" + other);
+        } else if (node.equals(other)) {
+            return "";
+        } else if (other.startsWith(node + '/')) {
+            return other.substring(node.length() + 1);
         } else {
-            String parentNormalized = ResourceUtil.normalize(parent);
-            String childNormalized = ResourceUtil.normalize(child);
-            if (parentNormalized == null || childNormalized == null)
-                throw new IllegalArgumentException("Invalid path: parent=" + parent + " , child=" + child);
-            if (!parentNormalized.endsWith("/")) parentNormalized = parentNormalized + "/";
-            if (childNormalized.startsWith(parentNormalized)) {
-                result = childNormalized.substring(parentNormalized.length());
+            if (!node.endsWith("/"))
+                node = node + "/";
+            if (other.startsWith(node)) {
+                return other.substring(node.length());
+            } else {
+                String longestPrefix = StringUtils.getCommonPrefix(node, other);
+                if (!longestPrefix.endsWith("/"))
+                    longestPrefix = StringUtils.defaultString(ResourceUtil.getParent(longestPrefix));
+                String nodeRestpath = other.substring(longestPrefix.length());
+                String otherRestpath = node.substring(longestPrefix.length());
+                return StringUtils.repeat("../", StringUtils.countMatches(otherRestpath, "/")) + nodeRestpath;
             }
         }
-        if (result == null)
-            throw new IllegalArgumentException("Path of supposed child is not really a child path of parent: parent=" + parent + " , child=" + child);
-        return result;
     }
 
     /**
@@ -90,14 +100,13 @@ public class SlingResourceUtil {
      *
      * @return true if we needed to add the mixin.
      */
-    @CheckForNull
     public static boolean addMixin(@Nonnull Resource resource, @Nonnull String mixin) {
         if (!ResourceUtil.isResourceType(resource, mixin)) {
             ModifiableValueMap vm = resource.adaptTo(ModifiableValueMap.class);
             String[] mixins = vm.get(ResourceUtil.PROP_MIXINTYPES, new String[0]);
-            List<String> newMixins = new ArrayList<String>(Arrays.asList(mixins));
+            List<String> newMixins = new ArrayList<>(Arrays.asList(mixins));
             newMixins.add(mixin);
-            vm.put(ResourceUtil.PROP_MIXINTYPES, newMixins.toArray(new String[newMixins.size()]));
+            vm.put(ResourceUtil.PROP_MIXINTYPES, newMixins.toArray(new String[0]));
             return true;
         }
         return false;

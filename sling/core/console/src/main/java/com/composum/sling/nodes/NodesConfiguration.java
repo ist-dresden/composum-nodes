@@ -28,6 +28,7 @@ public interface NodesConfiguration {
     String SOURCE_NODES_FILTER_KEY = "node.source.filter";
 
     String SOURCE_SERVLET_ENABLED = "source.servlet.enabled";
+    String SOURCE_UPDATE_SERVLET_ENABLED = "sourceupdate.servlet.enabled";
     String PACKAGE_SERVLET_ENABLED = "package.servlet.enabled";
     String SECURITY_SERVLET_ENABLED = "security.servlet.enabled";
     String NODE_SERVLET_ENABLED = "node.servlet.enabled";

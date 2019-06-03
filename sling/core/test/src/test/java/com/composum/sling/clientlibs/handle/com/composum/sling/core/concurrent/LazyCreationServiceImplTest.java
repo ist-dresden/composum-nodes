@@ -14,7 +14,6 @@ import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -22,16 +21,30 @@ import org.slf4j.Logger;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.lock.LockManager;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.composum.sling.core.util.ResourceUtil.*;
-import static org.apache.sling.hamcrest.ResourceMatchers.props;
-import static org.junit.Assert.*;
+import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
+import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_SLING_FOLDER;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_UNSTRUCTURED;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -198,24 +211,19 @@ public class LazyCreationServiceImplTest {
         runCreationAndInitInParallel(0);
     }
 
-    // TODO is it possible to fix this?
     /** Stresstest: simulate collisions in cluster as far as possible - SequencerService doesn't work there. */
     @Test
-    @Ignore("Sometimes fails for unknown reason. Jackrabbit bug? Reinsert this when developing again.")
     public void testCreationAndInitWithoutSequencer() throws Exception {
         setup(NOSEQUENCER);
         runCreationAndInitInParallel(0);
-        // switch off checking that nothing is initialized twice since that doesn't work because of a bug in the
-        // JCR locking: two threads trying to lock the same thing get a lock
-        initCount.clear();
+        initCount.clear(); // avoid initcount check since JCR locking doesn't seem to distinguish between sessions
     }
 
-    // TODO is it possible to fix this?
     @Test
-    @Ignore("Sometimes fails for unknown reason. Jackrabbit bug? Reinsert this when developing again.")
     public void testCreationAndInitWithRandomDelays() throws Exception {
         setup(NOSEQUENCER);
         runCreationAndInitInParallel(300);
+        initCount.clear(); // avoid initcount check since JCR locking doesn't seem to distinguish between sessions
     }
 
     /**
@@ -252,7 +260,7 @@ public class LazyCreationServiceImplTest {
         validateResult(future1.get(), true);
         timing = System.currentTimeMillis() - begin;
         assertTrue("" + timing, timing >= 3000);
-        initCount.clear(); // avoid the check in teardown since it doesn't fit here.
+        initCount.clear(); // avoid the check in teardown since it doesn't fit here - this deliberately initializes something twice
     }
 
     /** Delay by a random time between 3/4 and 5/4 * delay milliseconds. */
@@ -303,8 +311,12 @@ public class LazyCreationServiceImplTest {
             public void initialize(ResourceResolver resolver, Resource resource) throws RepositoryException,
                     PersistenceException {
                 randomlyDelay(delay);
-                initCount.get(resource.getPath()).incrementAndGet();
+                String path = resource.getPath();
+                if (initCount.get(path).incrementAndGet() > 1)
+                    LOG.error("Initialized twice (check 1)! {}", path);
                 ResourceHandle.use(resource).setProperty("initialized", Calendar.getInstance());
+                if (initCount.get(path).get() > 1)
+                    LOG.error("Initialized twice (check 2)! {}", path);
             }
         };
     }
