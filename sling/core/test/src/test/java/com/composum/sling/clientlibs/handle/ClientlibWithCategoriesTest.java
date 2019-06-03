@@ -147,7 +147,7 @@ public class ClientlibWithCategoriesTest extends AbstractClientlibTest {
 
     @Test
     public void equalHashesOfAllVisitors() throws Exception {
-        for (ClientlibElement clientlib : Arrays.asList(getClientlibs2("category:cat1", js), getClientlibs2
+        for (ClientlibElement clientlib : Arrays.<ClientlibElement>asList(getClientlibs2("category:cat1", js), getClientlibs2
                 ("category:cat2", js), getClientlibs2("category:cat3", js), getClientlibs2("category:embed2twice", js)))
             verifyEqualHashesOfVisitors(clientlib);
     }
