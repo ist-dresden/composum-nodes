@@ -521,7 +521,8 @@
                 var config = this.getConfig();
                 if (config.validationUrl) {
                     var url = _.isFunction(config.validationUrl) ? config.validationUrl() : config.validationUrl;
-                    core.ajaxPut(url, JSON.stringify(this.validationData()), {
+                    var data = this.validationData();
+                    core.ajaxPut(url, JSON.stringify(data), {
                             dataType: 'json'
                         }, undefined, undefined,
                         _.bind(function (xhr) {

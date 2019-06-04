@@ -33,6 +33,6 @@ public class LoggerFormat extends Format {
     }
 
     public static String format(String message, Object... values) {
-        return MessageFormatter.format(message, values).getMessage();
+        return MessageFormatter.arrayFormat(message, values).getMessage();
     }
 }

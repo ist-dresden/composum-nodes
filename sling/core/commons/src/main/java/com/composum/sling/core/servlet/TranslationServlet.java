@@ -12,8 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
+import static javax.servlet.http.HttpServletResponse.SC_OK;
 
 @SlingServlet(
         paths = "/bin/cpm/core/translate",
@@ -62,7 +63,7 @@ public class TranslationServlet extends AbstractServiceServlet {
                          @Nonnull final SlingHttpServletResponse response,
                          @Nonnull final ResourceHandle resource)
                 throws IOException {
-            response.setStatus(HttpServletResponse.SC_OK);
+            response.setStatus(SC_OK);
             response.setContentType("application/json; charset=UTF-8");
             translationService.translate(request, request.getReader(), response.getWriter());
         }
@@ -80,7 +81,7 @@ public class TranslationServlet extends AbstractServiceServlet {
                 throws IOException {
             Status status = new Status(request, response);
             status.translate(request.getReader());
-            status.sendJson();
+            status.sendJson(SC_OK);
         }
     }
 }

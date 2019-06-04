@@ -183,7 +183,8 @@
                                 || this.rules.pattern.test(value);
                             if (!valid) {
                                 this.alert(alertMethod, 'danger', '',
-                                    this.rules.patternHint || "value doesn't match pattern", this.rules.pattern);
+                                    this.rules.patternHint || "value doesn't match pattern",
+                                    ('' + this.rules.pattern).replace(/^\//, '').replace(/\/$/, ''));
                             }
                         }
                         if (this.valid && this.rules.mandatory) {

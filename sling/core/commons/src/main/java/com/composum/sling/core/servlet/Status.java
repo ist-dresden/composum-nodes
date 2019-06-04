@@ -45,7 +45,19 @@ public class Status {
 
     public static final String DATA = "data";
 
-    public enum Level {info, warn, error}
+    public static final String BOOTSTRAP_ERROR = "danger";
+
+    public enum Level {
+        info, warn, error;
+
+        @Nonnull
+        public static Level levelOf(@Nonnull String name) {
+            if (BOOTSTRAP_ERROR.equalsIgnoreCase(name)) {
+                name = error.name();
+            }
+            return valueOf(name);
+        }
+    }
 
     public class Message {
 
@@ -53,34 +65,30 @@ public class Status {
         public final String context;
         public final String label;
         public final String text;
-        public final String hint;
 
         public Message(@Nonnull final Level level, @Nonnull final String text) {
-            this(level, null, null, text, null);
-        }
-
-        public Message(@Nonnull final Level level, @Nonnull final String text, @Nonnull final String hint) {
-            this(level, null, null, text, hint);
+            this(level, null, null, text);
         }
 
         public Message(@Nonnull final Level level,
                        @Nullable final String context, @Nullable final String label,
-                       @Nonnull final String text, @Nullable final String hint) {
+                       @Nonnull final String text) {
             this.level = level;
             this.context = context;
             this.label = label;
             this.text = text;
-            this.hint = hint;
         }
 
         /** the 'translate' constructor */
         public Message(Map<String, Object> data) {
             Object value;
-            level = (value = data.get(LEVEL)) != null ? Level.valueOf(value.toString()) : Level.info;
+            Object hint = data.get(HINT);
+            level = (value = data.get(LEVEL)) != null ? Level.levelOf(value.toString()) : Level.info;
             context = (value = data.get(CONTEXT)) != null ? prepare(value.toString()) : null;
             label = (value = data.get(LABEL)) != null ? prepare(value.toString()) : null;
-            text = (value = data.get(TEXT)) != null ? prepare(value.toString()) : null;
-            hint = (value = data.get(HINT)) != null ? prepare(value.toString()) : null;
+            text = (value = data.get(TEXT)) != null
+                    ? (hint != null ? prepare(value.toString(), hint) : prepare(value.toString()))
+                    : null;
         }
 
         @SuppressWarnings("Duplicates")
@@ -94,9 +102,6 @@ public class Status {
                 writer.name(LABEL).value(label);
             }
             writer.name(TEXT).value(text);
-            if (StringUtils.isNotBlank(hint)) {
-                writer.name(HINT).value(hint);
-            }
             writer.endObject();
         }
     }
@@ -174,7 +179,7 @@ public class Status {
     }
 
     public void warn(@Nonnull final String label, @Nonnull final String text, Object... args) {
-        addMessage(Level.warn, null, label, prepare(text, args), null);
+        addMessage(Level.warn, null, label, prepare(text, args));
     }
 
     public void warn(@Nonnull final String context, @Nonnull final String label,
@@ -187,7 +192,7 @@ public class Status {
     }
 
     public void error(@Nonnull final String label, @Nonnull final String text, Object... args) {
-        addMessage(Level.error, null, label, prepare(text, args), null);
+        addMessage(Level.error, null, label, prepare(text, args));
     }
 
     public void error(@Nonnull final String context, @Nonnull final String label,
@@ -212,7 +217,7 @@ public class Status {
      * @param args  argument objects for the log like message preparation
      */
     public void addMessage(@Nonnull final Level level, @Nonnull final String text, Object... args) {
-        addMessage(level, null, null, prepare(text, args), null);
+        addMessage(level, null, null, prepare(text, args));
     }
 
     /**
@@ -220,11 +225,10 @@ public class Status {
      * @param context non prepared context key
      * @param label   non prepared aspect label (validation label)
      * @param text    pre prepared text message
-     * @param hint    pre prepared hint message
      */
     public void addMessage(@Nonnull final Level level, @Nullable final String context, @Nullable final String label,
-                           @Nonnull final String text, @Nullable final String hint) {
-        addMessage(new Message(level, prepare(context), prepare(label), text, hint));
+                           @Nonnull final String text) {
+        addMessage(new Message(level, prepare(context), prepare(label), text));
     }
 
     public void addMessage(@Nonnull final Message message) {
@@ -286,6 +290,9 @@ public class Status {
                 setTitle("Warning");
             }
         }
+        if ((value = data.get(STATUS)) != null) {
+            setStatus(value instanceof Integer ? (Integer) value : Integer.parseInt(value.toString()));
+        }
         if ((value = data.get(MESSAGES)) instanceof Collection) {
             for (Object val : ((Collection<?>) value)) {
                 if (val instanceof Map) {
@@ -314,8 +321,12 @@ public class Status {
     }
 
     public void sendJson() throws IOException {
+        sendJson(getStatus());
+    }
+
+    public void sendJson(int status) throws IOException {
         JsonWriter writer = ResponseUtil.getJsonWriter(response);
-        response.setStatus(getStatus());
+        response.setStatus(status);
         response.setContentType("application/json; charset=UTF-8");
         toJson(writer);
     }
