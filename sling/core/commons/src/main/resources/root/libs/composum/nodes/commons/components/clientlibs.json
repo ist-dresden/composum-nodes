@@ -63,7 +63,8 @@
     "js": {
       "jcr:primaryType": "sling:OrderedFolder",
       "embed": ["category:composum.components.base",
-                "composum/nodes/commons/components/js/core.js"]
+                "composum/nodes/commons/components/js/core.js",
+                "composum/nodes/commons/components/js/i18n.js"]
     }
   },
   "components": {
@@ -108,6 +109,8 @@
       ],
       "embed": [
         "composum/nodes/commons/components/js/core.js",
+        "composum/nodes/commons/components/js/i18n.js",
+        "composum/nodes/commons/components/js/widgets.js",
         "composum/nodes/commons/components/js/tree.js",
         "composum/nodes/commons/components/js/multiform.js",
         "composum/nodes/commons/components/js/components.js",
