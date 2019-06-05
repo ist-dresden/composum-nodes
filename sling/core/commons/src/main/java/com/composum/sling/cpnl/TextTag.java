@@ -121,8 +121,9 @@ public class TextTag extends TagBase {
                     this.value = ResourceUtil.getValueMap(resource).get(this.propertyName, Object.class);
                 }
             }
+            Format formatter = null;
             if (this.value != null) {
-                Format formatter = getFormatter(this.value);
+                formatter = getFormatter(this.value);
                 if (formatter != null) {
                     this.output = formatter.format(
                             formatter instanceof MessageFormat
@@ -132,7 +133,7 @@ public class TextTag extends TagBase {
                     this.output = String.valueOf(this.value);
                 }
             }
-            if (StringUtils.isNotBlank(this.output) && this.i18n) {
+            if (StringUtils.isNotBlank(this.output) && this.i18n && formatter == null) {
                 this.output = I18N.get(this.request, this.output);
             }
             return this.output != null ? SKIP_BODY : EVAL_BODY_BUFFERED;
@@ -235,7 +236,9 @@ public class TextTag extends TagBase {
 
     public Format getFormatter(Object value) {
         if (formatter == null && format != null) {
-            formatter = CpnlElFunctions.getFormatter(getLocale(), format, value != null ? value.getClass() : null);
+            formatter = CpnlElFunctions.getFormatter(getLocale(),
+                    this.i18n ? I18N.get(this.request, format) : format,
+                    value != null ? value.getClass() : null);
         }
         return formatter;
     }

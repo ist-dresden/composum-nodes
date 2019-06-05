@@ -21,6 +21,8 @@ import java.util.Map;
  */
 public abstract class TagBase extends CpnlBodyTagSupport implements DynamicAttributes {
 
+    public static final String TAG_NONE = "none";
+
     private static final Logger LOG = LoggerFactory.getLogger(TagBase.class);
 
     protected String tagName;
@@ -134,14 +136,17 @@ public abstract class TagBase extends CpnlBodyTagSupport implements DynamicAttri
     }
 
     protected void renderTagStart() {
-        try {
-            JspWriter writer = this.pageContext.getOut();
-            writer.write("<");
-            writer.write(getTagName());
-            writeAttributes(writer);
-            writer.write(">");
-        } catch (IOException ioex) {
-            LOG.error(ioex.getMessage(), ioex);
+        String tagName = getTagName();
+        if (!TAG_NONE.equalsIgnoreCase(tagName)) {
+            try {
+                JspWriter writer = this.pageContext.getOut();
+                writer.write("<");
+                writer.write(getTagName());
+                writeAttributes(writer);
+                writer.write(">");
+            } catch (IOException ioex) {
+                LOG.error(ioex.getMessage(), ioex);
+            }
         }
     }
 
@@ -155,13 +160,16 @@ public abstract class TagBase extends CpnlBodyTagSupport implements DynamicAttri
     }
 
     protected void renderTagEnd() {
-        try {
-            JspWriter writer = this.pageContext.getOut();
-            writer.write("</");
-            writer.write(getTagName());
-            writer.write(">");
-        } catch (IOException ioex) {
-            LOG.error(ioex.getMessage(), ioex);
+        String tagName = getTagName();
+        if (!TAG_NONE.equalsIgnoreCase(tagName)) {
+            try {
+                JspWriter writer = this.pageContext.getOut();
+                writer.write("</");
+                writer.write(getTagName());
+                writer.write(">");
+            } catch (IOException ioex) {
+                LOG.error(ioex.getMessage(), ioex);
+            }
         }
     }
 }

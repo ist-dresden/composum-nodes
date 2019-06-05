@@ -353,22 +353,26 @@ public class CpnlElFunctions {
     public static Format getFormatter(@Nonnull final Locale locale, @Nonnull final String format,
                                       @Nullable final Class<?>... type) {
         Format formatter = null;
-        Pattern TEXT_FORMAT_STRING = Pattern.compile("^\\{([^}]+)}(.+)$");
+        Pattern TEXT_FORMAT_STRING = Pattern.compile("^(\\{([^}]+)}(.+)|(.*\\{}.*))$");
         Matcher matcher = TEXT_FORMAT_STRING.matcher(format);
         if (matcher.matches()) {
             switch (matcher.group(1)) {
                 case "Message":
-                    formatter = new MessageFormat(matcher.group(2), locale);
+                    formatter = new MessageFormat(matcher.group(3), locale);
                     break;
                 case "Date":
-                    formatter = new SimpleDateFormat(matcher.group(2), locale);
+                    formatter = new SimpleDateFormat(matcher.group(3), locale);
                     break;
                 case "String":
-                    formatter = new FormatterFormat(matcher.group(2), locale);
+                    formatter = new FormatterFormat(matcher.group(3), locale);
+                    break;
+                case "Log":
+                    formatter = new LoggerFormat(matcher.group(3));
                     break;
                 default:
-                case "Log":
-                    formatter = new LoggerFormat(matcher.group(2));
+                    if (StringUtils.isBlank(matcher.group(2))) {
+                        formatter = new LoggerFormat(matcher.group(4));
+                    }
                     break;
             }
         } else {
