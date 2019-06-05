@@ -49,6 +49,29 @@
       }
     }
   },
+  "view": {
+    "sling:resourceType": "composum/nodes/commons/clientlib",
+    "description": "embeds the minimal set of dependencies to view pages",
+    "category": [
+      "composum.components.view"
+    ],
+    "order": 10,
+    "css": {
+      "jcr:primaryType": "sling:OrderedFolder"
+    },
+    "js": {
+      "jcr:primaryType": "sling:OrderedFolder",
+      "embed": [
+        "jslibs/jquery/([2-3].*:3.4.1)/jquery.js",
+        "jslibs/jquery/base64/jquery.base64.js",
+        "jslibs/loglevel/1.6.1/loglevel.js",
+        "jslibs/underscore/(1.*:1.9.1)/underscore.js",
+        "jslibs/backbone/(1.*:1.4.0)/backbone.js",
+        "composum/nodes/commons/components/js/core.js",
+        "composum/nodes/commons/components/js/i18n.js"
+      ]
+    }
+  },
   "core": {
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "description": "embeds the necessary set of dependencies to use the core features",
@@ -58,13 +81,17 @@
     "order": 110,
     "css": {
       "jcr:primaryType": "sling:OrderedFolder",
-      "embed": ["category:composum.components.base"]
+      "embed": [
+        "category:composum.components.base"
+      ]
     },
     "js": {
       "jcr:primaryType": "sling:OrderedFolder",
-      "embed": ["category:composum.components.base",
-                "composum/nodes/commons/components/js/core.js",
-                "composum/nodes/commons/components/js/i18n.js"]
+      "embed": [
+        "category:composum.components.base",
+        "composum/nodes/commons/components/js/core.js",
+        "composum/nodes/commons/components/js/i18n.js"
+      ]
     }
   },
   "components": {
