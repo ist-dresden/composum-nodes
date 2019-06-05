@@ -1,7 +1,7 @@
 package com.composum.sling.cpnl;
 
-import com.composum.sling.core.RequestBundle;
 import com.composum.sling.core.util.FormatterFormat;
+import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.LoggerFormat;
 import com.composum.sling.core.util.XSS;
@@ -27,7 +27,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.MissingResourceException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -143,15 +142,7 @@ public class CpnlElFunctions {
     }
 
     public static String i18n(SlingHttpServletRequest request, String text) {
-        String translated = null;
-        try {
-            translated = RequestBundle.get(request).getString(text);
-        } catch (MissingResourceException mrex) {
-            if (LOG.isInfoEnabled()) {
-                LOG.info(mrex.toString());
-            }
-        }
-        return translated != null ? translated : text;
+        return I18N.get(request, text);
     }
 
     /**

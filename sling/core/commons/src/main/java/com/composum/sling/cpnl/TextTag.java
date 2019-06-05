@@ -5,6 +5,7 @@
  */
 package com.composum.sling.cpnl;
 
+import com.composum.sling.core.util.I18N;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
@@ -132,7 +133,7 @@ public class TextTag extends TagBase {
                 }
             }
             if (StringUtils.isNotBlank(this.output) && this.i18n) {
-                this.output = CpnlElFunctions.i18n(this.request, this.output);
+                this.output = I18N.get(this.request, this.output);
             }
             return this.output != null ? SKIP_BODY : EVAL_BODY_BUFFERED;
         }

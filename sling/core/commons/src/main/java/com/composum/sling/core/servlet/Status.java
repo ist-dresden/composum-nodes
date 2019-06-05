@@ -1,8 +1,8 @@
 package com.composum.sling.core.servlet;
 
+import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.LoggerFormat;
 import com.composum.sling.core.util.ResponseUtil;
-import com.composum.sling.cpnl.CpnlElFunctions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
@@ -255,7 +255,7 @@ public class Status {
      */
     public String prepare(@Nullable String text, Object... args) {
         if (text != null) {
-            text = CpnlElFunctions.i18n(request, text);
+            text = I18N.get(request, text);
             if (args != null && args.length > 0) {
                 text = LoggerFormat.format(text, args);
             }

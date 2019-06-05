@@ -2,10 +2,10 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
+import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.LoggerFormat;
 import com.composum.sling.core.util.ResponseUtil;
-import com.composum.sling.cpnl.CpnlElFunctions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
@@ -143,7 +143,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         protected List<String> messages = new ArrayList<>();
 
         public void addMessage(SlingHttpServletRequest request, String message, Object value) {
-            message = CpnlElFunctions.i18n(request, message);
+            message = I18N.get(request, message);
             message = LoggerFormat.format(message, value);
             messages.add(message);
         }
@@ -230,7 +230,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         jsonWriter.name("messages").beginArray();
         jsonWriter.beginObject();
         jsonWriter.name("level").value("warn");
-        jsonWriter.name("text").value(CpnlElFunctions.i18n(request,
+        jsonWriter.name("text").value(I18N.get(request,
                 "An element with the same name exists already - use a different name!"));
         jsonWriter.endObject();
         jsonWriter.endArray();

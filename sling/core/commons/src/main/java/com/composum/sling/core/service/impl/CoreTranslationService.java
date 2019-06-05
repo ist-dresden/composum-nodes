@@ -1,7 +1,7 @@
 package com.composum.sling.core.service.impl;
 
 import com.composum.sling.core.service.TranslationService;
-import com.composum.sling.cpnl.CpnlElFunctions;
+import com.composum.sling.core.util.I18N;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -43,7 +43,7 @@ public class CoreTranslationService implements TranslationService {
         } else if (element instanceof JsonPrimitive) {
             JsonPrimitive primitive = (JsonPrimitive) element;
             if (primitive.isString()) {
-                primitive = new JsonPrimitive(CpnlElFunctions.i18n(request, primitive.getAsString()));
+                primitive = new JsonPrimitive(I18N.get(request, primitive.getAsString()));
             }
             return primitive;
         }

@@ -11,6 +11,7 @@ import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.NodeTreeServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
+import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.RequestUtil;
@@ -1059,7 +1060,7 @@ public class NodeServlet extends NodeTreeServlet {
                             jsonWriter.name("messages").beginArray();
                             jsonWriter.beginObject();
                             jsonWriter.name("level").value("info");
-                            jsonWriter.name("text").value(CpnlElFunctions.i18n(request, "no modification"));
+                            jsonWriter.name("text").value(I18N.get(request, "no modification"));
                             jsonWriter.endObject();
                             jsonWriter.endArray();
                             jsonWriter.endObject();
