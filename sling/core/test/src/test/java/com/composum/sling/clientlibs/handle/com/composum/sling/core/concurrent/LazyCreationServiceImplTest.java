@@ -31,9 +31,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
@@ -234,16 +236,30 @@ public class LazyCreationServiceImplTest {
     public void testCreationAndInitWithLockBreak() throws Exception {
         setup(NOSEQUENCER);
         final String path = context.uniqueRoot().content() + "/lock/break";
-        long begin = System.currentTimeMillis();
+        CountDownLatch latch = new CountDownLatch(1);
         Future<ResourceHandle> future1 = executor.submit(new Callable<ResourceHandle>() {
             @Override
             public ResourceHandle call() throws Exception {
                 final ResourceResolver resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
+
+                LazyCreationService.CreationStrategy creator = new LazyCreationService.CreationStrategy() {
+                    final LazyCreationService.CreationStrategy wrappedCreator = makeCreator(0);
+
+                    @Override
+                    public Resource create(ResourceResolver resolver, Resource parent, String name) throws RepositoryException, PersistenceException {
+                        Resource result = wrappedCreator.create(resolver, parent, name);
+                        latch.countDown();
+                        return result;
+                    }
+                };
+
                 ResourceHandle handle = lazyCreationService.getOrCreate(resolver, path,
-                        makeGetter(), makeCreator(0), makeInitializer(4000), makeParentCreator(0));
+                        makeGetter(), creator, makeInitializer(4000), makeParentCreator(0));
                 return handle;
             }
         });
+        latch.await(1, TimeUnit.MINUTES); // make sure the first thread actually started
+        long begin = System.currentTimeMillis();
         Future<ResourceHandle> future2 = executor.submit(new Callable<ResourceHandle>() {
             @Override
             public ResourceHandle call() throws Exception {
@@ -266,7 +282,12 @@ public class LazyCreationServiceImplTest {
     /** Delay by a random time between 3/4 and 5/4 * delay milliseconds. */
     protected void randomlyDelay(int delay) {
         try {
-            if (0 < delay) Thread.sleep(rnd.nextInt(delay / 2) + 3 * delay / 4);
+            if (0 < delay) {
+                int millis = rnd.nextInt(delay / 2) + 3 * delay / 4;
+                LOG.debug("Starting wait for {} milliseconds", millis);
+                Thread.sleep(millis);
+                LOG.debug("Elapsed {} milliseconds", millis);
+            }
         } catch (InterruptedException e) {
             fail("Impossible: " + e);
         }

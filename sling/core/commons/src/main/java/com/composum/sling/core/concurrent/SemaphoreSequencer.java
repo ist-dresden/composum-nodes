@@ -8,8 +8,10 @@ import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
+import javax.annotation.Nonnull;
+import java.lang.ref.WeakReference;
 import java.util.Map;
+import java.util.Objects;
 import java.util.WeakHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -21,32 +23,53 @@ public class SemaphoreSequencer implements SequencerService<SemaphoreSequencer.T
     private static final Logger LOG = LoggerFactory.getLogger(SemaphoreSequencer.class);
 
     public static final class Token implements SequencerService.Token {
-
+        @Nonnull
         protected final String key;
         protected final Semaphore semaphore;
 
-        protected Token(String key, Semaphore semaphore) {
+        protected Token(@Nonnull String key, Semaphore semaphore) {
             this.key = key;
             this.semaphore = semaphore;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null) return false;
+            Token token = (Token) o;
+            return key.equals(token.key);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(key);
         }
     }
 
     /**
+     * Memorizes the tokens we have passed out, so that a new acquire with the same key goes to exactly the same semaphore.
+     * The weakreference goes to the token itself.
      * We use here a synchronized {@link WeakHashMap} so that the semaphores can be reclaimed once they are not used anymore.
      * As long as the semaphore is in the token, it's not thrown away; afterwards GC can remove it at leisure.
      */
-    volatile WeakHashMap<String, Semaphore> semaphores;
+    volatile WeakHashMap<Token, WeakReference<Token>> activeTokens;
 
     @Override
+    @Nonnull
     public Token acquire(String key) {
 
+        Token token;
         Semaphore semaphore;
 
         synchronized (this) {
-            semaphore = semaphores.get(key);
-            if (semaphore == null) {
+            WeakReference<Token> ref = activeTokens.get(new Token(key, null));
+            token = ref != null ? ref.get() : null;
+            if (token == null) {
                 semaphore = new Semaphore(1);
-                semaphores.put(key, semaphore);
+                token = new Token(key, semaphore);
+                activeTokens.put(token, new WeakReference<>(token));
+            } else {
+                semaphore = token.semaphore;
             }
         }
 
@@ -65,12 +88,20 @@ public class SemaphoreSequencer implements SequencerService<SemaphoreSequencer.T
                 LOG.error("Unlocking semaphore for {} since we've been waiting for an hour. There must be something broken.", key);
                 // Hard to tell what to do here. We try having everything waiting for this continue and hopefully crash.
                 semaphore.release();
-                while (semaphore.hasQueuedThreads()) semaphore.release();
+                while (semaphore.hasQueuedThreads()) {
+                    Thread.yield();
+                    semaphore.release();
+                }
             }
             throw new java.lang.IllegalStateException("Could not acquive lock for a loong time, or we have been interrupted.", ex);
         }
 
-        return new Token(key, semaphore);
+        // We create a fresh token so that each user gets it's own token, which might make debugging easier at times.
+        synchronized (this) {
+            token = new Token(key, semaphore);
+            activeTokens.put(token, new WeakReference<>(token));
+        }
+        return token;
     }
 
     @Override
@@ -85,12 +116,12 @@ public class SemaphoreSequencer implements SequencerService<SemaphoreSequencer.T
 
     @Activate
     protected void activate(@SuppressWarnings("UnusedParameters") ComponentContext context) {
-        Map<String, Semaphore> oldSemaphores;
+        WeakHashMap<Token, WeakReference<Token>> oldTokens;
         synchronized (this) {
-            oldSemaphores = semaphores;
-            semaphores = new WeakHashMap<String, Semaphore>();
+            oldTokens = activeTokens;
+            activeTokens = new WeakHashMap<>();
         }
-        cleanOldSemaphores(oldSemaphores);
+        cleanOldSemaphores(oldTokens);
     }
 
     /**
@@ -99,22 +130,25 @@ public class SemaphoreSequencer implements SequencerService<SemaphoreSequencer.T
      */
     @Deactivate
     protected void deactivate(@SuppressWarnings("UnusedParameters") ComponentContext context) {
-        Map<String, Semaphore> semaphoresToClear = null;
+        Map<Token, WeakReference<Token>> semaphoresToClear = null;
         synchronized (this) {
-            if (semaphores != null) {
-                semaphoresToClear = semaphores;
-                semaphores = null;
+            if (activeTokens != null) {
+                semaphoresToClear = activeTokens;
+                activeTokens = null;
             }
         }
         cleanOldSemaphores(semaphoresToClear);
     }
 
-    protected void cleanOldSemaphores(Map<String, Semaphore> semaphoresToClear) {
-        if (semaphoresToClear == null || semaphoresToClear.isEmpty())
+    protected void cleanOldSemaphores(Map<Token, WeakReference<Token>> tokensToClear) {
+        if (tokensToClear == null || tokensToClear.isEmpty())
             return;
         for (int i = 0; i < 10; ++i) { // if our users try to reacquire the semaphore.
-            for (Semaphore semaphore : semaphoresToClear.values()) {
-                while (semaphore.hasQueuedThreads()) semaphore.release();
+            for (Token token : tokensToClear.keySet()) {
+                while (token.semaphore.hasQueuedThreads()) {
+                    token.semaphore.release();
+                    Thread.yield();
+                }
             }
         }
     }

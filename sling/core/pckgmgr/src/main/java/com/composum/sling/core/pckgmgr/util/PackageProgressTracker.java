@@ -73,6 +73,7 @@ public abstract class PackageProgressTracker implements ProgressTrackerListener 
 
     @Override
     public void onError(Mode mode, String path, Exception ex) {
+        LOG.warn("Received error for mode {} path {}", new Object[]{mode, path, ex});
         errorCount++;
         try {
             writeItem(new Item(mode, "E", path, ex));
