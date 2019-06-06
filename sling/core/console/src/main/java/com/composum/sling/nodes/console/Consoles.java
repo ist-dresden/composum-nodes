@@ -6,6 +6,7 @@ import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -129,7 +130,10 @@ public class Consoles extends ConsolePage {
 
         @Override
         public int compareTo(Console other) {
-            return order - other.order;
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(order, other.order);
+            builder.append(getPath(), other.getPath());
+            return builder.toComparison();
         }
     }
 

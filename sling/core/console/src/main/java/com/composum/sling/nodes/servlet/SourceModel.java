@@ -186,6 +186,7 @@ public class SourceModel extends ConsoleSlingBean {
         initialize(context, resource);
     }
 
+    @Override
     public String getName() {
         return resource.getName();
     }

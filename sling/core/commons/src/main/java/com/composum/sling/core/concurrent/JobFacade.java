@@ -1,5 +1,6 @@
 package com.composum.sling.core.concurrent;
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.event.impl.jobs.JobImpl;
@@ -60,9 +61,10 @@ public interface JobFacade extends Comparable<JobFacade> {
 
         @Override
         public int compareTo(JobFacade o2) {
-            final Calendar j1s = getProcessingStarted();
-            final Calendar j2s = o2.getProcessingStarted();
-            return j1s.compareTo(j2s);
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(getProcessingStarted(), o2.getProcessingStarted());
+            builder.append(getId(), o2.getId());
+            return builder.toComparison();
         }
     }
 
