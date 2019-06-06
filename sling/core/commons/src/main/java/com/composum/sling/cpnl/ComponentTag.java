@@ -34,7 +34,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     protected SlingBean component;
     private transient Class<? extends SlingBean> componentType;
-    private static Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<Class<? extends SlingBean>, Field[]>();
+    private static Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<>();
 
     protected ArrayList<Map<String, Object>> replacedAttributes;
     public static final Map<String, Integer> SCOPES = new HashMap<>();
@@ -119,8 +119,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
      * for the component instance attribute
      */
     public void setScope(String key) {
-        Integer value = key != null ? SCOPES.get(key.toLowerCase()) : null;
-        varScope = value != null ? value : null;
+        varScope = key != null ? SCOPES.get(key.toLowerCase()) : null;
     }
 
     public void setVarScope(Integer value) {
@@ -149,6 +148,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
     /**
      * get the content type class object
      */
+    @SuppressWarnings("unchecked")
     protected Class<? extends SlingBean> getComponentType() throws ClassNotFoundException {
         if (componentType == null) {
             String type = getType();
