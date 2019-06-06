@@ -28,7 +28,7 @@ public class TextTag extends TagBase {
 
     private static final Logger LOG = LoggerFactory.getLogger(TextTag.class);
 
-    public enum Type {text, rich, script, cdata, path, value}
+    public enum Type {text, rich, script, style, cdata, path, value}
 
     public interface EscapeFunction {
         Object escape(SlingHttpServletRequest request, Object value);
@@ -54,6 +54,12 @@ public class TextTag extends TagBase {
             @Override
             public Object escape(SlingHttpServletRequest request, Object value) {
                 return CpnlElFunctions.script(TextTag.toString(value));
+            }
+        });
+        ESCAPE_FUNCTION_MAP.put(Type.style, new EscapeFunction() {
+            @Override
+            public Object escape(SlingHttpServletRequest request, Object value) {
+                return CpnlElFunctions.style(TextTag.toString(value));
             }
         });
         ESCAPE_FUNCTION_MAP.put(Type.cdata, new EscapeFunction() {
@@ -125,12 +131,17 @@ public class TextTag extends TagBase {
             if (this.value != null) {
                 formatter = getFormatter(this.value);
                 if (formatter != null) {
+                    String stringValue = this.value instanceof String ? (String) this.value : null;
+                    if (StringUtils.isNotBlank(stringValue) && this.i18n) {
+                        stringValue = I18N.get(this.request, stringValue);
+                    }
                     this.output = formatter.format(
                             formatter instanceof MessageFormat
-                                    ? new String[]{String.valueOf(this.value)}
-                                    : this.value instanceof Calendar ? ((Calendar) this.value).getTime() : this.value);
+                                    ? new String[]{stringValue != null ? stringValue : toString(this.value)}
+                                    : this.value instanceof Calendar ? ((Calendar) this.value).getTime()
+                                    : stringValue != null ? stringValue : this.value);
                 } else {
-                    this.output = String.valueOf(this.value);
+                    this.output = toString(this.value);
                 }
             }
             if (StringUtils.isNotBlank(this.output) && this.i18n && formatter == null) {

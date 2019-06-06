@@ -450,13 +450,6 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
-            <description>deprecated: use 'class' like a normal HTML tag</description>
-            <name>tagClass</name>
-            <required>false</required>
-            <rtexprvalue>true</rtexprvalue>
-            <type>java.lang.String</type>
-        </attribute>
-        <attribute>
             <name>test</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
@@ -561,6 +554,13 @@
         <name>script</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String script(java.lang.String)</function-signature>
+    </function>
+
+    <function>
+        <description>transforms a string value for style rendering</description>
+        <name>style</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String style(java.lang.String)</function-signature>
     </function>
 
     <function>

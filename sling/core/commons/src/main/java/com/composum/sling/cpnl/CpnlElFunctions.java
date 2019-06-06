@@ -333,6 +333,16 @@ public class CpnlElFunctions {
     }
 
     /**
+     * Returns the escaped CSS code of a value (style escaping to prevent from XSS).
+     *
+     * @param value the value to escape
+     * @return the CSS escaped code of the value
+     */
+    public static String style(String value) {
+        return value != null ? XSS.api().encodeForCSSString(value) : value;
+    }
+
+    /**
      * Returns the encapsulated CDATA string of a value (no escaping!).
      *
      * @param value the value to encasulate
