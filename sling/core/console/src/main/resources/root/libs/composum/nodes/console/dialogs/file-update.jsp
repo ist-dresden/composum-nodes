@@ -12,7 +12,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <cpn:text tagName="h4" tagClass="modal-title" i18n="true">Change File Content</cpn:text>
+                    <cpn:text tagName="h4" class="modal-title" i18n="true">Change File Content</cpn:text>
                 </div>
                 <div class="modal-body">
                     <div class="messages">
@@ -22,7 +22,7 @@
                     <input name="_charset_" type="hidden" value="UTF-8"/>
                     <input name="path" type="hidden"/>
                     <div class="form-group binary">
-                        <cpn:text tagName="label" tagClass="control-label" i18n="true">Select File</cpn:text>
+                        <cpn:text tagName="label" class="control-label" i18n="true">Select File</cpn:text>
                         <input name="file" class="widget file-upload-widget form-control" type="file"/>
                     </div>
                     <div class="form-group binary">

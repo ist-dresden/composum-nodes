@@ -13,7 +13,7 @@
         </div>
         <div id="template-body-${template.id}" class="panel-collapse collapse" role="tabpanel"
              aria-labelledby="template-head-${template.id}">
-            <cpn:text tagName="div" tagClass="panel-body" value="${template.description}" type="rich"/>
+            <cpn:text tagName="div" class="panel-body" value="${template.description}" type="rich"/>
             <table class="table template-links">
                 <c:if test="${not empty template.xpath}">
                     <tr>
