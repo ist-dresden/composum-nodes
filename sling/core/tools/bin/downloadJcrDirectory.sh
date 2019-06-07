@@ -24,6 +24,11 @@ fi
 echo Arguments "$*"
 echo Dir: $(pwd)
 
+if [ -z $1 ]; then
+    echo NO SOURCE DIR GIVEN
+    exit 1
+fi
+
 TMPFIL=`mktemp -u`.zip
 trap "{ rm -f $TMPFIL; }" EXIT
 #echo temporary file: $TMPFIL

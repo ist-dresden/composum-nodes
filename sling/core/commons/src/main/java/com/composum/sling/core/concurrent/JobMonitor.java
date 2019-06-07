@@ -1,5 +1,6 @@
 package com.composum.sling.core.concurrent;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
@@ -130,5 +131,19 @@ public abstract class JobMonitor implements Callable<Boolean> {
                 isActive = false;
                 break;
         }
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("jobId", jobId)
+                .append("isActive", isActive)
+                .append("wasActive", wasActive)
+                .append("currentState", currentState)
+                .append("finalState", finalState)
+                .append("running", running)
+                .append("done", done)
+                .append("timeout", timeout)
+                .toString();
     }
 }

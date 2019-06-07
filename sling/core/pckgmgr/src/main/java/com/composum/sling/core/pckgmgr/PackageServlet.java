@@ -559,6 +559,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 installationDone(request, response, manager, jcrPackage, isDone);
 
             } else {
+                LOG.error("Job was not yet executed: {}", job);
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Package install not started!");
             }
         }
