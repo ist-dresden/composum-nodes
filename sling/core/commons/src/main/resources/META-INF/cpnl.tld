@@ -34,8 +34,16 @@
         <tei-class>com.composum.sling.cpnl.ComponentTagTEI</tei-class>
         <body-content>JSP</body-content>
         <attribute>
+            <description>deprecated: use 'var' instead of 'id'</description>
             <name>id</name>
-            <required>true</required>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <description>the variable name one of 'var' or 'id' must be declared</description>
+            <name>var</name>
+            <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
@@ -489,7 +497,7 @@
 
     <function>
         <description>Builds the URL for a repository path using the LinkUtil.getURL() method</description>
-        <name>ExternalUrl</name>
+        <name>externalUrl</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String externalUrl(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
     </function>
