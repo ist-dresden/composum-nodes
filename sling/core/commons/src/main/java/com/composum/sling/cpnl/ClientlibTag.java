@@ -115,7 +115,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
                     }
                     service.renderClientlibLinks(clientlib, writer, request, rendererContext);
                 } else {
-                    LOG.error("No clientlib found for path {} / category {} ");
+                    LOG.error("No clientlib found for path '{}' / category '{}' ", path, category);
                 }
             } catch (IOException | RepositoryException e) {
                 LOG.error(e.getMessage(), e);

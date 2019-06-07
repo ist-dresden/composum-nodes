@@ -272,12 +272,6 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
-            <name>tagName</name>
-            <required>false</required>
-            <rtexprvalue>true</rtexprvalue>
-            <type>java.lang.String</type>
-        </attribute>
-        <attribute>
             <description>deprecated: use 'class' like a normal HTML tag</description>
             <name>classes</name>
             <required>false</required>
