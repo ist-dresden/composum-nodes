@@ -126,7 +126,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 Authorizable authorizable = authorizableIterator.next();
                 strings.add(authorizable.getID());
             }
-            return strings.toArray(new String[strings.size()]);
+            return strings.toArray(new String[0]);
         }
     }
 
@@ -172,7 +172,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
             Method method = user.getClass().getMethod("isSystemUser");
             method.setAccessible(true);
             Boolean result = (Boolean) method.invoke(user);
-            su = (result == null ? false : result.booleanValue());
+            su = (result != null && result);
         } catch (Exception e) {
             //ignore
             su = false;
@@ -209,7 +209,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
-                throws RepositoryException, IOException, ServletException {
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
@@ -248,7 +248,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 Group group = groupIterator.next();
                 strings.add(group.getID());
             }
-            return strings.toArray(new String[strings.size()]);
+            return strings.toArray(new String[0]);
         }
     }
 
@@ -256,7 +256,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
-                throws RepositoryException, IOException, ServletException {
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
@@ -301,7 +301,9 @@ public class UserManagementServlet extends AbstractServiceServlet {
     public static class GetGroupsOfAuthorizable implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        @SuppressWarnings("Duplicates")
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final String path = AbstractServiceServlet.getPath(request);
@@ -325,7 +327,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
     public static class AddToGroup implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
@@ -341,7 +344,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
     public static class RemoveFromGroup implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
@@ -363,7 +367,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
-                throws RepositoryException, IOException, ServletException {
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             String originalRequestPath = AbstractServiceServlet.getPath(request);
             String requestPath;
@@ -394,9 +398,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
                     if (firstSlashPositionAfterRequestPath > 0) {
                         //child nodes are relative paths
                         String segment = path.substring(requestPathLength, requestPathLength + firstSlashPositionAfterRequestPath);
-                        if (!paths.contains(segment)) {
-                            paths.add(segment);
-                        }
+                        paths.add(segment);
                     } else {
                         //child nodes are authorizables
                         auths.add(authorizable);
@@ -408,21 +410,24 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
                 if (authorizableByRequestPath == null) {
+                    String name = originalRequestPath.equals("/")
+                            ? "/" : originalRequestPath.substring(originalRequestPath.lastIndexOf('/') + 1);
                     jsonWriter.beginObject()
                             .name("id").value(originalRequestPath)
-                            .name("text").value(originalRequestPath.equals("/") ? "/" : originalRequestPath.substring(originalRequestPath.lastIndexOf('/') + 1))
-                            .name("name").value(originalRequestPath.equals("/") ? "/" : originalRequestPath.substring(originalRequestPath.lastIndexOf('/') + 1))
+                            .name("text").value(name)
+                            .name("name").value(name)
                             .name("path").value(originalRequestPath)
                             .name("children")
                             .beginArray();
                 } else {
+                    //noinspection Duplicates
                     jsonWriter.beginObject()
                             .name("id").value(authorizableByRequestPath.getPath())
                             .name("text").value(authorizableByRequestPath.getID())
                             .name("name").value(authorizableByRequestPath.getID())
                             .name("path").value(authorizableByRequestPath.getPath())
                             .name("type").value(authorizableByRequestPath.isGroup() ? "group" : "user")
-                            .name("disabled").value(authorizableByRequestPath.isGroup() ? false : ((User) authorizableByRequestPath).isDisabled())
+                            .name("disabled").value(!authorizableByRequestPath.isGroup() && ((User) authorizableByRequestPath).isDisabled())
                             .name("systemUser").value(isSystemUser(authorizableByRequestPath))
                             .name("state").beginObject().name("loaded").value(true).endObject()
                             .name("children")
@@ -438,13 +443,14 @@ public class UserManagementServlet extends AbstractServiceServlet {
                             .endObject();
                 }
                 for (Authorizable authorizable : auths) {
+                    //noinspection Duplicates
                     jsonWriter.beginObject()
                             .name("id").value(authorizable.getPath())
                             .name("text").value(authorizable.getID())
                             .name("name").value(authorizable.getID())
                             .name("path").value(authorizable.getPath())
                             .name("type").value(authorizable.isGroup() ? "group" : "user")
-                            .name("disabled").value(authorizable.isGroup() ? false : ((User) authorizable).isDisabled())
+                            .name("disabled").value(!authorizable.isGroup() && ((User) authorizable).isDisabled())
                             .name("systemUser").value(isSystemUser(authorizable))
                             .name("state").beginObject().name("loaded").value(true).endObject()
                             .endObject();
@@ -459,7 +465,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
     public static class GetProperties implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final String path = AbstractServiceServlet.getPath(request);
@@ -501,7 +508,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
-                throws RepositoryException, IOException, ServletException {
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
@@ -509,14 +516,15 @@ public class UserManagementServlet extends AbstractServiceServlet {
             String password = request.getParameter("password");
 
             final Authorizable authorizable = userManager.getAuthorizable(username);
-            User user = (User) authorizable;
+            final User target = (User) authorizable;
+            final Authorizable agent = userManager.getAuthorizable(resolver.getUserID());
 
-            if (user.isAdmin()) {
-            	//admin can do it without knowing the old password
-                user.changePassword(password);
+            if (agent instanceof User && ((User) agent).isAdmin()) {
+                //admin can do it without knowing the old password for every user
+                target.changePassword(password);
             } else {
                 String oldPassword = request.getParameter("oldPassword");
-                user.changePassword(password, oldPassword);
+                target.changePassword(password, oldPassword);
             }
 
             session.save();
@@ -529,7 +537,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
-                throws RepositoryException, IOException, ServletException {
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
@@ -548,8 +556,9 @@ public class UserManagementServlet extends AbstractServiceServlet {
     public static class EnableUser implements ServletOperation {
 
         @Override
+        @SuppressWarnings("Duplicates")
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
-                throws RepositoryException, IOException, ServletException {
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final String path = AbstractServiceServlet.getPath(request);
@@ -560,14 +569,14 @@ public class UserManagementServlet extends AbstractServiceServlet {
             session.save();
             ResponseUtil.writeEmptyArray(response);
         }
-
     }
 
     public static class GetUser implements ServletOperation {
 
         @Override
+        @SuppressWarnings("Duplicates")
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
-                throws RepositoryException, IOException, ServletException {
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final String path = AbstractServiceServlet.getPath(request);
@@ -597,7 +606,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
     public class CreateSystemUser implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -634,7 +644,9 @@ public class UserManagementServlet extends AbstractServiceServlet {
     public static class CreateUser implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        @SuppressWarnings("Duplicates")
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -674,7 +686,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
     public static class DeleteAuthorizable implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
@@ -710,7 +723,9 @@ public class UserManagementServlet extends AbstractServiceServlet {
     public static class CreateGroup implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        @SuppressWarnings("Duplicates")
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
@@ -743,8 +758,9 @@ public class UserManagementServlet extends AbstractServiceServlet {
     public static class GetGroup implements ServletOperation {
 
         @Override
+        @SuppressWarnings("Duplicates")
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
-                throws RepositoryException, IOException, ServletException {
+                throws RepositoryException, IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final String path = AbstractServiceServlet.getPath(request);
@@ -778,6 +794,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         }
 
         @Override
+        @SuppressWarnings("Duplicates")
         protected AuthorizableEntry processPrincipal(Authorizable authorizable) throws RepositoryException {
             AuthorizableEntry authorizableEntry = new AuthorizableEntry();
             Principal principal = authorizable.getPrincipal();

@@ -3,6 +3,7 @@ package com.composum.sling.core;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -41,10 +42,11 @@ public class RequestBundle extends ResourceBundle {
         }
 
         @Override
-        protected Object handleGetObject(String key) {
+        protected Object handleGetObject(@Nonnull String key) {
             return bundle.getObject(key);
         }
 
+        @Nonnull
         @Override
         public Enumeration<String> getKeys() {
             return bundle.getKeys();
@@ -106,10 +108,11 @@ public class RequestBundle extends ResourceBundle {
     }
 
     @Override
-    protected Object handleGetObject(String key) {
+    protected Object handleGetObject(@Nonnull String key) {
         return bundles.get(0).bundle.getObject(key);
     }
 
+    @Nonnull
     @Override
     public Enumeration<String> getKeys() {
         return bundles.get(0).bundle.getKeys();

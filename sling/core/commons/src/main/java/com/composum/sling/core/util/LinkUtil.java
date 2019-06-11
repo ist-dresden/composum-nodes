@@ -14,6 +14,7 @@ import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -31,13 +32,15 @@ public class LinkUtil {
     public static final String PROP_TARGET = "sling:target";
     public static final String PROP_REDIRECT = "sling:redirect";
 
+    public static final String FORWARDED_PROTO = "X-Forwarded-Proto";
+    public static final String FORWARDED_PROTO_HTTPS = "https";
     public static final String FORWARDED_SSL_HEADER = "X-Forwarded-SSL";
     public static final String FORWARDED_SSL_ON = "on";
 
-    public static final String URL_PATTERN_STRING = "^(?:(https?|mailto|tel):)?//([^/]+)(:\\d+)?(/.*)?$";
-    public static final Pattern URL_PATTERN = Pattern.compile(URL_PATTERN_STRING);
+    public static final String URL_PATTERN_STRING = "^(?:(https?):)?//([^/]+)(:\\d+)?(/.*)?$";
+    public static final Pattern URL_PATTERN = Pattern.compile(URL_PATTERN_STRING, Pattern.CASE_INSENSITIVE);
     public static final String SPECIAL_URL_STRING = "^(?:(mailto|tel):)(.+)$";
-    public static final Pattern SPECIAL_URL_PATTERN = Pattern.compile(SPECIAL_URL_STRING);
+    public static final Pattern SPECIAL_URL_PATTERN = Pattern.compile(SPECIAL_URL_STRING, Pattern.CASE_INSENSITIVE);
 
     public static final Pattern SELECTOR_PATTERN = Pattern.compile("^(.*/[^/]+)(\\.[^.]+)$");
 
@@ -199,7 +202,12 @@ public class LinkUtil {
         if (!request.isSecure()) {
             return 80;
         }
-        return FORWARDED_SSL_ON.equalsIgnoreCase(request.getHeader(FORWARDED_SSL_HEADER)) ? 80 : 443;
+        return isForwaredSSL(request) ? 80 : 443;
+    }
+
+    public static boolean isForwaredSSL(HttpServletRequest request) {
+        return FORWARDED_SSL_ON.equalsIgnoreCase(request.getHeader(FORWARDED_SSL_HEADER)) ||
+                FORWARDED_PROTO.equalsIgnoreCase(request.getHeader(FORWARDED_PROTO_HTTPS));
     }
 
     /**
@@ -389,19 +397,32 @@ public class LinkUtil {
      * @param path the path to encode
      * @return the URL encoded path
      */
+    public static String encodeUrl(String path) {
+        if (path != null) {
+            path = path.replaceAll(">", "%3E");
+            path = path.replaceAll("<", "%3C");
+            path = path.replaceAll(" ", "%20");
+        }
+        return path;
+    }
+
+    /**
+     * URL encoding for a resource path (without the encoding for the '/' path delimiters).
+     *
+     * @param path the path to encode
+     * @return the URL encoded path
+     */
     public static String encodePath(String path) {
         if (path != null) {
+            path = encodeUrl(path);
             path = path.replaceAll("/jcr:", "/_jcr_");
             path = path.replaceAll("\\?", "%3F");
-            path = path.replaceAll(">", "%3E");
             path = path.replaceAll("=", "%3D");
-            path = path.replaceAll("<", "%3C");
             path = path.replaceAll(";", "%3B");
             path = path.replaceAll(":", "%3A");
             path = path.replaceAll("\\+", "%2B");
             path = path.replaceAll("&", "%26");
             path = path.replaceAll("#", "%23");
-            path = path.replaceAll(" ", "%20");
         }
         return path;
     }

@@ -24,36 +24,8 @@ iframe {
     border: 0;
 }
 
-button {
-    padding: 4px 6px;
-}
-
 a, a:link, a:hover, a:focus, a:active, a:visited {
     text-decoration: none;
-}
-
-fieldset {
-    border: 1px solid #aaa;
-}
-
-.invisible {
-    visibility: hidden;
-}
-
-.hidden {
-    display: none;
-}
-
-.alert-hidden {
-    display: none;
-}
-
-.align-left {
-    float: left;
-}
-
-.align-right {
-    float: right;
 }
 
 .align-left,
@@ -94,34 +66,6 @@ fieldset {
     padding: 5px 9px;
     width: 34px;
     height: 30px;
-}
-
-.align-right label {
-    margin-right: 5px;
-}
-
-.align-right .dropdown-menu {
-    right: 0;
-    left: auto;
-}
-
-.action-bar {
-    margin-right: 0;
-    padding: 5px;
-}
-
-.action-bar .btn span.label {
-    display: none;
-}
-
-.action-bar label {
-    margin: 0;
-    line-height: 30px;
-    color: #888;
-}
-
-.modal-body > .form-group:last-child {
-    margin-bottom: 0;
 }
 
 /* split pane */

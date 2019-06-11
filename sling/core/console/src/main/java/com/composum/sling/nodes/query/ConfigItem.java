@@ -3,6 +3,7 @@ package com.composum.sling.nodes.query;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.sling.api.resource.Resource;
 
 import javax.annotation.Nonnull;
@@ -32,6 +33,7 @@ public class ConfigItem extends ConsoleSlingBean implements Comparable<ConfigIte
         return getProperty(PROP_ORDER, ORDER_DEFAULT);
     }
 
+    @Override
     public String getId() {
         return getPath().replace('/', '-');
     }
@@ -48,10 +50,10 @@ public class ConfigItem extends ConsoleSlingBean implements Comparable<ConfigIte
 
     @Override
     public int compareTo(@Nonnull ConfigItem other) {
-        int result = getOrder() - other.getOrder();
-        if (result == 0) {
-            result = getTitle().compareTo(other.getTitle());
-        }
-        return result;
+        CompareToBuilder builder = new CompareToBuilder();
+        builder.append(getOrder(), other.getOrder());
+        builder.append(getTitle(), other.getTitle());
+        builder.append(getId(), other.getId());
+        return builder.toComparison();
     }
 }

@@ -315,7 +315,7 @@ public class PropertyUtil {
 
             Class defaultType = DEFAULT_PROPERTY_TYPES.get(value.getType());
             if (null != defaultType && type.isAssignableFrom(defaultType))
-                return type.cast(readValue(value, defaultType));
+                return type.cast((T) readValue(value, defaultType));
 
             throw new IllegalArgumentException("Type " + type + " not supported yet.");
         } catch (URISyntaxException | MalformedURLException | RuntimeException e) {

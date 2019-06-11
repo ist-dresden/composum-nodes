@@ -24,10 +24,10 @@ import static com.composum.sling.nodes.servlet.NodeServlet.getJsonSelectorRules;
 /**
  * a servlet to export the results of a query execution as a JSON object with emebedded object for each
  * found resource - the resource type of this servlet is used in the 'export set' configuration; see:
- * /libs/composum/nodes/console/query/export/json
+ * /libs/composum/nodes/browser/query/export/json
  */
 @SlingServlet(
-        resourceTypes = "composum/nodes/console/query/export/json/objects",
+        resourceTypes = "composum/nodes/browser/query/export/json/objects",
         methods = {"POST"}
 )
 public class ExportQueryJson extends SlingAllMethodsServlet {

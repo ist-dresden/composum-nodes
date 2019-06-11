@@ -3,6 +3,7 @@ package com.composum.sling.core;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.JobControlServlet;
 import com.composum.sling.core.servlet.SystemServlet;
+import com.composum.sling.core.servlet.TranslationServlet;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
@@ -77,6 +78,14 @@ public class CoreConfigImpl implements CoreConfiguration {
             boolValue = true
     )
     private boolean systemServletEnabled;
+
+    @Property(
+            name = TRANSLATION_SERVLET_ENABLED,
+            label = "Translation Servlet",
+            description = "the general on/off switch for the services of the Translation Servlet",
+            boolValue = true
+    )
+    private boolean translationServletEnabled;
 
     private Map<String, Boolean> enabledServlets;
 
@@ -174,6 +183,8 @@ public class CoreConfigImpl implements CoreConfiguration {
         enabledServlets = new HashMap<>();
         enabledServlets.put(SystemServlet.class.getSimpleName(), systemServletEnabled =
                 (Boolean) properties.get(SYSTEM_SERVLET_ENABLED));
+        enabledServlets.put(TranslationServlet.class.getSimpleName(), translationServletEnabled =
+                (Boolean) properties.get(TRANSLATION_SERVLET_ENABLED));
         enabledServlets.put(JobControlServlet.class.getSimpleName(), jobcontrolServletEnabled =
                 (Boolean) properties.get(JOBCONTROL_SERVLET_ENABLED));
     }

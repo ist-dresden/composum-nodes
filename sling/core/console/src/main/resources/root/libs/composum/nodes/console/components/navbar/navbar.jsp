@@ -17,11 +17,7 @@
       </div>
     </div>
     <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
-      <ul class="nav navbar-nav">
-        <c:forEach items="${status.consoles}" var="console">
-          <li class="nav-item ${console.name} link"><a href="${console.url}"${console.linkAttributes}>${console.label}</a></li>
-        </c:forEach>
-      </ul>
+      <sling:call script="consoles.jsp"/>
       <ul class="system nav navbar-nav navbar-right">
         <li>
           <a class="nav-user-status"><em>${status.currentUser}</em></a>

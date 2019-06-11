@@ -14,9 +14,12 @@ import org.osgi.framework.BundleContext;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
 
 /**
  * A base class for a general hook (servlet) for a console view.
@@ -30,12 +33,15 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
         this.bundleContext = bundleContext;
     }
 
+    protected abstract String getServletPath(BeanContext context);
+
     protected abstract Pattern getPathPattern(BeanContext context);
 
     protected abstract String getResourceType(BeanContext context);
 
     /**
      * extension point to check access rights for a console feature by feature path
+     *
      * @return the path to the console feature (content); 'null' if no check supported or check switched off
      */
     protected String getConsolePath(BeanContext context) {
@@ -76,8 +82,14 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
                 dispatcher.forward(request, response);
 
             } else {
-                // redirect to suffix path without console view if access not granted
-                response.sendRedirect(LinkUtil.getUrl(request, getRequestPath(request)));
+                // answer with 'forbidden' if access not granted (and give a chance for a new login)
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            }
+        } else {
+            if (pathInfo.equals(getServletPath(context))) {
+                response.sendRedirect(LinkUtil.getUrl(request, pathInfo + EXT_HTML));
+            } else {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             }
         }
     }
@@ -94,6 +106,7 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
 
     /**
      * Check access rights to the servlets path - is checking ACLs of the console path
+     *
      * @param context the current request
      * @return 'true' if access granted or access check switched off
      */

@@ -1,7 +1,13 @@
 package com.composum.sling.clientlibs.handle;
 
-import com.composum.sling.clientlibs.processor.*;
-import com.composum.sling.clientlibs.service.*;
+import com.composum.sling.clientlibs.processor.AbstractClientlibVisitor;
+import com.composum.sling.clientlibs.processor.ProcessingVisitor;
+import com.composum.sling.clientlibs.processor.ProcessorContext;
+import com.composum.sling.clientlibs.processor.RendererContext;
+import com.composum.sling.clientlibs.processor.RenderingVisitor;
+import com.composum.sling.clientlibs.processor.UpdateTimeVisitor;
+import com.composum.sling.clientlibs.service.ClientlibConfiguration;
+import com.composum.sling.clientlibs.service.ClientlibPermissionPlugin;
 import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.clientlibs.service.DefaultClientlibService;
 import com.composum.sling.core.BeanContext;
@@ -9,16 +15,14 @@ import com.composum.sling.core.concurrent.LazyCreationService;
 import com.composum.sling.core.concurrent.LazyCreationServiceImpl;
 import com.composum.sling.core.concurrent.SemaphoreSequencer;
 import com.composum.sling.core.concurrent.SequencerService;
-import com.composum.sling.core.mapping.MappingRules;
-import com.composum.sling.core.util.JsonUtil;
-import com.google.gson.stream.JsonWriter;
+import com.composum.sling.core.filter.ResourceFilter;
 import org.apache.sling.api.resource.ResourceResolverFactory;
-import org.apache.sling.testing.mock.osgi.MockOsgi;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import javax.jcr.RepositoryException;
@@ -26,17 +30,26 @@ import javax.servlet.ServletContext;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.util.*;
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Common code for clientlib tests.
  */
 public class AbstractClientlibTest {
+
+    public static final String DEFAULT_CACHE_ROOT = "/var/cache/clientlibs";
 
     @Rule
     public final SlingContext context = new SlingContext(ResourceResolverType.JCR_OAK);
@@ -51,6 +64,8 @@ public class AbstractClientlibTest {
 
     protected ExecutorService executorService;
 
+    protected ClientlibPermissionPlugin permissionPlugin;
+
     protected final String CONTEXTPATH = "/context";
 
     /**
@@ -59,7 +74,7 @@ public class AbstractClientlibTest {
     private Calendar setupTime;
 
     @Before
-    public final void setupFramework() throws Exception {
+    public final void setupFramework() {
         setupTime = GregorianCalendar.getInstance();
         context.request().setContextPath(CONTEXTPATH);
 
@@ -68,25 +83,93 @@ public class AbstractClientlibTest {
         final LazyCreationService creationService = context.registerInjectActivateService(
                 new LazyCreationServiceImpl());
 
-        configurationService = context.registerService(ClientlibConfiguration.class, new
-                ClientlibConfigurationService() {
-                    {
-                        cacheRoot = ClientlibConfigurationService.DEFAULT_CACHE_ROOT;
-                        threadPoolMin = 0;
-                        threadPoolMax = 1;
-                        linkTemplate = ClientlibConfigurationService.LINK_DEFAULT_TEMPLATE;
-                    }
+        permissionPlugin = Mockito.mock(ClientlibPermissionPlugin.class);
+        Mockito.when(permissionPlugin.categoryFilter(Matchers.anyString())).thenReturn(ResourceFilter.ALL);
 
-                    @Override
-                    public boolean getDebug() {
-                        return AbstractClientlibTest.this.debuggingMode;
-                    }
+        final ClientlibConfiguration.Config serviceConfig = new ClientlibConfiguration.Config() {
 
-                    @Override
-                    public boolean getUseMinifiedFiles() {
-                        return AbstractClientlibTest.this.useMinifiedFiles;
-                    }
-                }); // TODO: how to use properties?
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return null;
+            }
+
+            @Override
+            public boolean tagdebug() {
+                return false;
+            }
+
+            @Override
+            public boolean debug() {
+                return AbstractClientlibTest.this.debuggingMode;
+            }
+
+            @Override
+            public boolean enableAuthorMapping() {
+                return false;
+            }
+
+            @Override
+            public boolean cssMinimize() {
+                return true;
+            }
+
+            @Override
+            public int cssLineBreak() {
+                return 0;
+            }
+
+            @Override
+            public String cssTemplate() {
+                return "  <link rel=\"stylesheet\" href=\"{0}\" />";
+            }
+
+            @Override
+            public String javascriptTemplate() {
+                return "  <script type=\"text/javascript\" src=\"{0}\"></script>";
+            }
+
+            @Override
+            public String linkTemplate() {
+                return "  <link rel=\"{1}\" href=\"{0}\" />";
+            }
+
+            @Override
+            public boolean gzipEnabled() {
+                return false;
+            }
+
+            @Override
+            public String cacheRoot() {
+                return DEFAULT_CACHE_ROOT;
+            }
+
+            @Override
+            public boolean useMinifiedFiles() {
+                return AbstractClientlibTest.this.useMinifiedFiles;
+            }
+
+            @Override
+            public boolean mapClientlibURLs() {
+                return true;
+            }
+
+            @Override
+            public int threadPoolMin() {
+                return 10;
+            }
+
+            @Override
+            public int threadPoolMax() {
+                return 20;
+            }
+
+            @Override
+            public int resolverCachetime() {
+                return 60;
+            }
+        };
+
+        configurationService = context.registerService(ClientlibConfiguration.class, () -> serviceConfig);
 
         ServletContext servletContext = Mockito.mock(ServletContext.class);
         BeanContext beanContext = new BeanContext.Servlet(servletContext, context.bundleContext(), context.request(),
@@ -99,10 +182,11 @@ public class AbstractClientlibTest {
                         resolverFactory = context.getService(ResourceResolverFactory.class);
                         sequencer = sequencerService;
                         lazyCreationService = creationService;
+                        permissionPlugins.add(permissionPlugin);
                         activate(context.componentContext());
                     }
                 });
-        // TODO: MockOsgi.activate(clientlibService, context.bundleContext()); should work but doesn't
+        // TODO: MockOsgi.activate(clientlib2Service, context.bundleContext()); should work but doesn't
 
         rendererContext = RendererContext.instance(beanContext, context.request());
 
@@ -114,22 +198,25 @@ public class AbstractClientlibTest {
         assertTrue(executorService.shutdownNow().isEmpty());
     }
 
-    protected <T> T[] array(T... elements) {
+    @SafeVarargs
+    protected final <T> T[] array(T... elements) {
         return elements;
     }
 
-    protected <T> List<T> list(T... elements) {
-        return new ArrayList<T>(Arrays.asList(elements));
+    @SafeVarargs
+    protected final <T> List<T> list(T... elements) {
+        return new ArrayList<>(Arrays.asList(elements));
     }
 
     protected void createFile(String dir, String filename) {
         context.build().resource(dir).file(filename, new ByteArrayInputStream((dir + "/" + filename).getBytes()));
     }
 
-    protected Set<ClientlibLink> getRenderedClientlibs() throws IllegalAccessException {
+    protected Set<ClientlibLink> getRenderedClientlibs() {
         return rendererContext.getRenderedClientlibs();
     }
 
+    @SuppressWarnings("unchecked")
     protected <T extends ClientlibElement> T getClientlibs2(String path, Clientlib.Type type) {
         return (T) clientlib2Service.resolve(new ClientlibRef(type, path, false, null), context.resourceResolver());
     }

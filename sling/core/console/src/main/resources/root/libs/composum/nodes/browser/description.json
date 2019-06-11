@@ -1,0 +1,5 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "sling:resourceType": "composum/nodes/browser/description",
+  "sling:resourceSuperType": "composum/nodes/console/page/description"
+}

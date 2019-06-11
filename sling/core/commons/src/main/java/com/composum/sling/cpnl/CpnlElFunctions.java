@@ -1,8 +1,10 @@
 package com.composum.sling.cpnl;
 
-import com.composum.sling.core.RequestBundle;
+import com.composum.sling.core.util.FormatterFormat;
+import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.LinkUtil;
-import org.apache.commons.lang3.StringEscapeUtils;
+import com.composum.sling.core.util.LoggerFormat;
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.translate.AggregateTranslator;
 import org.apache.commons.lang3.text.translate.CharSequenceTranslator;
@@ -13,11 +15,18 @@ import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Writer;
+import java.text.Format;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
-import java.util.MissingResourceException;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,11 +46,14 @@ public class CpnlElFunctions {
     public static final String[] QTYPE_ESC = new String[]{"&quot;", "&apos;"};
 
     public static final String[] RICH_TEXT_TAGS = new String[]{
-            "p", "br", "a", "ul", "li", "ol", "strong", "em", "u", "b", "i", "strike", "sub", "sup"
+            "p", "br", "a", "ul", "li", "ol", "dl", "dt", "dd",
+            "strong", "em", "u", "b", "i", "strike", "sub", "sup", "code",
+            "table", "thead", "tbody", "tr", "th", "td"
     };
 
     public static final String[][] RICH_TEXT_BASIC_ESCAPE = {
             // avoid double escape
+            {"&copy;", "&copy;"},
             {"&nbsp;", "&nbsp;"},
             {"&amp;", "&amp;"},
             {"&lt;", "&lt;"},
@@ -130,15 +142,7 @@ public class CpnlElFunctions {
     }
 
     public static String i18n(SlingHttpServletRequest request, String text) {
-        String translated = null;
-        try {
-            translated = RequestBundle.get(request).getString(text);
-        } catch (MissingResourceException mrex) {
-            if (LOG.isInfoEnabled()) {
-                LOG.info(mrex.toString());
-            }
-        }
-        return translated != null ? translated : text;
+        return I18N.get(request, text);
     }
 
     /**
@@ -236,7 +240,9 @@ public class CpnlElFunctions {
      * @return the HTML escaped text of the value
      */
     public static String text(String value) {
-        return value != null ? StringEscapeUtils.escapeHtml4(value) : value;
+        return value != null
+                ? /* StringEscapeUtils.escapeHtml4(value) */ XSS.api().encodeForHTML(value)
+                : value;
     }
 
     /**
@@ -321,7 +327,19 @@ public class CpnlElFunctions {
      * @return the Script escaped code of the value
      */
     public static String script(String value) {
-        return value != null ? StringEscapeUtils.escapeEcmaScript(value) : value;
+        return value != null
+                ? /* StringEscapeUtils.escapeEcmaScript(value) */ XSS.api().encodeForJSString(value)
+                : value;
+    }
+
+    /**
+     * Returns the escaped CSS code of a value (style escaping to prevent from XSS).
+     *
+     * @param value the value to escape
+     * @return the CSS escaped code of the value
+     */
+    public static String style(String value) {
+        return value != null ? XSS.api().encodeForCSSString(value) : value;
     }
 
     /**
@@ -332,5 +350,49 @@ public class CpnlElFunctions {
      */
     public static String cdata(String value) {
         return value != null ? "<![CDATA[" + value + "]]>" : null;
+    }
+
+    /**
+     * Creates the formatter for a describing string rule
+     *
+     * @param locale the local to use for formatting
+     * @param format the format string rule
+     * @param type   the optional value type
+     * @return the Format instance
+     */
+    public static Format getFormatter(@Nonnull final Locale locale, @Nonnull final String format,
+                                      @Nullable final Class<?>... type) {
+        Format formatter = null;
+        Pattern TEXT_FORMAT_STRING = Pattern.compile("^(\\{([^}]+)}(.+)|(.*\\{}.*))$");
+        Matcher matcher = TEXT_FORMAT_STRING.matcher(format);
+        if (matcher.matches()) {
+            switch (matcher.group(1)) {
+                case "Message":
+                    formatter = new MessageFormat(matcher.group(3), locale);
+                    break;
+                case "Date":
+                    formatter = new SimpleDateFormat(matcher.group(3), locale);
+                    break;
+                case "String":
+                    formatter = new FormatterFormat(matcher.group(3), locale);
+                    break;
+                case "Log":
+                    formatter = new LoggerFormat(matcher.group(3));
+                    break;
+                default:
+                    if (StringUtils.isBlank(matcher.group(2))) {
+                        formatter = new LoggerFormat(matcher.group(4));
+                    }
+                    break;
+            }
+        } else {
+            if (type != null && type.length == 1 && type[0] != null &&
+                    (Calendar.class.isAssignableFrom(type[0]) || Date.class.isAssignableFrom(type[0]))) {
+                formatter = new SimpleDateFormat(format, locale);
+            } else {
+                formatter = new LoggerFormat(format);
+            }
+        }
+        return formatter;
     }
 }

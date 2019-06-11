@@ -134,7 +134,7 @@ public class Browser extends ConsoleServletBean {
                     type = contentResource.getResourceType();
                     if (StringUtils.isNotBlank(type)) {
                         ResourceHandle handle = ResourceHandle.use(contentResource);
-                        if (handle.getPrimaryType().equals(type)) {
+                        if (type.equals(handle.getPrimaryType())) {
                             type = null;
                         }
                     }

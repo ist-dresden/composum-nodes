@@ -1,12 +1,17 @@
 package com.composum.sling.cpnl;
 
+import org.apache.commons.lang3.StringUtils;
+
 import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.JspWriter;
+import java.io.IOException;
 
 /**
  * a tag to build hypertext links with mapped URLs
  */
 public class LinkTag extends UrlTag {
 
+    protected String target;
     protected Object body;
     private transient Boolean bodyResult;
 
@@ -14,6 +19,11 @@ public class LinkTag extends UrlTag {
         super.clear();
         bodyResult = null;
         body = null;
+        target = null;
+    }
+
+    public void setTarget(String target) {
+        this.target = target;
     }
 
     /**
@@ -49,5 +59,15 @@ public class LinkTag extends UrlTag {
 
     public void setHref(String href) {
         setUrl(href);
+    }
+
+    @Override
+    protected void writeAttributes(JspWriter writer) throws IOException {
+        super.writeAttributes(writer);
+        if (StringUtils.isNotBlank(target)) {
+            writer.write(" target=\"");
+            writer.write(target);
+            writer.write("\"");
+        }
     }
 }

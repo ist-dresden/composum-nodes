@@ -2,9 +2,11 @@ package com.composum.sling.core.pckginstall;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.jackrabbit.vault.packaging.PackagingService;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
@@ -41,6 +43,9 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private BundleContext bundleContext;
+
+    @Reference
+    private Packaging packaging;
 
     @Activate
     private void activate(final BundleContext bundleContext) {
@@ -119,7 +124,7 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
                 final Method loginAdministrative = repository.getClass().getMethod("loginAdministrative", String.class);
                 final Object invoke = loginAdministrative.invoke(repository, (Object) null);
                 final Session session = (Session) invoke;
-                final JcrPackageManager packageManager = PackagingService.getPackageManager(session);
+                final JcrPackageManager packageManager = packaging.getPackageManager(session);
                 final TaskResource resource = getResource();
                 final InputStream inputStream = resource.getInputStream();
                 logger.info("package upload - {}", resource.getEntityId());

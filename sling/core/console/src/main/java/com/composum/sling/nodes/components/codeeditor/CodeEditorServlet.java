@@ -9,13 +9,13 @@ import org.apache.felix.scr.annotations.sling.SlingServlet;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.nodes.browser.BrowserServlet.CONSOLE_PATH;
-
+import static com.composum.sling.nodes.components.codeeditor.CodeEditorServlet.SERVLET_PATH;
 
 /**
  * The general hook (servlet) for the Editor feature to edit code in a separate view.
  */
 @SlingServlet(
-        paths = CodeEditorServlet.SERVLET_PATH,
+        paths = SERVLET_PATH,
         methods = {"GET"}
 )
 public class CodeEditorServlet extends AbstractConsoleServlet {
@@ -28,6 +28,11 @@ public class CodeEditorServlet extends AbstractConsoleServlet {
 
     @Reference
     protected NodesConfiguration config;
+
+    @Override
+    protected String getServletPath(BeanContext context) {
+        return SERVLET_PATH;
+    }
 
     @Override
     protected Pattern getPathPattern(BeanContext context) {

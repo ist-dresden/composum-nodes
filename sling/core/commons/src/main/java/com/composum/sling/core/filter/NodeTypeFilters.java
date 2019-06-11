@@ -18,6 +18,10 @@ public class NodeTypeFilters {
 
     public static final String TYPE_ORDERABLE = NODE_TYPE_PREFIX + "orderable";
 
+    /**
+     * Provides a set of predefined filters whose name start with {@value #NODE_TYPE_PREFIX}
+     * - e.g. {@value TYPE_ORDERABLE} for {@link OrderableTypeFilter} that work on the {@link NodeType}s of a resource.
+     */
     public static boolean accept(Resource resource, String type) {
         try {
             if (resource != null) {
@@ -70,6 +74,7 @@ public class NodeTypeFilters {
     }
 
     public static class OrderableTypeFilter implements NodeTypeFilter {
+        @Override
         public boolean accept(NodeType type) {
             return type.hasOrderableChildNodes();
         }

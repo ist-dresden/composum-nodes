@@ -1,10 +1,17 @@
 package com.composum.sling.clientlibs.handle;
 
 import com.composum.sling.clientlibs.processor.RenderingVisitor;
+import com.composum.sling.clientlibs.service.ClientlibPermissionPlugin;
+import com.composum.sling.core.filter.ResourceFilter;
+import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.util.ResourceUtil;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.theories.suppliers.TestedOn;
+import org.mockito.Mockito;
 
+import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.List;
 
@@ -15,6 +22,7 @@ import static com.composum.sling.clientlibs.handle.ClientlibResourceFolder.PROP_
 import static com.composum.sling.clientlibs.handle.ClientlibResourceFolder.PROP_EMBED;
 import static com.composum.sling.core.util.ResourceUtil.*;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests related to clientlibs with categories. This verifies only that categories are used correctly to
@@ -76,6 +84,13 @@ public class ClientlibWithCategoriesTest extends AbstractClientlibTest {
     }
 
     @Test
+    public void testRestrictedResolve() throws Exception {
+        Mockito.when(permissionPlugin.categoryFilter("cat2")).thenReturn(
+                new ResourceFilter.PathFilter(new StringFilter.WhiteList("^/apps/2.1")));
+        assertEquals("category:cat2[js:/apps/2.1]", getClientlibs2("category:cat2", js).toString());
+    }
+
+    @Test
     public void testLinkGenerationCat3() throws Exception {
         ClientlibCategory ref = getClientlibs2("category:cat3", js);
         List<ClientlibLink> links = new RenderingVisitor(ref, rendererContext).execute().getLinksToRender();
@@ -132,7 +147,7 @@ public class ClientlibWithCategoriesTest extends AbstractClientlibTest {
 
     @Test
     public void equalHashesOfAllVisitors() throws Exception {
-        for (ClientlibElement clientlib : Arrays.asList(getClientlibs2("category:cat1", js), getClientlibs2
+        for (ClientlibElement clientlib : Arrays.<ClientlibElement>asList(getClientlibs2("category:cat1", js), getClientlibs2
                 ("category:cat2", js), getClientlibs2("category:cat3", js), getClientlibs2("category:embed2twice", js)))
             verifyEqualHashesOfVisitors(clientlib);
     }

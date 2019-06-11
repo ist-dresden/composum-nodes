@@ -9,14 +9,25 @@
             richtext: {
                 editorSelector: '.rich-editor',
                 defaultOptions: {
+                    semantic: true,
                     btns: [
-                        ['bold', 'italic', 'underline', 'strikethrough'],
+                        ['bold', 'italic', 'underline', 'strikethrough', 'code'],
                         ['superscript', 'subscript'], ['removeformat'],
                         'btnGrp-lists',
                         ['link', 'unlink']
                     ],
+                    btnsDef: {
+                        code: {
+                            key: 'C',
+                            class: 'fa-custom-button fa fa-code',
+                            fn: function (tagName) {
+                                components.trumbowyg.toggleTag(tagName);
+                            }
+                        }
+                    },
                     removeformatPasted: true
-                }
+                },
+                fn: {}
             }
         });
 
@@ -77,6 +88,29 @@
          * trumbowyg editor customizing
          */
         components.trumbowyg = {
+
+            toggleTag: function (tagName) {
+                var tag = ['<' + tagName + '>', '</' + tagName + '>', tagName.toUpperCase()];
+                var selection = document.getSelection();
+                if (selection) {
+                    var anchor = selection.anchorNode;
+                    while (anchor.tagName !== tag[2] && anchor.tagName !== 'P' && anchor.tagName !== 'DIV') {
+                        anchor = anchor.parentElement;
+                    }
+                    if (tag[2] === anchor.tagName) {
+                        var content = $(anchor).html();
+                        selection.removeAllRanges();
+                        var range = document.createRange();
+                        range.selectNode(anchor);
+                        selection.addRange(range);
+                        document.execCommand('insertText', false, '');
+                        document.execCommand('insertHTML', false, content);
+                    } else {
+                        var snippet = selection.toString();
+                        document.execCommand('insertHTML', false, tag[0] + snippet + tag[1]);
+                    }
+                }
+            },
 
             openModalWidgets: function (dialogUri, values, cmd) {
                 var t = this;

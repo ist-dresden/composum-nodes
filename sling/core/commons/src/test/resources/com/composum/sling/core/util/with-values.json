@@ -1,0 +1,50 @@
+{
+  "x1": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+  "${key}": [
+    {
+      "x1": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+      "cd": "${base}",
+      "efwrzwrthzvwrthwerhetzh werth wrthwr h wrtgergq egqe gq ${abc} qegvqwg rghw rtbrewh qr wrgbwrtw r": [
+        {
+          "x1": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+          "ab": {
+            "x1": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x2": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x3": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x4": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x5": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x6": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x7": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt"
+          }
+        }
+      ],
+      "efwrzwrthzvwrthwerhetzh werth wrthwr h wrtgergq egqe gq ${abc}": [
+        {
+          "x1": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+          "ab": {
+            "x1": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x2": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x3": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x4": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x5": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x6": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x7": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt"
+          }
+        },
+        {
+          "x1": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+          "ab": {
+            "x1": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x2": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x3": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x4": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x5": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x6": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt",
+            "x7": "/var/ertwert/qwerteqrtwe/qertwertwert/ertwertwerztr/werwerzwertz/${segment}/qewrtwertt"
+          }
+        }
+      ]
+    }
+  ],
+  "embedded": "${resource:/com/composum/sling/core/util/for-embedding.txt}"
+}

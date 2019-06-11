@@ -44,4 +44,9 @@ public class ClientlibExternalUri implements ClientlibElement {
         return new ClientlibRef(link.type, link.path, false, link.properties);
     }
 
+
+    @Override
+    public String toString() {
+        return link.toString();
+    }
 }

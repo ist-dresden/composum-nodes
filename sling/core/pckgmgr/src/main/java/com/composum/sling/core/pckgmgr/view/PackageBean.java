@@ -11,6 +11,7 @@ import org.apache.jackrabbit.vault.fs.io.AccessControlHandling;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
@@ -21,6 +22,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+
+import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
 
 public class PackageBean extends ConsoleSlingBean {
 
@@ -64,13 +67,13 @@ public class PackageBean extends ConsoleSlingBean {
         SlingHttpServletRequest request = context.getRequest();
         path = PackageUtil.getPath(request);
         try {
-            resource = PackageUtil.getResource(request, path);
+            pckgMgr = PackageUtil.getPackageManager(context.getService(Packaging.class), request);
+            resource = PackageUtil.getResource(pckgMgr, request, path);
         } catch (RepositoryException rex) {
             LOG.error(rex.getMessage(), rex);
         }
         super.initialize(context, resource);
         try {
-            pckgMgr = PackageUtil.createPackageManager(getRequest());
             pckg = pckgMgr.open(getNode());
             if (pckg != null) {
                 pckgDef = pckg.getDefinition();
@@ -110,7 +113,7 @@ public class PackageBean extends ConsoleSlingBean {
 
     @Override
     public String getUrl() {
-        return LinkUtil.getUrl(getRequest(), PackagesServlet.SERVLET_PATH + getPath());
+        return LinkUtil.getUrl(getRequest(), PackagesServlet.SERVLET_PATH + EXT_HTML + getPath());
     }
 
     @Override
@@ -278,7 +281,7 @@ public class PackageBean extends ConsoleSlingBean {
             try {
                 String path = PackageUtil.getThumbnailPath(pckgDef);
                 if (StringUtils.isNotBlank(path)) {
-                    builder.append(LinkUtil.getUrl(request, path));
+                    builder.append(LinkUtil.getUrl(getRequest(), path));
                 }
             } catch (RepositoryException rex) {
                 LOG.error(rex.getMessage(), rex);
@@ -297,7 +300,7 @@ public class PackageBean extends ConsoleSlingBean {
 
     public String getAcHandling() {
         AccessControlHandling acHandling = pckgDef.getAccessControlHandling();
-        return acHandling != null ? acHandling.name(): "";
+        return acHandling != null ? acHandling.name() : "";
     }
 
     public String getAcHandlingLabel() {

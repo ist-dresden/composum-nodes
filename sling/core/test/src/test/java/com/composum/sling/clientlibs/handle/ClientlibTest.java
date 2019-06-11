@@ -30,7 +30,6 @@ import static com.composum.sling.clientlibs.handle.Clientlib.Type.js;
 import static com.composum.sling.clientlibs.handle.Clientlib.Type.link;
 import static com.composum.sling.clientlibs.handle.ClientlibLink.PROP_REL;
 import static com.composum.sling.clientlibs.handle.ClientlibResourceFolder.*;
-import static com.composum.sling.clientlibs.service.ClientlibConfigurationService.DEFAULT_CACHE_ROOT;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 

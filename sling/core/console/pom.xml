@@ -62,7 +62,9 @@
                             com.composum.sling.nodes.*
                         </Export-Package>
                         <Sling-Initial-Content>
-                            root/libs/composum/nodes/console;path:=/libs/composum/nodes/console;overwrite:=true
+                            root/libs/composum/nodes/console;path:=/libs/composum/nodes/console;overwrite:=true,
+                            root/libs/composum/nodes/browser;path:=/libs/composum/nodes/browser;overwrite:=true,
+                            root/libs/composum/nodes/system;path:=/libs/composum/nodes/system;overwrite:=true
                         </Sling-Initial-Content>
                     </instructions>
                 </configuration>
@@ -189,21 +191,21 @@
 
         <!-- OSGi, Felix -->
         <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+        </dependency>
+        <!-- deprecated! -->
+        <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.scr</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.scr.annotations</artifactId>
-        </dependency>
-        <!-- OSGi Core and Compendium API -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
         </dependency>
 
         <!-- Apache Commons -->
@@ -243,6 +245,12 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>
+        </dependency>
+
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
         </dependency>
 
     </dependencies>

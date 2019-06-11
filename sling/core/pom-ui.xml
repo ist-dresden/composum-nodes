@@ -23,6 +23,7 @@
 		<module>usermgnt</module>
 		<module>slingfeature</module>
 		<module>corecfg</module>
+		<module>setup</module>
 		<module>corepckg</module>
 	</modules>
 

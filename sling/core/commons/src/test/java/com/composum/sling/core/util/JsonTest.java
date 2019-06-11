@@ -9,6 +9,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by rw on 18.05.15.
@@ -36,6 +37,7 @@ public class JsonTest {
             String jsonValue = writer.toString();
             System.out.println("template:");
             System.out.println(jsonValue);
+            System.out.println();
             StringReader reader = new StringReader(jsonValue);
             JsonReader jsonReader = new JsonReader(reader);
             Object newObject = gson.fromJson(jsonReader, object.getClass());
@@ -43,6 +45,7 @@ public class JsonTest {
             jsonWriter = createJsonWriter(writer);
             gson.toJson(newObject, newObject.getClass(), jsonWriter);
             assertEquals(jsonValue, writer.toString());
+            assertTrue("Sanity check failed: the JSON representation is suspiciously short - is this broken? " + jsonValue, jsonValue.length() > 10);
         } finally {
             System.out.println("new object:");
             System.out.println(writer.toString());

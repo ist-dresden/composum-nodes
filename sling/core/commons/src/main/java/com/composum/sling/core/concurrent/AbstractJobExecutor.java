@@ -1,5 +1,6 @@
 package com.composum.sling.core.concurrent;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
@@ -263,6 +264,9 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
     }
 
     private synchronized Resource giveParent(ResourceResolver resolver, String path) {
+        if ("/".equals(path))
+            return resolver.getResource("/");
+
         Resource resource = null;
         SequencerService.Token token = sequencer.acquire(path);
         try {

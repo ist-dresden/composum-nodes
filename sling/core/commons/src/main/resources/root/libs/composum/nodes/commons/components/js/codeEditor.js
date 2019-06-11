@@ -121,7 +121,8 @@
                             }
                         }, this),
                         _.bind(function (result) {
-                            core.alert('danger', 'Error', 'Error on loading text', result);
+                            core.alert('danger', core.i18n.get('Error'),
+                                core.i18n.get('Error on loading text'), result);
                         }, this));
                 }
             },
@@ -138,7 +139,8 @@
                                 onSuccess(result);
                             }
                         } else {
-                            core.alert('danger', 'Error', 'Error on updating text', result);
+                            core.alert('danger', core.i18n.get('Error'),
+                                core.i18n.get('Error on updating text'), result);
                         }
                     }, this));
                 }

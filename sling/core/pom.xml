@@ -13,7 +13,7 @@
 	<artifactId>composum-sling-core-reactor</artifactId>
 	<packaging>pom</packaging>
 
-	<name>Composum Sling Core Reactor</name>
+	<name>Composum Core Reactor</name>
 
 	<modules>
 		<module>.parent</module>
@@ -25,6 +25,7 @@
 		<module>usermgnt</module>
 		<module>slingfeature</module>
 		<module>corecfg</module>
+		<module>setup</module>
 		<module>corepckg</module>
 
 		<!-- Test modules - no deployed code contained -->
