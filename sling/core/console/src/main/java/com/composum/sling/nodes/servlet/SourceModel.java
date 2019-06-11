@@ -182,6 +182,8 @@ public class SourceModel extends ConsoleSlingBean {
     private transient List<Resource> subnodeList;
 
     public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
+        if ("/".equals(ResourceUtil.normalize(resource.getPath())))
+            throw new IllegalArgumentException("Cannot export the whole JCR - " + resource.getPath());
         this.config = config;
         initialize(context, resource);
     }
