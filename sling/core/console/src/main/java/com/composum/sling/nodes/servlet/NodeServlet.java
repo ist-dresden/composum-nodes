@@ -6,10 +6,12 @@ import com.composum.sling.core.exception.ParameterValidationException;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.mapping.MappingRules;
+import com.composum.sling.core.resource.SyntheticQueryResult;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.NodeTreeServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
+import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.RequestUtil;
@@ -20,7 +22,6 @@ import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
@@ -29,6 +30,7 @@ import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.request.RequestDispatcherOptions;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.request.RequestPathInfo;
@@ -56,6 +58,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
@@ -78,6 +81,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.composum.sling.core.mapping.MappingRules.CHARSET;
 
 /**
  * The JCR nodes service servlet to walk though and modify the entire hierarchy.
@@ -196,7 +201,7 @@ public class NodeServlet extends NodeTreeServlet {
     public enum Operation {
         create, copy, move, reorder, delete, toggle,
         tree, reference, mixins, resolve, typeahead,
-        query, queryTemplates, filters, map, load, download, fileUpdate
+        query, filters, map, load, download, fileUpdate
     }
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
@@ -245,8 +250,6 @@ public class NodeServlet extends NodeTreeServlet {
                 Operation.query, new JsonQueryOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.html,
                 Operation.query, new HtmlQueryOperation());
-        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
-                Operation.queryTemplates, new GetQueryTemplates());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.bin,
                 Operation.load, new LoadBinaryOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.bin,
@@ -257,6 +260,8 @@ public class NodeServlet extends NodeTreeServlet {
                 Operation.map, new MapPostOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.create, new CreateOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.bin,
+                Operation.query, new ExportQueryOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.copy, new CopyOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
@@ -292,8 +297,7 @@ public class NodeServlet extends NodeTreeServlet {
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            response.setContentType(MappingRules.CHARSET.name());
-            response.setContentType("text/html;charset=" + MappingRules.CHARSET.name());
+            response.setContentType("text/html;charset=" + CHARSET); // XSS? - checked (2019-05-04)
             Writer writer = response.getWriter();
             response.setStatus(HttpServletResponse.SC_OK);
 
@@ -338,7 +342,7 @@ public class NodeServlet extends NodeTreeServlet {
      */
     public static final Pattern WORD_QUERY = Pattern.compile("^ *([^ /]+) *$");
 
-    protected class JsonQueryOperation implements ServletOperation {
+    protected abstract class AbstractQueryOperation implements ServletOperation {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
@@ -418,6 +422,21 @@ public class NodeServlet extends NodeTreeServlet {
             }
         }
 
+        protected abstract void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                                 String queryString, QueryResult result,
+                                                 ResourceFilter filter, ResourceResolver resolver)
+                throws RepositoryException, ServletException, IOException;
+
+        protected void writeError(SlingHttpServletResponse response, String queryString, Exception ex)
+                throws IOException {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "query: '" + CpnlElFunctions.text(queryString) + "' (" + ex.getMessage() + ")"); // XSS? - checked (2019-05-04)
+        }
+    }
+
+    protected class JsonQueryOperation extends AbstractQueryOperation {
+
+        @Override
         protected void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                         String queryString, QueryResult result,
                                         ResourceFilter filter, ResourceResolver resolver)
@@ -447,23 +466,16 @@ public class NodeServlet extends NodeTreeServlet {
             writer.endArray();
 
             writer.name("summary").beginObject();
-            writer.name("query").value(queryString);
+            writer.name("query").value(CpnlElFunctions.script(queryString)); // XSS? - checked (2019-05-04)
             writer.name("count").value(count);
             writer.name("limit").value(nodesConfig.getQueryResultLimit());
             writer.endObject();
 
             writer.endObject();
         }
-
-
-        protected void writeError(SlingHttpServletResponse response, String queryString, Exception ex)
-                throws IOException {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                    "query: '" + queryString + "' (" + ex.getMessage() + ")");
-        }
     }
 
-    protected class HtmlQueryOperation extends JsonQueryOperation {
+    protected class HtmlQueryOperation extends AbstractQueryOperation {
 
         @Override
         protected void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
@@ -473,6 +485,7 @@ public class NodeServlet extends NodeTreeServlet {
 
             PrintWriter writer = response.getWriter();
             response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentType("text/html;charset=" + CHARSET); // XSS? - checked (2019-05-04)
 
             TreeNodeStrategy nodeStrategy = new DefaultTreeNodeStrategy(getNodeFilter(request));
             NodeIterator iterator = result.getNodes();
@@ -512,13 +525,13 @@ public class NodeServlet extends NodeTreeServlet {
                             .append("\"><span></span></td>");
                     writer.append("<td class=\"id\">").append(resource.getId()).append("</td>");
                     writer.append("<td class=\"name\">")
-                            .append(StringEscapeUtils.escapeHtml4(resource.getName())).append("</td>");
+                            .append(CpnlElFunctions.text(resource.getName())).append("</td>");
                     writer.append("<td class=\"text\">")
-                            .append(StringEscapeUtils.escapeHtml4(getNodeLabel(resource, LabelType.title)))
+                            .append(CpnlElFunctions.text(getNodeLabel(resource, LabelType.title)))
                             .append("</td>");
                     writer.append("<td class=\"path\"><a href=\"")
-                            .append(StringEscapeUtils.escapeHtml4(path)).append("\">")
-                            .append(StringEscapeUtils.escapeHtml4(path)).append("</a></td>");
+                            .append(CpnlElFunctions.text(path)).append("\">")
+                            .append(CpnlElFunctions.text(path)).append("</a></td>");
                     writer.append("<td class=\"type\">").append(resource.getPrimaryType()).append("</td>");
                     writer.append("</tr>");
                     count++;
@@ -539,11 +552,12 @@ public class NodeServlet extends NodeTreeServlet {
                                     PrintWriter writer, String cssClasses) {
             writer.append("<tr class=\"").append(cssClasses).append("\">");
             writer.append("<td class=\"icon\" data-type=\"summary\" rowspan=\"2\"><span></span></td>");
-            writer.append("<td class=\"message\" colspan=\"5\">").append(message)
-                    .append("<br/>query: '").append(queryString).append("'</td>");
+            writer.append("<td class=\"message\" colspan=\"5\">").append(CpnlElFunctions.text(message))
+                    .append("<br/>query: '").append(CpnlElFunctions.text(queryString)).append("'</td>"); // XSS! (2019-05-04)
             writer.append("</tr>");
         }
 
+        @Override
         protected void writeError(SlingHttpServletResponse response, String queryString, Exception ex)
                 throws IOException {
             PrintWriter writer = response.getWriter();
@@ -553,19 +567,25 @@ public class NodeServlet extends NodeTreeServlet {
         }
     }
 
-    //
-    // Query templates
-    //
-
-    public class GetQueryTemplates implements ServletOperation {
+    protected class ExportQueryOperation extends AbstractQueryOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        protected void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                                        String queryString, QueryResult result,
+                                        ResourceFilter filter, ResourceResolver resolver)
                 throws ServletException, IOException {
 
-            JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-            response.setStatus(HttpServletResponse.SC_OK);
-            JsonUtil.writeJsonArray(jsonWriter, nodesConfig.getQueryTemplates());
+            String rendererType = request.getParameter("export");
+
+            String syntheticPath = "/libs/composum/nodes/browser/query/export";
+            SyntheticQueryResult resultResource = new SyntheticQueryResult(resolver, syntheticPath, result, filter, rendererType);
+            resultResource.putValue("query", queryString);
+
+            RequestDispatcherOptions options = new RequestDispatcherOptions();
+            options.setForceResourceType(rendererType);
+
+            RequestDispatcher dispatcher = request.getRequestDispatcher(resultResource, options);
+            dispatcher.forward(request, response);
         }
     }
 
@@ -605,6 +625,7 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ReferenceOperation implements ServletOperation {
 
         @Override
+        @SuppressWarnings("Duplicates")
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
@@ -653,6 +674,7 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ResolveOperation implements ServletOperation {
 
         @Override
+        @SuppressWarnings("Duplicates")
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
@@ -794,13 +816,9 @@ public class NodeServlet extends NodeTreeServlet {
                 response.setContentLength((int) binary.getSize());
                 response.setStatus(HttpServletResponse.SC_OK);
 
-                InputStream input = binary.getStream();
-                BufferedInputStream buffered = new BufferedInputStream(input);
-                try {
+                try (InputStream input = binary.getStream();
+                     BufferedInputStream buffered = new BufferedInputStream(input)) {
                     IOUtils.copy(buffered, response.getOutputStream());
-                } finally {
-                    buffered.close();
-                    input.close();
                 }
 
             } catch (RepositoryException ex) {
@@ -822,7 +840,7 @@ public class NodeServlet extends NodeTreeServlet {
     protected class DownloadBinaryOperation extends LoadBinaryOperation {
 
         @Override
-
+        @SuppressWarnings("Duplicates")
         protected void prepareResponse(SlingHttpServletResponse response, ResourceHandle resource) {
             super.prepareResponse(response, resource);
 
@@ -1039,10 +1057,12 @@ public class NodeServlet extends NodeTreeServlet {
                             response.setStatus(HttpServletResponse.SC_ACCEPTED);
                             jsonWriter.beginObject();
                             jsonWriter.name("success").value(true);
-                            jsonWriter.name("response").beginObject();
+                            jsonWriter.name("messages").beginArray();
+                            jsonWriter.beginObject();
                             jsonWriter.name("level").value("info");
-                            jsonWriter.name("text").value(CpnlElFunctions.i18n(request, "no modification"));
+                            jsonWriter.name("text").value(I18N.get(request, "no modification"));
                             jsonWriter.endObject();
+                            jsonWriter.endArray();
                             jsonWriter.endObject();
                         }
 
@@ -1250,6 +1270,38 @@ public class NodeServlet extends NodeTreeServlet {
     // raw mapping
     //
 
+    public static final Pattern MAP_DEPTH_SELECTOR = Pattern.compile("^d([\\d]+)$");
+    public static final Pattern MAP_INDENT_SELECTOR = Pattern.compile("^i([\\d]+)$");
+
+    public static MappingRules getJsonSelectorRules(SlingHttpServletRequest request) {
+        boolean asSource = RequestUtil.checkSelector(request, "source");
+        boolean embedTypes = !(asSource || RequestUtil.checkSelector(request, "notype"));
+        ResourceFilter nodeFilter = null;
+        if (asSource || RequestUtil.checkSelector(request, "nofile")) {
+            nodeFilter = new ResourceFilter.FilterSet(ResourceFilter.FilterSet.Rule.and,
+                    new ResourceFilter.PrimaryTypeFilter(new StringFilter.BlackList("^nt:(file|resource)$")),
+                    MappingRules.MAPPING_NODE_FILTER);
+        }
+        return new MappingRules(MappingRules.getDefaultMappingRules(),
+                nodeFilter,
+                asSource ? MappingRules.SOURCE_EXPORT_FILTER : null, null,
+                new MappingRules.PropertyFormat(
+                        RequestUtil.getParameter(request, "format",
+                                RequestUtil.getSelector(request, MappingRules.PropertyFormat.Scope.value)),
+                        RequestUtil.getParameter(request, "binary",
+                                RequestUtil.getSelector(request, MappingRules.PropertyFormat.Binary.base64)),
+                        embedTypes),
+                RequestUtil.getParameter(request, "depth",
+                        RequestUtil.getIntSelector(request, MAP_DEPTH_SELECTOR,
+                                RequestUtil.getIntSelector(request, 0))),
+                null);
+    }
+
+    public static int getJsonSelectorIndent(SlingHttpServletRequest request) {
+        return RequestUtil.getParameter(request, "indent",
+                RequestUtil.getIntSelector(request, MAP_INDENT_SELECTOR, 0));
+    }
+
     protected class MapGetOperation implements ServletOperation {
 
         @Override
@@ -1263,21 +1315,8 @@ public class NodeServlet extends NodeTreeServlet {
             }
 
             try {
-                MappingRules rules = new MappingRules(MappingRules.getDefaultMappingRules(),
-                        null, null, null, new MappingRules.PropertyFormat(
-                        RequestUtil.getParameter(request, "format",
-                                RequestUtil.getSelector(request, MappingRules.PropertyFormat.Scope.value)),
-                        RequestUtil.getParameter(request, "binary",
-                                RequestUtil.getSelector(request, MappingRules.PropertyFormat.Binary.base64))),
-                        RequestUtil.getParameter(request, "depth",
-                                RequestUtil.getIntSelector(request, 0)),
-                        null);
-
-                int indent = RequestUtil.getParameter(request, "indent", 0);
-                JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                if (indent > 0) {
-                    jsonWriter.setIndent(StringUtils.repeat(' ', indent));
-                }
+                MappingRules rules = getJsonSelectorRules(request);
+                int indent = getJsonSelectorIndent(request);
 
                 if (RequestUtil.checkSelector(request, "download")) {
                     response.setContentType(FILE_CONTENT_TYPE);
@@ -1295,6 +1334,10 @@ public class NodeServlet extends NodeTreeServlet {
 
                 response.setStatus(HttpServletResponse.SC_OK);
 
+                JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                if (indent > 0) {
+                    jsonWriter.setIndent(StringUtils.repeat(' ', indent));
+                }
                 JsonUtil.exportJson(jsonWriter, resource, rules);
 
             } catch (RepositoryException ex) {
@@ -1328,7 +1371,7 @@ public class NodeServlet extends NodeTreeServlet {
             if (file != null) {
                 InputStream input = file.getInputStream();
                 reader = new BufferedReader(
-                        new InputStreamReader(input, MappingRules.CHARSET.name()));
+                        new InputStreamReader(input, CHARSET.name()));
             }
             return reader;
         }
@@ -1341,7 +1384,7 @@ public class NodeServlet extends NodeTreeServlet {
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            request.setCharacterEncoding(MappingRules.CHARSET.name());
+            request.setCharacterEncoding(CHARSET.name());
             Reader reader = getReader(request);
 
             if (reader != null) {

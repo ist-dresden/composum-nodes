@@ -4,6 +4,8 @@ import com.composum.sling.nodes.console.ConsoleSlingBean;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +31,13 @@ public class PackageManagerBean extends ConsoleSlingBean {
 
     public String getViewType() {
         if (type == null) {
-            type = PackageUtil.getTreeType(getRequest(), getPath());
+            JcrPackageManager manager = null;
+            try {
+                manager = PackageUtil.getPackageManager(context.getService(Packaging.class), getRequest());
+                type = PackageUtil.getTreeType(manager, getRequest(), getPath());
+            } catch (RepositoryException rex) {
+                LOG.error(rex.toString());
+            }
         }
         return type != null ? type.name() : "";
     }
@@ -42,7 +50,8 @@ public class PackageManagerBean extends ConsoleSlingBean {
     public List<PackageUtil.PackageItem> getCurrentGroupPackages() {
         List<PackageUtil.PackageItem> items = new ArrayList<>();
         try {
-            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(context.getService(Packaging.class), getRequest());
+            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(manager, getRequest());
             for (PackageUtil.TreeItem item : treeNode) {
                 if (item instanceof PackageUtil.PackageItem) {
                     if (((PackageUtil.PackageItem) item).getDefinition() != null) {

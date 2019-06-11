@@ -73,7 +73,7 @@ public class MappingRules {
     /**
      * the name for the set of properties in the JSON view to a resource
      */
-    public static final Pattern TYPED_PROPERTY_STRING = Pattern.compile("^\\{([A-Za-z]+)\\}(.*)$");
+    public static final Pattern TYPED_PROPERTY_STRING = Pattern.compile("^\\{([A-Za-z]+)}(.*)$");
 
     /**
      * the name for the set of property objects in the external view to a resource
@@ -118,6 +118,13 @@ public class MappingRules {
     public static final StringFilter MAPPING_EXPORT_FILTER = StringFilter.ALL;
 
     /**
+     * the property name filter to ignore automatic or transient properties not useful in source code
+     */
+    public static final StringFilter SOURCE_EXPORT_FILTER = new StringFilter.BlackList(
+            "^jcr:(created|lastModified)(By)?$",
+            "^jcr:(uuid|baseVersion|predecessors|versionHistory|isCheckedOut)$");
+
+    /**
      * the default property name filter to restrict the import - creation properties are disabled
      */
     public static final StringFilter MAPPING_IMPORT_FILTER = new StringFilter.BlackList(
@@ -151,11 +158,17 @@ public class MappingRules {
         }
 
         public final Scope scope;
+        public final boolean embedType;
         public final Binary binary;
 
         public PropertyFormat(Scope scope, Binary binary) {
+            this(scope, binary, true);
+        }
+
+        public PropertyFormat(Scope scope, Binary binary, boolean embedType) {
             this.scope = scope != null ? scope : Scope.value;
             this.binary = binary != null ? binary : Binary.base64;
+            this.embedType = embedType;
         }
     }
 
@@ -175,7 +188,7 @@ public class MappingRules {
         protected List<SimpleDateFormat> formatList;
 
         public DateParser() {
-            this (Arrays.asList(DATE_PATTERNS));
+            this(Arrays.asList(DATE_PATTERNS));
         }
 
         public DateParser(Iterable<String> datePatterns) {
@@ -191,6 +204,7 @@ public class MappingRules {
 
         /**
          * parse string to create a date by trying the configured patterns
+         *
          * @param string the date string
          * @return the date if a pattern matches, otherwise 'null'
          */

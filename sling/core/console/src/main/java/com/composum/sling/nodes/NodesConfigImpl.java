@@ -6,6 +6,7 @@ import com.composum.sling.nodes.servlet.NodeServlet;
 import com.composum.sling.nodes.servlet.PropertyServlet;
 import com.composum.sling.nodes.servlet.SecurityServlet;
 import com.composum.sling.nodes.servlet.SourceServlet;
+import com.composum.sling.nodes.servlet.SourceUpdateServlet;
 import com.composum.sling.nodes.servlet.VersionServlet;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -59,17 +60,6 @@ public class NodesConfigImpl implements NodesConfiguration {
             longValue = QUERY_RESULT_LIMIT_DEFAULT
     )
     private long queryResultLimit;
-
-    @Property(
-            name = QUERY_TEMPLATES_KEY,
-            label = "Query Templates",
-            description = "a list of templates for the initial query history list",
-            value = {
-                    "/content/test ${text}",
-                    "${path}//${name}[jcr:contains(.,'${word}')]"
-            }
-    )
-    private String[] queryTemplates;
 
     @Property(
             name = ERRORPAGES_PATH,
@@ -176,6 +166,14 @@ public class NodesConfigImpl implements NodesConfiguration {
     private boolean sourceServletEnabled;
 
     @Property(
+            name = SOURCE_UPDATE_SERVLET_ENABLED,
+            label = "Source Update Servlet",
+            description = "the general on/off switch for the services of the Source Update Servlet",
+            boolValue = true
+    )
+    private boolean sourceUpdateServletEnabled;
+
+    @Property(
             name = USER_MANAGEMENT_SERVLET_ENABLED,
             label = "User Management Servlet",
             description = "the general on/off switch for the services of the User Management Servlet",
@@ -204,11 +202,6 @@ public class NodesConfigImpl implements NodesConfiguration {
     @Override
     public long getQueryResultLimit() {
         return queryResultLimit;
-    }
-
-    @Override
-    public String[] getQueryTemplates() {
-        return queryTemplates;
     }
 
     @Override
@@ -241,6 +234,7 @@ public class NodesConfigImpl implements NodesConfiguration {
         return sourceNodesFilter;
     }
 
+    @Override
     public Dictionary getProperties() {
         return properties;
     }
@@ -254,7 +248,6 @@ public class NodesConfigImpl implements NodesConfiguration {
         checkConsoleAccess = (Boolean) properties.get(CONSOLE_ACCESS_CHECK);
         consoleCategories = PropertiesUtil.toStringArray(properties.get(CONSOLE_CATEGORIES_KEY));
         queryResultLimit = PropertiesUtil.toLong(properties.get(QUERY_RESULT_LIMIT_KEY), QUERY_RESULT_LIMIT_DEFAULT);
-        queryTemplates = PropertiesUtil.toStringArray(properties.get(QUERY_TEMPLATES_KEY));
         errorpagesPath = (String) properties.get(ERRORPAGES_PATH);
         if (errorpagesPath.endsWith("/") && errorpagesPath.length() > 1) {
             errorpagesPath = errorpagesPath.substring(errorpagesPath.length() - 1);
@@ -284,6 +277,8 @@ public class NodesConfigImpl implements NodesConfiguration {
                 (Boolean) properties.get(VERSION_SERVLET_ENABLED));
         enabledServlets.put(SourceServlet.class.getSimpleName(), sourceServletEnabled =
                 (Boolean) properties.get(SOURCE_SERVLET_ENABLED));
+        enabledServlets.put(SourceUpdateServlet.class.getSimpleName(), sourceUpdateServletEnabled =
+                (Boolean) properties.get(SOURCE_UPDATE_SERVLET_ENABLED));
         enabledServlets.put("UserManagementServlet", userManagementServletEnabled =
                 (Boolean) properties.get(USER_MANAGEMENT_SERVLET_ENABLED));
     }

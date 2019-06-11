@@ -1,8 +1,5 @@
 package com.composum.sling.clientlibs.handle;
 
-import com.composum.sling.clientlibs.processor.RendererContext;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -12,7 +9,10 @@ import java.util.Map;
 import static com.composum.sling.clientlibs.handle.Clientlib.Type.js;
 import static com.composum.sling.clientlibs.handle.Clientlib.Type.link;
 import static com.composum.sling.clientlibs.handle.ClientlibLink.PROP_REL;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -26,7 +26,7 @@ public class ClientlibRefTest {
         ClientlibRef ref = new ClientlibRef(js, "jslib/([1-3]*:2.3.1)/outerembed.js",
                 true, null) {
             {
-                assertEquals("^.*/jslib/[1-3][^/]*/outerembed(\\.min)?\\.js$", pattern.pattern());
+                assertEquals("^.*/jslib/([1-3][^/]*)/outerembed(\\.min)?\\.js$", pattern.pattern());
             }
         };
         assertTrue(ref.isSatisfiedby(new ClientlibLink(js, ClientlibLink.Kind.FILE, "/libs/jslib/2.1.2/outerembed.js", null)));
@@ -36,7 +36,7 @@ public class ClientlibRefTest {
         ref = new ClientlibRef(js, "jslib/([1-3]*:2.3.1)/outerembed.min.js",
                 true, null) {
             {
-                assertEquals("^.*/jslib/[1-3][^/]*/outerembed(\\.min)?\\.js$", pattern.pattern());
+                assertEquals("^.*/jslib/([1-3][^/]*)/outerembed(\\.min)?\\.js$", pattern.pattern());
             }
         };
 

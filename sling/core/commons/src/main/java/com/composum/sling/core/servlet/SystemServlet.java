@@ -3,10 +3,18 @@ package com.composum.sling.core.servlet;
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.ResourceFilter;
+import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.util.JsonUtil;
+import com.composum.sling.core.util.RequestUtil;
+import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.collections.map.LRUMap;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.LineIterator;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -16,10 +24,15 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.Binary;
 import javax.jcr.RepositoryException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +63,7 @@ public class SystemServlet extends AbstractServiceServlet {
 
     public enum Extension {json}
 
-    public enum Operation {propertyTypes, primaryTypes, mixinTypes}
+    public enum Operation {propertyTypes, primaryTypes, mixinTypes, typeahead}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -75,6 +88,7 @@ public class SystemServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.propertyTypes, new GetPropertyTypes());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.primaryTypes, new GetPrimaryTypes());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.mixinTypes, new GetMixinTypes());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.typeahead, new JsonTypeahead());
     }
 
     //
@@ -113,13 +127,12 @@ public class SystemServlet extends AbstractServiceServlet {
     //
 
     /** the general filter for mixin types */
-    public static class MixinTypesFilter implements ResourceFilter {
+    public static class MixinTypesFilter extends ResourceFilter.AbstractResourceFilter {
 
         @Override
         public boolean accept(Resource resource) {
             ResourceHandle handle = ResourceHandle.use(resource);
-            Boolean isMixin = handle.getProperty(PROP_IS_MIXIN, false);
-            return isMixin;
+            return handle.getProperty(PROP_IS_MIXIN, false);
         }
 
         @Override
@@ -198,29 +211,23 @@ public class SystemServlet extends AbstractServiceServlet {
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws ServletException, IOException {
 
-            try {
-                String query = request.getParameter(PARAM_QUERY);
+            String query = request.getParameter(PARAM_QUERY);
 
-                ResourceResolver resolver = request.getResourceResolver();
-                @SuppressWarnings("unchecked")
-                List<String> nodeTypes = (List<String>) this.queryCache.get(query == null ? ALL_QUERY_KEY : query);
-                if (nodeTypes == null) {
-                    nodeTypes = getNodeTypes(resolver, query != null ? query.toLowerCase() : null);
-                    this.queryCache.put(query == null ? ALL_QUERY_KEY : query, nodeTypes);
-                }
-
-                JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                response.setStatus(HttpServletResponse.SC_OK);
-
-                JsonUtil.writeJsonArray(jsonWriter, nodeTypes.iterator());
-
-            } catch (RepositoryException ex) {
-                LOG.error(ex.getMessage(), ex);
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            ResourceResolver resolver = request.getResourceResolver();
+            @SuppressWarnings("unchecked")
+            List<String> nodeTypes = (List<String>) this.queryCache.get(query == null ? ALL_QUERY_KEY : query);
+            if (nodeTypes == null) {
+                nodeTypes = getNodeTypes(resolver, query != null ? query.toLowerCase() : null);
+                this.queryCache.put(query == null ? ALL_QUERY_KEY : query, nodeTypes);
             }
+
+            JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+            response.setStatus(HttpServletResponse.SC_OK);
+
+            JsonUtil.writeJsonArray(jsonWriter, nodeTypes.iterator());
         }
 
-        public List<String> getNodeTypes(ResourceResolver resolver, String query) throws RepositoryException {
+        public List<String> getNodeTypes(ResourceResolver resolver, String query) {
 
             List<String> nodeTypes = new ArrayList<>();
             Resource typesResource = resolver.getResource(NODE_TYPES_PATH);
@@ -233,6 +240,79 @@ public class SystemServlet extends AbstractServiceServlet {
             }
             Collections.sort(nodeTypes);
             return nodeTypes;
+        }
+    }
+
+    //
+    // typeahead of JSON value sets
+    //
+
+    public class JsonTypeahead implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+                throws ServletException, IOException {
+
+            final String query = RequestUtil.getParameter(request, PARAM_QUERY, "").toLowerCase();
+            StringFilter filter = StringUtils.isBlank(query) ? StringFilter.ALL : new StringFilter() {
+
+                @Override
+                public boolean accept(String value) {
+                    return value.toLowerCase().contains(query);
+                }
+
+                @Override
+                public boolean isRestriction() {
+                    return false;
+                }
+
+                @Override
+                public void toString(StringBuilder builder) {
+                }
+            };
+
+            JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+            response.setStatus(HttpServletResponse.SC_OK);
+            jsonWriter.beginArray();
+
+            if (ResourceUtil.isFile(resource)) {
+                try {
+                    Binary binary = ResourceUtil.getBinaryData(resource);
+                    InputStream stream = binary.getStream();
+                    Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+                    String value;
+
+                    String ext = StringUtils.substringAfterLast(resource.getName(), ".");
+                    switch (ext != null ? ext.toLowerCase() : "") {
+
+                        case "json":
+                            JsonReader jsonReader = new JsonReader(reader);
+                            jsonReader.beginArray();
+                            while (jsonReader.peek() != JsonToken.END_ARRAY) {
+                                value = jsonReader.nextString();
+                                if (StringUtils.isNotBlank(value) && filter.accept(value)) {
+                                    jsonWriter.value(value);
+                                }
+                            }
+                            jsonReader.endArray();
+                            break;
+
+                        default:
+                            LineIterator iterator = IOUtils.lineIterator(reader);
+                            while (iterator.hasNext()) {
+                                value = iterator.nextLine();
+                                if (StringUtils.isNotBlank(value) && filter.accept(value = value.trim())) {
+                                    jsonWriter.value(value);
+                                }
+                            }
+                            break;
+                    }
+                } catch (RepositoryException ex) {
+                    LOG.error(ex.getMessage(), ex);
+                }
+            }
+
+            jsonWriter.endArray();
         }
     }
 }

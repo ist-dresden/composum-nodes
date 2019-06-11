@@ -1,14 +1,32 @@
 package com.composum.sling.cpnl;
 
-import com.composum.sling.core.RequestBundle;
+import com.composum.sling.core.util.FormatterFormat;
+import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.LinkUtil;
-import org.apache.commons.lang3.StringEscapeUtils;
+import com.composum.sling.core.util.LoggerFormat;
+import com.composum.sling.core.util.XSS;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.translate.AggregateTranslator;
+import org.apache.commons.lang3.text.translate.CharSequenceTranslator;
+import org.apache.commons.lang3.text.translate.EntityArrays;
+import org.apache.commons.lang3.text.translate.LookupTranslator;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.MissingResourceException;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.Writer;
+import java.text.Format;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,18 +37,112 @@ public class CpnlElFunctions {
 
     private static final Logger LOG = LoggerFactory.getLogger(CpnlElFunctions.class);
 
-    public static final Pattern HREF_PATTERN = Pattern.compile("(<a(\\s*[^>]*)?\\s*href\\s*=\\s*['\"])([^'\"]+)([\"'])");
+    public static final Pattern HREF_PATTERN = Pattern.compile("(<a(\\s*[^>]*)?\\s*href\\s*=\\s*['\"])([^'\"]+)([\"'][^>]*>)");
 
-    public static String i18n(SlingHttpServletRequest request, String text) {
-        String translated = null;
-        try {
-            translated = RequestBundle.get(request).getString(text);
-        } catch (MissingResourceException mrex) {
-            if (LOG.isInfoEnabled()) {
-                LOG.info(mrex.toString());
+    /** for the 'attr' escaping - the quotation type constants */
+    public static final int QTYPE_QUOT = 0;
+    public static final int QTYPE_APOS = 1;
+    public static final String[] QTYPE_CHAR = new String[]{"\"", "'"};
+    public static final String[] QTYPE_ESC = new String[]{"&quot;", "&apos;"};
+
+    public static final String[] RICH_TEXT_TAGS = new String[]{
+            "p", "br", "a", "ul", "li", "ol", "dl", "dt", "dd",
+            "strong", "em", "u", "b", "i", "strike", "sub", "sup", "code",
+            "table", "thead", "tbody", "tr", "th", "td"
+    };
+
+    public static final String[][] RICH_TEXT_BASIC_ESCAPE = {
+            // avoid double escape
+            {"&copy;", "&copy;"},
+            {"&nbsp;", "&nbsp;"},
+            {"&amp;", "&amp;"},
+            {"&lt;", "&lt;"},
+            {"&gt;", "&gt;"},
+            // escape if not skipped
+            {"&", "&amp;"},
+            {"<", "&lt;"},
+            {">", "&gt;"},
+    };
+
+    protected static final List<String> RICH_TEXT_TAG_START;
+    protected static final List<String> RICH_TEXT_TAG_CLOSED;
+    protected static final int RICH_TEXT_TAG_MAX_LEN;
+
+    static {
+        int maxLen = 0;
+        RICH_TEXT_TAG_START = new ArrayList<>();
+        for (String tag : RICH_TEXT_TAGS) {
+            RICH_TEXT_TAG_START.add("<" + tag + " ");
+            int length = tag.length() + 2;
+            if (maxLen < length) {
+                maxLen = length;
             }
         }
-        return translated != null ? translated : text;
+        RICH_TEXT_TAG_CLOSED = new ArrayList<>();
+        for (String tag : RICH_TEXT_TAGS) {
+            RICH_TEXT_TAG_CLOSED.add("<" + tag + ">");
+            RICH_TEXT_TAG_CLOSED.add("<" + tag + "/>");
+            RICH_TEXT_TAG_CLOSED.add("</" + tag + ">");
+            int length = tag.length() + 3;
+            if (maxLen < length) {
+                maxLen = length;
+            }
+        }
+        RICH_TEXT_TAG_MAX_LEN = maxLen;
+    }
+
+    public static class RichTextTagsFilter extends LookupTranslator {
+
+        protected boolean isInTagStart = false;
+
+        public RichTextTagsFilter() {
+            super(RICH_TEXT_BASIC_ESCAPE);
+        }
+
+        @Override
+        public int translate(CharSequence input, int index, Writer out) throws IOException {
+            if (isInTagStart) {
+                char token = input.charAt(index);
+                out.write(token);
+                if (token == '>') {
+                    isInTagStart = false;
+                }
+                return 1;
+            } else {
+                String subSeq = input.subSequence(index, index + Math.min(RICH_TEXT_TAG_MAX_LEN, input.length() - index))
+                        .toString().toLowerCase();
+                for (String pattern : RICH_TEXT_TAG_START) {
+                    if (subSeq.startsWith(pattern)) {
+                        out.write(pattern);
+                        isInTagStart = true;
+                        return pattern.length();
+                    }
+                }
+                for (String pattern : RICH_TEXT_TAG_CLOSED) {
+                    if (subSeq.startsWith(pattern)) {
+                        out.write(pattern);
+                        return pattern.length();
+                    }
+                }
+                return super.translate(input, index, out);
+            }
+        }
+    }
+
+
+    public static final CharSequenceTranslator ESCAPE_RICH_TEXT =
+            new AggregateTranslator(
+                    new RichTextTagsFilter(),
+                    new LookupTranslator(EntityArrays.ISO8859_1_ESCAPE()),
+                    new LookupTranslator(EntityArrays.HTML40_EXTENDED_ESCAPE())
+            );
+
+    public static String escapeRichText(String input) {
+        return ESCAPE_RICH_TEXT.translate(input);
+    }
+
+    public static String i18n(SlingHttpServletRequest request, String text) {
+        return I18N.get(request, text);
     }
 
     /**
@@ -128,7 +240,28 @@ public class CpnlElFunctions {
      * @return the HTML escaped text of the value
      */
     public static String text(String value) {
-        return StringEscapeUtils.escapeHtml4(value);
+        return value != null
+                ? /* StringEscapeUtils.escapeHtml4(value) */ XSS.api().encodeForHTML(value)
+                : value;
+    }
+
+    /**
+     * Returns the escaped text of a rich text value as HTML text for a tag attribute.
+     * We assume that the result is used as value for a insertion done by jQuery.html();
+     * in this case all '&...' escaped chars are translated back by jQuery and the XSS protection
+     * is broken - to avoid this each '&' in the value is 'double escaped'
+     *
+     * @param value the value to escape
+     * @return the HTML escaped rich text of the value
+     */
+    public static String attr(SlingHttpServletRequest request, String value, int qType) {
+        if (value != null) {
+            value = rich(request, value);
+            value = value
+                    .replaceAll("&", "&amp;") // prevent from unescaping in jQuery.html()
+                    .replaceAll(QTYPE_CHAR[qType], QTYPE_ESC[qType]);
+        }
+        return value;
     }
 
     /**
@@ -138,7 +271,15 @@ public class CpnlElFunctions {
      * @return the escaped HTML code of the value
      */
     public static String rich(SlingHttpServletRequest request, String value) {
-        value = map(request, value);
+        if (value != null) {
+            // ensure that a rich text value is always enclosed with a HTML paragraph tag
+            if (StringUtils.isNotBlank(value) && !value.trim().startsWith("<p>")) {
+                value = "<p>" + value + "</p>";
+            }
+            // transform embedded resource links (paths) to mapped URLs
+            value = map(request, value);
+            value = escapeRichText(value);
+        }
         return value;
     }
 
@@ -176,7 +317,7 @@ public class CpnlElFunctions {
      * @return the encoded path
      */
     public static String path(String value) {
-        return LinkUtil.encodePath(value);
+        return value != null ? LinkUtil.encodePath(value) : null;
     }
 
     /**
@@ -186,6 +327,72 @@ public class CpnlElFunctions {
      * @return the Script escaped code of the value
      */
     public static String script(String value) {
-        return StringEscapeUtils.escapeEcmaScript(value);
+        return value != null
+                ? /* StringEscapeUtils.escapeEcmaScript(value) */ XSS.api().encodeForJSString(value)
+                : value;
+    }
+
+    /**
+     * Returns the escaped CSS code of a value (style escaping to prevent from XSS).
+     *
+     * @param value the value to escape
+     * @return the CSS escaped code of the value
+     */
+    public static String style(String value) {
+        return value != null ? XSS.api().encodeForCSSString(value) : value;
+    }
+
+    /**
+     * Returns the encapsulated CDATA string of a value (no escaping!).
+     *
+     * @param value the value to encasulate
+     * @return the string with <![CDATA[ ... ]]> around
+     */
+    public static String cdata(String value) {
+        return value != null ? "<![CDATA[" + value + "]]>" : null;
+    }
+
+    /**
+     * Creates the formatter for a describing string rule
+     *
+     * @param locale the local to use for formatting
+     * @param format the format string rule
+     * @param type   the optional value type
+     * @return the Format instance
+     */
+    public static Format getFormatter(@Nonnull final Locale locale, @Nonnull final String format,
+                                      @Nullable final Class<?>... type) {
+        Format formatter = null;
+        Pattern TEXT_FORMAT_STRING = Pattern.compile("^(\\{([^}]+)}(.+)|(.*\\{}.*))$");
+        Matcher matcher = TEXT_FORMAT_STRING.matcher(format);
+        if (matcher.matches()) {
+            switch (matcher.group(1)) {
+                case "Message":
+                    formatter = new MessageFormat(matcher.group(3), locale);
+                    break;
+                case "Date":
+                    formatter = new SimpleDateFormat(matcher.group(3), locale);
+                    break;
+                case "String":
+                    formatter = new FormatterFormat(matcher.group(3), locale);
+                    break;
+                case "Log":
+                    formatter = new LoggerFormat(matcher.group(3));
+                    break;
+                default:
+                    if (StringUtils.isBlank(matcher.group(2))) {
+                        formatter = new LoggerFormat(matcher.group(4));
+                    }
+                    break;
+            }
+        } else {
+            if (type != null && type.length == 1 && type[0] != null &&
+                    (Calendar.class.isAssignableFrom(type[0]) || Date.class.isAssignableFrom(type[0]))) {
+                formatter = new SimpleDateFormat(format, locale);
+            } else {
+                formatter = new LoggerFormat(format);
+            }
+        }
+        return formatter;
     }
 }

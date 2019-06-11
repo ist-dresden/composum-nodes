@@ -947,7 +947,9 @@ public class JsonUtil {
      */
     public static String getValueString(Object value, int type, MappingRules mapping) {
         String string = value.toString();
-        if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value && type != PropertyType.STRING) {
+        if (type != PropertyType.STRING &&
+                mapping.propertyFormat.embedType &&
+                mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value) {
             string = "{" + PropertyType.nameFromValue(type) + "}" + string;
         }
         return string;

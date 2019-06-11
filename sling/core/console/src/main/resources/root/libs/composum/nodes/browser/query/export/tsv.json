@@ -1,0 +1,9 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "sling:resourceType": "composum/nodes/browser/query/export",
+  "jcr:title": "TSV file (tab separated)",
+  "jcr:description": "a simple tab separated text file; see /libs/composum/nodes/browser/query/export/tsv",
+  "group": "TXT",
+  "order": 60,
+  "exportType": "composum/nodes/browser/query/export/tsv"
+}

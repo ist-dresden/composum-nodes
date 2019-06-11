@@ -1,18 +1,26 @@
 package com.composum.sling.clientlibs.service;
 
-import com.composum.sling.clientlibs.handle.*;
+import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.handle.ClientlibCategory;
+import com.composum.sling.clientlibs.handle.ClientlibElement;
+import com.composum.sling.clientlibs.handle.ClientlibLink;
+import com.composum.sling.clientlibs.handle.ClientlibRef;
 import com.composum.sling.clientlibs.processor.RendererContext;
 import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
+import javax.annotation.Nullable;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Calendar;
 
-/** Various internal functionality about client libraries. */
+/**
+ * Various internal functionality about client libraries.
+ */
 public interface ClientlibService {
 
     String ENCODING_GZIP = "gzip";
@@ -64,6 +72,32 @@ public interface ClientlibService {
      */
     void deliverContent(ResourceResolver resolver, ClientlibRef clientlibRef, boolean minified, OutputStream
             outputStream, String encoding) throws IOException, RepositoryException;
+
+    /**
+     * Generates a human readable descriptions of inconsistencies of the client libraries wrt. the given resolver
+     * (or an anonymous resolver, of none is given).
+     * Checks for each client library readable for the given resolver, that all elements of these client libraries
+     * and the files referenced from them are readable, too. Also we check that for all categories either all
+     * client libraries with this reference are readable, or none of them.
+     * All these are errors, since if that's not the case, this can cause a permanent recalculation of the clientlibs content,
+     * or, even worse, break the rendering.
+     * If {onlyErrors} is false, we also include informational messages about all unreadable libraries.
+     *
+     *
+     * @param type     if not null, only clientlibs / files of that type are checked
+     * @param resolver if not null, we use this resolver instead of an anonymous resolver to check readability
+     * @param onlyErrors if true, we skip informational messages
+     * @return null if everything is OK, otherwise a description of the problems
+     */
+    @Nullable
+    String verifyClientlibPermissions(@Nullable Clientlib.Type type, @Nullable ResourceResolver resolver, boolean onlyErrors);
+
+    /**
+     * Clears the whole cache for all clientlibs. Obviously something to used sparingly.
+     *
+     * @param resolver the resolver to use.
+     */
+    void clearCache(ResourceResolver resolver) throws PersistenceException;
 
     class ClientlibInfo {
         public Long size;

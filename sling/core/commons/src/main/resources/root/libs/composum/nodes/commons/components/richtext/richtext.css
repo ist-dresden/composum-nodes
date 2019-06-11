@@ -25,6 +25,13 @@
     min-height: 0;
 }
 
+.composum-widgets-richtext_wrapper{
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+}
+
 .composum-widgets-richtext .trumbowyg-box .trumbowyg-editor {
     padding: 10px;
     min-height: 55px;
@@ -42,6 +49,10 @@
 .composum-widgets-richtext .trumbowyg-button-pane {
     background: #eee;
     border-bottom: 1px solid #ccc;
+}
+
+.composum-widgets-richtext .trumbowyg-button-pane .fa-custom-button {
+    line-height: 32px;
 }
 
 .composum-widgets-richtext .trumbowyg-modal-box {

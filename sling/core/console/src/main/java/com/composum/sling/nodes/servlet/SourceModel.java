@@ -38,20 +38,6 @@ public class SourceModel extends ConsoleSlingBean {
     private static final Logger LOG = LoggerFactory.getLogger(SourceModel.class);
 
     // TODO move to configuration
-    public static final Map<String, String> NAMESPACES;
-
-    static {
-        NAMESPACES = new HashMap<>();
-        NAMESPACES.put("jcr", "http://www.jcp.org/jcr/1.0");
-        NAMESPACES.put("nt", "http://www.jcp.org/jcr/nt/1.0");
-        NAMESPACES.put("mix", "http://www.jcp.org/jcr/mix/1.0");
-        NAMESPACES.put("sling", "http://sling.apache.org/jcr/sling/1.0");
-        NAMESPACES.put("cpp", "http://sling.composum.com/pages/1.0");
-        NAMESPACES.put("cpa", "http://sling.composum.com/assets/1.0");
-        NAMESPACES.put("cq", "http://www.day.com/jcr/cq/1.0");
-    }
-
-    // TODO move to configuration
     public static final List<Pattern> EXCLUDED_PROPS;
 
     static {
@@ -182,10 +168,13 @@ public class SourceModel extends ConsoleSlingBean {
     private transient List<Resource> subnodeList;
 
     public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
+        if ("/".equals(ResourceUtil.normalize(resource.getPath())))
+            throw new IllegalArgumentException("Cannot export the whole JCR - " + resource.getPath());
         this.config = config;
         initialize(context, resource);
     }
 
+    @Override
     public String getName() {
         return resource.getName();
     }
@@ -243,6 +232,7 @@ public class SourceModel extends ConsoleSlingBean {
             String ns = property.getNs();
             addNamespace(keys, ns);
         }
+        addNameNamespace(keys, resource.getName());
         if (contentOnly) {
             Resource contentResource;
             if ((contentResource = resource.getChild(JcrConstants.JCR_CONTENT)) != null) {
@@ -409,7 +399,7 @@ public class SourceModel extends ConsoleSlingBean {
 
     // XML output
 
-    public void writeFile(Writer writer, boolean contentOnly) throws IOException {
+    public void writeFile(Writer writer, boolean contentOnly) throws IOException, RepositoryException {
         List<String> namespaces = new ArrayList<>();
         namespaces.add("jcr");
         determineNamespaces(namespaces, contentOnly);
@@ -418,7 +408,7 @@ public class SourceModel extends ConsoleSlingBean {
         writer.append("<jcr:root");
         for (int i = 0; i < namespaces.size(); ) {
             String ns = namespaces.get(i);
-            String url = NAMESPACES.get(ns);
+            String url = getSession().getNamespaceURI(ns);
             if (StringUtils.isNotBlank(url)) {
                 writer.append(" xmlns:").append(ns).append("=\"").append(url).append("\"");
                 if (++i < namespaces.size()) {

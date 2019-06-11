@@ -1,7 +1,7 @@
 package com.composum.sling.core.pckgmgr;
 
-import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.concurrent.JobFacade;
 import com.composum.sling.core.concurrent.JobMonitor;
 import com.composum.sling.core.concurrent.JobUtil;
 import com.composum.sling.core.pckgmgr.util.PackageProgressTracker;
@@ -12,6 +12,7 @@ import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
@@ -32,6 +33,7 @@ import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.PackageException;
+import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
@@ -59,6 +61,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -67,8 +70,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import static com.composum.sling.core.pckgmgr.util.PackageUtil.DATE_FORMAT;
 
 /** The servlet to provide download and upload of content packages and package definitions. */
 @SlingServlet(
@@ -103,6 +104,9 @@ public class PackageServlet extends AbstractServiceServlet {
     @Reference
     private JobManager jobManager;
 
+    @Reference
+    private Packaging packaging;
+
     //
     // Servlet operations
     //
@@ -129,7 +133,7 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
     @Activate
-    protected void activate(ComponentContext context) throws Exception {
+    protected void activate(ComponentContext context) {
         Dictionary<String, Object> properties = context.getProperties();
         jobIdleTimeout = PropertiesUtil.toLong(properties.get(PACKAGE_JOB_TIMEOUT), 60L * 1000L);
     }
@@ -142,7 +146,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
         // GET
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
-            Operation.list, new ListOperation());
+                Operation.list, new ListOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.tree, new TreeOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
@@ -169,7 +173,7 @@ public class PackageServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.install, new InstallOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
-            Operation.uninstall, new UninstallOperation());
+                Operation.uninstall, new UninstallOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.deploy, new ServiceOperation());
 
@@ -204,7 +208,8 @@ public class PackageServlet extends AbstractServiceServlet {
             Resource resource = null;
             try {
                 String path = PackageUtil.getPath(request);
-                resource = PackageUtil.getResource(request, path);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
+                resource = PackageUtil.getResource(manager, request, path);
             } catch (RepositoryException rex) {
                 LOG.error(rex.getMessage(), rex);
             }
@@ -220,9 +225,10 @@ public class PackageServlet extends AbstractServiceServlet {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-            ResourceHandle resource)
-            throws RepositoryException, IOException {
-            List<JcrPackage> jcrPackages = PackageUtil.createPackageManager(request).listPackages();
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
+            List<JcrPackage> jcrPackages = manager.listPackages();
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             writer.beginArray();
             for (JcrPackage jcrPackage : jcrPackages) {
@@ -239,7 +245,8 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
+            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(manager, request);
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             treeNode.sort();
@@ -265,10 +272,11 @@ public class PackageServlet extends AbstractServiceServlet {
 
             if (suffix.length() > 1) {
 
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
 
                 ResourceResolver resolver = request.getResourceResolver();
                 String rootPath = manager.getPackageRoot().getPath();
+                @SuppressWarnings("deprecation")
                 Iterator<Resource> found = resolver.findResources("/jcr:root" + rootPath
                                 + "//element(*,vlt:PackageDefinition)[jcr:contains(.,'" + suffix + "')]/../..",
                         Query.XPATH);
@@ -314,7 +322,7 @@ public class PackageServlet extends AbstractServiceServlet {
             String name = request.getParameter(PARAM_NAME);
             String version = request.getParameter(PARAM_VERSION);
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = manager.create(group, name, version);
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
@@ -331,7 +339,7 @@ public class PackageServlet extends AbstractServiceServlet {
             RequestParameterMap parameters = request.getRequestParameterMap();
             for (Map.Entry<String, RequestParameter[]> parameter : parameters.entrySet()) {
                 String key = parameter.getKey();
-                Object value = null;
+                Object value;
                 RequestParameter[] param = parameter.getValue();
                 if (param.length > 1) {
                     String[] values = new String[param.length];
@@ -354,7 +362,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
             try {
 
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                 JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
                 if (jcrPackage != null) {
@@ -404,7 +412,7 @@ public class PackageServlet extends AbstractServiceServlet {
         @Override
         protected Map<String, Object> getParameters(SlingHttpServletRequest request) throws IOException {
             Map<String, Object> result = new HashMap<>();
-            JsonReader reader = new JsonReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
+            JsonReader reader = new JsonReader(new InputStreamReader(request.getInputStream(), StandardCharsets.UTF_8));
             reader.setLenient(true);
             reader.beginObject();
             while (reader.peek() != JsonToken.END_OBJECT) {
@@ -429,7 +437,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
             if (jcrPackage != null) {
@@ -449,7 +457,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
             if (jcrPackage != null) {
@@ -499,7 +507,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 InputStream input = file.getInputStream();
                 boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
 
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                 JcrPackage jcrPackage = manager.upload(input, force);
 
                 JsonWriter writer = ResponseUtil.getJsonWriter(response);
@@ -519,12 +527,13 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
             installPackage(request, response, manager, jcrPackage);
         }
 
+        @SuppressWarnings("Duplicates")
         protected void installPackage(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                       JcrPackageManager manager, JcrPackage jcrPackage)
                 throws RepositoryException, IOException {
@@ -550,6 +559,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 installationDone(request, response, manager, jcrPackage, isDone);
 
             } else {
+                LOG.error("Job was not yet executed: {}", job);
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Package install not started!");
             }
         }
@@ -568,18 +578,19 @@ public class PackageServlet extends AbstractServiceServlet {
 
         @Override
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-            ResourceHandle resource)
-            throws RepositoryException, IOException {
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
             uninstallPackage(request, response, manager, jcrPackage);
         }
 
+        @SuppressWarnings("Duplicates")
         protected void uninstallPackage(SlingHttpServletRequest request, SlingHttpServletResponse response,
-            JcrPackageManager manager, JcrPackage jcrPackage)
-            throws RepositoryException, IOException {
+                                        JcrPackageManager manager, JcrPackage jcrPackage)
+                throws RepositoryException, IOException {
 
             ResourceResolver resolver = request.getResourceResolver();
             Session session = resolver.adaptTo(Session.class);
@@ -605,8 +616,8 @@ public class PackageServlet extends AbstractServiceServlet {
         }
 
         protected void uninstallationDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
-            JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
-            throws RepositoryException, IOException {
+                                          JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
+                throws RepositoryException, IOException {
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             jsonAnswer(writer, "uninstallation", "done", manager, jcrPackage);
@@ -650,7 +661,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
             @Override
             void doCommand(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException {
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                 final List<JcrPackage> jcrPackages = manager.listPackages();
                 response.setStatus(HttpServletResponse.SC_OK);
                 try (Writer writer = response.getWriter()) {
@@ -677,7 +688,7 @@ public class PackageServlet extends AbstractServiceServlet {
             void doCommand(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException {
                 String name = getName(parameters);
                 String group = getGroup(parameters);
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                 final List<JcrPackage> jcrPackages = manager.listPackages();
                 boolean found = false;
                 for (JcrPackage jcrPackage : jcrPackages) {
@@ -716,12 +727,13 @@ public class PackageServlet extends AbstractServiceServlet {
             abstract String getOperation();
 
             @Override
+            @SuppressWarnings("Duplicates")
             void doCommand(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException {
                 ResourceResolver resolver = request.getResourceResolver();
                 Session session = resolver.adaptTo(Session.class);
                 String name = getName(parameters);
                 String group = getGroup(parameters);
-                JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                 final JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, group, name);
                 if (jcrPackage != null) {
                     String path = jcrPackage.getNode().getPath();
@@ -804,16 +816,22 @@ public class PackageServlet extends AbstractServiceServlet {
             RequestParameterMap parameters = request.getRequestParameterMap();
             final RequestParameter cmd = parameters.getValue(AbstractServiceServlet.PARAM_CMD);
             if (cmd != null && !StringUtils.isBlank(cmd.getString())) {
-                if (cmd.getString().equals("ls")) {
-                    new LsCommand().doCommand(request, response, parameters);
-                } else if (cmd.getString().equals("rm")) {
-                    new RmCommand().doCommand(request, response, parameters);
-                } else if (cmd.getString().equals("build")) {
-                    new BuildCommand().doCommand(request, response, parameters);
-                } else if (cmd.getString().equals("uninst")) {
-                    new UninstCommand().doCommand(request, response, parameters);
-                } else {
-                    LOG.warn("unsupported command '{}' received. will ignore it.", cmd);
+                switch (cmd.getString()) {
+                    case "ls":
+                        new LsCommand().doCommand(request, response, parameters);
+                        break;
+                    case "rm":
+                        new RmCommand().doCommand(request, response, parameters);
+                        break;
+                    case "build":
+                        new BuildCommand().doCommand(request, response, parameters);
+                        break;
+                    case "uninst":
+                        new UninstCommand().doCommand(request, response, parameters);
+                        break;
+                    default:
+                        LOG.warn("unsupported command '{}' received. will ignore it.", cmd);
+                        break;
                 }
             } else {
                 RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
@@ -821,7 +839,7 @@ public class PackageServlet extends AbstractServiceServlet {
                     InputStream input = file.getInputStream();
                     boolean force = RequestUtil.getParameter(request, PARAM_FORCE, true);
 
-                    JcrPackageManager manager = PackageUtil.createPackageManager(request);
+                    JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                     JcrPackage jcrPackage = manager.upload(input, force);
 
                     installPackage(request, response, manager, jcrPackage);
@@ -851,7 +869,8 @@ public class PackageServlet extends AbstractServiceServlet {
                 if (jobMonitor.succeeded()) {
                     writer.append(createStatusElement("200", "ok"));
                 } else {
-                    final String msg = jobMonitor.getJob().getResultMessage();
+                    JobFacade jobFacade = jobMonitor.getJob();
+                    final String msg = jobFacade != null ? jobFacade.getResultMessage() : "no job found";
                     writer.append(createStatusElement("500", msg));
                 }
                 writer.append("</response>");
@@ -889,7 +908,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
             Session session = RequestUtil.getSession(request);
 
@@ -907,7 +926,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            JcrPackageManager manager = PackageUtil.createPackageManager(request);
+            JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
             Session session = RequestUtil.getSession(request);
 
@@ -961,7 +980,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 throws RepositoryException {
             this.request = request;
 
-            manager = PackageUtil.createPackageManager(request);
+            manager = PackageUtil.getPackageManager(packaging, request);
             jcrPackage = PackageUtil.getJcrPackage(manager, resource);
             definition = jcrPackage.getDefinition();
 
@@ -1133,8 +1152,7 @@ public class PackageServlet extends AbstractServiceServlet {
     protected static void fromJson(JsonReader reader, JcrPackage jcrPackage)
             throws RepositoryException, IOException {
         reader.beginObject();
-        JsonToken token;
-        while (reader.hasNext() && (token = reader.peek()) == JsonToken.NAME) {
+        while (reader.hasNext() && (reader.peek()) == JsonToken.NAME) {
             String name = reader.nextName();
             switch (name) {
                 case "definition":
@@ -1149,10 +1167,9 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
     protected static void fromJson(JsonReader reader, JcrPackageDefinition definition)
-            throws RepositoryException, IOException {
+            throws IOException {
         reader.beginObject();
-        JsonToken token;
-        while (reader.hasNext() && (token = reader.peek()) == JsonToken.NAME) {
+        while (reader.hasNext() && (reader.peek()) == JsonToken.NAME) {
             String name = reader.nextName();
             switch (name) {
                 case "filter":
@@ -1167,7 +1184,7 @@ public class PackageServlet extends AbstractServiceServlet {
                             definition.set(name, strVal, AUTO_SAVE);
                             break;
                         case BOOLEAN:
-                            Boolean boolVal = reader.nextBoolean();
+                            boolean boolVal = reader.nextBoolean();
                             definition.set(name, boolVal, AUTO_SAVE);
                             break;
                         default:

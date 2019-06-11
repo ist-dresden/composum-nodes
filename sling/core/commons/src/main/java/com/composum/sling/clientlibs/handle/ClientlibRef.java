@@ -87,7 +87,7 @@ public class ClientlibRef {
         // (xxx*:yyy) -> (xxx[^/]*:yyy)
         rule = rule.replaceAll("(\\([^:]+)\\*(:[^)]+\\))", "$1[^/]*$2");
         // (xxxx:yyy) -> xxxx
-        rule = rule.replaceAll("\\(([^:]+):[^)]+\\)", "$1");
+        rule = rule.replaceAll("\\(([^:]+):[^)]+\\)", "($1)");
         // make '.min' optional, or insert it if not present, to match both minified and unminified files.
         rule = rule.replaceFirst("([.-]min)?(\\.[^./]+)?$", "(.min)?$2");
         // check dots as dots

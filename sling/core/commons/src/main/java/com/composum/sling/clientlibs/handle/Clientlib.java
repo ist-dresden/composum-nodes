@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 
+import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.util.Arrays;
@@ -40,11 +41,13 @@ public class Clientlib implements ClientlibElement {
     public static final String RESOURCE_TYPE = "composum/nodes/commons/clientlib";
 
     /** A reference that matches this. */
+    @Override
     public ClientlibRef getRef() {
         return new ClientlibRef(getType(), resource.getPath(), true, null);
     }
 
     /** A link that matches this. */
+    @Override
     public ClientlibLink makeLink() {
         return new ClientlibLink(getType(), ClientlibLink.Kind.CLIENTLIB, resource.getPath(), null);
     }
@@ -78,6 +81,7 @@ public class Clientlib implements ClientlibElement {
         return resource.getProperty(PROP_ORDER, 0);
     }
 
+    @Nonnull
     public List<String> getCategories() {
         return Arrays.asList(resource.getProperty(PROP_CATEGORY, new String[0]));
     }

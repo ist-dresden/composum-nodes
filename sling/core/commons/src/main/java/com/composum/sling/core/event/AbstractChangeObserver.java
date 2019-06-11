@@ -5,6 +5,7 @@ import com.composum.sling.core.filter.StringFilter;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Modified;
+import org.apache.jackrabbit.api.observation.JackrabbitEvent;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
@@ -197,6 +198,7 @@ public abstract class AbstractChangeObserver implements EventListener {
                     ChangeCollection changedNodes = new ChangeCollection();
                     while (events.hasNext()) {
                         Event event = events.nextEvent();
+                        if (ignoreEvent(event)) continue;
                         try {
                             String path = event.getPath();
                             String user = event.getUserID();
@@ -240,6 +242,11 @@ public abstract class AbstractChangeObserver implements EventListener {
         } catch (LoginException ex) {
             LOG.error(ex.getMessage(), ex);
         }
+    }
+
+    /** We avoid processing external events since we can't access all data on these and we avoid duplicated processing. */
+    protected boolean ignoreEvent(Event event) {
+        return (event instanceof JackrabbitEvent) && ((JackrabbitEvent) event).isExternal();
     }
 
     /**

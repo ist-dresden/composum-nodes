@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.sling.core</groupId>
         <artifactId>composum-sling-core-parent</artifactId>
-        <version>1.9.0</version>
+        <version>1.10.0</version>
         <relativePath>../.parent</relativePath>
     </parent>
 
@@ -51,11 +51,20 @@
                         <Include-Resource>
                             {maven-resources}
                         </Include-Resource>
+                        <Import-Package>
+                            org.apache.sling.event.jobs.consumer.*;version="[1.1,3)",
+                            org.apache.sling.event.jobs.*;version="[1.3,3)",
+                            groovy.lang.*;version="[2.2.2,3)",
+                            javax.annotation.*;version="[0,4)",
+                            *
+                        </Import-Package>
                         <Export-Package>
                             com.composum.sling.nodes.*
                         </Export-Package>
                         <Sling-Initial-Content>
-                            root/libs/composum/nodes/console;path:=/libs/composum/nodes/console;overwrite:=true
+                            root/libs/composum/nodes/console;path:=/libs/composum/nodes/console;overwrite:=true,
+                            root/libs/composum/nodes/browser;path:=/libs/composum/nodes/browser;overwrite:=true,
+                            root/libs/composum/nodes/system;path:=/libs/composum/nodes/system;overwrite:=true
                         </Sling-Initial-Content>
                     </instructions>
                 </configuration>
@@ -217,6 +226,12 @@
             <artifactId>commons-codec</artifactId>
         </dependency>
 
+        <!-- Java Annotations -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+        </dependency>
+
         <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -230,6 +245,12 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>
+        </dependency>
+
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
         </dependency>
 
     </dependencies>

@@ -21,16 +21,32 @@ import org.slf4j.Logger;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.lock.LockManager;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.composum.sling.core.util.ResourceUtil.*;
-import static org.apache.sling.hamcrest.ResourceMatchers.props;
-import static org.junit.Assert.*;
+import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
+import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_SLING_FOLDER;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_UNSTRUCTURED;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -141,6 +157,7 @@ public class LazyCreationServiceImplTest {
             final String path = paths.get(rnd.nextInt(paths.size()));
             final ResourceResolver resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
             futures.add(executor.submit(new Callable<ResourceHandle>() {
+                @Override
                 public ResourceHandle call() throws Exception {
                     ResourceHandle handle = lazyCreationService.getOrCreate(resolver, path, makeGetter(),
                             makeCreator(delay), makeParentCreator(delay));
@@ -173,6 +190,7 @@ public class LazyCreationServiceImplTest {
             final String path = paths.get(rnd.nextInt(paths.size()));
             final ResourceResolver resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
             futures.add(executor.submit(new Callable<ResourceHandle>() {
+                @Override
                 public ResourceHandle call() throws Exception {
                     ResourceHandle handle = lazyCreationService.getOrCreate(resolver, path,
                             makeGetter(), makeCreator(delay), makeInitializer(delay), makeParentCreator(delay));
@@ -200,15 +218,14 @@ public class LazyCreationServiceImplTest {
     public void testCreationAndInitWithoutSequencer() throws Exception {
         setup(NOSEQUENCER);
         runCreationAndInitInParallel(0);
-        // switch off checking that nothing is initialized twice since that doesn't work because of a bug in the
-        // JCR locking: two threads trying to lock the same thing get a lock
-        initCount.clear();
+        initCount.clear(); // avoid initcount check since JCR locking doesn't seem to distinguish between sessions
     }
 
     @Test
     public void testCreationAndInitWithRandomDelays() throws Exception {
         setup(NOSEQUENCER);
         runCreationAndInitInParallel(300);
+        initCount.clear(); // avoid initcount check since JCR locking doesn't seem to distinguish between sessions
     }
 
     /**
@@ -219,16 +236,32 @@ public class LazyCreationServiceImplTest {
     public void testCreationAndInitWithLockBreak() throws Exception {
         setup(NOSEQUENCER);
         final String path = context.uniqueRoot().content() + "/lock/break";
-        long begin = System.currentTimeMillis();
+        CountDownLatch latch = new CountDownLatch(1);
         Future<ResourceHandle> future1 = executor.submit(new Callable<ResourceHandle>() {
+            @Override
             public ResourceHandle call() throws Exception {
                 final ResourceResolver resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
+
+                LazyCreationService.CreationStrategy creator = new LazyCreationService.CreationStrategy() {
+                    final LazyCreationService.CreationStrategy wrappedCreator = makeCreator(0);
+
+                    @Override
+                    public Resource create(ResourceResolver resolver, Resource parent, String name) throws RepositoryException, PersistenceException {
+                        Resource result = wrappedCreator.create(resolver, parent, name);
+                        latch.countDown();
+                        return result;
+                    }
+                };
+
                 ResourceHandle handle = lazyCreationService.getOrCreate(resolver, path,
-                        makeGetter(), makeCreator(0), makeInitializer(4000), makeParentCreator(0));
+                        makeGetter(), creator, makeInitializer(4000), makeParentCreator(0));
                 return handle;
             }
         });
+        latch.await(1, TimeUnit.MINUTES); // make sure the first thread actually started
+        long begin = System.currentTimeMillis();
         Future<ResourceHandle> future2 = executor.submit(new Callable<ResourceHandle>() {
+            @Override
             public ResourceHandle call() throws Exception {
                 final ResourceResolver resolver2 = resourceResolverFactory.getAdministrativeResourceResolver(null);
                 ResourceHandle handle = lazyCreationService.getOrCreate(resolver2, path,
@@ -243,13 +276,18 @@ public class LazyCreationServiceImplTest {
         validateResult(future1.get(), true);
         timing = System.currentTimeMillis() - begin;
         assertTrue("" + timing, timing >= 3000);
-        initCount.clear(); // avoid the check in teardown since it doesn't fit here.
+        initCount.clear(); // avoid the check in teardown since it doesn't fit here - this deliberately initializes something twice
     }
 
     /** Delay by a random time between 3/4 and 5/4 * delay milliseconds. */
     protected void randomlyDelay(int delay) {
         try {
-            if (0 < delay) Thread.sleep(rnd.nextInt(delay / 2) + 3 * delay / 4);
+            if (0 < delay) {
+                int millis = rnd.nextInt(delay / 2) + 3 * delay / 4;
+                LOG.debug("Starting wait for {} milliseconds", millis);
+                Thread.sleep(millis);
+                LOG.debug("Elapsed {} milliseconds", millis);
+            }
         } catch (InterruptedException e) {
             fail("Impossible: " + e);
         }
@@ -294,8 +332,12 @@ public class LazyCreationServiceImplTest {
             public void initialize(ResourceResolver resolver, Resource resource) throws RepositoryException,
                     PersistenceException {
                 randomlyDelay(delay);
-                initCount.get(resource.getPath()).incrementAndGet();
+                String path = resource.getPath();
+                if (initCount.get(path).incrementAndGet() > 1)
+                    LOG.error("Initialized twice (check 1)! {}", path);
                 ResourceHandle.use(resource).setProperty("initialized", Calendar.getInstance());
+                if (initCount.get(path).get() > 1)
+                    LOG.error("Initialized twice (check 2)! {}", path);
             }
         };
     }
@@ -324,6 +366,7 @@ public class LazyCreationServiceImplTest {
         final ResourceResolver resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
         final ResourceResolver resolver2 = resourceResolverFactory.getAdministrativeResourceResolver(null);
         Future<ResourceHandle> future1 = executor.submit(new Callable<ResourceHandle>() {
+            @Override
             public ResourceHandle call() throws Exception {
                 ResourceHandle.use(resolver.getResource(path)).setProperty("test", "ha");
                 ResourceHandle.use(resolver.getResource(path)).setProperty("test1", "hu");
@@ -333,6 +376,7 @@ public class LazyCreationServiceImplTest {
             }
         });
         Future<ResourceHandle> future2 = executor.submit(new Callable<ResourceHandle>() {
+            @Override
             public ResourceHandle call() throws Exception {
                 ResourceHandle.use(resolver2.getResource(path)).setProperty("test", "ha");
                 ResourceHandle.use(resolver.getResource(path)).setProperty("test2", "ho");
@@ -357,6 +401,7 @@ public class LazyCreationServiceImplTest {
         final ResourceResolver resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
         final ResourceResolver resolver2 = resourceResolverFactory.getAdministrativeResourceResolver(null);
         Future<ResourceHandle> future1 = executor.submit(new Callable<ResourceHandle>() {
+            @Override
             public ResourceHandle call() throws Exception {
                 Resource child1 = resolver.create(resolver.getResource(handle.getPath()), "child1", ITEM_PROPS);
                 Thread.sleep(500);
@@ -365,6 +410,7 @@ public class LazyCreationServiceImplTest {
             }
         });
         Future<ResourceHandle> future2 = executor.submit(new Callable<ResourceHandle>() {
+            @Override
             public ResourceHandle call() throws Exception {
                 Resource child2 = resolver2.create(resolver2.getResource(handle.getPath()), "child2", ITEM_PROPS);
                 Thread.sleep(500);

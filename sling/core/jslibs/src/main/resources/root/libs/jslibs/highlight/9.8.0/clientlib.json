@@ -9,7 +9,7 @@
   "js": {
     "jcr:primaryType": "nt:unstructured",
     "embed": [
-      "jslibs/highlight/9.8.0/highlight-packed.js"
+      "jslibs/highlight/9.8.0/highlight.min.js"
     ]
   }
 }

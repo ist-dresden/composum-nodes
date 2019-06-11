@@ -1,0 +1,18 @@
+{
+  "jcr:primaryType": "sling:OrderedFolder",
+  "sling:resourceType": "composum/nodes/console/page",
+  "browser": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:mixinTypes": [
+      "sling:Redirect"
+    ],
+    "jcr:title": "Browser",
+    "description": "/libs/composum/nodes/browser/description",
+    "sling:redirect": "/bin/browser.html",
+    "categories": [
+      "core",
+      "nodes"
+    ],
+    "order": 10
+  }
+}

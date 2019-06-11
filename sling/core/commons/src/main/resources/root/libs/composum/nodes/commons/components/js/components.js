@@ -170,6 +170,21 @@
             },
 
             /**
+             * finalize all date before the following submit (prepare data for storing)
+             */
+            finalize: function () {
+                var c = components.const.form;
+                this.$(widgets.const.css.selector.general).each(function () {
+                    if (this.view) {
+                        if (_.isFunction(this.view.finalize)) {
+                            // prepare each widget independent
+                            this.view.finalize.apply(this.view);
+                        }
+                    }
+                });
+            },
+
+            /**
              * Submit the form of the dialog.
              */
             submitForm: function (onSuccess, onError, onComplete) {
@@ -347,22 +362,22 @@
             },
 
             getValue: function () {
-                return this.$el.val();
+                return this.$input.val();
             },
 
             setValue: function (value, triggerChange) {
-                this.$el.val(value);
+                this.$input.val(value);
                 if (triggerChange) {
                     this.$el.trigger('change');
                 }
             },
 
             reset: function () {
-                this.$el.selectedIndex = -1;
+                this.$input.val(undefined);
             },
 
             setOptions: function (options) {
-                this.$el.html('');
+                this.$input.html('');
                 if (_.isArray(options)) {
                     options.forEach(function (option) {
                         if (_.isObject(option)) {
@@ -376,6 +391,67 @@
         });
 
         widgets.register('.widget.select-widget', components.SelectWidget);
+
+        /**
+         * the behaviour of a table with rows containing a checkbox to implement a multiple selection
+         */
+        components.TableSelectWidget = components.SelectWidget.extend({
+
+            initialize: function (options) {
+                components.SelectWidget.prototype.initialize.apply(this, [options]);
+                this.$items = this.$('tbody tr');
+                this.$items.click(_.bind(this.toggleElement, this));
+                this.$('thead tr input[type="checkbox"]').change(_.bind(this.toggleAll, this));
+            },
+
+            isNotEmpty: function () {
+                return this.$items.length > 0;
+            },
+
+            toggleElement: function (event) {
+                event.preventDefault();
+                var $row = $(event.currentTarget);
+                var $checkbox = $row.find('input[type="checkbox"]');
+                $checkbox.prop('checked', !$checkbox.prop('checked'));
+                return false;
+            },
+
+            toggleAll: function (event) {
+                var $checkbox = $(event.currentTarget);
+                var value = $checkbox.prop('checked');
+                this.$('tbody tr input[type="checkbox"]').prop('checked', value);
+                return false;
+            },
+
+            // SelectWidget
+
+            retrieveInput: function () {
+                return this.$('input[type="checkbox"]');
+            },
+
+            getValue: function () {
+                var value = [];
+                this.$('input[type="checkbox"]:checked').each(_.bind(function (i, el) {
+                    value.push($(el).attr('value'))
+                }, this));
+                return value;
+            },
+
+            setValue: function (value, triggerChange) {
+                if (!_.isArray(value)) {
+                    value = [value];
+                }
+                this.$('input[type="checkbox"]').prop('checked', false);
+                value.forEach(_.bind(function (val) {
+                    this.$('input[type="checkbox"][value="' + val + '"]').prop('checked', true);
+                }, this));
+                if (triggerChange) {
+                    this.$el.trigger('change');
+                }
+            }
+        });
+
+        widgets.register('.widget.table-select-widget', components.TableSelectWidget);
 
         /**
          * the 'text-field-widget' (window.core.components.TextFieldWidget)
@@ -393,6 +469,14 @@
                 this.$textField = this.textField();
                 // scan 'rules / pattern' attributes
                 this.initRules();
+                var typeahead = this.typeahead(options);
+                if (typeahead) {
+                    // switch off the browsers autocomplete function (!)
+                    if (typeahead.autocomplete !== 'auto') {
+                        this.$textField.attr('autocomplete', typeahead.autocomplete || 'off');
+                    }
+                    this.$textField.typeahead(typeahead);
+                }
                 // bind change events if any validation option has been found
                 if (this.rules) {
                     this.$textField.on('keyup.validate', _.bind(this.validate, this));
@@ -430,6 +514,52 @@
             },
 
             /**
+             * @param options the initializers options object
+             * @returns the configuration object for the typeahead plugin
+             */
+            typeahead: function (options) {
+                var typeahead = this.$el.data('typeahead') || options.typeahead;
+                if (typeahead) {
+                    if (_.isString(typeahead)) {
+                        if (/^(https?:\/\/[^/]+)?\/[^/]+\/.*/i.exec(typeahead)) {
+                            var url = typeahead;
+                            // a typeahead service must return a JSON array of suggestions
+                            // for the current text value sent as 'query' parameter
+                            typeahead = function (query, callback) {
+                                core.ajaxGet(url, {
+                                    data: {
+                                        query: query
+                                    }
+                                }, function (data) {
+                                    callback(data);
+                                })
+                            };
+                        } else if (typeahead.indexOf('{') === 0) {
+                            typeahead = JSON.parse(typeahead);
+                        } else if (typeahead.indexOf(',') > 0 && typeahead.indexOf('(') < 0) {
+                            typeahead = typeahead.split(',')
+                        } else {
+                            try {
+                                var f = eval(typeahead);
+                                if (_.isFunction(f)) {
+                                    typeahead = f;
+                                }
+                            } catch (ex) {
+                            }
+                        }
+                    }
+                    if (_.isFunction(typeahead) || _.isArray(typeahead)) {
+                        return {
+                            minLength: 1,
+                            source: typeahead
+                        };
+                    }
+                    return typeahead;
+                }
+                return undefined;
+            },
+
+            /**
              * sets the focus on the textfield
              */
             focus: function () {
@@ -462,6 +592,39 @@
         });
 
         widgets.register('.widget.text-field-widget', components.TextFieldWidget);
+
+        components.ComboBoxWidget = components.TextFieldWidget.extend({
+
+            initialize: function (options) {
+                components.TextFieldWidget.prototype.initialize.apply(this, [options]);
+                this.$menu = this.$('.dropdown-menu');
+                this.$menu.find('li a').click(_.bind(this.optionSelected, this));
+                this.$textField.on('change.combobox', _.bind(this.onValueChange, this));
+            },
+
+            onValueChange: function () {
+                var value = this.getValue();
+                var self = this;
+                this.$('[data-value-class]').each(function () {
+                    var $el = $(this);
+                    var css = $el.data('value-class').replace(/\$/g, value);
+                    $el.removeClass().addClass(css);
+                });
+                this.$menu.find('li').removeClass('active');
+                this.$menu.find('li[data-value="' + value + '"]').addClass('active');
+            },
+
+            optionSelected: function (event) {
+                event.preventDefault();
+                var $link = $(event.currentTarget);
+                var value = $link.closest('li').data('value');
+                this.setValue(value, true);
+                this.$menu.dropdown('toggle');
+                return false;
+            }
+        });
+
+        widgets.register('.widget.combobox-widget', components.ComboBoxWidget);
 
         /**
          * the 'text-field-widget' (window.core.components.TextFieldWidget)
@@ -568,10 +731,11 @@
                     var path = this.pathWidget.getValue();
                     if (path !== this.lastPathSelected) {
                         if (path.indexOf('/') === 0) {
-                            core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (data) {
-                                this.lastPathSelected = data.path;
-                                this.onPathChanged(data.path);
-                            }, this));
+                            core.getJson('/bin/cpm/nodes/node.tree.json' + core.encodePath(path),
+                                _.bind(function (data) {
+                                    this.lastPathSelected = data.path;
+                                    this.onPathChanged(data.path);
+                                }, this));
                         }
                     }
                     this.busy = false;
@@ -591,7 +755,41 @@
         components.PathWidget = components.TextFieldWidget.extend({
 
             initialize: function (options) {
-                components.TextFieldWidget.prototype.initialize.apply(this, [options]);
+                components.TextFieldWidget.prototype.initialize.apply(this, [_.extend({
+                    typeahead: {
+                        minLength: 1,
+                        source: _.bind(function (query, callback) {
+                            // ensure that query is of a valid path pattern
+                            if (query.indexOf('/') === 0) {
+                                var rootPath = this.getRootPath();
+                                if (rootPath !== '/') {
+                                    query = rootPath + query;
+                                }
+                                core.getJson('/bin/cpm/nodes/node.typeahead.json' + query, function (data) {
+                                    if (rootPath !== '/') {
+                                        for (var i = 0; i < data.length; i++) {
+                                            if (data[i].indexOf(rootPath + '/') === 0) {
+                                                data[i] = data[i].substring(rootPath.length);
+                                            }
+                                        }
+                                    }
+                                    callback(data);
+                                });
+                            }
+                        }, this),
+                        // custom matcher to check last name in path only
+                        matcher: function (item) {
+                            var pattern = /^(.*\/)([^\/]*)$/.exec(this.query);
+                            return item.match('.*' + pattern[2] + '.*');
+                        },
+                        // the custom highlighter to mark the name pattern in the last segment
+                        highlighter: function (item) {
+                            var pattern = /^(.*\/)([^\/]*)$/.exec(this.query);
+                            var splitted = new RegExp('^(.*)' + pattern[2] + '(.*)?').exec(item);
+                            return splitted[1] + '<b>' + pattern[2] + '</b>' + (splitted[2] || '');
+                        }
+                    }
+                }, options)]);
                 // retrieve element attributes
                 this.dialogTitle = this.$el.attr('title');
                 this.dialogLabel = this.$el.data('label');
@@ -600,42 +798,6 @@
                 };
                 this.setRootPath(this.config.rootPath);
                 this.filter = this.$el.data('filter');
-                // switch off the browsers autocomplete function (!)
-                this.$textField.attr('autocomplete', 'off');
-                // add typeahead function to the input field
-                this.$textField.typeahead({
-                    minLength: 1,
-                    source: _.bind(function (query, callback) {
-                        // ensure that query is of a valid path pattern
-                        if (query.indexOf('/') === 0) {
-                            var rootPath = this.getRootPath();
-                            if (rootPath !== '/') {
-                                query = rootPath + query;
-                            }
-                            core.getJson('/bin/cpm/nodes/node.typeahead.json' + query, function (data) {
-                                if (rootPath !== '/') {
-                                    for (var i = 0; i < data.length; i++) {
-                                        if (data[i].indexOf(rootPath + '/') === 0) {
-                                            data[i] = data[i].substring(rootPath.length);
-                                        }
-                                    }
-                                }
-                                callback(data);
-                            });
-                        }
-                    }, this),
-                    // custom matcher to check last name in path only
-                    matcher: function (item) {
-                        var pattern = /^(.*\/)([^\/]*)$/.exec(this.query);
-                        return item.match('.*' + pattern[2] + '.*');
-                    },
-                    // the custom highlighter to mark the name pattern in the last segment
-                    highlighter: function (item) {
-                        var pattern = /^(.*\/)([^\/]*)$/.exec(this.query);
-                        var splitted = new RegExp('^(.*)' + pattern[2] + '(.*)?').exec(item);
-                        return splitted[1] + '<b>' + pattern[2] + '</b>' + (splitted[2] || '');
-                    }
-                });
                 // set up '.select' button if present
                 this.$selectButton = this.$('button.select');
                 if (this.$selectButton.length > 0) {
@@ -677,7 +839,8 @@
              * stores the value for a selected path; extension hook for different path based values
              */
             setPath: function (path) {
-                this.setValue(path);
+                var oldValue = this.getValue();
+                this.setValue(path, oldValue !== path);
             },
 
             getRootPath: function () {
@@ -734,7 +897,7 @@
              * retrieves the referenc for the path and stores this reference as value
              */
             retrieveReference: function (path) {
-                core.getJson('/bin/cpm/nodes/node.tree.json' + path, _.bind(function (data) {
+                core.getJson('/bin/cpm/nodes/node.tree.json' + core.encodePath(path), _.bind(function (data) {
                     this.path = path;
                     this.setValue(data.uuid ? data.uuid : data.id);
                 }, this));
@@ -829,10 +992,16 @@
 
             initialize: function (options) {
                 components.TextFieldWidget.prototype.initialize.apply(this, [options]);
+                this.data = {
+                    locale: this.$el.data('locale') || 'en',
+                    format: this.$el.data('format') || 'YYYY-MM-DD HH:mm:ss',
+                    options: {
+                        weeks: core.toBoolean(this.$el.data('weeks'), true)
+                    }
+                };
                 this.$el.datetimepicker({
-                    locale: 'en',
-                    format: 'YYYY-MM-DD HH:mm:ss',
-                    //format: 'DD.MM.YYYY HH:mm:ss',
+                    locale: this.data.locale,
+                    format: this.data.format,
                     extraFormats: [
                         'YY-MM-DD',
                         'YY-MM-DD HH:mm',
@@ -853,20 +1022,39 @@
                         'DD.MM.YYYY HH:mm',
                         'DD.MM.YYYY HH:mm ZZ',
                         'DD.MM.YYYY HH:mm:ss',
-                        'DD.MM.YYYY HH:mm:ss ZZ'
+                        'DD.MM.YYYY HH:mm:ss ZZ',
+                        'D. MMMM YYYY',
+                        'D. MMMM YYYY HH:mm',
+                        'D. MMMM YYYY HH:mm ZZ',
+                        'D MMM YYYY',
+                        'D MMM YYYY HHmm',
+                        'D MMM YYYY HHmm ZZ',
+                        'D MMM YYYY HH:mm',
+                        'D MMM YYYY HH:mm ZZ',
+                        'MMMM D, YYYY',
+                        'MMMM D, YYYY HHmm',
+                        'MMMM D, YYYY HHmm ZZ',
+                        'MMMM D, YYYY HH:mm',
+                        'MMMM D, YYYY HH:mm ZZ',
+                        'MM/DD/YYYY',
+                        'MM/DD/YYYY HHmm',
+                        'MM/DD/YYYY HHmm ZZ',
+                        'MM/DD/YYYY HH:mm',
+                        'MM/DD/YYYY HH:mm ZZ'
                     ],
-                    calendarWeeks: true,
+                    calendarWeeks: this.data.options.weeks,
                     showTodayButton: true,
                     showClear: true,
                     showClose: true
                 });
+                this.datetimepicker = this.$el.data('DateTimePicker');
             },
 
             /**
              * defines the (initial) value of the input field
              */
             setValue: function (value, triggerChange) {
-                this.$el.data('DateTimePicker').date(value ? new Date(value) : null);
+                this.datetimepicker.date(value ? moment(value, this.data.format) : null);
                 this.validate();
                 if (triggerChange) {
                     this.$el.trigger('change');
@@ -961,24 +1149,24 @@
         components.PropertyNameWidget = components.TextFieldWidget.extend({
 
             initialize: function (options) {
-                components.TextFieldWidget.prototype.initialize.apply(this, [options]);
-                // switch off the browsers autocomplete function (!)
-                //this.$textField.attr('autocomplete', 'off');
-                // add typeahead function to the input field
-                this.$textField.typeahead({
-                    minLength: 1,
-                    source: [
-                        'jcr:data',
-                        'jcr:description',
-                        'jcr:lastModified',
-                        'jcr:lastModifiedBy',
-                        'jcr:mixinTypes',
-                        'jcr:primaryType',
-                        'jcr:title',
-                        'sling:redirect',
-                        'sling:resourceType'
-                    ]
-                });
+                components.TextFieldWidget.prototype.initialize.apply(this, [_.extend({
+                    // let browsers autocomplete as is and add typeahead function to the input field
+                    typeahead: {
+                        autocomplete: 'auto',
+                        minLength: 1,
+                        source: [
+                            'jcr:data',
+                            'jcr:description',
+                            'jcr:lastModified',
+                            'jcr:lastModifiedBy',
+                            'jcr:mixinTypes',
+                            'jcr:primaryType',
+                            'jcr:title',
+                            'sling:redirect',
+                            'sling:resourceType'
+                        ]
+                    }
+                }, options)]);
             }
         });
 
@@ -1007,20 +1195,9 @@
         components.PrimaryTypeWidget = components.TextFieldWidget.extend({
 
             initialize: function (options) {
-                components.TextFieldWidget.prototype.initialize.apply(this, [options]);
-                // switch off the browsers autocomplete function (!)
-                this.$textField.attr('autocomplete', 'off');
-                // add typeahead function to the input field
-                this.$textField.typeahead({
-                    minLength: 1,
-                    source: function (query, callback) {
-                        core.ajaxGet('/bin/cpm/core/system.primaryTypes.json', {
-                            query: query
-                        }, function (data) {
-                            callback(data);
-                        })
-                    }
-                });
+                components.TextFieldWidget.prototype.initialize.apply(this, [_.extend({
+                    typeahead: '/bin/cpm/core/system.primaryTypes.json'
+                }, options)]);
             }
         });
 
@@ -1032,20 +1209,9 @@
         components.MixinTypeWidget = components.TextFieldWidget.extend({
 
             initialize: function (options) {
-                components.TextFieldWidget.prototype.initialize.apply(this, [options]);
-                // switch off the browsers autocomplete function (!)
-                this.$textField.attr('autocomplete', 'off');
-                // add typeahead function to the input field
-                this.$textField.typeahead({
-                    minLength: 1,
-                    source: function (query, callback) {
-                        core.ajaxGet('/bin/cpm/core/system.mixinTypes.json', {
-                            query: query
-                        }, function (data) {
-                            callback(data);
-                        })
-                    }
-                });
+                components.TextFieldWidget.prototype.initialize.apply(this, [_.extend({
+                    typeahead: '/bin/cpm/core/system.mixinTypes.json'
+                }, options)]);
             }
         });
 

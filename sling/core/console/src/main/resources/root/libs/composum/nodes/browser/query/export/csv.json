@@ -1,0 +1,9 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "sling:resourceType": "composum/nodes/browser/query/export",
+  "jcr:title": "CSV file",
+  "jcr:description": "a simple CSV export; see /libs/composum/nodes/browser/query/export/csv",
+  "group": "TXT",
+  "order": 90,
+  "exportType": "composum/nodes/browser/query/export/csv"
+}

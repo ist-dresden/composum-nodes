@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.composum.sling.core</groupId>
     <artifactId>composum-sling-core-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.9.0</version>
+    <version>1.10.0</version>
 
     <name>Composum Core Parent</name>
     <description>Maven parent for Composum Sling Core bundles</description>
@@ -49,8 +49,12 @@
         <bundle.failOnError>true</bundle.failOnError>
         <bundle.status.skip>true</bundle.status.skip>
         <source.encoding>UTF-8</source.encoding>
-        <java.source>1.7</java.source>
-        <java.target>1.7</java.target>
+        <project.build.sourceEncoding>${source.encoding}</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>${source.encoding}</project.reporting.outputEncoding>
+        <java.source>1.8</java.source>
+        <java.target>1.8</java.target>
+        <maven.compiler.source>${java.source}</maven.compiler.source>
+        <maven.compiler.target>${java.target}</maven.compiler.target>
     </properties>
 
     <scm>
@@ -127,10 +131,31 @@
                     </configuration>
                 </plugin>
 
+                <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-dependency-plugin -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.1.1</version>
+                </plugin>
+
+                <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-jar-plugin -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.1.1</version>
+                </plugin>
+
+                <!-- https://mvnrepository.com/artifact/org.codehaus.mojo/exec-maven-plugin -->
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.6.0</version>
+                </plugin>
+
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-scr-plugin</artifactId>
-                    <version>1.20.0</version>
+                    <version>1.26.0</version>
                     <executions>
                         <execution>
                             <id>generate-scr-scrdescriptor</id>
@@ -253,7 +278,9 @@
 
                                 <!-- No css minify - that's done in the application. -->
                                 <cssSourceDir>.</cssSourceDir>
-                                <cssSourceExcludes><cssSourceExclude>**</cssSourceExclude></cssSourceExcludes>
+                                <cssSourceExcludes>
+                                    <cssSourceExclude>**</cssSourceExclude>
+                                </cssSourceExcludes>
                             </configuration>
                             <goals>
                                 <goal>minify</goal>
@@ -307,6 +334,18 @@
                             <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                             <autoReleaseAfterClose>true</autoReleaseAfterClose>
                         </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -408,6 +447,18 @@
                 <artifactId>org.apache.sling.scripting.jsp.taglib</artifactId>
                 <version>2.1.8</version>
                 <scope>provided</scope>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.sling/org.apache.sling.xss -->
+            <dependency>
+                <!-- This is an evil JAR with several old versions of libraries as embedded dependencies that aren't exported
+                and can conflict with your code. Scope optional at least means that that doesn't conflict with artefacts
+                using a bundle that uses the sling.xss bundle.
+                 -->
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.xss</artifactId>
+                <version>2.0.0</version>
+                <scope>provided</scope>
+                <optional>true</optional>
             </dependency>
             <dependency>
                 <groupId>org.apache.sling</groupId>
@@ -621,6 +672,15 @@
                 <artifactId>commons-codec</artifactId>
                 <version>1.5</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <!-- Java Annotations -->
+            <dependency>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>jsr305</artifactId>
+                <version>3.0.2</version>
+                <scope>provided</scope>
+                <optional>true</optional><!-- needed only for annotations -->
             </dependency>
 
             <!-- Logging -->

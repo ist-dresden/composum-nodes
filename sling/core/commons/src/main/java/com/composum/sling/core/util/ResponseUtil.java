@@ -2,8 +2,11 @@ package com.composum.sling.core.util;
 
 import com.composum.sling.core.mapping.MappingRules;
 import com.google.gson.stream.JsonWriter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletResponse;
 
+import javax.jcr.AccessDeniedException;
+import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
@@ -16,6 +19,26 @@ import java.io.PrintWriter;
 public class ResponseUtil {
 
     public static final String JSON_CONTENT_TYPE = "application/json;charset=" + MappingRules.CHARSET;
+
+    public static String getMessage(Throwable ex) {
+        StringBuilder builder = new StringBuilder();
+        String msg;
+        if (StringUtils.isNotBlank(msg = ex.getMessage())) {
+            builder.append(msg);
+        } else if (ex instanceof AccessDeniedException ||
+                ex instanceof IllegalAccessException ||
+                ex instanceof LoginException) {
+            builder.append("access denied");
+        } else {
+            Throwable cause = ex.getCause();
+            if (cause != null) {
+                builder.append(getMessage(cause));
+            } else {
+                builder.append("server error");
+            }
+        }
+        return builder.toString();
+    }
 
     /**
      * the default rule set for general import an export features

@@ -20,6 +20,8 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceWrapper;
 import org.apache.sling.api.resource.ValueMap;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
@@ -35,15 +37,18 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
     /**
      * The 'adaptTo' like wrapping helper.
      *
+     * @param resource the wrapped resource. We explicitly allow null here to avoid many null checks though many ResourceWrapper methods throw a NPE then,
+     *                 but you need to make sure that you check {@link #isValid()} if that's possible.
      * @return the wrapped resource (may be resource itself if it is a ResourceHandle), not null
      */
-    public static ResourceHandle use(Resource resource) {
+    @Nonnull
+    public static ResourceHandle use(@Nullable Resource resource) {
         return resource instanceof ResourceHandle
                 ? ((ResourceHandle) resource) : new ResourceHandle(resource);
     }
 
     /** the universal validation test */
-    public static boolean isValid(Resource resource) {
+    public static boolean isValid(@Nullable Resource resource) {
         return resource instanceof ResourceHandle
                 ? ((ResourceHandle) resource).isValid()
                 : resource != null && resource.getResourceResolver().getResource(resource.getPath()) != null;
@@ -52,6 +57,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
     // initialized attributes
 
     protected final Resource resource;
+    @Nonnull
     protected final ValueMap properties;
 
     // attributes retrieved on demand
@@ -121,6 +127,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
         return getProperty(key, String.class);
     }
 
+    @Nonnull
     public ValueMap getProperties() {
         return properties;
     }
@@ -296,6 +303,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
      * retrieves the primary type of the resources node; is using the 'getPrimaryType()' method
      * if the wrapped resource is a JcrResource.
      */
+    @Override
     public String getPrimaryType() {
         return resource instanceof JcrResource
                 ? ((JcrResource) resource).getPrimaryType()
@@ -303,7 +311,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
     }
 
     /**
-     * check the node type or the resource type
+     * Checks whether any of the resource's primary type, super types, sling resource type and supertypes is {resourceType}.
      */
     public boolean isOfType(String type) {
         return ResourceUtil.isResourceType(getResource(), type);
@@ -385,6 +393,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
         return StringUtils.isNotBlank(title) ? title : getResourceName();
     }
 
+    @Nullable
     @Override
     public ResourceHandle getParent() {
         if (resource != null) {
@@ -402,6 +411,10 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
         }
     }
 
+    /**
+     * Returns the {distance}-th parent - getParent(1) is just getParent().
+     */
+    @Nullable
     public ResourceHandle getParent(int distance) {
         ResourceHandle parent = this;
         while (distance > 0 && parent != null && parent.isValid()) {

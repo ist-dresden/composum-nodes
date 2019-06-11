@@ -1,3 +1,8 @@
+/*
+ * copyright (c) 2015ff IST GmbH Dresden, Germany - https://www.ist-software.com
+ *
+ * This software may be modified and distributed under the terms of the MIT license.
+ */
 package com.composum.sling.cpnl;
 
 import org.apache.commons.lang3.StringUtils;
@@ -15,6 +20,8 @@ import java.util.Map;
  * an abstract base tag implementation to generate HTML tags with dynamic attributes and an optional condition
  */
 public abstract class TagBase extends CpnlBodyTagSupport implements DynamicAttributes {
+
+    public static final String TAG_NONE = "none";
 
     private static final Logger LOG = LoggerFactory.getLogger(TagBase.class);
 
@@ -46,6 +53,10 @@ public abstract class TagBase extends CpnlBodyTagSupport implements DynamicAttri
 
     protected String getTagName() {
         return StringUtils.isNotBlank(tagName) ? tagName : getDefaultTagName();
+    }
+
+    public String getClasses() {
+        return StringUtils.isNotBlank(this.classes) ? classes : (String) dynamicAttributes.get("class");
     }
 
     public void setClasses(String classes) {
@@ -125,14 +136,17 @@ public abstract class TagBase extends CpnlBodyTagSupport implements DynamicAttri
     }
 
     protected void renderTagStart() {
-        try {
-            JspWriter writer = this.pageContext.getOut();
-            writer.write("<");
-            writer.write(getTagName());
-            writeAttributes(writer);
-            writer.write(">");
-        } catch (IOException ioex) {
-            LOG.error(ioex.getMessage(), ioex);
+        String tagName = getTagName();
+        if (!TAG_NONE.equalsIgnoreCase(tagName)) {
+            try {
+                JspWriter writer = this.pageContext.getOut();
+                writer.write("<");
+                writer.write(getTagName());
+                writeAttributes(writer);
+                writer.write(">");
+            } catch (IOException ioex) {
+                LOG.error(ioex.getMessage(), ioex);
+            }
         }
     }
 
@@ -146,13 +160,16 @@ public abstract class TagBase extends CpnlBodyTagSupport implements DynamicAttri
     }
 
     protected void renderTagEnd() {
-        try {
-            JspWriter writer = this.pageContext.getOut();
-            writer.write("</");
-            writer.write(getTagName());
-            writer.write(">");
-        } catch (IOException ioex) {
-            LOG.error(ioex.getMessage(), ioex);
+        String tagName = getTagName();
+        if (!TAG_NONE.equalsIgnoreCase(tagName)) {
+            try {
+                JspWriter writer = this.pageContext.getOut();
+                writer.write("</");
+                writer.write(getTagName());
+                writer.write(">");
+            } catch (IOException ioex) {
+                LOG.error(ioex.getMessage(), ioex);
+            }
         }
     }
 }

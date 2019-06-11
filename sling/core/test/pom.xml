@@ -8,7 +8,7 @@
 
     <groupId>com.composum.sling.core</groupId>
     <artifactId>composum-sling-core-test</artifactId>
-    <version>1.9.0</version>
+    <version>1.10.0</version>
 
     <name>Composum Core Sling Testing</name>
     <description>
@@ -36,8 +36,10 @@
 
     <properties>
         <source.encoding>UTF-8</source.encoding>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <java.source>1.8</java.source>
+        <java.target>1.8</java.target>
+        <maven.compiler.source>${java.source}</maven.compiler.source>
+        <maven.compiler.target>${java.target}</maven.compiler.target>
     </properties>
 
     <scm>
@@ -147,10 +149,11 @@
         </dependency>
 
         <!-- More testing dependencies -->
+        <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
+            <artifactId>mockito-core</artifactId>
+            <version>2.26.0</version>
             <scope>test</scope>
         </dependency>
 

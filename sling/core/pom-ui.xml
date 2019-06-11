@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.composum.sling.core</groupId>
 		<artifactId>composum-sling-core-parent</artifactId>
-		<version>1.9.0</version>
+		<version>1.10.0</version>
 		<relativePath>.parent</relativePath>
 	</parent>
 
@@ -23,6 +23,7 @@
 		<module>usermgnt</module>
 		<module>slingfeature</module>
 		<module>corecfg</module>
+		<module>setup</module>
 		<module>corepckg</module>
 	</modules>
 

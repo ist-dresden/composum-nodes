@@ -103,7 +103,7 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     )
     protected boolean gzipEnabled;
 
-    public static final String DEFAULT_CACHE_ROOT = "/var/cache/clientlibs";
+    public static final String DEFAULT_CACHE_ROOT = "/var/composum/clientlibs";
     public static final String CACHE_ROOT = "clientlibs.cache.root";
     @Property(
             name = CACHE_ROOT,

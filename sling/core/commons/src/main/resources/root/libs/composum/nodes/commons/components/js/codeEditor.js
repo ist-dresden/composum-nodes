@@ -110,7 +110,7 @@
             loadText: function (onSuccess) {
                 var path = this.getPath();
                 if (path) {
-                    core.ajaxGet("/bin/cpm/nodes/property.bin" + path, {
+                    core.ajaxGet("/bin/cpm/nodes/property.bin" + core.encodePath(path), {
                             contentType: 'text/plain;charset=UTF-8',
                             dataType: 'text'
                         }, _.bind(function (data) {
@@ -121,7 +121,8 @@
                             }
                         }, this),
                         _.bind(function (result) {
-                            core.alert('danger', 'Error', 'Error on loading text', result);
+                            core.alert('danger', core.i18n.get('Error'),
+                                core.i18n.get('Error on loading text'), result);
                         }, this));
                 }
             },
@@ -129,7 +130,7 @@
             saveText: function (onSuccess) {
                 var path = this.getPath();
                 if (path) {
-                    core.ajaxPut("/bin/cpm/nodes/property.update.bin" + path, this.ace.getValue(), {
+                    core.ajaxPut("/bin/cpm/nodes/property.update.bin" + core.encodePath(path), this.ace.getValue(), {
                         contentType: 'text/plain;charset=UTF-8',
                         dataType: 'text'
                     }, undefined, undefined, _.bind(function (result, x, y) {
@@ -138,7 +139,8 @@
                                 onSuccess(result);
                             }
                         } else {
-                            core.alert('danger', 'Error', 'Error on updating text', result);
+                            core.alert('danger', core.i18n.get('Error'),
+                                core.i18n.get('Error on updating text'), result);
                         }
                     }, this));
                 }

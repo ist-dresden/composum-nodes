@@ -9,6 +9,7 @@ import com.composum.sling.core.concurrent.LazyCreationService;
 import com.composum.sling.core.concurrent.LazyCreationServiceImpl;
 import com.composum.sling.core.concurrent.SemaphoreSequencer;
 import com.composum.sling.core.concurrent.SequencerService;
+import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.JsonUtil;
 import com.google.gson.stream.JsonWriter;
@@ -19,6 +20,7 @@ import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import javax.jcr.RepositoryException;
@@ -51,6 +53,8 @@ public class AbstractClientlibTest {
 
     protected ExecutorService executorService;
 
+    protected ClientlibPermissionPlugin permissionPlugin;
+
     protected final String CONTEXTPATH = "/context";
 
     /**
@@ -67,6 +71,9 @@ public class AbstractClientlibTest {
 
         final LazyCreationService creationService = context.registerInjectActivateService(
                 new LazyCreationServiceImpl());
+
+        permissionPlugin = Mockito.mock(ClientlibPermissionPlugin.class);
+        Mockito.when(permissionPlugin.categoryFilter(Matchers.anyString())).thenReturn(ResourceFilter.ALL);
 
         configurationService = context.registerService(ClientlibConfiguration.class, new
                 ClientlibConfigurationService() {
@@ -86,7 +93,7 @@ public class AbstractClientlibTest {
                     public boolean getUseMinifiedFiles() {
                         return AbstractClientlibTest.this.useMinifiedFiles;
                     }
-                }); // TODO: how to use properties?
+                });
 
         ServletContext servletContext = Mockito.mock(ServletContext.class);
         BeanContext beanContext = new BeanContext.Servlet(servletContext, context.bundleContext(), context.request(),
@@ -99,10 +106,11 @@ public class AbstractClientlibTest {
                         resolverFactory = context.getService(ResourceResolverFactory.class);
                         sequencer = sequencerService;
                         lazyCreationService = creationService;
+                        permissionPlugins.add(permissionPlugin);
                         activate(context.componentContext());
                     }
                 });
-        // TODO: MockOsgi.activate(clientlibService, context.bundleContext()); should work but doesn't
+        // TODO: MockOsgi.activate(clientlib2Service, context.bundleContext()); should work but doesn't
 
         rendererContext = RendererContext.instance(beanContext, context.request());
 

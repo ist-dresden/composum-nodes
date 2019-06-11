@@ -26,6 +26,13 @@
                             <input name="username" class="widget text-field-widget form-control" type="text"
                                    data-rules="mandatory" readonly />
                         </div>
+                        <c:if test="${!user.currentUserAdmin}">
+	                        <div class="form-group">
+	                            <label class="control-label">Old Password</label>
+	                            <input name="oldPassword" class="widget text-field-widget form-control" type="password"
+	                                   placeholder="enter password" data-rules="mandatory" />
+	                        </div>
+                        </c:if>                        
                         <div class="form-group">
                             <label class="control-label">Password</label>
                             <input name="password" class="widget text-field-widget form-control" type="password"

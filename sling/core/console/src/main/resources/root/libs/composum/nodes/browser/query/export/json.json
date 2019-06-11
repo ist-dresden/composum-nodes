@@ -1,0 +1,11 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "sling:resourceType": "composum/nodes/browser/query/export",
+  "jcr:title": "JSON objects file",
+  "jcr:description": "export a 'query object' with the resources of the result as JSON objects named with their path",
+  "group": "JSON",
+  "order": 60,
+  "exportType": "composum/nodes/browser/query/export/json/objects",
+  "selectors": "source.i4",
+  "filename": "query-export.json"
+}
