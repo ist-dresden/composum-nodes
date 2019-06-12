@@ -242,14 +242,14 @@ public class CpnlElFunctions {
     public static String text(String value) {
         return value != null
                 ? /* StringEscapeUtils.escapeHtml4(value) */ XSS.api().encodeForHTML(value)
-                : value;
+                : null;
     }
 
     /**
      * Returns the escaped text of a rich text value as HTML text for a tag attribute.
      * We assume that the result is used as value for a insertion done by jQuery.html();
-     * in this case all '&...' escaped chars are translated back by jQuery and the XSS protection
-     * is broken - to avoid this each '&' in the value is 'double escaped'
+     * in this case all '&amp;...' escaped chars are translated back by jQuery and the XSS protection
+     * is broken - to avoid this each '&amp;' in the value is 'double escaped'
      *
      * @param value the value to escape
      * @return the HTML escaped rich text of the value
@@ -329,7 +329,7 @@ public class CpnlElFunctions {
     public static String script(String value) {
         return value != null
                 ? /* StringEscapeUtils.escapeEcmaScript(value) */ XSS.api().encodeForJSString(value)
-                : value;
+                : null;
     }
 
     /**
@@ -339,14 +339,14 @@ public class CpnlElFunctions {
      * @return the CSS escaped code of the value
      */
     public static String style(String value) {
-        return value != null ? XSS.api().encodeForCSSString(value) : value;
+        return value != null ? XSS.api().encodeForCSSString(value) : null;
     }
 
     /**
      * Returns the encapsulated CDATA string of a value (no escaping!).
      *
      * @param value the value to encasulate
-     * @return the string with <![CDATA[ ... ]]> around
+     * @return the string with &lt;![CDATA[ ... ]]&gt; around
      */
     public static String cdata(String value) {
         return value != null ? "<![CDATA[" + value + "]]>" : null;

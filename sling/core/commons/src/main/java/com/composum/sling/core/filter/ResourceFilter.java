@@ -558,7 +558,7 @@ public interface ResourceFilter {
             none;
 
             /**
-             * Combines a set of filter instances by this combination rule. Convenience method wrapping FilterSet{@link #FilterSet(Rule, ResourceFilter...)}.
+             * Combines a set of filter instances by this combination rule. Convenience method wrapping FilterSet(Rule, ResourceFilter...).
              * We also throw in a little simplification of {@link FilterSet}s of {@link FilterSet}s, if that seems sensible.
              *
              * @param filters the set of combined filters

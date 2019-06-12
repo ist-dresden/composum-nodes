@@ -8,7 +8,7 @@
 
     <groupId>com.composum.sling.core.test</groupId>
     <artifactId>composum-sling-core-test</artifactId>
-    <version>1.10.1-SNAPSHOT</version>
+    <version>1.10.1</version>
 
     <name>Composum Core Sling Testing</name>
     <description>
@@ -66,7 +66,7 @@
                 <!-- Only for the test classes to use MockOSGI.activate. -->
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-scr-plugin</artifactId>
-                <version>1.20.0</version>
+                <version>1.26.0</version>
                 <executions>
                     <execution>
                         <id>generate-scr-scrdescriptor</id>
