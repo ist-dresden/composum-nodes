@@ -8,6 +8,7 @@ import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.SetUtils;
 import org.apache.commons.collections.map.LRUMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -738,6 +739,9 @@ public class DefaultClientlibService implements ClientlibService {
                     }
                     for (ClientlibRef ref : resourceFolder.getEmbedded()) {
                         verifyRef(resourceFolder, ref, administrativeResolver, impersonationResolver, allCategories, buf);
+                    }
+                    for (ClientlibRef ref : (Collection<ClientlibRef>) CollectionUtils.intersection(resourceFolder.getDependencies(), resourceFolder.getEmbedded())) {
+                        buf.append("ERROR: both a dependency and embedded: ").append(ref).append(" in ").append(resourceFolder).append("\n");
                     }
                 }
             }

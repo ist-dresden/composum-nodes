@@ -52,7 +52,6 @@
         "jslibs/jstree/3.3.8/themes/proton/style.css"
       ],
       "embed": [
-        "jslibs/jstree/3.3.8/themes/proton/style.css",
         "jslibs/bootstrap-table/1.7.0/bootstrap-table.css",
         "jslibs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.css",
         "jslibs/bootstrap-slider/10.6.1/css/bootstrap-slider.css",
