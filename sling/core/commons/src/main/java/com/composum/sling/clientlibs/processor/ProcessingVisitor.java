@@ -87,7 +87,7 @@ public class ProcessingVisitor extends AbstractClientlibVisitor {
     @Override
     protected void alreadyProcessed(ClientlibRef ref, VisitorMode mode, ClientlibResourceFolder folder) {
         if (mode == EMBEDDED) {
-            LOG.warn("Trying to embed already embedded / dependency {} again at {}", ref, folder);
+            LOG.warn("Trying to embed already embedded / dependency {} again at {} from {}", new Object[]{ref, folder, owner});
         }
     }
 
