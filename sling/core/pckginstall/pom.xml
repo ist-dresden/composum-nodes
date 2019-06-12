@@ -10,6 +10,7 @@
         <relativePath>../.parent</relativePath>
     </parent>
 
+    <groupId>com.composum.sling.core.osgi</groupId>
     <artifactId>composum-sling-osgi-package-installer</artifactId>
     <packaging>bundle</packaging>
 
