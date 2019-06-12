@@ -283,7 +283,7 @@
                 this.show(_.bind(function () {
                     // initialize the editor instance
                     this.editor.initEditor(initAfterLoad);
-                    this.editor.setSaveCommand( _.bind(function (editor) {
+                    this.editor.setSaveCommand(_.bind(function (editor) {
                         this.saveAndContinue();
                     }, this));
                 }, this));

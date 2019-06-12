@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.composum.sling.core</groupId>
+        <groupId>com.composum.sling.core.setup</groupId>
         <artifactId>composum-sling-core-setup-parent</artifactId>
-        <version>1.10.0</version>
+        <version>1.10.1</version>
     </parent>
 
     <artifactId>composum-sling-core-setup-hook</artifactId>
@@ -46,7 +46,7 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>com.composum.sling.core</groupId>
+                                    <groupId>${project.groupId}</groupId>
                                     <artifactId>composum-sling-core-setup-util</artifactId>
                                     <outputDirectory>${project.build.directory}/classes</outputDirectory>
                                 </artifactItem>
@@ -62,7 +62,7 @@
 
         <!-- Setup utilities -->
         <dependency>
-            <groupId>com.composum.sling.core</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>composum-sling-core-setup-util</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>

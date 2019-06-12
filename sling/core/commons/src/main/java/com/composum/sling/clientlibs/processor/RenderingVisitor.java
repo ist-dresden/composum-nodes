@@ -107,6 +107,10 @@ public class RenderingVisitor extends AbstractClientlibVisitor {
             LOG.warn("Not present and contains , - should probably be a multi " +
                     "string: " +
                     "{} references {}", parent, ref);
-        else LOG.info("Not present: {} referenced from {}", ref, parent);
+        else if (ref.optional) {
+            LOG.debug("Not present: opt. {} referenced from {}", ref, parent);
+        } else {
+            LOG.warn("Not present: mand. {} referenced from {}", ref, parent);
+        }
     }
 }

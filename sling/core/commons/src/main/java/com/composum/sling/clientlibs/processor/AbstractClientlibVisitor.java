@@ -80,7 +80,7 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
                 clientlib.accept(this, EMBEDDED, null);
             action(category, mode, parent);
             markAsProcessed(category.makeLink(), parent, mode);
-        } else notPresent(category.getRef(), mode, parent);
+        } else alreadyProcessed(category.getRef(), mode, parent);
         LOG.trace("<<< {} => {}", category, hasEmbeddedFiles);
     }
 
@@ -94,7 +94,7 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
             if (null != folder) folder.accept(this, mode, null);
             action(clientlib, mode, parent);
             markAsProcessed(clientlib.makeLink(), parent, mode);
-        } else notPresent(clientlib.getRef(), mode, parent);
+        } else alreadyProcessed(clientlib.getRef(), mode, parent);
         LOG.trace("<<< {} => {}", clientlib, hasEmbeddedFiles);
     }
 
@@ -126,7 +126,7 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
             }
             action(file, mode, parent);
             markAsProcessed(file.makeLink(), parent, mode);
-        } else notPresent(file.getRef(), mode, parent);
+        } else alreadyProcessed(file.getRef(), mode, parent);
         LOG.trace("<<< {} {}", mode, file);
     }
 
@@ -136,7 +136,7 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
         if (isNotProcessed(externalUri.getRef())) {
             action(externalUri, mode, parent);
             markAsProcessed(externalUri.makeLink(), parent, mode);
-        } else notPresent(externalUri.getRef(), mode, parent);
+        } else alreadyProcessed(externalUri.getRef(), mode, parent);
         // never embedded -> irrelevant for hash.
         LOG.trace("<<< {} {}", mode, externalUri);
     }
@@ -152,12 +152,14 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
 
     /** Hook for additional checks about already processed elements. */
     protected void alreadyProcessed(ClientlibRef ref, VisitorMode mode, ClientlibResourceFolder folder) {
-        // empty here.
+        // That's usually OK if it's included e.g. as a dependency from several places, so just log at trace level.
+        LOG.trace("Already processed: {} referenced from {}", ref, folder);
     }
 
     /** Hook for additional checks about an element referenced but not present. Default: debuglog. */
     protected void notPresent(ClientlibRef ref, VisitorMode mode, ClientlibResourceFolder parent) {
-        LOG.debug("Not present: {} referenced from {}", ref, parent);
+        if (LOG.isDebugEnabled())
+            LOG.debug("Not present: {} {} referenced {} from {}", new Object[]{ref.optional ? " opt. " : " mand. ", ref, mode, parent});
     }
 
     protected void updateHash(String path, Calendar updatetime) {
