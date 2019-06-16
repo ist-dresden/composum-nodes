@@ -84,8 +84,8 @@
                                 <include>.*/composum-nodes-jslibs.*\.jar</include>
                                 <include>.*/composum-nodes-commons.*\.jar</include>
                                 <include>.*/composum-nodes-console.*\.jar</include>
-                                <include>.*/composum-nodes-package-manager.*\.jar</include>
-                                <include>.*/composum-nodes-user-management.*\.jar</include>
+                                <include>.*/composum-nodes-pckgmgr.*\.jar</include>
+                                <include>.*/composum-nodes-usermgr.*\.jar</include>
                                 <include>.*/composum-nodes-config.*\.jar</include>
                             </includes>
                         </filter>
@@ -113,12 +113,12 @@
                         </embedded>
                         <embedded>
                             <groupId>${project.groupId}</groupId>
-                            <artifactId>composum-nodes-package-manager</artifactId>
+                            <artifactId>composum-nodes-pckgmgr</artifactId>
                             <target>/libs/composum/nodes/install</target>
                         </embedded>
                         <embedded>
                             <groupId>${project.groupId}</groupId>
-                            <artifactId>composum-nodes-user-management</artifactId>
+                            <artifactId>composum-nodes-usermgr</artifactId>
                             <target>/libs/composum/nodes/install</target>
                         </embedded>
                         <embedded>
@@ -137,12 +137,12 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>composum-nodes-user-management</artifactId>
+            <artifactId>composum-nodes-usermgr</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>composum-nodes-package-manager</artifactId>
+            <artifactId>composum-nodes-pckgmgr</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

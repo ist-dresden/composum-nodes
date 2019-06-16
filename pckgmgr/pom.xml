@@ -9,7 +9,7 @@
         <version>2.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>composum-nodes-package-manager</artifactId>
+    <artifactId>composum-nodes-pckgmgr</artifactId>
     <packaging>bundle</packaging>
 
     <name>Composum Nodes (Core) Package Manager</name>

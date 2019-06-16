@@ -9,17 +9,15 @@
         <version>2.0.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.composum.nodes.setup</groupId>
-    <artifactId>composum-nodes-setup-parent</artifactId>
+    <groupId>com.composum.nodes.osgi</groupId>
+    <artifactId>composum-nodes-osgi-parent</artifactId>
     <packaging>pom</packaging>
 
-    <name>Composum Nodes (Core) setup parent</name>
-    <description>setup implementation core modules</description>
+    <name>Composum Nodes (Core) OSGi addons parent</name>
+    <description>osgi addon modules</description>
 
     <modules>
-        <module>slingfeature</module>
-        <module>util</module>
-        <module>hook</module>
+        <module>pckginstall</module>
     </modules>
 
 </project>

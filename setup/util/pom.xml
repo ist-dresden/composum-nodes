@@ -19,7 +19,7 @@
 
         <dependency>
             <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-user-management</artifactId>
+            <artifactId>composum-nodes-usermgr</artifactId>
         </dependency>
         <dependency>
             <groupId>com.composum.nodes</groupId>

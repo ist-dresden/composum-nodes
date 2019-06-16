@@ -47,11 +47,11 @@
         </dependency>
         <dependency>
             <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-package-manager</artifactId>
+            <artifactId>composum-nodes-pckgmgr</artifactId>
         </dependency>
         <dependency>
             <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-user-management</artifactId>
+            <artifactId>composum-nodes-usermgr</artifactId>
         </dependency>
 
         <!-- Commons Lang -->

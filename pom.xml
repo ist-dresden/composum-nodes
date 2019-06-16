@@ -84,11 +84,10 @@
         <module>jslibs</module>
         <module>commons</module>
         <module>console</module>
-        <module>pckginstall</module>
         <module>pckgmgr</module>
-        <module>usermgnt</module>
-        <module>slingfeature</module>
+        <module>usermgr</module>
         <module>corecfg</module>
+        <module>osgi</module>
         <module>setup</module>
         <module>corepckg</module>
 
@@ -412,13 +411,13 @@
             <!-- Composum -->
             <dependency>
                 <groupId>com.composum.nodes</groupId>
-                <artifactId>composum-nodes-user-management</artifactId>
+                <artifactId>composum-nodes-usermgr</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.composum.nodes</groupId>
-                <artifactId>composum-nodes-package-manager</artifactId>
+                <artifactId>composum-nodes-pckgmgr</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
