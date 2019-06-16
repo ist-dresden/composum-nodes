@@ -719,9 +719,11 @@ public class DefaultClientlibService implements ClientlibService {
             // Check clientlibraries themselves and their categories
             Set<String> categoriesWithReachableClientlibs = new HashSet<>();
             Set<String> categoriesWithUnreachableClientlibs = new HashSet<>();
+            Set<String> allCategories = new HashSet<>();
             while (it.hasNext()) {
                 Resource clientlibElement = it.next();
                 List<String> categories = Arrays.asList(ResourceHandle.use(clientlibElement).getProperty(PROP_CATEGORY, new String[0]));
+                allCategories.addAll(categories);
                 if (impersonationResolver.getResource(clientlibElement.getPath()) == null) {
                     unreachablePaths.add(clientlibElement.getPath());
                     categoriesWithUnreachableClientlibs.addAll(categories);
@@ -771,10 +773,10 @@ public class DefaultClientlibService implements ClientlibService {
                 if (type != null) {
                     ClientlibResourceFolder resourceFolder = new ClientlibResourceFolder(type, clientlibElement);
                     for (ClientlibRef ref : resourceFolder.getDependencies()) {
-                        verifyRef(resourceFolder, ref, administrativeResolver, impersonationResolver, buf);
+                        verifyRef(resourceFolder, ref, administrativeResolver, impersonationResolver, allCategories, buf);
                     }
                     for (ClientlibRef ref : resourceFolder.getEmbedded()) {
-                        verifyRef(resourceFolder, ref, administrativeResolver, impersonationResolver, buf);
+                        verifyRef(resourceFolder, ref, administrativeResolver, impersonationResolver, allCategories, buf);
                     }
                 }
             }
@@ -835,8 +837,17 @@ public class DefaultClientlibService implements ClientlibService {
         );
     }
 
-    private void verifyRef(ClientlibResourceFolder resourceFolder, ClientlibRef ref, ResourceResolver administrativeResolver, ResourceResolver userResolver, StringBuilder buf) {
-        if (ref.isCategory() || ref.isExternalUri()) return;
+    private void verifyRef(ClientlibResourceFolder resourceFolder, ClientlibRef ref, ResourceResolver administrativeResolver, ResourceResolver userResolver, Set<String> allCategories, StringBuilder buf) {
+        if (ref.isExternalUri()) return;
+        if (ref.isCategory()) {
+            if (!allCategories.contains(ref.category)) {
+                if (ref.optional)
+                    buf.append("INFO: empty optional category ").append(ref).append(" referenced\n");
+                else
+                    buf.append("WARN: empty mandatory category ").append(ref).append(" referenced\n");
+            }
+            return;
+        }
         Resource resourceAsAdmin = retrieveResource(ref.path, administrativeResolver);
         if (resourceAsAdmin != null) {
             Resource resourceAsUser = retrieveResource(ref.path, userResolver);

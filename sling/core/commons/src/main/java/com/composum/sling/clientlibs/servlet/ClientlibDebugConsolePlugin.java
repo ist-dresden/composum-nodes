@@ -26,6 +26,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
@@ -388,13 +389,18 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
 
         @Override
         protected void notPresent(ClientlibRef ref, VisitorMode mode, ClientlibResourceFolder folder) {
-            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " Not present: " + ref);
+            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + modeName(mode) + " NOT PRESENT: " + (ref.optional ? "optional " : "mandatory ") + ref);
+        }
+
+        @Nonnull
+        private String modeName(VisitorMode mode) {
+            return VisitorMode.EMBEDDED.equals(mode) ? " embeds " : " depends";
         }
 
         @Override
         public void visit(ClientlibCategory category, VisitorMode mode, ClientlibResourceFolder parent) throws
                 IOException, RepositoryException {
-            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " " + category);
+            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + modeName(mode) + " " + category);
             indentation++;
             super.visit(category, mode, parent);
             indentation--;
@@ -404,7 +410,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
         public void visit(Clientlib clientlib, VisitorMode mode, ClientlibResourceFolder parent) throws IOException,
                 RepositoryException {
             String order = 0 != clientlib.getOrder() ? " [order=" + clientlib.getOrder() + "]" : "";
-            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " " + clientlib
+            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + modeName(mode) + " " + clientlib
                     + order);
             indentation++;
             super.visit(clientlib, mode, parent);
@@ -414,7 +420,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
         @Override
         public void visit(ClientlibResourceFolder folder, VisitorMode mode, ClientlibResourceFolder parent) throws
                 IOException, RepositoryException {
-            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " " + folder
+            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + modeName(mode) + " " + folder
                     + (folder.getOptional() ? "[Opt]" : ""));
             indentation++;
             super.visit(folder, mode, parent);
@@ -424,7 +430,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
         @Override
         public void visit(ClientlibFile file, VisitorMode mode, ClientlibResourceFolder parent) throws
                 RepositoryException, IOException {
-            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " " + file);
+            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + modeName(mode) + " " + file);
             indentation++;
             super.visit(file, mode, parent);
             indentation--;
@@ -432,7 +438,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
 
         @Override
         public void visit(ClientlibExternalUri externalUri, VisitorMode mode, ClientlibResourceFolder parent) {
-            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + mode + " " + externalUri);
+            writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + modeName(mode) + " " + externalUri);
             indentation++;
             super.visit(externalUri, mode, parent);
             indentation--;
