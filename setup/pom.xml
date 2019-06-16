@@ -17,6 +17,7 @@
     <description>setup implementation code modules</description>
 
     <modules>
+        <module>slingfeature</module>
         <module>util</module>
         <module>hook</module>
     </modules>
