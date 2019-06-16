@@ -121,7 +121,7 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
     protected String makeUrl(SlingHttpServletRequest request, ClientlibLink link, boolean minified) {
         String uri = makeUri(minified, link);
         String url;
-        if (getConfig().mapClientlibURLs()) {
+        if (getConfig().clientlibs_url_map()) {
             url = LinkUtil.getUrl(request, uri);
         } else {
             url = LinkUtil.getUnmappedUrl(request, uri);

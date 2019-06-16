@@ -30,7 +30,7 @@ public class YUICssProcessor extends AbstractClientlibRenderer implements CssPro
 
     @Override
     protected String getLinkTemplate() {
-        return clientlibConfig.getConfig().cssTemplate();
+        return clientlibConfig.getConfig().template_link_css();
     }
 
     @Override
@@ -39,14 +39,14 @@ public class YUICssProcessor extends AbstractClientlibRenderer implements CssPro
         InputStream result = source;
         if (source != null) {
             context.hint(ResourceUtil.PROP_MIME_TYPE, "text/css");
-            if (context.useMinifiedFiles() && clientlibConfig.getConfig().cssMinimize()) {
+            if (context.useMinifiedFiles() && clientlibConfig.getConfig().css_minimize()) {
                 final PipedOutputStream outputStream = new PipedOutputStream();
                 result = new PipedInputStream(outputStream);
                 context.execute(() -> {
                     try (OutputStreamWriter writer = new OutputStreamWriter(outputStream);
                          InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET)) {
                         final CssCompressor compressor = new CssCompressor(sourceReader);
-                        compressor.compress(writer, clientlibConfig.getConfig().cssLineBreak());
+                        compressor.compress(writer, clientlibConfig.getConfig().css_line_break());
                         writer.flush();
                     } catch (IOException ex) {
                         LOG.error(ex.getMessage(), ex);

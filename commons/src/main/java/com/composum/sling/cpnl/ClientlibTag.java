@@ -109,7 +109,7 @@ public class ClientlibTag extends CpnlBodyTagSupport {
 
                 if (null != clientlib) { // if this is a clientlib or category
                     JspWriter writer = this.pageContext.getOut();
-                    if (service.getClientlibConfig().tagdebug()) {
+                    if (service.getClientlibConfig().debug_tag()) {
                         writer.println("<!-- cpn:clientlib." + type + " " + defaultIfNull(path, "") +
                                 " " + defaultIfNull(category, "") + " -->");
                     }

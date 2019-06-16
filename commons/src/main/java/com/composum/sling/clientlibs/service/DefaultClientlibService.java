@@ -115,7 +115,7 @@ public class DefaultClientlibService implements ClientlibService {
 
     public static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
 
-    /** Top node for the category cache within the {@link ClientlibConfiguration.Config#cacheRoot()}. */
+    /** Top node for the category cache within the {@link ClientlibConfiguration.Config#clientlibs_cache_root()}. */
     protected static final String CATEGORYCACHE = "categorycache";
 
     static {
@@ -185,7 +185,7 @@ public class DefaultClientlibService implements ClientlibService {
     @Activate
     protected void activate(ComponentContext context) {
         ClientlibConfiguration.Config config = getClientlibConfig();
-        executorService = new ThreadPoolExecutor(config.threadPoolMin(), config.threadPoolMax(),
+        executorService = new ThreadPoolExecutor(config.clientlibs_threadpool_min(), config.clientlibs_threadpool_max(),
                 200L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         rendererMap = new EnumMap<>(Type.class);
         rendererMap.put(Type.js, javascriptProcessor);
@@ -193,7 +193,7 @@ public class DefaultClientlibService implements ClientlibService {
         rendererMap.put(Type.link, linkRenderer);
         processorMap = new EnumMap<>(Type.class);
         processorMap.put(Type.js, javascriptProcessor);
-        processorMap.put(Type.css, getClientlibConfig().mapClientlibURLs() ? new ProcessorPipeline(new
+        processorMap.put(Type.css, getClientlibConfig().clientlibs_url_map() ? new ProcessorPipeline(new
                 CssUrlMapper(), cssProcessor) : cssProcessor);
     }
 
@@ -241,10 +241,10 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     /**
-     * For files we use the correct sibling wrt. {@link ClientlibConfiguration.Config#useMinifiedFiles()}.
+     * For files we use the correct sibling wrt. {@link ClientlibConfiguration.Config#clientlibs_minified_use()}.
      */
     protected Resource minificationVariant(Resource resource) {
-        if (getClientlibConfig().useMinifiedFiles()) {
+        if (getClientlibConfig().clientlibs_minified_use()) {
             return getMinifiedSibling(resource);
         }
         return resource;
@@ -328,7 +328,7 @@ public class DefaultClientlibService implements ClientlibService {
      * afterwards, filtering out inaccessible things.
      */
     protected List<Resource> retrieveCategoryResources(String category, ResourceResolver resolver) {
-        long cacheTime = TimeUnit.SECONDS.toMillis(getClientlibConfig().resolverCachetime());
+        long cacheTime = TimeUnit.SECONDS.toMillis(getClientlibConfig().clientlibs_resolver_cache_time());
         if (cacheTime <= 0) return retrieveResourcesForCategoryUncached(category, resolver);
 
         List<String> paths = null;
@@ -524,8 +524,8 @@ public class DefaultClientlibService implements ClientlibService {
                     }
 
                     final ProcessorContext context = new ProcessorContext(request, adminResolver, executorService,
-                            getClientlibConfig().mapClientlibURLs(), minified && getClientlibConfig()
-                            .useMinifiedFiles());
+                            getClientlibConfig().clientlibs_url_map(), minified && getClientlibConfig()
+                            .clientlibs_minified_use());
 
                     LazyCreationService.InitializationStrategy initializer = initializationStrategy(clientlibRef,
                             encoding, hash, context);
@@ -660,19 +660,19 @@ public class DefaultClientlibService implements ClientlibService {
      * @return the name of the file that is used for caching this resource. Not null.
      */
     protected String getCachePath(ClientlibRef ref, boolean minified, String encoding) {
-        String cacheRoot = getClientlibConfig().cacheRoot();
+        String cacheRoot = getClientlibConfig().clientlibs_cache_root();
         String cacheKey;
         cacheKey = ref.isCategory() ? "/" + CATEGORYCACHE + "/" + ref.category : ref.path;
         if (StringUtils.isNotBlank(encoding)) {
             cacheKey += '.' + encoding.trim();
         }
-        if (minified && getClientlibConfig().useMinifiedFiles()) cacheKey = cacheKey + ".min";
+        if (minified && getClientlibConfig().clientlibs_minified_use()) cacheKey = cacheKey + ".min";
         cacheKey = cacheKey + "." + ref.type.name();
         return cacheRoot + cacheKey;
     }
 
     protected String adjustEncoding(String encoding) {
-        if (ENCODING_GZIP.equals(encoding) && !getClientlibConfig().gzipEnabled()) {
+        if (ENCODING_GZIP.equals(encoding) && !getClientlibConfig().gzip_enabled()) {
             encoding = null;
         }
         return encoding;
@@ -796,7 +796,7 @@ public class DefaultClientlibService implements ClientlibService {
     @Override
     public void clearCache(ResourceResolver resolver) throws PersistenceException {
         LOG.info("Clear cache requested.");
-        String cacheRootPath = clientlibConfig.getConfig().cacheRoot();
+        String cacheRootPath = clientlibConfig.getConfig().clientlibs_cache_root();
         Resource cacheRoot = Objects.requireNonNull(resolver.getResource(cacheRootPath));
         List<String> subpaths = new ArrayList<>(Arrays.asList(resolver.getSearchPath()));
         subpaths.add(CATEGORYCACHE);

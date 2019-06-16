@@ -17,7 +17,7 @@ public class DefaultLinkRenderer extends AbstractClientlibRenderer implements Li
 
     @Override
     protected String getLinkTemplate() {
-        return clientlibConfig.getConfig().linkTemplate();
+        return clientlibConfig.getConfig().template_link_general();
     }
 
 }

@@ -28,7 +28,7 @@ public class DefaultJavascriptProcessor extends AbstractClientlibRenderer implem
 
     @Override
     protected String getLinkTemplate() {
-        return clientlibConfig.getConfig().javascriptTemplate();
+        return clientlibConfig.getConfig().template_link_javascript();
     }
 
     @Override
