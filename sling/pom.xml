@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.composum.sling.parent</groupId>
-	<artifactId>composum-sling-reactor</artifactId>
+	<artifactId>composum-nodes-reactor</artifactId>
 	<packaging>pom</packaging>
 	<version>2</version>
 

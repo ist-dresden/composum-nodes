@@ -1,0 +1,18 @@
+[feature name=composum-console]
+
+[artifacts startLevel=20]
+  org.apache.commons/commons-lang3
+  com.composum.nodes/composum-nodes-commons
+  com.composum.nodes/composum-nodes-jslibs
+  com.composum.nodes/composum-nodes-console
+  com.composum.nodes/composum-nodes-package-manager
+  com.composum.nodes/composum-nodes-user-management
+
+[configurations]
+  org.apache.sling.jcr.base.internal.LoginAdminWhitelist.fragment-composum_core
+    whitelist.name="composum_core"
+    whitelist.bundles=[
+      "com.composum.core.commons",
+      "com.composum.core.pckgmgr",
+      "com.composum.core.pckginstall"
+    ]

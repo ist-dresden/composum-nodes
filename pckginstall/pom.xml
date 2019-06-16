@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.nodes</groupId>
+        <artifactId>composum-nodes-parent</artifactId>
+        <version>2.0.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>com.composum.nodes.osgi</groupId>
+    <artifactId>composum-nodes-osgi-package-installer</artifactId>
+    <packaging>bundle</packaging>
+
+    <name>Composum Nodes (Core) OSGi Package Installer</name>
+    <description>OSGi installer for JCR packages</description>
+
+    <properties>
+        <bundle.name>com.composum.core.pckginstall</bundle.name>
+        <source.encoding>UTF-8</source.encoding>
+    </properties>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-scr-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-Category>${bundle.category}</Bundle-Category>
+                        <Bundle-SymbolicName>${bundle.name}</Bundle-SymbolicName>
+                        <Include-Resource>{maven-resources}</Include-Resource>
+                        <Import-Package>*</Import-Package>
+                        <Export-Package>
+                            com.composum.core.pckginstall.*
+                        </Export-Package>
+                        <DynamicImport-Package>*</DynamicImport-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.installer.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit.vault</groupId>
+            <artifactId>org.apache.jackrabbit.vault</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>javax.jcr</groupId>
+            <artifactId>jcr</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.event</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- OSGi, Felix -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+        </dependency>
+        <!-- deprecated! -->
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.scr</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.scr.annotations</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+    </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installPackage</id>
+        </profile>
+        <profile>
+            <id>installBundle</id>
+        </profile>
+        <profile>
+            <id>installTestContent</id>
+        </profile>
+
+    </profiles>
+
+</project>
