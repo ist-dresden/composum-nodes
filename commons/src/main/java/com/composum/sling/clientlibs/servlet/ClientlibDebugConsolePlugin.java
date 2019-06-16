@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -110,7 +111,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         if (request.getRequestURI().endsWith(LOC_CSS)) {
             response.setContentType("text/css");
-            IOUtils.copy(getClass().getClassLoader().getResourceAsStream("/" + LOC_CSS),
+            IOUtils.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("/" + LOC_CSS)),
                     response.getOutputStream());
             return;
         }
@@ -172,6 +173,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
 
     protected void initResolvers(Processor processor, String impersonation) throws ServletException {
         try {
+            //noinspection deprecation
             processor.adminResolver = resolverFactory.getAdministrativeResourceResolver(null);
         } catch (LoginException e) {
             processor.writer.println("Cannot get administrative resolver");
@@ -186,9 +188,11 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             }
         } else {
             try {
+                @SuppressWarnings("unchecked")
                 Map authenticationInfo = StringUtils.isNotBlank(impersonation) ?
                         new HashMap(Collections.singletonMap(ResourceResolverFactory.USER_IMPERSONATION, impersonation))
                         : null;
+                //noinspection deprecation,unchecked
                 processor.impersonationResolver = resolverFactory.getAdministrativeResourceResolver(authenticationInfo);
             } catch (LoginException e) {
                 processor.writer.println("Could not login as " + impersonation);
@@ -285,10 +289,11 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
         /** Prints all client libraries readable for the impersonation user. */
         protected void printAllLibs() throws ServletException, IOException {
             try {
-                QueryManager querymanager = adminResolver.adaptTo(Session.class).getWorkspace()
+                QueryManager querymanager = Objects.requireNonNull(adminResolver.adaptTo(Session.class)).getWorkspace()
                         .getQueryManager();
                 String statement = "//element(*)[sling:resourceType='composum/nodes/commons/clientlib']/" + type.name() +
                         "/..  order by path";
+                @SuppressWarnings({"unchecked", "deprecation"})
                 List<Resource> clientlibs = IteratorUtils.toList(adminResolver.findResources(statement, Query.XPATH));
                 for (Resource clientlibResource : clientlibs) {
                     if (impersonationResolver.getResource(clientlibResource.getPath()) != null)
@@ -368,7 +373,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
 
         protected DebugVisitor(ClientlibElement owner, ClientlibService service, ResourceResolver resolver,
                                PrintWriter writer) {
-            super(owner, service, resolver, new LinkedHashSet<ClientlibLink>());
+            super(owner, service, resolver, new LinkedHashSet<>());
             this.writer = writer;
         }
 
@@ -384,7 +389,6 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
 
         @Override
         protected void markAsProcessed(ClientlibLink link, ClientlibResourceFolder parent, VisitorMode visitorMode) {
-            return;
         }
 
         @Override

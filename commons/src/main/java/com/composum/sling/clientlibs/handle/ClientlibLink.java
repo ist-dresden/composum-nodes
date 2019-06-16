@@ -9,6 +9,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.composum.sling.clientlibs.handle.ClientlibLink.Kind.CATEGORY;
 import static com.composum.sling.clientlibs.handle.ClientlibLink.Kind.EXTERNALURI;
@@ -110,10 +111,10 @@ public class ClientlibLink {
 
         ClientlibLink that = (ClientlibLink) o;
 
-        if (kind != null ? !kind.equals(that.kind) : that.kind != null) return false;
-        if (path != null ? !path.equals(that.path) : that.path != null) return false;
+        if (!Objects.equals(kind, that.kind)) return false;
+        if (!Objects.equals(path, that.path)) return false;
         if (type != that.type) return false;
-        return properties != null ? properties.equals(that.properties) : that.properties == null;
+        return Objects.equals(properties, that.properties);
     }
 
     @Override
@@ -168,6 +169,7 @@ public class ClientlibLink {
         String uri;
         switch (kind) {
             case FILE: // we can only refer to that exact resource.
+            case EXTERNALURI:
                 uri = path;
                 break;
             case CLIENTLIB:
@@ -175,9 +177,6 @@ public class ClientlibLink {
                 break;
             case CATEGORY:
                 uri = ClientlibCategoryServlet.makePath(path, type, context.useMinifiedFiles(), hash);
-                break;
-            case EXTERNALURI:
-                uri = path;
                 break;
             default:
                 throw new UnsupportedOperationException("Bug - impossible.");

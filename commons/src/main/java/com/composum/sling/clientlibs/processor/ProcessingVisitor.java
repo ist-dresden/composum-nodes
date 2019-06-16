@@ -14,7 +14,6 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 
-import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -56,7 +55,8 @@ public class ProcessingVisitor extends AbstractClientlibVisitor {
     }
 
     @Override
-    public void action(ClientlibFile clientlibFile, VisitorMode mode, ClientlibResourceFolder parent) throws RepositoryException, IOException {
+    public void action(ClientlibFile clientlibFile, VisitorMode mode, ClientlibResourceFolder parent)
+            throws IOException {
         if (EMBEDDED != mode) return;
         Resource resource = clientlibFile.handle.getResource();
         if (context.useMinifiedFiles()) {

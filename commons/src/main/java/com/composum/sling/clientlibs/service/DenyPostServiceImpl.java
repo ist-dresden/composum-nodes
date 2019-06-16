@@ -55,13 +55,11 @@ public class DenyPostServiceImpl implements SlingPostProcessor {
     public void process(SlingHttpServletRequest request, List<Modification> changes) throws ResourceNotFoundException {
         if (!deniedPathList.isEmpty()) {
             Resource resource = request.getResource();
-            String path = resource != null ? resource.getPath() : null;
-            if (path != null) {
-                for (Pattern pat : deniedPathList) {
-                    if (pat.matcher(path).matches()) {
-                        LOG.warn("POST to {} reached default SlingPostServlet, but is forbidden via pattern {}", path, pat.pattern());
-                        throw new IllegalArgumentException("POSTing to resource via default SlingPostServlet forbidden at this JCR path");
-                    }
+            String path = resource.getPath();
+            for (Pattern pat : deniedPathList) {
+                if (pat.matcher(path).matches()) {
+                    LOG.warn("POST to {} reached default SlingPostServlet, but is forbidden via pattern {}", path, pat.pattern());
+                    throw new IllegalArgumentException("POSTing to resource via default SlingPostServlet forbidden at this JCR path");
                 }
             }
         }

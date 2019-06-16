@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Models a resource folder for a {@link Clientlib} - this can be the folder js/css directly below it, or a lower level
@@ -152,7 +153,7 @@ public class ClientlibResourceFolder implements ClientlibElement {
 
         ClientlibResourceFolder that = (ClientlibResourceFolder) o;
 
-        if (resource != null ? !resource.equals(that.resource) : that.resource != null) return false;
+        if (!Objects.equals(resource, that.resource)) return false;
         return type == that.type;
     }
 

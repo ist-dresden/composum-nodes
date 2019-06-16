@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -119,11 +120,11 @@ public class ClientlibRef {
 
         ClientlibRef that = (ClientlibRef) o;
 
-        if (rule != null ? !rule.equals(that.rule) : that.rule != null) return false;
-        if (category != null ? !category.equals(that.category) : that.category != null) return false;
-        if (externalUri != null ? !externalUri.equals(that.externalUri) : that.externalUri != null) return false;
+        if (!Objects.equals(rule, that.rule)) return false;
+        if (!Objects.equals(category, that.category)) return false;
+        if (!Objects.equals(externalUri, that.externalUri)) return false;
         if (type != that.type) return false;
-        return properties != null ? properties.equals(that.properties) : that.properties == null;
+        return Objects.equals(properties, that.properties);
     }
 
     @Override

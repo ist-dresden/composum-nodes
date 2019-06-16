@@ -7,6 +7,7 @@ import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
 import org.slf4j.Logger;
 
+import javax.annotation.Nonnull;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -21,12 +22,14 @@ public class DropMapServlet extends SlingSafeMethodsServlet {
     private static final Logger LOG = getLogger(DropMapServlet.class);
 
     @Override
-    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response) {
+    protected void doGet(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response) {
         drop(request, response);
     }
 
     @Override
-    protected void doHead(SlingHttpServletRequest request, SlingHttpServletResponse response) {
+    protected void doHead(@Nonnull final SlingHttpServletRequest request,
+                          @Nonnull final SlingHttpServletResponse response) {
         drop(request, response);
     }
 
