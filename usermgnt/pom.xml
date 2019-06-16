@@ -50,6 +50,10 @@
                         <Include-Resource>
                             {maven-resources}
                         </Include-Resource>
+                        <Export-Package>
+                            !com.composum.sling.core.usermanagement.*.impl.*,
+                            com.composum.sling.core.usermanagement.*
+                        </Export-Package>
                         <Sling-Initial-Content>
                             root/libs/composum/nodes/usermgnt;path:=/libs/composum/nodes/usermgnt;overwrite:=true
                         </Sling-Initial-Content>

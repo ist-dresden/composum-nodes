@@ -4,13 +4,10 @@ import org.apache.commons.collections.ComparatorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
@@ -25,17 +22,15 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
-
 
 /**
  * Plots a graph of service usages. Use as console plugin: http://localhost:9090/system/console/servicegraph.
@@ -45,15 +40,14 @@ import java.util.regex.Pattern;
  *
  * @see "https://github.com/magjac/d3-graphviz"
  */
-@Component(label = "Composum Service Graph Webconsole Plugin",
-        description = "Prints a dotty file describing the service relations")
-@Service(value = Servlet.class)
-@Properties({
-        @Property(name = "felix.webconsole.label", value = "servicegraph"),
-        @Property(name = "felix.webconsole.title", value = "Service Graph"),
-        @Property(name = "felix.webconsole.category", value = "Composum"),
-        @Property(name = "felix.webconsole.css", value = "clientlibs/" + ShowServiceGraphConsolePlugin.LOC_CSS),
-})
+@Component(service = Servlet.class,
+        name = "Composum Service Graph Webconsole Plugin",
+        property = {
+                "felix.webconsole.category=Composum",
+                "felix.webconsole.label=servicegraph",
+                "felix.webconsole.title=Service Graph",
+                "felix.webconsole.css=clientlibs/" + ShowServiceGraphConsolePlugin.LOC_CSS
+        })
 public class ShowServiceGraphConsolePlugin extends HttpServlet {
 
     /** A regex to limit the service classes to. Default: <code>^com.composum</code>. */
@@ -96,7 +90,7 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         if (request.getRequestURI().endsWith(LOC_CSS)) {
             response.setContentType("text/css");
-            IOUtils.copy(getClass().getClassLoader().getResourceAsStream("/" + LOC_CSS),
+            IOUtils.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("/" + LOC_CSS)),
                     response.getOutputStream());
             return;
         }
@@ -130,12 +124,8 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
 
         try {
             ServiceReference<?>[] refs = bundleContext.getAllServiceReferences(null, null);
-            Arrays.sort(refs, new Comparator<ServiceReference<?>>() {
-                @Override
-                public int compare(ServiceReference<?> o1, ServiceReference<?> o2) {
-                    return ComparatorUtils.naturalComparator().compare(o1.toString(), o2.toString());
-                }
-            });
+            //noinspection unchecked
+            Arrays.sort(refs, (o1, o2) -> ComparatorUtils.naturalComparator().compare(o1.toString(), o2.toString()));
             for (ServiceReference<?> ref : refs) {
                 Object service = null;
                 Class<?> clazz;
@@ -148,7 +138,6 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
                     clazz = service.getClass();
                 } finally {
                     if (service != null) {
-                        service = null;
                         bundleContext.ungetService(ref);
                     }
                 }
@@ -232,7 +221,7 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
                 List<Class> referredClasses = new ArrayList<>();
                 while (serviceOrSuper != null) {
                     for (Field field : serviceOrSuper.getDeclaredFields()) {
-                        collectReferredClasses(field.getGenericType(), referredClasses, new HashSet<Type>());
+                        collectReferredClasses(field.getGenericType(), referredClasses, new HashSet<>());
                     }
                     serviceOrSuper = serviceOrSuper.getSuperclass();
                 }
@@ -240,6 +229,7 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
                 for (Class referredClass : referredClasses) {
                     if (classPattern.matcher(referredClass.getName()).find()) {
                         for (Class<?> serviceClass : classIdx.values()) {
+                            //noinspection unchecked
                             if (referredClass.isAssignableFrom(serviceClass)) {
                                 refFields.add(serviceClass.getName());
                                 break;

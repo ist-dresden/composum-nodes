@@ -58,7 +58,8 @@
                             *
                         </Import-Package>
                         <Export-Package>
-                            com.composum.core.pckgmgr.*
+                            !com.composum.sling.core.pckgmgr.*.impl.*,
+                            com.composum.sling.core.pckgmgr.*
                         </Export-Package>
                         <Sling-Initial-Content>
                             root/libs/composum/nodes/pckgmgr;path:=/libs/composum/nodes/pckgmgr;overwrite:=true

@@ -16,15 +16,12 @@ import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
@@ -57,15 +54,14 @@ import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
  * @author Hans-Peter Stoerr
  * @since 10/2017
  */
-@Component(label = "Composum Clientlib Webconsole Plugin",
-        description = "Delivers some debugging informations about the clientlibs through the Felix Webconsole")
-@Service(value = Servlet.class)
-@Properties({
-        @Property(name = "felix.webconsole.label", value = "clientlibs"),
-        @Property(name = "felix.webconsole.title", value = "Composum Client Libraries"),
-        @Property(name = "felix.webconsole.category", value = "Composum"),
-        @Property(name = "felix.webconsole.css", value = "clientlibs/" + ClientlibDebugConsolePlugin.LOC_CSS),
-})
+@Component (service = Servlet.class,
+        name = "Composum Clientlib Webconsole Plugin",
+        property = {
+                "felix.webconsole.category=Composum",
+                "felix.webconsole.label=clientlibs",
+                "felix.webconsole.title=Composum Client Libraries",
+                "felix.webconsole.css=clientlibs/" + ClientlibDebugConsolePlugin.LOC_CSS
+        })
 public class ClientlibDebugConsolePlugin extends HttpServlet {
 
     /**

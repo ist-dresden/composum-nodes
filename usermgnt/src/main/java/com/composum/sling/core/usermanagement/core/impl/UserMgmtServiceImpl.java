@@ -1,5 +1,6 @@
-package com.composum.sling.core.usermanagement.core;
+package com.composum.sling.core.usermanagement.core.impl;
 
+import com.composum.sling.core.usermanagement.core.UserManagementService;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.JackrabbitSession;
