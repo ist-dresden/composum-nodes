@@ -16,7 +16,7 @@
     <description>a set of basig tools: jcr browser, package manager, user manager</description>
 
     <properties>
-        <bundle.name>com.composum.core.console</bundle.name>
+        <bundle.name>com.composum.nodes.console</bundle.name>
     </properties>
 
     <build>

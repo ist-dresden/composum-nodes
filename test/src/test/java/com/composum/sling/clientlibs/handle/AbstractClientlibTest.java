@@ -73,6 +73,7 @@ public class AbstractClientlibTest {
      */
     private Calendar setupTime;
 
+    @SuppressWarnings("deprecation")
     @Before
     public final void setupFramework() {
         setupTime = GregorianCalendar.getInstance();
@@ -94,78 +95,78 @@ public class AbstractClientlibTest {
             }
 
             @Override
-            public boolean tagdebug() {
-                return false;
-            }
-
-            @Override
             public boolean debug() {
                 return AbstractClientlibTest.this.debuggingMode;
             }
 
             @Override
-            public boolean enableAuthorMapping() {
+            public boolean author_mapping_enabled() {
                 return false;
             }
 
             @Override
-            public boolean cssMinimize() {
+            public boolean css_minimize() {
                 return true;
             }
 
             @Override
-            public int cssLineBreak() {
+            public int css_line_break() {
                 return 0;
             }
 
             @Override
-            public String cssTemplate() {
-                return "  <link rel=\"stylesheet\" href=\"{0}\" />";
-            }
-
-            @Override
-            public String javascriptTemplate() {
-                return "  <script type=\"text/javascript\" src=\"{0}\"></script>";
-            }
-
-            @Override
-            public String linkTemplate() {
-                return "  <link rel=\"{1}\" href=\"{0}\" />";
-            }
-
-            @Override
-            public boolean gzipEnabled() {
+            public boolean debug_tag() {
                 return false;
             }
 
             @Override
-            public String cacheRoot() {
+            public String template_link_css() {
+                return "  <link rel=\"stylesheet\" href=\"{0}\" />";
+            }
+
+            @Override
+            public String template_link_javascript() {
+                return "  <script type=\"text/javascript\" src=\"{0}\"></script>";
+            }
+
+            @Override
+            public String template_link_general() {
+                return "  <link rel=\"{1}\" href=\"{0}\" />";
+            }
+
+            @Override
+            public boolean gzip_enabled() {
+                return false;
+            }
+
+            @Override
+            public String clientlibs_cache_root() {
                 return DEFAULT_CACHE_ROOT;
             }
 
             @Override
-            public boolean useMinifiedFiles() {
+            public boolean clientlibs_minified_use() {
                 return AbstractClientlibTest.this.useMinifiedFiles;
             }
 
             @Override
-            public boolean mapClientlibURLs() {
+            public boolean clientlibs_url_map() {
                 return true;
             }
 
             @Override
-            public int threadPoolMin() {
+            public int clientlibs_resolver_cache_time() {
+                return 60;
+            }
+
+            @Override
+            public int clientlibs_threadpool_min() {
                 return 10;
             }
 
             @Override
-            public int threadPoolMax() {
+            public int clientlibs_threadpool_max() {
                 return 20;
-            }
-
-            @Override
-            public int resolverCachetime() {
-                return 60;
             }
         };
 

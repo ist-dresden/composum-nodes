@@ -16,7 +16,7 @@
     <description>a console module to manage users via JCR API</description>
 
     <properties>
-        <bundle.name>com.composum.core.usermgnt</bundle.name>
+        <bundle.name>com.composum.nodes.usermgr</bundle.name>
     </properties>
 
     <build>

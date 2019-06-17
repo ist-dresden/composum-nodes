@@ -16,7 +16,7 @@
     <description>OSGi installer for JCR packages</description>
 
     <properties>
-        <bundle.name>com.composum.core.pckginstall</bundle.name>
+        <bundle.name>com.composum.nodes.pckginstall</bundle.name>
         <source.encoding>UTF-8</source.encoding>
     </properties>
 

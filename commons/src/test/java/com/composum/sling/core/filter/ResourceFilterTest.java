@@ -13,18 +13,25 @@ package com.composum.sling.core.filter;
 import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
 import com.composum.sling.core.mapping.json.ResourceFilterTypeAdapter;
 import com.composum.sling.core.util.JsonTest;
+import com.composum.sling.core.util.ResourceUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.SyntheticResource;
+import org.apache.sling.api.wrappers.ValueMapDecorator;
 import org.hamcrest.CoreMatchers;
-import org.junit.Before;
 import org.junit.Test;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertThat;
@@ -83,39 +90,54 @@ public class ResourceFilterTest {
 
     public static final ResourceFilter CONTENT_NODE_FILTER = new ResourceFilter.ContentNodeFilter(true, NAME_FILTER, TYPE_FILTER);
 
-    protected Resource matchesResource;
-    protected Resource notMatchesResource;
-
-    @Before
-    public void createTestResources() throws RepositoryException {
+    protected Resource createResource(final ResourceResolver resolver, final String primaryType,
+                                      final String path, final String resourceType)
+            throws RepositoryException {
+        final String name = StringUtils.substringAfterLast(path, "/");
         NodeType nodeType = createMock(NodeType.class);
-        expect(nodeType.getName()).andReturn("nt:folder").anyTimes();
+        expect(nodeType.getName()).andReturn(primaryType).anyTimes();
+        expect(nodeType.getSupertypes()).andReturn(new NodeType[0]).anyTimes();
         replay(nodeType);
         Node node = createMock(Node.class);
         expect(node.getPrimaryNodeType()).andReturn(nodeType).anyTimes();
-        expect(node.getName()).andReturn("resource-test").anyTimes();
-        expect(node.getPath()).andReturn("/content/test/mocked/resource-test").anyTimes();
-        expect(node.isNodeType("nt:folder")).andReturn(true).anyTimes();
-        expect(node.isNodeType("nt:unstructured")).andReturn(false).anyTimes();
+        expect(node.getName()).andReturn(name).anyTimes();
+        expect(node.getPath()).andReturn(path).anyTimes();
+        expect(node.isNodeType(primaryType)).andReturn(true).anyTimes();
+        expect(node.isNodeType(anyObject(String.class))).andReturn(false).anyTimes();
         expect(node.getMixinNodeTypes()).andReturn(new NodeType[0]).anyTimes();
         replay(node);
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(JcrConstants.JCR_PRIMARYTYPE, primaryType);
+        properties.put(ResourceUtil.PROP_RESOURCE_TYPE, resourceType);
         Resource resource = createMock(Resource.class);
+        expect(resource.getResourceResolver()).andReturn(resolver).anyTimes();
+        expect(resource.getValueMap()).andReturn(new ValueMapDecorator(properties)).anyTimes();
         expect(resource.adaptTo(Node.class)).andReturn(node).anyTimes();
-        expect(resource.getName()).andReturn(node.getName()).anyTimes();
-        expect(resource.getPath()).andReturn(node.getPath()).anyTimes();
-        expect(resource.getResourceType()).andReturn("test/components/mock").anyTimes();
-        expect(resource.isResourceType("nt:folder")).andReturn(true).anyTimes();
-        expect(resource.isResourceType("nt:unstructured")).andReturn(false).anyTimes();
+        expect(resource.getName()).andReturn(name).anyTimes();
+        expect(resource.getPath()).andReturn(path).anyTimes();
+        expect(resource.getResourceType()).andReturn(resourceType).anyTimes();
+        expect(resource.isResourceType(primaryType)).andReturn(true).anyTimes();
+        expect(resource.isResourceType(resourceType)).andReturn(true).anyTimes();
+        expect(resource.isResourceType(anyObject(String.class))).andReturn(false).anyTimes();
         replay(resource);
+        return resource;
+    }
+
+    public ResourceResolver createResolver() {
         ResourceResolver resolver = createMock(ResourceResolver.class);
         expect(resolver.getSearchPath()).andReturn(new String[0]).anyTimes();
         replay(resolver);
-        matchesResource = resource;
-        notMatchesResource = new SyntheticResource(resolver, "/nowhere", "nt:unstructured");
+        return resolver;
     }
 
     @Test
     public void testResourceFilters() throws RepositoryException {
+        ResourceResolver resolver = createResolver();
+        Resource matchesResource = createResource(resolver, "nt:folder",
+                "/content/test/mocked/resource-test", "test/components/mock");
+        Resource notMatchesResource = createResource(resolver, "nt:unstructured",
+                "/nowhere", "test/type/not/matching");
+
         assertThat(NAME_FILTER.accept(matchesResource), is(true));
         assertThat(PAGE_FILTER.accept(matchesResource), is(true));
         assertThat(PATH_FILTER.accept(matchesResource), is(true));
@@ -161,29 +183,38 @@ public class ResourceFilterTest {
 
     @Test
     public void testResourceFilterMapping() throws RepositoryException {
-        checkStringRepresentation(NAME_FILTER, "Name(+'^.*test$')");
-        checkStringRepresentation(PAGE_FILTER, "PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$')");
-        checkStringRepresentation(PATH_FILTER, "Path(+'^/content/test,.*/mocked/.*')");
-        checkStringRepresentation(RESOURCE_TYPE_FILTER, "ResourceType(+'components/mock')");
-        checkStringRepresentation(TYPE_FILTER, "Type(+[nt:folder])");
-        checkStringRepresentation(NODE_TYPE_FILTER, "NodeType(+'nt:folder')");
-        checkStringRepresentation(OR_RULE_SET,
+        ResourceResolver resolver = createResolver();
+        Resource matchesResource = createResource(resolver, "nt:folder",
+                "/content/test/mocked/resource-test", "test/components/mock");
+        Resource notMatchesResource = createResource(resolver, "nt:unstructured",
+                "/nowhere", "test/type/not/matching");
+
+        checkStringRepresentation(matchesResource, notMatchesResource, NAME_FILTER, "Name(+'^.*test$')");
+        checkStringRepresentation(matchesResource, notMatchesResource, PAGE_FILTER, "PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$')");
+        checkStringRepresentation(matchesResource, notMatchesResource, PATH_FILTER, "Path(+'^/content/test,.*/mocked/.*')");
+        checkStringRepresentation(matchesResource, notMatchesResource, RESOURCE_TYPE_FILTER, "ResourceType(+'components/mock')");
+        checkStringRepresentation(matchesResource, notMatchesResource, TYPE_FILTER, "Type(+[nt:folder])");
+        checkStringRepresentation(matchesResource, notMatchesResource, NODE_TYPE_FILTER, "NodeType(+'nt:folder')");
+        checkStringRepresentation(matchesResource, notMatchesResource, OR_RULE_SET,
                 "or{Folder(),Name(+'^.*test$'),PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$')}");
-        checkStringRepresentation(AND_RULE_SET,
+        checkStringRepresentation(matchesResource, notMatchesResource, AND_RULE_SET,
                 "and{Name(+'^.*test$'),PrimaryType(+'^(nt|sling):.*[Ff]older$,^[a-z]+:Page$')," +
                         "Path(+'^/content/test,.*/mocked/.*'),ResourceType(+'components/mock')}");
-        checkStringRepresentation(NONE_RULE_SET, "none{Type(+[nt:unstructured])}");
+        checkStringRepresentation(matchesResource, notMatchesResource, NONE_RULE_SET, "none{Type(+[nt:unstructured])}");
 
         // ALL_FILTER matches notMatchesResource, wo we have to check separately:
         assertThat(ResourceFilterMapping.toString(ALL_FILTER), is("All()"));
-        assertThat(ResourceFilterMapping.fromString("All()"), CoreMatchers.<ResourceFilter>instanceOf(ResourceFilter.AllFilter.class));
+        assertThat(ResourceFilterMapping.fromString("All()"), CoreMatchers.instanceOf(ResourceFilter.AllFilter.class));
 
         assertThat(ResourceFilterMapping.fromString(""), sameInstance(ResourceFilter.ALL));
     }
 
-    /** Verifies that the string representation is as expected and that it can be deserialized again and behaves the
-     * same . */
-    private void checkStringRepresentation(ResourceFilter filter, String expectedStringRep) {
+    /**
+     * Verifies that the string representation is as expected and that it can be deserialized again and behaves the
+     * same .
+     */
+    private void checkStringRepresentation(Resource matchesResource, Resource notMatchesResource,
+                                           ResourceFilter filter, String expectedStringRep) {
         String stringRep = ResourceFilterMapping.toString(filter);
         assertThat(stringRep, is(expectedStringRep));
         ResourceFilter deserializedFilter = ResourceFilterMapping.fromString(stringRep);
@@ -201,7 +232,13 @@ public class ResourceFilterTest {
     }
 
     @Test
-    public void testSomeDetailsOnLast() {
+    public void testSomeDetailsOnLast() throws RepositoryException {
+        ResourceResolver resolver = createResolver();
+        Resource matchesResource = createResource(resolver, "nt:folder",
+                "/content/test/mocked/resource-test", "test/components/mock");
+        Resource notMatchesResource = createResource(resolver, "nt:unstructured",
+                "/nowhere", "test/type/not/matching");
+
         ResourceFilter.FilterSet filter = new ResourceFilter.FilterSet(ResourceFilter.FilterSet.Rule.last, NAME_FILTER);
         assertThat(filter.accept(matchesResource), is(true));
         assertThat(filter.accept(notMatchesResource), is(false));
@@ -216,7 +253,13 @@ public class ResourceFilterTest {
     }
 
     @Test
-    public void contentNodeFilter() {
+    public void contentNodeFilter() throws RepositoryException {
+        ResourceResolver resolver = createResolver();
+        Resource matchesResource = createResource(resolver, "nt:folder",
+                "/content/test/mocked/resource-test", "test/components/mock");
+        Resource notMatchesResource = createResource(resolver, "nt:unstructured",
+                "/nowhere", "test/type/not/matching");
+
         // fails always on our setup - that'd require a quite expensive setup. It's tested in use from other stuff
         // assertThat(CONTENT_NODE_FILTER.accept(matchesResource), is(true));
         // this succeeds since the applyFilter fails:
@@ -235,7 +278,8 @@ public class ResourceFilterTest {
     /** An really evil filter that broke the old parsing without nested parentheses check - works now. */
     @Test
     public void parenthesesNestingWorks() {
-        ResourceFilter filter = ResourceFilter.FilterSet.Rule.and.of(AND_RULE_SET, new ResourceFilter.ContentNodeFilter(true, AND_RULE_SET, AND_RULE_SET), AND_RULE_SET);
+        ResourceFilter filter = ResourceFilter.FilterSet.Rule.and.of(AND_RULE_SET,
+                new ResourceFilter.ContentNodeFilter(true, AND_RULE_SET, AND_RULE_SET), AND_RULE_SET);
         String stringRep = ResourceFilterMapping.toString(filter);
         ResourceFilter deserializedFilter = ResourceFilterMapping.fromString(stringRep);
         String stringRep2 = ResourceFilterMapping.toString(deserializedFilter);

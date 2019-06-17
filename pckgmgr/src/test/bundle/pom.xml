@@ -17,7 +17,7 @@
 
     <properties>
         <bundle.category>composum,test</bundle.category>
-        <bundle.name>com.composum.core.pckgmgr.test</bundle.name>
+        <bundle.name>com.composum.nodes.pckgmgr.test</bundle.name>
     </properties>
 
     <build>

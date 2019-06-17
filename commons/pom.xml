@@ -16,7 +16,7 @@
     <description>general components and objects to use the Sling API</description>
 
     <properties>
-        <bundle.name>com.composum.core.commons</bundle.name>
+        <bundle.name>com.composum.nodes.commons</bundle.name>
     </properties>
 
     <build>

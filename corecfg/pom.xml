@@ -15,7 +15,7 @@
     <description>the set of necessary OSGi configuration fragments</description>
 
     <properties>
-        <bundle.name>com.composum.core.config</bundle.name>
+        <bundle.name>com.composum.nodes.config</bundle.name>
     </properties>
 
     <build>

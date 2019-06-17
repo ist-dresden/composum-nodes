@@ -6,6 +6,8 @@ import org.apache.commons.lang3.Validate;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.HashMap;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -76,7 +78,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
     }
 
     public InheritedValues(Resource resource, Type inheritanceType) {
-        Validate.notNull(inheritanceType,"Inheritance type null is not permitted.");
+        Validate.notNull(inheritanceType, "Inheritance type null is not permitted.");
         Validate.isTrue(Type.useDefault != inheritanceType, "useDefault is not a valid inheritance strategy");
         this.resource = resource;
         this.inheritanceType = inheritanceType;
@@ -100,7 +102,8 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
      * @return inherited value if existing or <code>null</code>
      */
     @Override
-    public <T> T get(String name, Class<T> type) {
+    @Nullable
+    public <T> T get(@Nonnull final String name, @Nonnull final Class<T> type) {
         Object value = get(name);
         if (value == null) {
             value = findInherited(name, type);
@@ -121,7 +124,8 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
      * @return inherited value if existing, otherwise the default value
      */
     @Override
-    public <T> T get(String name, T defaultValue) {
+    @Nonnull
+    public <T> T get(@Nonnull final String name, @Nonnull final T defaultValue) {
         Class<T> type = PropertyUtil.getType(defaultValue);
         T value = get(name, type);
         return value != null ? value : defaultValue;
@@ -157,12 +161,10 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
         findEntryPoint();
         String path = getRelativePath(name);
         for (Resource parent = entryPoint; parent != null; parent = parent.getParent()) {
-            ValueMap parentProps = parent.adaptTo(ValueMap.class);
-            if (parentProps != null) {
-                value = parentProps.get(path, type);
-                if (value != null) {
-                    return new HierarchyScanResult(parent, value);
-                }
+            ValueMap parentProps = parent.getValueMap();
+            value = parentProps.get(path, type);
+            if (value != null) {
+                return new HierarchyScanResult(parent, value);
             }
             if (exitPoint != null && parent.getPath().equals(exitPoint.getPath())) {
                 break;
@@ -191,7 +193,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
         if (entryPoint == null) {
             StringBuilder path = new StringBuilder();
             Resource parent = resource;
-            String name = null;
+            String name;
             while (parent != null && !ResourceUtil.CONTENT_NODE.equals(name = parent.getName())) {
                 if (inheritanceType != Type.contentBased) {
                     if (path.length() > 0) {
@@ -201,8 +203,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
                 }
                 parent = parent.getParent();
             }
-            if (inheritanceType != Type.nodeRelated && inheritanceType != Type.sameContent
-                    && parent != null && ResourceUtil.CONTENT_NODE.equals(name)) {
+            if (inheritanceType != Type.nodeRelated && inheritanceType != Type.sameContent && parent != null) {
                 // the resource is a child of an element with a content subtree ('jcr:content/...')
                 path.insert(0, '/');
                 path.insert(0, ResourceUtil.CONTENT_NODE);
@@ -212,7 +213,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
                 // node inheritance or no content subtree ('jcr:content/...') detected...
                 relativePath = "";
                 entryPoint = resource.getParent();
-                if (inheritanceType == Type.sameContent && parent != null && ResourceUtil.CONTENT_NODE.equals(name)) {
+                if (inheritanceType == Type.sameContent && parent != null) {
                     exitPoint = parent;
                 }
             }

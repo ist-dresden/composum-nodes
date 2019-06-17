@@ -16,7 +16,7 @@
     <description>a console module to manage VLT packages</description>
 
     <properties>
-        <bundle.name>com.composum.core.pckgmgr</bundle.name>
+        <bundle.name>com.composum.nodes.pckgmgr</bundle.name>
     </properties>
 
     <build>

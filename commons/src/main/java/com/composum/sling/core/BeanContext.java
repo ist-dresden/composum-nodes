@@ -18,6 +18,7 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -136,8 +137,9 @@ public interface BeanContext extends Adaptable {
      * @return the component of type or whatever Sling has adapters for, or null if there is nothing.
      * @see SlingAdaptable#adaptTo(Class)
      */
+    @SuppressWarnings("deprecation")
     @Override
-    <AdapterType> AdapterType adaptTo(Class<AdapterType> type);
+    <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type);
 
     /**
      * Returns a clone of this context with the resource overridden, or <code>this</code> if it already had this
@@ -221,7 +223,7 @@ public interface BeanContext extends Adaptable {
         }
 
         @Override
-        public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+        public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
             if (typeFits(type, BeanContext.class, this, BeanContext.class))
                 return type.cast(this);
             if (typeFits(type, ServletRequest.class, getRequest(), SlingHttpServletRequest.class))
@@ -234,7 +236,7 @@ public interface BeanContext extends Adaptable {
                 return type.cast(getResource());
             // adaptTo ValueMap as well, to directly support injecting resource attributes in sling-models
             if (ValueMap.class.equals(type))
-                return null != getResource() ? type.cast(getResource().adaptTo(ValueMap.class)) : null;
+                return null != getResource() ? type.cast(getResource().getValueMap()) : null;
             if (Locale.class.equals(type)) return type.cast(getLocale());
 
             AdapterType slingAdaption = super.adaptTo(type); // fall back to default sling mechanisms
@@ -336,20 +338,20 @@ public interface BeanContext extends Adaptable {
         protected transient ResourceResolver resolver;
 
         public Map() {
-            this(new HashMap<String, Object>());
+            this(new HashMap<>());
         }
 
         public Map(java.util.Map<String, Object> pageScopeMap) {
-            this(pageScopeMap, new HashMap<String, Object>());
+            this(pageScopeMap, new HashMap<>());
         }
 
         public Map(java.util.Map<String, Object> pageScopeMap,
                    java.util.Map<String, Object> requestScopeMap) {
-            this(pageScopeMap, requestScopeMap, new HashMap<String, Object>());
+            this(pageScopeMap, requestScopeMap, new HashMap<>());
         }
 
         public Map(java.util.Map<String, Object> pageScopeMap, SlingHttpServletRequest request) {
-            this(pageScopeMap, null, new HashMap<String, Object>());
+            this(pageScopeMap, null, new HashMap<>());
             this.request = request;
         }
 
@@ -390,6 +392,7 @@ public interface BeanContext extends Adaptable {
             return getAttribute(ATTR_RESPONSE, SlingHttpServletResponse.class);
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public <T> T getAttribute(String name, Class<T> T) {
             Object attribute = null;
@@ -541,6 +544,7 @@ public interface BeanContext extends Adaptable {
             return (SlingHttpServletResponse) this.pageContext.getResponse();
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public <T> T getAttribute(String name, Class<T> T) {
             Object attribute = null;
@@ -559,7 +563,7 @@ public interface BeanContext extends Adaptable {
          * {@inheritDoc} Adapts to {@link PageContext} as well.
          */
         @Override
-        public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+        public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
             if (typeFits(type, PageContext.class, pageContext, PageContext.class)) {
                 return type.cast(pageContext);
             }
@@ -604,7 +608,7 @@ public interface BeanContext extends Adaptable {
         public Servlet(ServletContext servletContext, BundleContext bundleContext,
                        SlingHttpServletRequest request, SlingHttpServletResponse response,
                        Resource resource) {
-            this (servletContext, bundleContext, request, response);
+            this(servletContext, bundleContext, request, response);
             this.resource = resource;
         }
 
@@ -634,6 +638,7 @@ public interface BeanContext extends Adaptable {
             return this.response;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public <T> T getAttribute(String name, Class<T> T) {
             T attribute = null;
@@ -686,6 +691,7 @@ public interface BeanContext extends Adaptable {
             return bundleContext.getService(reference);
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public <T> T[] getServices(Class<T> type, String filter) throws InvalidSyntaxException {
             List<T> services = new ArrayList<>();
@@ -701,7 +707,7 @@ public interface BeanContext extends Adaptable {
          * {@inheritDoc} Adapts to {@link ServletContext} and {@link BundleContext} as well.
          */
         @Override
-        public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+        public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
             if (typeFits(type, ServletContext.class, servletContext, ServletContext.class))
                 return type.cast(servletContext);
             if (typeFits(type, BundleContext.class, bundleContext, BundleContext.class))
@@ -797,7 +803,7 @@ public interface BeanContext extends Adaptable {
         }
 
         @Override
-        public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+        public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
             return beanContext.adaptTo(type);
         }
 

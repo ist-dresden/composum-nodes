@@ -3,7 +3,6 @@ package com.composum.sling.core.util;
 import com.composum.sling.core.JcrResource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
-import org.apache.sling.api.SlingConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -12,12 +11,19 @@ import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.jcr.*;
+import javax.jcr.Binary;
+import javax.jcr.ItemNotFoundException;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -85,7 +91,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
             if (parent != null) {
                 int index = 0;
                 for (Resource child : parent.getChildren()) {
-                    if (type == null || child.isResourceType(type)) {
+                    if (child.isResourceType(type)) {
                         if (name.equals(child.getName())) {
                             return index;
                         }
@@ -105,7 +111,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
             if (parent != null) {
                 boolean returnNext = false;
                 for (Resource child : parent.getChildren()) {
-                    if (type == null || child.isResourceType(type)) {
+                    if (child.isResourceType(type)) {
                         if (returnNext) {
                             return child;
                         }
@@ -116,7 +122,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
                 }
                 if (returnNext && wrapAround) {
                     for (Resource child : parent.getChildren()) {
-                        if (type == null || child.isResourceType(type)) {
+                        if (child.isResourceType(type)) {
                             return child;
                         }
                     }
@@ -127,10 +133,10 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
     }
 
     public static String getNameExtension(Resource resource) {
-        String extension = null;
+        String extension;
         String name = resource.getName();
         if (ResourceUtil.CONTENT_NODE.equals(name)) {
-            name = resource.getParent().getName();
+            name = Objects.requireNonNull(resource.getParent()).getName();
         }
         int dot = name.lastIndexOf('.');
         extension = (dot >= 0 ? name.substring(dot + 1).toLowerCase() : "");
@@ -158,10 +164,8 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
                     }
                 }
                 if (result == null) {
-                    ValueMap values = resource.adaptTo(ValueMap.class);
-                    if (values != null) {
-                        result = values.get(JcrConstants.JCR_PRIMARYTYPE, (String) null);
-                    }
+                    ValueMap values = resource.getValueMap();
+                    result = values.get(JcrConstants.JCR_PRIMARYTYPE, String.class);
                 }
             }
         }
@@ -227,7 +231,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
                 if (resourceType == null) {
                     return false;
                 } else {
-                    ValueMap values = resourceType.adaptTo(ValueMap.class);
+                    ValueMap values = resourceType.getValueMap();
                     String resourceSuperTypeName = values.get(PROP_RESOURCE_SUPER_TYPE, "");
                     return isResourceType(resolver, resourceSuperTypeName, pattern);
                 }
@@ -251,7 +255,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
         T value = null;
         Resource resourceType = getResourceType(resolver, resourceTypeName);
         if (resourceType != null) {
-            ValueMap values = resourceType.adaptTo(ValueMap.class);
+            ValueMap values = resourceType.getValueMap();
             value = values.get(name, type);
             if (value == null) {
                 String resourceSuperTypeName = values.get(PROP_RESOURCE_SUPER_TYPE, "");
@@ -364,16 +368,11 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
 
     /**
      * Checks the access control policies for enabled changes (node creation and property change).
-     *
-     * @param resource
-     * @param relPath
-     * @return
-     * @throws RepositoryException
      */
     public static boolean isWriteEnabled(Resource resource, String relPath) throws RepositoryException {
 
         ResourceResolver resolver = resource.getResourceResolver();
-        Session session = resolver.adaptTo(Session.class);
+        Session session = Objects.requireNonNull(resolver.adaptTo(Session.class));
         AccessControlManager accessManager = AccessControlUtil.getAccessControlManager(session);
 
         String resourcePath = resource.getPath();

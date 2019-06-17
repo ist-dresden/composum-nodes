@@ -57,7 +57,7 @@ public interface JobFacade extends Comparable<JobFacade> {
 
     Calendar getProgressETA();
 
-    public abstract class AbstractJobFacade implements JobFacade {
+    abstract class AbstractJobFacade implements JobFacade {
 
         @Override
         public int compareTo(JobFacade o2) {
@@ -68,7 +68,7 @@ public interface JobFacade extends Comparable<JobFacade> {
         }
     }
 
-    public class EventJob extends AbstractJobFacade {
+    class EventJob extends AbstractJobFacade {
 
         @Nonnull
         public final Job job;
@@ -134,7 +134,7 @@ public interface JobFacade extends Comparable<JobFacade> {
 
         @Override
         public Calendar getCreated() {
-            return (Calendar) job.getCreated();
+            return job.getCreated();
         }
 
         @Override
@@ -178,7 +178,7 @@ public interface JobFacade extends Comparable<JobFacade> {
         }
     }
 
-    public class AuditJob extends AbstractJobFacade {
+    class AuditJob extends AbstractJobFacade {
 
         @Nonnull
         public final Resource resource;
@@ -188,7 +188,7 @@ public interface JobFacade extends Comparable<JobFacade> {
         }
 
         protected String getStringProperty(String name) {
-            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+            final ValueMap valueMap = resource.getValueMap();
             return valueMap.get(name, "");
         }
 
@@ -204,25 +204,25 @@ public interface JobFacade extends Comparable<JobFacade> {
 
         @Override
         public Object getProperty(String name) {
-            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+            final ValueMap valueMap = resource.getValueMap();
             return valueMap.get(name);
         }
 
         @Override
         public Set<String> getPropertyNames() {
-            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+            final ValueMap valueMap = resource.getValueMap();
             return valueMap.keySet();
         }
 
         @Override
         public <T> T getProperty(String name, Class<T> type) {
-            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+            final ValueMap valueMap = resource.getValueMap();
             return valueMap.get(name, type);
         }
 
         @Override
         public <T> T getProperty(String name, T defaultValue) {
-            final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+            final ValueMap valueMap = resource.getValueMap();
             return valueMap.get(name, defaultValue);
         }
 

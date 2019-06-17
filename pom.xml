@@ -42,7 +42,7 @@
     <properties>
         <release.repository.id>ossrh</release.repository.id>
         <release.repository.url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</release.repository.url>
-        <bundle.category>composum,core</bundle.category>
+        <bundle.category>composum,nodes</bundle.category>
         <sling.scheme>http</sling.scheme>
         <sling.secure>false</sling.secure>
         <sling.host>localhost</sling.host>
@@ -92,7 +92,7 @@
         <module>corepckg</module>
 
         <!-- Test modules - no deployed code contained -->
-        <!--module>test</module-->
+        <module>test</module>
     </modules>
 
     <build>
