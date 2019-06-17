@@ -71,6 +71,8 @@ public class ServiceHandle<T> {
         public void removedService(ServiceReference<T> reference, T service) {
             super.removedService(reference, service);
             ServiceHandle.this.service = null;
+            ServiceHandle.this.serviceTracker = null; // the ServiceReference is probably invalid now.
+            close();
         }
 
         public T waitForService() {
@@ -78,6 +80,8 @@ public class ServiceHandle<T> {
                 return waitForService(WAIT_TIMEOUT);
             } catch (InterruptedException tmex) {
                 LOG.error("timeout on wait for service '{}' ({})", type.getName(), tmex.toString());
+                ServiceHandle.this.serviceTracker = null; // not clear whether the service reference is still valid. There were cases where this never recovers.
+                close();
                 return null;
             }
         }

@@ -5,6 +5,8 @@
  */
 package com.composum.sling.cpnl;
 
+import org.apache.commons.lang3.StringUtils;
+
 import javax.servlet.jsp.JspWriter;
 import java.io.IOException;
 
@@ -15,11 +17,13 @@ public class AnchorTag extends TagBase {
 
     protected String name;
 
+    @Override
     protected void clear() {
         name = null;
         super.clear();
     }
 
+    @Override
     protected String getDefaultTagName() {
         return "a";
     }
@@ -35,8 +39,17 @@ public class AnchorTag extends TagBase {
         return name;
     }
 
+    @Override
     protected void writeAttributes(JspWriter writer) throws IOException {
         writer.append(" name=\"").append(CpnlElFunctions.text(getName())).append("\"");
         super.writeAttributes(writer);
+    }
+
+    /**
+     * @return the 'test' result combined with the name not blank check
+     */
+    @Override
+    protected boolean getTestResult() {
+        return super.getTestResult() && StringUtils.isNotBlank(getName());
     }
 }

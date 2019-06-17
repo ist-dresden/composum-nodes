@@ -12,10 +12,12 @@ public class TableTag extends UrlTag {
 
     private String toolbar;
 
+    @Override
     protected String getDefaultTagName() {
         return "table";
     }
 
+    @Override
     protected String getDefaultUrlAttr() {
         return "data-path";
     }
@@ -24,6 +26,7 @@ public class TableTag extends UrlTag {
         setUrl(path);
     }
 
+    @Override
     protected void clear() {
         super.clear();
         toolbar = null;
@@ -33,6 +36,7 @@ public class TableTag extends UrlTag {
         this.toolbar = toolbar;
     }
 
+    @Override
     protected void writeAttributes (JspWriter writer) throws IOException {
         super.writeAttributes(writer);
         if (StringUtils.isNotBlank(toolbar)) {

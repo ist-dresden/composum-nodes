@@ -15,6 +15,7 @@ public class LinkTag extends UrlTag {
     protected Object body;
     private transient Boolean bodyResult;
 
+    @Override
     protected void clear() {
         super.clear();
         bodyResult = null;
@@ -49,10 +50,12 @@ public class LinkTag extends UrlTag {
         return body != null ? (getBodyResult() ? EVAL_BODY_INCLUDE : SKIP_BODY) : result;
     }
 
+    @Override
     protected String getDefaultTagName() {
         return "a";
     }
 
+    @Override
     protected String getDefaultUrlAttr() {
         return "href";
     }

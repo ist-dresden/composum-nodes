@@ -5,7 +5,7 @@
     <groupId>com.composum.sling.core</groupId>
     <artifactId>composum-sling-core-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.10.1</version>
+    <version>1.10.2</version>
 
     <name>Composum Core Parent</name>
     <description>Maven parent for Composum Sling Core bundles</description>
@@ -155,7 +155,7 @@
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-scr-plugin</artifactId>
-                    <version>1.26.0</version>
+                    <version>1.24.0</version>
                     <executions>
                         <execution>
                             <id>generate-scr-scrdescriptor</id>

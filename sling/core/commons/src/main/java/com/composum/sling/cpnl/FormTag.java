@@ -14,10 +14,12 @@ public class FormTag extends UrlTag {
     private String enctype;
     private String charset;
 
+    @Override
     protected String getDefaultTagName() {
         return "form";
     }
 
+    @Override
     protected String getDefaultUrlAttr() {
         return "action";
     }
@@ -26,6 +28,7 @@ public class FormTag extends UrlTag {
         setUrl(action);
     }
 
+    @Override
     protected void clear() {
         super.clear();
         enctype = null;
@@ -44,6 +47,7 @@ public class FormTag extends UrlTag {
         this.charset = charset;
     }
 
+    @Override
     protected void writeAttributes (JspWriter writer) throws IOException {
         super.writeAttributes(writer);
         if (StringUtils.isNotBlank(charset)) {

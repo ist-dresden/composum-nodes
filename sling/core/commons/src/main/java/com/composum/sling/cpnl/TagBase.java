@@ -91,6 +91,10 @@ public abstract class TagBase extends CpnlBodyTagSupport implements DynamicAttri
         return value != null;
     }
 
+    /**
+     * interface: DynamicAttributes
+     */
+    @Override
     public void setDynamicAttribute(String namespace, String name, Object value) {
         String key = name;
         if (StringUtils.isNotBlank(namespace)) {

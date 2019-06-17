@@ -11,6 +11,7 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
@@ -34,7 +35,8 @@ public interface ClientlibService {
 
     /* Returns the minified sibling (e.g. ending .min.js if resource ends with .js) if there is one, otherwise
     resource itself is returned. */
-    Resource getMinifiedSibling(Resource resource);
+    @Nonnull
+    Resource getMinifiedSibling(@Nonnull Resource resource);
 
     ClientlibConfiguration getClientlibConfig();
 

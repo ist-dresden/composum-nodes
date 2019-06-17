@@ -65,7 +65,8 @@ public class RendererContext {
      */
     public void registerClientlibLink(ClientlibLink link, ClientlibResourceFolder parent) {
         if (renderedClientlibs.contains(link)) {
-            LOG.error("Bug: duplicate clientlib link {} being included from {} ", link, parent);
+            // normally not critical - just a hint that something is included twice via various paths
+            LOG.debug("duplicate clientlib link {} being included from {} ", link, parent);
         } else {
             renderedClientlibs.add(link);
             LOG.debug("registered {} referenced from {}", link, parent);

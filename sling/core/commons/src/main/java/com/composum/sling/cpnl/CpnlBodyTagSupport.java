@@ -2,19 +2,12 @@ package com.composum.sling.cpnl;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.util.ExpressionUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.scripting.jsp.util.TagUtil;
 
-import javax.el.ELContext;
-import javax.el.ExpressionFactory;
-import javax.el.ValueExpression;
-import javax.servlet.ServletContext;
-import javax.servlet.jsp.JspApplicationContext;
 import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspFactory;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.PageContext;
 import javax.servlet.jsp.tagext.BodyTagSupport;

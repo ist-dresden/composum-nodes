@@ -88,6 +88,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
     /**
      * Configure an var / variable name to store the component in the context
      */
+    @Override
     public void setId(String id) {
         setVar(id);
     }
