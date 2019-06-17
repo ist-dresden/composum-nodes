@@ -3,33 +3,33 @@
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "description": "embeds the complete set of console widgets and components",
     "category": [
-      "composum.core.console.default"
+      "composum.nodes.console.default"
     ],
     "order": 100,
     "link": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "category:composum.core.console.base"
+        "category:composum.nodes.console.base"
       ]
     },
     "css": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
-        "category:composum.core.console.base"
+        "category:composum.nodes.console.base"
       ]
     },
     "js": {
       "jcr:primaryType": "nt:unstructured",
       "depends": [
         "jslibs/jquery/3.4.1/jquery.js",
-        "category:composum.core.console.base"
+        "category:composum.nodes.console.base"
       ]
     }
   },
   "base": {
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "category": [
-      "composum.core.console.base"
+      "composum.nodes.console.base"
     ],
     "order": 100,
     "link": {

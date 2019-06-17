@@ -65,7 +65,7 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
         writer.println("<h2>Usage:</h2>");
         writer.println("Please give the type of the client library as extension and one or more");
         writer.println("client libraries or -categories as parameter lib. Some examples:<ul>");
-        printLinkItem(writer, url + "?lib=category:composum.core.console.browser");
+        printLinkItem(writer, url + "?lib=category:composum.nodes.console.browser");
         printLinkItem(writer, url + "?lib=/libs/composum/nodes/console/clientlibs/base");
         printLinkItem(writer, url + "?lib=composum/nodes/console/clientlibs/base");
         writer.println("</ul>This prints the files and other included client libraries.");
