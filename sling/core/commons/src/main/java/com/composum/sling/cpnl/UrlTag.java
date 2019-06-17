@@ -22,6 +22,7 @@ public abstract class UrlTag extends TagBase {
     private String format;
     private Format formatter;
 
+    @Override
     protected void clear() {
         super.clear();
         urlAttr = null;
