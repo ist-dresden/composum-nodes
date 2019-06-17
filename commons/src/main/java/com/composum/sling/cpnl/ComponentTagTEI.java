@@ -18,6 +18,7 @@ import java.util.List;
 
 public class ComponentTagTEI extends AbstractTagTEI {
 
+    @Override
     protected void collectVariables(TagData data, List<VariableInfo> variables) {
         String var = getVar(data);
         String type = getType(data);

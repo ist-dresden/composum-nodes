@@ -46,7 +46,8 @@ public class ShowServiceGraphConsolePluginTest {
         List<String> classNames = new ArrayList<>();
         for (Class refClass : refClasses)
             classNames.add(refClass.getSimpleName());
-        Assert.assertEquals(classNames.toString(), "[AtomicReference, Boolean, CharSequence, Character, Collection, Comparable, Double, Exception, Float, Integer, Iterable, List, Map, Number, Object, Reference, RuntimeException, Serializable, String, Subtyped, Throwable, WeakReference]");
+        // Constable, ConstantDesc, is an uninteresting difference between JDKs.
+        Assert.assertEquals(classNames.toString().replace("Constable, ConstantDesc, ", ""), "[AtomicReference, Boolean, CharSequence, Character, Collection, Comparable, Double, Exception, Float, Integer, Iterable, List, Map, Number, Object, Reference, RuntimeException, Serializable, String, Subtyped, Throwable, WeakReference]");
     }
 
 }

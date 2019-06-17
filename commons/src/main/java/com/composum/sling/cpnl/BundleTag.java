@@ -9,6 +9,7 @@ public class BundleTag extends CpnlBodyTagSupport {
 
     protected String basename;
 
+    @Override
     protected void clear() {
         basename = null;
     }

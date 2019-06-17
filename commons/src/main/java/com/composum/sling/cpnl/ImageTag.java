@@ -5,10 +5,12 @@ package com.composum.sling.cpnl;
  */
 public class ImageTag extends UrlTag {
 
+    @Override
     protected String getDefaultTagName() {
         return "img";
     }
 
+    @Override
     protected String getDefaultUrlAttr() {
         return "src";
     }

@@ -253,7 +253,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             writer.println("Type: <select name=\"type\"> <option value=\"all\">All</option>");
             for (Type selectType : Type.values()) {
                 writer.print("        <option value=\"" + selectType.name() + "\"");
-                if (selectType == type) writer.print(" selected ");
+                if (selectType == requestedType) writer.print(" selected ");
                 writer.print(">" + selectType.name());
                 writer.println("</option>");
             }

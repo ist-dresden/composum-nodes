@@ -152,6 +152,7 @@ public class TextTag extends TagBase {
         return result;
     }
 
+    @Override
     public int doAfterBody() {
         this.output = this.bodyContent.getString().trim();
         return SKIP_BODY;

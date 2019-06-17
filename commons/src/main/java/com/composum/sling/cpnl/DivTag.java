@@ -15,12 +15,14 @@ public class DivTag extends TagBase {
     protected Object body;
     private transient Boolean bodyResult;
 
+    @Override
     protected void clear() {
         super.clear();
         bodyResult = null;
         body = null;
     }
 
+    @Override
     protected String getDefaultTagName() {
         return "div";
     }
