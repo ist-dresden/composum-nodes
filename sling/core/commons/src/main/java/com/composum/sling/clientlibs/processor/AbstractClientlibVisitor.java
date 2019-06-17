@@ -2,14 +2,19 @@ package com.composum.sling.clientlibs.processor;
 
 import com.composum.sling.clientlibs.handle.*;
 import com.composum.sling.clientlibs.service.ClientlibService;
+import com.composum.sling.core.ResourceHandle;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -109,10 +114,41 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
         VisitorMode embeddingMode = embedding ? EMBEDDED : DEPENDS;
         for (ClientlibRef embedded : folder.getEmbedded())
             resolveAndAccept(embedded, embeddingMode, folder);
-        for (ClientlibElement child : folder.getChildren())
+        for (ClientlibElement child : removeMinificationDuplicates(folder.getChildren()))
             child.accept(getVisitorFor(mode, child), embeddingMode, folder);
         action(folder, mode, parent);
         LOG.trace("<<< {} => {}", folder, hasEmbeddedFiles);
+    }
+
+    protected List<ClientlibElement> removeMinificationDuplicates(List<ClientlibElement> children) {
+        Set<String> duplicatesToRemove = new HashSet<>();
+        for (ClientlibElement child : children) {
+            if (child instanceof ClientlibFile) {
+                ClientlibFile file = (ClientlibFile) child;
+                Resource resource = file.handle.getResource();
+                Resource minified = service.getMinifiedSibling(resource);
+                if (!minified.getPath().equals(resource.getPath())) {
+                    if (service.getClientlibConfig().getUseMinifiedFiles())
+                        duplicatesToRemove.add(resource.getPath());
+                    else
+                        duplicatesToRemove.add(minified.getPath());
+                }
+            }
+        }
+
+        List<ClientlibElement> result = new ArrayList<>();
+        for (ClientlibElement child : children) {
+            if (child instanceof ClientlibFile) {
+                if (child instanceof ClientlibFile) {
+                    ClientlibFile file = (ClientlibFile) child;
+                    if (!duplicatesToRemove.contains(file.handle.getPath()))
+                        result.add(child);
+                }
+            } else {
+                result.add(child);
+            }
+        }
+        return result;
     }
 
     @Override

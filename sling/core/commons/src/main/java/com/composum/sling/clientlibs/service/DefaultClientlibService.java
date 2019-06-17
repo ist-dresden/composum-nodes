@@ -247,7 +247,8 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     @Override
-    public Resource getMinifiedSibling(Resource resource) {
+    @Nonnull
+    public Resource getMinifiedSibling(@Nonnull Resource resource) {
         String path = resource.getPath();
         String minifiedPath = getMinifiedSibling(path);
         if (!path.equals(minifiedPath)) {
