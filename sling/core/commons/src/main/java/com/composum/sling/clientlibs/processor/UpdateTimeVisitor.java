@@ -54,8 +54,7 @@ public class UpdateTimeVisitor extends AbstractClientlibVisitor {
     }
 
     @Override
-    public void action(Clientlib clientlib, VisitorMode mode, ClientlibResourceFolder parent) throws IOException,
-            RepositoryException {
+    public void action(Clientlib clientlib, VisitorMode mode, ClientlibResourceFolder parent) {
         updateTime(clientlib, clientlib.resource.getLastModified());
     }
 

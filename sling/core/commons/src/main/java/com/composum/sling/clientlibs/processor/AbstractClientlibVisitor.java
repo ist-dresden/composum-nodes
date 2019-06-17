@@ -2,7 +2,6 @@ package com.composum.sling.clientlibs.processor;
 
 import com.composum.sling.clientlibs.handle.*;
 import com.composum.sling.clientlibs.service.ClientlibService;
-import com.composum.sling.core.ResourceHandle;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -57,7 +56,7 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
         this.service = service;
         this.resolver = resolver;
         this.owner = owner;
-        this.processedElements = null != processedElements ? processedElements : new LinkedHashSet<ClientlibLink>();
+        this.processedElements = null != processedElements ? processedElements : new LinkedHashSet<>();
     }
 
     /**
@@ -139,11 +138,9 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
         List<ClientlibElement> result = new ArrayList<>();
         for (ClientlibElement child : children) {
             if (child instanceof ClientlibFile) {
-                if (child instanceof ClientlibFile) {
-                    ClientlibFile file = (ClientlibFile) child;
-                    if (!duplicatesToRemove.contains(file.handle.getPath()))
-                        result.add(child);
-                }
+                ClientlibFile file = (ClientlibFile) child;
+                if (!duplicatesToRemove.contains(file.handle.getPath()))
+                    result.add(child);
             } else {
                 result.add(child);
             }
@@ -221,13 +218,15 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
         return Base64.encodeBase64URLSafeString(b);
     }
 
-    /** Checks whether something matching this reference has already been
-     * {@link #markAsProcessed(ClientlibLink, ClientlibResourceFolder, VisitorMode)}. */
+    /**
+     * Checks whether something matching this reference has already been
+     * {@link #markAsProcessed(ClientlibLink, ClientlibResourceFolder, VisitorMode)}.
+     */
     protected boolean isNotProcessed(ClientlibRef ref) {
         return !ref.isSatisfiedby(processedElements);
     }
 
-    /** Marks a link processed for current clientlib call (that is, clientlib tag call).   */
+    /** Marks a link processed for current clientlib call (that is, clientlib tag call). */
     protected void markAsProcessed(ClientlibLink link, ClientlibResourceFolder parent, VisitorMode visitorMode) {
         if (processedElements.contains(link)) {
             LOG.error("Bug: processed duplicate clientlib link: {} mode {} from {}",
@@ -247,23 +246,20 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
     }
 
     /** Optional action to take after visiting the element. Default : empty. */
-    protected void action(ClientlibCategory clientlibCategory, VisitorMode mode, ClientlibResourceFolder parent)
-            throws IOException, RepositoryException {
+    protected void action(ClientlibCategory clientlibCategory, VisitorMode mode, ClientlibResourceFolder parent) {
     }
 
     /** Optional action to take after visiting the element. Default : empty. */
-    protected void action(Clientlib clientlib, VisitorMode mode, ClientlibResourceFolder parent) throws IOException,
-            RepositoryException {
+    protected void action(Clientlib clientlib, VisitorMode mode, ClientlibResourceFolder parent) {
     }
 
     /** Optional action to take after visiting the element. Default : empty. */
-    protected void action(ClientlibResourceFolder folder, VisitorMode mode, ClientlibResourceFolder parent) throws
-            IOException, RepositoryException {
+    protected void action(ClientlibResourceFolder folder, VisitorMode mode, ClientlibResourceFolder parent) {
     }
 
     /** Optional action to take after visiting the element. Default : empty. */
-    protected void action(ClientlibFile file, VisitorMode mode, ClientlibResourceFolder parent) throws
-            RepositoryException, IOException {
+    protected void action(ClientlibFile file, VisitorMode mode, ClientlibResourceFolder parent)
+            throws RepositoryException, IOException {
     }
 
     /** Optional action to take after visiting the element. Default : empty. */
