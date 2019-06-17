@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.sling.core.setup</groupId>
         <artifactId>composum-sling-core-setup-parent</artifactId>
-        <version>1.10.2</version>
+        <version>1.10.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>composum-sling-core-setup-hook</artifactId>
