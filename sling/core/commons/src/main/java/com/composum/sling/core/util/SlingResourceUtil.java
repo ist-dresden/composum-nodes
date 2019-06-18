@@ -31,8 +31,8 @@ public class SlingResourceUtil {
      * @throws IllegalArgumentException in those cases where there is no sensible answer: one of the paths is empty or one absolute and one relative path
      */
     public static String relativePath(@Nonnull String node, @Nonnull String other) {
-        node = node != null ? ResourceUtil.normalize(node) : node;
-        other = other != null ? ResourceUtil.normalize(other) : other;
+        node = ResourceUtil.normalize(node);
+        other = ResourceUtil.normalize(other);
         //noinspection IfStatementWithTooManyBranches,OverlyComplexBooleanExpression
         if (StringUtils.isBlank(node) || StringUtils.isBlank(other)
                 || (StringUtils.startsWith(node, "/") && !StringUtils.startsWith(other, "/"))
@@ -127,25 +127,17 @@ public class SlingResourceUtil {
             @SuppressWarnings("unchecked")
             @Override
             public Iterator<Resource> iterator() {
-                Transformer descendantsTransformer = new Transformer() {
-                    @Override
-                    public Object transform(Object input) {
-                        if (input instanceof Resource) {
-                            return IteratorUtils.chainedIterator(
-                                    // we wrap the resource into Object[] so that it doesn't get its children read again
-                                    IteratorUtils.singletonIterator(new Object[]{input}),
-                                    ((Resource) input).listChildren());
-                        }
-                        return input;
+                Transformer descendantsTransformer = input -> {
+                    if (input instanceof Resource) {
+                        return IteratorUtils.chainedIterator(
+                                // we wrap the resource into Object[] so that it doesn't get its children read again
+                                IteratorUtils.singletonIterator(new Object[]{input}),
+                                ((Resource) input).listChildren());
                     }
+                    return input;
                 };
                 return IteratorUtils.transformedIterator(IteratorUtils.objectGraphIterator(resource, descendantsTransformer),
-                        new Transformer() {
-                            @Override
-                            public Object transform(Object input) {
-                                return ((Object[]) input)[0];
-                            }
-                        });
+                        input -> ((Object[]) input)[0]);
             }
 
         };

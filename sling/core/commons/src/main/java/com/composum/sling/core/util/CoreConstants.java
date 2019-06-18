@@ -16,18 +16,17 @@ public interface CoreConstants extends JcrConstants {
     String CONTENT_NODE = JCR_CONTENT;
 
     /** mix:created */
-    public static final String MIX_CREATED = "mix:created";
+    String MIX_CREATED = "mix:created";
     /** mix:lastModified */
-    public static final String MIX_LAST_MODIFIED = "mix:lastModified";
+    String MIX_LAST_MODIFIED = "mix:lastModified";
     /** mix:title */
-    public static final String MIX_TITLE = "mix:title";
+    String MIX_TITLE = "mix:title";
 
     /** jcr:title */
-    public static final String JCR_TITLE = "jcr:title";
+    String JCR_TITLE = "jcr:title";
     /** jcr:description */
-    public static final String JCR_DESCRIPTION = "jcr:description";
+    String JCR_DESCRIPTION = "jcr:description";
 
-    /** {@value TYPE_OAKINDEX} */
     String TYPE_OAKINDEX = "oak:QueryIndexDefinition";
     String TYPE_FOLDER = NT_FOLDER;
     String TYPE_FILE = NT_FILE;

@@ -30,16 +30,13 @@ public class CssUrlMapper implements ClientlibProcessor {
             throws IOException {
         final PipedOutputStream outputStream = new PipedOutputStream();
         InputStream result = new PipedInputStream(outputStream);
-        context.execute(new Runnable() {
-            @Override
-            public void run() {
-                try (OutputStreamWriter writer = new OutputStreamWriter(outputStream)) {
-                    String css = IOUtils.toString(source, DEFAULT_CHARSET);
-                    map(css, writer, context);
-                    writer.flush();
-                } catch (IOException ex) {
-                    LOG.error(ex.getMessage(), ex);
-                }
+        context.execute(() -> {
+            try (OutputStreamWriter writer = new OutputStreamWriter(outputStream)) {
+                String css = IOUtils.toString(source, DEFAULT_CHARSET);
+                CssUrlMapper.this.map(css, writer, context);
+                writer.flush();
+            } catch (IOException ex) {
+                LOG.error(ex.getMessage(), ex);
             }
         });
         return result;

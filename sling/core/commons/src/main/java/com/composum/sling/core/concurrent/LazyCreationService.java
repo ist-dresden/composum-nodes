@@ -206,12 +206,5 @@ public interface LazyCreationService {
      * Simplest {@link com.composum.sling.core.concurrent.LazyCreationService.RetrievalStrategy}: just returns the
      * resource.
      */
-    final RetrievalStrategy<Resource> IDENTITY_RETRIEVER = new RetrievalStrategy<Resource>() {
-        @Override
-        public Resource get(ResourceResolver resolver, String path) throws RepositoryException {
-            Resource resource = resolver.getResource(path);
-            return resource;
-        }
-    };
-
+    RetrievalStrategy<Resource> IDENTITY_RETRIEVER = ResourceResolver::getResource;
 }

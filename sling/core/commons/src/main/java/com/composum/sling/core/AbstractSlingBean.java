@@ -199,10 +199,10 @@ public abstract class AbstractSlingBean implements SlingBean {
      */
     public ResourceHandle getParent(String resourceType) {
         ResourceHandle result = getResource();
-        while (result.isValid() && !result.isResourceType(resourceType)) {
+        while (result != null && result.isValid() && !result.isResourceType(resourceType)) {
             result = result.getParent();
         }
-        if (!result.isValid()) {
+        if (result != null && !result.isValid()) {
             result = getParent(resourceType, getPath()); // implicit fallback to the path
         }
         return result;

@@ -4,12 +4,12 @@ import com.composum.sling.clientlibs.processor.RendererContext;
 import com.composum.sling.clientlibs.servlet.ClientlibCategoryServlet;
 import com.composum.sling.clientlibs.servlet.ClientlibServlet;
 import com.composum.sling.core.util.LinkUtil;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.sling.api.SlingHttpServletRequest;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.composum.sling.clientlibs.handle.ClientlibLink.Kind.CATEGORY;
 import static com.composum.sling.clientlibs.handle.ClientlibLink.Kind.EXTERNALURI;
@@ -79,7 +79,7 @@ public class ClientlibLink {
         this.path = path;
         this.type = type;
         this.kind = kind;
-        this.properties = Collections.unmodifiableMap(properties != null ? new HashMap<>(properties) : new HashMap<String, String>());
+        this.properties = Collections.unmodifiableMap(properties != null ? new HashMap<>(properties) : new HashMap<>());
         this.hash = hash;
     }
 
@@ -111,10 +111,10 @@ public class ClientlibLink {
 
         ClientlibLink that = (ClientlibLink) o;
 
-        if (kind != null ? !kind.equals(that.kind) : that.kind != null) return false;
-        if (path != null ? !path.equals(that.path) : that.path != null) return false;
+        if (!Objects.equals(kind, that.kind)) return false;
+        if (!Objects.equals(path, that.path)) return false;
         if (type != that.type) return false;
-        return properties != null ? properties.equals(that.properties) : that.properties == null;
+        return Objects.equals(properties, that.properties);
     }
 
     @Override
@@ -169,6 +169,7 @@ public class ClientlibLink {
         String uri;
         switch (kind) {
             case FILE: // we can only refer to that exact resource.
+            case EXTERNALURI:
                 uri = path;
                 break;
             case CLIENTLIB:
@@ -176,9 +177,6 @@ public class ClientlibLink {
                 break;
             case CATEGORY:
                 uri = ClientlibCategoryServlet.makePath(path, type, context.useMinifiedFiles(), hash);
-                break;
-            case EXTERNALURI:
-                uri = path;
                 break;
             default:
                 throw new UnsupportedOperationException("Bug - impossible.");

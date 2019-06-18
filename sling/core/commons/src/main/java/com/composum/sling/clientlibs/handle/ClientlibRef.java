@@ -42,7 +42,7 @@ public class ClientlibRef {
         this.path = (!isUri && !isCategory) ? ruleToPath(rule) : null;
         this.category = isCategory ? rule.substring(PREFIX_CATEGORY.length()) : null;
         this.properties = Collections.unmodifiableMap(properties != null ? new HashMap<>(properties) : new
-                HashMap<String, String>());
+                HashMap<>());
     }
 
     public static ClientlibRef forCategory(Clientlib.Type type, String category, boolean optional, Map<String,
@@ -72,9 +72,7 @@ public class ClientlibRef {
         } else {
             if (link.isCategory() || link.isExternalUri() || !pattern.matcher(link.path).matches()) return false;
         }
-        if (!properties.equals(link.properties))
-            return false;
-        return true;
+        return properties.equals(link.properties);
     }
 
     /** Checks whether one of the links matches this, up to version patterns. */
@@ -119,11 +117,11 @@ public class ClientlibRef {
 
         ClientlibRef that = (ClientlibRef) o;
 
-        if (rule != null ? !rule.equals(that.rule) : that.rule != null) return false;
-        if (category != null ? !category.equals(that.category) : that.category != null) return false;
-        if (externalUri != null ? !externalUri.equals(that.externalUri) : that.externalUri != null) return false;
+        if (!Objects.equals(rule, that.rule)) return false;
+        if (!Objects.equals(category, that.category)) return false;
+        if (!Objects.equals(externalUri, that.externalUri)) return false;
         if (type != that.type) return false;
-        return properties != null ? properties.equals(that.properties) : that.properties == null;
+        return Objects.equals(properties, that.properties);
     }
 
     @Override

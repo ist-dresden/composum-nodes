@@ -30,7 +30,7 @@ import static com.composum.sling.core.filter.NodeTypeFilters.NODE_TYPE_PREFIX;
  */
 public interface ResourceFilter {
 
-    Pattern SIMPLE_ARRAY_PATTERN = Pattern.compile("^([+-])\\[(.*)\\]$");
+    Pattern SIMPLE_ARRAY_PATTERN = Pattern.compile("^([+-])\\[(.*)]$");
 
     /**
      * the core function of a filters says: this resource is appropriate or not
@@ -103,7 +103,7 @@ public interface ResourceFilter {
         }
 
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append("All()");
         }
     }
@@ -118,7 +118,7 @@ public interface ResourceFilter {
         }
 
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append("Folder()");
         }
     }
@@ -134,6 +134,7 @@ public interface ResourceFilter {
         protected List<String> typeNames;
         protected boolean restriction = false;
 
+        @Nonnull
         public List<String> getTypeNames() {
             return typeNames;
         }
@@ -156,7 +157,7 @@ public interface ResourceFilter {
          *                    if false, the filter matches for all nodes that have one of the given types (whitelist)
          */
         public TypeFilter(@Nullable List<String> names, boolean restriction) {
-            typeNames = names != null ? Collections.unmodifiableList(new ArrayList<>(names)) : Collections.<String>emptyList();
+            typeNames = names != null ? Collections.unmodifiableList(new ArrayList<>(names)) : Collections.emptyList();
             this.restriction = restriction;
         }
 
@@ -192,7 +193,7 @@ public interface ResourceFilter {
         }
 
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append("Type(");
             typeNamesToString(builder);
             builder.append(")");
@@ -231,7 +232,7 @@ public interface ResourceFilter {
          * Returns the string representation of the used StringFilter
          */
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             filter.toString(builder);
         }
     }
@@ -259,14 +260,14 @@ public interface ResourceFilter {
          */
         @Override
         public boolean accept(Resource resource) {
-            return resource != null ? filter.accept(resource.getName()) : false;
+            return resource != null && filter.accept(resource.getName());
         }
 
         /**
          * Returns the string representation of the filter itself [Name('filter')]
          */
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append("Name(");
             super.toString(builder);
             builder.append(")");
@@ -296,14 +297,14 @@ public interface ResourceFilter {
          */
         @Override
         public boolean accept(Resource resource) {
-            return resource != null ? filter.accept(resource.getPath()) : false;
+            return resource != null && filter.accept(resource.getPath());
         }
 
         /**
          * Returns the string representation of the filter itself [Path('filter')]
          */
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append("Path(");
             super.toString(builder);
             builder.append(")");
@@ -342,7 +343,7 @@ public interface ResourceFilter {
          * Returns the string representation of the filter itself [PrimaryType('filter')]
          */
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append("PrimaryType(");
             super.toString(builder);
             builder.append(")");
@@ -406,7 +407,7 @@ public interface ResourceFilter {
          * Returns the string representation of the filter itself [NodeType('filter')]
          */
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append("NodeType(");
             super.toString(builder);
             builder.append(")");
@@ -457,7 +458,7 @@ public interface ResourceFilter {
          * Returns the string representation of the filter itself [ResourceType('filter')]
          */
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append("ResourceType(");
             super.toString(builder);
             builder.append(")");
@@ -504,7 +505,7 @@ public interface ResourceFilter {
          * Returns the string representation of the filter itself [MimeType('filter')]
          */
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append("MimeType(");
             super.toString(builder);
             builder.append(")");
@@ -568,9 +569,7 @@ public interface ResourceFilter {
                     // simplify if we have an 'and' of 'and's or 'or' of 'or's.
                     List<ResourceFilter> flattenedFilters = new ArrayList<>();
                     for (ResourceFilter filter : filters) {
-                        if (filter instanceof FilterSet && ((FilterSet) filter).rule.equals(this) ||
-                                this.equals(none) && ((FilterSet) filter).rule.equals(or)
-                        ) {
+                        if (filter instanceof FilterSet && ((FilterSet) filter).rule.equals(this)) {
                             flattenedFilters.addAll(((FilterSet) filter).getSet());
                         } else
                             flattenedFilters.add(filter);
@@ -757,7 +756,7 @@ public interface ResourceFilter {
                         }
                         break;
                     case tree:
-                        restriction = set.size() > 0 ? set.get(0).isRestriction() : true;
+                        restriction = set.size() <= 0 || set.get(0).isRestriction();
                         break;
                 }
             }
@@ -767,8 +766,9 @@ public interface ResourceFilter {
         /**
          * Returns the string representation of the filter itself ['rule'{'filter', ...}]
          */
+        @SuppressWarnings("Duplicates")
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append(rule.name());
             builder.append("{");
             for (int i = 0; i < set.size(); ) {

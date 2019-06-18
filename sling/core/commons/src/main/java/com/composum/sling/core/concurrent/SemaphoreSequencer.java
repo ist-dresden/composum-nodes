@@ -16,7 +16,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-@Component(immediate = true, metatype = false)
+@Component(immediate = true)
 @Service
 public class SemaphoreSequencer implements SequencerService<SemaphoreSequencer.Token> {
 

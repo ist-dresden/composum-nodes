@@ -191,7 +191,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
         if (entryPoint == null) {
             StringBuilder path = new StringBuilder();
             Resource parent = resource;
-            String name = null;
+            String name;
             while (parent != null && !ResourceUtil.CONTENT_NODE.equals(name = parent.getName())) {
                 if (inheritanceType != Type.contentBased) {
                     if (path.length() > 0) {
@@ -201,8 +201,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
                 }
                 parent = parent.getParent();
             }
-            if (inheritanceType != Type.nodeRelated && inheritanceType != Type.sameContent
-                    && parent != null && ResourceUtil.CONTENT_NODE.equals(name)) {
+            if (inheritanceType != Type.nodeRelated && inheritanceType != Type.sameContent && parent != null) {
                 // the resource is a child of an element with a content subtree ('jcr:content/...')
                 path.insert(0, '/');
                 path.insert(0, ResourceUtil.CONTENT_NODE);
@@ -212,7 +211,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
                 // node inheritance or no content subtree ('jcr:content/...') detected...
                 relativePath = "";
                 entryPoint = resource.getParent();
-                if (inheritanceType == Type.sameContent && parent != null && ResourceUtil.CONTENT_NODE.equals(name)) {
+                if (inheritanceType == Type.sameContent && parent != null) {
                     exitPoint = parent;
                 }
             }

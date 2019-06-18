@@ -17,8 +17,7 @@ public class RequestUtil extends org.apache.sling.api.request.RequestUtil {
 
     public static Session getSession(SlingHttpServletRequest request) {
         ResourceResolver resolver = request.getResourceResolver();
-        Session session = resolver.adaptTo(Session.class);
-        return session;
+        return resolver.adaptTo(Session.class);
     }
 
     /**

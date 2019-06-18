@@ -1,22 +1,51 @@
 package com.composum.sling.clientlibs.service;
 
-import com.composum.sling.clientlibs.handle.*;
-import com.composum.sling.clientlibs.processor.*;
+import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.handle.ClientlibCategory;
+import com.composum.sling.clientlibs.handle.ClientlibElement;
+import com.composum.sling.clientlibs.handle.ClientlibExternalUri;
+import com.composum.sling.clientlibs.handle.ClientlibFile;
+import com.composum.sling.clientlibs.handle.ClientlibLink;
+import com.composum.sling.clientlibs.handle.ClientlibRef;
+import com.composum.sling.clientlibs.handle.ClientlibResourceFolder;
+import com.composum.sling.clientlibs.handle.FileHandle;
+import com.composum.sling.clientlibs.processor.CssProcessor;
+import com.composum.sling.clientlibs.processor.CssUrlMapper;
+import com.composum.sling.clientlibs.processor.GzipProcessor;
+import com.composum.sling.clientlibs.processor.JavascriptProcessor;
+import com.composum.sling.clientlibs.processor.LinkRenderer;
+import com.composum.sling.clientlibs.processor.ProcessingVisitor;
+import com.composum.sling.clientlibs.processor.ProcessorContext;
+import com.composum.sling.clientlibs.processor.ProcessorPipeline;
+import com.composum.sling.clientlibs.processor.RendererContext;
+import com.composum.sling.clientlibs.processor.UpdateTimeVisitor;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.concurrent.LazyCreationService;
 import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.SetUtils;
 import org.apache.commons.collections.map.LRUMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.felix.scr.annotations.*;
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Modified;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.ReferencePolicy;
+import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingException;
 import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.resource.*;
+import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.ModifiableValueMap;
+import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.api.resource.ValueMap;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 
@@ -26,13 +55,40 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.composum.sling.clientlibs.handle.Clientlib.*;
+import static com.composum.sling.clientlibs.handle.Clientlib.PROP_CATEGORY;
+import static com.composum.sling.clientlibs.handle.Clientlib.PROP_ORDER;
+import static com.composum.sling.clientlibs.handle.Clientlib.RESOURCE_TYPE;
+import static com.composum.sling.clientlibs.handle.Clientlib.Type;
 import static com.composum.sling.core.util.ResourceUtil.PROP_RESOURCE_TYPE;
 import static com.composum.sling.core.util.ResourceUtil.TYPE_SLING_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -124,7 +180,7 @@ public class DefaultClientlibService implements ClientlibService {
     @Activate
     protected void activate(ComponentContext context) {
         executorService = new ThreadPoolExecutor(clientlibConfig.getThreadPoolMin(), clientlibConfig.getThreadPoolMax
-                (), 200L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+                (), 200L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         rendererMap = new EnumMap<>(Clientlib.Type.class);
         rendererMap.put(Clientlib.Type.js, javascriptProcessor);
         rendererMap.put(Clientlib.Type.css, cssProcessor);
@@ -273,6 +329,7 @@ public class DefaultClientlibService implements ClientlibService {
         List<String> paths = null;
         long currentTimeMillis = System.currentTimeMillis();
         synchronized (categoryToPathCache) {
+            @SuppressWarnings("unchecked")
             Pair<Long, List<String>> cacheEntry = (Pair<Long, List<String>>) categoryToPathCache.get(category);
             if (null != cacheEntry && cacheEntry.getLeft() >= (currentTimeMillis - cacheTime))
                 paths = cacheEntry.getRight();
@@ -324,7 +381,7 @@ public class DefaultClientlibService implements ClientlibService {
                 }
             }
         }
-        Collections.sort(resources, orderResourceComparator);
+        resources.sort(orderResourceComparator);
         return resources;
     }
 
@@ -332,10 +389,8 @@ public class DefaultClientlibService implements ClientlibService {
     @Nonnull
     protected List<ResourceFilter> getCategoryPermissionFilters(String category) {
         List<ResourceFilter> result = new ArrayList<>();
-        if (permissionPlugins != null) {
-            for (ClientlibPermissionPlugin plugin : permissionPlugins) {
-                result.add(plugin.categoryFilter(category));
-            }
+        for (ClientlibPermissionPlugin plugin : permissionPlugins) {
+            result.add(plugin.categoryFilter(category));
         }
         return result;
     }
@@ -353,14 +408,11 @@ public class DefaultClientlibService implements ClientlibService {
      * Compares two client libraries by the {@link Clientlib#PROP_ORDER} attribute, resorting to path to at least
      * ensure a predictable order when there is no order attribute.
      */
-    protected static final Comparator<Resource> orderResourceComparator = new Comparator<Resource>() {
-        @Override
-        public int compare(Resource o1, Resource o2) {
-            int order1 = ResourceHandle.use(o1).getProperty(PROP_ORDER, 0);
-            int order2 = ResourceHandle.use(o2).getProperty(PROP_ORDER, 0);
-            int res = Integer.compare(order1, order2);
-            return res != 0 ? res : o1.getPath().compareTo(o2.getPath());
-        }
+    protected static final Comparator<Resource> orderResourceComparator = (o1, o2) -> {
+        int order1 = ResourceHandle.use(o1).getProperty(PROP_ORDER, 0);
+        int order2 = ResourceHandle.use(o2).getProperty(PROP_ORDER, 0);
+        int res = Integer.compare(order1, order2);
+        return res != 0 ? res : o1.getPath().compareTo(o2.getPath());
     };
 
     protected ResourceResolver createAdministrativeResolver() {
@@ -491,63 +543,54 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     protected LazyCreationService.CreationStrategy creationStrategy() {
-        return new LazyCreationService.CreationStrategy() {
-            @Override
-            public Resource create(ResourceResolver adminResolver, Resource parent, String name) throws
-                    RepositoryException, PersistenceException {
-                Resource cacheEntry = adminResolver.create(parent, name, FileHandle.CRUD_FILE_PROPS);
-                adminResolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS)
-                        .adaptTo(Node.class).addMixin(ResourceUtil.TYPE_TITLE);
-                FileHandle cacheFile = new FileHandle(cacheEntry);
-                cacheFile.storeContent(new ByteArrayInputStream("".getBytes())); // mandatory node jcr:data
-                return cacheEntry;
-            }
+        return (adminResolver, parent, name) -> {
+            Resource cacheEntry = adminResolver.create(parent, name, FileHandle.CRUD_FILE_PROPS);
+            adminResolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS)
+                    .adaptTo(Node.class).addMixin(ResourceUtil.TYPE_TITLE);
+            FileHandle cacheFile = new FileHandle(cacheEntry);
+            cacheFile.storeContent(new ByteArrayInputStream("".getBytes())); // mandatory node jcr:data
+            return cacheEntry;
         };
     }
 
     protected LazyCreationService.InitializationStrategy initializationStrategy(
             final ClientlibRef clientlibRef, final String encoding, final String hash, final ProcessorContext context) {
-        return new LazyCreationService.InitializationStrategy() {
-            @Override
-            public void initialize(ResourceResolver adminResolver, Resource cacheEntry) throws
-                    RepositoryException, PersistenceException {
+        return (adminResolver, cacheEntry) -> {
 
-                try {
-                    FileHandle cacheFile = new FileHandle(cacheEntry);
-                    if (cacheFile.isValid()) {
-                        LOG.debug("create clientlib cache content ''{}''...", cacheFile.getResource()
-                                .getPath());
+            try {
+                FileHandle cacheFile = new FileHandle(cacheEntry);
+                if (cacheFile.isValid()) {
+                    LOG.debug("create clientlib cache content ''{}''...", cacheFile.getResource()
+                            .getPath());
 
-                        final PipedOutputStream outputStream = new PipedOutputStream();
-                        InputStream inputStream = new PipedInputStream(outputStream);
-                        Future<Void> result = startProcessing(clientlibRef, encoding, context, outputStream);
-                        if (ENCODING_GZIP.equals(encoding)) {
-                            inputStream = gzipProcessor.processContent(inputStream, context);
-                        }
-                        cacheFile.storeContent(inputStream);
-
-                        ModifiableValueMap contentValues = cacheFile.getContent().adaptTo
-                                (ModifiableValueMap.class);
-                        contentValues.put(ResourceUtil.PROP_LAST_MODIFIED,
-                                Calendar.getInstance());
-                        contentValues.putAll(context.getHints());
-                        contentValues.put(PROP_HASH, hash);
-
-                        adminResolver.commit();
-                        result.get(); // transport any exceptions here
-
-                        LOG.info("clientlib cache content ''{}'' created", cacheFile.getResource()
-                                .getPath());
-                    } else {
-                        LOG.error("can't create cache content in '{}'!", cacheFile != null ? cacheFile
-                                .getResource().getPath() : "null");
+                    final PipedOutputStream outputStream = new PipedOutputStream();
+                    InputStream inputStream = new PipedInputStream(outputStream);
+                    Future<Void> result = startProcessing(clientlibRef, encoding, context, outputStream);
+                    if (ENCODING_GZIP.equals(encoding)) {
+                        inputStream = gzipProcessor.processContent(inputStream, context);
                     }
-                } catch (Exception e) {
-                    LOG.error("Error when initializing content in " + cacheEntry + "; deleting the file", e);
-                    refreshSession(adminResolver, false);
-                    adminResolver.delete(cacheEntry);
-                    throw new PersistenceException("" + e, e);
+                    cacheFile.storeContent(inputStream);
+
+                    ModifiableValueMap contentValues = cacheFile.getContent().adaptTo
+                            (ModifiableValueMap.class);
+                    contentValues.put(ResourceUtil.PROP_LAST_MODIFIED,
+                            Calendar.getInstance());
+                    contentValues.putAll(context.getHints());
+                    contentValues.put(PROP_HASH, hash);
+
+                    adminResolver.commit();
+                    result.get(); // transport any exceptions here
+
+                    LOG.info("clientlib cache content ''{}'' created", cacheFile.getResource()
+                            .getPath());
+                } else {
+                    LOG.error("can't create cache content in '{}'!", cacheFile.getResource().getPath());
                 }
+            } catch (Exception e) {
+                LOG.error("Error when initializing content in " + cacheEntry + "; deleting the file", e);
+                refreshSession(adminResolver, false);
+                adminResolver.delete(cacheEntry);
+                throw new PersistenceException("" + e, e);
             }
         };
     }

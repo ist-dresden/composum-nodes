@@ -1,7 +1,5 @@
 package com.composum.sling.clientlibs.handle;
 
-import javax.jcr.RepositoryException;
-import java.io.IOException;
 import java.util.Map;
 
 /**

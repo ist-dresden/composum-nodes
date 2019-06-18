@@ -4,6 +4,7 @@ import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
 import org.apache.sling.api.resource.Resource;
 
+import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +38,7 @@ public class ObjectMapping {
         }
 
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append("Object(...)");
         }
     }
