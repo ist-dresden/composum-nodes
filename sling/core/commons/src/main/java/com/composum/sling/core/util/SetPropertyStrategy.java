@@ -78,7 +78,7 @@ public interface SetPropertyStrategy {
                 LOG.warn("mixin types must be of property type NAME, was '"
                         + PropertyType.nameFromValue(type) + "'");
             }
-            List<String> valueList = new ArrayList<String>();
+            List<String> valueList = new ArrayList<>();
             if (values != null) {
                 for (Value val : values) {
                     String mixin = val.getString();

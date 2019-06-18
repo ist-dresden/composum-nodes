@@ -14,7 +14,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.zip.GZIPOutputStream;
 
-@Component(immediate = true, metatype = false)
+@Component(immediate = true)
 @Service
 public class DefaultGzipProcessor implements GzipProcessor {
 

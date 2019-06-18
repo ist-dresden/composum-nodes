@@ -58,12 +58,13 @@ public class ExpressionUtil {
     /**
      * evaluate an EL expression value, the value can contain @{..} expression rules which are transformed to ${..}
      */
+    @SuppressWarnings("unchecked")
     public <T> T eval(Object value, T defaultValue) {
         T result = null;
         if (value instanceof String) {
             String expression = (String) value;
             if (StringUtils.isNotBlank(expression)) {
-                expression = expression.replaceAll("@\\{([^\\}]+)\\}", "\\${$1}");
+                expression = expression.replaceAll("@\\{([^}]+)}", "\\${$1}");
                 Class type = defaultValue != null ? defaultValue.getClass() : String.class;
                 if (String.class.equals(type) && !expression.contains("${") && !expression.contains("#{")) {
                     result = (T) expression; // no change if it does not contain an actual EL expression

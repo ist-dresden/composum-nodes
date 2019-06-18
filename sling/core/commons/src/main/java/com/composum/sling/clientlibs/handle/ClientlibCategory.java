@@ -7,6 +7,7 @@ import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -56,7 +57,7 @@ public class ClientlibCategory implements ClientlibElement {
         ClientlibCategory that = (ClientlibCategory) o;
 
         if (getType() != that.getType()) return false;
-        return category != null ? category.equals(that.category) : that.category == null;
+        return Objects.equals(category, that.category);
     }
 
     @Override

@@ -253,7 +253,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
 
     public InheritedValues getInheritedValues(InheritedValues.Type type) {
         if (null == inheritedValuesMap) {
-            inheritedValuesMap = new EnumMap<InheritedValues.Type, InheritedValues>(InheritedValues.Type.class);
+            inheritedValuesMap = new EnumMap<>(InheritedValues.Type.class);
         }
         InheritedValues res = inheritedValuesMap.get(type);
         if (null == res) {

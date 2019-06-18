@@ -10,7 +10,6 @@ import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static org.slf4j.LoggerFactory.getLogger;
 

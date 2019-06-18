@@ -3,7 +3,6 @@ package com.composum.sling.core.util;
 import com.composum.sling.core.JcrResource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
-import org.apache.sling.api.SlingConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -12,7 +11,13 @@ import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.jcr.*;
+import javax.jcr.Binary;
+import javax.jcr.ItemNotFoundException;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
@@ -127,7 +132,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
     }
 
     public static String getNameExtension(Resource resource) {
-        String extension = null;
+        String extension;
         String name = resource.getName();
         if (ResourceUtil.CONTENT_NODE.equals(name)) {
             name = resource.getParent().getName();
@@ -364,11 +369,6 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
 
     /**
      * Checks the access control policies for enabled changes (node creation and property change).
-     *
-     * @param resource
-     * @param relPath
-     * @return
-     * @throws RepositoryException
      */
     public static boolean isWriteEnabled(Resource resource, String relPath) throws RepositoryException {
 

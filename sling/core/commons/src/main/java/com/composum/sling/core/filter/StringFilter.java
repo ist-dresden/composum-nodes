@@ -1,8 +1,6 @@
 package com.composum.sling.core.filter;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,8 +34,6 @@ public interface StringFilter {
 
     /**
      * to build a rebuildable string view of the filter
-     *
-     * @param builder
      */
     void toString(StringBuilder builder);
 
@@ -90,7 +86,7 @@ public interface StringFilter {
                     result.add(value);
                 }
             }
-            return result.toArray(new String[result.size()]);
+            return result.toArray(new String[0]);
         }
     }
 
@@ -469,6 +465,7 @@ public interface StringFilter {
         /**
          * Returns the string representation of the filter itself ['rule'{'filter', ...}]
          */
+        @SuppressWarnings("Duplicates")
         @Override
         public void toString(StringBuilder builder) {
             builder.append(rule.name());

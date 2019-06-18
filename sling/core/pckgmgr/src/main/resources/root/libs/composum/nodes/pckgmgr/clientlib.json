@@ -1,13 +1,13 @@
 {
   "sling:resourceType": "composum/nodes/commons/clientlib",
   "category": [
-    "composum.core.console.pckgmgr"
+    "composum.nodes.console.pckgmgr"
   ],
   "order": 100,
   "css": {
     "jcr:primaryType": "sling:OrderedFolder",
     "depends": [
-      "category:composum.core.console.default"
+      "category:composum.nodes.console.default"
     ],
     "group": {
       "embed": [
@@ -30,7 +30,7 @@
   "js": {
     "jcr:primaryType": "sling:OrderedFolder",
     "depends": [
-      "category:composum.core.console.default"
+      "category:composum.nodes.console.default"
     ],
     "dialogs": {
       "embed": [

@@ -3,4 +3,4 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <sling:defineObjects/>
 <sling:call script="/libs/composum/nodes/console/page/script.jsp"/>
-<cpn:clientlib type="js" category="composum.core.console.pckgmgr"/>
+<cpn:clientlib type="js" category="composum.nodes.console.pckgmgr"/>

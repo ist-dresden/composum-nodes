@@ -122,7 +122,7 @@ public class FileHandle {
         return size;
     }
 
-    public InputStream getStream() throws RepositoryException {
+    public InputStream getStream() {
         InputStream stream = null;
         if (content.isValid()) {
             ValueMap values = content.adaptTo(ValueMap.class);
@@ -131,7 +131,7 @@ public class FileHandle {
         return stream;
     }
 
-    public void storeContent(InputStream stream) throws RepositoryException {
+    public void storeContent(InputStream stream) {
         if (content.isValid()) {
             ModifiableValueMap values = content.adaptTo(ModifiableValueMap.class);
             values.put(ResourceUtil.PROP_DATA, stream);

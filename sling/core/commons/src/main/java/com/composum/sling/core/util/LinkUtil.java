@@ -177,7 +177,6 @@ public class LinkUtil {
      *
      * @param request the request as the externalization context
      * @param url     the url value (the local URL)
-     * @return
      */
     public static String getAbsoluteUrl(SlingHttpServletRequest request, String url) {
         if (!isExternalUrl(url) && url.startsWith("/")) {
@@ -256,8 +255,7 @@ public class LinkUtil {
      */
     public static String getFinalTarget(Resource resource) throws RedirectLoopException {
         ResourceHandle handle = ResourceHandle.use(resource);
-        String finalTarget = getFinalTarget(handle, new ArrayList<String>());
-        return finalTarget;
+        return getFinalTarget(handle, new ArrayList<>());
     }
 
     /**

@@ -233,7 +233,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             writer.println("<h3>Usage:</h3>");
             writer.println("Please give the type of the client library as selector and one or more");
             writer.println("client libraries or -categories as parameter lib. Some examples:<ul>");
-            printLinkItem(url + "?lib=category:composum.core.console.browser");
+            printLinkItem(url + "?lib=category:composum.nodes.console.browser");
             printLinkItem(url + "?lib=/libs/composum/nodes/console/clientlibs/base");
             printLinkItem(url + "?lib=composum/nodes/console/clientlibs/base");
             writer.println("</ul>This prints the files and other included client libraries.");
