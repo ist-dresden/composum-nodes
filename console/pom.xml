@@ -58,6 +58,7 @@
                             *
                         </Import-Package>
                         <Export-Package>
+                            !com.composum.sling.nodes.*.impl.*,
                             com.composum.sling.nodes.*
                         </Export-Package>
                         <Sling-Initial-Content>

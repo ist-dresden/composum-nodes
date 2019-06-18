@@ -72,7 +72,7 @@
                             *
                         </Import-Package>
                         <Export-Package>
-                            !com.composum.sling.*.impl,
+                            !com.composum.sling.core.*.impl.*,
                             com.composum.sling.clientlibs.*,
                             com.composum.sling.core.*,
                             com.composum.sling.cpnl.*,
