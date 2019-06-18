@@ -10,12 +10,12 @@ import com.composum.sling.nodes.components.codeeditor.CodeEditorServlet;
 import com.composum.sling.nodes.console.ConsoleServletBean;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ValueMap;
 import org.slf4j.Logger;
 
-import javax.jcr.Binary;
 import javax.jcr.Node;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 import java.util.ArrayList;
@@ -31,6 +31,7 @@ public class Browser extends ConsoleServletBean {
 
     public static final String TYPE_FILE = "nt:file";
     public static final String TYPE_RESOURCE = "nt:resource";
+    public static final String OAK_RESOURCE = "oak:Resource";
     public static final String TYPE_UNSTRUCTURED = "nt:unstructured";
 
     public static final String HTML = "html";
@@ -165,26 +166,22 @@ public class Browser extends ConsoleServletBean {
                 contentResource = resource; // use node itself if no content present (only in the Browser!)
             }
             if (contentResource != null) {
-                try {
-                    Node node = contentResource.adaptTo(Node.class);
-                    if (node != null) {
-                        NodeType type = node.getPrimaryNodeType();
-                        String typeName = type.getName();
-                        if (TYPE_RESOURCE.equals(typeName)
-                                || TYPE_FILE.equals(typeName)
-                                || TYPE_UNSTRUCTURED.equals(typeName)) {
-                            if (getData() != null) {
+                ValueMap values = contentResource.adaptTo(ValueMap.class);
+                if (values != null) {
+                    String typeName = values.get(JcrConstants.JCR_PRIMARYTYPE, "");
+                    if (TYPE_RESOURCE.equals(typeName)
+                            || OAK_RESOURCE.equals(typeName)
+                            || TYPE_FILE.equals(typeName)
+                            || TYPE_UNSTRUCTURED.equals(typeName)) {
+                        if (values.containsKey(JcrConstants.JCR_DATA)) {
+                            isFile = true;
+                        } else {
+                            mimeType = contentResource.getProperty(PROP_MIME_TYPE);
+                            if (StringUtils.isNotBlank(mimeType)) {
                                 isFile = true;
-                            } else {
-                                mimeType = contentResource.getProperty(PROP_MIME_TYPE);
-                                if (StringUtils.isNotBlank(mimeType)) {
-                                    isFile = true;
-                                }
                             }
                         }
                     }
-                } catch (Exception ex) {
-                    // ignore
                 }
             }
         }
@@ -200,7 +197,7 @@ public class Browser extends ConsoleServletBean {
 
     public boolean isImage() {
         if (isImage == null) {
-            isImage = isFile() && getMimeType().startsWith("image/") || isAsset();
+            isImage = (isFile() && getMimeType().startsWith("image/")) || isAsset();
         }
         return isImage;
     }
@@ -285,35 +282,6 @@ public class Browser extends ConsoleServletBean {
             textType = "";
         }
         return textType;
-    }
-
-    public Property getData() {
-        Property data = null;
-        ResourceHandle content = getContentResource();
-        if (content != null) {
-            Node node = content.adaptTo(Node.class);
-            if (node != null) {
-                try {
-                    data = node.getProperty(PROP_DATA);
-                } catch (Exception ex) {
-                    // ignore
-                }
-            }
-        }
-        return data;
-    }
-
-    public Binary getBinary() {
-        Binary binary = null;
-        Property data = getData();
-        if (data != null) {
-            try {
-                binary = data.getBinary();
-            } catch (RepositoryException e) {
-                LOG.error(e.getMessage(), e);
-            }
-        }
-        return binary;
     }
 
     public String getViewType() {
@@ -505,7 +473,7 @@ public class Browser extends ConsoleServletBean {
 
     public List<NodeHandle> getParents() {
         if (parents == null) {
-            parents = new ArrayList<NodeHandle>();
+            parents = new ArrayList<>();
             ResourceHandle resource = getResource();
             String parentPath;
             NodeHandle parent;
