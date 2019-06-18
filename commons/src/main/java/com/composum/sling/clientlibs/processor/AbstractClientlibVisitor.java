@@ -258,7 +258,8 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
     }
 
     /** Optional action to take after visiting the element. Default : empty. */
-    protected void action(ClientlibFile file, VisitorMode mode, ClientlibResourceFolder parent) throws IOException {
+    protected void action(ClientlibFile file, VisitorMode mode, ClientlibResourceFolder parent)
+            throws RepositoryException, IOException {
     }
 
     /** Optional action to take after visiting the element. Default : empty. */

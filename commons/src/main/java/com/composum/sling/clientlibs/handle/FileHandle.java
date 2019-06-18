@@ -148,8 +148,7 @@ public class FileHandle {
                 String uuid = resource.getProperty(ResourceUtil.CONTENT_NODE, "");
                 if (StringUtils.isNotBlank(uuid)) {
                     ResourceResolver resolver = resource.getResourceResolver();
-                    Session session = resolver.adaptTo(Session.class);
-                    assert session != null;
+                    Session session = Objects.requireNonNull(resolver.adaptTo(Session.class));
                     try {
                         Node node = session.getNodeByIdentifier(uuid);
                         if (node != null) {
