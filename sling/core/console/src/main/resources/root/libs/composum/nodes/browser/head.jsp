@@ -4,5 +4,5 @@
 <sling:defineObjects/>
 <head>
 <sling:call script="/libs/composum/nodes/console/page/head.jsp"/>
-<cpn:clientlib type="css" category="composum.core.console.browser"/>
+<cpn:clientlib type="css" category="composum.nodes.console.browser"/>
 </head>
