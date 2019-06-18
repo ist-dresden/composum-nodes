@@ -43,14 +43,17 @@ public class YUICssProcessor extends AbstractClientlibRenderer implements CssPro
             if (context.useMinifiedFiles() && clientlibConfig.getCssMinimize()) {
                 final PipedOutputStream outputStream = new PipedOutputStream();
                 result = new PipedInputStream(outputStream);
-                context.execute(() -> {
-                    try (OutputStreamWriter writer = new OutputStreamWriter(outputStream);
-                         InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET)) {
-                        final CssCompressor compressor = new CssCompressor(sourceReader);
-                        compressor.compress(writer, clientlibConfig.getCssLineBreak());
-                        writer.flush();
-                    } catch (IOException ex) {
-                        LOG.error(ex.getMessage(), ex);
+                context.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try (OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+                             InputStreamReader sourceReader = new InputStreamReader(source, DEFAULT_CHARSET)) {
+                            final CssCompressor compressor = new CssCompressor(sourceReader);
+                            compressor.compress(writer, clientlibConfig.getCssLineBreak());
+                            writer.flush();
+                        } catch (IOException ex) {
+                            LOG.error(ex.getMessage(), ex);
+                        }
                     }
                 });
             }

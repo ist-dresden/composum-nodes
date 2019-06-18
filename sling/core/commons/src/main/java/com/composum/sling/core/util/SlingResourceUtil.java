@@ -127,17 +127,25 @@ public class SlingResourceUtil {
             @SuppressWarnings("unchecked")
             @Override
             public Iterator<Resource> iterator() {
-                Transformer descendantsTransformer = input -> {
-                    if (input instanceof Resource) {
-                        return IteratorUtils.chainedIterator(
-                                // we wrap the resource into Object[] so that it doesn't get its children read again
-                                IteratorUtils.singletonIterator(new Object[]{input}),
-                                ((Resource) input).listChildren());
+                Transformer descendantsTransformer = new Transformer() {
+                    @Override
+                    public Object transform(Object input) {
+                        if (input instanceof Resource) {
+                            return IteratorUtils.chainedIterator(
+                                    // we wrap the resource into Object[] so that it doesn't get its children read again
+                                    IteratorUtils.singletonIterator(new Object[]{input}),
+                                    ((Resource) input).listChildren());
+                        }
+                        return input;
                     }
-                    return input;
                 };
                 return IteratorUtils.transformedIterator(IteratorUtils.objectGraphIterator(resource, descendantsTransformer),
-                        input -> ((Object[]) input)[0]);
+                        new Transformer() {
+                            @Override
+                            public Object transform(Object input) {
+                                return ((Object[]) input)[0];
+                            }
+                        });
             }
 
         };
