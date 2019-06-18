@@ -31,8 +31,8 @@ public class SlingResourceUtil {
      * @throws IllegalArgumentException in those cases where there is no sensible answer: one of the paths is empty or one absolute and one relative path
      */
     public static String relativePath(@Nonnull String node, @Nonnull String other) {
-        node = node != null ? ResourceUtil.normalize(node) : node;
-        other = other != null ? ResourceUtil.normalize(other) : other;
+        node = ResourceUtil.normalize(node);
+        other = ResourceUtil.normalize(other);
         //noinspection IfStatementWithTooManyBranches,OverlyComplexBooleanExpression
         if (StringUtils.isBlank(node) || StringUtils.isBlank(other)
                 || (StringUtils.startsWith(node, "/") && !StringUtils.startsWith(other, "/"))

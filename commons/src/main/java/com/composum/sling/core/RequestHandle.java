@@ -8,11 +8,10 @@
  */
 package com.composum.sling.core;
 
+import com.composum.sling.core.filter.StringFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.wrappers.SlingHttpServletRequestWrapper;
-
-import com.composum.sling.core.filter.StringFilter;
 
 /**
  * Wrapper that extends the functionality of {@link SlingHttpServletRequest}.
@@ -20,16 +19,13 @@ import com.composum.sling.core.filter.StringFilter;
 public class RequestHandle extends SlingHttpServletRequestWrapper {
 
     public static RequestHandle use(SlingHttpServletRequest request) {
-        RequestHandle handle = request instanceof RequestHandle ? ((RequestHandle) request)
-                        : new RequestHandle(request);
-        return handle;
+        return request instanceof RequestHandle ? ((RequestHandle) request) : new RequestHandle(request);
     }
 
     /**
      * Creates a new wrapper instance delegating all method calls to the given <code>request</code>.
      *
-     * @param request
-     *            the request to wrap
+     * @param request the request to wrap
      */
     protected RequestHandle(SlingHttpServletRequest request) {
         super(request);
@@ -50,23 +46,23 @@ public class RequestHandle extends SlingHttpServletRequestWrapper {
         String[] selectors = getSlingRequest().getRequestPathInfo().getSelectors();
         StringBuilder result = new StringBuilder();
         if (prepend != null && prepend.length > 0) {
-            for (int i = 0; i < prepend.length; i++) {
+            for (String s : prepend) {
                 result.append('.');
-                result.append(prepend[i]);
+                result.append(s);
             }
         }
         if (selectors != null && selectors.length > 0) {
-            for (int i = 0; i < selectors.length; i++) {
-                if (filter.accept(selectors[i])) {
+            for (String selector : selectors) {
+                if (filter.accept(selector)) {
                     result.append('.');
-                    result.append(selectors[i]);
+                    result.append(selector);
                 }
             }
         }
         if (append != null && append.length > 0) {
-            for (int i = 0; i < append.length; i++) {
+            for (String s : append) {
                 result.append('.');
-                result.append(append[i]);
+                result.append(s);
             }
         }
         return result.toString();

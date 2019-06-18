@@ -13,6 +13,7 @@ import org.apache.sling.api.resource.ValueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
 import java.util.ArrayList;
@@ -82,7 +83,7 @@ public class Consoles extends ConsolePage {
         }
 
         @Override
-        public void toString(StringBuilder builder) {
+        public void toString(@Nonnull StringBuilder builder) {
             builder.append("console(").append(StringUtils.join(selectors, ',')).append(")");
         }
     }

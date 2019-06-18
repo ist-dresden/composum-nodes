@@ -126,7 +126,7 @@ public abstract class AbstractChangeObserver implements EventListener {
     protected class ChangeCollection extends HashMap<String, ChangedResource> {
 
         public void registerChange(Session session, ResourceResolver resolver, String path, Calendar time, String user)
-                throws RepositoryException, LoginException {
+                throws RepositoryException {
             Node contentNode = getContentNode(session, path);
             if (contentNode != null) {
                 path = contentNode.getPath();
