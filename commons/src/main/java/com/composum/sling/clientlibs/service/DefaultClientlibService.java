@@ -241,10 +241,11 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     /**
-     * For files we use the correct sibling wrt. {@link ClientlibConfiguration.Config#clientlibs_minified_use()}.
+     * For files we use the correct sibling wrt. {@link ClientlibConfiguration.Config#clientlibs_minified_use()}
+     * and {@link ClientlibConfiguration.Config#debug()}.
      */
     protected Resource minificationVariant(Resource resource) {
-        if (getClientlibConfig().clientlibs_minified_use()) {
+        if (getClientlibConfig().clientlibs_minified_use() && !getClientlibConfig().debug()) {
             return getMinifiedSibling(resource);
         }
         return resource;
@@ -525,8 +526,8 @@ public class DefaultClientlibService implements ClientlibService {
                     }
 
                     final ProcessorContext context = new ProcessorContext(request, adminResolver, executorService,
-                            getClientlibConfig().clientlibs_url_map(), minified && getClientlibConfig()
-                            .clientlibs_minified_use());
+                            getClientlibConfig().clientlibs_url_map(), minified &&
+                            getClientlibConfig().clientlibs_minified_use() && !getClientlibConfig().debug());
 
                     LazyCreationService.InitializationStrategy initializer = initializationStrategy(clientlibRef,
                             encoding, hash, context);
@@ -667,7 +668,8 @@ public class DefaultClientlibService implements ClientlibService {
         if (StringUtils.isNotBlank(encoding)) {
             cacheKey += '.' + encoding.trim();
         }
-        if (minified && getClientlibConfig().clientlibs_minified_use()) cacheKey = cacheKey + ".min";
+        if (minified && getClientlibConfig().clientlibs_minified_use() && !getClientlibConfig().debug())
+            cacheKey = cacheKey + ".min";
         cacheKey = cacheKey + "." + ref.type.name();
         return cacheRoot + cacheKey;
     }

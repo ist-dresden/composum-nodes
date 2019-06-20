@@ -77,7 +77,7 @@ public class RendererContext {
     }
 
     public boolean useMinifiedFiles() {
-        return getConfiguration().clientlibs_minified_use();
+        return getConfiguration().clientlibs_minified_use() && !getConfiguration().debug();
     }
 
     public ClientlibService getClientlibService() {

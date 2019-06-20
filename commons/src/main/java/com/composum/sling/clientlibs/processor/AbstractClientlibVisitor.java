@@ -127,7 +127,7 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
                 Resource resource = file.handle.getResource();
                 Resource minified = service.getMinifiedSibling(resource);
                 if (!minified.getPath().equals(resource.getPath())) {
-                    if (service.getClientlibConfig().clientlibs_minified_use())
+                    if (service.getClientlibConfig().clientlibs_minified_use() && !service.getClientlibConfig().debug())
                         duplicatesToRemove.add(resource.getPath());
                     else
                         duplicatesToRemove.add(minified.getPath());
