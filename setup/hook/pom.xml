@@ -25,7 +25,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.composum.core.setup.hook.SetupHook</mainClass>
+                            <mainClass>com.composum.sling.core.setup.hook.SetupHook</mainClass>
                             <addClasspath>true</addClasspath>
                         </manifest>
                     </archive>
