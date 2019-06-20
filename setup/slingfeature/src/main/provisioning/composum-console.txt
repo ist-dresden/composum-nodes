@@ -9,7 +9,7 @@
   com.composum.nodes/composum-nodes-usermgr
 
 [configurations]
-  org.apache.sling.jcr.base.internal.LoginAdminWhitelist.fragment-composum_core
+  org.apache.sling.jcr.base.internal.LoginAdminWhitelist.fragment-composum_core_v2
     whitelist.name="composum_core"
     whitelist.bundles=[
       "com.composum.nodes.commons",
