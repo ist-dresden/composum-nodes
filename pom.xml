@@ -207,7 +207,7 @@
 
                 <plugin>
                     <groupId>org.apache.sling</groupId>
-                    <artifactId>maven-sling-plugin</artifactId>
+                    <artifactId>sling-maven-plugin</artifactId>
                     <version>2.4.2</version>
                     <configuration>
                         <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
