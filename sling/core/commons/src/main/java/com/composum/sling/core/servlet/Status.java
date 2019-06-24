@@ -9,6 +9,7 @@ import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.request.RequestParameter;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
@@ -21,6 +22,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
@@ -142,6 +144,38 @@ public class Status {
         }
     }
 
+    public String getRequiredParameter(@Nonnull final String paramName,
+                                       @Nullable final Pattern pattern, @Nonnull final String errorMessage) {
+        final RequestParameter requestParameter = request.getRequestParameter(paramName);
+        String value = null;
+        if (requestParameter != null) {
+            value = requestParameter.getString();
+            if (pattern == null || pattern.matcher(value).matches()) {
+                return value;
+            }
+        }
+        addMessage(Level.error, errorMessage, value);
+        return null;
+    }
+
+    public List<String> getRequiredParameters(@Nonnull final String paramName,
+                                              @Nullable final Pattern pattern, @Nonnull final String errorMessage) {
+        final RequestParameter[] requestParameters = request.getRequestParameters(paramName);
+        if (requestParameters == null || requestParameters.length < 1) {
+            addMessage(Level.error, errorMessage);
+            return null;
+        }
+        List<String> values = new ArrayList<>();
+        for (RequestParameter parameter : requestParameters) {
+            String value = parameter.getString();
+            if (pattern != null && !pattern.matcher(value).matches()) {
+                addMessage(Level.error, errorMessage, value);
+            }
+            values.add(value);
+        }
+        return values;
+    }
+
     public String getTitle() {
         return hasTitle() ? title : prepare("Result");
     }
@@ -174,30 +208,27 @@ public class Status {
         addMessage(Level.info, text, args);
     }
 
+    public void info(@Nonnull final String context, @Nonnull final String label,
+                     @Nonnull final String text, Object... args) {
+        addMessage(Level.info, context, label, text, args);
+    }
+
     public void warn(@Nonnull final String text, Object... args) {
         addMessage(Level.warn, text, args);
     }
 
-    public void warn(@Nonnull final String label, @Nonnull final String text, Object... args) {
-        addMessage(Level.warn, null, label, prepare(text, args));
-    }
-
     public void warn(@Nonnull final String context, @Nonnull final String label,
                      @Nonnull final String text, Object... args) {
-        addMessage(Level.warn, context, label, text);
+        addMessage(Level.warn, context, label, text, args);
     }
 
     public void error(@Nonnull final String text, Object... args) {
-        addMessage(Level.error, text);
-    }
-
-    public void error(@Nonnull final String label, @Nonnull final String text, Object... args) {
-        addMessage(Level.error, null, label, prepare(text, args));
+        addMessage(Level.error, text, args);
     }
 
     public void error(@Nonnull final String context, @Nonnull final String label,
                       @Nonnull final String text, Object... args) {
-        addMessage(Level.error, label, context, text);
+        addMessage(Level.error, label, context, text, args);
     }
 
     /**
@@ -354,13 +385,13 @@ public class Status {
             logger.info(text, args);
         }
 
-        public void warn(@Nonnull String text, Object... args) {
-            Status.this.warn(text, args);
-            logger.warn(text, args);
+        public void info(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
+            Status.this.warn(context, label, text, args);
+            logger.info(text, args);
         }
 
-        public void warn(@Nonnull String label, @Nonnull String text, Object... args) {
-            Status.this.warn(label, text, args);
+        public void warn(@Nonnull String text, Object... args) {
+            Status.this.warn(text, args);
             logger.warn(text, args);
         }
 
@@ -371,11 +402,6 @@ public class Status {
 
         public void error(@Nonnull String text, Object... args) {
             Status.this.error(text, args);
-            logger.error(text, args);
-        }
-
-        public void error(@Nonnull String label, @Nonnull String text, Object... args) {
-            Status.this.error(label, text, args);
             logger.error(text, args);
         }
 

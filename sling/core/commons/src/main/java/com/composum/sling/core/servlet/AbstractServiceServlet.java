@@ -4,7 +4,6 @@ import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.JsonUtil;
-import com.composum.sling.core.util.LoggerFormat;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -14,12 +13,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 
-import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -28,12 +25,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * A basic class for all '/bin/{service}/path/to/resource' servlets.
@@ -132,64 +126,6 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         response.addHeader("Cache-Control", "must-revalidate");
         response.setHeader("Pragma", "no-cache");
         response.setDateHeader("Expires", 0);
-    }
-
-    //
-    // Validation handling
-    //
-
-    public class Validation {
-
-        protected List<String> messages = new ArrayList<>();
-
-        public void addMessage(SlingHttpServletRequest request, String message, Object value) {
-            message = I18N.get(request, message);
-            message = LoggerFormat.format(message, value);
-            messages.add(message);
-        }
-
-        @Nullable
-        public String getRequiredParameter(SlingHttpServletRequest request, String paramName,
-                                           Pattern pattern, String errorMessage) {
-            final RequestParameter requestParameter = request.getRequestParameter(paramName);
-            String value = null;
-            if (requestParameter != null) {
-                value = requestParameter.getString();
-                if (pattern == null || pattern.matcher(value).matches()) {
-                    return value;
-                }
-            }
-            addMessage(request, errorMessage, value);
-            return null;
-        }
-
-        @Nullable
-        public List<String> getRequiredParameters(SlingHttpServletRequest request, String paramName,
-                                                  Pattern pattern, String errorMessage) {
-            final RequestParameter[] requestParameters = request.getRequestParameters(paramName);
-            if (requestParameters == null || requestParameters.length < 1) {
-                addMessage(request, errorMessage, null);
-                return null;
-            }
-            List<String> values = new ArrayList<>();
-            for (RequestParameter parameter : requestParameters) {
-                String value = parameter.getString();
-                if (pattern != null && !pattern.matcher(value).matches()) {
-                    addMessage(request, errorMessage, value);
-                }
-                values.add(value);
-            }
-            return values;
-        }
-
-        public boolean sendError(SlingHttpServletResponse response)
-                throws IOException {
-            if (messages.size() > 0) {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, messages.get(0));
-                return true;
-            }
-            return false;
-        }
     }
 
     //
