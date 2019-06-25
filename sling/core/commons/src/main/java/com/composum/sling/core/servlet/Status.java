@@ -405,6 +405,11 @@ public class Status {
             logger.error(text, args);
         }
 
+        public void error(@Nonnull String text, @Nonnull Throwable ex) {
+            Status.this.error(text, ex.getLocalizedMessage());
+            logger.error(prepare(text, ex.getLocalizedMessage()), ex);
+        }
+
         public void error(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
             Status.this.error(context, label, text, args);
             logger.error(text, args);
