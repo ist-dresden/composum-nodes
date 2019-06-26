@@ -5,6 +5,9 @@ import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.jackrabbit.commons.cnd.CndImporter;
+import org.apache.jackrabbit.commons.cnd.ParseException;
+import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.packaging.InstallContext;
 import org.apache.jackrabbit.vault.packaging.PackageException;
 import org.osgi.framework.Bundle;
@@ -15,8 +18,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 public class SetupUtil {
 
@@ -136,4 +144,48 @@ public class SetupUtil {
         ServiceReference serviceReference = serviceBundleContext.getServiceReference(type.getName());
         return (T) serviceBundleContext.getService(serviceReference);
     }
+
+    /**
+     * Updates existing nodetypes. This might be neccesary for changes in nodetypes.cnd, since the normal package installation does not change
+     * existing node types. It's probably sensible to do this only after checking that the current definition in the
+     * {@link javax.jcr.nodetype.NodeTypeManager} of the changed node type is not current.
+     */
+    public static void updateNodeTypes(InstallContext ctx) throws PackageException {
+        Archive archive = ctx.getPackage().getArchive();
+        try {
+            try (InputStream stream = archive.openInputStream(archive.getEntry("/META-INF/vault/nodetypes.cnd"))) {
+                InputStreamReader cndReader = new InputStreamReader(stream);
+                CndImporter.registerNodeTypes(cndReader, ctx.getSession(), true);
+            }
+        } catch (ParseException | RepositoryException | IOException e) {
+            LOG.error("Failed to update node types.", e);
+            throw new PackageException("Failed to update node types.", e);
+        }
+    }
+
+    /**
+     * Updates existing nodetypes if an up to date check fails. This might be neccesary for changes in nodetypes.cnd, since the normal package installation does not change
+     * existing node types.
+     *
+     * @param upToDateCheck if this does return true, the update is skipped. Probably involves <code>ctx.getSession().getWorkspace().getNodeTypeManager()</code>.
+     */
+    public static void updateNodeTypesConditionally(InstallContext ctx, Callable<Boolean> upToDateCheck) throws PackageException {
+        try {
+            if (!Boolean.TRUE.equals(upToDateCheck.call())) {
+                LOG.info("up to date check failed - updating node types.");
+
+                updateNodeTypes(ctx);
+
+                if (!Boolean.TRUE.equals(upToDateCheck.call())) {
+                    LOG.error("up to date check still fails even after package installation!");
+                    // That's probably a bug or obsolete check - we do not throw up here since this is likely not a showstopper
+                }
+            }
+        } catch (PackageException e) {
+            throw e;
+        } catch (Exception e) {
+            LOG.error("Error during current check", e);
+        }
+    }
+
 }
