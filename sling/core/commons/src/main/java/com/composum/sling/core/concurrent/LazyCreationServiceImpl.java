@@ -39,8 +39,8 @@ import static org.slf4j.LoggerFactory.getLogger;
  * ignored.
  */
 @Component(
-        label = "Composum lazy creation service",
-        description = "provides a cluster-safe 'get or create' pattern",
+        label = "Composum Lazy Creation Service",
+        description = "Provides a cluster-safe 'get or create' pattern",
         immediate = true,
         metatype = true
 )
