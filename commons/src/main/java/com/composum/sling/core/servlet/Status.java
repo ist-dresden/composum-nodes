@@ -7,9 +7,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
+import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
@@ -27,6 +29,7 @@ import java.util.regex.Pattern;
 import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static org.apache.sling.api.resource.ResourceUtil.isSyntheticResource;
 
 /**
  * the standardised answer object of a servlet request to fill the response output
@@ -119,6 +122,7 @@ public class Status {
     protected String title;
     protected final List<Message> messages;
     protected final Map<String, Map<String, Object>> data;
+    protected final Map<String, List<Map<String, Object>>> list;
 
     public Status(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response) {
         this(new GsonBuilder().create(), request, response);
@@ -130,6 +134,7 @@ public class Status {
         this.request = request;
         this.response = response;
         data = new HashMap<>();
+        list = new HashMap<>();
         messages = new ArrayList<>();
     }
 
@@ -240,6 +245,48 @@ public class Status {
         Map<String, Object> object = new LinkedHashMap<>();
         data.put(name, object);
         return object;
+    }
+
+    /**
+     * @param name the key of the data element to insert in the status response
+     */
+    public void reference(@Nonnull final String name, Resource resource) {
+        Map<String, Object> object = data(name);
+        reference(object, resource);
+    }
+
+    /**
+     *
+     */
+    public void reference(Map<String, Object> object, Resource resource) {
+        object.put("name", resource.getName());
+        object.put("path", resource.getPath());
+        object.put("type", resource.getResourceType());
+        object.put("prim", resource.getValueMap().get(JcrConstants.JCR_PRIMARYTYPE, ""));
+        object.put("synthetic", isSyntheticResource(resource));
+    }
+
+    /**
+     * @param name the key of the data element to insert in the status response
+     * @return a new list of Map items for the data values of the added status object
+     */
+    @Nonnull
+    public List<Map<String, Object>> list(@Nonnull final String name) {
+        List<Map<String, Object>> object = new ArrayList<>();
+        list.put(name, object);
+        return object;
+    }
+
+    /**
+     * @param name the key of the data element to insert in the status response
+     */
+    public void list(@Nonnull final String name, Collection<Resource> items) {
+        List<Map<String, Object>> object = list(name);
+        for (Resource item : items) {
+            Map<String, Object> ref = new HashMap<>();
+            reference(ref, item);
+            object.add(ref);
+        }
     }
 
     /**
