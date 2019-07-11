@@ -418,8 +418,8 @@ public class SourceModel extends ConsoleSlingBean {
                 i++;
             }
         }
-        writeProperty(writer, "        ", "jcr:primaryType", getPrimaryType());
-        writeProperties(writer, "        ");
+        writeProperty(writer, "          ", "jcr:primaryType", getPrimaryType());
+        writeProperties(writer, "          ");
         writer.append(">\n");
         Resource contentResource;
         if ((contentResource = resource.getChild(JcrConstants.JCR_CONTENT)) != null) {
@@ -485,7 +485,7 @@ public class SourceModel extends ConsoleSlingBean {
                 .replaceAll("\"", "&quot;");
     }
 
-    public String escapeXmlAttribute(String value) {
+    public String escapeXmlAttribute(String value) { // FIXME(hps,2019-07-11) use utilities? Should be consistent with packge manager, though.
         return value
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")

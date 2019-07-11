@@ -122,11 +122,13 @@ public class LinkUtil {
             return url;
         }
 
+        String result = url;
+
         // rebuild URL if not always external only
-        if (!isExternalUrl(url)) {
+        if (!isExternalUrl(result)) {
 
             ResourceResolver resolver = request.getResourceResolver();
-            ResourceHandle resource = ResourceHandle.use(resolver.getResource(url));
+            ResourceHandle resource = ResourceHandle.use(resolver.getResource(result));
 
             // it's possible that the resource can not be resolved / is virtual but is valid...
             if (resource.isValid()) {
@@ -148,12 +150,12 @@ public class LinkUtil {
 
             // map the path (the url) with the resource resolver (encodes the url)
             if (mapper != null) {
-                url = mapper.mapUri(request, url);
-                url = adjustMappedUrl(request, url);
+                result = mapper.mapUri(request, result);
+                result = adjustMappedUrl(request, result);
             }
 
             if (StringUtils.isNotBlank(extension)) {
-                url += extension;   // extension starts with a '.'
+                result += extension;   // extension starts with a '.'
             }
 
             // inject selectors into the complete URL because
@@ -163,13 +165,15 @@ public class LinkUtil {
                     selectors = "." + selectors;
                 }
 
-                Matcher matcher = SELECTOR_PATTERN.matcher(url);
+                Matcher matcher = SELECTOR_PATTERN.matcher(result);
                 if (matcher.matches()) {
-                    url = matcher.group(1) + selectors + matcher.group(2);
+                    result = matcher.group(1) + selectors + matcher.group(2);
                 }
             }
         }
-        return url;
+
+        LOG.debug("Mapped '{}' to '{}'", url, result);
+        return result;
     }
 
     /**

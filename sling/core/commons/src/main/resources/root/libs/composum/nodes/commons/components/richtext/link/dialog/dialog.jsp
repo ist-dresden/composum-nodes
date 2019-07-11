@@ -3,7 +3,7 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <sling:defineObjects/>
 <div class="composum-widgets-richtext_link-dialog_url form-group">
-    <label class="control-label">${cpn:i18n(slingRequest,'Link (Content Path)')}</label>
+    <label class="control-label">${cpn:i18n(slingRequest,'Link (Content Path or external URL)')}</label>
     <div class="link input-group widget path-widget" data-rules="mandatory">
         <input name="url" class="form-control" type="text" autofocus/>
         <span class="input-group-btn">
