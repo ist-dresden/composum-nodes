@@ -202,10 +202,7 @@ public class LinkUtil {
     }
 
     public static int getDefaultPort(SlingHttpServletRequest request) {
-        if (!request.isSecure()) {
-            return 80;
-        }
-        return isForwaredSSL(request) ? 80 : 443;
+        return request.isSecure() || isForwaredSSL(request) ? 443 : 80;
     }
 
     public static boolean isForwaredSSL(HttpServletRequest request) {
