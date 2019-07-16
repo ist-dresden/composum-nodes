@@ -56,7 +56,7 @@
         "jslibs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.css",
         "jslibs/bootstrap-slider/10.6.1/css/bootstrap-slider.css",
         "jslibs/bootstrap-colorpicker/3.1.2/css/bootstrap-colorpicker.css",
-        "jslibs/bootstrap-fileinput/5.0.3/css/fileinput.css",
+        "jslibs/bootstrap-fileinput/4.3.6/css/fileinput.css",
         "jslibs/split-pane/1.0.0/split-pane.css",
         "jslibs/trumbowyg/2.3.0/ui/trumbowyg.css",
         "category:composum.components.widgets",
@@ -94,7 +94,7 @@
           "jslibs/typeahead/3.1.0/bootstrap3-typeahead.js",
           "jslibs/bootstrap-slider/10.6.1/bootstrap-slider.js",
           "jslibs/bootstrap-colorpicker/3.1.2/js/bootstrap-colorpicker.js",
-          "jslibs/bootstrap-fileinput/5.0.3/js/fileinput.js",
+          "jslibs/bootstrap-fileinput/4.3.6/js/fileinput.js",
           "jslibs/split-pane/1.0.0/split-pane.js",
           "jslibs/jstree/3.3.8/jstree.js",
           "jslibs/trumbowyg/2.3.0/trumbowyg.js"

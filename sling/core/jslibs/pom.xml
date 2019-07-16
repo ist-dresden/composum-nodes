@@ -44,6 +44,7 @@
                             root/libs/jslibs/bootstrap/3.4.1;path:=/libs/jslibs/bootstrap/3.4.1;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/bootstrap-colorpicker/3.1.2;path:=/libs/jslibs/bootstrap-colorpicker/3.1.2;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/bootstrap-datetimepicker/4.17.47;path:=/libs/jslibs/bootstrap-datetimepicker/4.17.47;overwrite:=true;ignoreImportProviders:="json,xml",
+                            root/libs/jslibs/bootstrap-fileinput/4.3.6;path:=/libs/jslibs/bootstrap-fileinput/4.3.6;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/bootstrap-fileinput/5.0.3;path:=/libs/jslibs/bootstrap-fileinput/5.0.3;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/bootstrap-slider/10.6.1;path:=/libs/jslibs/bootstrap-slider/10.6.1;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/bootstrap-table/1.7.0;path:=/libs/jslibs/bootstrap-table/1.7.0;overwrite:=true;ignoreImportProviders:="json,xml",

@@ -44,7 +44,7 @@
           "jslibs/typeahead/(3.*:3.1.0)/bootstrap3-typeahead.js",
           "jslibs/bootstrap-slider/(9.*|10.*:10.6.1)/bootstrap-slider.js",
           "jslibs/bootstrap-colorpicker/([2-3].*:3.1.2)/js/bootstrap-colorpicker.js",
-          "jslibs/bootstrap-fileinput/([4-5].*:5.0.3)/js/fileinput.js"
+          "jslibs/bootstrap-fileinput/([4-5].*:4.3.6)/js/fileinput.js"
         ]
       }
     }
@@ -109,7 +109,7 @@
         "jslibs/bootstrap-datetimepicker/(4.*:4.17.47)/css/bootstrap-datetimepicker.css",
         "jslibs/bootstrap-slider/(9.*|10.*:10.6.1)/css/bootstrap-slider.css",
         "jslibs/bootstrap-colorpicker/([2-3].*:3.1.2)/css/bootstrap-colorpicker.css",
-        "jslibs/bootstrap-fileinput/([4-5].*:5.0.3)/css/fileinput.css",
+        "jslibs/bootstrap-fileinput/([4-5].*:4.3.6)/css/fileinput.css",
         "jslibs/trumbowyg/(2.*:2.3.0)/ui/trumbowyg.css"
       ],
       "embed": [
@@ -131,7 +131,7 @@
         "jslibs/typeahead/(3.*:3.1.0)/bootstrap3-typeahead.js",
         "jslibs/bootstrap-slider/(9.*|10.*:10.6.1)/bootstrap-slider.js",
         "jslibs/bootstrap-colorpicker/([2-3].*:3.1.2)/js/bootstrap-colorpicker.js",
-        "jslibs/bootstrap-fileinput/([4-5].*:5.0.3)/js/fileinput.js",
+        "jslibs/bootstrap-fileinput/([4-5].*:4.3.6)/js/fileinput.js",
         "jslibs/ace/1.4.4/ace.js",
         "jslibs/trumbowyg/(2.*:2.3.0)/trumbowyg.js"
       ],
