@@ -459,7 +459,7 @@
          * this is the basic class ('superclass') of all text input field based widgets; it is also usable
          * as is for normal text input fields; it implements the general validation and reset functions
          * possible attributes:
-         * - data-rules: 'mandatory,unique'
+         * - data-rules: 'required,unique'
          * - data-pattern: a regexp pattern (javascript) as string or in pattern notation (/.../; with flags)
          */
         components.TextFieldWidget = widgets.Widget.extend({
@@ -632,7 +632,7 @@
          * this is the basic class ('superclass') of all text input field based widgets; it is also usable
          * as is for normal text input fields; it implements the general validation and reset functions
          * possible attributes:
-         * - data-rules: 'mandatory'
+         * - data-rules: 'required'
          * - data-pattern: a regexp pattern (javascript) as string or in pattern notation (/.../; with flags)
          */
         components.TextAreaWidget = widgets.Widget.extend({

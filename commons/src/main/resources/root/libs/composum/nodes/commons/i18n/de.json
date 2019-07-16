@@ -214,6 +214,31 @@
   },
   "message": {
     "jcr:primaryType": "sling:Folder",
+    "required": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "value is required",
+      "sling:message": "der Wert wird benötigt"
+    },
+    "pattern-match": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "value doesn't match pattern",
+      "sling:message": "der Wert entspricht nicht dem Muster"
+    },
+    "validation-error": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Validation error",
+      "sling:message": "Validierungsfehler"
+    },
+    "load-text-error": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Error on loading text",
+      "sling:message": "Fehler beim Laden von Text"
+    },
+    "update-text-error": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Error on updating text",
+      "sling:message": "Fehler beim Ändern von Text"
+    },
     "item-exists": {
       "jcr:primaryType": "sling:MessageEntry",
       "sling:key": "An element with the same name exists already - use a different name!",

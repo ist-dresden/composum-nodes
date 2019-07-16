@@ -563,7 +563,7 @@
                         this.showResult(result);
                     }, this));
                 }, this), _.bind(function () {
-                    this.messages('warning', this.validationHints.length < 1 ? core.i18n.get('validation error') : undefined,
+                    this.messages('warning', this.validationHints.length < 1 ? core.i18n.get('Validation error') : undefined,
                         this.validationHints);
                     this.onValidationFault();
                 }, this));
