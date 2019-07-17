@@ -947,8 +947,12 @@
             },
 
             initValue: function () {
-                this.setValue(this.defValue !== undefined ? this.defValue : this.blankAllowed() ? undefined
-                    : this.minValue !== undefined ? this.minValue : this.maxValue);
+                var value = this.getValue();
+                if (value === undefined) {
+                    value = this.defValue !== undefined ? this.defValue : this.blankAllowed() ? undefined
+                        : this.minValue !== undefined ? this.minValue : this.maxValue;
+                }
+                this.setValue(value);
             },
 
             onChange: function () {
