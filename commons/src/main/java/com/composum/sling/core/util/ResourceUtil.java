@@ -273,7 +273,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
     public static Resource getOrCreateResource(ResourceResolver resolver, String path, String primaryTypes)
             throws RepositoryException {
         Resource resource = resolver.getResource(path);
-        if (resource == null) {
+        if (resource == null && (path = normalize(path)) != null) {
             int lastPathSegment = path.lastIndexOf('/');
             String parentPath = "/";
             String name = path;
