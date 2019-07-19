@@ -69,7 +69,7 @@ public class LinkTag extends UrlTag {
         super.writeAttributes(writer);
         if (StringUtils.isNotBlank(target)) {
             writer.write(" target=\"");
-            writer.write(target);
+            writer.write(CpnlElFunctions.text(target));
             writer.write("\"");
         }
     }
