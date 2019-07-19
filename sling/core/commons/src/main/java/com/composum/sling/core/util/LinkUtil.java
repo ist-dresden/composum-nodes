@@ -173,7 +173,7 @@ public class LinkUtil {
         }
 
         LOG.debug("Mapped '{}' to '{}'", url, result);
-        return result;
+        return LinkUtil.encodeUrl(result);
     }
 
     /**
