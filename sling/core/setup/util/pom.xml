@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.sling.core.setup</groupId>
         <artifactId>composum-sling-core-setup-parent</artifactId>
-        <version>1.11.0</version>
+        <version>1.11.1</version>
     </parent>
 
     <artifactId>composum-sling-core-setup-util</artifactId>
@@ -36,6 +36,10 @@
         <dependency>
             <groupId>javax.jcr</groupId>
             <artifactId>jcr</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-jcr-commons</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>

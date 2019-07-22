@@ -27,7 +27,7 @@ import java.util.regex.PatternSyntaxException;
  */
 @Component(
         label = "Composum PostServlet Blocker",
-        description = "a service that blocks the default SlingPostServlet for configurable paths",
+        description = "A service that blocks the default SlingPostServlet for configurable paths, since that sometimes creates unwanted resources when deploying and the corresponding servlet is not present.",
         metatype = true
 )
 @Service(SlingPostProcessor.class)

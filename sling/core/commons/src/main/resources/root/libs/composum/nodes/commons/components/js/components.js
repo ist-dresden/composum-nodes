@@ -459,7 +459,7 @@
          * this is the basic class ('superclass') of all text input field based widgets; it is also usable
          * as is for normal text input fields; it implements the general validation and reset functions
          * possible attributes:
-         * - data-rules: 'mandatory,unique'
+         * - data-rules: 'required,unique'
          * - data-pattern: a regexp pattern (javascript) as string or in pattern notation (/.../; with flags)
          */
         components.TextFieldWidget = widgets.Widget.extend({
@@ -632,7 +632,7 @@
          * this is the basic class ('superclass') of all text input field based widgets; it is also usable
          * as is for normal text input fields; it implements the general validation and reset functions
          * possible attributes:
-         * - data-rules: 'mandatory'
+         * - data-rules: 'required'
          * - data-pattern: a regexp pattern (javascript) as string or in pattern notation (/.../; with flags)
          */
         components.TextAreaWidget = widgets.Widget.extend({
@@ -921,6 +921,7 @@
         /**
          * the 'number-field-widget' (window.core.components.NumberFieldWidget)
          * possible attributes:
+         *   - data-options: '[min][:step[:max[:default]]]'
          */
         components.NumberFieldWidget = components.TextFieldWidget.extend({
 
@@ -932,51 +933,93 @@
                     if (values.length > 0) options.minValue = values[0];
                     if (values.length > 1) options.stepSize = values[1];
                     if (values.length > 2) options.maxValue = values[2];
+                    if (values.length > 3) options.defValue = values[3];
                 }
                 this.minValue = options.minValue ? Number(options.minValue) : undefined;
                 this.stepSize = Number(options.stepSize || 1);
                 this.maxValue = options.maxValue ? Number(options.maxValue) : undefined;
+                this.defValue = options.defValue ? Number(options.defValue) : undefined;
+                this.$('.clear').click(_.bind(this.clear, this));
                 this.$('.increment').click(_.bind(this.increment, this));
                 this.$('.decrement').click(_.bind(this.decrement, this));
+                this.initValue();
                 this.$textField.on('change.number', _.bind(this.onChange, this));
             },
 
-            setValue: function (value, triggerChange) {
-                if (value) {
-                    var val = Number(value);
-                    if (this.minValue !== undefined && val < this.minValue) {
-                        value = this.minValue;
-                    }
-                    if (this.maxValue !== undefined && val > this.maxValue) {
-                        value = this.maxValue;
-                    }
+            initValue: function () {
+                var value = this.getValue();
+                if (value === undefined) {
+                    value = this.defValue !== undefined ? this.defValue : this.blankAllowed() ? undefined
+                        : this.minValue !== undefined ? this.minValue : this.maxValue;
                 }
-                components.TextFieldWidget.prototype.setValue.apply(this, [value, triggerChange]);
+                this.setValue(value);
             },
 
             onChange: function () {
                 this.setValue(this.getValue()); // filter new value for number restrictions
             },
 
+            setValue: function (value, triggerChange) {
+                if (value !== undefined && (value = this.getNumber(value)) !== undefined) {
+                    if (this.minValue !== undefined && value < this.minValue) {
+                        value = this.minValue;
+                    }
+                    if (this.maxValue !== undefined && value > this.maxValue) {
+                        value = this.maxValue;
+                    }
+                }
+                components.TextFieldWidget.prototype.setValue.apply(this, [value !== undefined ? value
+                    : this.blankAllowed() ? undefined : this.defValue, triggerChange]);
+            },
+
+            blankAllowed: function () {
+                return this.rules === undefined || this.rules.blank || this.rules.required !== true
+            },
+
+            getNumber: function (value) {
+                if (value === undefined) {
+                    value = this.getValue();
+                }
+                if (value !== undefined) {
+                    try {
+                        value = parseInt(value);
+                    } catch (ex) {
+                    }
+                    if (isNaN(value)) {
+                        value = undefined;
+                    }
+                }
+                return value;
+            },
+
             increment: function () {
                 if (this.stepSize) {
-                    this.setValue((this.getValue() ? parseInt(this.getValue()) : this.minValue) + this.stepSize, true);
+                    var value = this.getNumber();
+                    this.setValue(value !== undefined ? (value + this.stepSize) : this.minValue, true);
                 }
             },
 
             decrement: function () {
-                if (this.stepSize && this.getValue()) {
-                    this.setValue(parseInt(this.getValue()) - this.stepSize, true);
+                if (this.stepSize) {
+                    var value = this.getNumber();
+                    this.setValue(value !== undefined ? (value - this.stepSize) : this.maxValue, true);
                 }
             },
 
+            clear: function () {
+                this.setValue(undefined, true);
+            },
+
             extValidate: function (value) {
-                var valid = true;
-                if (valid && this.minValue !== undefined) {
-                    valid = (value >= this.minValue);
-                }
-                if (valid && this.maxValue !== undefined) {
-                    valid = (value <= this.maxValue);
+                value = this.getNumber(value);
+                var valid = value !== undefined || this.blankAllowed();
+                if (valid && value !== undefined) {
+                    if (this.minValue !== undefined) {
+                        valid = value >= this.minValue;
+                    }
+                    if (valid && this.maxValue !== undefined) {
+                        valid = value <= this.maxValue;
+                    }
                 }
                 return valid;
             }

@@ -7,8 +7,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.request.RequestParameter;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ValueMap;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
@@ -21,10 +25,12 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static org.apache.sling.api.resource.ResourceUtil.isSyntheticResource;
 
 /**
  * the standardised answer object of a servlet request to fill the response output
@@ -117,6 +123,7 @@ public class Status {
     protected String title;
     protected final List<Message> messages;
     protected final Map<String, Map<String, Object>> data;
+    protected final Map<String, List<Map<String, Object>>> list;
 
     public Status(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response) {
         this(new GsonBuilder().create(), request, response);
@@ -128,6 +135,7 @@ public class Status {
         this.request = request;
         this.response = response;
         data = new HashMap<>();
+        list = new HashMap<>();
         messages = new ArrayList<>();
     }
 
@@ -140,6 +148,38 @@ public class Status {
         if (status < 200 || status >= 300) {
             success = false;
         }
+    }
+
+    public String getRequiredParameter(@Nonnull final String paramName,
+                                       @Nullable final Pattern pattern, @Nonnull final String errorMessage) {
+        final RequestParameter requestParameter = request.getRequestParameter(paramName);
+        String value = null;
+        if (requestParameter != null) {
+            value = requestParameter.getString();
+            if (pattern == null || pattern.matcher(value).matches()) {
+                return value;
+            }
+        }
+        addMessage(Level.error, errorMessage, value);
+        return null;
+    }
+
+    public List<String> getRequiredParameters(@Nonnull final String paramName,
+                                              @Nullable final Pattern pattern, @Nonnull final String errorMessage) {
+        final RequestParameter[] requestParameters = request.getRequestParameters(paramName);
+        if (requestParameters == null || requestParameters.length < 1) {
+            addMessage(Level.error, errorMessage);
+            return null;
+        }
+        List<String> values = new ArrayList<>();
+        for (RequestParameter parameter : requestParameters) {
+            String value = parameter.getString();
+            if (pattern != null && !pattern.matcher(value).matches()) {
+                addMessage(Level.error, errorMessage, value);
+            }
+            values.add(value);
+        }
+        return values;
     }
 
     public String getTitle() {
@@ -174,30 +214,27 @@ public class Status {
         addMessage(Level.info, text, args);
     }
 
+    public void info(@Nonnull final String context, @Nonnull final String label,
+                     @Nonnull final String text, Object... args) {
+        addMessage(Level.info, context, label, text, args);
+    }
+
     public void warn(@Nonnull final String text, Object... args) {
         addMessage(Level.warn, text, args);
     }
 
-    public void warn(@Nonnull final String label, @Nonnull final String text, Object... args) {
-        addMessage(Level.warn, null, label, prepare(text, args));
-    }
-
     public void warn(@Nonnull final String context, @Nonnull final String label,
                      @Nonnull final String text, Object... args) {
-        addMessage(Level.warn, context, label, text);
+        addMessage(Level.warn, context, label, text, args);
     }
 
     public void error(@Nonnull final String text, Object... args) {
-        addMessage(Level.error, text);
-    }
-
-    public void error(@Nonnull final String label, @Nonnull final String text, Object... args) {
-        addMessage(Level.error, null, label, prepare(text, args));
+        addMessage(Level.error, text, args);
     }
 
     public void error(@Nonnull final String context, @Nonnull final String label,
                       @Nonnull final String text, Object... args) {
-        addMessage(Level.error, label, context, text);
+        addMessage(Level.error, label, context, text, args);
     }
 
     /**
@@ -209,6 +246,48 @@ public class Status {
         Map<String, Object> object = new LinkedHashMap<>();
         data.put(name, object);
         return object;
+    }
+
+    /**
+     * @param name the key of the data element to insert in the status response
+     */
+    public void reference(@Nonnull final String name, Resource resource) {
+        Map<String, Object> object = data(name);
+        reference(object, resource);
+    }
+
+    /**
+     *
+     */
+    public void reference(Map<String, Object> object, Resource resource) {
+        object.put("name", resource.getName());
+        object.put("path", resource.getPath());
+        object.put("type", resource.getResourceType());
+        object.put("prim", resource.adaptTo(ValueMap.class).get(JcrConstants.JCR_PRIMARYTYPE, ""));
+        object.put("synthetic", isSyntheticResource(resource));
+    }
+
+    /**
+     * @param name the key of the data element to insert in the status response
+     * @return a new list of Map items for the data values of the added status object
+     */
+    @Nonnull
+    public List<Map<String, Object>> list(@Nonnull final String name) {
+        List<Map<String, Object>> object = new ArrayList<>();
+        list.put(name, object);
+        return object;
+    }
+
+    /**
+     * @param name the key of the data element to insert in the status response
+     */
+    public void list(@Nonnull final String name, Collection<Resource> items) {
+        List<Map<String, Object>> object = list(name);
+        for (Resource item : items) {
+            Map<String, Object> ref = new HashMap<>();
+            reference(ref, item);
+            object.add(ref);
+        }
     }
 
     /**
@@ -354,13 +433,13 @@ public class Status {
             logger.info(text, args);
         }
 
-        public void warn(@Nonnull String text, Object... args) {
-            Status.this.warn(text, args);
-            logger.warn(text, args);
+        public void info(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
+            Status.this.warn(context, label, text, args);
+            logger.info(text, args);
         }
 
-        public void warn(@Nonnull String label, @Nonnull String text, Object... args) {
-            Status.this.warn(label, text, args);
+        public void warn(@Nonnull String text, Object... args) {
+            Status.this.warn(text, args);
             logger.warn(text, args);
         }
 
@@ -374,9 +453,9 @@ public class Status {
             logger.error(text, args);
         }
 
-        public void error(@Nonnull String label, @Nonnull String text, Object... args) {
-            Status.this.error(label, text, args);
-            logger.error(text, args);
+        public void error(@Nonnull String text, @Nonnull Throwable ex) {
+            Status.this.error(text, ex.getLocalizedMessage());
+            logger.error(prepare(text, ex.getLocalizedMessage()), ex);
         }
 
         public void error(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {

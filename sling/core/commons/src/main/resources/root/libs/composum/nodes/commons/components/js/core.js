@@ -393,18 +393,29 @@
 
         /**
          * displays a short 'alert' dialog with a single message
-         * @param type the message error level (success, info, warning, danger)
+         * @param typeOrResult the message error level (success, info, warning, danger) or a request result object
          * @param title the message text to display in the heading of the dialog
          * @param message the message text to display; optional - if not present the alert will hide
          * @param result an optional result object from an Ajax call; a hint from this result is added to the text
          */
-        alert: function (type, title, message, result) {
-            type = core.getAlertType(type);
-            var dialog = core.getView('#alert-dialog', core.components.Dialog);
-            dialog.$('.modal-header h4').text(title || 'Alert');
-            dialog.show(_.bind(function () {
-                dialog.alert(type, message, result);
-            }, this));
+        alert: function (typeOrResult, title, message, result) {
+            if (_.isObject(typeOrResult)) { // assuming a status response if 'type' is an object
+                core.messages(typeOrResult.success
+                    ? (typeOrResult.warning ? 'warn' : 'info') : 'danger',
+                    typeOrResult.title, typeOrResult.messages)
+            } else if (_.isObject(result) && result.title && _.isArray(result.messages)) { // status response
+                core.alert(result)
+            } else if (_.isObject(result) && _.isObject(result.responseJSON) &&
+                result.responseJSON.title && _.isArray(result.responseJSON.messages)) { // raw xhr object with status
+                core.alert(result.responseJSON)
+            } else {
+                typeOrResult = core.getAlertType(typeOrResult);
+                var dialog = core.getView('#alert-dialog', core.components.Dialog);
+                dialog.$('.modal-header h4').text(title || 'Alert');
+                dialog.show(_.bind(function () {
+                    dialog.alert(typeOrResult, message, result);
+                }, this));
+            }
         },
 
         /**

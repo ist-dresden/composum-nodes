@@ -52,17 +52,17 @@ public class FormTag extends UrlTag {
         super.writeAttributes(writer);
         if (StringUtils.isNotBlank(charset)) {
             writer.write(" accept-charset=\"");
-            writer.write(charset);
+            writer.write(CpnlElFunctions.text(charset));
             writer.write("\"");
         }
         if (StringUtils.isNotBlank(enctype)) {
             writer.write(" enctype=\"");
-            writer.write(enctype);
+            writer.write(CpnlElFunctions.text(enctype));
             writer.write("\"");
         }
         if (StringUtils.isNotBlank(method)) {
             writer.write(" method=\"");
-            writer.write(method.toUpperCase());
+            writer.write(CpnlElFunctions.text(method.toUpperCase()));
             writer.write("\"");
         }
     }

@@ -91,7 +91,7 @@ public abstract class UrlTag extends TagBase {
         writer.write("\"");
         if (StringUtils.isNotBlank(role)) {
             writer.write(" role=\"");
-            writer.write(role);
+            writer.write(CpnlElFunctions.text(role));
             writer.write("\"");
         }
         super.writeAttributes(writer);

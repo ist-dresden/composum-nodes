@@ -187,12 +187,12 @@
                                     ('' + this.rules.pattern).replace(/^\//, '').replace(/\/$/, ''));
                             }
                         }
-                        if (this.valid && this.rules.mandatory) {
+                        if (this.valid && this.rules.required) {
                             // check for a defined and not blank value
                             valid = this.valid = (value !== undefined &&
                                 (this.rules.blank || value.trim().length > 0));
                             if (!valid) {
-                                this.alert(alertMethod, 'danger', '', core.i18n.get('value is mandatory'));
+                                this.alert(alertMethod, 'danger', '', core.i18n.get('value is required'));
                             }
                         }
                     }
@@ -237,7 +237,7 @@
                 var rules = $element.data('rules');
                 if (rules) {
                     this.rules = _.extend(this.rules || {}, {
-                        mandatory: rules.indexOf('mandatory') >= 0,
+                        required: rules.indexOf('required') >= 0 || rules.indexOf('mandatory') >= 0,
                         blank: rules.indexOf('blank') >= 0,
                         unique: rules.indexOf('unique') >= 0
                     });

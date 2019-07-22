@@ -20,15 +20,16 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.nio.file.attribute.FileTime;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -57,6 +58,8 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+
+    public static final FileTime NO_TIME = FileTime.from(0, TimeUnit.MILLISECONDS);
 
     public class Property implements Comparable<Property> {
 
@@ -164,6 +167,7 @@ public class SourceModel extends ConsoleSlingBean {
 
     protected final NodesConfiguration config;
 
+    private transient FileTime lastModified;
     private transient List<Property> propertyList;
     private transient List<Resource> subnodeList;
 
@@ -181,6 +185,15 @@ public class SourceModel extends ConsoleSlingBean {
 
     public String getPrimaryType() {
         return StringUtils.defaultString(ResourceUtil.getPrimaryType(resource));
+    }
+
+    public FileTime getLastModified() {
+        if (lastModified == null) {
+            Calendar timestamp = resource.getProperties().get(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
+            lastModified = timestamp != null ?
+                    FileTime.from(timestamp.getTimeInMillis(), TimeUnit.MILLISECONDS) : NO_TIME;
+        }
+        return lastModified == NO_TIME ? null : lastModified;
     }
 
     public List<Property> getPropertyList() {
@@ -353,8 +366,12 @@ public class SourceModel extends ConsoleSlingBean {
 
         ZipEntry entry;
         String path = resource.getPath();
+        FileTime lastModified = getLastModified();
 
         entry = new ZipEntry(getZipName(root, path + "/.content.xml"));
+        if (lastModified != null) {
+            entry.setLastModifiedTime(lastModified);
+        }
         zipStream.putNextEntry(entry);
         Writer writer = new OutputStreamWriter(zipStream, "UTF-8");
         writeFile(writer, true);
@@ -418,8 +435,8 @@ public class SourceModel extends ConsoleSlingBean {
                 i++;
             }
         }
-        writeProperty(writer, "        ", "jcr:primaryType", getPrimaryType());
-        writeProperties(writer, "        ");
+        writeProperty(writer, "          ", "jcr:primaryType", getPrimaryType());
+        writeProperties(writer, "          ");
         writer.append(">\n");
         Resource contentResource;
         if ((contentResource = resource.getChild(JcrConstants.JCR_CONTENT)) != null) {
@@ -485,7 +502,7 @@ public class SourceModel extends ConsoleSlingBean {
                 .replaceAll("\"", "&quot;");
     }
 
-    public String escapeXmlAttribute(String value) {
+    public String escapeXmlAttribute(String value) { // FIXME(hps,2019-07-11) use utilities? Should be consistent with packge manager, though.
         return value
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")

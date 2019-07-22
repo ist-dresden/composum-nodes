@@ -34,7 +34,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     protected SlingBean component;
     private transient Class<? extends SlingBean> componentType;
-    private static Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<>();
+    private static final Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<>();
 
     protected ArrayList<Map<String, Object>> replacedAttributes;
     public static final Map<String, Integer> SCOPES = new HashMap<>();
@@ -72,6 +72,8 @@ public class ComponentTag extends CpnlBodyTagSupport {
                 LOG.error("Could not access: " + this.type, ex);
             } catch (InstantiationException ex) {
                 LOG.error("Could not instantiate: " + this.type, ex);
+            } catch (IllegalArgumentException ex) {
+                LOG.error("Could not adapt to: " + this.type, ex);
             }
         }
         return EVAL_BODY_INCLUDE;
@@ -186,14 +188,18 @@ public class ComponentTag extends CpnlBodyTagSupport {
         Class<? extends SlingBean> type = getComponentType();
         if (type != null) {
             BeanFactory factoryRule = type.getAnnotation(BeanFactory.class);
+            Resource modelResource = getModelResource(context);
             if (factoryRule != null) {
                 SlingBeanFactory factory = context.getService(factoryRule.serviceClass());
                 if (factory != null) {
-                    return factory.createBean(context, getModelResource(context), type);
+                    return factory.createBean(context, modelResource, type);
                 }
             }
-            BeanContext baseContext = context.withResource(getModelResource(context));
+            BeanContext baseContext = context.withResource(modelResource);
             component = baseContext.adaptTo(type);
+            if (component == null) {
+                throw new IllegalArgumentException("Could not adapt " + modelResource + " to " + type);
+            }
             injectServices(component);
             additionalInitialization(component);
         }
