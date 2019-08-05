@@ -94,7 +94,8 @@
             retrieveInput: function () {
                 var $inputEl = [];
                 for (var i = 0; $inputEl.length === 0 && i < widgets.const.tag.input.length; i++) {
-                    $inputEl = this.$el.is(widgets.const.tag.input[i]) ? this.$el : this.$(widgets.const.tag.input[i]);
+                    $inputEl = this.$el.is(widgets.const.tag.input[i]) ? this.$el
+                        : this.$(widgets.const.tag.input[i] + ':not([type="hidden"])');
                 }
                 return $inputEl;
             },
