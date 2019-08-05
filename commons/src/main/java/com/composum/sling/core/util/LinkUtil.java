@@ -170,10 +170,11 @@ public class LinkUtil {
                     result = matcher.group(1) + selectors + matcher.group(2);
                 }
             }
+            result = LinkUtil.encodeUrl(result);
         }
 
         LOG.debug("Mapped '{}' to '{}'", url, result);
-        return LinkUtil.encodeUrl(result);
+        return result;
     }
 
     /**
