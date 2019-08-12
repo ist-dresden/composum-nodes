@@ -56,7 +56,7 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
     /** Parameter that gives the type of the output: text or dotty / gv. Default: dotty. */
     public static final String PARAM_TYPE = "type";
 
-    /** Parameter that determines wether we should insert the bundles as subgraphs in dotty. */
+    /** Parameter that determines whether we should insert the bundles as subgraphs in dotty. */
     public static final String PARAM_BUNDLE = "bundle";
 
     /** Location for the CSS. */
