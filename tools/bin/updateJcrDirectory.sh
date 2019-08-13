@@ -5,6 +5,12 @@
 
 set -e
 
+if [ -n "$2" ]; then
+  HOSTPORT=(${2//:/ })
+  CPM_HOST=${HOSTPORT[0]}
+  CPM_PORT=${HOSTPORT[1]}
+fi
+
 if [ -z "$CPM_HOST" ]; then
    CPM_HOST=localhost
 fi
