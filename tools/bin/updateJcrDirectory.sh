@@ -27,9 +27,6 @@ if [ -z "$CPM_ADMINPASSWD" ]; then
    CPM_ADMINPASSWD=admin
 fi
 
-echo Arguments "$*"
-echo Dir: $(pwd)
-
 dirname=`pwd`
 rootdir=$dirname
 path=`basename $dirname`
@@ -40,6 +37,10 @@ done
 rootdir=`dirname $rootdir`;
 # echo $rootdir $path
 cd $rootdir
+
+echo Arguments "$*"
+echo Dir: $(pwd)
+echo URL: http://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/sourceupload.zip/${path#jcr_root/}
 
 TMPFIL=`mktemp -u`.zip
 trap "{ rm -f $TMPFIL; }" EXIT
