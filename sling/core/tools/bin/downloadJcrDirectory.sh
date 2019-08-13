@@ -5,12 +5,17 @@
 
 set -e
 
-if [ -z "$CPM_HOST" ]; then
-   CPM_HOST=localhost
+if [ -n "$2" ]; then
+  HOSTPORT=(${2//:/ })
+  CPM_HOST=${HOSTPORT[0]}
+  CPM_PORT=${HOSTPORT[1]}
 fi
 
+if [ -z "$CPM_HOST" ]; then
+  CPM_HOST="localhost"
+fi
 if [ -z "$CPM_PORT" ]; then
-   CPM_PORT=9090
+  CPM_PORT="9090"
 fi
 
 if [ -z "$CPM_ADMINUSER" ]; then
@@ -23,6 +28,7 @@ fi
 
 echo Arguments "$*"
 echo Dir: $(pwd)
+echo URL: http://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/source.zip/$1
 
 if [ -z $1 ]; then
     echo NO SOURCE DIR GIVEN
