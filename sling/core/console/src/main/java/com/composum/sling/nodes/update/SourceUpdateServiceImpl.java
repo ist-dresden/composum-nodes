@@ -90,7 +90,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             Resource topnode = tmpdir.getChild(nodePath.replaceFirst("^/+", ""));
             if (topnode == null)
                 throw new IllegalArgumentException("Archive does not contain given root path " + nodePath);
-            if (!nodePath.startsWith("/content") || StringUtils.countMatches(nodePath, "/") < 3)
+            if (StringUtils.countMatches(nodePath, "/") < 3)
                 throw new IllegalArgumentException("Suspicious / short root path: " + nodePath);
             Resource resource = resolver.getResource(nodePath);
             if (resource == null)
