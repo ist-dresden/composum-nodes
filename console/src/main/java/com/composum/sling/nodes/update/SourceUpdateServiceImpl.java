@@ -209,7 +209,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
 
         if (thisNodeChanged) {
             Resource modifcandidate = resource;
-            while (modifcandidate != null && !modifcandidate.isResourceType(TYPE_LAST_MODIFIED))
+            while (modifcandidate != null && !ResourceUtil.isNodeType(modifcandidate, TYPE_LAST_MODIFIED))
                 modifcandidate = modifcandidate.getParent();
             if (modifcandidate != null) {
                 newvalues.put(PROP_LAST_MODIFIED, Calendar.getInstance());
