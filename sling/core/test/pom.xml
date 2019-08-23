@@ -8,7 +8,7 @@
 
     <groupId>com.composum.sling.core.test</groupId>
     <artifactId>composum-sling-core-test</artifactId>
-    <version>1.11.4-SNAPSHOT</version>
+    <version>1.11.4</version>
 
     <name>Composum Core Sling Testing</name>
     <description>
