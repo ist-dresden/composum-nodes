@@ -253,7 +253,7 @@
                     this.messages(status.success ? (status.warning ? 'warn' : 'info') : 'error',
                         status.title || title, status.messages);
                 } else {
-                    this.errorMessage(title ? title : "Error", core.resultMessage(xhr));
+                    this.errorMessage(title ? title : "Error", xhr);
                 }
             },
 
