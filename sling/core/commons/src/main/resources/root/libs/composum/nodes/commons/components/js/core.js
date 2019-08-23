@@ -269,10 +269,10 @@
         },
 
         resultMessage: function (result, message) {
-            var hintPattern = new RegExp('<title>(.+)</title>', 'im');
-            var hint = hintPattern.exec(result.responseText);
+            var hint = new RegExp('<title>(.+)</title>', 'im').exec(result.responseText);
+            var exception = new RegExp('<div id="Message">.*Exception: ?(.+)</div>', 'im').exec(result.responseText);
             return (message ? message : '')
-                + (hint ? ((message ? '\n\n' : '') + hint[1])
+                + (hint ? ((message ? ' - ' : '') + hint[1] + (exception ? ' (' + exception[1] + ')' : ''))
                     : ((message ? ' - ' : '') + (result.responseText ? result.responseText
                         : (result.status + ': ' + result.statusText))));
         },
