@@ -1,19 +1,15 @@
 package com.composum.sling.nodes.update;
 
+import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
-import org.apache.commons.collections.ComparatorUtils;
 import org.apache.commons.collections.IteratorUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.vault.fs.io.Importer;
 import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
 import org.apache.sling.api.resource.*;
-import org.osgi.framework.BundleContext;
-import org.osgi.service.component.annotations.Activate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,15 +18,9 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeDefinition;
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import static com.composum.sling.core.util.ResourceUtil.*;
 
@@ -43,16 +33,6 @@ import static com.composum.sling.core.util.ResourceUtil.*;
 public class SourceUpdateServiceImpl implements SourceUpdateService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceUpdateServiceImpl.class);
-
-    private SAXParserFactory saxParserFactory;
-    private TransformerFactory transformerFactory;
-
-    @Activate
-    private void activate(final BundleContext bundleContext) {
-        saxParserFactory = SAXParserFactory.newInstance();
-        saxParserFactory.setNamespaceAware(true);
-        transformerFactory = TransformerFactory.newInstance();
-    }
 
     private static final Collection<String> ignoredMetadataAttributes = new HashSet<>(Arrays.asList("jcr:uuid", "jcr:lastModified",
             "jcr:lastModifiedBy", "jcr:created", "jcr:createdBy", "jcr:isCheckedOut", "jcr:baseVersion",
@@ -68,7 +48,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
      */
     @Override
     public void updateFromZip(@Nonnull ResourceResolver resolver, @Nonnull InputStream rawZipInputStream, @Nonnull String nodePath)
-            throws IOException, RepositoryException, TransformerException {
+            throws IOException, RepositoryException {
         Session session = resolver.adaptTo(Session.class);
         Resource tmpdir = makeTempdir(resolver);
         final String tmpPath = tmpdir.getPath();
@@ -95,7 +75,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             Resource resource = resolver.getResource(nodePath);
             if (resource == null)
                 throw new IllegalArgumentException("Node does not exist, so we cannot update it: " + nodePath);
-            equalize(topnode, resource, session, resolver);
+            equalize(topnode, resource, session);
 
             LOG.info("Have changes: {}", session.hasPendingChanges());
             session.save();
@@ -107,44 +87,12 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         }
     }
 
-    protected void sortZipContents(List<Pair<String, byte[]>> imports) {
-        Collections.sort(imports, new Comparator<Pair<String, byte[]>>() {
-            // sort by length of path - thus, parent nodes come before subnodes.
-            @Override
-            public int compare(Pair<String, byte[]> o1, Pair<String, byte[]> o2) {
-                return ComparatorUtils.naturalComparator().compare(o1.getKey().length(), o2.getKey().length());
-            }
-        });
-    }
-
-    protected List<Pair<String, byte[]>> readZipContents(ZipInputStream zip) throws IOException {
-        List<Pair<String, byte[]>> imports = new ArrayList<>();
-        ZipEntry zipEntry;
-        while ((zipEntry = zip.getNextEntry()) != null) {
-            if (!zipEntry.isDirectory()) {
-                String path = zipEntry.getName();
-                if (!path.startsWith("content")) {
-                    LOG.error("Ignoring zipEntry with path not content: " + path);
-                } else if (!path.endsWith("/.content.xml")) {
-                    throw new IOException("Unknown zipEntry that's not a .content.xml: " + path);
-                } else {
-                    String entryPath = ResourceUtil.getParent(path); // remove .content.xml
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    IOUtils.copy(zip, bos);
-                    imports.add(Pair.of(entryPath, bos.toByteArray()));
-                }
-            }
-            zip.closeEntry();
-        }
-        return imports;
-    }
-
-    protected Resource makeTempdir(ResourceResolver resolver) throws PersistenceException, RepositoryException {
+    protected Resource makeTempdir(ResourceResolver resolver) throws RepositoryException {
         String path = "/var/tmp/" + UUID.randomUUID().toString();
         return ResourceUtil.getOrCreateResource(resolver, path, TYPE_SLING_FOLDER);
     }
 
-    private void equalize(@Nonnull Resource templateresource, @Nonnull Resource resource, Session session, ResourceResolver resolver)
+    private void equalize(@Nonnull Resource templateresource, @Nonnull Resource resource, Session session)
             throws PersistenceException, RepositoryException {
         boolean thisNodeChanged = false;
         ValueMap templatevalues = ResourceUtil.getValueMap(templateresource);
@@ -172,7 +120,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                 }
             }
 
-            for (String key : new HashSet<String>(newvalues.keySet())) {
+            for (String key : new HashSet<>(newvalues.keySet())) {
                 if (!ignoredMetadataAttributes.contains(key) && !templatevalues.containsKey(key)) {
                     thisNodeChanged = true;
                     newvalues.remove(key);
@@ -185,7 +133,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                     thisNodeChanged = true;
                     resource.getResourceResolver().delete(child);
                 } else {
-                    equalize(templateChild, child, session, resolver);
+                    equalize(templateChild, child, session);
                 }
             }
 
@@ -199,8 +147,9 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                 }
             }
 
-            if (node.getPrimaryNodeType().hasOrderableChildNodes())
-                ensureSameOrdering(session, templateresource, templatechildren, resource);
+            if (node.getPrimaryNodeType().hasOrderableChildNodes()) {
+                ensureSameOrdering(templatechildren, resource);
+            }
 
         } catch (PersistenceException | RepositoryException | RuntimeException e) {
             LOG.error("Error at {} : {}", resource.getPath(), e.toString());
@@ -209,15 +158,15 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
 
         if (thisNodeChanged) {
             Resource modifcandidate = resource;
-            while (modifcandidate != null && !modifcandidate.isResourceType(TYPE_LAST_MODIFIED))
+            while (modifcandidate != null && !ResourceUtil.isNodeType(modifcandidate, TYPE_LAST_MODIFIED))
                 modifcandidate = modifcandidate.getParent();
             if (modifcandidate != null) {
-                newvalues.put(PROP_LAST_MODIFIED, Calendar.getInstance());
+                ResourceHandle.use(modifcandidate).setProperty(PROP_LAST_MODIFIED, Calendar.getInstance());
             }
         }
     }
 
-    private void ensureSameOrdering(Session session, Resource templateresource, List<Resource> templatechildren, Resource resource) throws RepositoryException {
+    private void ensureSameOrdering(List<Resource> templatechildren, Resource resource) throws RepositoryException {
         Node node = Objects.requireNonNull(resource.adaptTo(Node.class));
         List<Resource> resourcechildren = IteratorUtils.toList(resource.listChildren());
         if (templatechildren.size() != resourcechildren.size())
@@ -235,19 +184,19 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
     }
 
     private void checkForSamenameSiblings(Resource templateresource, @Nonnull Resource resource) throws IllegalArgumentException {
-        for (Resource checkedResource : Arrays.asList(templateresource, resource)) {
-            Set<String> nodenames = new HashSet<>();
-            for (Resource child : templateresource.getChildren()) {
-                if (nodenames.contains(child.getName()))
-                    throw new IllegalArgumentException("Equally named children not supported yet: existing resource " + templateresource.getPath() + " has two " + child.getName());
-                nodenames.add(child.getName());
+        Set<String> nodenames = new HashSet<>();
+        for (Resource child : templateresource.getChildren()) {
+            if (nodenames.contains(child.getName())) {
+                throw new IllegalArgumentException("Equally named children not supported yet: existing resource " + templateresource.getPath() + " has two " + child.getName());
             }
-            nodenames.clear();
-            for (Resource child : resource.getChildren()) {
-                if (nodenames.contains(child.getName()))
-                    throw new IllegalArgumentException("Equally named children not supported yet: imported resource " + resource.getPath() + " has two " + child.getName());
-                nodenames.add(child.getName());
+            nodenames.add(child.getName());
+        }
+        nodenames.clear();
+        for (Resource child : resource.getChildren()) {
+            if (nodenames.contains(child.getName())) {
+                throw new IllegalArgumentException("Equally named children not supported yet: imported resource " + resource.getPath() + " has two " + child.getName());
             }
+            nodenames.add(child.getName());
         }
     }
 
