@@ -13,6 +13,7 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.osgi.PropertiesUtil;
@@ -118,13 +119,16 @@ public class CoreConfigImpl implements CoreConfiguration {
         try {
             ResourceResolver resolver = request.getResourceResolver();
 
-            if (StringUtils.isNotBlank(errorpagesPath)) {
+            RequestPathInfo pathInfo;
+            if (StringUtils.isNotBlank(errorpagesPath) &&
+                    "html".equalsIgnoreCase((pathInfo = request.getRequestPathInfo()).getExtension())) {
+
                 if (errorpagesPath.startsWith("/")) {
                     // if the configured path is an absolute path use this path only
                     errorpage = resolver.getResource(errorpagesPath + "/" + status);
 
                 } else {
-                    String path = request.getRequestPathInfo().getResourcePath();
+                    String path = pathInfo.getResourcePath();
                     Resource resource = resolver.resolve(request, path);
                     path = resource.getPath(); // switch from path info to resource
 
