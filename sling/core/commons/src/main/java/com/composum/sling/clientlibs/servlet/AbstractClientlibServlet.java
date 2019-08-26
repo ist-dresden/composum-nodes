@@ -56,7 +56,9 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
         }
 
         header = request.getHeader(HttpUtil.HEADER_CACHE_CONTROL);
-        if (StringUtils.isNotBlank(header)) refreshCache = header.contains(HttpUtil.VALUE_NO_CACHE);
+        if (StringUtils.isNotBlank(header) && configuration.getRerenderOnNocache()) {
+            refreshCache = header.contains(HttpUtil.VALUE_NO_CACHE);
+        }
 
         long ifModifiedSince = request.getDateHeader(HttpConstants.HEADER_IF_MODIFIED_SINCE);
 

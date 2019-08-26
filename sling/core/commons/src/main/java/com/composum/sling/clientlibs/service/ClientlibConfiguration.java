@@ -40,4 +40,7 @@ public interface ClientlibConfiguration {
     /** Inserts HTML comments with the client libraries that have been called up into the page */
     boolean getTagDebug();
 
+    /** Renders clientlib again if a no-cache header is received - mainly for debugging purposes. Changes in the JS / CSS files automatically lead to re-rendering the clientlib. */
+    boolean getRerenderOnNocache();
+
 }
