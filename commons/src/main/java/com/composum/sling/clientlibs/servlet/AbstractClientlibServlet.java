@@ -15,6 +15,7 @@ import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
 import org.slf4j.Logger;
 
+import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
@@ -29,8 +30,10 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
 
     private final Logger LOG = getLogger(AbstractClientlibServlet.class);
 
+    @Nonnull
     protected abstract ClientlibService getClientlibService();
 
+    @Nonnull
     protected abstract ClientlibConfiguration.Config getConfig();
 
     /**
@@ -51,7 +54,9 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
         }
 
         header = request.getHeader(HttpUtil.HEADER_CACHE_CONTROL);
-        if (StringUtils.isNotBlank(header)) refreshCache = header.contains(HttpUtil.VALUE_NO_CACHE);
+        if (StringUtils.isNotBlank(header) && getConfig().rerender_on_nocache()) {
+            refreshCache = header.contains(HttpUtil.VALUE_NO_CACHE);
+        }
 
         long ifModifiedSince = request.getDateHeader(HttpConstants.HEADER_IF_MODIFIED_SINCE);
 

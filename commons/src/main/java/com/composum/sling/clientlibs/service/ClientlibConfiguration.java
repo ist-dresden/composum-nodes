@@ -43,6 +43,12 @@ public interface ClientlibConfiguration {
         boolean debug_tag() default false;
 
         @AttributeDefinition(
+                name = "Rerender On Nocache",
+                description = "Renders clientlib again if a no-cache header is received - mainly for debugging purposes. Changes in the JS / CSS files automatically lead to re-rendering the clientlib."
+        )
+        boolean rerender_on_nocache() default false;
+
+        @AttributeDefinition(
                 name = "CSS link template",
                 description = "the HTML template for the CSS link rendering"
         )
@@ -107,6 +113,7 @@ public interface ClientlibConfiguration {
                 description = "the size (maximum) of the thread pool for clientlib processing (must be equal or greater than the minimum)"
         )
         int clientlibs_threadpool_max() default 20;
+
     }
 
     Config getConfig();
