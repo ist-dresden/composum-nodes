@@ -19,10 +19,6 @@ on your sling instance.
 See also:
 
 * [Composum Homepage](https://www.composum.com/home/nodes.html)
-* [Lightning Talk at adaptTo() 2016](https://adapt.to/content/dam/adaptto/production/presentations/2016/adaptTo2016-LightningTalk-Staging-by-Versioning-Ralf-Wunsch.pdf/_jcr_content/renditions/original./adaptTo2016-LightningTalk-Staging-by-Versioning-Ralf-Wunsch.pdf) ([_Lightning Talks_](https://adapt.to/2016/en/schedule/lightning-talks.html))
-* [Lightning Talk at adaptTo() 2015](http://adapt.to/content/dam/adaptto/production/presentations/2015/adaptTo2015-LightningTalk-Composum-Console-Ralf-Wunsch.pdf/_jcr_content/renditions/original./adaptTo2015-LightningTalk-Composum-Console-Ralf-Wunsch.pdf) ([_Lightning Talks_](https://adapt.to/2015/en/schedule/lightning-talks.html))
-
-* [Composum Pages Homepage](https://www.composum.com/home/pages.html)
 
 ### see also
 
