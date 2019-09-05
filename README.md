@@ -16,8 +16,6 @@ Usage: just open
 
 on your sling instance.
 
-See also:
-
 * [Composum Homepage](https://www.composum.com/home/nodes.html)
 
 ### see also
