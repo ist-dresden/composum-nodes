@@ -16,7 +16,7 @@ Usage: just open
 
 on your sling instance.
 
-* [Composum Homepage](https://www.composum.com/home/nodes.html)
+* [Composum Nodes Homepage](https://www.composum.com/home/nodes.html)
 
 ### see also
 
