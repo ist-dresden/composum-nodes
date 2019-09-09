@@ -120,6 +120,11 @@ public class AbstractClientlibTest {
             }
 
             @Override
+            public boolean rerender_on_nocache() {
+                return false;
+            }
+
+            @Override
             public String template_link_css() {
                 return "  <link rel=\"stylesheet\" href=\"{0}\" />";
             }
