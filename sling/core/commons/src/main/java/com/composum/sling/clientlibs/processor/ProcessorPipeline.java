@@ -40,4 +40,17 @@ public class ProcessorPipeline implements ClientlibProcessor {
         }
         return stream;
     }
+
+    @Override
+    public String toString() {
+        StringBuffer buf = new StringBuffer();
+        buf.append("ProcessorPipeline{");
+        if (processors != null) {
+            for (ClientlibProcessor processor : processors) {
+                buf.append(processor.toString());
+            }
+        }
+        buf.append("}");
+        return buf.toString();
+    }
 }

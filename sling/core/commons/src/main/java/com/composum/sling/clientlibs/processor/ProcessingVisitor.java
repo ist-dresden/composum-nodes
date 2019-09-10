@@ -58,6 +58,8 @@ public class ProcessingVisitor extends AbstractClientlibVisitor {
     public void action(ClientlibFile clientlibFile, VisitorMode mode, ClientlibResourceFolder parent)
             throws IOException {
         if (EMBEDDED != mode) return;
+        LOG.trace("Processing {} with {}", clientlibFile, processor);
+        long begin = System.currentTimeMillis();
         Resource resource = clientlibFile.handle.getResource();
         if (context.useMinifiedFiles()) {
             resource = service.getMinifiedSibling(resource);
@@ -79,6 +81,9 @@ public class ProcessingVisitor extends AbstractClientlibVisitor {
         } else {
             logNotAvailable(resource, "[content]", parent.getOptional());
         }
+        float time = 0.001f * (System.currentTimeMillis() - begin);
+        LOG.trace("Processed {} in {} s", clientlibFile, time);
+        if (time > 0.1) { LOG.info("Large processing time: {} in {} s", clientlibFile, time); }
     }
 
     protected void logNotAvailable(Resource resource, String reference, boolean optional) {
