@@ -58,7 +58,7 @@
             onShown: function () {
                 this.resetOnShown();
                 if (_.isFunction(this.initView)) {
-                    this.initView();
+                    this.initView(this);
                 }
             },
 
@@ -69,7 +69,7 @@
             hide: function () {
                 this.$el.modal('hide');
                 if (_.isFunction(this.callback)) {
-                    this.callback();
+                    this.callback(this);
                 }
                 this.reset();
             },
