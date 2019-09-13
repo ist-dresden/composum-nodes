@@ -1,15 +1,54 @@
 {
+  "jcr:primaryType": "sling:Folder",
   "sling:resourceType": "composum/nodes/commons/clientlib",
   "css": {
-    "jcr:primaryType": "nt:unstructured",
+    "jcr:primaryType": "sling:OrderedFolder",
     "embed": [
       "jslibs/highlight/9.15.6/styles/tomorrow.css"
     ]
   },
   "js": {
-    "jcr:primaryType": "nt:unstructured",
+    "jcr:primaryType": "sling:OrderedFolder",
     "embed": [
       "jslibs/highlight/9.15.6/highlight.min.js"
     ]
+  },
+  "default": {
+    "jcr:primaryType": "sling:Folder",
+    "sling:resourceType": "composum/nodes/commons/clientlib",
+    "category": [
+      "code.highlight.default"
+    ],
+    "css": {
+      "jcr:primaryType": "sling:OrderedFolder",
+      "embed": [
+        "jslibs/highlight/9.15.6/styles/googlecode.css"
+      ]
+    },
+    "js": {
+      "jcr:primaryType": "sling:OrderedFolder",
+      "embed": [
+        "jslibs/highlight/9.15.6/highlight.min.js"
+      ]
+    }
+  },
+  "dark": {
+    "jcr:primaryType": "sling:Folder",
+    "sling:resourceType": "composum/nodes/commons/clientlib",
+    "category": [
+      "code.highlight.dark"
+    ],
+    "css": {
+      "jcr:primaryType": "sling:OrderedFolder",
+      "embed": [
+        "jslibs/highlight/9.15.6/styles/railscasts.css"
+      ]
+    },
+    "js": {
+      "jcr:primaryType": "sling:OrderedFolder",
+      "embed": [
+        "jslibs/highlight/9.15.6/highlight.min.js"
+      ]
+    }
   }
 }

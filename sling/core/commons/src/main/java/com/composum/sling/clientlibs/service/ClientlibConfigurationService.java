@@ -39,6 +39,15 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
     )
     protected boolean debug;
 
+    public static final String RERENDER_ON_NOCACHE = "rerender.on.nocache";
+    @Property(
+            name = RERENDER_ON_NOCACHE,
+            label = "Rerender On Nocache",
+            description = "Renders clientlib again if a no-cache header is received - mainly for debugging purposes. Changes in the JS / CSS files automatically lead to re-rendering the clientlib.",
+            boolValue = false
+    )
+    protected boolean rerenderOnNocache;
+
     public static final String CSS_MINIMIZE = "css.minimize";
     @Property(
             name = CSS_MINIMIZE,
@@ -166,68 +175,87 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
 
     // CSS configuration
 
+    @Override
     public boolean getCssMinimize() {
         return cssMinimize;
     }
 
+    @Override
     public int getCssLineBreak() {
         return cssLineBreak;
     }
 
+    @Override
     public String getCssTemplate() {
         return cssTemplate;
     }
 
     // JS configuration
 
+    @Override
     public String getJavascriptTemplate() {
         return jsTemplate;
     }
 
     // Link configuration
 
+    @Override
     public String getLinkTemplate() {
         return linkTemplate;
     }
 
     // general configuration
 
+    @Override
     public boolean getDebug() {
         return debug;
     }
 
+    @Override
     public boolean getMapClientlibURLs() {
         return mapClientlibURLs;
     }
 
+    @Override
     public boolean getUseMinifiedFiles() {
         return useMinifiedFiles;
     }
 
+    @Override
     public boolean getGzipEnabled() {
         return gzipEnabled;
     }
 
+    @Override
     public String getCacheRoot() {
         return cacheRoot;
     }
 
+    @Override
     public int getThreadPoolMin() {
         return threadPoolMin;
     }
 
+    @Override
     public int getThreadPoolMax() {
         return threadPoolMax;
     }
 
     /** General - Resolver cachetime : the time (in seconds) the clientlib resolver caches the locations of all client libraries for a category. <=0 means no caching. */
+    @Override
     public int getResolverCachetime() {
         return resolverCachetime;
     }
 
     /** Inserts HTML comments with the client libraries that have been called up into the page */
+    @Override
     public boolean getTagDebug() {
         return tagdebug;
+    }
+
+    @Override
+    public boolean getRerenderOnNocache() {
+        return rerenderOnNocache;
     }
 
     @Modified
@@ -253,5 +281,6 @@ public class ClientlibConfigurationService implements ClientlibConfiguration {
         if (threadPoolMin < DEFAULT_THREAD_POOL_MIN) threadPoolMin = DEFAULT_THREAD_POOL_MIN;
         if (threadPoolMax < threadPoolMin) threadPoolMax = threadPoolMin;
         resolverCachetime = PropertiesUtil.toInteger(properties.get(RESOLVER_CACHETIME), DEFAULT_RESOLVER_CACHETIME);
+        rerenderOnNocache = PropertiesUtil.toBoolean(properties.get(RERENDER_ON_NOCACHE), false);
     }
 }

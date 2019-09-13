@@ -71,7 +71,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/** The servlet to provide download and upload of content packages and package definitions. */
+/**
+ * The servlet to provide download and upload of content packages and package definitions.
+ */
 @SlingServlet(
         paths = "/bin/cpm/package",
         methods = {"GET", "POST", "PUT", "DELETE"},
@@ -117,7 +119,8 @@ public class PackageServlet extends AbstractServiceServlet {
 
     public enum Operation {
         create, update, delete, download, upload, install, uninstall, deploy, service, list, tree, view, query,
-        coverage, filterList, filterChange, filterAdd, filterRemove, filterMoveUp, filterMoveDown
+        coverage, filterList, filterChange, filterAdd, filterRemove, filterMoveUp, filterMoveDown,
+        cleanup
     }
 
     protected PackageOperationSet operations = new PackageOperationSet();
@@ -139,7 +142,9 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
 
-    /** setup of the servlet operation set for this servlet instance */
+    /**
+     * setup of the servlet operation set for this servlet instance
+     */
     @Override
     public void init() throws ServletException {
         super.init();
@@ -159,6 +164,9 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.download, new DownloadOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.html,
                 Operation.download, new DownloadOperation());
+
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.cleanup, new CleanupOperation());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
@@ -517,6 +525,41 @@ public class PackageServlet extends AbstractServiceServlet {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST,
                         "no package file accessible");
             }
+        }
+    }
+
+    /**
+     * an 'emergency' operation to remove blocking jobs
+     */
+    protected class CleanupOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+
+            LOG.warn("package service cleanup...");
+            JsonWriter writer = new JsonWriter(response.getWriter());
+            writer.beginObject();
+
+            writer.name("removedJobs").beginArray();
+            for (Job job : jobManager.findJobs(JobManager.QueryType.ALL, PackageJobExecutor.TOPIC, 0)) {
+                String created = new SimpleDateFormat(DATE_FORMAT).format(job.getCreated().getTime());
+                LOG.warn("package service cleanup: remove job: {}, {}, {}, '{}', {}, {}", new Object[]{
+                        job.getId(), job.getTopic(), created, job.getResultMessage(), job.getRetryCount(), job.getQueueName()});
+                writer.beginObject();
+                writer.name("id").value(job.getId());
+                writer.name("topic").value(job.getTopic());
+                writer.name("created").value(created);
+                writer.name("result").value(job.getResultMessage());
+                writer.name("retryCount").value(job.getRetryCount());
+                writer.name("queue").value(job.getQueueName());
+                writer.endObject();
+                jobManager.removeJobById(job.getId());
+            }
+            writer.endArray();
+
+            LOG.warn("package service cleanup ends.");
         }
     }
 

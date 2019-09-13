@@ -9,3 +9,4 @@
 <sling:call script="jcrpckg/options/change-options.jsp"/>
 <sling:call script="jcrpckg/options/change-relations.jsp"/>
 <sling:include resourceType="/libs/composum/nodes/console/dialogs" replaceSelectors="minimal"/>
+<sling:call script="/libs/composum/nodes/console/dialogs/purge-audit.jsp"/>

@@ -459,3 +459,15 @@ fieldset {
 #alert-dialog .modal-dialog .modal-body .messages .panel {
     margin-bottom: 0;
 }
+
+/**
+ * dialog layers
+ */
+
+#alert-dialog.modal {
+    z-index: 4990;
+}
+
+#path-select-dialog.modal {
+    z-index: 4590;
+}

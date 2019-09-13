@@ -4,7 +4,6 @@ import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.JobControlServlet;
 import com.composum.sling.core.servlet.SystemServlet;
 import com.composum.sling.core.servlet.TranslationServlet;
-import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -14,10 +13,13 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.osgi.service.component.ComponentContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -38,6 +40,8 @@ import java.util.Map;
 )
 @Service
 public class CoreConfigImpl implements CoreConfiguration {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CoreConfigImpl.class);
 
     public static final int DEFAULT_FORWARDED_SSL_PORT = 80; // cerrently delivered by the Felix HTTP module
     @Property(
@@ -111,44 +115,50 @@ public class CoreConfigImpl implements CoreConfiguration {
     @Override
     public Resource getErrorpage(SlingHttpServletRequest request, int status) {
         Resource errorpage = null;
-        ResourceResolver resolver = request.getResourceResolver();
 
-        if (StringUtils.isNotBlank(errorpagesPath)) {
-            if (errorpagesPath.startsWith("/")) {
-                // if the configured path is an absolute path use this path only
-                errorpage = resolver.getResource(errorpagesPath + "/" + status);
+        try {
+            ResourceResolver resolver = request.getResourceResolver();
 
-            } else {
-                String path = request.getRequestPathInfo().getResourcePath();
-                Resource resource = resolver.resolve(request, path);
+            RequestPathInfo pathInfo;
+            if (StringUtils.isNotBlank(errorpagesPath) &&
+                    "html".equalsIgnoreCase((pathInfo = request.getRequestPathInfo()).getExtension())) {
 
-                // skip non existing resource paths in the requested path
-                while (ResourceUtil.isNonExistingResource(resource)) {
-                    int lastSlash = path.lastIndexOf('/');
-                    if (lastSlash > 0) {
+                if (errorpagesPath.startsWith("/")) {
+                    // if the configured path is an absolute path use this path only
+                    errorpage = resolver.getResource(errorpagesPath + "/" + status);
+
+                } else {
+                    String path = pathInfo.getResourcePath();
+                    Resource resource = resolver.resolve(request, path);
+                    path = resource.getPath(); // switch from path info to resource
+
+                    // skip non existing resource paths in the requested path
+                    int lastSlash;
+                    while ((resource = resolver.getResource(path)) == null
+                            && (lastSlash = path.lastIndexOf('/')) > 2) {
                         path = path.substring(0, lastSlash);
-                    } else {
-                        path = "/";
                     }
-                    resource = resolver.resolve(request, path);
-                }
 
-                // scan upwards for an appropriate error page
-                while (errorpage == null && resource != null) {
-                    path = resource.getPath();
-                    if ("/".equals(path)) {
-                        path = "";
-                    }
-                    errorpage = resolver.getResource(path + "/" + errorpagesPath + "/" + status);
-                    if (errorpage == null) {
-                        resource = resource.getParent();
+                    // scan upwards for an appropriate error page
+                    while (errorpage == null && resource != null) {
+                        path = resource.getPath();
+                        if ("/".equals(path)) {
+                            break;
+                        }
+                        errorpage = resolver.getResource(path + "/" + errorpagesPath + "/" + status);
+                        if (errorpage == null) {
+                            resource = resource.getParent();
+                        }
                     }
                 }
             }
-        }
-        if (errorpage == null && StringUtils.isNotBlank(defaultErrorpages)) {
-            // use the default page if no custom error page found
-            errorpage = resolver.getResource(defaultErrorpages + "/" + status);
+            if (errorpage == null && StringUtils.isNotBlank(defaultErrorpages)) {
+                // use the default page if no custom error page found
+                errorpage = resolver.getResource(defaultErrorpages + "/" + status);
+            }
+
+        } catch (Throwable ex) {
+            LOG.error(ex.getMessage(), ex);
         }
         return errorpage;
     }
@@ -161,8 +171,10 @@ public class CoreConfigImpl implements CoreConfiguration {
         if (errorpage != null) {
             request.setAttribute(ERRORPAGE_STATUS, status); // hint for the custom page
             RequestDispatcher dispatcher = request.getRequestDispatcher(errorpage);
-            dispatcher.forward(request, response);
-            return true;
+            if (dispatcher != null) {
+                dispatcher.forward(request, response);
+                return true;
+            }
         }
         return false;
     }

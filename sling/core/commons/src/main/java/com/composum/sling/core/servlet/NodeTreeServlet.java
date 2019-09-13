@@ -10,6 +10,7 @@ import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
@@ -30,7 +31,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component(componentAbstract = true)
 public abstract class NodeTreeServlet extends AbstractServiceServlet {
@@ -370,6 +373,21 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
 
         public Integer index() {
             return StringUtils.isNotBlank(index) ? Integer.parseInt(index) : null;
+        }
+
+        public Map<String, Object> asMap() {
+            return new HashMap<String, Object>() {{
+                put(JcrConstants.JCR_PRIMARYTYPE, type);
+                if (StringUtils.isNotBlank(mimeType)) {
+                    put(JcrConstants.JCR_MIMETYPE, new String[]{mimeType});
+                }
+                if (StringUtils.isNotBlank(resourceType)) {
+                    put(ResourceUtil.PROP_RESOURCE_TYPE, resourceType);
+                }
+                if (StringUtils.isNotBlank(title)) {
+                    put(ResourceUtil.PROP_TITLE, title);
+                }
+            }};
         }
     }
 

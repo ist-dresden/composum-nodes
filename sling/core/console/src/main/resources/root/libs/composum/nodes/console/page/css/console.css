@@ -511,6 +511,10 @@ body.top-open #split-view-vertical-split > .bottom-pane {
  * user status
  */
 
+#user-status-dialog.modal {
+    z-index: 4890;
+}
+
 #user-status-dialog .modal-dialog {
     max-width: 25em;
 }

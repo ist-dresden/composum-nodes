@@ -85,7 +85,9 @@ public class Status {
             this.text = text;
         }
 
-        /** the 'translate' constructor */
+        /**
+         * the 'translate' constructor
+         */
         public Message(Map<String, Object> data) {
             Object value;
             Object hint = data.get(HINT);
@@ -395,6 +397,15 @@ public class Status {
         for (Map.Entry<String, Map<String, Object>> entry : data.entrySet()) {
             writer.name(entry.getKey());
             gson.toJson(entry.getValue(), Map.class, writer);
+        }
+        for (Map.Entry<String, List<Map<String, Object>>> entry : list.entrySet()) {
+            writer.name(entry.getKey());
+            List<Map<String, Object>> value = entry.getValue();
+            writer.beginArray();
+            for (Map<String, Object> item : value) {
+                gson.toJson(item, Map.class, writer);
+            }
+            writer.endArray();
         }
         writer.endObject();
     }

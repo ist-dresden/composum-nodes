@@ -1110,45 +1110,49 @@ public class NodeServlet extends NodeTreeServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            Node node = resource.adaptTo(Node.class);
+            ResourceResolver resolver = resource.getResourceResolver();
 
-            if (node != null) {
+            NodeParameters params = getNodeParameters(request);
+            String name = params.name;
 
-                NodeParameters params = getNodeParameters(request);
-                String name = params.name;
+            try {
+                if (StringUtils.isBlank(params.type)) {
+                    throw new ParameterValidationException("invalid node type '" + params.type + "'");
+                }
+                if (StringUtils.isBlank(name)) {
+                    throw new ParameterValidationException("invalid node name '" + name + "'");
+                }
 
-                try {
+                ResourceHandle newResource;
 
-                    if (StringUtils.isBlank(params.type)) {
-                        throw new ParameterValidationException("invalid node type '" + params.type + "'");
-                    }
-                    if (StringUtils.isBlank(name)) {
-                        throw new ParameterValidationException("invalid node name '" + name + "'");
-                    }
+                Node node = resource.adaptTo(Node.class);
+                if (node != null) {
 
                     Node newNode = NodeFactory.SINGLETON.createNode(request, node, name, params);
                     if (newNode != null) {
-                        ResourceResolver resolver = resource.getResourceResolver();
                         Session session = node.getSession();
                         session.save();
 
-                        ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newNode.getPath()));
-                        JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                        writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY,
-                                newResource, LabelType.name, false);
+                        newResource = ResourceHandle.use(resolver.getResource(newNode.getPath()));
 
                     } else {
                         response.sendError(HttpServletResponse.SC_BAD_REQUEST,
                                 "creation failed for node '" + resource.getPath() + "/" + name + "'");
+                        return;
                     }
 
-                } catch (ParameterValidationException pvex) {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, pvex.getMessage());
+                } else {
+
+                    newResource = ResourceHandle.use(resolver.create(resource, name, params.asMap()));
+                    resolver.commit();
                 }
 
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "can't determine parent node '" + resource.getPath() + "'");
+                JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY,
+                        newResource, LabelType.name, false);
+
+            } catch (ParameterValidationException pvex) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, pvex.getMessage());
             }
         }
 

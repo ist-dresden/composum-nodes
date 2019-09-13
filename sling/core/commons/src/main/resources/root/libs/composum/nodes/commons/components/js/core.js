@@ -399,7 +399,11 @@
          * @param result an optional result object from an Ajax call; a hint from this result is added to the text
          */
         alert: function (typeOrResult, title, message, result) {
-            if (_.isObject(typeOrResult)) { // assuming a status response if 'type' is an object
+            if (_.isObject(typeOrResult) && _.isObject(typeOrResult.responseJSON) &&
+                typeOrResult.responseJSON.title && _.isArray(typeOrResult.responseJSON.messages)) {
+                // raw xhr object with status as single parameteer
+                core.alert(typeOrResult.responseJSON)
+            } else if (_.isObject(typeOrResult)) { // assuming a status response if 'type' is an object
                 core.messages(typeOrResult.success
                     ? (typeOrResult.warning ? 'warn' : 'info') : 'danger',
                     typeOrResult.title, typeOrResult.messages)
