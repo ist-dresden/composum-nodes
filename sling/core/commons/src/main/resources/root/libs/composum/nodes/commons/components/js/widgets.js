@@ -132,6 +132,13 @@
             },
 
             /**
+             * @returns the - probably prepared - value for the input validation
+             */
+            getValueForValidation: function(){
+                return this.getValue();
+            },
+
+            /**
              * #abstract
              */
             setValue: function (value) {
@@ -175,7 +182,7 @@
                 // check only if this field has a 'name' (included in a form) and is visible
                 // prevent from validation check if the 'name' is removed or the class contains 'hidden'
                 if (!this.$el.hasClass('hidden') && this.retrieveName()) {
-                    var value = this.getValue();
+                    var value = this.getValueForValidation();
                     if (this.rules) {
                         var valid;
                         if (this.valid && this.rules.pattern) {
