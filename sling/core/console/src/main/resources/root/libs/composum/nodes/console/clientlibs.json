@@ -49,7 +49,8 @@
         "fonts/awesome/4.7.0/css/font-awesome.css",
         "jslibs/bootstrap/3.4.1/css/bootstrap.css",
         "jslibs/x-editable/1.5.3/bootstrap3-editable/css/bootstrap-editable.css",
-        "jslibs/jstree/3.3.8/themes/proton/style.css"
+        "jslibs/jstree/3.3.8/themes/proton/style.css",
+        "jslibs/trumbowyg/2.3.0/ui/trumbowyg.css"
       ],
       "embed": [
         "jslibs/bootstrap-table/1.7.0/bootstrap-table.css",
@@ -58,7 +59,6 @@
         "jslibs/bootstrap-colorpicker/3.1.2/css/bootstrap-colorpicker.css",
         "jslibs/bootstrap-fileinput/4.3.6/css/fileinput.css",
         "jslibs/split-pane/1.0.0/split-pane.css",
-        "jslibs/trumbowyg/2.3.0/ui/trumbowyg.css",
         "category:composum.components.widgets",
         "composum/nodes/console/page/css/console.css"
       ]
@@ -81,7 +81,8 @@
       },
       "libs": {
         "depends": [
-          "jslibs/bootstrap/3.4.1/js/bootstrap.js"
+          "jslibs/bootstrap/3.4.1/js/bootstrap.js",
+          "jslibs/trumbowyg/2.3.0/trumbowyg.js"
         ],
         "embed": [
           "jslibs/jquery/base64/jquery.base64.js",
@@ -96,8 +97,7 @@
           "jslibs/bootstrap-colorpicker/3.1.2/js/bootstrap-colorpicker.js",
           "jslibs/bootstrap-fileinput/4.3.6/js/fileinput.js",
           "jslibs/split-pane/1.0.0/split-pane.js",
-          "jslibs/jstree/3.3.8/jstree.js",
-          "jslibs/trumbowyg/2.3.0/trumbowyg.js"
+          "jslibs/jstree/3.3.8/jstree.js"
         ]
       },
       "components": {
