@@ -26,6 +26,8 @@ public interface CoreConfiguration {
 
     String FORWARDED_SSL_PORT = "network.forward.ssl.port";
 
+    String LOGOUT_URL = "logouturl";
+
     int getForwardedSslPort();
 
     boolean isEnabled(AbstractServiceServlet servlet);
@@ -35,6 +37,13 @@ public interface CoreConfiguration {
     boolean forwardToErrorpage(SlingHttpServletRequest request,
                                SlingHttpServletResponse response, int status)
             throws IOException, ServletException;
+
+    /**
+     * The (relative) logout URL (including parameters) to use instead of the default /system/sling/logout
+     * .html?logout=true&GLO=true . (The GLO=true parameter is relevant for singlesignon logout if Keycloak
+     * authentication is installed.)
+     */
+    String getLogoutUrl();
 
     Dictionary getProperties();
 }

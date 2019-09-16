@@ -1,6 +1,7 @@
 package com.composum.sling.nodes.console;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.ResourceFilter;
@@ -159,6 +160,11 @@ public class Consoles extends ConsolePage {
     public String getCurrentUser() {
         Session session = getSession();
         return session.getUserID();
+    }
+
+    public String getLogoutUrl() {
+        CoreConfiguration service = this.context.getService(CoreConfiguration.class);
+        return service != null ? service.getLogoutUrl() : null;
     }
 
     public String getWorkspaceName() {

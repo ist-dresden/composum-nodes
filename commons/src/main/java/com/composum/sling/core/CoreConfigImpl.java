@@ -44,6 +44,8 @@ public class CoreConfigImpl implements CoreConfiguration {
     private static final Logger LOG = LoggerFactory.getLogger(CoreConfigImpl.class);
 
     public static final int DEFAULT_FORWARDED_SSL_PORT = 80; // cerrently delivered by the Felix HTTP module
+    public static final String DEFAULT_LOGOUTURL = "/system/sling/logout.html?logout=true&GLO=true";
+
     @Property(
             name = FORWARDED_SSL_PORT,
             label = "Forwarded SSL Port",
@@ -91,9 +93,18 @@ public class CoreConfigImpl implements CoreConfiguration {
     )
     private boolean translationServletEnabled;
 
+    @Property(
+            name = LOGOUT_URL,
+            label = "Logout URL",
+            description = "logout URL for the system",
+            value = DEFAULT_LOGOUTURL
+    )
+    private String logoutUrl;
+
     private Map<String, Boolean> enabledServlets;
 
 
+    @Override
     public int getForwardedSslPort() {
         return forwardedSslPort;
     }
@@ -179,8 +190,14 @@ public class CoreConfigImpl implements CoreConfiguration {
         return false;
     }
 
+    @Override
     public Dictionary getProperties() {
         return properties;
+    }
+
+    @Override
+    public String getLogoutUrl() {
+        return logoutUrl;
     }
 
     protected Dictionary properties;
@@ -199,6 +216,8 @@ public class CoreConfigImpl implements CoreConfiguration {
                 (Boolean) properties.get(TRANSLATION_SERVLET_ENABLED));
         enabledServlets.put(JobControlServlet.class.getSimpleName(), jobcontrolServletEnabled =
                 (Boolean) properties.get(JOBCONTROL_SERVLET_ENABLED));
+        logoutUrl = StringUtils.defaultIfBlank(StringUtils.trim((String) properties.get(LOGOUT_URL)),
+                DEFAULT_LOGOUTURL);
     }
 
     @Deactivate
