@@ -14,20 +14,6 @@ import java.util.Dictionary;
  */
 public interface CoreConfiguration {
 
-    String ERRORPAGE_STATUS = "errorpage.status";
-    String ERRORPAGES_PATH = "errorpages.path";
-    String DEFAULT_ERRORPAGES = "errorpages.default";
-
-    String TREE_INTERMEDIATE_FILTER_KEY = "tree.intermediate.filter";
-
-    String SYSTEM_SERVLET_ENABLED = "system.servlet.enabled";
-
-    String TRANSLATION_SERVLET_ENABLED = "validation.servlet.enabled";
-
-    String FORWARDED_SSL_PORT = "network.forward.ssl.port";
-
-    String LOGOUT_URL = "logouturl";
-
     int getForwardedSslPort();
 
     boolean isEnabled(AbstractServiceServlet servlet);
@@ -44,6 +30,12 @@ public interface CoreConfiguration {
      * authentication is installed.)
      */
     String getLogoutUrl();
+
+    /** The URL to redirect to after the user was logged out successfully. */
+    String getLoggedoutUrl();
+
+    /** The URL to redirect to when the user should login. */
+    String getLoginUrl();
 
     Dictionary getProperties();
 }

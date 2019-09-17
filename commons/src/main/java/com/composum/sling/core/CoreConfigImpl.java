@@ -41,10 +41,28 @@ import java.util.Map;
 @Service
 public class CoreConfigImpl implements CoreConfiguration {
 
+    protected static final String ERRORPAGE_STATUS = "errorpage.status";
+    protected static final String ERRORPAGES_PATH = "errorpages.path";
+    protected static final String DEFAULT_ERRORPAGES = "errorpages.default";
+
+    protected static final String TREE_INTERMEDIATE_FILTER_KEY = "tree.intermediate.filter";
+
+    protected static final String SYSTEM_SERVLET_ENABLED = "system.servlet.enabled";
+
+    protected static final String TRANSLATION_SERVLET_ENABLED = "validation.servlet.enabled";
+
+    protected static final String FORWARDED_SSL_PORT = "network.forward.ssl.port";
+
+    protected static final String LOGOUT_URL = "logouturl";
+    protected static final String DEFAULT_LOGOUTURL = "/system/sling/logout.html?logout=true&GLO=true";
+    protected static final String LOGGEDOUT_URL = "loggedouturl";
+    protected static final String DEFAULT_LOGGEDOUTURL = "/system/sling/form/login.html";
+    protected static final String LOGIN_URL = "loginurl";
+    protected static final String DEFAULT_LOGINURL = "/system/sling/form/login.html";
+
     private static final Logger LOG = LoggerFactory.getLogger(CoreConfigImpl.class);
 
     public static final int DEFAULT_FORWARDED_SSL_PORT = 80; // cerrently delivered by the Felix HTTP module
-    public static final String DEFAULT_LOGOUTURL = "/system/sling/logout.html?logout=true&GLO=true";
 
     @Property(
             name = FORWARDED_SSL_PORT,
@@ -100,6 +118,23 @@ public class CoreConfigImpl implements CoreConfiguration {
             value = DEFAULT_LOGOUTURL
     )
     private String logoutUrl;
+
+    @Property(
+            name = LOGGEDOUT_URL,
+            label = "Logged out URL",
+            description = "URL for the system to redirect to when the user was logged out",
+            value = DEFAULT_LOGGEDOUTURL
+    )
+    private String loggedoutUrl;
+
+    @Property(
+            name = LOGIN_URL,
+            label = "Login URL",
+            description = "URL for the system to redirect / link to when the user should be logged in",
+            value = DEFAULT_LOGINURL
+    )
+    private String loginUrl;
+
 
     private Map<String, Boolean> enabledServlets;
 
@@ -200,6 +235,16 @@ public class CoreConfigImpl implements CoreConfiguration {
         return logoutUrl;
     }
 
+    @Override
+    public String getLoggedoutUrl() {
+        return loggedoutUrl;
+    }
+
+    @Override
+    public String getLoginUrl() {
+        return loginUrl;
+    }
+
     protected Dictionary properties;
 
     @Activate
@@ -218,6 +263,10 @@ public class CoreConfigImpl implements CoreConfiguration {
                 (Boolean) properties.get(JOBCONTROL_SERVLET_ENABLED));
         logoutUrl = StringUtils.defaultIfBlank(StringUtils.trim((String) properties.get(LOGOUT_URL)),
                 DEFAULT_LOGOUTURL);
+        loggedoutUrl = StringUtils.defaultIfBlank(StringUtils.trim((String) properties.get(LOGGEDOUT_URL)),
+                DEFAULT_LOGGEDOUTURL);
+        loginUrl = StringUtils.defaultIfBlank(StringUtils.trim((String) properties.get(LOGIN_URL)),
+                DEFAULT_LOGINURL);
     }
 
     @Deactivate
