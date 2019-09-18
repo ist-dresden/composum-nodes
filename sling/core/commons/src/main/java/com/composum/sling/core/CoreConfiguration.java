@@ -14,6 +14,12 @@ import java.util.Dictionary;
  */
 public interface CoreConfiguration {
 
+    /**
+     * Parameter that is appended to {@link #getLoginUrl()} to save the current rendered resource, to allow
+     * re-rendering it after the user logged in.
+     */
+    public static final String RESOURCE_PARAMETER = "resource";
+
     int getForwardedSslPort();
 
     boolean isEnabled(AbstractServiceServlet servlet);
@@ -34,7 +40,10 @@ public interface CoreConfiguration {
     /** The URL to redirect to after the user was logged out successfully. */
     String getLoggedoutUrl();
 
-    /** The URL to redirect to when the user should login. */
+    /**
+     * The URL to redirect to when the user should login. A parameter {@link #RESOURCE_PARAMETER} can be appended
+     * if after user loging in the user should redirect to rendering that resource.
+     */
     String getLoginUrl();
 
     Dictionary getProperties();
