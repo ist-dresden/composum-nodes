@@ -107,9 +107,14 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
         if (isConsole && !request.getRequestURI().endsWith(".txt") && !request.getRequestURI().endsWith(".dot") && !request.getRequestURI().endsWith(".gv")) {
             response.setContentType("text/html");
             writeForm(writer, request, classRegex);
+            writer.println("<h3 id='thegraph'>Graph</h3>");
             if (isGraph) {
-                writer.println("You can scroll around the graph by dragging it with the mouse. Within the graph, the scroll wheel works as zoom in / zoom out. <button onclick='maximizeGraph();'>Maximize graph</button>");
-                writer.println("<div id=\"graph\" style=\"text-align: center;\"></div>\n");
+                writer.println("<p>You can scroll around the graph by dragging it with the mouse. Within the graph, " +
+                        "the scroll wheel works as zoom in / zoom out. <button onclick='maximizeGraph();'>Maximize " +
+                        "graph</button>\n" +
+                        "<a href=\"#asimage\">Go to saveable SVG</a>" +
+                        "<p>&nbsp;");
+                writer.println("<div id=\"graph\" style=\"text-align: center;\"><div id=\"wait\" style=\"padding: 10px;\">(Please wait for rendering process.)</div></div>\n");
             }
             writer.println("<pre id=\"digraph\">");
         } else if (isText) {
@@ -117,8 +122,7 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
         } else {
             response.setContentType("text/vnd.graphviz");
         }
-        if (!isText)
-            writer.println(" digraph servicestructure {");
+        if (!isText) { writer.println(" digraph servicestructure {"); }
 
         Map<Class<?>, ServiceReference<?>> classes = new HashMap<>();
 
@@ -132,17 +136,17 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
                 try {
                     service = bundleContext.getService(ref);
                     if (service == null) {
-                        if (isText) writer.println(ref + " : no service");
+                        if (isText) { writer.println(ref + " : no service"); }
                         continue;
                     }
                     clazz = service.getClass();
                 } finally {
                     if (service != null) {
+                        service = null;
                         bundleContext.ungetService(ref);
                     }
                 }
-                if (!classPattern.matcher(clazz.getName()).find())
-                    continue;
+                if (!classPattern.matcher(clazz.getName()).find()) { continue; }
                 if (isText) {
                     writer.println(ref.toString());
                     writer.println("class: " + clazz.getName());
@@ -166,19 +170,49 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
         } catch (Exception e) {
             throw new ServletException(e);
         }
-        if (!isText) writer.println("}");
+        if (!isText) { writer.println("}"); }
         if (isConsole) {
             writer.println("</pre>");
-            if (isGraph) writer.println("<script src=\"https://d3js.org/d3.v4.min.js\"></script>\n" +
-                    "<script src=\"https://unpkg.com/viz.js@1.8.0/viz.js\" type=\"javascript/worker\"></script>\n" +
-                    "<script src=\"https://unpkg.com/d3-graphviz@1.4.0/build/d3-graphviz.min.js\"></script>\n" +
-                    "<script>\n" +
-                    "    dot = document.getElementById('digraph').innerText;\n" +
-                    "    d3.select(\"#graph\").graphviz().renderDot(dot);\n" +
-                    "    function maximizeGraph() {" +
-                    "        $('svg').css('width', window.innerWidth).css('height',window.innerHeight).css('position','fixed').css('left',0).css('top',0)" +
-                    "    }\n" +
-                    "</script>");
+            if (isGraph) {
+                writer.println("<h3 id=\"asimage\">Graph as image</h3>");
+                writer.println("<p>Here's the graph as SVG image (shown here in reduced size). Open or save the image" +
+                        " using the browsers context menu.</p>");
+                writer.println("<img id=\"saveimg\" style=\"max-width:256px;max-height:256px;min-width: 32px;min-height: 32px;border: 1px solid #000;\" />");
+                writer.println("<script src=\"https://d3js.org/d3.v4.min.js\"></script>\n" +
+                        "<script src=\"https://unpkg.com/viz.js@1.8.0/viz.js\" type=\"javascript/worker\"></script>\n" +
+                        "<script src=\"https://unpkg.com/d3-graphviz@1.4.0/build/d3-graphviz.min.js\"></script>\n" +
+                        "<script>\n" +
+                        "function svg2img() {\n" +
+                        "    var svg = document.querySelector('svg');\n" +
+                        "    var xml = new XMLSerializer().serializeToString(svg);\n" +
+                        "    var svg64 = btoa(xml);\n" +
+                        "    var b64start = 'data:image/svg+xml;base64,';\n" +
+                        "    var image64 = b64start + svg64;\n" +
+                        "    return image64;\n" +
+                        "};\n" +
+                        "\n" +
+                        "\n" +
+                        "function createSvg() {\n" +
+                        "    try {\n" +
+                        "        document.getElementById('wait').style.display='none';\n" +
+                        "        img = document.getElementById('saveimg');\n" +
+                        "        img.src = svg2img();\n" +
+                        "    }\n" +
+                        "    catch (e) {\n" +
+                        "        if (console) console.log(e);\n" +
+                        "    }\n" +
+                        "}\n" +
+                        "\n" +
+                        "dot = document.getElementById('digraph').innerText;\n" +
+                        "graphviz = d3.select(\"#graph\").graphviz();\n" +
+                        "graphviz.on('end',createSvg);\n" +
+                        "graphviz.renderDot(dot);\n" +
+                        "\n" +
+                        "function maximizeGraph() {\n" +
+                        "    $('svg').css('width', window.innerWidth).css('height', window.innerHeight).css('position', 'fixed').css('left', 0).css('top', 0)\n" +
+                        "}\n" +
+                        "</script>");
+            }
             writer.println("</html>");
         }
     }
@@ -214,8 +248,7 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
             for (Map.Entry<String, Class<?>> classEntry : classIdx.entrySet()) {
                 Class<?> clazz = classEntry.getValue();
                 String bundlename = classes.get(clazz).getBundle().getSymbolicName();
-                if (!bundle.equals(bundlename))
-                    continue;
+                if (!bundle.equals(bundlename)) { continue; }
 
                 Class<?> serviceOrSuper = clazz;
                 List<Class> referredClasses = new ArrayList<>();
@@ -251,7 +284,9 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
     }
 
     protected static void collectReferredClasses(Type type, List<Class> referredClasses, Set<Type> visited) {
-        if (visited.contains(type) || type == null) return; // infinite recursion brake
+        if (visited.contains(type) || type == null) {
+            return; // infinite recursion brake
+        }
         visited.add(type);
 
         if (type instanceof Class) {
