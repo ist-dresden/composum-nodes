@@ -44,82 +44,89 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
                                     ClientlibRef clientlibRef, String requestedHash, boolean minified)
             throws RepositoryException, IOException {
 
-        String encoding = null;
-        boolean refreshCache = false;
-        String header;
-
-        header = request.getHeader(HttpUtil.HEADER_ACCEPT_ENCODING);
-        if (StringUtils.isNotBlank(header) && header.contains("gzip")) {
-            encoding = ClientlibService.ENCODING_GZIP;
-        }
-
-        header = request.getHeader(HttpUtil.HEADER_CACHE_CONTROL);
-        if (StringUtils.isNotBlank(header) && getConfig().rerender_on_nocache()) {
-            refreshCache = header.contains(HttpUtil.VALUE_NO_CACHE);
-        }
-
-        long ifModifiedSince = request.getDateHeader(HttpConstants.HEADER_IF_MODIFIED_SINCE);
-
-        ClientlibService.ClientlibInfo hints;
         try {
-            hints = getClientlibService().prepareContent(request, clientlibRef, minified, encoding, refreshCache,
-                    requestedHash, ifModifiedSince);
-        } catch (PersistenceException ex) {
-            LOG.warn("2nd try for preparation of '" + clientlibRef + "' after exception: " + ex);
-            // try it once more on concurrency problems (with a fresh resolver)
-            hints = getClientlibService().prepareContent(request, clientlibRef, minified, encoding, refreshCache,
-                    requestedHash, ifModifiedSince);
-        }
 
-        if (null == hints) {
-            LOG.warn("Not found: " + request.getRequestURI());
-            throw new FileNotFoundException(request.getRequestURI());
-        }
+            String encoding = null;
+            boolean refreshCache = false;
+            String header;
 
-        if (hints.hash.equals(requestedHash)) {
-            boolean notModified = false;
-            if (hints.mimeType != null) {
-                response.setContentType(hints.mimeType + "; charset=" + ClientlibProcessor.DEFAULT_CHARSET);
+            header = request.getHeader(HttpUtil.HEADER_ACCEPT_ENCODING);
+            if (StringUtils.isNotBlank(header) && header.contains("gzip")) {
+                encoding = ClientlibService.ENCODING_GZIP;
             }
-            if (hints.encoding != null) {
-                response.setHeader(HttpUtil.HEADER_CONTENT_ENCODING, hints.encoding);
-                response.setHeader(HttpUtil.HEADER_VARY, HttpUtil.HEADER_ACCEPT_ENCODING);
+
+            header = request.getHeader(HttpUtil.HEADER_CACHE_CONTROL);
+            if (StringUtils.isNotBlank(header) && getConfig().rerender_on_nocache()) {
+                refreshCache = header.contains(HttpUtil.VALUE_NO_CACHE);
             }
-            if (hints.size != null) {
-                response.setHeader(HttpUtil.HEADER_CONTENT_LENGTH, hints.size.toString());
+
+            long ifModifiedSince = request.getDateHeader(HttpConstants.HEADER_IF_MODIFIED_SINCE);
+
+            ClientlibService.ClientlibInfo hints;
+            try {
+                hints = getClientlibService().prepareContent(request, clientlibRef, minified, encoding, refreshCache,
+                        requestedHash, ifModifiedSince);
+            } catch (PersistenceException ex) {
+                LOG.warn("2nd try for preparation of '" + clientlibRef + "' after exception: " + ex);
+                // try it once more on concurrency problems (with a fresh resolver)
+                hints = getClientlibService().prepareContent(request, clientlibRef, minified, encoding, refreshCache,
+                        requestedHash, ifModifiedSince);
             }
-            if (hints.lastModified != null) {
-                long timeInMillis = hints.lastModified.getTimeInMillis();
-                response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, timeInMillis);
-                if (get) {
-                    if (!HttpUtil.isModifiedSince(ifModifiedSince, timeInMillis)) {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Skipping retransmission because " + HttpConstants.HEADER_IF_MODIFIED_SINCE +
-                                    "={} but modified {}", ifModifiedSince, timeInMillis);
-                        }
-                        notModified = true;
-                    } else {
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Transmitting because " + HttpConstants.HEADER_IF_MODIFIED_SINCE +
-                                    "={} but modified {}", ifModifiedSince, timeInMillis);
+
+            if (null == hints) {
+                LOG.warn("Not found: " + request.getRequestURI());
+                throw new FileNotFoundException(request.getRequestURI());
+            }
+
+            if (hints.hash.equals(requestedHash)) {
+                boolean notModified = false;
+                if (hints.mimeType != null) {
+                    response.setContentType(hints.mimeType + "; charset=" + ClientlibProcessor.DEFAULT_CHARSET);
+                }
+                if (hints.encoding != null) {
+                    response.setHeader(HttpUtil.HEADER_CONTENT_ENCODING, hints.encoding);
+                    response.setHeader(HttpUtil.HEADER_VARY, HttpUtil.HEADER_ACCEPT_ENCODING);
+                }
+                if (hints.size != null) {
+                    response.setHeader(HttpUtil.HEADER_CONTENT_LENGTH, hints.size.toString());
+                }
+                if (hints.lastModified != null) {
+                    long timeInMillis = hints.lastModified.getTimeInMillis();
+                    response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, timeInMillis);
+                    if (get) {
+                        if (!HttpUtil.isModifiedSince(ifModifiedSince, timeInMillis)) {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Skipping retransmission because " + HttpConstants.HEADER_IF_MODIFIED_SINCE +
+                                        "={} but modified {}", ifModifiedSince, timeInMillis);
+                            }
+                            notModified = true;
+                        } else {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Transmitting because " + HttpConstants.HEADER_IF_MODIFIED_SINCE +
+                                        "={} but modified {}", ifModifiedSince, timeInMillis);
+                            }
                         }
                     }
                 }
+
+                if (notModified) {
+                    response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+                } else {
+                    if (get) {
+                        getClientlibService().deliverContent(request.getResourceResolver(), clientlibRef, minified,
+                                response.getOutputStream(), encoding);
+                    }
+                }
+            } else {
+                response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+                String url = makeUrl(request, hints.link, minified);
+                response.setHeader(HttpUtil.HEADER_LOCATION, url);
+                LOG.debug("Redirecting because of hash other than {} to {}", hints.hash, url);
             }
 
-            if (notModified) {
-                response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
-            } else {
-                if (get) {
-                    getClientlibService().deliverContent(request.getResourceResolver(), clientlibRef, minified,
-                            response.getOutputStream(), encoding);
-                }
-            }
-        } else {
-            response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-            String url = makeUrl(request, hints.link, minified);
-            response.setHeader(HttpUtil.HEADER_LOCATION, url);
-            LOG.debug("Redirecting because of hash other than {} to {}", hints.hash, url);
+        } catch (FileNotFoundException e) { // thrown for unaccessible / not existent libs
+            LOG.info("Could not deliver {} : {}", request.getRequestURI(), e.toString());
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
     }
 
