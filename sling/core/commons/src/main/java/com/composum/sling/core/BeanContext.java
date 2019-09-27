@@ -12,6 +12,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScriptHelper;
+import org.apache.sling.api.wrappers.SlingHttpServletRequestWrapper;
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
@@ -600,7 +601,7 @@ public interface BeanContext extends Adaptable {
         public Servlet(ServletContext servletContext, BundleContext bundleContext,
                        SlingHttpServletRequest request, SlingHttpServletResponse response,
                        Resource resource) {
-            this (servletContext, bundleContext, request, response);
+            this(servletContext, bundleContext, request, response);
             this.resource = resource;
         }
 
@@ -724,6 +725,20 @@ public interface BeanContext extends Adaptable {
         protected final ResourceResolver resolver;
         protected final Resource resource;
 
+        class ContextRequest extends SlingHttpServletRequestWrapper {
+
+            public ContextRequest(SlingHttpServletRequest request) {
+                super(request);
+            }
+
+            @Override
+            public ResourceResolver getResourceResolver() {
+                return resolver;
+            }
+        }
+
+        private transient SlingHttpServletRequest request;
+
         public Wrapper(BeanContext beanContext) {
             this(beanContext, beanContext.getResolver());
         }
@@ -754,7 +769,13 @@ public interface BeanContext extends Adaptable {
 
         @Override
         public SlingHttpServletRequest getRequest() {
-            return beanContext.getRequest();
+            if (request == null) {
+                SlingHttpServletRequest beanRequest = beanContext.getRequest();
+                if (beanRequest != null) {
+                    request = new ContextRequest(beanRequest);
+                }
+            }
+            return request;
         }
 
         @Override
