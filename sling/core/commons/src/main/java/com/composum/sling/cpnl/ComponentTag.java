@@ -4,6 +4,7 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.SlingBean;
 import com.composum.sling.core.bean.BeanFactory;
 import com.composum.sling.core.bean.SlingBeanFactory;
+import com.composum.sling.core.util.SlingResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.osgi.framework.InvalidSyntaxException;
@@ -122,7 +123,13 @@ public class ComponentTag extends CpnlBodyTagSupport {
      * for the component instance attribute
      */
     public void setScope(String key) {
-        varScope = key != null ? SCOPES.get(key.toLowerCase()) : null;
+        varScope = null;
+        if (StringUtils.isNotBlank(key)) {
+            varScope = SCOPES.get(key.toLowerCase());
+            if (varScope == null) {
+                LOG.error("Invalid scope {} when rendering {}", key, SlingResourceUtil.getPath(resource));
+            }
+        }
     }
 
     public void setVarScope(Integer value) {
