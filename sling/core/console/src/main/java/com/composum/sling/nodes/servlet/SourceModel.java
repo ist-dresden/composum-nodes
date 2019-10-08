@@ -503,13 +503,16 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public String escapeXmlAttribute(String value) { // FIXME(hps,2019-07-11) use utilities? Should be consistent with packge manager, though.
-        return value
+        String escaped = value
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")
                 .replaceAll("'", "&apos;")
                 .replaceAll("\"", "&quot;")
                 .replaceAll("\t", "&#x9;")
                 .replaceAll("\n", "&#xa;")
-                .replaceAll("\r", "\n");
+                .replaceAll("\r", "\n")
+                // a value starting with { would be misinterpreted as type -> escape it:
+                .replaceFirst("^\\{", "\\\\{");
+        return escaped;
     }
 }
