@@ -11,6 +11,8 @@ import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
 import org.osgi.framework.BundleContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -26,10 +28,12 @@ import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
  */
 public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractConsoleServlet.class);
+
     protected BundleContext bundleContext;
 
     @Activate
-    protected void activate(final BundleContext bundleContext) {
+    public void activate(final BundleContext bundleContext) {
         this.bundleContext = bundleContext;
     }
 
@@ -113,7 +117,12 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
     protected boolean checkConsoleAccess(BeanContext context) {
         String consolePath = getConsolePath(context);
         if (StringUtils.isNotBlank(consolePath)) {
-            return context.getResolver().getResource(consolePath) != null;
+            Resource resource = context.getResolver().getResource(consolePath);
+            if (resource == null) {
+                LOG.info("Access to {} denied for {}", consolePath,
+                        context.getResolver().getUserID());
+            }
+            return resource != null;
         }
         return true;
     }

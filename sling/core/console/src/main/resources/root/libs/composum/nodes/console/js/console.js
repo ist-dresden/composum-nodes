@@ -37,11 +37,12 @@
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.$content = this.$('.modal-content');
-                var $form = this.$('form');
-                var $login = this.$('button.login');
-                $form.on('submit', _.bind(this.login, this));
-                $login.click(_.bind(this.login, this));
-                this.$('button.logout').click(_.bind(this.logout, this));
+                this.$form = this.$('form');
+                this.$login = this.$('button.login');
+                this.$logout = this.$('button.logout');
+                this.$form.on('submit', _.bind(this.login, this));
+                this.$login.click(_.bind(this.login, this));
+                this.$logout.click(_.bind(this.logout, this));
                 this.$el.on('shown.bs.modal', _.bind(this.onShown, this));
                 this.callsToRetry = [];
                 this.showing = false;
@@ -88,7 +89,11 @@
 
             logout: function (event) {
                 event.preventDefault();
-                core.getHtml('/system/sling/logout.html?logout=true&GLO=true', undefined, undefined, _.bind(function (data) {
+                var url = this.$logout.data('url');
+                if (!url) {
+                    url = '/system/sling/logout.html?logout=true&GLO=true';
+                }
+                core.getHtml(url, undefined, undefined, _.bind(function (data) {
                     this.hide();
                     core.initPermissions();
                 }, this));

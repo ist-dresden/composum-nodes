@@ -17,7 +17,6 @@ import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.jackrabbit.commons.jackrabbit.authorization.AccessControlUtils;
-import org.apache.jackrabbit.value.StringValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +28,7 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 import javax.jcr.security.AccessControlEntry;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
@@ -188,7 +188,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                         } else {
                             privileges = new String[]{(String) object};
                         }
-                        Map<String, String> restrictions = (Map<String, String>) rule.get("restrictions");
+                        Map<String, Object> restrictions = (Map<String, Object>) rule.get("restrictions");
                         addAcl(session, path, principal, allow, privileges,
                                 restrictions != null ? restrictions : Collections.EMPTY_MAP);
                     }
@@ -225,7 +225,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     protected void addAcl(@Nonnull final Session session, @Nonnull final String path,
                           @Nonnull final String principalName, boolean allow,
                           @Nonnull final String[] privilegeKeys,
-                          @Nonnull final Map restrictionKeys)
+                          @Nonnull final Map<String, Object> restrictionKeys)
             throws RepositoryException {
         try {
             final AccessControlManager acManager = session.getAccessControlManager();
@@ -234,13 +234,14 @@ public class CoreRepositorySetupService implements RepositorySetupService {
             final Principal principal = principalManager.getPrincipal(principalName);
             final Privilege[] privileges = AccessControlUtils.privilegesFromNames(acManager, privilegeKeys);
             final Map<String, Value> restrictions = new HashMap<>();
-            for (final Object key : restrictionKeys.keySet()) {
-                restrictions.put((String) key, new StringValue((String) restrictionKeys.get(key)));
+            final ValueFactory valueFactory = session.getValueFactory();
+            for (final String key : restrictionKeys.keySet()) {
+                restrictions.put(key, valueFactory.createValue((String) restrictionKeys.get(key), policies.getRestrictionType(key)));
             }
             policies.addEntry(principal, privileges, allow, restrictions);
             LOG.info("addAcl({},{})", principalName, Arrays.toString(privilegeKeys));
             acManager.setPolicy(path, policies);
-        } catch (RepositoryException e) {
+        } catch (Exception e) {
             LOG.error("Error in addAcl({},{},{},{}, {}) : {}", new Object[]{path, principalName, allow, Arrays.asList(privilegeKeys), restrictionKeys, e.toString()});
             throw e;
         }
@@ -328,7 +329,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                     return id;
                 }
             }, intermediatePath);
-        session.save();
+            session.save();
         } catch (RepositoryException e) {
             LOG.error("Error in makeGroupAvailable({},{}) : {}", new Object[]{id, intermediatePath, e.toString()});
             throw e;
@@ -348,7 +349,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                 }
             }
         } catch (RepositoryException e) {
-            LOG.error("Error in removeGroup({},{}) : {}", id, e.toString());
+            LOG.error("Error in removeGroup({}): {}", id, e.toString());
             throw e;
         }
     }

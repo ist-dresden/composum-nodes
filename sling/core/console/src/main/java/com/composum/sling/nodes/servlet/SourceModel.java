@@ -124,6 +124,10 @@ public class SourceModel extends ConsoleSlingBean {
                 DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
                 return formatter.format(((Calendar) value).getTime());
             }
+            if (value instanceof String && ((String) value).startsWith("{")) {
+                // a value starting with { would be misinterpreted as type prefix -> escape it:
+                value = "\\" + value;
+            }
             return value != null ? value.toString() : "";
         }
 
@@ -472,10 +476,10 @@ public class SourceModel extends ConsoleSlingBean {
 
     public void writeSubnodes(Writer writer, String indent) throws IOException {
         for (Resource subnode : getSubnodeList()) {
-            SourceModel subnodeModel = new SourceModel(config, context, subnode);
-            subnodeModel.writeXml(writer, indent);
+                SourceModel subnodeModel = new SourceModel(config, context, subnode);
+                subnodeModel.writeXml(writer, indent);
+            }
         }
-    }
 
     public void writeProperties(Writer writer, String indent) throws IOException {
         for (Property property : getPropertyList()) {
