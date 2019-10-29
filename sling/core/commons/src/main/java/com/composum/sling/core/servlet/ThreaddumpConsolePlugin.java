@@ -156,7 +156,7 @@ public class ThreaddumpConsolePlugin extends HttpServlet {
                         .append(stackTraceElement.getFileName())
                         .append(":")
                         .append(stackTraceElement.getLineNumber())
-                        .append("\n");
+                        .append(")\n");
 
             }
             return buf.toString();
