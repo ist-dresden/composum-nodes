@@ -98,8 +98,7 @@ public interface LazyCreationService {
     /**
      * Retrieves a resource or applies a creation and initialization strategy to be carried out with an admin resolver
      * to create it, for resource intensive initialization processes that should not performed twice in the cluster. The
-     * resource is locked for the cluster with {@link javax.jcr.lock.LockManager} during that time. <p> It is an error
-     * if getter still returns null after creator is executed. </p>
+     * resource is locked for the cluster with {@link javax.jcr.lock.LockManager} during that time.
      * <p>
      * <p>
      * It is an error if getter still returns null after creator is executed.
@@ -145,7 +144,7 @@ public interface LazyCreationService {
     interface RetrievalStrategy<T> {
         /**
          * Side effect free function to retrieve whatever we want to retrieve.
-         * Important is that is no sideeffects whenever it returns null, since that might be called
+         * Important is that it has no sideeffects as long as it returns null, since is might be called
          * several times.
          *
          * @param resolver the users resolver, if needed here.

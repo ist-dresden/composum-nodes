@@ -194,10 +194,12 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
         return contentResource;
     }
 
+    /** Returns a property of the {@link #getContentResource()}. */
     public <T> T getContentProperty(String key, Class<T> type) {
         return getContentResource().getProperty(key, type);
     }
 
+    /** Returns a property of the {@link #getContentResource()}. */
     public <T> T getContentProperty(String key, T defaultValue) {
         return getContentResource().getProperty(key, defaultValue);
     }
