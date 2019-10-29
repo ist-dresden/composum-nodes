@@ -374,9 +374,11 @@ public class LazyCreationServiceImpl implements LazyCreationService {
     @Override
     public boolean isInitialized(Resource resource) throws RepositoryException {
         ResourceHandle handle = ResourceHandle.use(resource);
-        return handle.isValid() && null != handle.getProperty(PROP_LAST_MODIFIED) &&
-                !handle.getResourceResolver().adaptTo(Session.class).getWorkspace().getLockManager().holdsLock
-                        (handle.getPath());
+        if (!handle.isValid()) { return false; }
+        if (handle.getProperty(PROP_LAST_MODIFIED) == null) { return false; }
+        LockManager lockManager = handle.getResourceResolver().adaptTo(Session.class).getWorkspace().getLockManager();
+        boolean locked = lockManager.holdsLock(handle.getPath());
+        return !locked;
     }
 
     @Override
