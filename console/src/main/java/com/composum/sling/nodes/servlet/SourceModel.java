@@ -125,6 +125,10 @@ public class SourceModel extends ConsoleSlingBean {
                 DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
                 return formatter.format(((Calendar) value).getTime());
             }
+            if (value instanceof String && ((String) value).startsWith("{")) {
+                // a value starting with { would be misinterpreted as type prefix -> escape it:
+                value = "\\" + value;
+            }
             return value != null ? value.toString() : "";
         }
 
@@ -375,7 +379,7 @@ public class SourceModel extends ConsoleSlingBean {
         }
         zipStream.putNextEntry(entry);
         Writer writer = new OutputStreamWriter(zipStream, StandardCharsets.UTF_8);
-        writeFile(writer, true);
+        writeFile(writer, true, false);
         writer.flush();
         zipStream.closeEntry();
 
@@ -417,7 +421,8 @@ public class SourceModel extends ConsoleSlingBean {
 
     // XML output
 
-    public void writeFile(Writer writer, boolean contentOnly) throws IOException, RepositoryException {
+    public void writeFile(Writer writer, boolean contentOnly, boolean noSubnodeNames)
+            throws IOException, RepositoryException {
         List<String> namespaces = new ArrayList<>();
         namespaces.add("jcr");
         determineNamespaces(namespaces, contentOnly);
@@ -443,10 +448,12 @@ public class SourceModel extends ConsoleSlingBean {
         if ((contentResource = resource.getChild(JcrConstants.JCR_CONTENT)) != null) {
             SourceModel subnodeModel = new SourceModel(config, context, contentResource);
             subnodeModel.writeXml(writer, "    ");
-            for (Resource subnode : getSubnodeList()) {
-                String name = subnode.getName();
-                if (!JcrConstants.JCR_CONTENT.equals(name)) {
-                    writer.append("    <").append(name).append("/>\n");
+            if (!noSubnodeNames) {
+                for (Resource subnode : getSubnodeList()) {
+                    String name = subnode.getName();
+                    if (!JcrConstants.JCR_CONTENT.equals(name)) {
+                        writer.append("    <").append(name).append("/>\n");
+                    }
                 }
             }
         } else {
@@ -504,16 +511,13 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public String escapeXmlAttribute(String value) { // FIXME(hps,2019-07-11) use utilities? Should be consistent with packge manager, though.
-        String escaped = value
+        return value
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")
                 .replaceAll("'", "&apos;")
                 .replaceAll("\"", "&quot;")
                 .replaceAll("\t", "&#x9;")
                 .replaceAll("\n", "&#xa;")
-                .replaceAll("\r", "\n")
-                // a value starting with { would be misinterpreted as type -> escape it:
-                .replaceFirst("^\\{", "\\\\{");
-        return escaped;
+                .replaceAll("\r", "\n");
     }
 }

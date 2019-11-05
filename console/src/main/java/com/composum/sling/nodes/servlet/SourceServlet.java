@@ -1,6 +1,7 @@
 package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.NodesConfiguration;
 import org.apache.commons.lang3.StringUtils;
@@ -77,7 +78,9 @@ public class SourceServlet extends SlingSafeMethodsServlet {
                         //response.setContentType("application/octet-stream");
                         response.setHeader("Content-Disposition", "inline; filename=.content.xml");
 
-                        sourceModel.writeFile(response.getWriter(), false);
+                        sourceModel.writeFile(response.getWriter(),
+                                RequestUtil.checkSelector(request, "content"),
+                                RequestUtil.checkSelector(request, "node"));
                         break;
 
                     // a content hierarchy in a zipped structure with '.content.xml' for the content within
