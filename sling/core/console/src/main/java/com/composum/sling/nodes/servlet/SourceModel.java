@@ -378,7 +378,7 @@ public class SourceModel extends ConsoleSlingBean {
         }
         zipStream.putNextEntry(entry);
         Writer writer = new OutputStreamWriter(zipStream, "UTF-8");
-        writeFile(writer, true);
+        writeFile(writer, true, false);
         writer.flush();
         zipStream.closeEntry();
 
@@ -420,7 +420,8 @@ public class SourceModel extends ConsoleSlingBean {
 
     // XML output
 
-    public void writeFile(Writer writer, boolean contentOnly) throws IOException, RepositoryException {
+    public void writeFile(Writer writer, boolean contentOnly, boolean noSubnodeNames)
+            throws IOException, RepositoryException {
         List<String> namespaces = new ArrayList<>();
         namespaces.add("jcr");
         determineNamespaces(namespaces, contentOnly);
@@ -446,10 +447,12 @@ public class SourceModel extends ConsoleSlingBean {
         if ((contentResource = resource.getChild(JcrConstants.JCR_CONTENT)) != null) {
             SourceModel subnodeModel = new SourceModel(config, context, contentResource);
             subnodeModel.writeXml(writer, "    ");
-            for (Resource subnode : getSubnodeList()) {
-                String name = subnode.getName();
-                if (!JcrConstants.JCR_CONTENT.equals(name)) {
-                    writer.append("    <").append(name).append("/>\n");
+            if (!noSubnodeNames) {
+                for (Resource subnode : getSubnodeList()) {
+                    String name = subnode.getName();
+                    if (!JcrConstants.JCR_CONTENT.equals(name)) {
+                        writer.append("    <").append(name).append("/>\n");
+                    }
                 }
             }
         } else {
@@ -476,10 +479,10 @@ public class SourceModel extends ConsoleSlingBean {
 
     public void writeSubnodes(Writer writer, String indent) throws IOException {
         for (Resource subnode : getSubnodeList()) {
-                SourceModel subnodeModel = new SourceModel(config, context, subnode);
-                subnodeModel.writeXml(writer, indent);
-            }
+            SourceModel subnodeModel = new SourceModel(config, context, subnode);
+            subnodeModel.writeXml(writer, indent);
         }
+    }
 
     public void writeProperties(Writer writer, String indent) throws IOException {
         for (Property property : getPropertyList()) {
