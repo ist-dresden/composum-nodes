@@ -135,6 +135,23 @@ public class FileHandle {
         if (content.isValid()) {
             ModifiableValueMap values = content.adaptTo(ModifiableValueMap.class);
             values.put(ResourceUtil.PROP_DATA, stream);
+            if (ResourceUtil.isPrimaryType(resource, ResourceUtil.MIX_LAST_MODIFIED)) {
+                Calendar now = Calendar.getInstance();
+                values.put(ResourceUtil.PROP_LAST_MODIFIED, now);
+                values.put(ResourceUtil.JCR_LASTMODIFIED_BY, getResource().getResourceResolver().getUserID());
+            }
+        }
+    }
+
+    /** Updates the last modified value, if the mix:lastModified is present. */
+    public void updateLastModified() {
+        if (content.isValid()) {
+            ModifiableValueMap values = content.adaptTo(ModifiableValueMap.class);
+            if (ResourceUtil.isNodeType(content, ResourceUtil.MIX_LAST_MODIFIED)) {
+                Calendar now = Calendar.getInstance();
+                values.put(ResourceUtil.PROP_LAST_MODIFIED, now);
+                values.put(ResourceUtil.JCR_LASTMODIFIED_BY, getResource().getResourceResolver().getUserID());
+            }
         }
     }
 
