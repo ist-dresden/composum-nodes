@@ -139,6 +139,18 @@ public class FileHandle {
         }
     }
 
+    /** Updates the last modified value, if the mix:lastModified is present. */
+    public void updateLastModified() {
+        if (content.isValid()) {
+            ModifiableValueMap values = Objects.requireNonNull(content.adaptTo(ModifiableValueMap.class));
+            if (ResourceUtil.isNodeType(content, ResourceUtil.MIX_LAST_MODIFIED)) {
+                Calendar now = Calendar.getInstance();
+                values.put(ResourceUtil.PROP_LAST_MODIFIED, now);
+                values.put(ResourceUtil.JCR_LASTMODIFIED_BY, getResource().getResourceResolver().getUserID());
+            }
+        }
+    }
+
     protected ResourceHandle retrieveContent() {
         Resource content = null;
         if (resource.isValid()) {
