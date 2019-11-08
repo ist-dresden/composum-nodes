@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class FileHandle {
 
@@ -134,19 +135,14 @@ public class FileHandle {
     public void storeContent(InputStream stream) {
         if (content.isValid()) {
             ModifiableValueMap values = content.adaptTo(ModifiableValueMap.class);
-            values.put(ResourceUtil.PROP_DATA, stream);
-            if (ResourceUtil.isPrimaryType(resource, ResourceUtil.MIX_LAST_MODIFIED)) {
-                Calendar now = Calendar.getInstance();
-                values.put(ResourceUtil.PROP_LAST_MODIFIED, now);
-                values.put(ResourceUtil.JCR_LASTMODIFIED_BY, getResource().getResourceResolver().getUserID());
-            }
+            Objects.requireNonNull(values).put(ResourceUtil.PROP_DATA, stream);
         }
     }
 
     /** Updates the last modified value, if the mix:lastModified is present. */
     public void updateLastModified() {
         if (content.isValid()) {
-            ModifiableValueMap values = content.adaptTo(ModifiableValueMap.class);
+            ModifiableValueMap values = Objects.requireNonNull(content.adaptTo(ModifiableValueMap.class));
             if (ResourceUtil.isNodeType(content, ResourceUtil.MIX_LAST_MODIFIED)) {
                 Calendar now = Calendar.getInstance();
                 values.put(ResourceUtil.PROP_LAST_MODIFIED, now);
