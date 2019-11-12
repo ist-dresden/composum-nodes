@@ -1,6 +1,7 @@
 package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
@@ -35,6 +36,12 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.jackrabbit.JcrConstants.JCR_MIXINTYPES;
+import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE;
+import static org.apache.jackrabbit.JcrConstants.NT_FILE;
+import static org.apache.jackrabbit.JcrConstants.NT_RESOURCE;
+
 public class SourceModel extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceModel.class);
@@ -60,9 +67,7 @@ public class SourceModel extends ConsoleSlingBean {
 
     public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
-    public static final FileTime NO_TIME = FileTime.from(0, TimeUnit.MILLISECONDS);
-
-    public class Property implements Comparable<Property> {
+    public static class Property implements Comparable<Property> {
 
         protected final String name;
         protected final Object value;
@@ -172,7 +177,6 @@ public class SourceModel extends ConsoleSlingBean {
 
     protected final NodesConfiguration config;
 
-    private transient FileTime lastModified;
     private transient List<Property> propertyList;
     private transient List<Resource> subnodeList;
 
@@ -192,13 +196,18 @@ public class SourceModel extends ConsoleSlingBean {
         return StringUtils.defaultString(ResourceUtil.getPrimaryType(resource));
     }
 
-    public FileTime getLastModified() {
-        if (lastModified == null) {
-            Calendar timestamp = resource.getProperties().get(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
-            lastModified = timestamp != null ?
-                    FileTime.from(timestamp.getTimeInMillis(), TimeUnit.MILLISECONDS) : NO_TIME;
+    public FileTime getLastModified(ResourceHandle someResource) {
+        Calendar timestamp;
+        timestamp = someResource.getProperties().get(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
+        if (timestamp == null) {
+            timestamp = someResource.getProperties().get(JcrConstants.JCR_CREATED, Calendar.class);
         }
-        return lastModified == NO_TIME ? null : lastModified;
+        timestamp = someResource.getContentResource().getProperties().get(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
+        if (timestamp == null) {
+            timestamp = someResource.getContentResource().getProperties().get(JcrConstants.JCR_CREATED, Calendar.class);
+        }
+        return timestamp != null ?
+                FileTime.from(timestamp.getTimeInMillis(), TimeUnit.MILLISECONDS) : null;
     }
 
     public List<Property> getPropertyList() {
@@ -304,23 +313,23 @@ public class SourceModel extends ConsoleSlingBean {
         zipStream.putNextEntry(entry);
 
         Writer writer = new OutputStreamWriter(zipStream, StandardCharsets.UTF_8);
-        writer.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n")
-                .append("<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n")
-                .append("<properties>\n")
-                .append("<comment>FileVault Package Properties</comment>\n")
-                .append("<entry key=\"name\">")
-                .append(name)
-                .append("</entry>\n")
-                .append("<entry key=\"buildCount\">1</entry>\n")
-                .append("<entry key=\"version\">")
-                .append(version)
-                .append("</entry>\n")
-                .append("<entry key=\"packageFormatVersion\">2</entry>\n")
-                .append("<entry key=\"group\">")
-                .append(group)
-                .append("</entry>\n")
-                .append("<entry key=\"description\">created from source download</entry>\n")
-                .append("</properties>");
+            writer.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n")
+                    .append("<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n")
+                    .append("<properties>\n")
+                    .append("<comment>FileVault Package Properties</comment>\n")
+                    .append("<entry key=\"name\">")
+                    .append(name)
+                    .append("</entry>\n")
+                    .append("<entry key=\"buildCount\">1</entry>\n")
+                    .append("<entry key=\"version\">")
+                    .append(version)
+                    .append("</entry>\n")
+                    .append("<entry key=\"packageFormatVersion\">2</entry>\n")
+                    .append("<entry key=\"group\">")
+                    .append(group)
+                    .append("</entry>\n")
+                    .append("<entry key=\"description\">created from source download</entry>\n")
+                    .append("</properties>");
 
         writer.flush();
         zipStream.closeEntry();
@@ -335,12 +344,12 @@ public class SourceModel extends ConsoleSlingBean {
         zipStream.putNextEntry(entry);
 
         Writer writer = new OutputStreamWriter(zipStream, StandardCharsets.UTF_8);
-        writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-                .append("<workspaceFilter version=\"1.0\">\n")
-                .append("    <filter root=\"")
-                .append(path)
-                .append("\"/>\n")
-                .append("</workspaceFilter>\n");
+            writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+                    .append("<workspaceFilter version=\"1.0\">\n")
+                    .append("    <filter root=\"")
+                    .append(path)
+                    .append("\"/>\n")
+                    .append("</workspaceFilter>\n");
 
         writer.flush();
         zipStream.closeEntry();
@@ -371,7 +380,7 @@ public class SourceModel extends ConsoleSlingBean {
 
         ZipEntry entry;
         String path = resource.getPath();
-        FileTime lastModified = getLastModified();
+        FileTime lastModified = getLastModified(resource);
 
         entry = new ZipEntry(getZipName(root, path + "/.content.xml"));
         if (lastModified != null) {
@@ -379,7 +388,7 @@ public class SourceModel extends ConsoleSlingBean {
         }
         zipStream.putNextEntry(entry);
         Writer writer = new OutputStreamWriter(zipStream, StandardCharsets.UTF_8);
-        writeFile(writer, true, false);
+            writeFile(writer, true, false);
         writer.flush();
         zipStream.closeEntry();
 
@@ -387,7 +396,7 @@ public class SourceModel extends ConsoleSlingBean {
             for (Resource subnode : getSubnodeList()) {
                 if (!JcrConstants.JCR_CONTENT.equals(subnode.getName())) {
                     if (ResourceUtil.isFile(subnode)) {
-                        writeFile(zipStream, root, subnode);
+                        writeFile(zipStream, root, ResourceHandle.use(subnode));
                     } else {
                         SourceModel subnodeModel = new SourceModel(config, context, subnode);
                         subnodeModel.writeZip(zipStream, root, true);
@@ -397,16 +406,39 @@ public class SourceModel extends ConsoleSlingBean {
         }
     }
 
-    public void writeFile(ZipOutputStream zipStream, String root, Resource file)
+    public void writeFile(ZipOutputStream zipStream, String root, ResourceHandle file)
             throws IOException, RepositoryException {
+        FileTime lastModified = getLastModified(file);
         ZipEntry entry;
         String path = file.getPath();
         entry = new ZipEntry(getZipName(root, path));
+        if (lastModified != null) {
+            entry.setLastModifiedTime(lastModified);
+        }
         zipStream.putNextEntry(entry);
         try (InputStream fileContent = ResourceUtil.getBinaryData(file).getStream()) {
             IOUtils.copy(fileContent, zipStream);
         }
         zipStream.closeEntry();
+
+        // if it's more than a nt:file/nt:resource construct that contains additional attributes we have to write
+        // an additional {file}.dir/.content.xml .
+        boolean fileIsNonstandard = file.getProperty(JCR_MIXINTYPES, new String[0].length) > 0
+                || !NT_FILE.equals(file.getProperty(JCR_PRIMARYTYPE, String.class));
+        boolean contentNodeIsNonstandard = file.getContentResource().getProperty(JCR_MIXINTYPES, new String[0]).length > 0
+                || !NT_RESOURCE.equals(file.getContentResource().getProperty(JCR_PRIMARYTYPE, String.class));
+        if (fileIsNonstandard || contentNodeIsNonstandard) {
+            entry = new ZipEntry(getZipName(root, file.getPath() + ".dir/.content.xml"));
+            if (lastModified != null) {
+                entry.setLastModifiedTime(lastModified);
+            }
+            zipStream.putNextEntry(entry);
+            Writer writer = new OutputStreamWriter(zipStream, UTF_8);
+            SourceModel fileModel = new SourceModel(config, context, file);
+            fileModel.writeFile(writer, false, false);
+            writer.flush();
+            zipStream.closeEntry();
+        }
     }
 
     public String getZipName(String root, String path) {
