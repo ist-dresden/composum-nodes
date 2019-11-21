@@ -22,6 +22,9 @@ public class ConsoleSlingBean extends AbstractSlingBean {
     @Override
     public void initialize(BeanContext context, Resource resource) {
         super.initialize(context, resource);
-        context.getRequest().setAttribute(LinkMapper.LINK_MAPPER_REQUEST_ATTRIBUTE, LinkMapper.CONTEXT);
+        if (context.getRequest() != null) {
+            context.getRequest()
+                    .setAttribute(LinkMapper.LINK_MAPPER_REQUEST_ATTRIBUTE, LinkMapper.CONTEXT);
+        }
     }
 }
