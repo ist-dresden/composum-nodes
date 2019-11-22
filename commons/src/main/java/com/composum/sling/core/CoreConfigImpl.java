@@ -41,18 +41,6 @@ import java.util.Map;
 @Service
 public class CoreConfigImpl implements CoreConfiguration {
 
-    protected static final String ERRORPAGE_STATUS = "errorpage.status";
-    protected static final String ERRORPAGES_PATH = "errorpages.path";
-    protected static final String DEFAULT_ERRORPAGES = "errorpages.default";
-
-    protected static final String TREE_INTERMEDIATE_FILTER_KEY = "tree.intermediate.filter";
-
-    protected static final String SYSTEM_SERVLET_ENABLED = "system.servlet.enabled";
-
-    protected static final String TRANSLATION_SERVLET_ENABLED = "validation.servlet.enabled";
-
-    protected static final String FORWARDED_SSL_PORT = "network.forward.ssl.port";
-
     protected static final String LOGOUT_URL = "logouturl";
     protected static final String DEFAULT_LOGOUTURL = "/system/sling/logout.html?logout=true&GLO=true";
     protected static final String LOGGEDOUT_URL = "loggedouturl";

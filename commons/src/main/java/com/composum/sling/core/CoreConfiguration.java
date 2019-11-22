@@ -14,6 +14,18 @@ import java.util.Dictionary;
  */
 public interface CoreConfiguration {
 
+    String ERRORPAGE_STATUS = "errorpage.status";
+    String ERRORPAGES_PATH = "errorpages.path";
+    String DEFAULT_ERRORPAGES = "errorpages.default";
+
+    String TREE_INTERMEDIATE_FILTER_KEY = "tree.intermediate.filter";
+
+    String SYSTEM_SERVLET_ENABLED = "system.servlet.enabled";
+
+    String TRANSLATION_SERVLET_ENABLED = "validation.servlet.enabled";
+
+    String FORWARDED_SSL_PORT = "network.forward.ssl.port";
+
     /**
      * Parameter that is appended to {@link #getLoginUrl()} to save the current rendered resource, to allow
      * re-rendering it after the user logged in.
