@@ -995,14 +995,16 @@
             increment: function () {
                 if (this.stepSize) {
                     var value = this.getNumber();
-                    this.setValue(value !== undefined ? (value + this.stepSize) : this.minValue, true);
+                    this.setValue(value !== undefined ? (value + this.stepSize)
+                        : (this.defValue !== undefined ? this.defValue : this.minValue), true);
                 }
             },
 
             decrement: function () {
                 if (this.stepSize) {
                     var value = this.getNumber();
-                    this.setValue(value !== undefined ? (value - this.stepSize) : this.maxValue, true);
+                    this.setValue(value !== undefined ? (value - this.stepSize)
+                        : (this.defValue !== undefined ? this.defValue : this.maxValue), true);
                 }
             },
 
