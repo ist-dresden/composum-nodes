@@ -68,13 +68,25 @@ public class SlingResourceUtil {
      * @return true if descendant is a descendant of parent , false if any is null.
      */
     public static boolean isSameOrDescendant(@Nullable String parent, @Nullable String descendant) {
-        if (parent == null || descendant == null) return false;
-        if (parent.equals(descendant) || parent.equals("/")) return true;
-        if (descendant.startsWith(parent + '/')) return true;
+        if (parent == null || descendant == null) { return false; }
+        if (parent.equals(descendant) || parent.equals("/")) { return true; }
+        if (descendant.startsWith(parent + '/')) { return true; }
         String parentNormalized = ResourceUtil.normalize(parent);
         String descendantNormalized = ResourceUtil.normalize(descendant);
         return parentNormalized.equals(descendantNormalized) || parentNormalized.equals("/")
                 || descendantNormalized.startsWith(parentNormalized + '/');
+    }
+
+    /**
+     * Checks whether {descendant} is the same path as parent node or a path of a descendant of the parent node.
+     *
+     * @param parent     the parent or null
+     * @param descendant the descendant or null
+     * @return true if descendant is a descendant of parent , false if any is null.
+     */
+    public static boolean isSameOrDescendant(@Nullable Resource parent, @Nullable Resource descendant) {
+        if (parent == null || descendant == null) { return false; }
+        return isSameOrDescendant(parent.getPath(), descendant.getPath());
     }
 
     /** Returns the path of a resource, or null if it is null. For use e.g. in logging statements. */
@@ -149,6 +161,26 @@ public class SlingResourceUtil {
             }
 
         };
+    }
+
+    /**
+     * Appends two paths: determines the given child of a path.
+     *
+     * @param path      an absolute or relative path. We ignore if it ends with /.
+     * @param childpath the relative path of the child to the path. Absolute paths are treated as relative paths: we
+     *                  ignore starting and ending / . if empty or null we return path
+     * @return the paths concatenated. If path is absolute, this is absolute; if path is relative, this is relative.
+     */
+    @Nonnull
+    public static String appendPaths(@Nullable String path, @Nullable String childpath) {
+        if (StringUtils.isEmpty(childpath)) { return path; }
+        childpath = StringUtils.removeStart(childpath, "/");
+        childpath = StringUtils.removeEnd(childpath, "/");
+        if (StringUtils.isEmpty(childpath)) { return path; }
+        if (StringUtils.isEmpty(path)) { return StringUtils.defaultString(childpath);}
+        if ("/".equals(ResourceUtil.normalize(path))) { return "/" + childpath; }
+        path = StringUtils.removeEnd(path, "/");
+        return path + "/" + childpath;
     }
 
 }

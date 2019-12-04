@@ -13,6 +13,7 @@ import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.Binary;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
@@ -411,15 +412,20 @@ public class SourceModel extends ConsoleSlingBean {
         FileTime lastModified = getLastModified(file);
         ZipEntry entry;
         String path = file.getPath();
-        entry = new ZipEntry(getZipName(root, path));
-        if (lastModified != null) {
-            entry.setLastModifiedTime(lastModified);
+        Binary binaryData = ResourceUtil.getBinaryData(file);
+        if (binaryData != null) {
+            entry = new ZipEntry(getZipName(root, path));
+            if (lastModified != null) {
+                entry.setLastModifiedTime(lastModified);
+            }
+            zipStream.putNextEntry(entry);
+            try (InputStream fileContent = binaryData.getStream()) {
+                IOUtils.copy(fileContent, zipStream);
+            }
+            zipStream.closeEntry();
+        } else {
+            LOG.info("Can't get binary data for {}", path);
         }
-        zipStream.putNextEntry(entry);
-        try (InputStream fileContent = ResourceUtil.getBinaryData(file).getStream()) {
-            IOUtils.copy(fileContent, zipStream);
-        }
-        zipStream.closeEntry();
 
         // if it's more than a nt:file/nt:resource construct that contains additional attributes we have to write
         // an additional {file}.dir/.content.xml .
