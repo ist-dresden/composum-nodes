@@ -84,7 +84,9 @@ public class Status {
             this.text = text;
         }
 
-        /** the 'translate' constructor */
+        /**
+         * the 'translate' constructor
+         */
         public Message(Map<String, Object> data) {
             Object value;
             Object hint = data.get(HINT);
@@ -159,7 +161,7 @@ public class Status {
                 return value;
             }
         }
-        addMessage(Level.error, errorMessage, value);
+        shortMessage(Level.error, errorMessage, value);
         return null;
     }
 
@@ -167,14 +169,14 @@ public class Status {
                                               @Nullable final Pattern pattern, @Nonnull final String errorMessage) {
         final RequestParameter[] requestParameters = request.getRequestParameters(paramName);
         if (requestParameters == null || requestParameters.length < 1) {
-            addMessage(Level.error, errorMessage);
+            shortMessage(Level.error, errorMessage);
             return null;
         }
         List<String> values = new ArrayList<>();
         for (RequestParameter parameter : requestParameters) {
             String value = parameter.getString();
             if (pattern != null && !pattern.matcher(value).matches()) {
-                addMessage(Level.error, errorMessage, value);
+                shortMessage(Level.error, errorMessage, value);
             }
             values.add(value);
         }
@@ -210,7 +212,7 @@ public class Status {
     }
 
     public void info(@Nonnull final String text, Object... args) {
-        addMessage(Level.info, text, args);
+        shortMessage(Level.info, text, args);
     }
 
     public void info(@Nonnull final String context, @Nonnull final String label,
@@ -219,7 +221,7 @@ public class Status {
     }
 
     public void warn(@Nonnull final String text, Object... args) {
-        addMessage(Level.warn, text, args);
+        shortMessage(Level.warn, text, args);
     }
 
     public void warn(@Nonnull final String context, @Nonnull final String label,
@@ -228,12 +230,12 @@ public class Status {
     }
 
     public void error(@Nonnull final String text, Object... args) {
-        addMessage(Level.error, text, args);
+        shortMessage(Level.error, text, args);
     }
 
     public void error(@Nonnull final String context, @Nonnull final String label,
                       @Nonnull final String text, Object... args) {
-        addMessage(Level.error, label, context, text, args);
+        addMessage(Level.error, context, label, text, args);
     }
 
     /**
@@ -294,7 +296,7 @@ public class Status {
      * @param text  non prepared text message
      * @param args  argument objects for the log like message preparation
      */
-    public void addMessage(@Nonnull final Level level, @Nonnull final String text, Object... args) {
+    public void shortMessage(@Nonnull final Level level, @Nonnull final String text, Object... args) {
         addMessage(level, null, null, prepare(text, args));
     }
 
@@ -305,8 +307,8 @@ public class Status {
      * @param text    pre prepared text message
      */
     public void addMessage(@Nonnull final Level level, @Nullable final String context, @Nullable final String label,
-                           @Nonnull final String text) {
-        addMessage(new Message(level, prepare(context), prepare(label), text));
+                           @Nonnull final String text, Object... args) {
+        addMessage(new Message(level, prepare(context), prepare(label), prepare(text, args)));
     }
 
     public void addMessage(@Nonnull final Message message) {
@@ -374,6 +376,7 @@ public class Status {
         if ((value = data.get(MESSAGES)) instanceof Collection) {
             for (Object val : ((Collection<?>) value)) {
                 if (val instanceof Map) {
+                    //noinspection rawtypes
                     addMessage(new Message((Map) val));
                 }
             }
