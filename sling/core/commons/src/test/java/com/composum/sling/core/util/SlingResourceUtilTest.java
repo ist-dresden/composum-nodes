@@ -55,6 +55,11 @@ public class SlingResourceUtilTest extends SlingResourceUtil {
                 checkAppendPaths(path, childpath, path);
             }
         }
+        for (String path : Arrays.asList(null, "")) {
+            for (String childpath : Arrays.asList(null, "", "/", "bla", "/bla", "bla/bluf", "/bla/bluf")) {
+                checkAppendPaths(path, childpath, null);
+            }
+        }
     }
 
     protected void checkAppendPaths(String path, String childpath, String result) {

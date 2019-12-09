@@ -166,18 +166,19 @@ public class SlingResourceUtil {
     /**
      * Appends two paths: determines the given child of a path.
      *
-     * @param path      an absolute or relative path. We ignore if it ends with /.
+     * @param path      an absolute or relative path. We ignore if it ends with /. If it's null, we return null
+     *                  (there is no child of no path).
      * @param childpath the relative path of the child to the path. Absolute paths are treated as relative paths: we
      *                  ignore starting and ending / . if empty or null we return path
      * @return the paths concatenated. If path is absolute, this is absolute; if path is relative, this is relative.
      */
-    @Nonnull
+    @Nullable
     public static String appendPaths(@Nullable String path, @Nullable String childpath) {
-        if (StringUtils.isEmpty(childpath)) { return path; }
+        if (StringUtils.isBlank(path)) { return null; }
+        if (StringUtils.isBlank(childpath)) { return path; }
         childpath = StringUtils.removeStart(childpath, "/");
         childpath = StringUtils.removeEnd(childpath, "/");
-        if (StringUtils.isEmpty(childpath)) { return path; }
-        if (StringUtils.isEmpty(path)) { return StringUtils.defaultString(childpath);}
+        if (StringUtils.isBlank(childpath)) { return path; }
         if ("/".equals(ResourceUtil.normalize(path))) { return "/" + childpath; }
         path = StringUtils.removeEnd(path, "/");
         return path + "/" + childpath;
