@@ -152,6 +152,12 @@ public class Status {
         }
     }
 
+    /**
+     * Retrieves and validates a required parameter from the request, adding the errorMessage if that fails.
+     *
+     * @return the validated parameter value, or null if that fails
+     */
+    @Nullable
     public String getRequiredParameter(@Nonnull final String paramName,
                                        @Nullable final Pattern pattern, @Nonnull final String errorMessage) {
         final RequestParameter requestParameter = request.getRequestParameter(paramName);
@@ -411,10 +417,12 @@ public class Status {
         writer.endObject();
     }
 
+    /** Serializes the status message and writes it in the response, using {@link #getStatus()} as HTTP status. */
     public void sendJson() throws IOException {
         sendJson(getStatus());
     }
 
+    /** Serializes the status message and writes it in the response, using the given HTTP status. */
     public void sendJson(int status) throws IOException {
         JsonWriter writer = ResponseUtil.getJsonWriter(response);
         response.setStatus(status);
@@ -431,6 +439,7 @@ public class Status {
         return new StatusWithLogging(logger);
     }
 
+    /** Wrapper that allows adding messages *and* logging them at the same time. Temporary object only - see {@link #withLogging(Logger)}. */
     public class StatusWithLogging {
 
         @Nonnull
