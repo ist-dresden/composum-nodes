@@ -414,7 +414,16 @@ public class Status {
             }
             writer.endArray();
         }
+        writeAdditionalAttributes(writer);
         writer.endObject();
+    }
+
+    /**
+     * Extension-hook to include stuff that does not fit the serialization scheme for {@link #data(String)} and
+     * {@link #list(String)}. Please use sparingly, if at all.
+     */
+    protected void writeAdditionalAttributes(@Nonnull final JsonWriter writer) throws IOException {
+        // empty
     }
 
     /** Serializes the status message and writes it in the response, using {@link #getStatus()} as HTTP status. */
