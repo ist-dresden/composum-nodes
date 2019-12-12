@@ -65,32 +65,51 @@ public class StatusTest {
 
         assertEquals("{\"status\":213,\"success\":true,\"warning\":false,\"title\":\"thetitle\"," +
                 "\"messages\":[{\"level\":\"warn\",\"text\":\"hello to franz from 17\"}]," +
-                "\"dat1\":{\"dk1\":15,\"dk2\":18}," +
-                "\"list1\":[{\"mlkey\":42},{\"mlkey1\":23,\"mlkey2\":54}]}", stringWriter.toString());
+                "\"data\":{\"dat1\":{\"dk1\":15,\"dk2\":18}}," +
+                "\"list\":{\"list1\":[{\"mlkey\":42},{\"mlkey1\":23,\"mlkey2\":54}]}}", stringWriter.toString());
 
-        TestStatusWithDataImpl readback = gson.fromJson(stringWriter.toString(), TestStatusWithDataImpl.class);
+        Status readback = gson.fromJson(stringWriter.toString(), Status.class);
         assertEquals(213, readback.getStatus());
         assertEquals("thetitle", readback.getTitle());
         assertEquals("hello to franz from 17", readback.messages.get(0).text);
-        assertNotNull(readback.dat1);
-        assertNotNull(readback.list1);
-        assertEquals(54.0, readback.list1.get(1).get("mlkey2"));
-        assertEquals(18.0, readback.dat1.get("dk2"));
+        assertNotNull(readback.data("dat1"));
+        assertNotNull(readback.list("list1"));
+        assertEquals(54.0, readback.list("list1").get(1).get("mlkey2"));
+        assertEquals(18.0, readback.data("dat1").get("dk2"));
     }
 
-    /**
-     * This is one way to read back status data from JSON: declare the data / list members as attributes.
-     * If they are nonstandard, one could declare a @JsonAdapter with a corresponding TypeAdapter to read them back.
-     */
-    private static class TestStatusWithDataImpl extends Status {
+    @Test
+    public void testExtension() throws Exception {
+        Gson gson = new GsonBuilder().create();
 
-        public TestStatusWithDataImpl(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response) {
+        TestStatusExtension status = new TestStatusExtension(request, response);
+        status.containedObject = new TestStatusExtensionObject();
+        status.containedObject.attr1 = "hallo";
+        status.containedObject.attr2 = 27;
+
+        Writer stringWriter = new StringWriter();
+        JsonWriter jsonWriter = new JsonWriter(stringWriter);
+        status.toJson(jsonWriter);
+
+        TestStatusExtension readback = gson.fromJson(stringWriter.toString(), TestStatusExtension.class);
+        assertNotNull(readback);
+        assertNotNull(readback.containedObject);
+        assertEquals("hallo", readback.containedObject.attr1);
+        assertEquals(Integer.valueOf(27), readback.containedObject.attr2);
+    }
+
+    private static class TestStatusExtensionObject {
+        public String attr1;
+        public Integer attr2;
+    }
+
+    private static class TestStatusExtension extends Status {
+
+        public TestStatusExtension(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response) {
             super(request, response);
         }
 
-        Map<String, Object> dat1;
-
-        List<Map<String, Object>> list1;
+        TestStatusExtensionObject containedObject;
     }
 
 }
