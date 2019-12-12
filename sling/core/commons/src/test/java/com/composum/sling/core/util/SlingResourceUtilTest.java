@@ -6,9 +6,12 @@ import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 public class SlingResourceUtilTest extends SlingResourceUtil {
 
@@ -16,7 +19,7 @@ public class SlingResourceUtilTest extends SlingResourceUtil {
     public final ErrorCollector ec = new ErrorCollector();
 
     @Test
-    public void relativePath() {
+    public void testRelativePath() {
         ec.checkThat(callRelativePath("bla", "bla/blu"), equalTo("blu"));
         ec.checkThat(callRelativePath("/", "/fol/der"), equalTo("fol/der"));
         ec.checkThat(callRelativePath("bla", "bla"), equalTo(""));
@@ -43,7 +46,7 @@ public class SlingResourceUtilTest extends SlingResourceUtil {
     }
 
     @Test
-    public void appendPaths() {
+    public void testAppendPaths() {
         checkAppendPaths("/bla", "blu/bluf", "/bla/blu/bluf");
         checkAppendPaths("/bla/bla/", "blu/bluf", "/bla/bla/blu/bluf");
         checkAppendPaths("bla/la", "blu", "bla/la/blu");
@@ -67,4 +70,44 @@ public class SlingResourceUtilTest extends SlingResourceUtil {
         ec.checkThat(path + " with " + childpath, StringUtils.startsWith(path, "/"),
                 equalTo(StringUtils.startsWith(result, "/")));
     }
+
+    @Test
+    public void testCommonParent() {
+        ec.checkThat(commonParent(null), nullValue());
+        ec.checkThat(commonParent(Collections.emptyList()), nullValue());
+        ec.checkThat(commonParent(Collections.emptySet()), nullValue());
+        ec.checkThat(commonParent(Arrays.asList(null, "")), nullValue());
+
+        ec.checkThat(commonParent(Arrays.asList("/a/b", "/a/c")), is("/a"));
+        ec.checkThat(commonParent(Arrays.asList("/a/b", "/a", "/a/d")), is("/a"));
+        ec.checkThat(commonParent(Arrays.asList("/b", "/a", "/a/d")), is("/"));
+
+        ec.checkThat(commonParent(Arrays.asList("/a/b", "", "/a", null, "/a/d")), is("/a"));
+
+        ec.checkThat(commonParent(Arrays.asList("a/b", "a/c")), is("a"));
+        ec.checkThat(commonParent(Arrays.asList("a/b", "a", "a/d")), is("a"));
+        ec.checkThat(commonParent(Arrays.asList("b", "a", "a/d")), nullValue());
+
+        ec.checkThat(commonParent(Arrays.asList("a/b", "/a/b")), nullValue()); // wrong call
+
+
+    }
+
+    /** Does not quite belong here, but needed for {@link #commonParent(Collection)}. */
+    @Test
+    public void testGetParent() {
+        ec.checkThat(ResourceUtil.getParent("/a/b"), is("/a"));
+        ec.checkThat(ResourceUtil.getParent("/a"), is("/"));
+        ec.checkThat(ResourceUtil.getParent("/"), nullValue());
+
+        ec.checkThat(ResourceUtil.getParent("workspace:/a/b"), is("workspace:/a"));
+        ec.checkThat(ResourceUtil.getParent("workspace:/a"), is("workspace:/"));
+        ec.checkThat(ResourceUtil.getParent("workspace:/"), nullValue());
+
+        ec.checkThat(ResourceUtil.getParent("a/b"), is("a"));
+        ec.checkThat(ResourceUtil.getParent("a"), nullValue());
+        ec.checkThat(ResourceUtil.getParent(""), nullValue());
+    }
+
+
 }
