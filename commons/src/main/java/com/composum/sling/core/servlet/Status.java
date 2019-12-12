@@ -32,7 +32,11 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.apache.sling.api.resource.ResourceUtil.isSyntheticResource;
 
 /**
- * the standardised answer object of a servlet request to fill the response output
+ * The standardised answer object of a servlet request to fill the response output.
+ * It allows adding generic objects and lists with the {@link #data(String)} / {@link #list(String)} methods.
+ * Can be serialized and deserialized with {@link Gson}, so it is possible to extend this and add your own attributes, too.
+ * (Caution: for deserializing it with Gson you might run into trouble if you put arbitrary objects into the data /
+ * list - it's probably easier to extend Status and have attributes with the specific types needed.)
  */
 public class Status {
 
@@ -113,9 +117,9 @@ public class Status {
         }
     }
 
-    protected final Gson gson;
-    protected final SlingHttpServletRequest request;
-    protected final SlingHttpServletResponse response;
+    protected transient final Gson gson;
+    protected transient final SlingHttpServletRequest request;
+    protected transient final SlingHttpServletResponse response;
 
     protected int status = SC_OK;
     protected boolean success = true;
@@ -245,18 +249,26 @@ public class Status {
     }
 
     /**
+     * Returns a map that is saved with the given name in the data section of the Status, creating it if necessary.
+     *
      * @param name the key of the data element to insert in the status response
-     * @return a new Map for the data values of the added status object
+     * @return a Map for the data values of the added status object, created if neccesary.
      */
     @Nonnull
     public Map<String, Object> data(@Nonnull final String name) {
-        Map<String, Object> object = new LinkedHashMap<>();
-        data.put(name, object);
+        Map<String, Object> object = data.get(name);
+        if (object == null) {
+            object = new LinkedHashMap<>();
+            data.put(name, object);
+        }
         return object;
     }
 
     /**
+     * Adds information about resource as {@link #data(String)} object.
+     *
      * @param name the key of the data element to insert in the status response
+     * @see #reference(Map, Resource)
      */
     public void reference(@Nonnull final String name, Resource resource) {
         Map<String, Object> object = data(name);
@@ -264,7 +276,8 @@ public class Status {
     }
 
     /**
-     *
+     * Adds general information about the resource into the object: name, path, type (Sling resourcetype),
+     * prim (primary type), synthetic (whether it is a synthetic resource).
      */
     public void reference(Map<String, Object> object, Resource resource) {
         object.put("name", resource.getName());
@@ -275,17 +288,25 @@ public class Status {
     }
 
     /**
+     * Returns the list for the given name, creating it if neccesary.
+     *
      * @param name the key of the data element to insert in the status response
      * @return a new list of Map items for the data values of the added status object
      */
     @Nonnull
     public List<Map<String, Object>> list(@Nonnull final String name) {
-        List<Map<String, Object>> object = new ArrayList<>();
-        list.put(name, object);
+        List<Map<String, Object>> object = list.get(name);
+        if (object == null) {
+            object = new ArrayList<>();
+            list.put(name, object);
+        }
         return object;
     }
 
     /**
+     * Adds a list of resources in a request with common information. If there was already a list with that name,
+     * the items are added to it.
+     *
      * @param name the key of the data element to insert in the status response
      */
     public void list(@Nonnull final String name, Collection<Resource> items) {
@@ -389,40 +410,9 @@ public class Status {
         }
     }
 
+    /** Writes this object as JSON using {@link Gson}. */
     public void toJson(@Nonnull final JsonWriter writer) throws IOException {
-        writer.beginObject();
-        writer.name(STATUS).value(getStatus());
-        writer.name(SUCCESS).value(isSuccess());
-        writer.name(WARNING).value(isWarning());
-        writer.name(TITLE).value(getTitle());
-        writer.name(MESSAGES).beginArray();
-        for (Message message : messages) {
-            message.toJson(writer);
-        }
-        writer.endArray();
-        for (Map.Entry<String, Map<String, Object>> entry : data.entrySet()) {
-            writer.name(entry.getKey());
-            gson.toJson(entry.getValue(), Map.class, writer);
-        }
-        for (Map.Entry<String, List<Map<String, Object>>> entry : list.entrySet()) {
-            writer.name(entry.getKey());
-            List<Map<String, Object>> value = entry.getValue();
-            writer.beginArray();
-            for (Map<String, Object> item : value) {
-                gson.toJson(item, Map.class, writer);
-            }
-            writer.endArray();
-        }
-        writeAdditionalAttributes(writer);
-        writer.endObject();
-    }
-
-    /**
-     * Extension-hook to include stuff that does not fit the serialization scheme for {@link #data(String)} and
-     * {@link #list(String)}. Please use sparingly, if at all.
-     */
-    protected void writeAdditionalAttributes(@Nonnull final JsonWriter writer) throws IOException {
-        // empty
+        gson.toJson(this, getClass(), writer);
     }
 
     /** Serializes the status message and writes it in the response, using {@link #getStatus()} as HTTP status. */
