@@ -17,6 +17,7 @@ import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -138,6 +139,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
      * @param request the sling request with the resource path in the suffix
      * @return the resource (NOT <code>null</code>; returns a handle with an invalid resource if not resolvable)
      */
+    @Nonnull
     public static ResourceHandle getResource(SlingHttpServletRequest request) {
         ResourceResolver resolver = request.getResourceResolver();
         String path = getPath(request);

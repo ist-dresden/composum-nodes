@@ -10,6 +10,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -25,8 +26,8 @@ public class SlingResourceUtil {
      * Returns the shortest relative path that leads from a node to another node.
      * Postcondition: <code>ResourceUtil.normalize(node + "/" + result), is(ResourceUtil.normalize(other))</code>.
      *
-     * @param node the parent
-     * @param other  a path of a child of parent
+     * @param node  the parent
+     * @param other a path of a child of parent
      * @return the path from which other can be read from node - e.g. with {@link org.apache.sling.api.resource.Resource#getChild(String)}. If node and other are the same, this is empty.
      * @throws IllegalArgumentException in those cases where there is no sensible answer: one of the paths is empty or one absolute and one relative path
      */
@@ -44,14 +45,14 @@ public class SlingResourceUtil {
         } else if (other.startsWith(node + '/')) {
             return other.substring(node.length() + 1);
         } else {
-            if (!node.endsWith("/"))
-                node = node + "/";
+            if (!node.endsWith("/")) { node = node + "/"; }
             if (other.startsWith(node)) {
                 return other.substring(node.length());
             } else {
                 String longestPrefix = StringUtils.getCommonPrefix(node, other);
-                if (!longestPrefix.endsWith("/"))
+                if (!longestPrefix.endsWith("/")) {
                     longestPrefix = StringUtils.defaultString(ResourceUtil.getParent(longestPrefix));
+                }
                 String nodeRestpath = other.substring(longestPrefix.length());
                 String otherRestpath = node.substring(longestPrefix.length());
                 return StringUtils.repeat("../", StringUtils.countMatches(otherRestpath, "/")) + nodeRestpath;
@@ -133,7 +134,7 @@ public class SlingResourceUtil {
     @Nonnull
     public static Iterable<Resource> descendants(@Nullable final Resource resource) {
         // this is awful because we are stuck at Java 7 for now. With Java 8 Streams this is way easier.
-        if (resource == null) return Collections.emptyList();
+        if (resource == null) { return Collections.emptyList(); }
         return new Iterable<Resource>() {
             @Nonnull
             @SuppressWarnings("unchecked")
@@ -182,6 +183,32 @@ public class SlingResourceUtil {
         if ("/".equals(ResourceUtil.normalize(path))) { return "/" + childpath; }
         path = StringUtils.removeEnd(path, "/");
         return path + "/" + childpath;
+    }
+
+    /**
+     * Finds the longest path that is a parent of all given paths - e.g. /foo/bar for /foo/bar/a/b, /foo/bar/a/c and
+     * /foo/bar/b/c .
+     *
+     * @param paths a collection of absolute paths or a collection of relative paths. Null / empty values are ignored.
+     * @return null if collection is empty, otherwise the common parent. It might be an empty string if the paths
+     * have no common parent (e.g. "a" and "b" or the illegitimate call with "/a" and "b").
+     */
+    @Nullable
+    public static String commonParent(@Nullable Collection<String> paths) {
+        if (paths == null || paths.isEmpty()) { return null; }
+        String result = null;
+        for (String path : paths) {
+            if (StringUtils.isBlank(path)) { continue; }
+            if (result == null) {
+                result = path;
+            } else {
+                while (!isSameOrDescendant(result, path) && result != null) {
+                    result = ResourceUtil.getParent(result);
+                }
+                if (result == null) { break; } // no common parents
+            }
+        }
+        return result;
     }
 
 }

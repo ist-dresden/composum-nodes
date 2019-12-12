@@ -126,12 +126,12 @@ public class Status {
     protected final Map<String, Map<String, Object>> data;
     protected final Map<String, List<Map<String, Object>>> list;
 
-    public Status(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response) {
+    public Status(@Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response) {
         this(new GsonBuilder().create(), request, response);
     }
 
     public Status(@Nonnull final Gson gson,
-                  @Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response) {
+                  @Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response) {
         this.gson = gson;
         this.request = request;
         this.response = response;
