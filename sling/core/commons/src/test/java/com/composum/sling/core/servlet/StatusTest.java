@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PropertyResourceBundle;
+import java.util.concurrent.ExecutorService;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -96,6 +97,20 @@ public class StatusTest {
         assertNotNull(readback.containedObject);
         assertEquals("hallo", readback.containedObject.attr1);
         assertEquals(Integer.valueOf(27), readback.containedObject.attr2);
+    }
+
+    @Test
+    public void testEmptyStatus() throws Exception {
+        Gson gson = new GsonBuilder().create();
+        Status status = new Status(request, response);
+        Writer stringWriter = new StringWriter();
+        JsonWriter jsonWriter = new JsonWriter(stringWriter);
+        status.toJson(jsonWriter);
+
+        assertEquals("{\"status\":200,\"success\":true,\"warning\":false}", stringWriter.toString());
+
+        Status readback = gson.fromJson(stringWriter.toString(), Status.class);
+        assertNotNull(readback);
     }
 
     private static class TestStatusExtensionObject {

@@ -126,10 +126,14 @@ public class Status {
     protected boolean success = true;
     protected boolean warning = false;
 
+    @Nullable
     protected String title;
-    protected final List<Message> messages;
-    protected final Map<String, Map<String, Object>> data;
-    protected final Map<String, List<Map<String, Object>>> list;
+    @Nullable
+    protected List<Message> messages;
+    @Nullable
+    protected Map<String, Map<String, Object>> data;
+    @Nullable
+    protected Map<String, List<Map<String, Object>>> list;
 
     public Status(@Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response) {
         this(new GsonBuilder().create(), request, response);
@@ -140,9 +144,6 @@ public class Status {
         this.gson = gson;
         this.request = request;
         this.response = response;
-        data = new HashMap<>();
-        list = new HashMap<>();
-        messages = new ArrayList<>();
     }
 
     public int getStatus() {
@@ -257,6 +258,7 @@ public class Status {
      */
     @Nonnull
     public Map<String, Object> data(@Nonnull final String name) {
+        if (data == null) { data = new LinkedHashMap<>();}
         Map<String, Object> object = data.get(name);
         if (object == null) {
             object = new LinkedHashMap<>();
@@ -296,6 +298,7 @@ public class Status {
      */
     @Nonnull
     public List<Map<String, Object>> list(@Nonnull final String name) {
+        if (list == null) { list = new LinkedHashMap<>(); }
         List<Map<String, Object>> object = list.get(name);
         if (object == null) {
             object = new ArrayList<>();
@@ -340,6 +343,7 @@ public class Status {
     }
 
     public void addMessage(@Nonnull final Message message) {
+        if (messages == null) { messages = new ArrayList<>(); }
         if (message.level == Level.error) {
             status = SC_BAD_REQUEST;
             success = false;
