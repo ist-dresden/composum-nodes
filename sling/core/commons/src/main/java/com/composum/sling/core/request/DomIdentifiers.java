@@ -47,7 +47,8 @@ public class DomIdentifiers {
             this.type = StringUtils.isNotBlank(type) ? type : "any";
             int idValue = nextId();
             this.id = path.substring(path.lastIndexOf('/') + 1) + "-"
-                    + type.substring(type.lastIndexOf('/') + 1) + "-" + idValue;
+                    + type.substring(type.lastIndexOf('/') + 1)
+                    .replaceAll("[:]", "-") + "-" + idValue;
         }
     }
 

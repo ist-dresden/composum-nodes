@@ -366,7 +366,7 @@ public class CpnlElFunctions {
         Pattern TEXT_FORMAT_STRING = Pattern.compile("^(\\{([^}]+)}(.+)|(.*\\{}.*))$");
         Matcher matcher = TEXT_FORMAT_STRING.matcher(format);
         if (matcher.matches()) {
-            switch (matcher.group(1)) {
+            switch (matcher.group(2)) {
                 case "Message":
                     formatter = new MessageFormat(matcher.group(3), locale);
                     break;
