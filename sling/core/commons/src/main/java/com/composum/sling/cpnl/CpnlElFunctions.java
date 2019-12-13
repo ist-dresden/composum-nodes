@@ -39,7 +39,9 @@ public class CpnlElFunctions {
 
     public static final Pattern HREF_PATTERN = Pattern.compile("(<a(\\s*[^>]*)?\\s*href\\s*=\\s*['\"])([^'\"]+)([\"'][^>]*>)");
 
-    /** for the 'attr' escaping - the quotation type constants */
+    /**
+     * for the 'attr' escaping - the quotation type constants
+     */
     public static final int QTYPE_QUOT = 0;
     public static final int QTYPE_APOS = 1;
     public static final String[] QTYPE_CHAR = new String[]{"\"", "'"};
@@ -366,24 +368,28 @@ public class CpnlElFunctions {
         Pattern TEXT_FORMAT_STRING = Pattern.compile("^(\\{([^}]+)}(.+)|(.*\\{}.*))$");
         Matcher matcher = TEXT_FORMAT_STRING.matcher(format);
         if (matcher.matches()) {
-            switch (matcher.group(2)) {
-                case "Message":
-                    formatter = new MessageFormat(matcher.group(3), locale);
-                    break;
-                case "Date":
-                    formatter = new SimpleDateFormat(matcher.group(3), locale);
-                    break;
-                case "String":
-                    formatter = new FormatterFormat(matcher.group(3), locale);
-                    break;
-                case "Log":
-                    formatter = new LoggerFormat(matcher.group(3));
-                    break;
-                default:
-                    if (StringUtils.isBlank(matcher.group(2))) {
-                        formatter = new LoggerFormat(matcher.group(4));
-                    }
-                    break;
+            if (matcher.group(2) != null) {
+                switch (matcher.group(2)) {
+                    case "Message":
+                        formatter = new MessageFormat(matcher.group(3), locale);
+                        break;
+                    case "Date":
+                        formatter = new SimpleDateFormat(matcher.group(3), locale);
+                        break;
+                    case "String":
+                        formatter = new FormatterFormat(matcher.group(3), locale);
+                        break;
+                    case "Log":
+                        formatter = new LoggerFormat(matcher.group(3));
+                        break;
+                    default:
+                        if (StringUtils.isBlank(matcher.group(2))) {
+                            formatter = new LoggerFormat(matcher.group(4));
+                        }
+                        break;
+                }
+            } else {
+                formatter = new LoggerFormat(matcher.group(4));
             }
         } else {
             if (type != null && type.length == 1 && type[0] != null &&
