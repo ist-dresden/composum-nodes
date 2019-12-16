@@ -18,6 +18,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Reader;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,15 +71,31 @@ public class Status {
 
     public class Message {
 
+        @Nonnull
         public final Level level;
+
+        /** In validation messages: context of the validation, for instance the dialog tab. */
+        @Nullable
         public final String context;
+
+        /** In validation messages: label of the field which the message is about. */
+        @Nullable
         public final String label;
+
+        /** The text of the message, can contain {@literal {}} placeholders. */
+        @Nonnull
         public final String text;
 
+        /** @param text The text of the message, can contain {@literal {}} placeholders. */
         public Message(@Nonnull final Level level, @Nonnull final String text) {
             this(level, null, null, text);
         }
 
+        /**
+         * @param context In validation messages: context of the validation, for instance the dialog tab.
+         * @param label   In validation messages: label of the field which the message is about.
+         * @param text    The text of the message, can contain {@literal {}} placeholders.
+         */
         public Message(@Nonnull final Level level,
                        @Nullable final String context, @Nullable final String label,
                        @Nonnull final String text) {
@@ -222,31 +239,37 @@ public class Status {
         return !isSuccess();
     }
 
+    /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
     public void info(@Nonnull final String text, Object... args) {
         shortMessage(Level.info, text, args);
     }
 
-    public void info(@Nonnull final String context, @Nonnull final String label,
-                     @Nonnull final String text, Object... args) {
-        addMessage(Level.info, context, label, text, args);
+    /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
+    public void validationInfo(@Nonnull final String context, @Nonnull final String label,
+                               @Nonnull final String text, Object... args) {
+        addValidationMessage(Level.info, context, label, text, args);
     }
 
+    /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
     public void warn(@Nonnull final String text, Object... args) {
         shortMessage(Level.warn, text, args);
     }
 
-    public void warn(@Nonnull final String context, @Nonnull final String label,
-                     @Nonnull final String text, Object... args) {
-        addMessage(Level.warn, context, label, text, args);
+    /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
+    public void validationWarn(@Nonnull final String context, @Nonnull final String label,
+                               @Nonnull final String text, Object... args) {
+        addValidationMessage(Level.warn, context, label, text, args);
     }
 
+    /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
     public void error(@Nonnull final String text, Object... args) {
         shortMessage(Level.error, text, args);
     }
 
-    public void error(@Nonnull final String context, @Nonnull final String label,
-                      @Nonnull final String text, Object... args) {
-        addMessage(Level.error, context, label, text, args);
+    /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
+    public void validationError(@Nonnull final String context, @Nonnull final String label,
+                                @Nonnull final String text, Object... args) {
+        addValidationMessage(Level.error, context, label, text, args);
     }
 
     /**
@@ -323,21 +346,24 @@ public class Status {
 
     /**
      * @param level the message level
-     * @param text  non prepared text message
-     * @param args  argument objects for the log like message preparation
+     * @param text  non prepared text message, may contain {@literal {}} placeholders
+     * @param args  argument objects for the log like message preparation of text
      */
     public void shortMessage(@Nonnull final Level level, @Nonnull final String text, Object... args) {
-        addMessage(level, null, null, prepare(text, args));
+        addValidationMessage(level, null, null, prepare(text, args));
     }
 
     /**
+     * For use with validation messages: add context and label, too.
+     *
      * @param level   the message level
      * @param context non prepared context key
      * @param label   non prepared aspect label (validation label)
-     * @param text    pre prepared text message
+     * @param text    non prepared text message, can contain placeholders {@literal {}}
+     * @see MessageFormat
      */
-    public void addMessage(@Nonnull final Level level, @Nullable final String context, @Nullable final String label,
-                           @Nonnull final String text, Object... args) {
+    public void addValidationMessage(@Nonnull final Level level, @Nullable final String context, @Nullable final String label,
+                                     @Nonnull final String text, Object... args) {
         addMessage(new Message(level, prepare(context), prepare(label), prepare(text, args)));
     }
 
@@ -363,6 +389,7 @@ public class Status {
      * @param text a text for an internationalized message
      * @param args the arguments for the text placeholders
      * @return the internationalized text
+     * @see MessageFormat
      */
     public String prepare(@Nullable String text, Object... args) {
         if (text != null) {
@@ -451,26 +478,31 @@ public class Status {
             this.logger = logger;
         }
 
+        /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
         public void info(@Nonnull String text, Object... args) {
             Status.this.info(text, args);
             logger.info(text, args);
         }
 
-        public void info(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
-            Status.this.warn(context, label, text, args);
+        /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
+        public void validationInfo(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
+            Status.this.validationInfo(context, label, text, args);
             logger.info(text, args);
         }
 
+        /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
         public void warn(@Nonnull String text, Object... args) {
             Status.this.warn(text, args);
             logger.warn(text, args);
         }
 
-        public void warn(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
-            Status.this.warn(context, label, text, args);
+        /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
+        public void validationWarn(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
+            Status.this.validationWarn(context, label, text, args);
             logger.warn(text, args);
         }
 
+        /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
         public void error(@Nonnull String text, Object... args) {
             Status.this.error(text, args);
             logger.error(text, args);
@@ -481,8 +513,9 @@ public class Status {
             logger.error(prepare(text, ex.getLocalizedMessage()), ex);
         }
 
-        public void error(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
-            Status.this.error(context, label, text, args);
+        /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
+        public void validationError(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
+            Status.this.validationError(context, label, text, args);
             logger.error(text, args);
         }
     }
