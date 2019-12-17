@@ -18,6 +18,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Reader;
+import java.text.DecimalFormat;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
@@ -157,9 +159,15 @@ public class Status {
 
     public Status(@Nonnull final Gson gson,
                   @Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response) {
-        this.gson = gson;
+        this.gson = Objects.requireNonNull(gson);
         this.request = request;
         this.response = response;
+    }
+
+    /** @deprecated Constructor for gson only */
+    @Deprecated
+    public Status() {
+        this(new GsonBuilder().create(), null, null);
     }
 
     public int getStatus() {
