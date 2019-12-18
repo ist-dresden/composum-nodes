@@ -817,8 +817,8 @@
                 selectDialog.show(_.bind(function () {
                         this.getPath(_.bind(selectDialog.setValue, selectDialog));
                     }, this),
-                    _.bind(function () {
-                        this.setPath(selectDialog.getValue());
+                    _.bind(function (path) {
+                        this.setPath(path);
                     }, this));
             },
 
