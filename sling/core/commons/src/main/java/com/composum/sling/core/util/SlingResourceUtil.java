@@ -28,10 +28,12 @@ public class SlingResourceUtil {
     /**
      * Returns the shortest relative path that leads from a node to another node.
      * Postcondition: <code>ResourceUtil.normalize(node + "/" + result), is(ResourceUtil.normalize(other))</code>.
+     * In most cases  {@link #appendPaths(String, String)}(node, result) will return {other}. )}
      *
      * @param node  the parent
-     * @param other a path of a child of parent
-     * @return the path from which other can be read from node - e.g. with {@link org.apache.sling.api.resource.Resource#getChild(String)}. If node and other are the same, this is empty.
+     * @param other a path of a child of parent / parent itself
+     * @return the (relative) path from which other can be read from node - e.g. with
+     * {@link org.apache.sling.api.resource.Resource#getChild(String)}. If node and other are the same, this is empty.
      * @throws IllegalArgumentException in those cases where there is no sensible answer: one of the paths is empty or one absolute and one relative path
      */
     public static String relativePath(@Nonnull String node, @Nonnull String other) {
