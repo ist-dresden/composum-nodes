@@ -298,6 +298,11 @@
                 this.inputChanged(); // simulate a change after shown to initialize the tree
             },
 
+            hide: function () {
+                this.$el.modal('hide');
+                this.reset();
+            },
+
             /**
              * defines the dialog title (default: 'default' data attribute of the title element)
              */
