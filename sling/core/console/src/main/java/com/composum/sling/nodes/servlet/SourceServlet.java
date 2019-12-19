@@ -78,7 +78,7 @@ public class SourceServlet extends SlingSafeMethodsServlet {
                         //response.setContentType("application/octet-stream");
                         response.setHeader("Content-Disposition", "inline; filename=.content.xml");
 
-                        sourceModel.writeFile(response.getWriter(),
+                        sourceModel.writeContentXmlFile(response.getWriter(),
                                 RequestUtil.checkSelector(request, "content"),
                                 RequestUtil.checkSelector(request, "node"));
                         break;
