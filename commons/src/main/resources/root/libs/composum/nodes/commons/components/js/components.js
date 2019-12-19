@@ -810,6 +810,19 @@
              */
             selectPath: function (event) {
                 var selectDialog = core.getView('#path-select-dialog', components.SelectPathDialog);
+                if (!selectDialog) {
+                    var u = components.const.dialog.load;
+                    core.getHtml(u.base + u._path,
+                        _.bind(function (content) {
+                            selectDialog = core.addLoadedDialog(components.SelectPathDialog, content);
+                            this.openDialog(selectDialog);
+                        }, this));
+                } else {
+                    this.openDialog(selectDialog);
+                }
+            },
+
+            openDialog: function (selectDialog) {
                 selectDialog.setTitle(this.dialogTitle);
                 selectDialog.setLabel(this.dialogLabel);
                 selectDialog.setRootPath(this.getRootPath());
