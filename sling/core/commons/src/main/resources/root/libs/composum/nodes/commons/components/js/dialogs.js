@@ -22,6 +22,10 @@
                     object: '/bin/cpm/core/translate.object.json',
                     status: '/bin/cpm/core/translate.status.json'
                 }
+            },
+            load: {
+                base: '/libs/composum/nodes/commons/components/dialogs',
+                _path: '.path-select.html'
             }
         };
 
@@ -31,11 +35,15 @@
         components.Dialog = Backbone.View.extend({
 
             initialize: function (options) {
+                this.isLoaded = options.loaded || false;
                 this.$alert = this.$('.alert');
                 this.$messageHead = this.$('.messages .panel-heading');
                 this.$messageBody = this.$('.messages .panel-body');
                 this.setUpWidgets(this.el);
                 this.$el.on('shown.bs.modal', _.bind(this.onShown, this));
+                if (this.isLoaded) { // remove a loaded dialog on close
+                    this.$el.on('hidden.bs.modal', _.bind(this.destroy, this));
+                }
             },
 
             setUpWidgets: function (root) {
@@ -63,7 +71,9 @@
             },
 
             resetOnShown: function () {
-                this.reset();
+                if (!this.isLoaded) { // asuming that loaded dialogs are pre filled
+                    this.reset();
+                }
             },
 
             hide: function () {
@@ -87,6 +97,13 @@
                         }
                     }
                 });
+            },
+
+            /**
+             * remove dialog from the DOM (on closing loaded dialogs)
+             */
+            destroy: function (event) {
+                this.$el.remove();
             },
 
             /**
@@ -408,27 +425,27 @@
             }
         });
 
+        /**
+         * load dialogs on demand and remove them on close
+         */
         components.LoadedDialog = components.Dialog.extend({
 
             initialize: function (options) {
-                core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$el.on('hidden.bs.modal', _.bind(this.onClose, this));
-            },
-
-            resetOnShown: function () {
-                // the loaded dialog should contain all values after load - prevent from reset
-            },
-
-            onClose: function (event) {
-                this.$el.remove();
+                core.components.Dialog.prototype.initialize.call(this, _.extend({
+                    loaded: true
+                }, options));
             }
         });
 
-        core.showLoadedDialog = function (viewType, html, initView, callback) {
+        core.addLoadedDialog = function (viewType, html) {
             var $body = $('body');
             $body.append(html);
             var $dialog = $body.children(':last-child');
-            var dialog = core.getWidget($body, $dialog[0], viewType);
+            return core.getWidget($body, $dialog[0], viewType, {loaded: true});
+        };
+
+        core.showLoadedDialog = function (viewType, html, initView, callback) {
+            var dialog = core.addLoadedDialog(viewType, html);
             if (dialog) {
                 dialog.show(initView, callback);
             }

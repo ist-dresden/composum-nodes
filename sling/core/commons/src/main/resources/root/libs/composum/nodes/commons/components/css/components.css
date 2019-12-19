@@ -289,11 +289,12 @@ fieldset {
  */
 .form-group .tree-panel {
     position: relative;
+    top: 0;
+    left: 0;
     min-height: 200px;
     max-height: 350px;
     overflow: auto;
     width: 100%;
-    margin: 0 0 0 -5px;
     padding: 10px;
     background-color: #fff;
     background-image: none;

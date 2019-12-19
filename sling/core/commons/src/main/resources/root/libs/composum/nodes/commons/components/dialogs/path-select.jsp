@@ -16,7 +16,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="messages">
-                        <div class="alert"></div>
+                        <div class="alert hidden"></div>
                     </div>
 
                     <div class="form-group">
