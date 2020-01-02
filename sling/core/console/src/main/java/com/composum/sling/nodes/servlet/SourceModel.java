@@ -389,6 +389,11 @@ public class SourceModel extends ConsoleSlingBean {
      */
     public void writeZip(@Nonnull ZipOutputStream zipStream, @Nonnull String root, boolean writeDeep)
             throws IOException, RepositoryException {
+        if (ResourceUtil.isFile(resource)) {
+            if (writeDeep) { writeFile(zipStream, root, resource); }
+            // not writeDeep: a .content.xml is not present for a file, so we can't do anything.
+            return;
+        }
 
         ZipEntry entry;
         String path = resource.getPath();
@@ -424,7 +429,10 @@ public class SourceModel extends ConsoleSlingBean {
      */
     protected void writeFile(ZipOutputStream zipStream, String root, ResourceHandle file)
             throws IOException, RepositoryException {
-        if (file.getName().equals(JcrConstants.JCR_CONTENT)) { throw new IllegalArgumentException(); } // safety check
+        if (file.getName().equals(JcrConstants.JCR_CONTENT)) {
+            // file format doesn't allow this - we need to write the file with the parent's name
+            file = file.getParent();
+        }
 
         FileTime lastModified = getLastModified(file);
         ZipEntry entry;
