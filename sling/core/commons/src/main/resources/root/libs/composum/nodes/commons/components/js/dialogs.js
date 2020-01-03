@@ -286,35 +286,49 @@
         });
 
         /**
-         * the dialog to select a repository path in a tree view
+         * a dialog which can be 'opened' inside of another open dialog
          */
-        components.SelectPathDialog = components.Dialog.extend({
+        components.StackableDialog = components.Dialog.extend({
 
             initialize: function (options) {
-                components.Dialog.prototype.initialize.apply(this, [options]);
-                this.busy = false;
-                this.tree = core.getView(this.$('.path-select-tree'), components.Tree);
-                this.tree.onNodeSelected = _.bind(this.onNodeSelected, this);
-                this.$title = this.$('.modal-title');
-                this.$label = this.$('.path-input-label');
-                this.input = core.getView(this.$('input.path-input'), components.PathWidget);
-                this.input.$el.on('change', _.bind(this.inputChanged, this));
-                this.$('button.select').click(_.bind(function () {
-                    if (_.isFunction(this.callback)) {
-                        this.callback(this.getValue());
-                    }
-                    this.hide();
-                }, this));
+                core.components.Dialog.prototype.initialize.call(this, options);
             },
 
             /**
-             * initialization after shown...
+             *
              */
-            onShown: function () {
-                core.components.Dialog.prototype.onShown.apply(this);
-                this.inputChanged(); // simulate a change after shown to initialize the tree
+            show: function (initView, callback) {
+                core.components.Dialog.prototype.show.call(this, initView, callback);
             },
 
+            hide: function () {
+                core.components.Dialog.prototype.hide.call(this);
+            }
+        });
+
+        components.AbstractPathSelectDialog = components.StackableDialog.extend({
+
+            initialize: function (options) {
+                components.StackableDialog.prototype.initialize.call(this, options);
+                this.$title = this.$('.modal-title');
+                this.$label = this.$('.path-input-label');
+                this.input = core.getView(this.$(options.inputSelector || 'input.path-input'),
+                    options.inputType || core.components.PathWidget);
+                this.input.$el.on('change', _.bind(this.inputChanged, this));
+            },
+
+            /**
+             * @extends components.StackableDialog - initialization after shown...
+             */
+            onShown: function () {
+                components.StackableDialog.prototype.onShown.call(this);
+                this.inputChanged(); // simulate a change after shown to initialize the view
+            },
+
+            /**
+             * @override prevent from default callback handling;
+             * the callback must be triggerded by 'select' with the value (path) as parameter
+             */
             hide: function () {
                 this.$el.modal('hide');
                 this.reset();
@@ -335,18 +349,17 @@
             },
 
             /**
-             * defines the root path for the tree (default: '/')
+             * defines the root path for the selector (default: '/')
              */
             setRootPath: function (rootPath) {
                 this.input.setRootPath(rootPath);
-                this.tree.setRootPath(rootPath);
             },
 
             /**
-             * defines the node filter for the tree; should be set according to the current value type
+             * defines the node filter for the view; should be set according to the current value type
              */
             setFilter: function (filter) {
-                this.tree.setFilter(filter);
+                this.input.setFilter(filter);
             },
 
             /**
@@ -355,7 +368,7 @@
             getValue: function () {
                 var path = this.input.getValue();
                 if (path && !_.isEmpty(path = path.trim())) {
-                    var rootPath = this.tree.getRootPath();
+                    var rootPath = this.input.getRootPath();
                     if (rootPath !== '/') {
                         if (path.indexOf('/') === 0) {
                             path = rootPath + path;
@@ -372,7 +385,7 @@
              */
             setValue: function (value) {
                 if (value && !_.isEmpty(value = value.trim())) {
-                    var rootPath = this.tree.getRootPath();
+                    var rootPath = this.input.getRootPath();
                     if (rootPath !== '/') {
                         if (value === rootPath) {
                             value = '/';
@@ -384,7 +397,48 @@
                     }
                 }
                 this.input.setValue(value);
-                this.inputChanged(); // select value in the tree
+                this.inputChanged(); // trigger state refresh
+            },
+
+            /**
+             * @abstract the callback on each change in the input field
+             */
+            inputChanged: function () {
+            }
+        });
+
+        /**
+         * the dialog to select a repository path in a tree view
+         */
+        components.SelectPathDialog = components.AbstractPathSelectDialog.extend({
+
+            initialize: function (options) {
+                components.AbstractPathSelectDialog.prototype.initialize.apply(this, [options]);
+                this.busy = false;
+                this.tree = core.getView(this.$('.path-select-tree'), components.Tree);
+                this.tree.onNodeSelected = _.bind(this.onNodeSelected, this);
+                this.$('button.select').click(_.bind(function () {
+                    if (_.isFunction(this.callback)) {
+                        this.callback(this.getValue());
+                    }
+                    this.hide();
+                }, this));
+            },
+
+            /**
+             * defines the root path for the tree (default: '/')
+             */
+            setRootPath: function (rootPath) {
+                components.AbstractPathSelectDialog.prototype.setRootPath.call(this, rootPath);
+                this.tree.setRootPath(rootPath);
+            },
+
+            /**
+             * defines the node filter for the tree; should be set according to the current value type
+             */
+            setFilter: function (filter) {
+                components.AbstractPathSelectDialog.prototype.setFilter.call(this, filter);
+                this.tree.setFilter(filter);
             },
 
             /**
@@ -420,7 +474,7 @@
              * extended to reset the selection in the tree
              */
             reset: function () {
-                components.Dialog.prototype.reset.apply(this);
+                components.AbstractPathSelectDialog.prototype.reset.apply(this);
                 this.tree.reset.apply(this.tree);
             }
         });

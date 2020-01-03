@@ -797,7 +797,7 @@
                     rootPath: this.$el.data('root') || '/'
                 };
                 this.setRootPath(this.config.rootPath);
-                this.filter = this.$el.data('filter');
+                this.setFilter(this.$el.data('filter'));
                 // set up '.select' button if present
                 this.$selectButton = this.$('button.select');
                 if (this.$selectButton.length > 0) {
@@ -826,7 +826,7 @@
                 selectDialog.setTitle(this.dialogTitle);
                 selectDialog.setLabel(this.dialogLabel);
                 selectDialog.setRootPath(this.getRootPath());
-                selectDialog.setFilter(this.filter);
+                selectDialog.setFilter(this.getFilter());
                 selectDialog.show(_.bind(function () {
                         this.getPath(_.bind(selectDialog.setValue, selectDialog));
                     }, this),
@@ -864,6 +864,14 @@
                 this.rootPath = this.adjustRootPath(path ? path : this.config.rootPath);
             },
 
+            getFilter: function () {
+                return this.filter;
+            },
+
+            setFilter: function (filter) {
+                this.filter = filter;
+            },
+
             adjustRootPath: function (path) {
                 return path;
             }
@@ -878,8 +886,8 @@
 
             initialize: function (options) {
                 components.PathWidget.prototype.initialize.apply(this, [options]);
-                if (!this.filter) {
-                    this.filter = 'referenceable';
+                if (!this.getFilter()) {
+                    this.setFilter('referenceable');
                 }
             },
 
