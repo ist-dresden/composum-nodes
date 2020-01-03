@@ -7,6 +7,7 @@ import com.composum.sling.core.bean.SlingBeanFactory;
 import com.composum.sling.core.util.SlingResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.osgi.framework.InvalidSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,9 @@ public class ComponentTag extends CpnlBodyTagSupport {
     protected Integer varScope;
     protected Boolean replace;
 
+    protected String path;
+    protected Resource resource;
+
     protected SlingBean component;
     private transient Class<? extends SlingBean> componentType;
     private static final Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<>();
@@ -48,6 +52,8 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     @Override
     protected void clear() {
+        resource = null;
+        path = null;
         var = null;
         type = null;
         varScope = null;
@@ -155,6 +161,14 @@ public class ComponentTag extends CpnlBodyTagSupport {
         return replace != null ? replace : (getVarScope() == PageContext.PAGE_SCOPE);
     }
 
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public void setResource(Resource resource) {
+        this.resource = resource;
+    }
+
     /**
      * get the content type class object
      */
@@ -215,9 +229,19 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     /**
      * Hook that can change the resource used for {@link #createComponent()} if necessary. This implementation just uses
-     * the resource from the {@link #context} ( {@link BeanContext#getResource()} ).
+     * the resource from the {@link #context} ( {@link BeanContext#getResource()} ) if not specified explicitly.
      */
     public Resource getModelResource(BeanContext context) {
+        if (this.resource != null) {
+            return this.resource;
+        }
+        if (StringUtils.isNotBlank(this.path)) {
+            ResourceResolver resolver = context.getResolver();
+            Resource resource = resolver.getResource(this.path);
+            if (resource != null) {
+                return resource;
+            }
+        }
         return context.getResource();
     }
 
