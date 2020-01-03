@@ -34,8 +34,8 @@ public class ComponentTag extends CpnlBodyTagSupport {
     protected Integer varScope;
     protected Boolean replace;
 
-    protected String path;
-    protected Resource resource;
+    protected String attrPath;
+    protected Resource attrResource;
 
     protected SlingBean component;
     private transient Class<? extends SlingBean> componentType;
@@ -52,8 +52,8 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     @Override
     protected void clear() {
-        resource = null;
-        path = null;
+        attrResource = null;
+        attrPath = null;
         var = null;
         type = null;
         varScope = null;
@@ -162,11 +162,11 @@ public class ComponentTag extends CpnlBodyTagSupport {
     }
 
     public void setPath(String path) {
-        this.path = path;
+        this.attrPath = path;
     }
 
     public void setResource(Resource resource) {
-        this.resource = resource;
+        this.attrResource = resource;
     }
 
     /**
@@ -232,12 +232,12 @@ public class ComponentTag extends CpnlBodyTagSupport {
      * the resource from the {@link #context} ( {@link BeanContext#getResource()} ) if not specified explicitly.
      */
     public Resource getModelResource(BeanContext context) {
-        if (this.resource != null) {
-            return this.resource;
+        if (this.attrResource != null) {
+            return this.attrResource;
         }
-        if (StringUtils.isNotBlank(this.path)) {
+        if (StringUtils.isNotBlank(this.attrPath)) {
             ResourceResolver resolver = context.getResolver();
-            Resource resource = resolver.getResource(this.path);
+            Resource resource = resolver.getResource(this.attrPath);
             if (resource != null) {
                 return resource;
             }
