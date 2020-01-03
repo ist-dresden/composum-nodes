@@ -7,18 +7,20 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Reader;
-import java.text.DecimalFormat;
+import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +44,8 @@ import static org.apache.sling.api.resource.ResourceUtil.isSyntheticResource;
  * list - it's probably easier to extend Status and have attributes with the specific types needed.)
  */
 public class Status {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Status.class);
 
     public static final String STATUS = "status";
     public static final String SUCCESS = "success";
@@ -454,6 +458,27 @@ public class Status {
         gson.toJson(this, getClass(), writer);
     }
 
+    /**
+     * Returns the JSON representation of this status as String, primarily for logging.
+     * Usable for logging: never throws up even if JSON generation fails, though it's
+     * obviously lacking data then.
+     */
+    @Nonnull
+    public String getJsonString() {
+        try (StringWriter statusString = new StringWriter()) {
+            toJson(new JsonWriter(statusString));
+            return statusString.toString();
+        } catch (IOException | RuntimeException e) {
+            LOG.error("Could not create JSON", e);
+            try { // since this is primarily for logging, we try this as last resort.
+                return ReflectionToStringBuilder.reflectionToString(this);
+            } catch (RuntimeException e1) {
+                LOG.error("Could not even create some representation via reflection. Giving up.", e1);
+                return super.toString();
+            }
+        }
+    }
+
     /** Serializes the status message and writes it in the response, using {@link #getStatus()} as HTTP status. */
     public void sendJson() throws IOException {
         sendJson(getStatus());
@@ -510,7 +535,14 @@ public class Status {
             logger.warn(text, args);
         }
 
-        /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
+        /**
+         * For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} .
+         * If you want to log an exception stacktrace, give the exception as additional argument not used as
+         * positional parameter. If the exception is to be included as positional parameter, too,
+         * you need to transform it into a string, or it won't be replaced in the log.
+         * <code>status.withLogging(LOG).error("For id {} got exception {}", id, exception.toString(), exception);
+         * </code>
+         */
         public void error(@Nonnull String text, Object... args) {
             Status.this.error(text, args);
             logger.error(text, args);

@@ -10,6 +10,8 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.StringReader;
@@ -24,10 +26,13 @@ import java.util.concurrent.ExecutorService;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 /** Checks JSON serialization of {@link Status}. */
 public class StatusTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(StatusTest.class);
 
     @Mock
     private SlingHttpServletRequest request;
@@ -111,6 +116,19 @@ public class StatusTest {
 
         Status readback = gson.fromJson(stringWriter.toString(), Status.class);
         assertNotNull(readback);
+    }
+
+    @Test
+    public void checkLoggingExceptions() {
+        String id = "arg";
+        Status status;
+        status = new Status(request, response);
+        Throwable exception = new RuntimeException("Some exception");
+        status.withLogging(LOG).error("For id {} got exception {}", id, exception.toString(), exception);
+        System.out.println(status.getJsonString());
+        // can't easily check the log output - manual checking required. There should be a stacktrace and a log message
+        // StatusTest - For id arg got exception java.lang.RuntimeException: Some exception
+        assertTrue(status.getJsonString().contains("For id arg got exception java.lang.RuntimeException: Some exception"));
     }
 
     private static class TestStatusExtensionObject {
