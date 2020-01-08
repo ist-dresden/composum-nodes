@@ -491,11 +491,12 @@
             }
         });
 
-        core.addLoadedDialog = function (viewType, html) {
+        core.addLoadedDialog = function (viewType, html, initializer) {
             var $body = $('body');
             $body.append(html);
             var $dialog = $body.children(':last-child');
-            return core.getWidget($body, $dialog[0], viewType, {loaded: true});
+            return core.getWidget($body, $dialog[0], viewType, initializer
+                ? _.extend({loaded: true}, initializer) : {loaded: true});
         };
 
         core.showLoadedDialog = function (viewType, html, initView, callback) {

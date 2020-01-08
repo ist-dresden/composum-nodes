@@ -794,10 +794,10 @@
                 this.dialogTitle = this.$el.attr('title');
                 this.dialogLabel = this.$el.data('label');
                 this.config = {
-                    rootPath: this.$el.data('root') || '/'
+                    rootPath: options.rootPath || this.$el.data('root') || '/'
                 };
                 this.setRootPath(this.config.rootPath);
-                this.setFilter(this.$el.data('filter'));
+                this.setFilter(options.filter || this.$el.data('filter'));
                 // set up '.select' button if present
                 this.$selectButton = this.$('button.select');
                 if (this.$selectButton.length > 0) {
