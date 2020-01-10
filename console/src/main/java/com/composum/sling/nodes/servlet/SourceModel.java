@@ -390,6 +390,9 @@ public class SourceModel extends ConsoleSlingBean {
      */
     public void writeZip(@Nonnull ZipOutputStream zipStream, @Nonnull String root, boolean writeDeep)
             throws IOException, RepositoryException {
+        if (resource == null || ResourceUtil.isNonExistingResource(resource)) {
+            return;
+        }
         if (ResourceUtil.isFile(resource)) {
             if (writeDeep) { writeFile(zipStream, root, resource); }
             // not writeDeep: a .content.xml is not present for a file, so we can't do anything.
