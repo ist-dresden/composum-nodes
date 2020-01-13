@@ -136,7 +136,7 @@ public class JobControlServlet extends AbstractServiceServlet {
                     final Iterator<Resource> resources = resolver.findResources("/jcr:root/var/audit/jobs//*[outfile='" + path + "']", "xpath");
                     if (resources.hasNext()) {
                         final Resource audit = resources.next();
-                        final Resource outfileResource = resolver.getResource(audit, path.substring(path.lastIndexOf('/') + 1));
+                        final Resource outfileResource = resolver.getResource(audit, path.substring(path.lastIndexOf(File.separator) + 1));
                         try (final ServletOutputStream outputStream = response.getOutputStream();
                              final InputStream inputStream = outfileResource.adaptTo(InputStream.class)) {
                             writeStream(ranges, outputStream, inputStream);
@@ -448,7 +448,7 @@ public class JobControlServlet extends AbstractServiceServlet {
             } else if (property instanceof String) {
                 final String s = (String) property;
                 if (propertyName.equals("outfile")) {
-                    jsonWriter.name(propertyName).value(s.substring(s.lastIndexOf('/') + 1));
+                    jsonWriter.name(propertyName).value(s.substring(s.lastIndexOf(File.separator) + 1));
                 } else {
                     jsonWriter.name(propertyName).value(s);
                 }
