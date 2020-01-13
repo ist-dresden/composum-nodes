@@ -982,7 +982,8 @@
 }
 
 #browser-view .node-view-panel .node-view-content .script .detail-content .log-output {
-    font-size: 13px;
+    font-family: "Monaco", "Menlo", "Consolas", "Courier New", "Courier", monospace;
+    font-size: 12px;
     white-space: pre;
 }
 
