@@ -17,7 +17,7 @@ public class RequestBundle extends ResourceBundle {
     /**
      * returns the requests instance
      */
-    public static synchronized RequestBundle get(SlingHttpServletRequest request) {
+    public static synchronized RequestBundle get(@Nonnull SlingHttpServletRequest request) {
         RequestBundle instance = (RequestBundle) request.getAttribute(ATTRIBUTE_KEY);
         if (instance == null) {
             instance = new RequestBundle(request);
@@ -29,7 +29,7 @@ public class RequestBundle extends ResourceBundle {
     protected final SlingHttpServletRequest request;
     protected final List<BundleItem> bundles;
 
-    protected class BundleWrapper extends ResourceBundle {
+    protected static class BundleWrapper extends ResourceBundle {
 
         protected final ResourceBundle bundle;
 
@@ -37,6 +37,7 @@ public class RequestBundle extends ResourceBundle {
             this.bundle = bundle;
         }
 
+        @Override
         public void setParent(ResourceBundle bundle) {
             super.setParent(bundle);
         }
