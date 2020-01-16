@@ -15,6 +15,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * Creates a {@link TypeAdapter} for the JSON (de-)serialization of {@link MessageContainer}s and {@link Message}s.
@@ -32,23 +33,33 @@ public class MessageTypeAdapterFactory implements TypeAdapterFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageTypeAdapterFactory.class);
 
-    @Nullable
-    protected final SlingHttpServletRequest request;
+    @Nonnull
+    protected final Supplier<SlingHttpServletRequest> requestProvider;
 
-    /** Default constructor, e.g. if used with {@link JsonAdapter}. */
+    /**
+     * Default constructor, e.g. if used with {@link JsonAdapter} - does not provide i18n for the messages.
+     *
+     * @deprecated since using explicitly makes little sense.
+     */
+    @Deprecated
     public MessageTypeAdapterFactory() {
-        this(null);
+        this(() -> null);
     }
 
     /** If you want i18n. For use with {@link com.google.gson.GsonBuilder#registerTypeAdapterFactory(TypeAdapterFactory)}. */
     public MessageTypeAdapterFactory(@Nullable SlingHttpServletRequest request) {
-        this.request = request;
+        this.requestProvider = () -> request;
     }
 
-    @SuppressWarnings({"unchecked", "NullabilityAnnotations"})
+    /** If you want i18n. For use with {@link com.google.gson.GsonBuilder#registerTypeAdapterFactory(TypeAdapterFactory)}. */
+    public MessageTypeAdapterFactory(@Nonnull Supplier<SlingHttpServletRequest> requestProvider) {
+        this.requestProvider = Objects.requireNonNull(requestProvider);
+    }
+
+    @SuppressWarnings({"unchecked", "NullabilityAnnotations", "ReturnOfNull"})
     @Override
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-        LOG.info("create called for " + type);
+        LOG.info("create called for {}", type);
         if (MessageContainer.class.equals(type.getRawType())) {
             return (TypeAdapter<T>) new MessageContainerTypeAdapter(gson);
         }
@@ -122,7 +133,7 @@ public class MessageTypeAdapterFactory implements TypeAdapterFactory {
         protected Message prepareI18nMessage(@Nonnull Message value) {
             Message i18nMessage = value;
             try {
-                i18nMessage = value.prepareForJsonSerialization(request);
+                i18nMessage = value.prepareForJsonSerialization(requestProvider.get());
             } catch (CloneNotSupportedException impossible) {
                 LOG.error("Could not clone " + value.getClass(), impossible);
                 i18nMessage.getText(); // make sure that i18nmessage.message at least contains something.

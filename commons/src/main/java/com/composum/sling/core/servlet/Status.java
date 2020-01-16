@@ -1,7 +1,9 @@
 package com.composum.sling.core.servlet;
 
-import com.composum.sling.core.util.I18N;
-import com.composum.sling.core.util.LoggerFormat;
+import com.composum.sling.core.logging.Message;
+import com.composum.sling.core.logging.Message.Level;
+import com.composum.sling.core.logging.MessageContainer;
+import com.composum.sling.core.logging.MessageTypeAdapterFactory;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -19,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.io.Reader;
 import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
@@ -47,98 +49,8 @@ public class Status {
 
     private static final Logger LOG = LoggerFactory.getLogger(Status.class);
 
-    public static final String STATUS = "status";
-    public static final String SUCCESS = "success";
-    public static final String WARNING = "warning";
-
-    public static final String TITLE = "title";
-    public static final String MESSAGES = "messages";
-    public static final String LEVEL = "level";
-    public static final String CONTEXT = "context";
-    public static final String LABEL = "label";
-    public static final String TEXT = "text";
-    public static final String HINT = "hint";
-
+    /** Constant for often used argument for {@link #data(String)}. */
     public static final String DATA = "data";
-
-    public static final String BOOTSTRAP_ERROR = "danger";
-
-    public enum Level {
-        info, warn, error;
-
-        @Nonnull
-        public static Level levelOf(@Nonnull String name) {
-            if (BOOTSTRAP_ERROR.equalsIgnoreCase(name)) {
-                name = error.name();
-            }
-            return valueOf(name);
-        }
-    }
-
-    public class Message {
-
-        @Nonnull
-        public final Level level;
-
-        /** In validation messages: context of the validation, for instance the dialog tab. */
-        @Nullable
-        public final String context;
-
-        /** In validation messages: label of the field which the message is about. */
-        @Nullable
-        public final String label;
-
-        /** The text of the message, can contain {@literal {}} placeholders. */
-        @Nonnull
-        public final String text;
-
-        /** @param text The text of the message, can contain {@literal {}} placeholders. */
-        public Message(@Nonnull final Level level, @Nonnull final String text) {
-            this(level, null, null, text);
-        }
-
-        /**
-         * @param context In validation messages: context of the validation, for instance the dialog tab.
-         * @param label   In validation messages: label of the field which the message is about.
-         * @param text    The text of the message, can contain {@literal {}} placeholders.
-         */
-        public Message(@Nonnull final Level level,
-                       @Nullable final String context, @Nullable final String label,
-                       @Nonnull final String text) {
-            this.level = level;
-            this.context = context;
-            this.label = label;
-            this.text = text;
-        }
-
-        /**
-         * the 'translate' constructor
-         */
-        public Message(Map<String, Object> data) {
-            Object value;
-            Object hint = data.get(HINT);
-            level = (value = data.get(LEVEL)) != null ? Level.levelOf(value.toString()) : Level.info;
-            context = (value = data.get(CONTEXT)) != null ? prepare(value.toString()) : null;
-            label = (value = data.get(LABEL)) != null ? prepare(value.toString()) : null;
-            text = (value = data.get(TEXT)) != null
-                    ? (hint != null ? prepare(value.toString(), hint) : prepare(value.toString()))
-                    : null;
-        }
-
-        @SuppressWarnings("Duplicates")
-        public void toJson(JsonWriter writer) throws IOException {
-            writer.beginObject();
-            writer.name(LEVEL).value(level.name());
-            if (StringUtils.isNotBlank(context)) {
-                writer.name(CONTEXT).value(context);
-            }
-            if (StringUtils.isNotBlank(label)) {
-                writer.name(LABEL).value(label);
-            }
-            writer.name(TEXT).value(text);
-            writer.endObject();
-        }
-    }
 
     protected transient final Gson gson;
     protected transient final SlingHttpServletRequest request;
@@ -148,19 +60,45 @@ public class Status {
     protected boolean success = true;
     protected boolean warning = false;
 
+    /** If set, added messages will be logged here. */
+    @Nullable
+    protected Logger messageLogger;
     @Nullable
     protected String title;
     @Nullable
-    protected List<Message> messages;
+    protected MessageContainer messages;
     @Nullable
     protected Map<String, Map<String, Object>> data;
     @Nullable
     protected Map<String, List<Map<String, Object>>> list;
 
-    public Status(@Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response) {
-        this(new GsonBuilder().create(), request, response);
+    public Status(@Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response,
+                  @Nullable Logger messageLogger) {
+        this(new GsonBuilder(), request, response, messageLogger);
     }
 
+    public Status(@Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response) {
+        this(new GsonBuilder(), request, response, null);
+    }
+
+    /** Construction */
+    public Status(@Nonnull final GsonBuilder gsonBuilder,
+                  @Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response,
+                  @Nullable Logger messageLogger) {
+        this.gson = initGson(Objects.requireNonNull(gsonBuilder), () -> request).create();
+        this.request = request;
+        this.response = response;
+        this.messageLogger = messageLogger;
+    }
+
+    /**
+     * Construct with a specific Gson instance. CAUTION: you need to have called
+     * {@link #initGson(GsonBuilder, SlingHttpServletRequest)} for proper message translation.
+     * Perhaps rather use {@link #Status(GsonBuilder, SlingHttpServletRequest, SlingHttpServletResponse)}.
+     *
+     * @deprecated since it's dangerous to forget {@link #initGson(GsonBuilder, SlingHttpServletRequest)}.
+     */
+    @Deprecated
     public Status(@Nonnull final Gson gson,
                   @Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response) {
         this.gson = Objects.requireNonNull(gson);
@@ -168,10 +106,24 @@ public class Status {
         this.response = response;
     }
 
-    /** @deprecated Constructor for gson only */
+    /** @deprecated Constructor for deserialization with gson only */
     @Deprecated
     public Status() {
         this(new GsonBuilder().create(), null, null);
+    }
+
+    /**
+     * Registers a type adapter for the JSON serialization of {@link Message} and {@link MessageContainer} that
+     * performs i18n according to the given request. If there is no request, we can skip this step as these classes are
+     * annotated with {@link com.google.gson.annotations.JsonAdapter}.
+     */
+    @Nonnull
+    public static GsonBuilder initGson(@Nonnull GsonBuilder gsonBuilder,
+                                       @Nonnull Supplier<SlingHttpServletRequest> requestProvider) {
+        if (requestProvider != null) {
+            return gsonBuilder.registerTypeAdapterFactory(new MessageTypeAdapterFactory(requestProvider));
+        }
+        return gsonBuilder;
     }
 
     public int getStatus() {
@@ -224,7 +176,7 @@ public class Status {
     }
 
     public String getTitle() {
-        return hasTitle() ? title : prepare("Result");
+        return title;
     }
 
     public boolean hasTitle() {
@@ -232,7 +184,13 @@ public class Status {
     }
 
     public void setTitle(String title) {
-        this.title = title != null ? prepare(title) : null;
+        this.title = title;
+    }
+
+    @Nonnull
+    public MessageContainer getMessages() {
+        if (messages == null) { messages = new MessageContainer(messageLogger); }
+        return messages;
     }
 
     public boolean isValid() {
@@ -245,6 +203,10 @@ public class Status {
 
     public boolean isWarning() {
         return warning;
+    }
+
+    public void setWarning(boolean value) {
+        this.warning = value;
     }
 
     public boolean isError() {
@@ -293,11 +255,7 @@ public class Status {
     @Nonnull
     public Map<String, Object> data(@Nonnull final String name) {
         if (data == null) { data = new LinkedHashMap<>();}
-        Map<String, Object> object = data.get(name);
-        if (object == null) {
-            object = new LinkedHashMap<>();
-            data.put(name, object);
-        }
+        Map<String, Object> object = data.computeIfAbsent(name, k -> new LinkedHashMap<>());
         return object;
     }
 
@@ -333,11 +291,7 @@ public class Status {
     @Nonnull
     public List<Map<String, Object>> list(@Nonnull final String name) {
         if (list == null) { list = new LinkedHashMap<>(); }
-        List<Map<String, Object>> object = list.get(name);
-        if (object == null) {
-            object = new ArrayList<>();
-            list.put(name, object);
-        }
+        List<Map<String, Object>> object = list.computeIfAbsent(name, k -> new ArrayList<>());
         return object;
     }
 
@@ -362,7 +316,7 @@ public class Status {
      * @param args  argument objects for the log like message preparation of text
      */
     public void shortMessage(@Nonnull final Level level, @Nonnull final String text, Object... args) {
-        addValidationMessage(level, null, null, prepare(text, args));
+        addValidationMessage(level, null, null, text, args);
     }
 
     /**
@@ -376,18 +330,18 @@ public class Status {
      */
     public void addValidationMessage(@Nonnull final Level level, @Nullable final String context, @Nullable final String label,
                                      @Nonnull final String text, Object... args) {
-        addMessage(new Message(level, prepare(context), prepare(label), prepare(text, args)));
+        addMessage(new Message(level, text, args).setContext(context).setLabel(label));
     }
 
     public void addMessage(@Nonnull final Message message) {
-        if (messages == null) { messages = new ArrayList<>(); }
-        if (message.level == Level.error) {
+        if (messages == null) { messages = new MessageContainer(messageLogger); }
+        if (message.getLevel() == Level.error) {
             status = SC_BAD_REQUEST;
             success = false;
             if (!hasTitle()) {
                 setTitle("Error");
             }
-        } else if (message.level == Level.warn && status == SC_OK) {
+        } else if (message.getLevel() == Level.warn && status == SC_OK) {
             status = SC_ACCEPTED; // 202 - accepted but there is a warning
             warning = true;
             if (!hasTitle()) {
@@ -395,62 +349,6 @@ public class Status {
             }
         }
         messages.add(message);
-    }
-
-    /**
-     * @param text a text for an internationalized message
-     * @param args the arguments for the text placeholders
-     * @return the internationalized text
-     * @see MessageFormat
-     */
-    public String prepare(@Nullable String text, Object... args) {
-        if (text != null) {
-            text = I18N.get(request, text);
-            if (args != null && args.length > 0) {
-                text = LoggerFormat.format(text, args);
-            }
-        }
-        return text;
-    }
-
-    @SuppressWarnings("unchecked")
-    public void translate(@Nonnull final Reader reader) {
-        Map<String, Object> data = gson.fromJson(reader, Map.class);
-        Object value;
-        if ((value = data.get(TITLE)) != null) {
-            setTitle(prepare(value.toString()));
-        }
-        if ((value = data.get(SUCCESS)) instanceof Boolean) {
-            success = (Boolean) value;
-            if (success) {
-                status = SC_OK;
-            } else {
-                status = SC_BAD_REQUEST;
-                if (!hasTitle()) {
-                    setTitle("Error");
-                }
-            }
-        }
-        if ((value = data.get(WARNING)) instanceof Boolean) {
-            warning = (Boolean) value;
-            if (success) {
-                status = SC_ACCEPTED;
-            }
-            if (!hasTitle()) {
-                setTitle("Warning");
-            }
-        }
-        if ((value = data.get(STATUS)) != null) {
-            setStatus(value instanceof Integer ? (Integer) value : Integer.parseInt(value.toString()));
-        }
-        if ((value = data.get(MESSAGES)) instanceof Collection) {
-            for (Object val : ((Collection<?>) value)) {
-                if (val instanceof Map) {
-                    //noinspection rawtypes
-                    addMessage(new Message((Map) val));
-                }
-            }
-        }
     }
 
     /** Writes this object as JSON using {@link Gson}. */
@@ -492,9 +390,14 @@ public class Status {
         toJson(writer);
     }
 
+    @Nonnull
+    public Gson getGson() {
+        return gson;
+    }
+
     /**
      * Shortcut: if you want to log the same message to a logger as you want to present to the user - call the methods here.
-     * E.g. <code>status.withLogging(LOG).error("Some error happened in {}", path);</code>.
+     * E.g. {@code status.withLogging(LOG).error("Some error happened in {}", path);}.
      */
     @Nonnull
     public StatusWithLogging withLogging(@Nonnull Logger logger) {
@@ -540,8 +443,8 @@ public class Status {
          * If you want to log an exception stacktrace, give the exception as additional argument not used as
          * positional parameter. If the exception is to be included as positional parameter, too,
          * you need to transform it into a string, or it won't be replaced in the log.
-         * <code>status.withLogging(LOG).error("For id {} got exception {}", id, exception.toString(), exception);
-         * </code>
+         * {@code status.withLogging(LOG).error("For id {} got exception {}", id, exception.toString(), exception);
+         * }
          */
         public void error(@Nonnull String text, Object... args) {
             Status.this.error(text, args);
@@ -550,7 +453,7 @@ public class Status {
 
         public void error(@Nonnull String text, @Nonnull Throwable ex) {
             Status.this.error(text, ex.getLocalizedMessage());
-            logger.error(prepare(text, ex.getLocalizedMessage()), ex);
+            logger.error(text, ex.getLocalizedMessage(), ex);
         }
 
         /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */

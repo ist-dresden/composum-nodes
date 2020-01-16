@@ -1,5 +1,6 @@
 package com.composum.sling.core.logging;
 
+import com.composum.sling.core.servlet.Status;
 import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.LoggerFormat;
 import com.google.gson.TypeAdapterFactory;
@@ -18,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A container for a message, e.g. about internal processes, that can be presented to the user. It could be localized,
@@ -37,6 +39,14 @@ public class Message implements Cloneable {
     /** @see #getLevel() */
     protected Level level;
 
+    /** @see #getContext() */
+    @Nullable
+    protected String context;
+
+    /** @see #getLabel() */
+    @Nullable
+    protected String label;
+
     /**
      * If set, an i18n-ed version of {@link #rawText} with all placeholders replaced. This is modified during
      * JSON-serialization.
@@ -55,14 +65,6 @@ public class Message implements Cloneable {
     /** @see #getCategory() */
     @Nullable
     protected String category;
-
-    /** @see #getContext() */
-    @Nullable
-    protected String context;
-
-    /** @see #getLabel() */
-    @Nullable
-    protected String label;
 
     /** @see #getDetails() */
     @Nullable
@@ -415,6 +417,7 @@ public class Message implements Cloneable {
 
     /** Kind of message, also used as loglevel when this is logged. */
     public enum Level {
+
         /**
          * Problems that require the users attention. This usually means that an operation was aborted or yielded
          * errorneous results.
@@ -431,7 +434,18 @@ public class Message implements Cloneable {
          * Detailed informations that are not normally shown to users, but could help to investigate problems if
          * required.
          */
-        debug
+        debug;
+
+        public static final String BOOTSTRAP_ERROR = "danger";
+
+        @Nonnull
+        public static Level levelOf(@Nonnull String name) {
+            if (BOOTSTRAP_ERROR.equalsIgnoreCase(name)) {
+                name = error.name();
+            }
+            return valueOf(name);
+        }
+
     }
 
 }
