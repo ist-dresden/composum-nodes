@@ -1,10 +1,13 @@
 package com.composum.sling.core.servlet;
 
+import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.logging.TestMessageContainer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.Resource;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
@@ -15,7 +18,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -29,6 +34,7 @@ import java.util.ResourceBundle;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /** Checks JSON serialization of {@link Status}. */
@@ -45,7 +51,7 @@ public class StatusTest {
     @Before
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
-        when(request.getResourceBundle(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(new PropertyResourceBundle(new StringReader("")));
+        when(request.getResourceBundle(any(), any())).thenReturn(new PropertyResourceBundle(new StringReader("")));
     }
 
     @Test
@@ -72,14 +78,16 @@ public class StatusTest {
         status.toJson(jsonWriter);
 
         assertEquals("{\"status\":213,\"success\":true,\"warning\":false,\"title\":\"thetitle\"," +
-                "\"messages\":[{\"level\":\"warn\",\"text\":\"hello to franz from 17\"}]," +
-                "\"data\":{\"dat1\":{\"dk1\":15,\"dk2\":18}}," +
-                "\"list\":{\"list1\":[{\"mlkey\":42},{\"mlkey1\":23,\"mlkey2\":54}]}}", stringWriter.toString());
+                        "\"messages\":[{\"level\":\"warn\",\"text\":\"hello to franz from 17\"," +
+                        "\"rawText\":\"hello to {} from {}\",\"arguments\":[\"franz\",17],\"timestamp\":<timestamp>}]," +
+                        "\"data\":{\"dat1\":{\"dk1\":15,\"dk2\":18}}," +
+                        "\"list\":{\"list1\":[{\"mlkey\":42},{\"mlkey1\":23,\"mlkey2\":54}]}}",
+                stringWriter.toString().replaceAll(TestMessageContainer.TIMESTAMP_REGEX, "<timestamp>"));
 
         Status readback = gson.fromJson(stringWriter.toString(), Status.class);
         assertEquals(213, readback.getStatus());
         assertEquals("thetitle", readback.getTitle());
-        assertEquals("hello to franz from 17", readback.messages.get(0).text);
+        assertEquals("hello to franz from 17", readback.messages.iterator().next().getText());
         assertNotNull(readback.data("dat1"));
         assertNotNull(readback.list("list1"));
         assertEquals(54.0, readback.list("list1").get(1).get("mlkey2"));
@@ -165,37 +173,29 @@ public class StatusTest {
                 "}\n";
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-        SlingHttpServletRequest request = Mockito.mock(SlingHttpServletRequest.class);
         ResourceBundle bundle = new PropertyResourceBundle(new StringReader(
                 "with\\ hint\\ {}: mit Hinweis {}\n" +
                         "thehint: der Hinweis\n" +
                         "thetile: der Titel"));
-        Mockito.when(request.getResourceBundle(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(bundle);
-
-        Status status = new Status(gson, request, Mockito.mock(SlingHttpServletResponse.class));
-        status.translate(new StringReader(json));
+        when(request.getResourceBundle(any(), any())).thenReturn(bundle);
+        when(request.getReader()).thenReturn(new BufferedReader(new StringReader(json)));
 
         Writer stringWriter = new StringWriter();
-        JsonWriter jsonWriter = new JsonWriter(stringWriter);
-        status.toJson(jsonWriter);
+        when(response.getWriter()).thenReturn(new PrintWriter(stringWriter));
+
+        TranslationServlet servlet = new TranslationServlet();
+        TranslationServlet.TranslateStatus service = servlet.new TranslateStatus();
+
+        service.doIt(request, response, ResourceHandle.use(Mockito.mock(Resource.class)));
+
         System.out.println(stringWriter.toString());
 
+        // FIXME(hps,16.01.20) "der Titel"
         assertEquals("{\"status\":404,\"success\":false,\"warning\":true,\"title\":\"thetitle\"," +
-                "\"messages\":[{\"level\":\"warn\",\"context\":\"thecontext\",\"label\":\"thelabel\",\"text\":\"mit Hinweis thehint\"}]}", stringWriter.toString());
-        assertEquals("{\n" +
-                "  \"status\": 404,\n" +
-                "  \"success\": false,\n" +
-                "  \"warning\": true,\n" +
-                "  \"title\": \"thetitle\",\n" + // FIXME(hps,16.01.20) "der Titel"
-                "  \"messages\": [\n" +
-                "    {\n" +
-                "      \"level\": \"warn\",\n" +
-                "      \"context\": \"thecontext\",\n" +
-                "      \"label\": \"thelabel\",\n" +
-                "      \"text\": \"mit Hinweis thehint\"\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}", gson.toJson(status));
+                        "\"messages\":[{\"level\":\"warn\",\"context\":\"thecontext\",\"label\":\"thelabel\"," +
+                        "\"text\":\"mit Hinweis thehint\"," +
+                        "\"rawText\":\"with hint {}\",\"arguments\":[\"thehint\"],\"timestamp\":<timestamp>}]}",
+                stringWriter.toString().replaceAll(TestMessageContainer.TIMESTAMP_REGEX, "<timestamp>"));
     }
 
 }

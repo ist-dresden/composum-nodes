@@ -10,12 +10,15 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 
 /** A collection of {@link Message}s for humans - also meant for transmitting them via JSON. */
 @ThreadSafe
 @JsonAdapter(MessageTypeAdapterFactory.class)
-public class MessageContainer {
+public class MessageContainer implements Iterable<Message> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageContainer.class);
 
@@ -47,7 +50,7 @@ public class MessageContainer {
         this.log = log;
     }
 
-    /** A (unmodifiable) list of messages. */
+    /** A (unmodifiable) snapshot of the list of messages. */
     @Nonnull
     public List<Message> getMessages() {
         synchronized (lockObject) {
@@ -109,26 +112,22 @@ public class MessageContainer {
         }
     }
 
-    /**
-     * Internationalizes the message according to the requests locale. This modifies the messages - see
-     * {@link Message#i18n(SlingHttpServletRequest)}.
-     *
-     * @return this container for builder-style operation-chaining.
-     * @see Message#i18n(SlingHttpServletRequest)
-     * @deprecated rather register a {@link MessageTypeAdapterFactory#MessageTypeAdapterFactory(SlingHttpServletRequest)}.
-     */
-    // FIXME(hps,15.01.20) remove usages
-    @Deprecated
-    @Nonnull
-    public MessageContainer i18n(@Nonnull SlingHttpServletRequest request) {
-        synchronized (lockObject) {
-            if (messages != null) {
-                for (Message message : messages) {
-                    message.i18n(request);
-                }
-            }
-        }
-        return this;
+    /** Iterates over a readonly view. */
+    @Override
+    public Iterator<Message> iterator() {
+        return getMessages().iterator();
+    }
+
+    /** Iterates over a readonly view. */
+    @Override
+    public void forEach(Consumer<? super Message> action) {
+        getMessages().forEach(action);
+    }
+
+    /** Iterates over a readonly view. */
+    @Override
+    public Spliterator<Message> spliterator() {
+        return getMessages().spliterator();
     }
 
 }
