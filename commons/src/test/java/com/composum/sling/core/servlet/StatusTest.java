@@ -1,7 +1,7 @@
 package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.ResourceHandle;
-import com.composum.sling.core.logging.TestMessageContainer;
+import com.composum.sling.core.logging.MessageContainerTest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
@@ -10,7 +10,6 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -82,7 +81,7 @@ public class StatusTest {
                         "\"rawText\":\"hello to {} from {}\",\"arguments\":[\"franz\",17],\"timestamp\":<timestamp>}]," +
                         "\"data\":{\"dat1\":{\"dk1\":15,\"dk2\":18}}," +
                         "\"list\":{\"list1\":[{\"mlkey\":42},{\"mlkey1\":23,\"mlkey2\":54}]}}",
-                stringWriter.toString().replaceAll(TestMessageContainer.TIMESTAMP_REGEX, "<timestamp>"));
+                stringWriter.toString().replaceAll(MessageContainerTest.TIMESTAMP_REGEX, "<timestamp>"));
 
         Status readback = gson.fromJson(stringWriter.toString(), Status.class);
         assertEquals(213, readback.getStatus());
@@ -176,7 +175,7 @@ public class StatusTest {
         ResourceBundle bundle = new PropertyResourceBundle(new StringReader(
                 "with\\ hint\\ {}: mit Hinweis {}\n" +
                         "thehint: der Hinweis\n" +
-                        "thetile: der Titel"));
+                        "thetitle: der Titel"));
         when(request.getResourceBundle(any(), any())).thenReturn(bundle);
         when(request.getReader()).thenReturn(new BufferedReader(new StringReader(json)));
 
@@ -191,11 +190,11 @@ public class StatusTest {
         System.out.println(stringWriter.toString());
 
         // FIXME(hps,16.01.20) "der Titel"
-        assertEquals("{\"status\":404,\"success\":false,\"warning\":true,\"title\":\"thetitle\"," +
+        assertEquals("{\"status\":404,\"success\":false,\"warning\":true,\"title\":\"der Titel\"," +
                         "\"messages\":[{\"level\":\"warn\",\"context\":\"thecontext\",\"label\":\"thelabel\"," +
                         "\"text\":\"mit Hinweis thehint\"," +
                         "\"rawText\":\"with hint {}\",\"arguments\":[\"thehint\"],\"timestamp\":<timestamp>}]}",
-                stringWriter.toString().replaceAll(TestMessageContainer.TIMESTAMP_REGEX, "<timestamp>"));
+                stringWriter.toString().replaceAll(MessageContainerTest.TIMESTAMP_REGEX, "<timestamp>"));
     }
 
 }

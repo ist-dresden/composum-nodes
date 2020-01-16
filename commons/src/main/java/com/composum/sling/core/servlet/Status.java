@@ -4,6 +4,7 @@ import com.composum.sling.core.logging.Message;
 import com.composum.sling.core.logging.Message.Level;
 import com.composum.sling.core.logging.MessageContainer;
 import com.composum.sling.core.logging.MessageTypeAdapterFactory;
+import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -183,8 +184,15 @@ public class Status {
         return StringUtils.isNotBlank(title);
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setTitle(String rawTitle) {
+        if (StringUtils.isNotBlank(rawTitle)) {
+            this.title = request != null ? I18N.get(request, rawTitle) : rawTitle;
+            if (StringUtils.isBlank(this.title)) {
+                this.title = rawTitle;
+            }
+        } else {
+            this.title = null;
+        }
     }
 
     @Nonnull
@@ -407,7 +415,7 @@ public class Status {
     /**
      * Sets the logger of the {@link #getMessages()} message container to logger. Thus, new added messages will also
      * be logged with this logger.
-     * Consider using the constructor
+     * Please consider using the constructor
      * {@link #Status(SlingHttpServletRequest, SlingHttpServletResponse, Logger)} or
      * {@link #Status(GsonBuilder, SlingHttpServletRequest, SlingHttpServletResponse, Logger)}.
      *
@@ -426,7 +434,8 @@ public class Status {
      * @return this in builder-style
      * @deprecated rather use the constructor
      * {@link #Status(SlingHttpServletRequest, SlingHttpServletResponse, Logger)},
-     * {@link #Status(GsonBuilder, SlingHttpServletRequest, SlingHttpServletResponse, Logger)} or {@link #setMessageLogger(Logger)}.
+     * {@link #Status(GsonBuilder, SlingHttpServletRequest, SlingHttpServletResponse, Logger)}
+     * or, if need be, {@link #setMessageLogger(Logger)}.
      * This is kept for backwards compatibility for a while.
      */
     @Nonnull
