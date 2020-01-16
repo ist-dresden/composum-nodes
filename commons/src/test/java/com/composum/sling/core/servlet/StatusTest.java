@@ -9,11 +9,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -22,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PropertyResourceBundle;
-import java.util.concurrent.ExecutorService;
+import java.util.ResourceBundle;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -143,6 +145,57 @@ public class StatusTest {
         }
 
         TestStatusExtensionObject containedObject;
+    }
+
+    @Test
+    public void testTranslate() throws IOException {
+        String json = "{\n" +
+                "  \"title\": \"thetitle\",\n" +
+                "  \"warning\": true,\n" +
+                "  \"status\": \"404\",\n" +
+                "  \"messages\": [\n" +
+                "    {\n" +
+                "      \"level\": \"warn\",\n" +
+                "      \"context\": \"thecontext\",\n" +
+                "      \"label\": \"thelabel\",\n" +
+                "      \"text\": \"with hint {}\",\n" +
+                "      \"hint\": \"thehint\"\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}\n";
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        SlingHttpServletRequest request = Mockito.mock(SlingHttpServletRequest.class);
+        ResourceBundle bundle = new PropertyResourceBundle(new StringReader(
+                "with\\ hint\\ {}: mit Hinweis {}\n" +
+                        "thehint: der Hinweis\n" +
+                        "thetile: der Titel"));
+        Mockito.when(request.getResourceBundle(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(bundle);
+
+        Status status = new Status(gson, request, Mockito.mock(SlingHttpServletResponse.class));
+        status.translate(new StringReader(json));
+
+        Writer stringWriter = new StringWriter();
+        JsonWriter jsonWriter = new JsonWriter(stringWriter);
+        status.toJson(jsonWriter);
+        System.out.println(stringWriter.toString());
+
+        assertEquals("{\"status\":404,\"success\":false,\"warning\":true,\"title\":\"thetitle\"," +
+                "\"messages\":[{\"level\":\"warn\",\"context\":\"thecontext\",\"label\":\"thelabel\",\"text\":\"mit Hinweis thehint\"}]}", stringWriter.toString());
+        assertEquals("{\n" +
+                "  \"status\": 404,\n" +
+                "  \"success\": false,\n" +
+                "  \"warning\": true,\n" +
+                "  \"title\": \"thetitle\",\n" + // FIXME(hps,16.01.20) "der Titel"
+                "  \"messages\": [\n" +
+                "    {\n" +
+                "      \"level\": \"warn\",\n" +
+                "      \"context\": \"thecontext\",\n" +
+                "      \"label\": \"thelabel\",\n" +
+                "      \"text\": \"mit Hinweis thehint\"\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}", gson.toJson(status));
     }
 
 }
