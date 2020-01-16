@@ -22,14 +22,14 @@ import java.util.stream.Collectors;
 import static org.hamcrest.Matchers.is;
 
 /** Tests for {@link MessageContainer} and {@link Message}. */
-public class TestMessageContainer {
+public class MessageContainerTest {
 
     public static final String TIMESTAMP_REGEX = "157[0-9]{10}";
 
     @Rule
     public ErrorCollector ec = new ErrorCollector();
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestMessageContainer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MessageContainerTest.class);
 
     @Test
     public void jsonizeAndBack() {
