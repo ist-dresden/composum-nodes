@@ -1,7 +1,6 @@
 package com.composum.sling.core.logging;
 
 import com.google.gson.annotations.JsonAdapter;
-import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +23,7 @@ public class MessageContainer implements Iterable<Message> {
 
     /** A logger where {@link #add(Message)} automatically logs to. */
     @Nullable
-    protected transient final Logger log;
+    protected volatile transient Logger log;
 
     /** Synchronizing on this when accessing messages. */
     protected transient final Object lockObject = new Object();
@@ -130,4 +129,11 @@ public class MessageContainer implements Iterable<Message> {
         return getMessages().spliterator();
     }
 
+    /**
+     * Modifies the logger newly {@link #add(Message)}-ed / {@link #add(Message, Throwable)}-ed messages are logged
+     * to.
+     */
+    public void setLogger(Logger logger) {
+        this.log = logger;
+    }
 }

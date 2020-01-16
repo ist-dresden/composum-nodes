@@ -241,6 +241,15 @@ public class Status {
         shortMessage(Level.error, text, args);
     }
 
+    /**
+     * For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} .
+     * This adds the {@link Exception#getLocalizedMessage()} as message argument and logs the exception if
+     * a message logger is set.
+     */
+    public void error(@Nonnull String text, @Nonnull Throwable exception) {
+        getMessages().add(Message.error(text, exception.getLocalizedMessage()), exception);
+    }
+
     /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
     public void validationError(@Nonnull final String context, @Nonnull final String label,
                                 @Nonnull final String text, Object... args) {
@@ -397,70 +406,34 @@ public class Status {
     }
 
     /**
-     * Shortcut: if you want to log the same message to a logger as you want to present to the user - call the methods here.
-     * E.g. {@code status.withLogging(LOG).error("Some error happened in {}", path);}.
+     * Sets the logger of the {@link #getMessages()} message container to logger. Thus, new added messages will also
+     * be logged with this logger.
+     * Consider using the constructor
+     * {@link #Status(SlingHttpServletRequest, SlingHttpServletResponse, Logger)} or
+     * {@link #Status(GsonBuilder, SlingHttpServletRequest, SlingHttpServletResponse, Logger)}.
+     *
+     * @return this in builder-style
      */
     @Nonnull
-    public StatusWithLogging withLogging(@Nonnull Logger logger) {
-        return new StatusWithLogging(logger);
+    public Status setMessageLogger(@Nullable Logger messageLogger) {
+        this.messageLogger = messageLogger;
+        return this;
     }
 
-    /** Wrapper that allows adding messages *and* logging them at the same time. Temporary object only - see {@link #withLogging(Logger)}. */
-    public class StatusWithLogging {
-
-        @Nonnull
-        private final Logger logger;
-
-        public StatusWithLogging(@Nonnull Logger logger) {
-            this.logger = logger;
-        }
-
-        /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
-        public void info(@Nonnull String text, Object... args) {
-            Status.this.info(text, args);
-            logger.info(text, args);
-        }
-
-        /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
-        public void validationInfo(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
-            Status.this.validationInfo(context, label, text, args);
-            logger.info(text, args);
-        }
-
-        /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
-        public void warn(@Nonnull String text, Object... args) {
-            Status.this.warn(text, args);
-            logger.warn(text, args);
-        }
-
-        /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
-        public void validationWarn(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
-            Status.this.validationWarn(context, label, text, args);
-            logger.warn(text, args);
-        }
-
-        /**
-         * For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} .
-         * If you want to log an exception stacktrace, give the exception as additional argument not used as
-         * positional parameter. If the exception is to be included as positional parameter, too,
-         * you need to transform it into a string, or it won't be replaced in the log.
-         * {@code status.withLogging(LOG).error("For id {} got exception {}", id, exception.toString(), exception);
-         * }
-         */
-        public void error(@Nonnull String text, Object... args) {
-            Status.this.error(text, args);
-            logger.error(text, args);
-        }
-
-        public void error(@Nonnull String text, @Nonnull Throwable ex) {
-            Status.this.error(text, ex.getLocalizedMessage());
-            logger.error(text, ex.getLocalizedMessage(), ex);
-        }
-
-        /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
-        public void validationError(@Nonnull String context, @Nonnull String label, @Nonnull String text, Object... args) {
-            Status.this.validationError(context, label, text, args);
-            logger.error(text, args);
-        }
+    /**
+     * Sets the logger of the {@link #getMessages()} message container to logger. Thus, new added messages will also
+     * be logged with this logger.
+     *
+     * @return this in builder-style
+     * @deprecated rather use the constructor
+     * {@link #Status(SlingHttpServletRequest, SlingHttpServletResponse, Logger)},
+     * {@link #Status(GsonBuilder, SlingHttpServletRequest, SlingHttpServletResponse, Logger)} or {@link #setMessageLogger(Logger)}.
+     * This is kept for backwards compatibility for a while.
+     */
+    @Nonnull
+    @Deprecated
+    public Status withLogging(@Nonnull Logger logger) {
+        return setMessageLogger(logger);
     }
+
 }
