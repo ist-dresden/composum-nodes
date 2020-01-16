@@ -26,7 +26,7 @@ import java.util.Objects;
  * Considerations for i18n: If a {@link Message} is delivered in a response, it should normally contain the i18n-ed message
  * with all placeholders replaced by the arguments as attribute "message". However, we also want to transfer the raw
  * data (un-i18n-ed message and the arguments) to be able to generate several i18ns (e.g. when logging audit-data in
- * a business-language). So we also transmit the raw data: "rawMessage" and "arguments" (as {@link Object#toString()}).
+ * a business-language). So we also transmit the raw data: "rawText" and "arguments" (as {@link Object#toString()}).
  */
 public class MessageTypeAdapterFactory implements TypeAdapterFactory {
 
@@ -125,7 +125,7 @@ public class MessageTypeAdapterFactory implements TypeAdapterFactory {
                 i18nMessage = value.prepareForJsonSerialization(request);
             } catch (CloneNotSupportedException impossible) {
                 LOG.error("Could not clone " + value.getClass(), impossible);
-                i18nMessage.getMessage(); // make sure that i18nmessage.message at least contains something.
+                i18nMessage.getText(); // make sure that i18nmessage.message at least contains something.
             }
             return i18nMessage;
         }

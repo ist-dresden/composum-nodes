@@ -50,8 +50,8 @@ public class TestMessageContainer {
         compare(json, "[\n" +
                 "  {\n" +
                 "    \"level\": \"warn\",\n" +
-                "    \"message\": \"Some problem with foo number 17\",\n" +
-                "    \"rawMessage\": \"Some problem with {} number {}\",\n" +
+                "    \"text\": \"Some problem with foo number 17\",\n" +
+                "    \"rawText\": \"Some problem with {} number {}\",\n" +
                 "    \"arguments\": [\n" +
                 "      \"foo\",\n" +
                 "      17\n" +
@@ -59,22 +59,22 @@ public class TestMessageContainer {
                 "    \"timestamp\": <timestamp>\n" +
                 "  },\n" +
                 "  {\n" +
-                "    \"message\": \"Minimal message\",\n" +
-                "    \"rawMessage\": \"Minimal message\",\n" +
+                "    \"text\": \"Minimal message\",\n" +
+                "    \"rawText\": \"Minimal message\",\n" +
                 "    \"timestamp\": <timestamp>\n" +
                 "  },\n" +
                 "  {\n" +
                 "    \"level\": \"info\",\n" +
-                "    \"message\": \"Message 3 with details\",\n" +
-                "    \"rawMessage\": \"Message {} with details\",\n" +
+                "    \"text\": \"Message 3 with details\",\n" +
+                "    \"rawText\": \"Message {} with details\",\n" +
                 "    \"arguments\": [\n" +
                 "      3\n" +
                 "    ],\n" +
                 "    \"details\": [\n" +
                 "      {\n" +
                 "        \"level\": \"debug\",\n" +
-                "        \"message\": \"Detail 1\",\n" +
-                "        \"rawMessage\": \"Detail {}\",\n" +
+                "        \"text\": \"Detail 1\",\n" +
+                "        \"rawText\": \"Detail {}\",\n" +
                 "        \"arguments\": [\n" +
                 "          1\n" +
                 "        ],\n" +
@@ -82,8 +82,8 @@ public class TestMessageContainer {
                 "      },\n" +
                 "      {\n" +
                 "        \"level\": \"info\",\n" +
-                "        \"message\": \"Detail 2\",\n" +
-                "        \"rawMessage\": \"Detail {}\",\n" +
+                "        \"text\": \"Detail 2\",\n" +
+                "        \"rawText\": \"Detail {}\",\n" +
                 "        \"arguments\": [\n" +
                 "          2\n" +
                 "        ],\n" +
@@ -116,31 +116,6 @@ public class TestMessageContainer {
 
         MessageContainer container = new MessageContainer(LOG);
         container.add(new Message(Message.Level.warn, "Some problem with {} number {}", "foo", 17));
-        container.i18n(request);
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        compare(gson.toJson(container), "[\n" +
-                "  {\n" +
-                "    \"level\": \"warn\",\n" +
-                "    \"message\": \"Ein Problem mit foo Nummer 17\",\n" +
-                "    \"rawMessage\": \"Some problem with {} number {}\",\n" +
-                "    \"arguments\": [\n" +
-                "      \"foo\",\n" +
-                "      17\n" +
-                "    ],\n" +
-                "    \"timestamp\": <timestamp>\n" +
-                "  }\n" +
-                "]");
-    }
-
-    @Test
-    public void i18nViaTypeAdapterFactory() throws IOException {
-        SlingHttpServletRequest request = Mockito.mock(SlingHttpServletRequest.class);
-        ResourceBundle bundle = new PropertyResourceBundle(new StringReader(
-                "Some\\ problem\\ with\\ {}\\ number\\ {}: Ein Problem mit {} Nummer {}"));
-        Mockito.when(request.getResourceBundle(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(bundle);
-
-        MessageContainer container = new MessageContainer(LOG);
-        container.add(new Message(Message.Level.warn, "Some problem with {} number {}", "foo", 17));
         // not: container.i18n(request);
 
         Gson gson = new GsonBuilder().setPrettyPrinting()
@@ -150,8 +125,8 @@ public class TestMessageContainer {
         compare(gson.toJson(container), "[\n" +
                 "  {\n" +
                 "    \"level\": \"warn\",\n" +
-                "    \"message\": \"Ein Problem mit foo Nummer 17\",\n" +
-                "    \"rawMessage\": \"Some problem with {} number {}\",\n" +
+                "    \"text\": \"Ein Problem mit foo Nummer 17\",\n" +
+                "    \"rawText\": \"Some problem with {} number {}\",\n" +
                 "    \"arguments\": [\n" +
                 "      \"foo\",\n" +
                 "      17\n" +
@@ -221,15 +196,15 @@ public class TestMessageContainer {
                 "  \"messages\": [\n" +
                 "    {\n" +
                 "      \"level\": \"info\",\n" +
-                "      \"message\": \"Information.\",\n" +
-                "      \"rawMessage\": \"Information.\",\n" +
+                "      \"text\": \"Information.\",\n" +
+                "      \"rawText\": \"Information.\",\n" +
                 "      \"timestamp\": <timestamp>\n" +
                 "    },\n" +
                 "    {\n" +
                 "      \"something\": \"else\",\n" +
                 "      \"level\": \"error\",\n" +
-                "      \"message\": \"abgeleitete Klasse\",\n" +
-                "      \"rawMessage\": \"derivedclass\",\n" +
+                "      \"text\": \"abgeleitete Klasse\",\n" +
+                "      \"rawText\": \"derivedclass\",\n" +
                 "      \"timestamp\": <timestamp>\n" +
                 "    }\n" +
                 "  ],\n" +

@@ -38,16 +38,16 @@ public class Message implements Cloneable {
     protected Level level;
 
     /**
-     * If set, an i18n-ed version of {@link #rawMessage} with all placeholders replaced. This is modified during
+     * If set, an i18n-ed version of {@link #rawText} with all placeholders replaced. This is modified during
      * JSON-serialization.
      */
-    protected String message;
+    protected String text;
 
     /**
-     * The raw version of the message which can contain {@literal {}}-placeholders and is used as
+     * The raw version of the text which can contain {@literal {}}-placeholders and is used as
      * i18n-key.
      */
-    protected String rawMessage;
+    protected String rawText;
 
     /** @see #getArguments() */
     protected Object[] arguments;
@@ -71,9 +71,6 @@ public class Message implements Cloneable {
     /** @see #getTimestamp() */
     protected Long timestamp;
 
-    /** Saves whether the message was already {@link #i18n(SlingHttpServletRequest)}-ized. */
-    protected transient boolean i18lized;
-
     /** @deprecated only for JSON deserialization. */
     @Deprecated
     public Message() {
@@ -83,13 +80,13 @@ public class Message implements Cloneable {
     /**
      * Creates a message.
      *
-     * @param level      the level of the message, default {@link Level#info}
-     * @param rawMessage the message, possibly with placeholders {@literal {}} for arguments
-     * @param arguments  optional arguments placed in placeholders. Caution: must be primitive types if this is to be
-     *                   transmitted with JSON!
+     * @param level     the level of the message, default {@link Level#info}
+     * @param rawText   the untranslated text of message, possibly with placeholders {@literal {}} for arguments
+     * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
+     *                  transmitted with JSON!
      */
-    public Message(@Nullable Level level, @Nonnull String rawMessage, Object... arguments) {
-        this.rawMessage = rawMessage;
+    public Message(@Nullable Level level, @Nonnull String rawText, Object... arguments) {
+        this.rawText = rawText;
         this.level = level;
         this.category = category;
         this.arguments = arguments != null && arguments.length > 0 ? arguments : null;
@@ -99,49 +96,49 @@ public class Message implements Cloneable {
     /**
      * Convenience-method - constructs with {@link Level#error}.
      *
-     * @param message   the message, possibly with placeholders {@literal {}} for arguments
+     * @param text      the untranslated text of message, possibly with placeholders {@literal {}} for arguments
      * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
      *                  transmitted with JSON!
      */
     @Nonnull
-    public static Message error(@Nonnull String message, Object... arguments) {
-        return new Message(Level.error, message, arguments);
+    public static Message error(@Nonnull String text, Object... arguments) {
+        return new Message(Level.error, text, arguments);
     }
 
     /**
      * Convenience-method - constructs with {@link Level#warn}.
      *
-     * @param message   the message, possibly with placeholders {@literal {}} for arguments
+     * @param text      the untranslated text of message, possibly with placeholders {@literal {}} for arguments
      * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
      *                  transmitted with JSON!
      */
     @Nonnull
-    public static Message warn(@Nonnull String message, Object... arguments) {
-        return new Message(Level.warn, message, arguments);
+    public static Message warn(@Nonnull String text, Object... arguments) {
+        return new Message(Level.warn, text, arguments);
     }
 
     /**
      * Convenience-method - constructs with {@link Level#info}.
      *
-     * @param message   the message, possibly with placeholders {@literal {}} for arguments
+     * @param text      the untranslated text of message, possibly with placeholders {@literal {}} for arguments
      * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
      *                  transmitted with JSON!
      */
     @Nonnull
-    public static Message info(@Nonnull String message, Object... arguments) {
-        return new Message(Level.info, message, arguments);
+    public static Message info(@Nonnull String text, Object... arguments) {
+        return new Message(Level.info, text, arguments);
     }
 
     /**
      * Convenience-method - constructs with {@link Level#debug}.
      *
-     * @param message   the message, possibly with placeholders {@literal {}} for arguments
+     * @param text      the untranslated text of message, possibly with placeholders {@literal {}} for arguments
      * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
      *                  transmitted with JSON!
      */
     @Nonnull
-    public static Message debug(@Nonnull String message, Object... arguments) {
-        return new Message(Level.debug, message, arguments);
+    public static Message debug(@Nonnull String text, Object... arguments) {
+        return new Message(Level.debug, text, arguments);
     }
 
     /**
@@ -179,33 +176,33 @@ public class Message implements Cloneable {
      * If i18n is wanted, this is the key for the i18n - all variable parts should be put into the arguments. Mandatory part of a message.
      */
     @Nonnull
-    public String getRawMessage() {
-        return rawMessage;
+    public String getRawText() {
+        return rawText;
     }
 
     /**
-     * A human readable message text composed from {@link #getRawMessage()}, all argument placeholders {@literal {}}
-     * replaced by the corresponding {@link #getArguments()}. This is lazily created from {@link #getRawMessage()}
-     * and {@link #getArguments()}. In JSON-serializations, the {@link #getRawMessage()} is i18n-ed to the request when
+     * A human readable i18n-ed message text composed from {@link #getRawText()}, all argument placeholders
+     * {@literal {}} replaced by the corresponding {@link #getArguments()}. This is lazily created from {@link #getRawText()}
+     * and {@link #getArguments()}. In JSON-serializations, the {@link #getRawText()} is i18n-ed to the request when
      * {@link MessageTypeAdapterFactory} is correctly used.
      */
     @Nonnull
-    public String getMessage() {
-        if (message != null) { return message; }
-        if (rawMessage == null) { return ""; }
-        message = rawMessage;
+    public String getText() {
+        if (text != null) { return text; }
+        if (rawText == null) { return ""; }
+        text = rawText;
         if (arguments != null && arguments.length > 0) {
-            message = LoggerFormat.format(message, arguments);
+            text = LoggerFormat.format(text, arguments);
         }
-        return message;
+        return text;
     }
 
-    /** Like {@link #getMessage()}, but returns the message localized for the request and parameters replaced. */
+    /** Like {@link #getText()}, but returns the text i18n-ed for the request and parameters replaced. */
     public String getMessage(@Nullable SlingHttpServletRequest request) {
         if (request == null) {
-            return getMessage();
+            return getText();
         }
-        String i18nMessage = rawMessage;
+        String i18nMessage = rawText;
         if (StringUtils.isNotBlank(i18nMessage)) {
             String newMessage = I18N.get(request, i18nMessage);
             if (StringUtils.isNotBlank(newMessage)) {
@@ -221,7 +218,7 @@ public class Message implements Cloneable {
     }
 
     /**
-     * Optional arguments used in placeholders of the {@link #getMessage()}. If transmission over JSON is needed,
+     * Optional arguments used in placeholders of the {@link #getText()}. If transmission over JSON is needed,
      * these must be serializable with GSON.
      */
     @Nonnull
@@ -302,32 +299,13 @@ public class Message implements Cloneable {
         return details != null ? Collections.unmodifiableList(details) : Collections.emptyList();
     }
 
-    /**
-     * Internationalizes the message according to the requests locale. This modifies the message: the
-     * {@link #getMessage()} is looked up as i18n key, and then the arguments are placed into the placeholders and
-     * then cleared. Recommended only after {@link #logInto(Logger)} or {@link #logInto(Logger, Throwable)}.
-     *
-     * @return this message for builder-style operation-chaining.
-     * @deprecated rather register a {@link MessageTypeAdapterFactory#MessageTypeAdapterFactory(SlingHttpServletRequest)}.
-     */
-    @Nonnull
-    @Deprecated
-    public Message i18n(SlingHttpServletRequest request) {
-        if (!i18lized) {
-            message = getMessage(request);
-        } else { // already i18lized - misuse
-            LOG.warn("Second i18n on same message", new Exception("Stacktrace for second i18n, not thrown"));
-        }
-        return this;
-    }
-
     @Override
     public Message clone() throws CloneNotSupportedException {
         return (Message) super.clone();
     }
 
     /**
-     * Clones the {@link Message} and sets its {@link Message#message} to a properly i18n-ed version,
+     * Clones the {@link Message} and sets its {@link Message#text} to a properly i18n-ed version,
      * and also makes Strings out of non-String and non-Numeric arguments to avoid problems with not JSON
      * serializable arguments.
      * <p>
@@ -337,7 +315,7 @@ public class Message implements Cloneable {
      */
     protected Message prepareForJsonSerialization(SlingHttpServletRequest request) throws CloneNotSupportedException {
         Message i18nMessage = clone();
-        i18nMessage.message = getMessage(request);
+        i18nMessage.text = getMessage(request);
         if (arguments != null) {
             i18nMessage.arguments = new Object[arguments.length];
             for (int i = 0; i < arguments.length; ++i) {
@@ -366,7 +344,9 @@ public class Message implements Cloneable {
     }
 
     /**
-     * Logs the message into the specified logger.
+     * Logs the message into the specified logger, including the {cause}'s stacktrace.
+     * Can be done automatically by a {@link MessageContainer} if {@link MessageContainer#MessageContainer(Logger)}
+     * is used.
      *
      * @param log   the log to write the message into
      * @param cause optionally, an exception that is logged as a cause of the message
@@ -404,7 +384,7 @@ public class Message implements Cloneable {
 
     /**
      * Return a full text representation of the message with replaced arguments and appended details. Mainly for
-     * logging / debugging purposes.
+     * logging / debugging purposes. Not i18n-ed.
      */
     public String toFormattedMessage() {
         StringBuilder buf = new StringBuilder();
@@ -418,10 +398,10 @@ public class Message implements Cloneable {
             buf.append(level.name()).append(": ");
         }
         if (arguments != null) {
-            FormattingTuple formatted = MessageFormatter.arrayFormat(message, arguments);
+            FormattingTuple formatted = MessageFormatter.arrayFormat(rawText, arguments);
             buf.append(formatted.getMessage());
         } else {
-            buf.append(message);
+            buf.append(rawText);
         }
         if (details != null) {
             String addIndent = indent + "    ";
@@ -433,6 +413,7 @@ public class Message implements Cloneable {
         }
     }
 
+    /** Kind of message, also used as loglevel when this is logged. */
     public enum Level {
         /**
          * Problems that require the users attention. This usually means that an operation was aborted or yielded
