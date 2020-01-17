@@ -152,12 +152,22 @@ public class TranslationServlet extends AbstractServiceServlet {
         protected Message parseMessage(Map<String, Object> data) {
             Object value;
             Object hint = data.get(HINT);
-            Message.Level level = (value = data.get(LEVEL)) != null ? Message.Level.levelOf(value.toString()) : Message.Level.info;
+            Message.Level level = (value = data.get(LEVEL)) != null ? levelOf(value.toString()) : Message.Level.info;
             String context = (value = data.get(CONTEXT)) != null ? value.toString() : null;
             String label = (value = data.get(LABEL)) != null ? value.toString() : null;
             String text = (value = data.get(TEXT)) != null ? value.toString() : null;
             Message message = new Message(level, text, hint).setContext(context).setLabel(label);
             return message;
+        }
+
+        public static final String BOOTSTRAP_ERROR = "danger";
+
+        @Nonnull
+        public Message.Level levelOf(@Nonnull String name) {
+            if (BOOTSTRAP_ERROR.equalsIgnoreCase(name)) {
+                name = Message.Level.error.name();
+            }
+            return Message.Level.valueOf(name);
         }
 
     }

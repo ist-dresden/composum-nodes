@@ -1,6 +1,5 @@
 package com.composum.sling.core.logging;
 
-import com.composum.sling.core.servlet.Status;
 import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.LoggerFormat;
 import com.google.gson.TypeAdapterFactory;
@@ -19,7 +18,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A container for a message, e.g. about internal processes, that can be presented to the user. It could be localized,
@@ -38,6 +36,15 @@ public class Message implements Cloneable {
 
     /** @see #getLevel() */
     protected Level level;
+
+    /**
+     * The level at which this message is logged, if different from level. This might be transient, but we make it
+     * non-transient because messages might be transmitted to a remote system and logged there again.
+     *
+     * @see #getLogLevel()
+     */
+    @Nullable
+    protected Level logLevel;
 
     /** @see #getContext() */
     @Nullable
@@ -60,6 +67,7 @@ public class Message implements Cloneable {
     protected String rawText;
 
     /** @see #getArguments() */
+    @Nullable
     protected Object[] arguments;
 
     /** @see #getCategory() */
@@ -108,6 +116,21 @@ public class Message implements Cloneable {
     }
 
     /**
+     * Convenience-method - constructs a validation message (which is logged only at level debug) with
+     * {@link Level#error}.
+     *
+     * @param context   an optional context of the message, such as the dialog tab in a validation message.
+     * @param label     an optional: label of the field which the message is about, primarily in validation messages.
+     * @param text      the untranslated text of message, possibly with placeholders {@literal {}} for arguments
+     * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
+     *                  transmitted with JSON!
+     */
+    public static Message validationError(@Nullable final String context, @Nullable final String label,
+                                          @Nonnull final String text, Object... args) {
+        return error(text, args).setContext(context).setLabel(label).setLogLevel(Level.debug);
+    }
+
+    /**
      * Convenience-method - constructs with {@link Level#warn}.
      *
      * @param text      the untranslated text of message, possibly with placeholders {@literal {}} for arguments
@@ -120,6 +143,21 @@ public class Message implements Cloneable {
     }
 
     /**
+     * Convenience-method - constructs a validation message (which is logged only at level debug) with
+     * {@link Level#warn}.
+     *
+     * @param context   an optional context of the message, such as the dialog tab in a validation message.
+     * @param label     an optional: label of the field which the message is about, primarily in validation messages.
+     * @param text      the untranslated text of message, possibly with placeholders {@literal {}} for arguments
+     * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
+     *                  transmitted with JSON!
+     */
+    public static Message validationWarn(@Nullable final String context, @Nullable final String label,
+                                         @Nonnull final String text, Object... args) {
+        return warn(text, args).setContext(context).setLabel(label).setLogLevel(Level.debug);
+    }
+
+    /**
      * Convenience-method - constructs with {@link Level#info}.
      *
      * @param text      the untranslated text of message, possibly with placeholders {@literal {}} for arguments
@@ -129,6 +167,21 @@ public class Message implements Cloneable {
     @Nonnull
     public static Message info(@Nonnull String text, Object... arguments) {
         return new Message(Level.info, text, arguments);
+    }
+
+    /**
+     * Convenience-method - constructs a validation message (which is logged only at level debug) with
+     * {@link Level#info}.
+     *
+     * @param context   an optional context of the message, such as the dialog tab in a validation message.
+     * @param label     an optional: label of the field which the message is about, primarily in validation messages.
+     * @param text      the untranslated text of message, possibly with placeholders {@literal {}} for arguments
+     * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
+     *                  transmitted with JSON!
+     */
+    public static Message validationInfo(@Nullable final String context, @Nullable final String label,
+                                         @Nonnull final String text, Object... args) {
+        return info(text, args).setContext(context).setLabel(label).setLogLevel(Level.debug);
     }
 
     /**
@@ -171,6 +224,31 @@ public class Message implements Cloneable {
     @Nonnull
     public Level getLevel() {
         return level != null ? level : Level.info;
+    }
+
+    /**
+     * The level with which we will log the message if {@link MessageContainer} has a logger. Transient attribute -
+     * will not be transmitted in JSON. This can be different from the {@link #getLevel()}, e.g. in the case of
+     * validation messages which should only be logged as debug. {@link Level#none} means it will not be logged; null
+     * means that {@link #getLevel()} is used.
+     */
+    @Nullable
+    public Level getLogLevel() {
+        return logLevel;
+    }
+
+    /**
+     * Sets the level with which we will log the message if {@link MessageContainer} has a logger. Transient attribute -
+     * will not be transmitted in JSON. This can be different from the {@link #getLevel()}, e.g. in the case of
+     * validation messages which should only be logged as debug. {@link Level#none} means it will not be logged; null
+     * means that {@link #getLevel()} is used.
+     *
+     * @return {this} for chaining calls in builder-style
+     */
+    @Nonnull
+    public Message setLogLevel(@Nullable Level logLevel) {
+        this.logLevel = logLevel;
+        return this;
     }
 
     /**
@@ -355,9 +433,11 @@ public class Message implements Cloneable {
      * @return this message for builder-style operation-chaining.
      */
     @Nonnull
-    public Message logInto(@Nonnull Logger log, @Nullable Throwable cause) {
+    public Message logInto(@Nullable Logger log, @Nullable Throwable cause) {
+        Level thelevel = getLogLevel();
+        thelevel = thelevel != null ? thelevel : getLevel();
         if (log != null) {
-            switch (getLevel()) {
+            switch (thelevel) {
                 case error:
                     if (log.isErrorEnabled()) {
                         log.error(toFormattedMessage(), cause);
@@ -372,6 +452,8 @@ public class Message implements Cloneable {
                     if (log.isDebugEnabled()) {
                         log.debug(toFormattedMessage(), cause);
                     }
+                    break;
+                case none:
                     break;
                 case info:
                 default:
@@ -396,8 +478,11 @@ public class Message implements Cloneable {
 
     protected void appendFormattedTo(StringBuilder buf, String indent, Level baseLevel) {
         buf.append(indent);
-        if (level != null && baseLevel != null && level != baseLevel) {
-            buf.append(level.name()).append(": ");
+        boolean differingLoglevel = logLevel != null && logLevel != level;
+        if (level != null && baseLevel != null && level != baseLevel || differingLoglevel) {
+            if (level != null) { buf.append(level.name()); }
+            if (differingLoglevel) { buf.append("(").append(logLevel.name()).append(")"); }
+            buf.append(": ");
         }
         if (arguments != null) {
             FormattingTuple formatted = MessageFormatter.arrayFormat(rawText, arguments);
@@ -423,28 +508,24 @@ public class Message implements Cloneable {
          * errorneous results.
          */
         error,
+
         /**
          * A warning that might or might not indicate that the result of an operation could have had errorneous
          * results.
          */
         warn,
+
         /** Informational messages for further details. */
         info,
+
         /**
          * Detailed informations that are not normally shown to users, but could help to investigate problems if
          * required.
          */
-        debug;
+        debug,
 
-        public static final String BOOTSTRAP_ERROR = "danger";
-
-        @Nonnull
-        public static Level levelOf(@Nonnull String name) {
-            if (BOOTSTRAP_ERROR.equalsIgnoreCase(name)) {
-                name = error.name();
-            }
-            return valueOf(name);
-        }
+        /** Special category mainly useful as {@link #getLogLevel()} which means the message is not being logged. */
+        none;
 
     }
 

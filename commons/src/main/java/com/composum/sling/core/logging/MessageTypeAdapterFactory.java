@@ -59,7 +59,6 @@ public class MessageTypeAdapterFactory implements TypeAdapterFactory {
     @SuppressWarnings({"unchecked", "NullabilityAnnotations", "ReturnOfNull"})
     @Override
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-        LOG.info("create called for {}", type);
         if (MessageContainer.class.equals(type.getRawType())) {
             return (TypeAdapter<T>) new MessageContainerTypeAdapter(gson);
         }

@@ -8,6 +8,7 @@ import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
@@ -63,7 +64,7 @@ public class Status {
 
     /** If set, added messages will be logged here. */
     @Nullable
-    protected Logger messageLogger;
+    protected transient Logger messageLogger;
     @Nullable
     protected String title;
     @Nullable
@@ -154,7 +155,7 @@ public class Status {
                 return value;
             }
         }
-        shortMessage(Level.error, errorMessage, value);
+        validationError(null, null, errorMessage, value);
         return null;
     }
 
@@ -162,14 +163,14 @@ public class Status {
                                               @Nullable final Pattern pattern, @Nonnull final String errorMessage) {
         final RequestParameter[] requestParameters = request.getRequestParameters(paramName);
         if (requestParameters == null || requestParameters.length < 1) {
-            shortMessage(Level.error, errorMessage);
+            validationError(null, null, errorMessage);
             return null;
         }
         List<String> values = new ArrayList<>();
         for (RequestParameter parameter : requestParameters) {
             String value = parameter.getString();
             if (pattern != null && !pattern.matcher(value).matches()) {
-                shortMessage(Level.error, errorMessage, value);
+                validationError(null, null, errorMessage, value);
             }
             values.add(value);
         }
@@ -328,29 +329,41 @@ public class Status {
     }
 
     /**
+     * Adds a message with minimum information.
+     *
      * @param level the message level
      * @param text  non prepared text message, may contain {@literal {}} placeholders
      * @param args  argument objects for the log like message preparation of text
+     * @return the created and added message, if you need to add more attributes
      */
-    public void shortMessage(@Nonnull final Level level, @Nonnull final String text, Object... args) {
-        addValidationMessage(level, null, null, text, args);
+    public Message shortMessage(@Nonnull final Level level, @Nonnull final String text, Object... args) {
+        return addMessage(new Message(level, text, args));
     }
 
     /**
-     * For use with validation messages: add context and label, too.
+     * For use with validation messages: add context and label, too. Validation messages are logged at level debug.
      *
      * @param level   the message level
      * @param context non prepared context key
      * @param label   non prepared aspect label (validation label)
      * @param text    non prepared text message, can contain placeholders {@literal {}}
+     * @return the created and added message, if you need to add more attributes
      * @see MessageFormat
      */
-    public void addValidationMessage(@Nonnull final Level level, @Nullable final String context, @Nullable final String label,
-                                     @Nonnull final String text, Object... args) {
-        addMessage(new Message(level, text, args).setContext(context).setLabel(label));
+    @Nonnull
+    public Message addValidationMessage(@Nonnull final Level level, @Nullable final String context,
+                                        @Nullable final String label,
+                                        @Nonnull final String text, Object... args) {
+        return addMessage(new Message(level, text, args).setContext(context).setLabel(label).setLogLevel(Level.debug));
     }
 
-    public void addMessage(@Nonnull final Message message) {
+    /**
+     * Adds the message and returns it.
+     *
+     * @return the created and added message, if you need to add more attributes
+     */
+    @Nonnull
+    public Message addMessage(@Nonnull final Message message) {
         if (messages == null) { messages = new MessageContainer(messageLogger); }
         if (message.getLevel() == Level.error) {
             status = SC_BAD_REQUEST;
@@ -366,11 +379,16 @@ public class Status {
             }
         }
         messages.add(message);
+        return message;
     }
 
     /** Writes this object as JSON using {@link Gson}. */
     public void toJson(@Nonnull final JsonWriter writer) throws IOException {
-        gson.toJson(this, getClass(), writer);
+        try {
+            gson.toJson(this, getClass(), writer);
+        } catch (JsonIOException e) {
+            throw new IOException(e);
+        }
     }
 
     /**
