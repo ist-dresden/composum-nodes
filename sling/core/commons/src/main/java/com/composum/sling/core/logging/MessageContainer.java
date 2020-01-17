@@ -92,6 +92,17 @@ public class MessageContainer implements Iterable<Message> {
     }
 
     /**
+     * Logs the messages into the given container. This is automatically done on {@link #add(Message)} if a logger
+     * is set, but this might be necessary after deserializing the container.
+     */
+    public void logInto(@Nullable Logger logger) {
+        if (logger == null) { return; }
+        for (Message message : getMessages()) {
+            message.logInto(logger);
+        }
+    }
+
+    /**
      * Removes all messages.
      *
      * @return this MessageContainer, for builder-style operation chaining.

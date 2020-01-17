@@ -37,7 +37,7 @@ public class MessageContainerTest {
         container.add(new Message(Message.Level.warn, "Some problem with {} number {}", "foo", 17))
                 .add(new Message(null, "Minimal message"))
                 .add(new Message(Message.Level.info, "Message {} with details", 3)
-                        .addDetail(new Message(Message.Level.debug, "Detail {}", 1))
+                        .addDetail(new Message(Message.Level.debug, "Detail {}", 1).setLogLevel(Message.Level.warn))
                         .addDetail(new Message(Message.Level.info, "Detail {}", 2))
                 );
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -73,6 +73,7 @@ public class MessageContainerTest {
                 "    \"details\": [\n" +
                 "      {\n" +
                 "        \"level\": \"debug\",\n" +
+                "        \"logLevel\": \"warn\",\n" +
                 "        \"text\": \"Detail 1\",\n" +
                 "        \"rawText\": \"Detail {}\",\n" +
                 "        \"arguments\": [\n" +
@@ -103,7 +104,7 @@ public class MessageContainerTest {
                 "Minimal message\n" +
                 "Message 3 with details\n" +
                 "    Details:\n" +
-                "    debug: Detail 1\n" +
+                "    debug(warn): Detail 1\n" +
                 "    Detail 2");
     }
 

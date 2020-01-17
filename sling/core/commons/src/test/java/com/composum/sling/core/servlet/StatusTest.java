@@ -57,7 +57,7 @@ public class StatusTest {
     public void testSerialization() throws Exception {
         Gson gson = new GsonBuilder().create();
 
-        Status status = new Status(request, response);
+        Status status = new Status(request, response, LOG);
         status.setStatus(213);
         status.setTitle("thetitle");
         status.warn("hello to {} from {}", "franz", 17);
@@ -189,7 +189,6 @@ public class StatusTest {
 
         System.out.println(stringWriter.toString());
 
-        // FIXME(hps,16.01.20) "der Titel"
         assertEquals("{\"status\":404,\"success\":false,\"warning\":true,\"title\":\"der Titel\"," +
                         "\"messages\":[{\"level\":\"warn\",\"context\":\"thecontext\",\"label\":\"thelabel\"," +
                         "\"text\":\"mit Hinweis thehint\"," +
