@@ -131,9 +131,9 @@ public class StatusTest {
     public void checkLoggingExceptions() {
         String id = "arg";
         Status status;
-        status = new Status(request, response);
+        status = new Status(request, response, LOG);
         Throwable exception = new RuntimeException("Some exception");
-        status.withLogging(LOG).error("For id {} got exception {}", id, exception.toString(), exception);
+        status.error("For id {} got exception {}", id, exception.toString(), exception);
         System.out.println(status.getJsonString());
         // can't easily check the log output - manual checking required. There should be a stacktrace and a log message
         // StatusTest - For id arg got exception java.lang.RuntimeException: Some exception
@@ -148,7 +148,7 @@ public class StatusTest {
     private static class TestStatusExtension extends Status {
 
         public TestStatusExtension(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response) {
-            super(request, response);
+            super(request, response, LOG);
         }
 
         TestStatusExtensionObject containedObject;
