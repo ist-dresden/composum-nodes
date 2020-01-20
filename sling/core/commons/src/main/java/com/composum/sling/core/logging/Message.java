@@ -434,23 +434,24 @@ public class Message implements Cloneable {
      */
     @Nonnull
     public Message logInto(@Nullable Logger log, @Nullable Throwable cause) {
+        Throwable loggedCause = cause != null ? cause : getThrowableArgument();
         Level thelevel = getLogLevel();
         thelevel = thelevel != null ? thelevel : getLevel();
         if (log != null) {
             switch (thelevel) {
                 case error:
                     if (log.isErrorEnabled()) {
-                        log.error(toFormattedMessage(), cause);
+                        log.error(toFormattedMessage(), loggedCause);
                     }
                     break;
                 case warn:
                     if (log.isWarnEnabled()) {
-                        log.warn(toFormattedMessage(), cause);
+                        log.warn(toFormattedMessage(), loggedCause);
                     }
                     break;
                 case debug:
                     if (log.isDebugEnabled()) {
-                        log.debug(toFormattedMessage(), cause);
+                        log.debug(toFormattedMessage(), loggedCause);
                     }
                     break;
                 case none:
@@ -458,12 +459,29 @@ public class Message implements Cloneable {
                 case info:
                 default:
                     if (log.isInfoEnabled()) {
-                        log.info(toFormattedMessage(), cause);
+                        log.info(toFormattedMessage(), loggedCause);
                     }
                     break;
             }
         }
         return this;
+    }
+
+    /**
+     * Return the last argument if it is a Throwable. This is the stacktrace logged if there was not given one with
+     * {@link #logInto(Logger, Throwable)} explicitly.
+     * Compatible with slf4j: use last argument if it is an exception http://slf4j.org/faq.html#paramException
+     */
+    @Nullable
+    protected Throwable getThrowableArgument() {
+        Throwable throwable = null;
+        if (arguments != null && arguments.length > 0) {
+            Object possibleThrowable = arguments[arguments.length - 1];
+            if (possibleThrowable instanceof Throwable) {
+                throwable = (Throwable) possibleThrowable;
+            }
+        }
+        return throwable;
     }
 
     /**

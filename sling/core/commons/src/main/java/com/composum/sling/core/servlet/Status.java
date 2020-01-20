@@ -80,6 +80,10 @@ public class Status {
         this(new GsonBuilder(), request, response, messageLogger);
     }
 
+    /**
+     * Constructor without logging messages - consider {@link #Status(SlingHttpServletRequest, SlingHttpServletResponse, Logger)}
+     * to automatically log added messages.
+     */
     public Status(@Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response) {
         this(new GsonBuilder(), request, response, null);
     }
