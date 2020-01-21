@@ -27,6 +27,12 @@
                     selector: {
                         item: '.multi-form-item'
                     }
+                },
+                translate: {
+                    uri: {
+                        object: '/bin/cpm/core/translate.object.json',
+                        status: '/bin/cpm/core/translate.status.json'
+                    }
                 }
             }
         });
@@ -45,6 +51,24 @@
             initialize: function (options) {
                 var c = components.const.form;
                 this.isSlingPost = this.$el.hasClass(c.css.action.slingPost);
+            },
+
+            registerWidget: function (widget) {
+                widget.onChange('FormWidget', _.bind(this.onChange, this));
+            },
+
+            /**
+             * sets the 'formChanged' to 'true' - form isChanged(): 'true'
+             */
+            onChange: function (event) {
+                this.formChanged = true;
+            },
+
+            /**
+             * @return 'true' if any widgets value in the form is changed
+             */
+            isChanged: function () {
+                return this.formChanged === true;
             },
 
             /**
@@ -152,6 +176,7 @@
                         }
                     }
                 });
+                this.formChanged = false;
             },
 
             /**
@@ -185,17 +210,49 @@
             },
 
             /**
+             * the general submit action; if a 'doValidate(alertMethod, onSuccess, onError)' function is avaialable
+             * at the form widget this validation is called instead of the general 'validate(alertMethod)'
+             * @param alertMethod (type, label, message, hint) - on validation fault
+             * @param onSuccess () - optional
+             * @param onError () - optional
+             */
+            doFormSubmit: function (alertMethod, onSuccess, onError) {
+                this.prepare();
+                if (_.isFunction(this.doValidate)) {
+                    this.doValidate(alertMethod, _.bind(function () {
+                        this.finalize();
+                        this.submitForm(onSuccess, onError);
+                    }, this), onError);
+                } else {
+                    if (this.validate(alertMethod)) {
+                        this.finalize();
+                        this.submitForm(onSuccess, onError);
+                    }
+                }
+            },
+
+            /**
              * Submit the form of the dialog.
              */
             submitForm: function (onSuccess, onError, onComplete) {
-                core.submitForm(this.el, onSuccess, onError, onComplete);
+                core.submitForm(this.el, _.bind(function (result) {
+                    this.formChanged = false;
+                    if (_.isFunction(onSuccess)) {
+                        onSuccess(result);
+                    }
+                }, this), onError, onComplete);
             },
 
             /**
              * Submit the form data using the 'PUT' method instead of 'POST'.
              */
             submitFormPut: function (onSuccess, onError, onComplete) {
-                core.submitFormPut(this.el, this.getValues(), onSuccess, onError, onComplete);
+                core.submitFormPut(this.el, this.getValues(), _.bind(function (result) {
+                    this.formChanged = false;
+                    if (_.isFunction(onSuccess)) {
+                        onSuccess(result);
+                    }
+                }, this), onError, onComplete);
             }
         });
 
@@ -355,6 +412,10 @@
                 widgets.Widget.prototype.initialize.apply(this, [options]);
                 // scan 'rules / pattern' attributes
                 this.initRules();
+                var value = this.$el.data('default');
+                if (value) {
+                    this.setValue(value);
+                }
             },
 
             retrieveInput: function () {
