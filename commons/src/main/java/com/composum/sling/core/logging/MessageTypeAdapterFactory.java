@@ -82,10 +82,9 @@ public class MessageTypeAdapterFactory implements TypeAdapterFactory {
         public void write(JsonWriter out, MessageContainer container) throws IOException {
             if (container != null) {
                 out.beginArray();
-                if (container.messages != null) {
-                    for (Message msg : container.messages) {
-                        gson.toJson(msg, msg.getClass(), out);
-                    }
+                for (Message msg : container.getMessages()) {
+                    // use getMessages() to avoid concurrency problems - returns a snapshot
+                    gson.toJson(msg, msg.getClass(), out);
                 }
                 out.endArray();
             } else {
