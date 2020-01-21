@@ -482,6 +482,7 @@
 
         encodePath: function (path) {
             path = encodeURI(path); // except: ',/?:@&=+$#' ...
+            path = path.replace('/jcr:', '/_jcr_');
             path = path.replace('\?', '%3F');
             path = path.replace('=', '%3D');
             path = path.replace(':', '%3A');

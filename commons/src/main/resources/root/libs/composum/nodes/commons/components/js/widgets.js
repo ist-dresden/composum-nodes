@@ -13,7 +13,7 @@
                 selector: {
                     general: '.widget',
                     prefix: '.widget.',
-                    form: 'form.form-widget',
+                    form: 'form.widget-form',
                     group: '.form-group',
                     label: 'label .label-text'
                 }
@@ -89,6 +89,9 @@
                 this.$input = this.retrieveInput();
                 this.name = this.retrieveName();
                 this.form = this.retrieveForm();
+                if (this.form && _.isFunction(this.form.registerWidget)) {
+                    this.form.registerWidget(this);
+                }
             },
 
             retrieveInput: function () {
@@ -134,7 +137,7 @@
             /**
              * @returns the - probably prepared - value for the input validation
              */
-            getValueForValidation: function(){
+            getValueForValidation: function () {
                 return this.getValue();
             },
 
@@ -148,6 +151,13 @@
              * #default
              */
             setDefaultValue: function (value) {
+            },
+
+            /**
+             * registers a value change handler
+             */
+            onChange: function (key, handler) {
+                this.$el.off('change.' + key).on('change.' + key, handler);
             },
 
             /**
