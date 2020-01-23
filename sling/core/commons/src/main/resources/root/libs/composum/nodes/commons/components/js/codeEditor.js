@@ -87,7 +87,7 @@
             setValue: function (value, triggerChange) {
                 this.ace.setValue(value);
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             },
 

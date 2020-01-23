@@ -54,13 +54,13 @@
             },
 
             registerWidget: function (widget) {
-                widget.onChange('FormWidget', _.bind(this.onChange, this));
+                widget.changed('FormWidget', _.bind(this.onChanged, this));
             },
 
             /**
              * sets the 'formChanged' to 'true' - form isChanged(): 'true'
              */
-            onChange: function (event) {
+            onChanged: function (event) {
                 this.formChanged = true;
             },
 
@@ -311,8 +311,11 @@
             /**
              * defines the (initial) value of the input field
              */
-            setValue: function (value) {
+            setValue: function (value, triggerChange) {
                 this.$input.prop('checked', value === 'false' ? false : value);
+                if (triggerChange) {
+                    this.$el.trigger('change', [value]);
+                }
             },
 
             /**
@@ -354,7 +357,7 @@
                 this.$('.btn[data-value="' + value + '"]').addClass('active');
                 this.value = this.$('.active').attr('data-value');
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             }
         });
@@ -391,7 +394,7 @@
                 $radio.prop("checked", true);
                 this.getValue();
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             },
 
@@ -429,7 +432,7 @@
             setValue: function (value, triggerChange) {
                 this.$input.val(value);
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [this.getValue()]);
                 }
             },
 
@@ -507,7 +510,7 @@
                     this.$('input[type="checkbox"][value="' + val + '"]').prop('checked', true);
                 }, this));
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             }
         });
@@ -870,16 +873,18 @@
              * the callback for the '.select' button opens set dialog with the tree view
              */
             selectPath: function (event) {
-                var selectDialog = core.getView('#path-select-dialog', components.SelectPathDialog);
-                if (!selectDialog) {
-                    var u = components.const.dialog.load;
-                    core.getHtml(u.base + u._path,
-                        _.bind(function (content) {
-                            selectDialog = core.addLoadedDialog(components.SelectPathDialog, content);
-                            this.openDialog(selectDialog);
-                        }, this));
-                } else {
-                    this.openDialog(selectDialog);
+                if (!this.isDisabled()) {
+                    var selectDialog = core.getView('#path-select-dialog', components.SelectPathDialog);
+                    if (!selectDialog) {
+                        var u = components.const.dialog.load;
+                        core.getHtml(u.base + u._path,
+                            _.bind(function (content) {
+                                selectDialog = core.addLoadedDialog(components.SelectPathDialog, content);
+                                this.openDialog(selectDialog);
+                            }, this));
+                    } else {
+                        this.openDialog(selectDialog);
+                    }
                 }
             },
 
@@ -915,6 +920,31 @@
             setPath: function (path) {
                 var oldValue = this.getValue();
                 this.setValue(path, oldValue !== path);
+            },
+
+            /**
+             * @returns the repository path with the root path prependet if a root is declared
+             */
+            getValue: function () {
+                var value = components.TextFieldWidget.prototype.getValue.call(this);
+                if (value && this.rootPath && this.rootPath !== '/') {
+                    value = value === '/' ? this.rootPath : this.rootPath + value;
+                }
+                return value;
+            },
+
+            /**
+             * sets the value of the input field without a probably declared root path
+             */
+            setValue: function (value, triggerChange) {
+                if (value && this.rootPath && this.rootPath !== '/'
+                    && (value === this.rootPath || value.indexOf(this.rootPath + '/') === 0)) {
+                    value = value.substring(this.rootPath.length);
+                    if (!value) {
+                        value = '/';
+                    }
+                }
+                components.TextFieldWidget.prototype.setValue.call(this, value, triggerChange);
             },
 
             getRootPath: function () {
@@ -1184,7 +1214,7 @@
                 this.datetimepicker.date(value ? moment(value, this.data.format) : null);
                 this.validate();
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             }
         });
@@ -1244,7 +1274,7 @@
             /**
              * defines the (initial) value of the input field
              */
-            setValue: function (value) {
+            setValue: function (value, triggerChange) {
             },
 
             grabFocus: function () {

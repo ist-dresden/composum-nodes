@@ -42,7 +42,7 @@
                     this.$input.val(undefined);
                 }
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             },
 

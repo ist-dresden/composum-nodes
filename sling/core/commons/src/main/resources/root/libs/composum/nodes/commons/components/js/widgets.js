@@ -80,20 +80,32 @@
         },
 
         /**
-         *
-         * #abstract
+         * a Widget implements the beaviour of a value editing DOM element (maybe as part of a form)
+         * the DOM element is not rendered by the Widget; a Widget is assigned to an existing appropriate
+         * DOM element rendered by a template on the server side (by a Sling component)
+         * @abstract this is a general 'interface' and basic 'class' to implement a form behaviour
+         * @event 'changed' a value changed event (a jQuery 'change' is also triggered but
+         * not only on value changes, widget state changes can trigger a 'change' also)
          */
         Widget: Backbone.View.extend({
 
+            /**
+             * @protected
+             */
             initialize: function (options) {
                 this.$input = this.retrieveInput();
+                this.rules = {};
                 this.name = this.retrieveName();
                 this.form = this.retrieveForm();
                 if (this.form && _.isFunction(this.form.registerWidget)) {
                     this.form.registerWidget(this);
                 }
+                this.initChangeEvent();
             },
 
+            /**
+             * @protected
+             */
             retrieveInput: function () {
                 var $inputEl = [];
                 for (var i = 0; $inputEl.length === 0 && i < widgets.const.tag.input.length; i++) {
@@ -103,16 +115,26 @@
                 return $inputEl;
             },
 
+            /**
+             * @protected
+             */
             retrieveName: function () {
                 return this.$input.attr(widgets.const.attr.name);
             },
 
+            /**
+             * @protected
+             */
             retrieveLabel: function () {
                 var c = widgets.const.css.selector;
                 var $label = this.$el.closest(c.group).find(c.label);
                 return $label.length === 1 ? $label.text().trim() : this.retrieveName();
             },
 
+            /**
+             * @public sets the input 'name' attribute - the name of the property to edit
+             * @param name the name; removes the name if (!name)
+             */
             declareName: function (name) {
                 if (name) {
                     this.$input.attr(widgets.const.attr.name, name);
@@ -121,13 +143,17 @@
                 }
             },
 
+            /**
+             * @protected
+             */
             retrieveForm: function () {
                 var $form = this.$el.closest(widgets.const.css.selector.form);
                 return $form.length > 0 ? $form[0].view : undefined;
             },
 
             /**
-             * #abstract
+             * @public
+             * @abstract
              * @returns {undefined}
              */
             getValue: function () {
@@ -135,6 +161,7 @@
             },
 
             /**
+             * @public
              * @returns the - probably prepared - value for the input validation
              */
             getValueForValidation: function () {
@@ -142,32 +169,53 @@
             },
 
             /**
-             * #abstract
+             * @public
+             * @abstract depends on the concrete widget
              */
-            setValue: function (value) {
+            setValue: function (value, triggerChange) {
             },
 
             /**
-             * #default
+             * @public
+             * @default empty; the default value is the value used if no value is present (no persistent value)
              */
             setDefaultValue: function (value) {
             },
 
             /**
-             * registers a value change handler
+             * @public registers a value 'changed' handler
+             * @param key a unique id of the registrator to separate the various handlers
              */
-            onChange: function (key, handler) {
-                this.$el.off('change.' + key).on('change.' + key, handler);
+            changed: function (key, handler) {
+                this.$el.off('changed.' + key).on('changed.' + key, handler);
             },
 
             /**
-             * #abstract
+             * @protected triggers a value 'changed' event if jQuery is triggering a 'change'
+             * this can be modified by a widget to filter change events, e.g. on internal state changes
+             */
+            onWidgetChange: function (event, value) {
+                this.$el.trigger('changed', [value]);
+            },
+
+            /**
+             * registers the widgets value change handler which is mapping 'change' events to 'changed' events
+             * @protected
+             */
+            initChangeEvent: function () {
+                this.$el.on('change.Widget', _.bind(this.onWidgetChange, this));
+            },
+
+            /**
+             * @abstract reset the widget state and value
              */
             reset: function () {
             },
 
             /**
-             * returns the current validation state, calls 'validate' if no state is present
+             * @public
+             * @return the current validation state, calls 'validate' if no state is present
+             * @param alertMethod (type, label, message, hint)
              */
             isValid: function (alertMethod) {
                 if (this.valid === undefined) {
@@ -185,7 +233,10 @@
             },
 
             /**
+             * @public
              * validates the current value using the 'rules' and the 'pattern' if present
+             * @return the current validation state, calls 'validate' if no state is present
+             * @param alertMethod (type, label, message, hint)
              */
             validate: function (alertMethod) {
                 this.valid = true;
@@ -227,6 +278,39 @@
                 return this.valid;
             },
 
+            /**
+             * @public
+             * @return the 'disabled' state of the widget
+             */
+            isDisabled: function () {
+                return (this.rules && this.rules.disabled) || (this.$input && this.$input.prop('disabled'));
+            },
+
+            /**
+             * @public sets the disabled state
+             * @param disabled boolean
+             */
+            setDisabled: function (disabled) {
+                this.rules = _.extend(this.rules || {}, {
+                    disabled: disabled
+                });
+                if (this.$input) {
+                    this.$input.prop('disabled', disabled);
+                }
+            },
+
+            /**
+             * @public sets the focus to the widgets input element
+             */
+            grabFocus: function () {
+                this.$input.focus();
+            },
+
+            /**
+             * @protected
+             * @initialize should be called during initialization; is not part of the Widget.initialize()
+             * @param $element optional; the element to use to get the data attributes
+             */
             initRules: function ($element) {
                 if (!$element) {
                     $element = this.$el;
@@ -257,15 +341,16 @@
                     this.rules = _.extend(this.rules || {}, {
                         required: rules.indexOf('required') >= 0 || rules.indexOf('mandatory') >= 0,
                         blank: rules.indexOf('blank') >= 0,
-                        unique: rules.indexOf('unique') >= 0
+                        unique: rules.indexOf('unique') >= 0,
+                        disabled: rules.indexOf('disabled') >= 0 || (this.$input && this.$input.prop('disabled'))
                     });
                 }
             },
 
-            grabFocus: function () {
-                this.$input.focus();
-            },
-
+            /**
+             * @protected
+             * @param alertMethod (type, label, message, hint)
+             */
             alert: function (alertMethod, type, label, message, hint) {
                 if (_.isFunction(alertMethod)) {
                     alertMethod(type, label || this.label, message, hint);
@@ -280,6 +365,7 @@
             },
 
             /**
+             * @protected
              * print out a probably delayed message
              */
             alertFlush: function (alertMethod) {

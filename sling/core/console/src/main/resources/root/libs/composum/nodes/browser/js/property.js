@@ -363,7 +363,7 @@
                 return value;
             },
 
-            setValue: function (value) {
+            setValue: function (value, triggerChange) {
                 if (this.multiValue && _.isArray(value)) {
                     this.reset(value.length);
                     var values = this.$('[name="value"]');
@@ -373,6 +373,9 @@
                 } else {
                     this.reset();
                     this.setWidgetValue('[name="value"]', value);
+                }
+                if (triggerChange) {
+                    this.$el.trigger('change', [value]);
                 }
             }
         });

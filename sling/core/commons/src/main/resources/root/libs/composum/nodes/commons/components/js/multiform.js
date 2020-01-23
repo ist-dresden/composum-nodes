@@ -145,6 +145,7 @@
 
             initialize: function (options) {
                 var c = components.const.multiform;
+                widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.itemList = [];
                 this.itemType = options.itemType || components.MultiFormItem;
                 this.name = this.$el.data(c.data.name) || 'name';
@@ -166,10 +167,31 @@
                         '</div>' +
                         '</div>');
                 }
-                this.$(c.css.selector.actions + ' button.add').unbind('click').on('click', _.bind(this.add, this));
-                this.$(c.css.selector.actions + ' button.remove').unbind('click').on('click', _.bind(this.remove, this));
-                this.$(c.css.selector.actions + ' button.move-up').unbind('click').on('click', _.bind(this.moveUp, this));
-                this.$(c.css.selector.actions + ' button.move-down').unbind('click').on('click', _.bind(this.moveDown, this));
+                this.buttons = {
+                    $add: this.$(c.css.selector.actions + ' button.add'),
+                    $remove: this.$(c.css.selector.actions + ' button.remove'),
+                    $up: this.$(c.css.selector.actions + ' button.move-up'),
+                    $down: this.$(c.css.selector.actions + ' button.move-down')
+                };
+                this.initRules();
+                this.buttons.$add.unbind('click').on('click', _.bind(this.add, this));
+                this.buttons.$remove.unbind('click').on('click', _.bind(this.remove, this));
+                this.buttons.$up.unbind('click').on('click', _.bind(this.moveUp, this));
+                this.buttons.$down.unbind('click').on('click', _.bind(this.moveDown, this));
+                this.setDisabled(this.isDisabled());
+            },
+
+            setDisabled: function (disabled) {
+                widgets.Widget.prototype.setDisabled.call(this, disabled);
+                for (var i = 0; i < this.itemList.length; i++) {
+                    if (this.itemList[i].$input) {
+                        this.itemList[i].$input.prop('disabled', disabled);
+                    }
+                }
+                this.buttons.$add.prop('disabled', disabled);
+                this.buttons.$remove.prop('disabled', disabled);
+                this.buttons.$up.prop('disabled', disabled);
+                this.buttons.$down.prop('disabled', disabled);
             },
 
             declareName: function (name) {
@@ -188,7 +210,7 @@
                 return valueSet;
             },
 
-            setValue: function (valueSet) {
+            setValue: function (valueSet, triggerChange) {
                 if (valueSet) {
                     this.reset(valueSet.length);
                     for (var i = 0; i < this.itemList.length; i++) {
@@ -196,6 +218,19 @@
                     }
                 } else {
                     this.reset(0);
+                }
+                if (triggerChange) {
+                    this.$el.trigger('change', [valueSet]);
+                }
+            },
+
+            /**
+             * prevent from triggering value 'changed' events on item selection change
+             */
+            onWidgetChange: function (event, value) {
+                var c = components.const.multiform;
+                if (!$(event.target).is(c.css.selector.handle)) {
+                    widgets.Widget.prototype.onWidgetChange.call(this, event, value);
                 }
             },
 
@@ -253,9 +288,9 @@
                 return item;
             },
 
-            onSelect: function (event) {
+            onSelect: function (event, item) {
                 var c = components.const.multiform;
-                var itemElement = $(event.currentTarget).closest('.multi-form-item')[0];
+                var itemElement = item || $(event.currentTarget).closest('.multi-form-item')[0];
                 for (var i = 0; i < this.itemList.length; i++) {
                     if (itemElement === this.itemList[i].el) {
                         var $handle = this.itemList[i].$(c.css.selector.handle);
