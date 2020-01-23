@@ -51,7 +51,7 @@
             setValue: function (value, triggerChange) {
                 this.$editor.trumbowyg('html', value);
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             },
 
@@ -60,7 +60,7 @@
             },
 
             onChange: function () {
-                this.$el.trigger('change');
+                this.$el.trigger('change', [value]);
             },
 
             richText: function () {

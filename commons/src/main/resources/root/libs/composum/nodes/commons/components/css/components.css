@@ -148,6 +148,7 @@ fieldset {
 
 .checkbox-widget.form-control {
     border: none;
+    box-shadow: none;
     padding-left: 0;
 }
 

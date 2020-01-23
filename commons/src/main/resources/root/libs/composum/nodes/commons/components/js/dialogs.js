@@ -366,36 +366,13 @@
              * returns the current path value selected in this dialog
              */
             getValue: function () {
-                var path = this.input.getValue();
-                if (path && !_.isEmpty(path = path.trim())) {
-                    var rootPath = this.input.getRootPath();
-                    if (rootPath !== '/') {
-                        if (path.indexOf('/') === 0) {
-                            path = rootPath + path;
-                        } else {
-                            path = rootPath + '/' + path;
-                        }
-                    }
-                }
-                return path;
+                return this.input.getValue();
             },
 
             /**
              * defines the (initial) value - the current / old value
              */
             setValue: function (value) {
-                if (value && !_.isEmpty(value = value.trim())) {
-                    var rootPath = this.input.getRootPath();
-                    if (rootPath !== '/') {
-                        if (value === rootPath) {
-                            value = '/';
-                        } else {
-                            if (value.indexOf(rootPath + '/') === 0) {
-                                value = value.substring(rootPath.length);
-                            }
-                        }
-                    }
-                }
                 this.input.setValue(value);
                 this.inputChanged(); // trigger state refresh
             },

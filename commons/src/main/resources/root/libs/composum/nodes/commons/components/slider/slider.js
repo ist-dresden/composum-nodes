@@ -28,7 +28,7 @@
             setValue: function (value, triggerChange) {
                 this.$input.val(value);
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             },
 
