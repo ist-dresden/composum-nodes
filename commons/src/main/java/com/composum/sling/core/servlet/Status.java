@@ -426,6 +426,13 @@ public class Status {
         JsonWriter writer = ResponseUtil.getJsonWriter(response);
         response.setStatus(status);
         response.setContentType("application/json; charset=UTF-8");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Sending status {} {} {} : {}",
+                    new Object[]{status,
+                            success ? "success" : "failed",
+                            warning ? " with warning" : "",
+                            StringUtils.abbreviate(title, 256)});
+        }
         toJson(writer);
     }
 
