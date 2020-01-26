@@ -8,7 +8,7 @@ import java.io.Reader;
 import java.io.Writer;
 
 /**
- * Permission and Member check service
+ * Translates all strings in a JSON.
  */
 public interface TranslationService {
 
