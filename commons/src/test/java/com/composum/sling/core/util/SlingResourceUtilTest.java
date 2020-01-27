@@ -1,6 +1,7 @@
 package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -9,6 +10,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+import static org.apache.commons.lang3.StringUtils.contains;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -42,6 +46,10 @@ public class SlingResourceUtilTest extends SlingResourceUtil {
         ec.checkThat(relativePath(parent + "/", child), is(relpath));
         ec.checkThat(relativePath(parent + "/", child + "/"), is(relpath));
         ec.checkThat(relativePath(parent, child + "/"), is(relpath));
+        ec.checkThat(startsWith(relpath, "/"), is(false));
+        if (SlingResourceUtil.isSameOrDescendant(parent, child) && !contains(parent, "..") && !contains(child, "..")) {
+            ec.checkThat("for " + parent + " , " + child, appendPaths(parent, relpath), is(child));
+        }
         return relpath;
     }
 
@@ -66,9 +74,18 @@ public class SlingResourceUtilTest extends SlingResourceUtil {
     }
 
     protected void checkAppendPaths(String path, String childpath, String result) {
-        ec.checkThat(path + " with " + childpath, appendPaths(path, childpath), equalTo(result));
-        ec.checkThat(path + " with " + childpath, StringUtils.startsWith(path, "/"),
-                equalTo(StringUtils.startsWith(result, "/")));
+        String appended = appendPaths(path, childpath);
+        ec.checkThat(path + " with " + childpath, appended, equalTo(result));
+        ec.checkThat(path + " with " + childpath, startsWith(path, "/"),
+                equalTo(startsWith(result, "/")));
+        if (isNotBlank(path) && isNotBlank(childpath) && isNotBlank(appended)) {
+            if (startsWith(childpath, "/")) {
+                ec.checkThat("for " + path + " , " + childpath, relativePath(path, appended),
+                        is(StringUtils.removeStart(childpath, "/")));
+            } else {
+                ec.checkThat("for " + path + " , " + childpath, relativePath(path, appended), is(childpath));
+            }
+        }
     }
 
     @Test

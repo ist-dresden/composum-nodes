@@ -1,17 +1,25 @@
 package com.composum.sling.core.servlet;
 
+import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.logging.MessageContainerTest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.Resource;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -20,13 +28,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PropertyResourceBundle;
+import java.util.ResourceBundle;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /** Checks JSON serialization of {@link Status}. */
 public class StatusTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(StatusTest.class);
 
     @Mock
     private SlingHttpServletRequest request;
@@ -37,14 +50,14 @@ public class StatusTest {
     @Before
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
-        when(request.getResourceBundle(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(new PropertyResourceBundle(new StringReader("")));
+        when(request.getResourceBundle(any(), any())).thenReturn(new PropertyResourceBundle(new StringReader("")));
     }
 
     @Test
     public void testSerialization() throws Exception {
         Gson gson = new GsonBuilder().create();
 
-        Status status = new Status(request, response);
+        Status status = new Status(request, response, LOG);
         status.setStatus(213);
         status.setTitle("thetitle");
         status.warn("hello to {} from {}", "franz", 17);
@@ -64,33 +77,123 @@ public class StatusTest {
         status.toJson(jsonWriter);
 
         assertEquals("{\"status\":213,\"success\":true,\"warning\":false,\"title\":\"thetitle\"," +
-                "\"messages\":[{\"level\":\"warn\",\"text\":\"hello to franz from 17\"}]," +
-                "\"dat1\":{\"dk1\":15,\"dk2\":18}," +
-                "\"list1\":[{\"mlkey\":42},{\"mlkey1\":23,\"mlkey2\":54}]}", stringWriter.toString());
+                        "\"messages\":[{\"level\":\"warn\",\"text\":\"hello to franz from 17\"," +
+                        "\"rawText\":\"hello to {} from {}\",\"arguments\":[\"franz\",17],\"timestamp\":<timestamp>}]," +
+                        "\"data\":{\"dat1\":{\"dk1\":15,\"dk2\":18}}," +
+                        "\"list\":{\"list1\":[{\"mlkey\":42},{\"mlkey1\":23,\"mlkey2\":54}]}}",
+                stringWriter.toString().replaceAll(MessageContainerTest.TIMESTAMP_REGEX, "<timestamp>"));
 
-        TestStatusWithDataImpl readback = gson.fromJson(stringWriter.toString(), TestStatusWithDataImpl.class);
+        Status readback = gson.fromJson(stringWriter.toString(), Status.class);
         assertEquals(213, readback.getStatus());
         assertEquals("thetitle", readback.getTitle());
-        assertEquals("hello to franz from 17", readback.messages.get(0).text);
-        assertNotNull(readback.dat1);
-        assertNotNull(readback.list1);
-        assertEquals(54.0, readback.list1.get(1).get("mlkey2"));
-        assertEquals(18.0, readback.dat1.get("dk2"));
+        assertEquals("hello to franz from 17", readback.messages.iterator().next().getText());
+        assertNotNull(readback.data("dat1"));
+        assertNotNull(readback.list("list1"));
+        assertEquals(54.0, readback.list("list1").get(1).get("mlkey2"));
+        assertEquals(18.0, readback.data("dat1").get("dk2"));
     }
 
-    /**
-     * This is one way to read back status data from JSON: declare the data / list members as attributes.
-     * If they are nonstandard, one could declare a @JsonAdapter with a corresponding TypeAdapter to read them back.
-     */
-    private static class TestStatusWithDataImpl extends Status {
+    @Test
+    public void testExtension() throws Exception {
+        Gson gson = new GsonBuilder().create();
 
-        public TestStatusWithDataImpl(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response) {
-            super(request, response);
+        TestStatusExtension status = new TestStatusExtension(request, response);
+        status.containedObject = new TestStatusExtensionObject();
+        status.containedObject.attr1 = "hallo";
+        status.containedObject.attr2 = 27;
+
+        Writer stringWriter = new StringWriter();
+        JsonWriter jsonWriter = new JsonWriter(stringWriter);
+        status.toJson(jsonWriter);
+
+        TestStatusExtension readback = gson.fromJson(stringWriter.toString(), TestStatusExtension.class);
+        assertNotNull(readback);
+        assertNotNull(readback.containedObject);
+        assertEquals("hallo", readback.containedObject.attr1);
+        assertEquals(Integer.valueOf(27), readback.containedObject.attr2);
+    }
+
+    @Test
+    public void testEmptyStatus() throws Exception {
+        Gson gson = new GsonBuilder().create();
+        Status status = new Status(request, response);
+        Writer stringWriter = new StringWriter();
+        JsonWriter jsonWriter = new JsonWriter(stringWriter);
+        status.toJson(jsonWriter);
+
+        assertEquals("{\"status\":200,\"success\":true,\"warning\":false}", stringWriter.toString());
+
+        Status readback = gson.fromJson(stringWriter.toString(), Status.class);
+        assertNotNull(readback);
+    }
+
+    @Test
+    public void checkLoggingExceptions() {
+        String id = "arg";
+        Status status;
+        status = new Status(request, response, LOG);
+        Throwable exception = new RuntimeException("Some exception");
+        status.error("For id {} got exception {}", id, exception.toString(), exception);
+        System.out.println(status.getJsonString());
+        // can't easily check the log output - manual checking required. There should be a stacktrace and a log message
+        // StatusTest - For id arg got exception java.lang.RuntimeException: Some exception
+        assertTrue(status.getJsonString().contains("For id arg got exception java.lang.RuntimeException: Some exception"));
+    }
+
+    private static class TestStatusExtensionObject {
+        public String attr1;
+        public Integer attr2;
+    }
+
+    private static class TestStatusExtension extends Status {
+
+        public TestStatusExtension(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response) {
+            super(request, response, LOG);
         }
 
-        Map<String, Object> dat1;
+        TestStatusExtensionObject containedObject;
+    }
 
-        List<Map<String, Object>> list1;
+    @Test
+    public void testTranslate() throws IOException {
+        String json = "{\n" +
+                "  \"title\": \"thetitle\",\n" +
+                "  \"warning\": true,\n" +
+                "  \"status\": \"404\",\n" +
+                "  \"messages\": [\n" +
+                "    {\n" +
+                "      \"level\": \"warn\",\n" +
+                "      \"context\": \"thecontext\",\n" +
+                "      \"label\": \"thelabel\",\n" +
+                "      \"text\": \"with hint {}\",\n" +
+                "      \"hint\": \"thehint\"\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}\n";
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        ResourceBundle bundle = new PropertyResourceBundle(new StringReader(
+                "with\\ hint\\ {}: mit Hinweis {}\n" +
+                        "thehint: der Hinweis\n" +
+                        "thetitle: der Titel"));
+        when(request.getResourceBundle(any(), any())).thenReturn(bundle);
+        when(request.getReader()).thenReturn(new BufferedReader(new StringReader(json)));
+
+        Writer stringWriter = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(stringWriter));
+
+        TranslationServlet servlet = new TranslationServlet();
+        TranslationServlet.TranslateStatus service = servlet.new TranslateStatus();
+
+        service.doIt(request, response, ResourceHandle.use(Mockito.mock(Resource.class)));
+
+        System.out.println(stringWriter.toString());
+
+        assertEquals("{\"status\":404,\"success\":false,\"warning\":true,\"title\":\"der Titel\"," +
+                        "\"messages\":[{\"level\":\"warn\",\"context\":\"thecontext\",\"label\":\"thelabel\"," +
+                        "\"text\":\"mit Hinweis thehint\"," +
+                        "\"rawText\":\"with hint {}\",\"arguments\":[\"thehint\"],\"timestamp\":<timestamp>}]}",
+                stringWriter.toString().replaceAll(MessageContainerTest.TIMESTAMP_REGEX, "<timestamp>"));
     }
 
 }

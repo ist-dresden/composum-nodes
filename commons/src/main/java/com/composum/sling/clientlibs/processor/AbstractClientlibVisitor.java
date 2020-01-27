@@ -197,7 +197,7 @@ public abstract class AbstractClientlibVisitor implements ClientlibVisitor {
 
     protected void updateHash(String path, Calendar updatetime) {
         LOG.trace("Hashing {} with {}", path, null != updatetime ? updatetime.getTime() : null);
-        embeddedHash = embeddedHash * 92821 + path.hashCode();
+        for (char character : path.toCharArray()) { embeddedHash = embeddedHash * 92821 + character; }
         if (null != updatetime) {
             embeddedHash = embeddedHash * 92821 + updatetime.getTimeInMillis();
         }

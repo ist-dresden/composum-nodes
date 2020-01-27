@@ -13,6 +13,7 @@ import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Binary;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
@@ -182,8 +183,9 @@ public class SourceModel extends ConsoleSlingBean {
     private transient List<Resource> subnodeList;
 
     public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
-        if ("/".equals(ResourceUtil.normalize(resource.getPath())))
+        if ("/".equals(ResourceUtil.normalize(resource.getPath()))) {
             throw new IllegalArgumentException("Cannot export the whole JCR - " + resource.getPath());
+        }
         this.config = config;
         initialize(context, resource);
     }
@@ -293,20 +295,21 @@ public class SourceModel extends ConsoleSlingBean {
 
     // Package output
 
+    /** Writes a complete package about the node - arguments specify the package metadata. */
     public void writePackage(OutputStream output, String group, String name, String version)
             throws IOException, RepositoryException {
 
         String root = "jcr_root";
         ZipOutputStream zipStream = new ZipOutputStream(output);
-        writeProperties(zipStream, group, name, version);
-        writeFilter(zipStream);
+        writePackageProperties(zipStream, group, name, version);
+        writeFilterXml(zipStream);
         writeParents(zipStream, root, resource.getParent());
         writeZip(zipStream, root, true);
         zipStream.flush();
         zipStream.close();
     }
 
-    public void writeProperties(ZipOutputStream zipStream, String group, String name, String version)
+    protected void writePackageProperties(ZipOutputStream zipStream, String group, String name, String version)
             throws IOException {
 
         ZipEntry entry;
@@ -314,29 +317,29 @@ public class SourceModel extends ConsoleSlingBean {
         zipStream.putNextEntry(entry);
 
         Writer writer = new OutputStreamWriter(zipStream, StandardCharsets.UTF_8);
-            writer.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n")
-                    .append("<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n")
-                    .append("<properties>\n")
-                    .append("<comment>FileVault Package Properties</comment>\n")
-                    .append("<entry key=\"name\">")
-                    .append(name)
-                    .append("</entry>\n")
-                    .append("<entry key=\"buildCount\">1</entry>\n")
-                    .append("<entry key=\"version\">")
-                    .append(version)
-                    .append("</entry>\n")
-                    .append("<entry key=\"packageFormatVersion\">2</entry>\n")
-                    .append("<entry key=\"group\">")
-                    .append(group)
-                    .append("</entry>\n")
-                    .append("<entry key=\"description\">created from source download</entry>\n")
-                    .append("</properties>");
+        writer.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n")
+                .append("<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n")
+                .append("<properties>\n")
+                .append("<comment>FileVault Package Properties</comment>\n")
+                .append("<entry key=\"name\">")
+                .append(name)
+                .append("</entry>\n")
+                .append("<entry key=\"buildCount\">1</entry>\n")
+                .append("<entry key=\"version\">")
+                .append(version)
+                .append("</entry>\n")
+                .append("<entry key=\"packageFormatVersion\">2</entry>\n")
+                .append("<entry key=\"group\">")
+                .append(group)
+                .append("</entry>\n")
+                .append("<entry key=\"description\">created from source download</entry>\n")
+                .append("</properties>");
 
         writer.flush();
         zipStream.closeEntry();
     }
 
-    public void writeFilter(ZipOutputStream zipStream) throws IOException {
+    protected void writeFilterXml(ZipOutputStream zipStream) throws IOException {
 
         String path = resource.getPath();
 
@@ -345,18 +348,19 @@ public class SourceModel extends ConsoleSlingBean {
         zipStream.putNextEntry(entry);
 
         Writer writer = new OutputStreamWriter(zipStream, StandardCharsets.UTF_8);
-            writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-                    .append("<workspaceFilter version=\"1.0\">\n")
-                    .append("    <filter root=\"")
-                    .append(path)
-                    .append("\"/>\n")
-                    .append("</workspaceFilter>\n");
+        writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+                .append("<workspaceFilter version=\"1.0\">\n")
+                .append("    <filter root=\"")
+                .append(path)
+                .append("\"/>\n")
+                .append("</workspaceFilter>\n");
 
         writer.flush();
         zipStream.closeEntry();
     }
 
-    public void writeParents(ZipOutputStream zipStream, String root, Resource parent)
+    /** Writes all the .content.xml of the parents of root into the zip. */
+    protected void writeParents(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nonnull Resource parent)
             throws IOException, RepositoryException {
         if (parent != null && !"/".equals(parent.getPath())) {
             writeParents(zipStream, root, parent.getParent());
@@ -367,7 +371,8 @@ public class SourceModel extends ConsoleSlingBean {
 
     // ZIP output
 
-    public void writeArchive(OutputStream output)
+    /** Writes a "naked" Zip about the node: no package metadata, no parent nodes. */
+    public void writeArchive(@Nonnull OutputStream output)
             throws IOException, RepositoryException {
 
         ZipOutputStream zipStream = new ZipOutputStream(output);
@@ -376,8 +381,23 @@ public class SourceModel extends ConsoleSlingBean {
         zipStream.close();
     }
 
-    public void writeZip(ZipOutputStream zipStream, String root, boolean writeDeep)
+    /**
+     * Writes a "naked" Zip about the node: no package metadata, no parent nodes.
+     *
+     * @param zipStream the stream to write to, not closed.
+     * @param writeDeep if true, we also write subnodes recursively. If not, only a jcr:content node is written, if
+     *                  present.
+     */
+    public void writeZip(@Nonnull ZipOutputStream zipStream, @Nonnull String root, boolean writeDeep)
             throws IOException, RepositoryException {
+        if (resource == null || ResourceUtil.isNonExistingResource(resource)) {
+            return;
+        }
+        if (ResourceUtil.isFile(resource)) {
+            if (writeDeep) { writeFile(zipStream, root, resource); }
+            // not writeDeep: a .content.xml is not present for a file, so we can't do anything.
+            return;
+        }
 
         ZipEntry entry;
         String path = resource.getPath();
@@ -389,7 +409,7 @@ public class SourceModel extends ConsoleSlingBean {
         }
         zipStream.putNextEntry(entry);
         Writer writer = new OutputStreamWriter(zipStream, StandardCharsets.UTF_8);
-            writeFile(writer, true, false);
+        writeContentXmlFile(writer, true, false);
         writer.flush();
         zipStream.closeEntry();
 
@@ -407,8 +427,17 @@ public class SourceModel extends ConsoleSlingBean {
         }
     }
 
-    public void writeFile(ZipOutputStream zipStream, String root, ResourceHandle file)
+    /**
+     * Writes the current node as a file node (not the jcr:content but the parent) incl. it's binary data and possibly
+     * additional data about nonstandard properties.
+     */
+    protected void writeFile(ZipOutputStream zipStream, String root, ResourceHandle file)
             throws IOException, RepositoryException {
+        if (file.getName().equals(JcrConstants.JCR_CONTENT)) {
+            // file format doesn't allow this - we need to write the file with the parent's name
+            file = file.getParent();
+        }
+
         FileTime lastModified = getLastModified(file);
         ZipEntry entry;
         String path = file.getPath();
@@ -441,13 +470,13 @@ public class SourceModel extends ConsoleSlingBean {
             zipStream.putNextEntry(entry);
             Writer writer = new OutputStreamWriter(zipStream, UTF_8);
             SourceModel fileModel = new SourceModel(config, context, file);
-            fileModel.writeFile(writer, false, false);
+            fileModel.writeContentXmlFile(writer, false, false);
             writer.flush();
             zipStream.closeEntry();
         }
     }
 
-    public String getZipName(String root, String path) {
+    protected String getZipName(@Nonnull String root, @Nonnull String path) {
         String name = path;
         if (name.startsWith(root)) {
             name = name.substring(root.length() + 1);
@@ -459,7 +488,14 @@ public class SourceModel extends ConsoleSlingBean {
 
     // XML output
 
-    public void writeFile(Writer writer, boolean contentOnly, boolean noSubnodeNames)
+    /**
+     * Writes the data for the .content.xml file for the node, including an jcr:content node if present.
+     *
+     * @param contentOnly    if true, subnodes other than jcr:content are also included
+     * @param noSubnodeNames if false and the node has a jcr:content, we also write nodes for the names of the
+     *                       siblings of the jcr:content node to indicate the order of the subnodes.
+     */
+    protected void writeContentXmlFile(Writer writer, boolean contentOnly, boolean noSubnodeNames)
             throws IOException, RepositoryException {
         List<String> namespaces = new ArrayList<>();
         namespaces.add("jcr");
@@ -467,18 +503,7 @@ public class SourceModel extends ConsoleSlingBean {
         Collections.sort(namespaces);
         writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         writer.append("<jcr:root");
-        for (int i = 0; i < namespaces.size(); ) {
-            String ns = namespaces.get(i);
-            String url = getSession().getNamespaceURI(ns);
-            if (StringUtils.isNotBlank(url)) {
-                writer.append(" xmlns:").append(ns).append("=\"").append(url).append("\"");
-                if (++i < namespaces.size()) {
-                    writer.append("\n         ");
-                }
-            } else {
-                i++;
-            }
-        }
+        writeNamespaceAttributes(writer, namespaces);
         writeProperty(writer, "          ", "jcr:primaryType", getPrimaryType());
         writeProperties(writer, "          ");
         writer.append(">\n");
@@ -496,40 +521,41 @@ public class SourceModel extends ConsoleSlingBean {
             }
         } else {
             if (!contentOnly) {
-                writeSubnodes(writer, "    ");
+                writeSubnodesAsXml(writer, "    ");
             }
         }
         writer.append("</jcr:root>\n");
     }
 
-    public void writeXml(Writer writer, String indent) throws IOException {
+    /** Writes the node including subnodes as XML, using the base indentation. */
+    protected void writeXml(Writer writer, String indent) throws IOException {
         String name = escapeXmlName(getName());
         writer.append(indent).append("<").append(name).append('\n');
         writer.append(indent).append("        ").append("jcr:primaryType=\"").append(getPrimaryType()).append("\"");
         writeProperties(writer, indent + "        ");
         if (getHasSubnodes()) {
             writer.append(">\n");
-            writeSubnodes(writer, indent + "    ");
+            writeSubnodesAsXml(writer, indent + "    ");
             writer.append(indent).append("</").append(name).append(">\n");
         } else {
             writer.append("/>\n");
         }
     }
 
-    public void writeSubnodes(Writer writer, String indent) throws IOException {
+    protected void writeSubnodesAsXml(Writer writer, String indent) throws IOException {
         for (Resource subnode : getSubnodeList()) {
             SourceModel subnodeModel = new SourceModel(config, context, subnode);
             subnodeModel.writeXml(writer, indent);
         }
     }
 
-    public void writeProperties(Writer writer, String indent) throws IOException {
+    protected void writeProperties(Writer writer, String indent) throws IOException {
         for (Property property : getPropertyList()) {
             writeProperty(writer, indent, property.getName(), property.getString(indent));
         }
     }
 
-    public void writeProperty(Writer writer, String indent, String name, String value)
+    protected void writeProperty(Writer writer, String indent, String name, String value)
             throws IOException {
         writer.append("\n");
         writer.append(indent);
@@ -537,6 +563,21 @@ public class SourceModel extends ConsoleSlingBean {
         writer.append("=\"");
         writer.append(escapeXmlAttribute(value));
         writer.append("\"");
+    }
+
+    protected void writeNamespaceAttributes(Writer writer, List<String> namespaces) throws RepositoryException, IOException {
+        for (int i = 0; i < namespaces.size(); ) {
+            String ns = namespaces.get(i);
+            String url = getSession().getNamespaceURI(ns);
+            if (StringUtils.isNotBlank(url)) {
+                writer.append(" xmlns:").append(ns).append("=\"").append(url).append("\"");
+                if (++i < namespaces.size()) {
+                    writer.append("\n         ");
+                }
+            } else {
+                i++;
+            }
+        }
     }
 
     public String escapeXmlName(String name) {
