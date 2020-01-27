@@ -445,7 +445,8 @@
                 if (_.isArray(options)) {
                     options.forEach(function (option) {
                         if (_.isObject(option)) {
-                            this.$input.append('<option value="' + (option.value || option.key) + '">' + (option.label || option.name) + '</option>');
+                            this.$input.append('<option value="' + (option.value || option.key || option.name) + '">'
+                                + (option.label || option.name || option.key || option.value) + '</option>');
                         } else {
                             this.$input.append('<option>' + option + '</option>');
                         }
