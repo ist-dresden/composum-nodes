@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.is;
 /** Tests for {@link MessageContainer} and {@link Message}. */
 public class MessageContainerTest {
 
-    public static final String TIMESTAMP_REGEX = "157[0-9]{10}";
+    public static final String TIMESTAMP_REGEX = "1[0-9]{12}";
 
     @Rule
     public ErrorCollector ec = new ErrorCollector();
