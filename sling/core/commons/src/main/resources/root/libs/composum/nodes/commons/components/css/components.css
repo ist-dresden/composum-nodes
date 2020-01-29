@@ -242,6 +242,10 @@ fieldset {
     padding-left: 25px;
 }
 
+.multi-form-widget.readonly .multi-form-item {
+    padding-left: 0;
+}
+
 .multi-form-item.current {
 }
 
@@ -254,11 +258,20 @@ fieldset {
     box-shadow: none;
 }
 
+.multi-form-widget.readonly .multi-form-item .item-select {
+    display: none;
+}
+
 .multi-form-widget .action-bar,
 .property-value-widget .action-bar {
     padding-top: 2px;
     padding-left: 25px;
     border: none;
+}
+
+.multi-form-widget.readonly .action-bar,
+.property-value-widget.readonly .action-bar {
+    display: none;
 }
 
 /**

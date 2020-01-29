@@ -60,7 +60,7 @@
             },
 
             onChange: function () {
-                this.$el.trigger('change', [value]);
+                this.$el.trigger('change', [this.getValue()]);
             },
 
             richText: function () {
