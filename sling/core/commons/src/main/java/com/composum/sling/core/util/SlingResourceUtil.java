@@ -1,7 +1,5 @@
 package com.composum.sling.core.util;
 
-import org.apache.commons.collections.IteratorUtils;
-import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
@@ -12,9 +10,8 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -27,7 +24,7 @@ public class SlingResourceUtil {
 
     /**
      * Returns the shortest relative path that leads from a node to another node.
-     * Postcondition: <code>ResourceUtil.normalize(node + "/" + result), is(ResourceUtil.normalize(other))</code>.
+     * Postcondition: {@code ResourceUtil.normalize(node + "/" + result), is(ResourceUtil.normalize(other))}.
      * In most cases  {@link #appendPaths(String, String)}(node, result) will return {other}. )}
      *
      * @param node  the parent
@@ -149,11 +146,31 @@ public class SlingResourceUtil {
      */
     @Nonnull
     public static Stream<Resource> descendantsStream(@Nullable Resource resource) {
-        if (resource == null) { return Stream.empty(); }
+        return descendantsStream(resource, null);
+    }
+
+    /**
+     * Returns a stream that goes through all descendants of a resource until a filter is hit, parents come before
+     * their children.
+     *
+     * @param resource   a resource or null
+     * @param leafFilter if this returns true, this assumes the resource is a leaf and does not return it's descendants.
+     * @return a stream running through the resource and it's the descendants, not null
+     */
+    @Nonnull
+    public static Stream<Resource> descendantsStream(@Nullable Resource resource,
+                                                     @Nullable Function<Resource, Boolean> leafFilter) {
+        if (resource == null) {
+            return Stream.empty();
+        }
+        if (leafFilter != null && Boolean.TRUE.equals(leafFilter.apply(resource))) {
+            return Stream.of(resource);
+        }
         return Stream.concat(Stream.of(resource),
                 StreamSupport.stream(resource.getChildren().spliterator(), false)
-                        .flatMap(SlingResourceUtil::descendantsStream));
+                        .flatMap((r) -> SlingResourceUtil.descendantsStream(r, leafFilter)));
     }
+
 
     /**
      * Appends two paths: determines the given child of a path.
@@ -211,6 +228,7 @@ public class SlingResourceUtil {
      */
     @Nullable
     public static Resource getFirstExistingParent(@Nullable ResourceResolver resolver, @Nullable String path) {
+        if (resolver == null) { return null; }
         String searchedPath = path;
         Resource result = StringUtils.isNotBlank(searchedPath) ? resolver.getResource(searchedPath) : null;
         while (result == null && StringUtils.isNotBlank(searchedPath)) {

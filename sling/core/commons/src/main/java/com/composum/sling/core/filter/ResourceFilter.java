@@ -15,7 +15,11 @@ import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -163,7 +167,7 @@ public interface ResourceFilter {
 
         @Override
         public boolean accept(Resource resource) {
-            if (resource == null) return restriction;
+            if (resource == null) { return restriction; }
             for (String type : typeNames) {
                 if (type.startsWith(NODE_TYPE_PREFIX)) {
                     if (NodeTypeFilters.accept(resource, type)) {
@@ -173,8 +177,7 @@ public interface ResourceFilter {
                     if (!StringUtils.contains(type, "/")) {
                         try {
                             Node node = resource.adaptTo(Node.class);
-                            if (node != null && node.isNodeType(type))
-                                return !restriction;
+                            if (node != null && node.isNodeType(type)) { return !restriction; }
                         } catch (RepositoryException e) {
                             LOG.error("Error checking node type for " + resource.getPath(), e);
                         }
@@ -335,7 +338,7 @@ public interface ResourceFilter {
         @Override
         public boolean accept(Resource resource) {
             String primaryType = ResourceUtil.getPrimaryType(resource);
-            if (StringUtils.isNotBlank(primaryType)) return filter.accept(primaryType);
+            if (StringUtils.isNotBlank(primaryType)) { return filter.accept(primaryType); }
             return false;
         }
 
@@ -352,13 +355,15 @@ public interface ResourceFilter {
 
     /**
      * A ResourceFilter implementation which checks for JCR nodetypes similar to {@link Node#isNodeType(String)} -
-     * both primary type and all direct and inherited mixin types are checket against the filters.
+     * both primary type and all direct and inherited mixin types are checked against the filters.
      * Can work as a blacklist (restriction) or whitelist, depending on the filter.
      */
     class NodeTypeFilter extends PatternFilter {
 
         /**
-         * The constructor based on a StringFilter for the resources mixin types.
+         * A ResourceFilter implementation which checks for JCR nodetypes similar to {@link Node#isNodeType(String)} -
+         * both primary type and all direct and inherited mixin types are checked against the filters.
+         * Can work as a blacklist (restriction) or whitelist, depending on the filter.
          *
          * @param filter the string filter (or a filter set) to use
          */
@@ -379,19 +384,23 @@ public interface ResourceFilter {
                 if (node != null) {
                     try {
                         NodeType primaryNodeType = node.getPrimaryNodeType();
-                        if (filter.isRestriction() != filter.accept(primaryNodeType.getName()))
+                        if (filter.isRestriction() != filter.accept(primaryNodeType.getName())) {
                             return !filter.isRestriction();
+                        }
                         for (NodeType primarySuperType : primaryNodeType.getSupertypes()) {
-                            if (filter.isRestriction() != filter.accept(primarySuperType.getName()))
+                            if (filter.isRestriction() != filter.accept(primarySuperType.getName())) {
                                 return !filter.isRestriction();
+                            }
                         }
                         NodeType[] mixinTypes = node.getMixinNodeTypes();
                         for (NodeType mixinType : mixinTypes) {
-                            if (filter.isRestriction() != filter.accept(mixinType.getName()))
+                            if (filter.isRestriction() != filter.accept(mixinType.getName())) {
                                 return !filter.isRestriction();
+                            }
                             for (NodeType mixinSuperType : mixinType.getSupertypes()) {
-                                if (filter.isRestriction() != filter.accept(mixinSuperType.getName()))
+                                if (filter.isRestriction() != filter.accept(mixinSuperType.getName())) {
                                     return !filter.isRestriction();
+                                }
                             }
                         }
                         return filter.isRestriction();
@@ -571,8 +580,7 @@ public interface ResourceFilter {
                     for (ResourceFilter filter : filters) {
                         if (filter instanceof FilterSet && ((FilterSet) filter).rule.equals(this)) {
                             flattenedFilters.addAll(((FilterSet) filter).getSet());
-                        } else
-                            flattenedFilters.add(filter);
+                        } else { flattenedFilters.add(filter); }
                     }
                     return new FilterSet(this, flattenedFilters);
                 }
@@ -801,7 +809,7 @@ public interface ResourceFilter {
         /**
          * Constructs a {@link ContentNodeFilter} - for documentation see there.
          *
-         * @param restriction whether it should work as a restriction
+         * @param restriction       whether it should work as a restriction
          * @param applicableFilter  the filter that determines to which node's content node the 'contentNodeFilter' should be applied
          * @param contentNodeFilter the filter the content nodes of the resources matching applicableFilter have to match
          */
@@ -819,8 +827,9 @@ public interface ResourceFilter {
          */
         public ContentNodeFilter(@Nonnull String filterData) {
             Matcher m = ARGUMENT_PATTERN.matcher(filterData);
-            if (!m.matches())
+            if (!m.matches()) {
                 throw new IllegalArgumentException("Cannot parse arguments from \"" + filterData + "\"");
+            }
             restriction = "-".equals(m.group(1));
             applicableFilter = ResourceFilterMapping.fromString(m.group(2));
             contentNodeFilter = ResourceFilterMapping.fromString(m.group(3));
@@ -837,8 +846,9 @@ public interface ResourceFilter {
             } else { // whitelist: we only want stuff that has an OK content node
                 result = applicable && contentNodeFilter.accept(contentNode);
             }
-            if (LOG.isTraceEnabled())
+            if (LOG.isTraceEnabled()) {
                 LOG.trace("accept {} = {} , applicable {}", new Object[]{SlingResourceUtil.getPath(resource), result, applicable});
+            }
             return result;
         }
 

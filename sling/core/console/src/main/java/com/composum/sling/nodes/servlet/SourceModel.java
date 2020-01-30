@@ -588,7 +588,8 @@ public class SourceModel extends ConsoleSlingBean {
                 .replaceAll("\"", "&quot;");
     }
 
-    public String escapeXmlAttribute(String value) { // FIXME(hps,2019-07-11) use utilities? Should be consistent with packge manager, though.
+    public String escapeXmlAttribute(String value) {
+        // TODO(hps,2019-07-11) use utilities? Should be consistent with package manager, though.
         return value
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")
