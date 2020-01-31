@@ -483,6 +483,12 @@
             }
         };
 
+        core.openLoadedDialog = function (url, viewType, initView, callback) {
+            core.getHtml(url, function (content) {
+                core.showLoadedDialog(viewType, content, initView, callback);
+            });
+        };
+
         /**
          * a FormDialog supports validation before submit
          * uses a 'config' attribute:
@@ -493,17 +499,15 @@
         components.FormDialog = components.LoadedDialog.extend({
 
             initialize: function (options) {
+                this.form = core.getWidget(this.el, "form", options.formType || core.components.FormWidget);
                 core.components.LoadedDialog.prototype.initialize.apply(this, [options]);
-                this.form = core.getWidget(this.el, "form", core.components.FormWidget);
                 this.validationHints = [];
                 this.initView();
                 this.initSubmit();
             },
 
             getConfig: function () {
-                return _.extend({
-                    validationUrl: components.const.dialog.translate.uri.status
-                }, this.config);
+                return this.config;
             },
 
             dialogData: function () {
@@ -525,6 +529,7 @@
             },
 
             onValidationFault: function () {
+                this.form.onValidationFault();
             },
 
             message: function (type, label, message, hint) {
@@ -548,9 +553,7 @@
 
             validateForm: function () {
                 this.validationReset();
-                return this.form.validate(_.bind(function (type, label, message, hint) {
-                    this.validationHint(type, label, message, hint)
-                }, this));
+                return this.form.validate(_.bind(this.validationHint, this));
             },
 
             /**
@@ -573,7 +576,7 @@
             doValidate: function (onSuccess, onError) {
                 var valid = this.validateForm();
                 var config = this.getConfig();
-                if (config.validationUrl) {
+                if (config && config.validationUrl) {
                     var url = _.isFunction(config.validationUrl) ? config.validationUrl() : config.validationUrl;
                     var data = this.validationData();
                     core.ajaxPut(url, JSON.stringify(data), {
@@ -604,6 +607,13 @@
             },
 
             /**
+             * @default the simplest 'save and return' - no message - override if not enough
+             */
+            doSubmit: function () {
+                this.submitForm();
+            },
+
+            /**
              * triggered if the submit button is clicked or activated somewhere else
              */
             onSubmit: function (event) {
@@ -617,8 +627,13 @@
                         this.showResult(result);
                     }, this));
                 }, this), _.bind(function () {
-                    this.messages('warning', this.validationHints.length < 1 ? core.i18n.get('Validation error') : undefined,
-                        this.validationHints);
+                    if (this.validationHints.length < 1) {
+                        core.i18n.get('Validation error', _.bind(function (text) {
+                            this.messages('warning', text, this.validationHints);
+                        }, this));
+                    } else {
+                        this.messages('warning', undefined, this.validationHints);
+                    }
                     this.onValidationFault();
                 }, this));
                 return false;
@@ -639,6 +654,12 @@
 
         core.showFormDialog = function (viewType, html, initView, callback) {
             core.showLoadedDialog(viewType, html, initView, callback);
+        };
+
+        core.openFormDialog = function (url, viewType, initView, callback) {
+            core.getHtml(url, function (content) {
+                core.showLoadedDialog(viewType, content, initView, callback);
+            });
         };
 
     })(core.components);

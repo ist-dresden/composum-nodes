@@ -26,6 +26,12 @@
                     },
                     selector: {
                         item: '.multi-form-item'
+                    },
+                    tab: {
+                        base: 'composum-commons-form-tab',
+                        tabbed: 'composum-commons-form-tabbed',
+                        _nav: '-nav',
+                        _panel: '-panel'
                     }
                 },
                 translate: {
@@ -51,6 +57,7 @@
             initialize: function (options) {
                 var c = components.const.form;
                 this.isSlingPost = this.$el.hasClass(c.css.action.slingPost);
+                this.initTabs();
             },
 
             registerWidget: function (widget) {
@@ -79,12 +86,68 @@
                 return this.validate(alertMethod);
             },
 
+            /**
+             * if the form is marked as 'tabbed' find the tab navigation and insert an item for each tab panel
+             */
+            initTabs: function () {
+                var c = components.const.form.css.tab;
+                if (this.$('.' + c.tabbed).length === 1) {
+                    this.tabbed = {
+                        $el: this.$('.' + c.tabbed)
+                    };
+                    var $tabNav = this.tabbed.$nav = this.$('.' + c.base + c._nav);
+                    var tabList = this.tabbed.list = [];
+                    var tabMap = this.tabbed.map = {};
+                    $tabNav.html('');
+                    this.tabbed.$el.find('.' + c.base + c._panel).each(function () {
+                        var $tabPanel = $(this);
+                        var tabId = $tabPanel.attr('id');
+                        var tabLabel = $tabPanel.data('label');
+                        $tabNav.append('<li role="presentation"><a role="tab" data-toggle="tab" href="#'
+                            + tabId + '" data-key="' + $tabPanel.data('key') + '">' + tabLabel + '</a></li>');
+                        tabList.push($tabPanel);
+                        tabMap[tabId] = {
+                            id: tabId,
+                            label: tabLabel,
+                            panel: $tabPanel
+                        }
+                    });
+                }
+            },
+
             validationReset: function () {
+                var c = components.const.form.css;
+                if (this.tabbed) {
+                    this.tabbed.$nav.find('li').removeClass('has-error');
+                }
                 this.$(widgets.const.css.selector.general).each(function () {
                     if (this.view && _.isFunction(this.view.validationReset)) {
                         this.view.validationReset.apply(this.view);
                     }
                 });
+                this.$el.removeClass(c.status.invalid);
+                this.$el.addClass(c.status.valid);
+            },
+
+            onValidationFault: function () {
+                var c = components.const.form.css;
+                this.$el.removeClass(c.status.valid);
+                this.$el.addClass(c.status.invalid);
+                if (this.tabbed) {
+                    var dialog = this;
+                    var $first = undefined;
+                    this.tabbed.list.forEach(function (item) {
+                        var $tab = $(item);
+                        if ($tab.find('.has-error').length > 0) {
+                            var $tabLink = dialog.tabbed.$nav.find('[href="#' + $tab[0].id + '"]');
+                            $tabLink.parent().addClass('has-error');
+                            if (!$first) {
+                                $first = $tabLink;
+                                $first.tab('show');
+                            }
+                        }
+                    });
+                }
             },
 
             /**
@@ -92,7 +155,6 @@
              * the class of the form signals the result ('valid-form / 'invalid-form')
              */
             validate: function (alertMethod) {
-                var c = components.const.form;
                 var valid = true;
                 this.$(widgets.const.css.selector.general).each(function () {
                     if (this.view) {
@@ -102,13 +164,6 @@
                         }
                     }
                 });
-                if (valid) {
-                    this.$el.removeClass(c.css.status.invalid);
-                    this.$el.addClass(c.css.status.valid);
-                } else {
-                    this.$el.removeClass(c.css.status.valid);
-                    this.$el.addClass(c.css.status.invalid);
-                }
                 return valid;
             },
 
@@ -180,7 +235,7 @@
             },
 
             /**
-             * prepare the validation and a following submit (adjust names and values is useful)
+             * prepare the validation and a following submit (adjust names and values if useful)
              */
             prepare: function () {
                 var c = components.const.form;
@@ -195,7 +250,7 @@
             },
 
             /**
-             * finalize all date before the following submit (prepare data for storing)
+             * finalize all data (values) before the following submit (prepare data for storing)
              */
             finalize: function () {
                 var c = components.const.form;
@@ -927,25 +982,14 @@
              * @returns the repository path with the root path prependet if a root is declared
              */
             getValue: function () {
-                var value = components.TextFieldWidget.prototype.getValue.call(this);
-                if (value && this.rootPath && this.rootPath !== '/') {
-                    value = value === '/' ? this.rootPath : this.rootPath + value;
-                }
-                return value;
+                return this.applyRootPath(components.TextFieldWidget.prototype.getValue.call(this), false);
             },
 
             /**
              * sets the value of the input field without a probably declared root path
              */
             setValue: function (value, triggerChange) {
-                if (value && this.rootPath && this.rootPath !== '/'
-                    && (value === this.rootPath || value.indexOf(this.rootPath + '/') === 0)) {
-                    value = value.substring(this.rootPath.length);
-                    if (!value) {
-                        value = '/';
-                    }
-                }
-                components.TextFieldWidget.prototype.setValue.call(this, value, triggerChange);
+                components.TextFieldWidget.prototype.setValue.call(this, this.applyRootPath(value, true), triggerChange);
             },
 
             getRootPath: function () {
@@ -953,7 +997,13 @@
             },
 
             setRootPath: function (path) {
+                var value = this.getValue();
+                var placeholder = this.applyRootPath(this.$input.prop('placeholder'), false);
                 this.rootPath = this.adjustRootPath(path ? path : this.config.rootPath);
+                if (placeholder) {
+                    this.$input.prop('placeholder', this.applyRootPath(placeholder, true));
+                }
+                this.setValue(value, false);
             },
 
             getFilter: function () {
@@ -965,6 +1015,25 @@
             },
 
             adjustRootPath: function (path) {
+                return path;
+            },
+
+            applyRootPath: function (path, shorten) {
+                if (path) {
+                    if (shorten) {
+                        if (this.rootPath && this.rootPath !== '/'
+                            && (path === this.rootPath || path.indexOf(this.rootPath + '/') === 0)) {
+                            path = path.substring(this.rootPath.length);
+                            if (!path) {
+                                path = '/';
+                            }
+                        }
+                    } else {
+                        if (this.rootPath && this.rootPath !== '/') {
+                            path = path === '/' ? this.rootPath : this.rootPath + path;
+                        }
+                    }
+                }
                 return path;
             }
         });

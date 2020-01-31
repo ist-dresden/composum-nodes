@@ -333,6 +333,7 @@
                 newItem.reset();
                 this.itemList[this.itemList.length] = newItem;
                 this.current(currentState);
+                this.$el.trigger('change', [this.getValue()]);
             },
 
             remove: function () {
@@ -347,6 +348,7 @@
                 } else {
                     this.itemList[0].reset();
                 }
+                this.$el.trigger('change', [this.getValue()]);
             },
 
             moveUp: function () {
@@ -356,6 +358,7 @@
                     var tail = index < this.itemList.length - 1 ? _.rest(this.itemList, index + 1) : [];
                     this.itemList = _.union(head, [this.currentItem], [this.itemList[index - 1]], tail);
                     this.currentItem.$el.insertBefore(this.currentItem.$el.prev());
+                    this.$el.trigger('change', [this.getValue()]);
                 }
             },
 
@@ -366,6 +369,7 @@
                     var tail = index < this.itemList.length - 2 ? _.rest(this.itemList, index + 2) : [];
                     this.itemList = _.union(head, [this.itemList[index + 1]], [this.currentItem], tail);
                     this.currentItem.$el.insertAfter(this.currentItem.$el.next());
+                    this.$el.trigger('change', [this.getValue()]);
                 }
             },
 
