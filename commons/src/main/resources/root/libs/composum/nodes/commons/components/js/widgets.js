@@ -15,7 +15,8 @@
                     prefix: '.widget.',
                     form: 'form.widget-form',
                     group: '.form-group',
-                    label: 'label .label-text'
+                    labeltext: 'label .label-text',
+                    label: 'label'
                 }
             },
             attr: {
@@ -127,7 +128,10 @@
              */
             retrieveLabel: function () {
                 var c = widgets.const.css.selector;
-                var $label = this.$el.closest(c.group).find(c.label);
+                var $label = this.$el.closest(c.group).find(c.labeltext);
+                if ($label.length < 1) {
+                    $label = this.$el.closest(c.group).find(c.label);
+                }
                 return $label.length === 1 ? $label.text().trim() : this.retrieveName();
             },
 
@@ -195,7 +199,7 @@
              * this can be modified by a widget to filter change events, e.g. on internal state changes
              */
             onWidgetChange: function (event, value) {
-                this.$el.trigger('changed', [value]);
+                this.$el.trigger('changed', [value ? value : this.getValue()]);
             },
 
             /**
@@ -251,9 +255,15 @@
                             valid = this.valid = (this.rules.blank && (!value || value.trim().length < 1))
                                 || this.rules.pattern.test(value);
                             if (!valid) {
-                                this.alert(alertMethod, 'danger', '',
-                                    this.rules.patternHint || core.i18n.get("value doesn't match pattern"),
-                                    ('' + this.rules.pattern).replace(/^\//, '').replace(/\/$/, ''));
+                                if (this.rules.patternHint) {
+                                    this.alert(alertMethod, 'danger', '',
+                                        this.rules.patternHint, this.patternHint(this.rules.pattern));
+                                } else {
+                                    core.i18n.get("value doesn't match pattern", _.bind(function (text) {
+                                        this.alert(alertMethod, 'danger', '',
+                                            text, this.patternHint(this.rules.pattern));
+                                    }, this));
+                                }
                             }
                         }
                         if (this.valid && this.rules.required) {
@@ -374,6 +384,16 @@
                         this.alertMessage.message, this.alertMessage.hint);
                     this.alertMessage = undefined;
                 }
+            },
+
+            /**
+             * @protected
+             * @return a 'readable' text derived from the regex pattern used vor validation
+             */
+            patternHint: function (pattern) {
+                return ('' + pattern)
+                    .replace(/^\//, '').replace(/\/$/, '')
+                    .replace(/^[^]/, '').replace(/[$]$/, '');
             }
         })
     };
