@@ -468,24 +468,24 @@
             }
         });
 
-        core.addLoadedDialog = function (viewType, html, initializer) {
+        core.addLoadedDialog = function (viewType, html, config) {
             var $body = $('body');
             $body.append(html);
             var $dialog = $body.children(':last-child');
-            return core.getWidget($body, $dialog[0], viewType, initializer
-                ? _.extend({loaded: true}, initializer) : {loaded: true});
+            return core.getWidget($body, $dialog[0], viewType, config
+                ? _.extend({loaded: true}, config) : {loaded: true});
         };
 
-        core.showLoadedDialog = function (viewType, html, initView, callback) {
-            var dialog = core.addLoadedDialog(viewType, html);
+        core.showLoadedDialog = function (viewType, html, config, initView, callback) {
+            var dialog = core.addLoadedDialog(viewType, html, config);
             if (dialog) {
                 dialog.show(initView, callback);
             }
         };
 
-        core.openLoadedDialog = function (url, viewType, initView, callback) {
+        core.openLoadedDialog = function (url, viewType, config, initView, callback) {
             core.getHtml(url, function (content) {
-                core.showLoadedDialog(viewType, content, initView, callback);
+                core.showLoadedDialog(viewType, content, config, initView, callback);
             });
         };
 
@@ -652,13 +652,13 @@
             }
         });
 
-        core.showFormDialog = function (viewType, html, initView, callback) {
-            core.showLoadedDialog(viewType, html, initView, callback);
+        core.showFormDialog = function (viewType, html, config, initView, callback) {
+            core.showLoadedDialog(viewType, html, config, initView, callback);
         };
 
-        core.openFormDialog = function (url, viewType, initView, callback) {
+        core.openFormDialog = function (url, viewType, config, initView, callback) {
             core.getHtml(url, function (content) {
-                core.showLoadedDialog(viewType, content, initView, callback);
+                core.showLoadedDialog(viewType, content, config, initView, callback);
             });
         };
 
