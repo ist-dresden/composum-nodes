@@ -17,13 +17,33 @@
             return console.profile;
         };
 
-        console.getUserLoginDialog = function () {
-            return core.getView('#user-status-dialog', console.UserLoginDialog);
+        console.openUserLoginDialog = function (action) {
+            var loginDialog = core.getView('#user-status-dialog', console.UserLoginDialog);
+            if (!loginDialog) {
+                core.getHtml('/libs/composum/nodes/console/dialogs.user-status.html',
+                    _.bind(function (content) {
+                        loginDialog = core.addLoadedDialog(console.UserLoginDialog, content);
+                        if (loginDialog) {
+                            if (_.isFunction(action)) {
+                                action(loginDialog);
+                            } else {
+                                loginDialog.show();
+                            }
+                        }
+                    }, this));
+            } else {
+                if (_.isFunction(action)) {
+                    action(loginDialog);
+                } else {
+                    loginDialog.show();
+                }
+            }
         };
 
         console.authorize = function (retryThisFailedCall) {
-            var loginDialog = console.getUserLoginDialog();
-            loginDialog.handleUnauthorized(retryThisFailedCall);
+            console.openUserLoginDialog(_.bind(function (loginDialog) {
+                loginDialog.handleUnauthorized(retryThisFailedCall);
+            }, this));
         };
 
         //
@@ -126,8 +146,9 @@
             initialize: function () {
                 var consoleId = $('body').attr('id');
                 this.$('.nav-item.' + consoleId).addClass('active');
-                var loginDialog = console.getUserLoginDialog();
-                this.$('.nav-user-status').on('click', _.bind(loginDialog.show, loginDialog));
+                this.$('.nav-user-status').on('click', _.bind(function () {
+                    console.openUserLoginDialog();
+                }, this));
             }
         });
 

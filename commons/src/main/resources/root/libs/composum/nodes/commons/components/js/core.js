@@ -392,6 +392,21 @@
         },
 
         /**
+         * @param action (alertDialog) the action th show the loaded 'alertDialog' (required)
+         */
+        openAlertDialog: function (action) {
+            var alertDialog = core.getView('#alert-dialog', core.components.Dialog);
+            if (!alertDialog) { // if not static included load dialog dynamically
+                core.getHtml('/libs/composum/nodes/commons/dialogs.alert.html',
+                    _.bind(function (content) {
+                        action(core.addLoadedDialog(core.components.Dialog, content));
+                    }, this));
+            } else {
+                action(alertDialog);
+            }
+        },
+
+        /**
          * displays a short 'alert' dialog with a single message
          * @param typeOrResult the message error level (success, info, warning, danger) or a request result object
          * @param title the message text to display in the heading of the dialog
@@ -414,10 +429,11 @@
                 core.alert(result.responseJSON)
             } else {
                 typeOrResult = core.getAlertType(typeOrResult);
-                var dialog = core.getView('#alert-dialog', core.components.Dialog);
-                dialog.$('.modal-header h4').text(title || 'Alert');
-                dialog.show(_.bind(function () {
-                    dialog.alert(typeOrResult, message, result);
+                core.openAlertDialog(_.bind(function (alertDialog) {
+                    alertDialog.$('.modal-header h4').text(title || 'Alert');
+                    alertDialog.show(_.bind(function () {
+                        alertDialog.alert(typeOrResult, message, result);
+                    }, this));
                 }, this));
             }
         },
@@ -430,10 +446,11 @@
          */
         messages: function (type, title, messages) {
             type = core.getAlertType(type);
-            var dialog = core.getView('#alert-dialog', core.components.Dialog);
-            dialog.$('.modal-header h4').text(title);
-            dialog.show(_.bind(function () {
-                dialog.messages(type, undefined, messages);
+            core.openAlertDialog(_.bind(function (alertDialog) {
+                alertDialog.$('.modal-header h4').text(title);
+                alertDialog.show(_.bind(function () {
+                    alertDialog.messages(type, undefined, messages);
+                }, this));
             }, this));
         },
 
