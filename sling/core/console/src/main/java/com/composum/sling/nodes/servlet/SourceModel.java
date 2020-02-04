@@ -196,6 +196,11 @@ public class SourceModel extends ConsoleSlingBean {
 
     private transient List<Property> propertyList;
     private transient List<Resource> subnodeList;
+    /**
+     * Whether the child nodes are known to be orderable - wrapped into array to distinguish "not known" from "not
+     * yet determined".
+     */
+    protected transient Boolean[] hasOrderableChildNodes;
 
     public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
         if ("/".equals(ResourceUtil.normalize(resource.getPath()))) {
@@ -332,6 +337,28 @@ public class SourceModel extends ConsoleSlingBean {
         writeZip(zipStream, root, true);
         zipStream.flush();
         zipStream.close();
+    }
+
+    /**
+     * Returns true if the nodes children are ordered. Works only for JCR resources - if we cannot determine this,
+     * we return null.
+     */
+    public Boolean hasOrderableChildNodes() {
+        Boolean result = null;
+        if (hasOrderableChildNodes == null) {
+            try {
+                Node node = getResource().adaptTo(Node.class);
+                if (node != null) {
+                    result = node.getPrimaryNodeType().hasOrderableChildNodes();
+                }
+            } catch (RepositoryException e) {
+                LOG.error("" + e, e);
+            }
+            hasOrderableChildNodes = new Boolean[]{result};
+        } else {
+            result = hasOrderableChildNodes[0];
+        }
+        return result;
     }
 
     protected void writePackageProperties(ZipOutputStream zipStream, String group, String name, String version)
@@ -536,7 +563,7 @@ public class SourceModel extends ConsoleSlingBean {
         if ((contentResource = resource.getChild(JcrConstants.JCR_CONTENT)) != null) {
             SourceModel subnodeModel = new SourceModel(config, context, contentResource);
             subnodeModel.writeXml(writer, "    ");
-            if (!noSubnodeNames) {
+            if (!noSubnodeNames && !Boolean.FALSE.equals(hasOrderableChildNodes())) { // rather do it if unknown
                 for (Resource subnode : getSubnodeList()) {
                     String name = subnode.getName();
                     if (!JcrConstants.JCR_CONTENT.equals(name)) {
