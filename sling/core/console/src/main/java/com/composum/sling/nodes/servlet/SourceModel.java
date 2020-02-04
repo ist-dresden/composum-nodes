@@ -272,7 +272,12 @@ public class SourceModel extends ConsoleSlingBean {
                 if (jcrNode != null) {
                     try {
                         javax.jcr.Property jcrProp = jcrNode.getProperty(entry.getKey());
+                        if (jcrProp.getDefinition().getRequiredType() == PropertyType.UNDEFINED) {
+                            // we need specific type information e.g. if it's PATH, REFERENCE, NAME, ...
                             type = jcrProp.getType();
+                        }
+                        // otherwise the property has a required type - no point in forcing it to be displayed.
+                        // for instance you don't need to give {NAME} for jcr:mixinTypes which is forced to be name.
                     } catch (RepositoryException e) { // shouldn't happen
                         LOG.warn("Error reading property {}/{}", new Object[]{resource.getPath(), entry.getValue(), e});
                     }
