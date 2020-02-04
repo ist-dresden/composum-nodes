@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.jcr.Binary;
+import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
@@ -72,10 +73,17 @@ public class SourceModel extends ConsoleSlingBean {
 
         protected final String name;
         protected final Object value;
+        /** JCR {@link PropertyType} since that cannot be guessed from the value in various cases. */
+        protected final Integer jcrType;
 
-        public Property(String name, Object value) {
+        public Property(String name, Object value, Integer jcrType) {
             this.name = name;
             this.value = value;
+            this.jcrType = jcrType;
+        }
+
+        public Property(String key, Object value) {
+            this(key, value, null);
         }
 
         public String getNs() {
@@ -91,7 +99,7 @@ public class SourceModel extends ConsoleSlingBean {
             return name;
         }
 
-        public String getString(String indent) {
+        public String getString(String indent) throws IOException {
 
             if (isMultiValue()) {
                 StringBuilder buffer = new StringBuilder();
@@ -126,10 +134,13 @@ public class SourceModel extends ConsoleSlingBean {
             return getTypePrefix(value) + getString(value);
         }
 
-        public String getString(Object value) {
+        protected String getString(Object value) throws IOException {
             if (value instanceof Calendar) {
                 DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
                 return formatter.format(((Calendar) value).getTime());
+            }
+            if (value instanceof InputStream) { // actual value is exported in additional file.
+                return "";
             }
             if (value instanceof String && ((String) value).startsWith("{")) {
                 // a value starting with { would be misinterpreted as type prefix -> escape it:
@@ -138,7 +149,10 @@ public class SourceModel extends ConsoleSlingBean {
             return value != null ? value.toString() : "";
         }
 
-        public String getTypePrefix(Object value) {
+        protected String getTypePrefix(Object value) {
+            if (jcrType != null && jcrType != PropertyType.STRING) {
+                return "{" + PropertyType.nameFromValue(jcrType) + "}";
+            }
             if (value instanceof String || value instanceof String[]) {
                 return "";
             } else if (value instanceof Boolean || value instanceof Boolean[]) {
@@ -151,6 +165,8 @@ public class SourceModel extends ConsoleSlingBean {
                 return "{" + PropertyType.TYPENAME_DOUBLE + "}";
             } else if (value instanceof Calendar || value instanceof Calendar[]) {
                 return "{" + PropertyType.TYPENAME_DATE + "}";
+            } else if (value instanceof InputStream || value instanceof InputStream[]) {
+                return "{" + PropertyType.TYPENAME_BINARY + "}";
             }
             return "";
         }
@@ -215,8 +231,18 @@ public class SourceModel extends ConsoleSlingBean {
     public List<Property> getPropertyList() {
         if (propertyList == null) {
             propertyList = new ArrayList<>();
+            Node jcrNode = resource.adaptTo(Node.class);
             for (Map.Entry<String, Object> entry : resource.getProperties().entrySet()) {
-                Property property = new Property(entry.getKey(), entry.getValue());
+                Integer type = null;
+                if (jcrNode != null) {
+                    try {
+                        javax.jcr.Property jcrProp = jcrNode.getProperty(entry.getKey());
+                        type = jcrProp.getType();
+                    } catch (RepositoryException e) { // shouldn't happen
+                        LOG.warn("Error reading property {}/{}", new Object[]{resource.getPath(), entry.getValue(), e});
+                    }
+                }
+                Property property = new Property(entry.getKey(), entry.getValue(), type);
                 if (!isExcluded(property)) {
                     propertyList.add(property);
                 }
