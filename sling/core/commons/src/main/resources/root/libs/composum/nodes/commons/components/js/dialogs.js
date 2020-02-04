@@ -499,8 +499,9 @@
         components.FormDialog = components.LoadedDialog.extend({
 
             initialize: function (options) {
-                this.form = core.getWidget(this.el, "form", options.formType || core.components.FormWidget);
-                core.components.LoadedDialog.prototype.initialize.apply(this, [options]);
+                var formType = options ? (options.formType || core.components.FormWidget) : core.components.FormWidget;
+                this.form = core.getWidget(this.el, "form", formType);
+                core.components.LoadedDialog.prototype.initialize.call(this, options);
                 this.validationHints = [];
                 this.initView();
                 this.initSubmit();

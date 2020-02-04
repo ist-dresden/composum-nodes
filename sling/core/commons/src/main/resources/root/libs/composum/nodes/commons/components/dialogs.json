@@ -1,3 +1,4 @@
 {
+  "jcr:primaryType": "sling:Folder",
   "sling:resourceType": "composum/nodes/commons/components/dialogs"
 }
