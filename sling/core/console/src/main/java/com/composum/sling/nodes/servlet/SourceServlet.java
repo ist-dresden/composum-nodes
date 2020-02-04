@@ -80,7 +80,7 @@ public class SourceServlet extends SlingSafeMethodsServlet {
 
                         sourceModel.writeContentXmlFile(response.getWriter(),
                                 RequestUtil.checkSelector(request, "content"),
-                                RequestUtil.checkSelector(request, "node"));
+                                RequestUtil.checkSelector(request, "node"), null);
                         break;
 
                     // a content hierarchy in a zipped structure with '.content.xml' for the content within
