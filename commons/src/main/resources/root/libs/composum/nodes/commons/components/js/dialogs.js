@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('core.components');
 
-    core.components = core.components || {};
-
-    (function (components) {
+    (function (components, core) {
 
         components.const = components.const || {};
         components.const.dialog = {
@@ -47,7 +46,7 @@
             },
 
             setUpWidgets: function (root) {
-                window.widgets.setUp(root);
+                CPM.widgets.setUp(root);
             },
 
             /**
@@ -663,6 +662,6 @@
             });
         };
 
-    })(core.components);
+    })(CPM.core.components, CPM.core);
 
-})(window.core);
+})();

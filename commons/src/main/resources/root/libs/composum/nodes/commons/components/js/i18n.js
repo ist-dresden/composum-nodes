@@ -109,4 +109,4 @@
         }
     };
 })
-(window.core);
+(CPM.core);

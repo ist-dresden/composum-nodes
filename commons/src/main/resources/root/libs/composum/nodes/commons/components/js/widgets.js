@@ -2,10 +2,12 @@
  *
  *
  */
-(function (window) {
+(function () {
     'use strict';
 
-    window.widgets = {
+    window.CPM = window.CPM || {};
+
+    window.widgets = CPM.widgets = { // window.widgets for compatibility ... @deprecated
 
         const: {
             css: {
@@ -401,6 +403,6 @@
     /**
      * register the 'hidden' input as a widget to add the widgets behaviour to such hidden values
      */
-    window.widgets.register('.widget.hidden-widget', window.widgets.Widget);
+    CPM.widgets.register('.widget.hidden-widget', CPM.widgets.Widget);
 
-})(window);
+})();

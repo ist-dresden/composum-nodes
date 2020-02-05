@@ -1,9 +1,8 @@
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('core.components');
 
-    core.components = core.components || {};
-
-    (function (components) {
+    (function (components, core) {
 
         components.const = _.extend(components.const || {}, {
             richtext: {
@@ -120,7 +119,7 @@
                         form = core.getWidget($dialog[0], 'form', core.components.FormWidget),
                         formWidgets = {};
                     $dialog.addClass('composum-widgets-richtext_link-dialog');
-                    window.widgets.setUp(form.el);
+                    CPM.widgets.setUp(form.el);
 
                     form.$('[name]').each(function () {
                         var name = $(this).attr('name');
@@ -226,6 +225,6 @@
             }
         });
 
-    })(core.components);
+    })(CPM.core.components, CPM.core);
 
-})(window.core);
+})();
