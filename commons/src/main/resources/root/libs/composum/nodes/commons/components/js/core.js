@@ -22,6 +22,20 @@
 
         log: log.getLogger('core'),
 
+        /**
+         * ensure presence of a 'namespace' object
+         * @param pckge the 'package' name to use as 'namespace'
+         */
+        namespace: function (pckge) {
+            var base = window;
+            pckge.split('.').forEach(function (segment) {
+                if (!_.isObject(base[segment])) {
+                    base[segment] = {};
+                }
+                base = base[segment];
+            });
+        },
+
         getHtml: function (url, onSuccess, onError, onComplete) {
             core.ajaxGet(url, {dataType: 'html'}, onSuccess, onError, onComplete);
         },
