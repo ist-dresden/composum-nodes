@@ -2,10 +2,25 @@
  *
  *
  */
-(function (window) {
+(function () {
     'use strict';
 
-    window.core = {
+    window.composum = window.CPM = window.CPM || {};
+
+    /**
+     * ensure presence of a 'namespace' object
+     * @param pckge the 'package' name to use as 'namespace'
+     */
+    CPM.namespace = function (pckge, base = window.CPM) {
+        pckge.split('.').forEach(function (segment) {
+            if (!_.isObject(base[segment])) {
+                base[segment] = {};
+            }
+            base = base[segment];
+        });
+    };
+
+    window.core = CPM.core = { // window.core for compatibility ... @deprecated
 
         const: {
             url: {
@@ -21,20 +36,6 @@
         },
 
         log: log.getLogger('core'),
-
-        /**
-         * ensure presence of a 'namespace' object
-         * @param pckge the 'package' name to use as 'namespace'
-         */
-        namespace: function (pckge) {
-            var base = window;
-            pckge.split('.').forEach(function (segment) {
-                if (!_.isObject(base[segment])) {
-                    base[segment] = {};
-                }
-                base = base[segment];
-            });
-        },
 
         getHtml: function (url, onSuccess, onError, onComplete) {
             core.ajaxGet(url, {dataType: 'html'}, onSuccess, onError, onComplete);
@@ -564,12 +565,12 @@
         }
     };
 
-    window.core.LocalProfile = function (key) {
+    CPM.core.LocalProfile = function (key) {
         this.profileKey = key;
         this.aspects = {};
     };
 
-    _.extend(window.core.LocalProfile.prototype, {
+    _.extend(CPM.core.LocalProfile.prototype, {
 
         get: function (aspect, key, defaultValue) {
             var object = this.aspects[aspect];
@@ -606,9 +607,9 @@
         }
     });
 
-    window.core.SlingUrl = function (url, parameters) {
+    CPM.core.SlingUrl = function (url, parameters) {
         this.url = url;
-        var parts = window.core.const.url.sling.exec(url);
+        var parts = CPM.core.const.url.sling.exec(url);
         this.scheme = parts[2];
         this.host = parts[3];
         this.port = parts[5];
@@ -644,7 +645,7 @@
         }
     };
 
-    _.extend(window.core.SlingUrl.prototype, {
+    _.extend(CPM.core.SlingUrl.prototype, {
 
         build: function () {
             this.url = "";
@@ -706,4 +707,4 @@
         }
     });
 
-})(window);
+})();

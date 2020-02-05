@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('core.components');
 
-    core.components = core.components || {};
-
-    (function (components, widgets) {
+    (function (components, widgets, core) {
 
         //
         // Multi 'Form'
@@ -283,7 +282,7 @@
                     }
                     $handle.prop('checked', false);
                     $handle.unbind('click').on('click', _.bind(this.onSelect, this));
-                    window.widgets.setUp(item.el);
+                    CPM.widgets.setUp(item.el);
                 }, this), this.itemType !== components.MultiFormItem);
                 return item;
             },
@@ -397,6 +396,6 @@
         widgets.register(widgets.const.css.selector.prefix +
             components.const.multiform.css.base, components.MultiFormWidget);
 
-    })(core.components, window.widgets);
+    })(CPM.core.components, CPM.widgets, CPM.core);
 
-})(window.core);
+})();

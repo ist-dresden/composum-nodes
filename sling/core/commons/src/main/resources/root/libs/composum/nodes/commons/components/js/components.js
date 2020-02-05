@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('core.components');
 
-    core.components = core.components || {};
-
-    (function (components, widgets) {
+    (function (components, widgets, core) {
 
         //
         // Form
@@ -318,7 +317,7 @@
         //
 
         /**
-         * the 'checkbox-widget' (window.core.components.CheckboxWidget)
+         * the 'checkbox-widget' core.components.CheckboxWidget)
          * possible attributes:
          */
         components.CheckboxWidget = widgets.Widget.extend({
@@ -384,7 +383,7 @@
         widgets.register('.widget.checkbox-widget', components.CheckboxWidget);
 
         /**
-         * the 'select-buttons-widget' (window.core.components.SelectButtonsWidget)
+         * the 'select-buttons-widget' core.components.SelectButtonsWidget)
          * possible attributes:
          */
         components.SelectButtonsWidget = widgets.Widget.extend({
@@ -420,7 +419,7 @@
         widgets.register('.widget.select-buttons-widget', components.SelectButtonsWidget);
 
         /**
-         * the 'radio-group-widget' (window.core.components.RadioGroupWidget)
+         * the 'radio-group-widget' core.components.RadioGroupWidget)
          * possible attributes:
          */
         components.RadioGroupWidget = widgets.Widget.extend({
@@ -461,7 +460,7 @@
         widgets.register('.widget.radio-group-widget', components.RadioGroupWidget);
 
         /**
-         * the 'select-widget' (window.core.components.SelectWidget)
+         * the 'select-widget' core.components.SelectWidget)
          * possible attributes:
          */
         components.SelectWidget = widgets.Widget.extend({
@@ -574,7 +573,7 @@
         widgets.register('.widget.table-select-widget', components.TableSelectWidget);
 
         /**
-         * the 'text-field-widget' (window.core.components.TextFieldWidget)
+         * the 'text-field-widget' core.components.TextFieldWidget)
          *
          * this is the basic class ('superclass') of all text input field based widgets; it is also usable
          * as is for normal text input fields; it implements the general validation and reset functions
@@ -747,7 +746,7 @@
         widgets.register('.widget.combobox-widget', components.ComboBoxWidget);
 
         /**
-         * the 'text-field-widget' (window.core.components.TextFieldWidget)
+         * the 'text-field-widget' core.components.TextFieldWidget)
          *
          * this is the basic class ('superclass') of all text input field based widgets; it is also usable
          * as is for normal text input fields; it implements the general validation and reset functions
@@ -864,7 +863,7 @@
         });
 
         /**
-         * the 'path-widget' (window.core.components.PathWidget)
+         * the 'path-widget' core.components.PathWidget)
          *
          * the widget behaviour to extend an input or an input group to select repository path values
          * - adds a typeahead function for the last path segment during input on the input element
@@ -1041,7 +1040,7 @@
         widgets.register('.widget.path-widget', components.PathWidget);
 
         /**
-         * the 'reference-widget' (window.core.components.ReferenceWidget)
+         * the 'reference-widget' core.components.ReferenceWidget)
          */
         components.ReferenceWidget = components.PathWidget.extend({
 
@@ -1101,7 +1100,7 @@
         widgets.register('.widget.reference-widget', components.ReferenceWidget);
 
         /**
-         * the 'number-field-widget' (window.core.components.NumberFieldWidget)
+         * the 'number-field-widget' core.components.NumberFieldWidget)
          * possible attributes:
          *   - data-options: '[min][:step[:max[:default]]]'
          */
@@ -1212,7 +1211,7 @@
         widgets.register('.widget.number-field-widget', components.NumberFieldWidget);
 
         /**
-         * the 'date-time-widget' (window.core.components.DateTimeWidget)
+         * the 'date-time-widget' core.components.DateTimeWidget)
          * possible attributes:
          */
         components.DateTimeWidget = components.TextFieldWidget.extend({
@@ -1292,7 +1291,7 @@
         widgets.register('.widget.date-time-widget', components.DateTimeWidget);
 
         /**
-         * the 'file-upload-widget' (window.core.components.FileUploadWidget)
+         * the 'file-upload-widget' core.components.FileUploadWidget)
          * possible attributes:
          * - data-options: 'hidePreview' (no file preview), 'showUpload' (the direct upload button)
          *  'browse:<Label>(:<Title>)', 'remove:<Label>(:<Title>)','upload:<Label>(:<Title>)',
@@ -1371,7 +1370,7 @@
         widgets.register('.widget.file-upload-widget', components.FileUploadWidget);
 
         /**
-         * the 'property-name-widget' (window.core.components.RepositoryNameWidget)
+         * the 'property-name-widget' core.components.RepositoryNameWidget)
          */
         components.PropertyNameWidget = components.TextFieldWidget.extend({
 
@@ -1400,7 +1399,7 @@
         widgets.register('.widget.property-name-widget', components.PropertyNameWidget);
 
         /**
-         * the 'repository-name-widget' (window.core.components.RepositoryNameWidget)
+         * the 'repository-name-widget' core.components.RepositoryNameWidget)
          */
         components.RepositoryNameWidget = components.TextFieldWidget.extend({
 
@@ -1417,7 +1416,7 @@
         widgets.register('.widget.repository-name-widget', components.RepositoryNameWidget);
 
         /**
-         * the 'primary-type-widget' (window.core.components.PrimaryTypeWidget)
+         * the 'primary-type-widget' core.components.PrimaryTypeWidget)
          */
         components.PrimaryTypeWidget = components.TextFieldWidget.extend({
 
@@ -1431,7 +1430,7 @@
         widgets.register('.widget.primary-type-widget', components.PrimaryTypeWidget);
 
         /**
-         * the 'mixin-type-widget' (window.core.components.MixinTypeWidget)
+         * the 'mixin-type-widget' core.components.MixinTypeWidget)
          */
         components.MixinTypeWidget = components.TextFieldWidget.extend({
 
@@ -1444,6 +1443,6 @@
 
         widgets.register('.widget.mixin-type-widget', components.MixinTypeWidget);
 
-    })(core.components, window.widgets);
+    })(CPM.core.components, CPM.widgets, CPM.core);
 
-})(window.core);
+})();
