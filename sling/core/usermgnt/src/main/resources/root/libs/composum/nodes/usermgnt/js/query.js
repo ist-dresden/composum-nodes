@@ -1,10 +1,8 @@
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.usermanagement');
 
-    core.usermanagement = core.usermanagement || {};
-
-    (function (usermanagement) {
-
+    (function (usermanagement, core) {
 
         usermanagement.Query = Backbone.View.extend({
 
@@ -71,6 +69,6 @@
 
         usermanagement.query = core.getView('#usermanagement-query .query-panel', usermanagement.Query);
 
-    })(core.usermanagement);
+    })(CPM.nodes.usermanagement, CPM.core);
 
-})(window.core);
+})();

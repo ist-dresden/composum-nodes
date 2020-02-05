@@ -200,4 +200,4 @@
 
     browser.favorites = core.getView('#favorites-view', browser.Favorites);
 
-})(window.core.browser);
+})(CPM.nodes.browser);

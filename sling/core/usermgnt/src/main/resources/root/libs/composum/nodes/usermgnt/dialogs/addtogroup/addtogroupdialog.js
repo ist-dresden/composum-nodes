@@ -1,9 +1,8 @@
-(function(core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.usermanagement');
 
-    core.usermanagement = core.usermanagement || {};
-
-    (function(usermanagement) {
+    (function (usermanagement, core) {
 
         usermanagement.getAddToGroupDialog = function () {
             return core.getView('#add-to-group-dialog', usermanagement.AddToGroupDialog);
@@ -52,10 +51,10 @@
                     {
                         dataType: 'post'
                     },
-                    _.bind(function(result) {
+                    _.bind(function (result) {
                         this.hide();
                     }, this),
-                    _.bind(function(result) {
+                    _.bind(function (result) {
                         this.hide();
                         core.alert('danger', 'Error', 'Error adding authorizable to group', result);
                     }, this));
@@ -63,6 +62,6 @@
             }
         });
 
-    })(core.usermanagement);
+    })(CPM.nodes.usermanagement, CPM.core);
 
-})(window.core);
+})();

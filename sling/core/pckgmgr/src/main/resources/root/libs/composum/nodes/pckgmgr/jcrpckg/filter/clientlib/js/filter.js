@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.pckgmgr');
 
-    core.pckgmgr = core.pckgmgr || {};
-
-    (function (pckgmgr) {
+    (function (pckgmgr, core) {
 
         /**
          * the generic 'property-value-widget' derived from the 'multi-value-widget'
@@ -304,6 +303,6 @@
 
         });
 
-    })(core.pckgmgr);
-    
-})(window.core);
+    })(CPM.nodes.pckgmgr, CPM.core);
+
+})();

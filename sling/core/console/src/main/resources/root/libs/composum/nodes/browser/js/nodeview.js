@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.browser');
 
-    core.browser = core.browser || {};
-
-    (function (browser) {
+    (function (browser, console, core) {
 
         /**
          * the abstract tab to display the current resource by their own view with
@@ -316,7 +315,7 @@
                     audit: false
                 });
                 this.verticalSplit = core.getWidget(this.$el,
-                    '.split-pane.vertical-split', core.components.VerticalSplitPane);
+                    '.split-pane.vertical-split', console.components.VerticalSplitPane);
                 browser.EditorTab.prototype.initialize.apply(this, [options]);
                 this.$bottomArea = this.$('.detail-content .bottom-area');
                 this.$logOutput = this.$bottomArea.find('.log-output');
@@ -890,6 +889,6 @@
 
         browser.nodeView = core.getView('#browser-view', browser.NodeView);
 
-    })(core.browser);
+    })(CPM.nodes.browser, CPM.console, CPM.core);
 
-})(window.core);
+})();

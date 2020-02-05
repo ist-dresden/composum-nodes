@@ -1,9 +1,8 @@
-(function(core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.usermanagement');
 
-    core.usermanagement = core.usermanagement || {};
-
-    (function(usermanagement) {
+    (function (usermanagement, core) {
 
         usermanagement.getDeleteAuthorizableDialog = function () {
             return core.getView('#authorizable-delete-dialog', usermanagement.DeleteAuthorizableDialog);
@@ -50,7 +49,6 @@
             }
         });
 
+    })(CPM.nodes.usermanagement, CPM.core);
 
-    })(core.usermanagement);
-
-})(window.core);
+})();

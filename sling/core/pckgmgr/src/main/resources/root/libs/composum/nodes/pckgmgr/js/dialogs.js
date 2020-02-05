@@ -3,11 +3,11 @@
  *
  *
  */
-(function (core) {
+(function () {
+    'use strict';
+    CPM.namespace('nodes.pckgmgr');
 
-    core.pckgmgr = core.pckgmgr || {};
-
-    (function (pckgmgr) {
+    (function (pckgmgr, core) {
 
         pckgmgr.getCreatePackageDialog = function () {
             return core.getView('#pckg-create-dialog', pckgmgr.CreatePackageDialog);
@@ -132,6 +132,6 @@
             }
         });
 
-    })(core.pckgmgr);
-    
-})(window.core);
+    })(CPM.nodes.pckgmgr, CPM.core);
+
+})();

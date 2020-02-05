@@ -1,13 +1,12 @@
-'use strict';
 /**
  *
  *
  */
-(function (core) {
+(function () {
+    'use strict';
+    CPM.namespace('console');
 
-    core.console = core.console || {};
-
-    (function (console) {
+    (function (console, core) {
 
         console.getApprovalDialog = function () {
             return core.getView('#approval-dialog', console.ApprovalDialog);
@@ -67,6 +66,6 @@
             }
         });
 
-    })(core.console);
+    })(CPM.console, CPM.core);
 
-})(window.core);
+})();

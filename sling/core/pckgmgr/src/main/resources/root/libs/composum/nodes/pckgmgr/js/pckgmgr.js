@@ -2,13 +2,11 @@
  *
  *
  */
-'use strict';
+(function () {
+    'use strict';
+    CPM.namespace('nodes.pckgmgr');
 
-(function (core) {
-
-    core.pckgmgr = core.pckgmgr || {};
-
-    (function (pckgmgr) {
+    (function (pckgmgr, console, core) {
 
         pckgmgr.pathPattern = /^\/((.+)\/)?([^\/]+)-([^\/]+)\.(zip|jar)$/;
 
@@ -36,9 +34,9 @@
                                 includeVersions: result.responseJSON.definition ? result.responseJSON.definition.includeVersions : undefined,
                                 node: result.responseJSON,
                                 viewUrl: core.getContextUrl('/bin/packages.view.html'
-                                    + window.core.encodePath(path)),
+                                    + core.encodePath(path)),
                                 nodeUrl: core.getContextUrl('/bin/packages.html'
-                                    + window.core.encodePath(path)),
+                                    + core.encodePath(path)),
                                 downloadUrl: pathMatch
                                     ? core.getContextUrl('/bin/cpm/package.download.zip' + core.encodePath(path))
                                     : ''
@@ -56,10 +54,10 @@
             }
         };
 
-        pckgmgr.Pckgmgr = core.components.SplitView.extend({
+        pckgmgr.Pckgmgr = console.components.SplitView.extend({
 
             initialize: function (options) {
-                core.components.SplitView.prototype.initialize.apply(this, [options]);
+                console.components.SplitView.prototype.initialize.apply(this, [options]);
                 $(document).on('path:select', _.bind(this.onPathSelect, this));
                 $(document).on('path:selected', _.bind(this.onPathSelected, this));
                 core.unauthorizedDelegate = core.console.authorize;
@@ -220,6 +218,6 @@
 
         pckgmgr.detailView = core.getView('#pckgmgr-view', pckgmgr.DetailView);
 
-    })(core.pckgmgr);
+    })(CPM.nodes.pckgmgr, CPM.console, CPM.core);
 
-})(window.core);
+})();

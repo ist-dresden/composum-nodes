@@ -1,9 +1,8 @@
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.browser');
 
-    core.browser = core.browser || {};
-
-    (function (browser) {
+    (function (browser, core) {
 
         browser.getAddLabelDialog = function () {
             return core.getView('#version-add-label-dialog', browser.AddLabelDialog);
@@ -338,6 +337,6 @@
 
         })
 
-    })(core.browser);
+    })(CPM.nodes.browser, CPM.core);
 
-})(window.core);
+})();
