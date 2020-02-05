@@ -2,15 +2,14 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.browser');
 
-    core.browser = core.browser || {};
-
-    (function (browser) {
+    (function (browser, core) {
 
         browser.getPropertyDialog = function () {
-            return core.getView('#browser-view-property-dialog', window.core.browser.PropertyDialog);
+            return core.getView('#browser-view-property-dialog', browser.PropertyDialog);
         };
 
         browser.openNewPropertyDialog = function (callback) {
@@ -39,8 +38,8 @@
                 var name = this.get('name');
                 var type = this.get('type');
                 return (path && path.trim().length > 0 &&
-                name && name.trim().length > 0 &&
-                type && type.trim().length > 0);
+                    name && name.trim().length > 0 &&
+                    type && type.trim().length > 0);
             },
 
             save: function (onSuccess, onError, data) {
@@ -380,6 +379,6 @@
             }
         });
 
-    })(core.browser);
+    })(CPM.nodes.browser, CPM.core);
 
-})(window.core);
+})();

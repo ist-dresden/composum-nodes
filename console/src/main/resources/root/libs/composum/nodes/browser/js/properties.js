@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.browser');
 
-    core.browser = core.browser || {};
-
-    (function (browser) {
+    (function (browser, core) {
 
         browser.getPropertiesTab = function () {
             return core.getView('.node-view-panel .properties', browser.PropertiesTab);
@@ -297,6 +296,6 @@
             }
         });
 
-    })(core.browser);
+    })(CPM.nodes.browser, CPM.core);
 
-})(window.core);
+})();

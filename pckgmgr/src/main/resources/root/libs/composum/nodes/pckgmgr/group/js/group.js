@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.pckgmgr');
 
-    core.pckgmgr = core.pckgmgr || {};
-
-    (function (pckgmgr) {
+    (function (pckgmgr, core) {
 
         pckgmgr.GroupTab = core.console.DetailTab.extend({
 
@@ -15,6 +14,6 @@
             }
         });
 
-    })(core.pckgmgr);
+    })(CPM.nodes.pckgmgr, CPM.core);
 
-})(window.core);
+})();

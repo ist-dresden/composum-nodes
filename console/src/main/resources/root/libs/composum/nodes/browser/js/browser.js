@@ -2,12 +2,12 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.browser');
+    window.core.browser = CPM.nodes.browser; // window.core.browser for compatibility ... @deprecated
 
-    core.browser = core.browser || {};
-
-    (function (browser) {
+    (function (browser, console, core) {
 
         browser.current = {};
 
@@ -46,8 +46,8 @@
                         browser.current = {
                             path: path,
                             node: result.responseJSON,
-                            viewUrl: core.getContextUrl('/bin/browser.view.html' + window.core.encodePath(path)),
-                            nodeUrl: core.getContextUrl('/bin/browser.html' + window.core.encodePath(path))
+                            viewUrl: core.getContextUrl('/bin/browser.view.html' + core.encodePath(path)),
+                            nodeUrl: core.getContextUrl('/bin/browser.html' + core.encodePath(path))
                         };
                         if (_.isFunction(callback)) {
                             callback.call(this, path);
@@ -56,10 +56,10 @@
             }
         };
 
-        browser.Browser = core.components.SplitView.extend({
+        browser.Browser = console.components.SplitView.extend({
 
             initialize: function (options) {
-                core.components.SplitView.prototype.initialize.apply(this, [options]);
+                console.components.SplitView.prototype.initialize.apply(this, [options]);
                 $(document).on('path:select.Browser', _.bind(this.onPathSelect, this));
                 $(document).on('path:selected.Browser', _.bind(this.onPathSelected, this));
                 $(document).on('path:changed.Browser', _.bind(this.onPathChanged, this));
@@ -206,6 +206,6 @@
             return core.getView('#browser-view .breadcrumbs', browser.Breadcrumbs);
         };
 
-    })(core.browser);
+    })(CPM.nodes.browser, CPM.console, CPM.core);
 
-})(window.core);
+})();

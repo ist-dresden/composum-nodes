@@ -2,12 +2,12 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes');
+    core.nodes = CPM.nodes; // core.console for compatibility ... @deprecated
 
-    core.nodes = core.nodes || {};
-
-    (function (nodes) {
+    (function (nodes, core) {
 
         nodes.getCreateNodeDialog = function () {
             return core.getView('#node-create-dialog', nodes.CreateNodeDialog);
@@ -512,6 +512,6 @@
             }
         });
 
-    })(core.nodes);
+    })(CPM.nodes, CPM.core);
 
-})(window.core);
+})();

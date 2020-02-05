@@ -1,9 +1,8 @@
-(function(core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.usermanagement');
 
-    core.usermanagement = core.usermanagement || {};
-
-    (function(usermanagement) {
+    (function (usermanagement, core) {
 
         usermanagement.PreferencesTab = core.console.DetailTab.extend({
 
@@ -13,6 +12,6 @@
             }
         });
 
-    })(core.usermanagement);
+    })(CPM.nodes.usermanagement, CPM.core);
 
-})(window.core);
+})();

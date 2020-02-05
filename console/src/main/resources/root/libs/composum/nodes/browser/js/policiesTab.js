@@ -2,17 +2,16 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.browser');
 
-    core.browser = core.browser || {};
-
-    (function (browser) {
+    (function (browser, console, core) {
 
         browser.PoliciesTab = core.console.DetailTab.extend({
 
             initialize: function (options) {
-                this.verticalSplit = core.getWidget(this.$el, '.split-pane.vertical-split', core.components.VerticalSplitPane);
+                this.verticalSplit = core.getWidget(this.$el, '.split-pane.vertical-split', console.components.VerticalSplitPane);
                 this.localTable = core.getWidget(this.$el, '.local-policies > table', browser.PoliciesTable, {
                     selectable: true
                 });
@@ -135,6 +134,6 @@
         });
 
 
-    })(core.browser);
+    })(CPM.nodes.browser, CPM.console, CPM.core);
 
-})(window.core);
+})();

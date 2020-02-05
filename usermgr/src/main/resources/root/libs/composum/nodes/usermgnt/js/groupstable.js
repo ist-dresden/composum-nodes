@@ -1,9 +1,8 @@
-(function(core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.usermanagement');
 
-    core.usermanagement = core.usermanagement || {};
-
-    (function(usermanagement) {
+    (function (usermanagement, core) {
 
         usermanagement.GroupsTable = Backbone.View.extend({
             initialize: function(options) {
@@ -65,6 +64,6 @@
 
         });
 
-    })(core.usermanagement);
+    })(CPM.nodes.usermanagement, CPM.core);
 
-})(window.core);
+})();

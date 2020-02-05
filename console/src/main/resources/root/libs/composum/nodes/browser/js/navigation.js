@@ -2,13 +2,13 @@
  * Favorites Overlay behaviour
  */
 
-(function (browser) {
+(function (browser, console) {
     'use strict';
 
     browser.Navigation = Backbone.View.extend({
 
         initialize: function (options) {
-            this.verticalSplit = core.getWidget(this.$el, this.el, core.components.VerticalSplitPane);
+            this.verticalSplit = core.getWidget(this.$el, this.el, console.components.VerticalSplitPane);
             this.verticalSplit.$el.on('splitpaneresize', _.bind(this.onSplitResize, this));
             if (core.console.getProfile().get('navigation', 'favorites')) {
                 this.toggleFavorites();
@@ -43,4 +43,4 @@
 
     browser.navigation = core.getView('#browser-nav-split', browser.Navigation);
 
-})(window.core.browser);
+})(CPM.nodes.browser, CPM.console);

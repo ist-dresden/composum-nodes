@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('console');
 
-    core.console = core.console || {};
-
-    (function (console) {
+    (function (console, core) {
 
         console.CodeEditorPage = Backbone.View.extend({
 
@@ -36,6 +35,6 @@
 
         core.getView('body.composum-nodes-components-codeeditor_page', console.CodeEditorPage);
 
-    })(core.console);
+    })(CPM.console, CPM.core);
 
-})(window.core);
+})();

@@ -1,17 +1,17 @@
-'use strict';
 /**
  *
  *
  */
-(function (core) {
+(function () {
+    'use strict';
+    CPM.namespace('console');
+    core.console = CPM.console; // core.console for compatibility ... @deprecated
 
-    core.console = core.console || {};
+    (function (console, core) {
 
-    core.initPermissions = function () {
-        location.reload(); // FIXME: to refactor
-    };
-
-    (function (console) {
+        core.initPermissions = function () {
+            location.reload(); // FIXME: to refactor
+        };
 
         console.getProfile = function () {
             return console.profile;
@@ -547,7 +547,7 @@
                 }
                 var path = this.getCurrentPath();
                 if (name && path) {
-                    var uri = new core.SlingUrl(this.getTabUri(name) + window.core.encodePath(path), parameters);
+                    var uri = new core.SlingUrl(this.getTabUri(name) + core.encodePath(path), parameters);
                     this.$detailContent.load(core.getContextUrl(uri.build()), _.bind(function () {
                         if (_.isFunction(refreshTabState)) {
                             refreshTabState();
@@ -569,6 +569,6 @@
             }
         });
 
-    })(core.console);
+    })(CPM.console, CPM.core);
 
-})(window.core);
+})();

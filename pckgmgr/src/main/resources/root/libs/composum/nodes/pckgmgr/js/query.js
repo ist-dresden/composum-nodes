@@ -1,9 +1,8 @@
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.pckgmgr');
 
-    core.pckgmgr = core.pckgmgr || {};
-
-    (function (pckgmgr) {
+    (function (pckgmgr, core) {
 
         pckgmgr.Query = Backbone.View.extend({
 
@@ -66,6 +65,6 @@
 
         pckgmgr.query = core.getView('#pckgmgr-query .query-panel', pckgmgr.Query);
 
-    })(core.pckgmgr);
+    })(CPM.nodes.pckgmgr, CPM.core);
 
-})(window.core);
+})();

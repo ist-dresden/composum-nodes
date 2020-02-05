@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.browser');
 
-    core.browser = core.browser || {};
-
-    (function (browser) {
+    (function (browser, core) {
 
         browser.PoliciesTable = Backbone.View.extend({
 
@@ -104,6 +103,6 @@
             }
         });
 
-    })(core.browser);
+    })(CPM.nodes.browser, CPM.core);
 
-})(window.core);
+})();
