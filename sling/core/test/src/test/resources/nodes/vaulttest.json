@@ -1,0 +1,96 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "propertytest": {
+    "bool": true,
+    "boolmulti": [
+      true,
+      false,
+      true
+    ],
+    "date": "{Date}2020-02-06T11:46:09.000+01:00",
+    "datemulti": [
+      "{Date}2020-02-06T11:46:09.000+01:00",
+      "{Date}2020-02-16T11:46:09.000+01:00"
+    ],
+    "decimal": "{Decimal}123231",
+    "decimalmulti": [
+      "{Decimal}123231",
+      "{Decimal}4342"
+    ],
+    "double": "{Double}1242432.0",
+    "doublemulti": [
+      "{Double}1242432.0",
+      "{Double}4324.23423"
+    ],
+    "jcr:primaryType": "nt:unstructured",
+    "long": 17,
+    "longmulti": [
+      234,
+      -151
+    ],
+    "name": "anameisthis",
+    "namemulti": [
+      "anameisthis",
+      "anothername"
+    ],
+    "path": "/content/composum",
+    "pathmulti": [
+      "/content/composum",
+      "/public/composum/prototype"
+    ],
+    "reference": "54ab0ccd-2035-4eca-94e3-5fce589b171a",
+    "referencemulti": [
+      "07937510-397d-4703-b62a-d3d99100adf4",
+      "5d058f77-5479-4527-9d3c-a58bf99113d9"
+    ],
+    "string": "a string",
+    "stringmulti": [
+      "false",
+      "two"
+    ],
+    "uri": "http://www.example.net/",
+    "urimulti": [
+      "www.example.net",
+      "/nix/nux",
+      "http://www.example.net/"
+    ],
+    "weakreference": "5d058f77-5479-4527-9d3c-a58bf99113d9",
+    "weakreferencemulti": [
+      "5d058f77-5479-4527-9d3c-a58bf99113d9",
+      "54ab0ccd-2035-4eca-94e3-5fce589b171a"
+    ],
+    "bool": {
+      "jcr:description": "somesubnode",
+      "jcr:primaryType": "nt:unstructured"
+    }
+  },
+  "testbild.png": {
+    "jcr:created": "{Date}2019-12-04 09:01:44",
+    "jcr:createdBy": "admin",
+    "jcr:primaryType": "nt:file",
+    "jcr:content": {
+      "jcr:mimeType": "image/png",
+      "jcr:mixinTypes": [
+        "tst:Resource"
+      ],
+      "jcr:primaryType": "tst:MetaData",
+      "meta": {
+        "jcr:primaryType": "nt:unstructured",
+        "Chroma ColorSpaceType": "RGB",
+        "Compression CompressionTypeName": "deflate",
+        "Compression Lossless": "true",
+        "Compression NumProgressiveScans": "1",
+        "Content-Type": "image/png",
+        "Data BitsPerSample": "8 8 8 8",
+        "Data PlanarConfiguration": "PixelInterleaved",
+        "Data SampleFormat": "UnsignedIntegral",
+        "Dimension ImageOrientation": "Normal",
+        "Dimension PixelAspectRatio": "1.0",
+        "Transparency Alpha": "nonpremultipled",
+        "height": 1500,
+        "size": 120063,
+        "width": 2000
+      }
+    }
+  }
+}

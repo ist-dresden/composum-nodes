@@ -147,6 +147,10 @@
             <version>1.9.10</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit.vault</groupId>
+            <artifactId>org.apache.jackrabbit.vault</artifactId>
+        </dependency>
 
         <!-- More testing dependencies -->
         <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->

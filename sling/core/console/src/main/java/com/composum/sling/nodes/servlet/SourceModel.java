@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -211,7 +212,7 @@ public class SourceModel extends ConsoleSlingBean {
 
         @Override
         public int hashCode() {
-            return name != null ? name.hashCode() : 17;
+            return Objects.hashCode(name);
         }
     }
 
