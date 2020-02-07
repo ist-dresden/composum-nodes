@@ -10,20 +10,27 @@ import org.apache.jackrabbit.vault.fs.api.AccessType;
 import org.apache.jackrabbit.vault.fs.api.Aggregate;
 import org.apache.jackrabbit.vault.fs.api.AggregateManager;
 import org.apache.jackrabbit.vault.fs.api.Artifact;
+import org.apache.jackrabbit.vault.fs.api.ImportMode;
+import org.apache.jackrabbit.vault.fs.api.PathFilter;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.RepositoryAddress;
 import org.apache.jackrabbit.vault.fs.api.VaultFile;
 import org.apache.jackrabbit.vault.fs.api.VaultFileSystem;
 import org.apache.jackrabbit.vault.fs.config.DefaultMetaInf;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
+import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
 import org.apache.jackrabbit.vault.fs.impl.AggregateImpl;
 import org.apache.jackrabbit.vault.fs.impl.io.DocViewSAXFormatter;
 import org.apache.jackrabbit.vault.fs.impl.io.DocViewSerializer;
 import org.apache.jackrabbit.vault.fs.io.DocViewFormat;
 import org.apache.jackrabbit.vault.packaging.ExportOptions;
+import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.PackageManager;
 import org.apache.jackrabbit.vault.packaging.PackageProperties;
+import org.apache.jackrabbit.vault.packaging.PackageType;
+import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.jackrabbit.vault.packaging.impl.PackageManagerImpl;
+import org.apache.jackrabbit.vault.packaging.impl.PackagingImpl;
 import org.apache.jackrabbit.vault.util.xml.serialize.XMLSerializer;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
@@ -31,6 +38,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.hamcrest.Matchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,6 +62,8 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import static org.junit.Assert.assertTrue;
 
 /** Test how to use vault as an easier to maintain version of the SourceModel. */
 public class VaultExportTest {
@@ -105,19 +115,29 @@ public class VaultExportTest {
 
     @Test
     public void usePackageManager() throws Exception {
-        PackageManager packageManager = context.registerService(new PackageManagerImpl());
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PackageManager packageMgr = new PackageManagerImpl();
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
         ExportOptions opts = new ExportOptions();
-        opts.setRootPath("/pathto");
-        opts.setMountPath("/pathto");
+        // opts.setRootPath("/pathto/page");
+        // opts.setMountPath("/pathto/page");
         DefaultMetaInf metainf = new DefaultMetaInf();
         Properties properties = new Properties();
         properties.setProperty(PackageProperties.NAME_GROUP, "somegroup");
         properties.setProperty(PackageProperties.NAME_NAME, "somename");
+        properties.setProperty(PackageProperties.NAME_VERSION, "1");
+        properties.setProperty(PackageProperties.NAME_PACKAGE_TYPE, PackageType.CONTENT.name());
         metainf.setProperties(properties);
         opts.setMetaInf(metainf);
-        packageManager.assemble(resolver.adaptTo(Session.class), opts, out);
-        ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
+        DefaultWorkspaceFilter filter = new DefaultWorkspaceFilter();
+        filter.setImportMode(ImportMode.REPLACE);
+        filter.add(new PathFilterSet(topnodePath));
+        metainf.setFilter(filter);
+        packageMgr.assemble(resolver.adaptTo(Session.class), opts, outStream);
+        printZipContents(outStream.toByteArray());
+    }
+
+    protected void printZipContents(byte[] zipBytes) throws IOException {
+        ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(zipBytes));
         ZipEntry zipEntry;
         while ((zipEntry = zip.getNextEntry()) != null) {
             System.out.println(zipEntry.getName());
@@ -129,7 +149,39 @@ public class VaultExportTest {
             }
             zip.closeEntry();
         }
+    }
 
+    @Test
+    public void useJcrPackageManager() throws Exception {
+        Packaging packaging = new PackagingImpl();
+        JcrPackageManager packageMgr = packaging.getPackageManager(session);
+        Resource resource = topnode.getChild("jcr:content");
+
+        DefaultMetaInf metainf = new DefaultMetaInf();
+        Properties properties = new Properties();
+        properties.setProperty(PackageProperties.NAME_GROUP, "remotepublisher");
+        properties.setProperty(PackageProperties.NAME_NAME, resource.getPath());
+        properties.setProperty(PackageProperties.NAME_VERSION, "1");
+        properties.setProperty(PackageProperties.NAME_PACKAGE_TYPE, PackageType.CONTENT.name());
+        metainf.setProperties(properties);
+
+        DefaultWorkspaceFilter filter = new DefaultWorkspaceFilter();
+        filter.setImportMode(ImportMode.REPLACE);
+        PathFilterSet filterSet = new PathFilterSet(resource.getPath());
+        filter.add(filterSet);
+        metainf.setFilter(filter);
+
+        assertTrue(filter.isAncestor("/pathto"));
+        assertTrue(filter.contains(resource.getPath()));
+        assertTrue(filter.contains(resource.getPath() + "/jcr:content"));
+
+        ExportOptions opts = new ExportOptions();
+        opts.setMetaInf(metainf);
+
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        packageMgr.assemble(session, opts, outStream);
+
+        printZipContents(outStream.toByteArray());
     }
 
     @Test
@@ -198,7 +250,7 @@ public class VaultExportTest {
         DefaultWorkspaceFilter filter = new DefaultWorkspaceFilter();
         filter.add(new PathFilterSet(topnode.getPath()));
         VaultFileSystem jcrfs = Mounter.mount(null, filter, new RepositoryAddress("/-" + topnodePath), null,
-                session);
+                session); // ??? encoding of weird chars needed?
         AggregateManager agmgr = jcrfs.getAggregateManager();
         VaultFile root = jcrfs.getRoot();
         System.out.println(root.getPath());

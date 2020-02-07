@@ -609,8 +609,8 @@ public class SourceModel extends ConsoleSlingBean {
      *                         siblings of the jcr:content node to indicate the order of the subnodes.
      * @param binaryProperties if given, collects the full paths to binary properties (except jcr:data which is handled
      */
-    protected void writeContentXmlFile(@Nonnull Writer writer, boolean contentOnly, boolean noSubnodeNames,
-                                       @Nullable Queue<String> binaryProperties)
+    public void writeContentXmlFile(@Nonnull Writer writer, boolean contentOnly, boolean noSubnodeNames,
+                                    @Nullable Queue<String> binaryProperties)
             throws IOException, RepositoryException {
         List<String> namespaces = new ArrayList<>();
         namespaces.add("jcr");
