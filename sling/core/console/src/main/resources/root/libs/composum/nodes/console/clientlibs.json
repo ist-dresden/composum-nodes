@@ -60,6 +60,7 @@
         "jslibs/bootstrap-fileinput/4.3.6/css/fileinput.css",
         "jslibs/split-pane/1.0.0/split-pane.css",
         "category:composum.components.widgets",
+        "composum/nodes/commons/components/system/css/system.css",
         "composum/nodes/console/page/css/console.css"
       ]
     },
@@ -107,6 +108,8 @@
       },
       "console": {
         "embed": [
+          "composum/nodes/commons/components/js/nodes.js",
+          "composum/nodes/commons/components/system/js/system.js",
           "composum/nodes/console/js/splitPane.js",
           "composum/nodes/console/js/dialogs.js",
           "composum/nodes/console/js/nodes.js",
