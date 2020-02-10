@@ -486,20 +486,27 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 
 .navbar .system.nav > li > a.nav-user-status em {
     padding-right: 3px;
+    cursor: pointer;
 }
 
 .navbar .system.nav > li > a.nav-workspace-menu {
     padding-left: 0;
 }
 
+.navbar .system.nav > li > a.nav-workspace-menu:hover em,
+.navbar .system.nav > li > a.nav-workspace-menu:focus em {
+    color: #9d9d9d;
+}
+
 .navbar .system.nav > li > a.nav-workspace-menu em {
     padding-left: 3px;
+    cursor: default;
 }
 
 .navbar li a em {
     font-style: normal;
     padding-left: 5px;
-    color: #337ab7;
+    color: #9d9d9d;
 }
 
 .navbar li a:hover em,
@@ -933,4 +940,36 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 
 .audit-log .audit-list li .result {
     display: none;
+}
+
+.system-health-monitor span {
+    font-family: FontAwesome, sans-serif;
+    display: inline-block;
+    width: 18px;
+    text-align: center;
+}
+
+.system-health-monitor span::before {
+    content: '\f1fa';
+}
+
+.system-health-monitor span.system-health-state::before {
+    content: '\f111';
+    font-size: 18px;
+}
+
+.system-health-monitor .system-health-state.system-health-OK {
+    color: #8c8;
+}
+
+.system-health-monitor .system-health-state.system-health-WARN {
+    color: #fb0;
+}
+
+.system-health-monitor .system-health-state.system-health-CRITICAL {
+    color: #c44;
+}
+
+.system-health-monitor .system-health-state.system-health-TEMPORARILY_UNAVAILABLE {
+    color: #c8c;
 }

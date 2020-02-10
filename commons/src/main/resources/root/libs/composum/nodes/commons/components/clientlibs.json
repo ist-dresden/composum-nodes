@@ -68,7 +68,8 @@
         "jslibs/underscore/(1.*:1.9.1)/underscore.js",
         "jslibs/backbone/(1.*:1.4.0)/backbone.js",
         "composum/nodes/commons/components/js/core.js",
-        "composum/nodes/commons/components/js/i18n.js"
+        "composum/nodes/commons/components/js/i18n.js",
+        "composum/nodes/commons/components/js/nodes.js"
       ]
     }
   },
@@ -90,7 +91,8 @@
       "embed": [
         "category:composum.components.base",
         "composum/nodes/commons/components/js/core.js",
-        "composum/nodes/commons/components/js/i18n.js"
+        "composum/nodes/commons/components/js/i18n.js",
+        "composum/nodes/commons/components/js/nodes.js"
       ]
     }
   },

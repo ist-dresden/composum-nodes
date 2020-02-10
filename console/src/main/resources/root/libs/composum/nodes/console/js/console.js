@@ -149,6 +149,21 @@
                 this.$('.nav-user-status').on('click', _.bind(function () {
                     console.openUserLoginDialog();
                 }, this));
+                this.$status = this.$('.system-health-monitor');
+                this.$healthState = this.$status.find('span');
+                this.$status.click(_.bind(this.showStatus, this));
+                this.system = core.getWidget(this.$status, '.composum-nodes-system', CPM.nodes.system.Status);
+                $(document).on('system:health', _.bind(this.onSystemHealth, this));
+            },
+
+            onSystemHealth: function (event, status, data) {
+                this.$healthState.removeClass().addClass(
+                    'system-health-state system-health-' + (status ? status : 'unknown'));
+            },
+
+            showStatus: function () {
+                core.openFormDialog('/libs/composum/nodes/commons/components/system/dialog.html',
+                    CPM.nodes.system.StatusDialog);
             }
         });
 
