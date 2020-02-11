@@ -162,8 +162,10 @@
             },
 
             showStatus: function () {
-                core.openFormDialog('/libs/composum/nodes/commons/components/system/dialog.html',
-                    CPM.nodes.system.StatusDialog);
+                if (this.$healthState.is('.system-health-state')) { // if status visible (accessible and loaded)...
+                    core.openFormDialog('/libs/composum/nodes/commons/components/system/dialog.html',
+                        CPM.nodes.system.StatusDialog);
+                }
             }
         });
 
