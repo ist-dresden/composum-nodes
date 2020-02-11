@@ -49,7 +49,59 @@ import static org.apache.jackrabbit.JcrConstants.NT_FILE;
 import static org.apache.jackrabbit.JcrConstants.NT_RESOURCE;
 
 /**
- * Model that can produce XML source and ZIP files for it's resource.
+ * <p>
+ * Model that can produce XML source, ZIP files or Vault-packages for it's resource.
+ * This is quite similar to what
+ * <a href="https://jackrabbit.apache.org/filevault/vaultfs.html">Jackrabbit Vault</a>
+ * produces, but we make a few differences, since our main intention here is to produce good source code for our site.
+ * These are:</p>
+ * <ul>
+ *     <li>
+ *         This is based on Sling {@link Resource}s and does not use JCR itself like Vault does. Thus, it could also
+ *         be used for non-JCR based resources. (One exception is that we need JCR to determine whether a nodes
+ *         children are orderable and to find out primaryType relationships, but we try to degrade gracefully if that
+ *         fails.)
+ *     </li>
+ *     <li>
+ *         We do not export properties that change on each im- and export, since importing and exporting a site
+ *     should not change it's source - compare {@link #EXCLUDED_PROPS}. For instance, jcr:created* and
+ *     jcr:lastModified* are omitted, as are the properties mix:versionable creates. Also, jcr:uuid is not exported,
+ *     as it will change on each import and since we regard references to jcr:uuid as
+ *      dangerous, to be used only sparingly if at all. (Composum uses absolute paths as references.)
+ *     </li>
+ *     <li>
+ *         In the .content.xml for a node with a jcr:content node, all subnodes of this node will be included, even
+ *         if they happen to be a nt:folder. The only exception here are binary properties / files, which are written
+ *         into separate files, since we don't want binary content in XML files.
+ *     </li>
+ *     <li>If nt:file have additional properties, we do always create an "extended file aggregate" with an
+ *     additional directory {filename}.dir to avoid having parts of the file hidden in
+ *     the .content.xml, invisible in a file browser</li>
+ * </ul>
+ * <p> To summarize, we follow the following rules for our output. </p>
+ * <ul>
+ *   <li>Resources with a primary type of nt:folder (or subtypes) or with a subnode named jcr:content are
+ *   exported as a folder with a .content.xml. Other nodes (barring files and binary properties) are exported in the
+ *   next higher .content.xml.</li>
+ *   <li>Resources with type nt:file are exported as a file with a name according to their name; if they contain
+ *   additional attributes an additional file {filename}_dir/.content.xml is created for them, which also contains
+ *   other subnodes of the file node (barring files and binary attributes).</li>
+ *   <li>Resources with type nt:resource that are not below a nt:file are exported into a file named like the
+ *   resource with an extension added according to the mime type.</li>
+ *   <li>Binary resources (except jcr:data below nt:file + nt:resource) are exported as a file {resource}/{
+ *   propertyname}.binary, with an entry <code>{propertyname}="{BINARY}"</code> in the .content.xml to declare the
+ *   attribute with it's type.</li>
+ *   <li>If a node has orderable subnodes, it includes entries for all it's children - possibly empty nodes if they
+ *   have their own folder / file according to the above rules.</li>
+ *   <li>Only "source compatible" properties are exported - we ignore protected properties and properties that
+ *   change on import-export cycles. (See {@link #EXCLUDED_PROPS}). </li>
+ * </ul>
+ * <p> Limitations: </p>
+ * <ul>
+ *     <li>Since we do not export jcr:uuid, references don't work.</li>
+ *     <li>This will, obviously, not be quite identical to an export with Jackrabbit Vault, though
+ *     it is compatible to be imported into JCR via Vault.</li>
+ * </ul>
  *
  * @see "https://jackrabbit.apache.org/filevault/vaultfs.html"
  */
@@ -62,7 +114,7 @@ public class SourceModel extends ConsoleSlingBean {
 
     static {
         EXCLUDED_PROPS = new ArrayList<>();
-        EXCLUDED_PROPS.add(Pattern.compile("^jcr:primaryType"));
+        EXCLUDED_PROPS.add(Pattern.compile("^jcr:primaryType")); // exported explicitly
         EXCLUDED_PROPS.add(Pattern.compile("^jcr:baseVersion"));
         EXCLUDED_PROPS.add(Pattern.compile("^jcr:predecessors"));
         EXCLUDED_PROPS.add(Pattern.compile("^jcr:versionHistory"));
@@ -72,7 +124,7 @@ public class SourceModel extends ConsoleSlingBean {
         EXCLUDED_PROPS.add(Pattern.compile("^jcr:uuid"));
         EXCLUDED_PROPS.add(Pattern.compile("^jcr:data"));
         EXCLUDED_PROPS.add(Pattern.compile("^cq:lastModified.*"));
-        EXCLUDED_PROPS.add(Pattern.compile("^cq:lastReplicat.*"));
+        EXCLUDED_PROPS.add(Pattern.compile("^cq:lastReplicat.*")); // used for staging
         //EXCLUDED_PROPS.add(Pattern.compile("^cq:lastRolledout.*"));
     }
 
@@ -218,8 +270,8 @@ public class SourceModel extends ConsoleSlingBean {
 
     protected final NodesConfiguration config;
 
-    private transient List<Property> propertyList;
-    private transient List<Resource> subnodeList;
+    protected transient List<Property> propertyList;
+    protected transient List<Resource> subnodeList;
     /**
      * Whether the child nodes are known to be orderable - wrapped into array to distinguish "not known" from "not
      * yet determined".
@@ -607,7 +659,8 @@ public class SourceModel extends ConsoleSlingBean {
      * @param contentOnly      if true, subnodes other than jcr:content are also included
      * @param noSubnodeNames   if false and the node has a jcr:content, we also write nodes for the names of the
      *                         siblings of the jcr:content node to indicate the order of the subnodes.
-     * @param binaryProperties if given, collects the full paths to binary properties (except jcr:data which is handled
+     * @param binaryProperties if given, collects the full paths to binary properties (except jcr:data which is
+     *                         handled separately.)
      */
     public void writeContentXmlFile(@Nonnull Writer writer, boolean contentOnly, boolean noSubnodeNames,
                                     @Nullable Queue<String> binaryProperties)
@@ -642,7 +695,10 @@ public class SourceModel extends ConsoleSlingBean {
         writer.append("</jcr:root>\n");
     }
 
-    /** Writes the node including subnodes as XML, using the base indentation. */
+    /**
+     * Writes the node including subnodes as XML, using the base indentation. Only used from within
+     * {@link #writeContentXmlFile(Writer, boolean, boolean, Queue)}.
+     */
     protected void writeXml(@Nonnull Writer writer, @Nonnull String indent, @Nullable Queue<String> binaryProperties) throws IOException {
         String name = escapeXmlName(getName());
         writer.append(indent).append("<").append(name).append('\n');
