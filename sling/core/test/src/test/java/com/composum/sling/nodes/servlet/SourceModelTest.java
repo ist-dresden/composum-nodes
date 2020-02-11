@@ -83,36 +83,36 @@ public class SourceModelTest {
         model.writePackage(out, "thegroup", "thename", "1.0");
         String zipContents = getZipContentOverview(out);
         System.out.println(zipContents);
-        assertThat(zipContents, is("META-INF/vault/properties.xml : 442\n" +
-                "META-INF/vault/filter.xml : 160\n" +
-                "jcr_root/content/.content.xml : 190\n" +
-                "jcr_root/content/composum/.content.xml : 190\n" +
-                "jcr_root/content/composum/nodes/.content.xml : 190\n" +
-                "jcr_root/content/composum/nodes/console/.content.xml : 190\n" +
-                "jcr_root/content/composum/nodes/console/test/.content.xml : 190\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/.content.xml : 211\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/.content.xml : 204\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/.content.xml : 317\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/cancel/.content.xml : 275\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/configuration/.content.xml : 286\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/config/.content.xml : 196\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/config/CreateConfig/.content.xml : 301\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/config/ChangeConfig/.content.xml : 301\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/.content.xml : 204\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/plain.jpg : 76910\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/plain.jpg.dir/.content.xml : 344\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/withadditionaldata.jpg : 76910\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/withadditionaldata.jpg.dir/.content.xml : 1104\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/_nt_resourcewithoutfile : 83358\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 227\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/.content.xml : 461\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/folderbinprop.binary : 20\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/_jcr_content/binprop.binary : 20\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/.content.xml : 3430\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary.binary : 86\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary%20with-weird%20na_me.binary : 86\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/__folder_wi%5cth%20weird%20%22char's/.content.xml : 204\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/401.jsp : 650\n"));
+        assertThat(zipContents, is("META-INF/vault/properties.xml : 442 | 2916747502\n" +
+                "META-INF/vault/filter.xml : 160 | 1687942330\n" +
+                "jcr_root/content/.content.xml : 190 | 2531735275\n" +
+                "jcr_root/content/composum/.content.xml : 190 | 2531735275\n" +
+                "jcr_root/content/composum/nodes/.content.xml : 190 | 2531735275\n" +
+                "jcr_root/content/composum/nodes/console/.content.xml : 190 | 2531735275\n" +
+                "jcr_root/content/composum/nodes/console/test/.content.xml : 190 | 2531735275\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/.content.xml : 211 | 2724194649\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/.content.xml : 204 | 3438455284\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/.content.xml : 317 | 3793538747\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/cancel/.content.xml : 275 | 902577937\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/configuration/.content.xml : 286 | 3561449388\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/config/.content.xml : 196 | 1992426303\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/config/CreateConfig/.content.xml : 301 | 2322230755\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/config/ChangeConfig/.content.xml : 301 | 2706073434\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/.content.xml : 204 | 3438455284\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/plain.jpg : 76910 | 2714537933\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/plain.jpg.dir/.content.xml : 344 | 1511749529\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/withadditionaldata.jpg : 76910 | 2714537933\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/withadditionaldata.jpg.dir/.content.xml : 1104 | 1828430221\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/_nt_resourcewithoutfile : 83358 | 2844564088\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 227 | 1283844817\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/.content.xml : 461 | 1613583327\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/folderbinprop.binary : 20 | 2592797726\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/_jcr_content/binprop.binary : 20 | 2592797726\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/.content.xml : 3430 | 783664152\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary.binary : 86 | 1434328335\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary%20with-weird%20na_me.binary : 86 | 1434328335\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/__folder_wi%5cth%20weird%20%22char's/.content.xml : 204 | 3438455284\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/401.jsp : 650 | 442210237\n"));
     }
 
     @Test
@@ -121,29 +121,29 @@ public class SourceModelTest {
         model.writeArchive(out);
         String zipContents = getZipContentOverview(out);
         System.out.println(zipContents);
-        assertThat(zipContents, is(".content.xml : 211\n" +
-                "i18n/.content.xml : 204\n" +
-                "i18n/de/.content.xml : 317\n" +
-                "i18n/de/cancel/.content.xml : 275\n" +
-                "i18n/de/configuration/.content.xml : 286\n" +
-                "i18n/de/config/.content.xml : 196\n" +
-                "i18n/de/config/CreateConfig/.content.xml : 301\n" +
-                "i18n/de/config/ChangeConfig/.content.xml : 301\n" +
-                "assetsfolder/.content.xml : 204\n" +
-                "assetsfolder/plain.jpg : 76910\n" +
-                "assetsfolder/plain.jpg.dir/.content.xml : 344\n" +
-                "assetsfolder/withadditionaldata.jpg : 76910\n" +
-                "assetsfolder/withadditionaldata.jpg.dir/.content.xml : 1104\n" +
-                "assetsfolder/_nt_resourcewithoutfile : 83358\n" +
-                "assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 227\n" +
-                "ntunstructuredwithjcrcontent/.content.xml : 461\n" +
-                "ntunstructuredwithjcrcontent/folderbinprop.binary : 20\n" +
-                "ntunstructuredwithjcrcontent/_jcr_content/binprop.binary : 20\n" +
-                "subfolder/.content.xml : 3430\n" +
-                "subfolder/_jcr_content/propertytest/binary.binary : 86\n" +
-                "subfolder/_jcr_content/propertytest/binary%20with-weird%20na_me.binary : 86\n" +
-                "subfolder/__folder_wi%5cth%20weird%20%22char's/.content.xml : 204\n" +
-                "subfolder/401.jsp : 650\n"));
+        assertThat(zipContents, is(".content.xml : 211 | 2724194649\n" +
+                "i18n/.content.xml : 204 | 3438455284\n" +
+                "i18n/de/.content.xml : 317 | 3793538747\n" +
+                "i18n/de/cancel/.content.xml : 275 | 902577937\n" +
+                "i18n/de/configuration/.content.xml : 286 | 3561449388\n" +
+                "i18n/de/config/.content.xml : 196 | 1992426303\n" +
+                "i18n/de/config/CreateConfig/.content.xml : 301 | 2322230755\n" +
+                "i18n/de/config/ChangeConfig/.content.xml : 301 | 2706073434\n" +
+                "assetsfolder/.content.xml : 204 | 3438455284\n" +
+                "assetsfolder/plain.jpg : 76910 | 2714537933\n" +
+                "assetsfolder/plain.jpg.dir/.content.xml : 344 | 1511749529\n" +
+                "assetsfolder/withadditionaldata.jpg : 76910 | 2714537933\n" +
+                "assetsfolder/withadditionaldata.jpg.dir/.content.xml : 1104 | 1828430221\n" +
+                "assetsfolder/_nt_resourcewithoutfile : 83358 | 2844564088\n" +
+                "assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 227 | 1283844817\n" +
+                "ntunstructuredwithjcrcontent/.content.xml : 461 | 1613583327\n" +
+                "ntunstructuredwithjcrcontent/folderbinprop.binary : 20 | 2592797726\n" +
+                "ntunstructuredwithjcrcontent/_jcr_content/binprop.binary : 20 | 2592797726\n" +
+                "subfolder/.content.xml : 3430 | 783664152\n" +
+                "subfolder/_jcr_content/propertytest/binary.binary : 86 | 1434328335\n" +
+                "subfolder/_jcr_content/propertytest/binary%20with-weird%20na_me.binary : 86 | 1434328335\n" +
+                "subfolder/__folder_wi%5cth%20weird%20%22char's/.content.xml : 204 | 3438455284\n" +
+                "subfolder/401.jsp : 650 | 442210237\n"));
     }
 
     @Nonnull
@@ -153,7 +153,7 @@ public class SourceModelTest {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
                 int size = IOUtils.toByteArray(zip).length;
-                buf.append(entry.getName()).append(" : ").append(size).append("\n");
+                buf.append(entry.getName()).append(" : ").append(size).append(" | ").append(entry.getCrc()).append("\n");
                 zip.closeEntry();
             }
         }
