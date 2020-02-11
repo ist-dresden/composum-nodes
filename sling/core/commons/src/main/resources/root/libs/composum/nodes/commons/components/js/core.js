@@ -293,9 +293,11 @@
         },
 
         getContextUrl: function (url) {
-            var contextPath = $('html').data('context-path');
-            if (contextPath && url.indexOf(contextPath) !== 0) {
-                url = contextPath + url;
+            if (url && !url.match(/^https?:\/\//i)) {  // ignore 'external' URLs
+                var contextPath = $('html').data('context-path');
+                if (contextPath && url.indexOf(contextPath) !== 0) {
+                    url = contextPath + url;
+                }
             }
             return url;
         },

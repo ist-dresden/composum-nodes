@@ -43,6 +43,7 @@
 
 .composum-nodes-system-felix_content table th {
     font-weight: normal;
+    white-space: nowrap;
 }
 
 .composum-nodes-system-felix_content table td p {
