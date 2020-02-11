@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:mix="http://www.jcp.org/jcr/mix/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+    jcr:language="de"
+    jcr:mixinTypes="[mix:language]"
+    jcr:primaryType="sling:Folder"
+    sling:basename="composum-assets">
+    <cancel
+        jcr:primaryType="sling:MessageEntry"
+        sling:key="Cancel"
+        sling:message="Abbrechen"/>
+    <config jcr:primaryType="nt:unstructured">
+        <CreateConfig
+            jcr:primaryType="sling:MessageEntry"
+            sling:key="Create Configuration"
+            sling:message="Konfiguration Anlegen"/>
+        <ChangeConfig
+            jcr:primaryType="sling:MessageEntry"
+            sling:key="Change Configuration"
+            sling:message="Konfiguration Ändern"/>
+    </config>
+    <configuration
+        jcr:primaryType="sling:MessageEntry"
+        sling:key="Configuration"
+        sling:message="Konfiguration"/>
+</jcr:root>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:mix="http://www.jcp.org/jcr/mix/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+    jcr:primaryType="sling:Folder">
+    <jcr:content
+        jcr:isCheckedOut="{Boolean}true"
+        jcr:mixinTypes="[mix:title,mix:versionable]"
+        jcr:primaryType="nt:unstructured"
+        jcr:title="various cases"
+        jcr:uuid="1d0bd90f-ba42-41f5-8a3a-94e5fec11294">
+        <folder/>
+        <assets jcr:primaryType="nt:unstructured">
+            <withadditionaldata.jpg/>
+        </assets>
+        <propertytest
+            jcr:primaryType="nt:unstructured"
+            binary="{Binary}"
+            binary_x0020_with-weird_x0020_na_me="{Binary}"
+            bool="{Boolean}true"
+            boolmulti="{Boolean}[true,false,true]"
+            date="{Date}2020-02-19T11:46:09.000+01:00"
+            datemulti="{Date}[2020-02-06T11:46:09.000+01:00,2020-02-17T11:46:09.000+01:00]"
+            decimal="{Decimal}123231"
+            decimalmulti="{Decimal}[123231,4342]"
+            double="{Double}1242432.0"
+            doublemulti="{Double}[1242432.0,4324.23423]"
+            long="{Long}17"
+            longmulti="{Long}[234,-151]"
+            name="{Name}anameisthis"
+            namemulti="[anameisthis,anothername]"
+            path="{Path}/content/composum"
+            pathmulti="[/content/composum,/public/composum/prototype]"
+            reference="{Reference}54ab0ccd-2035-4eca-94e3-5fce589b171a"
+            referencemulti="[07937510-397d-4703-b62a-d3d99100adf4,5d058f77-5479-4527-9d3c-a58bf99113d9]"
+            string="a string"
+            stringmulti="[false,two]"
+            uri="{URI}http://www.example.net/"
+            urimulti="[www.example.net,/nix/nux,http://www.example.net/]"
+            weakreference="{WeakReference}5d058f77-5479-4527-9d3c-a58bf99113d9"
+            weakreferencemulti="[5d058f77-5479-4527-9d3c-a58bf99113d9,54ab0ccd-2035-4eca-94e3-5fce589b171a]"/>
+    </jcr:content>
+</jcr:root>
