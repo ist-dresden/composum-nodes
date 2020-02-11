@@ -103,15 +103,15 @@ public class SourceModelTest {
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/plain.jpg.dir/.content.xml : 344\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/withadditionaldata.jpg : 76910\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/withadditionaldata.jpg.dir/.content.xml : 1104\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/nt:resourcewithoutfile : 83358\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/nt:resourcewithoutfile.dir/.content.xml : 227\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/_nt_resourcewithoutfile : 83358\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 227\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/.content.xml : 461\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/folderbinprop.binary : 20\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/jcr:content/binprop.binary : 20\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/_jcr_content/binprop.binary : 20\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/.content.xml : 3430\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/jcr:content/propertytest/binary.binary : 86\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/jcr:content/propertytest/binary with-weird na_me.binary : 86\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_folder_wi\\th weird \"char's/.content.xml : 204\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary.binary : 86\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary%20with-weird%20na_me.binary : 86\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/__folder_wi%5cth%20weird%20%22char's/.content.xml : 204\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/401.jsp : 650\n"));
     }
 
@@ -134,15 +134,15 @@ public class SourceModelTest {
                 "assetsfolder/plain.jpg.dir/.content.xml : 344\n" +
                 "assetsfolder/withadditionaldata.jpg : 76910\n" +
                 "assetsfolder/withadditionaldata.jpg.dir/.content.xml : 1104\n" +
-                "assetsfolder/nt:resourcewithoutfile : 83358\n" +
-                "assetsfolder/nt:resourcewithoutfile.dir/.content.xml : 227\n" +
+                "assetsfolder/_nt_resourcewithoutfile : 83358\n" +
+                "assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 227\n" +
                 "ntunstructuredwithjcrcontent/.content.xml : 461\n" +
                 "ntunstructuredwithjcrcontent/folderbinprop.binary : 20\n" +
-                "ntunstructuredwithjcrcontent/jcr:content/binprop.binary : 20\n" +
+                "ntunstructuredwithjcrcontent/_jcr_content/binprop.binary : 20\n" +
                 "subfolder/.content.xml : 3430\n" +
-                "subfolder/jcr:content/propertytest/binary.binary : 86\n" +
-                "subfolder/jcr:content/propertytest/binary with-weird na_me.binary : 86\n" +
-                "subfolder/_folder_wi\\th weird \"char's/.content.xml : 204\n" +
+                "subfolder/_jcr_content/propertytest/binary.binary : 86\n" +
+                "subfolder/_jcr_content/propertytest/binary%20with-weird%20na_me.binary : 86\n" +
+                "subfolder/__folder_wi%5cth%20weird%20%22char's/.content.xml : 204\n" +
                 "subfolder/401.jsp : 650\n"));
     }
 

@@ -9,6 +9,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.util.ISO9075;
+import org.apache.jackrabbit.util.Text;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,13 +24,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.nio.file.attribute.FileTime;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Iterator;
@@ -38,6 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -648,7 +653,27 @@ public class SourceModel extends ConsoleSlingBean {
         } else {
             name = root + name;
         }
-        return name;
+        return filesystemName(name);
+    }
+
+    protected static final Pattern PAT_NAMESPACEPREFIX = Pattern.compile("([^:_]+)+:([^:_]+)");
+
+    /** Transforms the name into something usable for the filesystem. */
+    protected String filesystemName(String name) {
+        StringBuilder buf = new StringBuilder();
+        for (String part : name.split("/")) {
+            if (buf.length() > 0) { buf.append("/"); }
+            Matcher namesp = PAT_NAMESPACEPREFIX.matcher(part);
+            if (namesp.matches()) {
+                part = "_" + namesp.group(1) + "_" + namesp.group(2);
+            } else if (part.matches("_.*_.*")) { // would match result of this encoding -> "escape"
+                part = "_" + part;
+            }
+            part = Text.escape(part); // TODO - unclear what vault actually uses here. Spaces seem to be encoded to
+            // spaces, but this transforms them to %20
+            buf.append(part);
+        }
+        return buf.toString();
     }
 
     // XML output
