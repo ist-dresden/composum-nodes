@@ -24,7 +24,7 @@
                 url: {
                     status: '/bin/cpm/proxy.fwd/system/health/status.json?httpStatus=CRITICAL:200,TEMPORARILY_UNAVAILABLE:200',
                     content: '/bin/cpm/proxy.fwd/system/health.html?httpStatus=CRITICAL:200,TEMPORARILY_UNAVAILABLE:200&tags=',
-                    polling: 60000 // every minute
+                    polling: 600000 // every 10 minutes
                 }
             }
         });
