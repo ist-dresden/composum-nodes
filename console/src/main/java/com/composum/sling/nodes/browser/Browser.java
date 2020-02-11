@@ -47,6 +47,8 @@ public class Browser extends ConsoleServletBean {
         EDITOR_MODES = new HashMap<>();
         EDITOR_MODES.put("json", "json");
         EDITOR_MODES.put("xml", "xml");
+        EDITOR_MODES.put("xslt", "xml");
+        EDITOR_MODES.put("xslt+xml", "xml");
         EDITOR_MODES.put(HTML, HTML);
         EDITOR_MODES.put(JSP, JSP);
         EDITOR_MODES.put("esp", "jsp");
