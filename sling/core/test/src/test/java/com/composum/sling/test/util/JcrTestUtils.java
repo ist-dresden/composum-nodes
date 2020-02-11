@@ -129,7 +129,6 @@ public class JcrTestUtils {
                         if (file.isFile()) {
                             int jcrRootLoc = file.getPath().indexOf("/jcr_root/");
                             String path = file.getPath().substring(jcrRootLoc + 1);
-                            System.out.println(path);
                             ZipEntry entry = new ZipEntry(path);
                             zip.putNextEntry(entry);
                             try (FileInputStream fileContent = new FileInputStream(file)) {
