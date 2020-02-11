@@ -55,6 +55,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
 
         try {
             Importer importer = new Importer();
+            // TODO(hps,11.02.20) Use ZipStreamArchive once that's public (in later vault versions)
             MemoryArchive archive = new MemoryArchive(false);
             archive.run(rawZipInputStream);
             importer.run(archive, tmpdir.adaptTo(Node.class));

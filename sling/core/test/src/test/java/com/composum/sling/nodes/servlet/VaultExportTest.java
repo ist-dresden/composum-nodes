@@ -11,14 +11,12 @@ import org.apache.jackrabbit.vault.fs.api.Aggregate;
 import org.apache.jackrabbit.vault.fs.api.AggregateManager;
 import org.apache.jackrabbit.vault.fs.api.Artifact;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
-import org.apache.jackrabbit.vault.fs.api.PathFilter;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.RepositoryAddress;
 import org.apache.jackrabbit.vault.fs.api.VaultFile;
 import org.apache.jackrabbit.vault.fs.api.VaultFileSystem;
 import org.apache.jackrabbit.vault.fs.config.DefaultMetaInf;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
-import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
 import org.apache.jackrabbit.vault.fs.impl.AggregateImpl;
 import org.apache.jackrabbit.vault.fs.impl.io.DocViewSAXFormatter;
 import org.apache.jackrabbit.vault.fs.impl.io.DocViewSerializer;
@@ -38,7 +36,6 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.hamcrest.Matchers;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -83,10 +80,7 @@ public class VaultExportTest {
     public void setup() throws IOException, ParseException, RepositoryException {
         resolver = context.resourceResolver();
         session = resolver.adaptTo(Session.class);
-        InputStreamReader cndReader =
-                new InputStreamReader(getClass().getResourceAsStream("/nodes/testingNodetypes.cnd"));
-        NodeType[] nodeTypes = CndImporter.registerNodeTypes(cndReader, session);
-        ec.checkThat(nodeTypes.length, Matchers.greaterThan(0));
+        JcrTestUtils.importCnd("/nodes/testingNodetypes.cnd", resolver);
 
         topnode = context.load(false).json("/nodes/vaulttest.json", topnodePath);
 
@@ -95,7 +89,7 @@ public class VaultExportTest {
         vm.put("binary with-weird na_me", getClass().getResourceAsStream("/nodes/something.bin"));
         ModifiableValueMap vm2 = topnode.getChild("testbild.png/jcr:content").adaptTo(ModifiableValueMap.class);
         vm2.put(ResourceUtil.PROP_DATA, getClass().getResourceAsStream("/nodes/something.bin"));
-        vm2.put(ResourceUtil.PROP_MIXINTYPES, new String[]{"tst:Resource"});
+        vm2.put(ResourceUtil.PROP_MIXINTYPES, new String[]{"cpl:Resource"});
 
         topnode.getChild("jcr:content").adaptTo(ModifiableValueMap.class)
                 .put(ResourceUtil.PROP_MIXINTYPES, new String[]{ResourceUtil.MIX_VERSIONABLE});

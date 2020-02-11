@@ -3,18 +3,35 @@ package com.composum.sling.test.util;
 import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.JsonUtil;
 import com.google.gson.stream.JsonWriter;
-import org.apache.sling.api.SlingException;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.jackrabbit.commons.cnd.CndImporter;
+import org.apache.jackrabbit.commons.cnd.ParseException;
+import org.apache.jackrabbit.vault.fs.io.Importer;
+import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
+import org.apache.jackrabbit.vault.fs.io.ZipStreamArchive;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.hamcrest.Matchers;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Some utility methods for JCR.
@@ -84,14 +101,69 @@ public class JcrTestUtils {
         return objects;
     }
 
-    @Nonnull
-    public static List<Resource> ancestorsAndSelf(@Nullable Resource r) {
-        List<Resource> list = new ArrayList<>();
-        while (r != null) {
-            list.add(r);
-            r = r.getParent();
+    /** Imports a CND file into the repository from a classpath location, e.g. /nodes/testingNodetypes.cnd . */
+    public static void importCnd(@Nonnull String location, @Nonnull ResourceResolver resolver) throws ParseException, RepositoryException, IOException {
+        InputStreamReader cndReader =
+                new InputStreamReader(JcrTestUtils.class.getResourceAsStream("/nodes/testingNodetypes.cnd"));
+        NodeType[] nodeTypes = CndImporter.registerNodeTypes(cndReader, resolver.adaptTo(Session.class));
+        if (nodeTypes == null || nodeTypes.length == 0) { throw new IllegalArgumentException("No nodetypes found."); }
+    }
+
+    /**
+     * Given a location in the classpath resources, e.g. /jcr_root/content/something, this imports
+     * the contents from there into the repository.
+     */
+    public static void importTestPackage(@Nonnull String location, @Nonnull ResourceResolver resolver) throws Exception {
+        PipedInputStream in = new PipedInputStream();
+        PipedOutputStream out = new PipedOutputStream(in);
+        ArrayList<Throwable> exceptions = new ArrayList<>();
+
+        Thread writer = new Thread() {
+            @Override
+            public void run() {
+                ZipOutputStream zip = new ZipOutputStream(out);
+                File jcrRootDir = new File(getClass().getResource(location).getFile());
+                for (File file : FileUtils.listFilesAndDirs(jcrRootDir, FileFilterUtils.trueFileFilter(),
+                        FileFilterUtils.trueFileFilter())) {
+                    try {
+                        if (file.isFile()) {
+                            int jcrRootLoc = file.getPath().indexOf("/jcr_root/");
+                            String path = file.getPath().substring(jcrRootLoc + 1);
+                            System.out.println(path);
+                            ZipEntry entry = new ZipEntry(path);
+                            zip.putNextEntry(entry);
+                            try (FileInputStream fileContent = new FileInputStream(file)) {
+                                IOUtils.copy(fileContent, zip);
+                            }
+                            zip.closeEntry();
+                            zip.flush();
+                        }
+                    } catch (Exception e) {
+                        exceptions.add(new AssertionError("Could not import " + file, e));
+                    }
+                }
+                try {
+                    zip.close();
+                } catch (IOException e) {
+                    // ignore: importer does not read the directory that's written now.
+                }
+            }
+        };
+        try {
+            writer.setDaemon(true);
+            writer.start();
+
+            Importer importer = new Importer();
+            ZipStreamArchive archive = new ZipStreamArchive(in);
+            archive.open(true);
+            importer.run(archive, resolver.getResource("/").adaptTo(Node.class));
+            archive.close();
+        } finally {
+            writer.interrupt();
+            if (writer.isAlive()) { Thread.sleep(500); }
+            writer.stop();
         }
-        return list;
+
     }
 
 }

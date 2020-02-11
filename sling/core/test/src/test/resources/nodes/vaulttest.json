@@ -74,9 +74,9 @@
     "jcr:content": {
       "jcr:mimeType": "image/png",
       "jcr:mixinTypes": [
-        "tst:Resource"
+        "cpl:Resource"
       ],
-      "jcr:primaryType": "tst:MetaData",
+      "jcr:primaryType": "cpl:MetaData",
       "meta": {
         "jcr:primaryType": "nt:unstructured",
         "Chroma ColorSpaceType": "RGB",

@@ -1,10 +1,12 @@
+/* FOR TESTING PURPOSES ONLY */
+
 <'nt'='http://www.jcp.org/jcr/nt/1.0'>
 <'mix'='http://www.jcp.org/jcr/mix/1.0'>
 <'jcr'='http://www.jcp.org/jcr/1.0'>
-<'tst'='http://sling.composum.com/testing/1.0'>
+<'cpl'='http://sling.composum.com/platform/1.0'>
 
-[tst:MetaData] > nt:unstructured, mix:created, mix:lastModified
+[cpl:MetaData] > nt:unstructured, mix:created, mix:lastModified
 
-[tst:Resource] > sling:Resource, mix:created, mix:versionable
+[cpl:Resource] > sling:Resource, mix:created, mix:versionable
   mixin
-  + meta (tst:MetaData) = tst:MetaData
+  + meta (cpl:MetaData) = cpl:MetaData

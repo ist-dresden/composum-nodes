@@ -1,6 +1,7 @@
 package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.spi.commons.iterator.Iterators;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -10,7 +11,10 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -171,6 +175,17 @@ public class SlingResourceUtil {
                         .flatMap((r) -> SlingResourceUtil.descendantsStream(r, leafFilter)));
     }
 
+    /**
+     * Returns a stream of the resource and all its parents.
+     */
+    @Nonnull
+    public static Stream<Resource> selfAndAncestors(@Nullable Resource r) {
+        if (r == null) { return Stream.empty(); }
+        // yes, that should be done with takeWhile, but we are restricted to Java 8 here for now.
+        return Stream.iterate(r, Resource::getParent)
+                .limit(StringUtils.countMatches(r.getPath(), "/"))
+                .filter(Objects::nonNull);
+    }
 
     /**
      * Appends two paths: determines the given child of a path.
