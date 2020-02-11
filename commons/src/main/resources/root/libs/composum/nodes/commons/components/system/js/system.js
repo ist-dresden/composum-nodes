@@ -22,8 +22,8 @@
                     _content: '_content'
                 },
                 url: {
-                    status: '/system/health/status.json?httpStatus=CRITICAL:200,TEMPORARILY_UNAVAILABLE:200',
-                    content: '/system/health.html?httpStatus=CRITICAL:200,TEMPORARILY_UNAVAILABLE:200&tags=',
+                    status: '/bin/cpm/proxy.fwd/system/health/status.json?httpStatus=CRITICAL:200,TEMPORARILY_UNAVAILABLE:200',
+                    content: '/bin/cpm/proxy.fwd/system/health.html?httpStatus=CRITICAL:200,TEMPORARILY_UNAVAILABLE:200&tags=',
                     polling: 60000 // every minute
                 }
             }
@@ -46,7 +46,7 @@
             refresh: function () {
                 core.getHtml(system.const.felix.url.content + encodeURIComponent(this.tags.getValue()),
                     _.bind(function (content) {
-                        this.$content.html(content.replace(/<style>.*<\/style>/, ''));
+                        this.$content.html(content);
                         this.$content.find('table').addClass('table table-condensed');
                     }, this));
             }
@@ -56,12 +56,16 @@
 
             initialize: function (options) {
                 core.components.FormWidget.prototype.initialize.call(this, options);
-                core.getWidget(this.$el, '.' + system.const.felix.css.base, system.FelixHealthView);
+                this.felixHealth = core.getWidget(this.$el, '.' + system.const.felix.css.base, system.FelixHealthView);
                 this.tabbed.$nav.find('a[data-key="' + CPM.nodes.profile.get('system', 'dialogTab', 'felix') + '"]').tab('show');
                 this.tabbed.$nav.find('a').on('shown.bs.tab.FormTabs', _.bind(function (event) {
                     var $tab = $(event.target);
                     CPM.nodes.profile.set('system', 'dialogTab', $tab.data('key'));
                 }, this));
+            },
+
+            refresh: function () {
+                this.felixHealth.refresh();
             }
         });
 
@@ -71,6 +75,17 @@
                 core.components.FormDialog.prototype.initialize.call(this, _.extend({
                     formType: system.StatusForm
                 }, options));
+            },
+
+            /**
+             * suppress each submit
+             */
+            onSubmit: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                this.form.refresh();
+                return false;
             }
         });
 
