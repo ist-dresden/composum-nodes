@@ -792,7 +792,6 @@ public class SourceModel extends ConsoleSlingBean {
         return value
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")
-                .replaceAll("'", "&apos;")
                 .replaceAll("\"", "&quot;")
                 .replaceAll("\t", "&#x9;")
                 .replaceAll("\n", "&#xa;")

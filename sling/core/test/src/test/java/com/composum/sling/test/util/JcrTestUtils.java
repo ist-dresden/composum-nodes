@@ -9,11 +9,9 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.jackrabbit.commons.cnd.CndImporter;
 import org.apache.jackrabbit.commons.cnd.ParseException;
 import org.apache.jackrabbit.vault.fs.io.Importer;
-import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
 import org.apache.jackrabbit.vault.fs.io.ZipStreamArchive;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.hamcrest.Matchers;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -29,7 +27,6 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -157,6 +154,7 @@ public class JcrTestUtils {
             archive.open(true);
             importer.run(archive, resolver.getResource("/").adaptTo(Node.class));
             archive.close();
+            if (importer.hasErrors()) { throw new IllegalArgumentException("Import failed!"); }
         } finally {
             writer.interrupt();
             if (writer.isAlive()) { Thread.sleep(500); }
