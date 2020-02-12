@@ -76,11 +76,23 @@ public class SourceModelTest {
         JcrTestUtils.printResourceRecursivelyAsJson(contentResource);
     }
 
+    /** Check that failing tests are not because of the source encoding. */
+    @Ignore
+    @Test
+    public void testSourceEncoding() {
+        ec.checkThat(CharsetStress.fromBytes(CharsetStress.bytes(CharsetStress.getUTF8CharsetStress())), is(CharsetStress.getUTF8CharsetStress()));
+        ec.checkThat(CharsetStress.getUTF8CharsetStress(),
+                is("äöüÄ\\\"'ÖÜñóáéíóú¬áßàèìùòâêîôû &<&>xml; &euro; @%‰ ¼½¾ «™©®» „$”“€”‘£’‚¥’ <b>!</b>"));
+        ec.checkThat(CharsetStress.bytes("ä"), is("[-61, -92]"));
+        ec.checkThat(CharsetStress.bytes("€"), is("[-30, -126, -84]"));
+    }
+
     /** Compares results of encoding with results exported from Vault. */
     @Test
     public void testEscapeXmlAttribute() {
         String charsetstress = CharsetStress.getUTF8CharsetStress();
-        ec.checkThat(model.escapeXmlAttribute(charsetstress), is("äöüÄ\\&quot;'ÖÜñóáéíóú¬áßàèìùòâêîôû &amp;&lt;&amp;>xml; &amp;euro; @%‰ ¼½¾ «™©®» „$”“€”‘£’‚¥’ &lt;b>!&lt;/b>"));
+        // "äöüÄ\\&quot;'ÖÜñóáéíóú¬áßàèìùòâêîôû &amp;&lt;&amp;>xml; &amp;euro; @%‰ ¼½¾ «™©®» „$”“€”‘£’‚¥’ &lt;b>!&lt;/b>"
+        ec.checkThat(CharsetStress.bytes(model.escapeXmlAttribute(charsetstress)), is("[-61, -92, -61, -74, -61, -68, -61, -124, 92, 38, 113, 117, 111, 116, 59, 39, -61, -106, -61, -100, -61, -79, -61, -77, -61, -95, -61, -87, -61, -83, -61, -77, -61, -70, -62, -84, -61, -95, -61, -97, -61, -96, -61, -88, -61, -84, -61, -71, -61, -78, -61, -94, -61, -86, -61, -82, -61, -76, -61, -69, 32, 38, 97, 109, 112, 59, 38, 108, 116, 59, 38, 97, 109, 112, 59, 62, 120, 109, 108, 59, 32, 38, 97, 109, 112, 59, 101, 117, 114, 111, 59, 32, 64, 37, -30, -128, -80, 32, -62, -68, -62, -67, -62, -66, 32, -62, -85, -30, -124, -94, -62, -87, -62, -82, -62, -69, 32, -30, -128, -98, 36, -30, -128, -99, -30, -128, -100, -30, -126, -84, -30, -128, -99, -30, -128, -104, -62, -93, -30, -128, -103, -30, -128, -102, -62, -91, -30, -128, -103, 32, 38, 108, 116, 59, 98, 62, 33, 38, 108, 116, 59, 47, 98, 62]"));
         ec.checkThat(model.escapeXmlAttribute("<p><strong>This</strong> <em>is</em> <u>some</u>&nbsp;</p><p><strike>rich</strike> te<sup>xt</sup> ev<sub>en</sub>&nbsp;with <a href=\"http://www.example.net/\" title=\"example\" target=\"_blank\">links</a> and</p><p><ul><li>with&nbsp;</li></ul></p><p><ol><li>some&nbsp;<code>code</code>.</li></ol></p>"), is("&lt;p>&lt;strong>This&lt;/strong> &lt;em>is&lt;/em> &lt;u>some&lt;/u>&amp;nbsp;&lt;/p>&lt;p>&lt;strike>rich&lt;/strike> te&lt;sup>xt&lt;/sup> ev&lt;sub>en&lt;/sub>&amp;nbsp;with &lt;a href=&quot;http://www.example.net/&quot; title=&quot;example&quot; target=&quot;_blank&quot;>links&lt;/a> and&lt;/p>&lt;p>&lt;ul>&lt;li>with&amp;nbsp;&lt;/li>&lt;/ul>&lt;/p>&lt;p>&lt;ol>&lt;li>some&amp;nbsp;&lt;code>code&lt;/code>.&lt;/li>&lt;/ol>&lt;/p>"));
     }
 
@@ -91,7 +103,9 @@ public class SourceModelTest {
         String charsetstress = CharsetStress.getUTF8CharsetStress().replaceAll("/", "");
         ec.checkThat(model.escapeXmlName("binary with-weird na_me"), is("binary_x0020_with-weird_x0020_na_me"));
         ec.checkThat(model.escapeXmlName("&<>'\\"), is("_x0026__x003c__x003e__x0027__x005c_"));
-        ec.checkThat(model.escapeXmlName(charsetstress), is("äöüÄ_x005c__x0022__x0027_ÖÜñóáéíóú_x00ac_áßàèìùòâêîôû_x0020__x0026__x003c__x0026__x003e_xml_x003b__x0020__x0026_euro_x003b__x0020__x0040__x0025__x2030__x0020__x00bc__x00bd__x00be__x0020__x00ab__x2122__x00a9__x00ae__x00bb__x0020__x201e__x0024__x201d__x201c__x20ac__x201d__x2018__x00a3__x2019__x201a__x00a5__x2019__x0020__x003c_b_x003e__x0021__x003c_b_x003e_"));
+        // "äöüÄ_x005c__x0022__x0027_" + "ÖÜñóáéíóú_x00ac_" +
+        // "áßàèìùòâêîôû_x0020__x0026__x003c__x0026__x003e_xml_x003b__x0020__x0026_euro_x003b__x0020__x0040__x0025__x2030__x0020__x00bc__x00bd__x00be__x0020__x00ab__x2122__x00a9__x00ae__x00bb__x0020__x201e__x0024__x201d__x201c__x20ac__x201d__x2018__x00a3__x2019__x201a__x00a5__x2019__x0020__x003c_b_x003e__x0021__x003c_b_x003e_"
+        ec.checkThat(CharsetStress.bytes(model.escapeXmlName(charsetstress)), is("[-61, -92, -61, -74, -61, -68, -61, -124, 95, 120, 48, 48, 53, 99, 95, 95, 120, 48, 48, 50, 50, 95, 95, 120, 48, 48, 50, 55, 95, -61, -106, -61, -100, -61, -79, -61, -77, -61, -95, -61, -87, -61, -83, -61, -77, -61, -70, 95, 120, 48, 48, 97, 99, 95, -61, -95, -61, -97, -61, -96, -61, -88, -61, -84, -61, -71, -61, -78, -61, -94, -61, -86, -61, -82, -61, -76, -61, -69, 95, 120, 48, 48, 50, 48, 95, 95, 120, 48, 48, 50, 54, 95, 95, 120, 48, 48, 51, 99, 95, 95, 120, 48, 48, 50, 54, 95, 95, 120, 48, 48, 51, 101, 95, 120, 109, 108, 95, 120, 48, 48, 51, 98, 95, 95, 120, 48, 48, 50, 48, 95, 95, 120, 48, 48, 50, 54, 95, 101, 117, 114, 111, 95, 120, 48, 48, 51, 98, 95, 95, 120, 48, 48, 50, 48, 95, 95, 120, 48, 48, 52, 48, 95, 95, 120, 48, 48, 50, 53, 95, 95, 120, 50, 48, 51, 48, 95, 95, 120, 48, 48, 50, 48, 95, 95, 120, 48, 48, 98, 99, 95, 95, 120, 48, 48, 98, 100, 95, 95, 120, 48, 48, 98, 101, 95, 95, 120, 48, 48, 50, 48, 95, 95, 120, 48, 48, 97, 98, 95, 95, 120, 50, 49, 50, 50, 95, 95, 120, 48, 48, 97, 57, 95, 95, 120, 48, 48, 97, 101, 95, 95, 120, 48, 48, 98, 98, 95, 95, 120, 48, 48, 50, 48, 95, 95, 120, 50, 48, 49, 101, 95, 95, 120, 48, 48, 50, 52, 95, 95, 120, 50, 48, 49, 100, 95, 95, 120, 50, 48, 49, 99, 95, 95, 120, 50, 48, 97, 99, 95, 95, 120, 50, 48, 49, 100, 95, 95, 120, 50, 48, 49, 56, 95, 95, 120, 48, 48, 97, 51, 95, 95, 120, 50, 48, 49, 57, 95, 95, 120, 50, 48, 49, 97, 95, 95, 120, 48, 48, 97, 53, 95, 95, 120, 50, 48, 49, 57, 95, 95, 120, 48, 48, 50, 48, 95, 95, 120, 48, 48, 51, 99, 95, 98, 95, 120, 48, 48, 51, 101, 95, 95, 120, 48, 48, 50, 49, 95, 95, 120, 48, 48, 51, 99, 95, 98, 95, 120, 48, 48, 51, 101, 95]"));
     }
 
     @Test

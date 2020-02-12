@@ -779,16 +779,13 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     public String escapeXmlName(String propertyName) {
-        return ISO9075.encode(propertyName)
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll("'", "&apos;")
-                .replaceAll("\"", "&quot;");
+        return ISO9075.encode(propertyName);
     }
 
     public String escapeXmlAttribute(String value) {
         // TODO(hps,2019-07-11) use utilities? Should be consistent with package manager, though.
+        // This is probably not quite complete - what about other control characters?
+        // There is org.apache.jackrabbit.util.Text.encodeIllegalXMLCharacters , but that doesn't seem right.
         return value
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")

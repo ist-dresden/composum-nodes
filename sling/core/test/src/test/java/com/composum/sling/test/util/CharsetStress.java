@@ -1,12 +1,20 @@
 package com.composum.sling.test.util;
 
+import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Returns a couple of teststrings to detect character escaping problems. This file encodes all chars numerically to
- * make sure we are independent of the encoding of this file.
+ * make sure we are independent of the encoding of this file. Caution: this currently covers only relatively common
+ * stuff - it does not yet lead into the deeper realms of UTF like substitutes, right to left, Kanji, characters
+ * outside of 16 bit.
  */
 public class CharsetStress {
 
@@ -94,6 +102,35 @@ public class CharsetStress {
         } catch (final UnsupportedEncodingException e) { // can't happen.
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Returns a textual representation of the bytes of a string to compare to,
+     * in case there is unexplainable trouble with source file charsets.
+     */
+    @Nonnull
+    public static String bytes(@Nullable String string) {
+        if (string == null) { return "<null>"; }
+        StringBuilder buf = new StringBuilder("[");
+        for (byte b : string.getBytes(StandardCharsets.UTF_8)) {
+            if (buf.length() > 1) { buf.append(", "); }
+            buf.append((int) b);
+        }
+        return buf.append("]").toString();
+    }
+
+    /** Inverse of {@link #bytes(String)}. */
+    @Nullable
+    public static String fromBytes(@Nonnull String bytesString) {
+        if ("<null>".equals(bytesString)) { return null; }
+        if (!StringUtils.startsWith(bytesString, "[") || !StringUtils.endsWith(bytesString, "]")) {
+            throw new IllegalArgumentException("Wrong format of " + bytesString);
+        }
+        ByteBuffer buf = ByteBuffer.allocate(StringUtils.countMatches(bytesString, ",") + 1);
+        for (String b : bytesString.substring(1, bytesString.length() - 1).split("\\s*,\\s*")) {
+            buf.put(Byte.parseByte(b));
+        }
+        return new String(buf.array(), StandardCharsets.UTF_8);
     }
 
     private static byte[] bytes32to255() {
