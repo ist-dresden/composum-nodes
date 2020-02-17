@@ -123,12 +123,7 @@ public class SourceModelTest {
                 "jcr_root/content/composum/nodes/console/test/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/cancel/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/configuration/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/config/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/config/CreateConfig/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de/config/ChangeConfig/.content.xml\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/plain.jpg\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/plain.jpg.dir/.content.xml\n" +
@@ -202,6 +197,23 @@ public class SourceModelTest {
             }
         }
         return buf.toString();
+    }
+
+    /** Not actually a test - mostly for debugging specific cases in the IDE. */
+    @Test
+    public void detailTest() throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Resource detailResource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel/i18n");
+        SourceModel detailModel = new SourceModel(config, beanContext, detailResource);
+        detailModel.writeArchive(out);
+        try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                System.out.println(entry.getName());
+                zip.closeEntry();
+            }
+        }
+
     }
 
 }

@@ -2,6 +2,8 @@ package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.filter.ResourceFilter;
+import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
@@ -45,6 +47,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.jackrabbit.JcrConstants.JCR_CONTENT;
 import static org.apache.jackrabbit.JcrConstants.JCR_MIXINTYPES;
 import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE;
 import static org.apache.jackrabbit.JcrConstants.NT_FILE;
@@ -111,26 +114,631 @@ public class SourceModel extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceModel.class);
 
-    // TODO move to configuration
-    public static final List<Pattern> EXCLUDED_PROPS;
+    /**
+     * Matches a number of properties that do not belong into a source.
+     * <p>TODO move to configuration
+     */
+    public static final StringFilter EXCLUDED_PROPS = new StringFilter.WhiteList(
+            "^jcr:primaryType$", "^jcr:mixinTypes$" // both exported explicitly
+            , "^jcr:baseVersion$", "^jcr:predecessors$", "^jcr:versionHistory$", "^jcr:isCheckedOut$"
+            , "^jcr:created", "^jcr:lastModified", "^jcr:uuid$", "^jcr:data$", "^cq:lastModified"
+            , "^cq:lastReplicat" // used for staging
+            // , "^cq:lastRolledout"
+    );
 
-    static {
-        EXCLUDED_PROPS = new ArrayList<>();
-        EXCLUDED_PROPS.add(Pattern.compile("^jcr:primaryType")); // exported explicitly
-        EXCLUDED_PROPS.add(Pattern.compile("^jcr:baseVersion"));
-        EXCLUDED_PROPS.add(Pattern.compile("^jcr:predecessors"));
-        EXCLUDED_PROPS.add(Pattern.compile("^jcr:versionHistory"));
-        EXCLUDED_PROPS.add(Pattern.compile("^jcr:isCheckedOut"));
-        EXCLUDED_PROPS.add(Pattern.compile("^jcr:created.*"));
-        EXCLUDED_PROPS.add(Pattern.compile("^jcr:lastModified.*"));
-        EXCLUDED_PROPS.add(Pattern.compile("^jcr:uuid"));
-        EXCLUDED_PROPS.add(Pattern.compile("^jcr:data"));
-        EXCLUDED_PROPS.add(Pattern.compile("^cq:lastModified.*"));
-        EXCLUDED_PROPS.add(Pattern.compile("^cq:lastReplicat.*")); // used for staging
-        //EXCLUDED_PROPS.add(Pattern.compile("^cq:lastRolledout.*"));
+    /**
+     * Filter matching nodes that are rendered as an XML file named like the node - "Full coverage aggregate" in
+     * Vault.
+     *
+     * @see "https://github.com/apache/jackrabbit-filevault/blob/trunk/vault-core/src/main/resources/org/apache/jackrabbit/vault/fs/config/defaultConfig-1.1.xml"
+     */
+    public static final ResourceFilter RENDERFILTER_XMLFILE =
+            new ResourceFilter.NodeTypeFilter(new StringFilter.WhiteList("mix:language", "rep:AccessControl",
+                    "rep:Policy", "cq:Widget", "cq:EditConfig", "cq:WorkflowModel", "vlt:FullCoverage", "mix:language",
+                    "sling:OsgiConfig"));
+
+    /** Pattern for {@link SimpleDateFormat} that creates a date suitable with XML sources. */
+    public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+
+    /** Indentation level for one level in the XML hierarchy in an XML document. */
+    public static final String BASIC_INDENT = "    ";
+
+    protected static final Pattern PAT_NAMESPACEPREFIX = Pattern.compile("([^:_]+)+:([^:_]+)");
+
+    protected static final Pattern PATH_WITHIN_JCR_CONTENT = Pattern.compile(".*/jcr:content(/.*)?$");
+
+
+    protected final NodesConfiguration config;
+
+    protected transient List<Property> propertyList;
+    protected transient List<Resource> subnodeList;
+    /**
+     * Whether the child nodes are known to be orderable - wrapped into array to distinguish "not known" from "not
+     * yet determined".
+     */
+    protected transient Boolean[] hasOrderableSiblings;
+
+    protected transient RenderingType renderingType;
+
+    public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
+        if ("/".equals(ResourceUtil.normalize(resource.getPath()))) {
+            throw new IllegalArgumentException("Cannot export the whole JCR - " + resource.getPath());
+        }
+        this.config = config;
+        initialize(context, resource);
     }
 
-    public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+    @Override
+    public String getName() {
+        return resource.getName();
+    }
+
+    public String getPrimaryType() {
+        return StringUtils.defaultString(ResourceUtil.getPrimaryType(resource));
+    }
+
+    public FileTime getLastModified(Resource rawResource) {
+        ResourceHandle someResource = ResourceHandle.use(rawResource);
+        Calendar timestamp = someResource.getProperties().get(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
+        if (timestamp == null) {
+            timestamp = someResource.getProperties().get(JcrConstants.JCR_CREATED, Calendar.class);
+        }
+        if (timestamp == null) {
+            timestamp = someResource.getContentResource().getProperties().get(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
+        }
+        if (timestamp == null) {
+            timestamp = someResource.getContentResource().getProperties().get(JcrConstants.JCR_CREATED, Calendar.class);
+        }
+        if (timestamp == null) {
+            timestamp = someResource.getInherited(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
+        }
+        if (timestamp == null) {
+            timestamp = someResource.getInherited(JcrConstants.JCR_CREATED, Calendar.class);
+        }
+        return timestamp != null ?
+                FileTime.from(timestamp.getTimeInMillis(), TimeUnit.MILLISECONDS) : null;
+    }
+
+    public List<Property> getPropertyList() {
+        if (propertyList == null) {
+            propertyList = new ArrayList<>();
+            Node jcrNode = resource.adaptTo(Node.class);
+            for (Map.Entry<String, Object> entry : resource.getProperties().entrySet()) {
+                Integer type = null;
+                if (jcrNode != null) {
+                    try {
+                        javax.jcr.Property jcrProp = jcrNode.getProperty(entry.getKey());
+                        type = jcrProp.getType();
+                        if (JCR_PRIMARYTYPE.equals(entry.getKey()) || JCR_MIXINTYPES.equals(entry.getKey()) ||
+                                jcrProp.getDefinition().getRequiredType() != PropertyType.UNDEFINED) {
+                            // the property has a required type - no point in forcing it to be displayed. for instance
+                            // you don't need to give {NAME} for jcr:mixinTypes which is forced to be name.
+                            type = null;
+                        }
+                    } catch (RepositoryException e) {
+                        // shouldn't happen, but happens for staging resources in the platform since we
+                        // don't implement getDefinition there -- would be hard to change.
+                        LOG.debug("Error reading property {}/{} : {}",
+                                new Object[]{resource.getPath(), entry.getValue(), e.toString()});
+                    }
+                }
+                Property property = new Property(entry.getKey(), entry.getValue(), type);
+                if (!isExcluded(property)) {
+                    propertyList.add(property);
+                }
+            }
+            Collections.sort(propertyList);
+        }
+        return propertyList;
+    }
+
+    protected boolean isExcluded(Property property) {
+        return EXCLUDED_PROPS.accept(property.getName());
+    }
+
+    public boolean getHasSubnodes() {
+        return !getSubnodeList().isEmpty();
+    }
+
+    public List<Resource> getSubnodeList() {
+        if (subnodeList == null) {
+            subnodeList = new ArrayList<>();
+            Resource jcrcontent = null;
+            Iterator<Resource> iterator = resource.listChildren();
+            while (iterator.hasNext()) {
+                Resource subnode = iterator.next();
+                if (config.getSourceNodesFilter().accept(subnode)) {
+                    if (subnode.getName().equals(JCR_CONTENT)) {
+                        jcrcontent = subnode;
+                    } else {
+                        subnodeList.add(subnode);
+                    }
+                }
+            }
+            if (jcrcontent != null) {
+                subnodeList.add(0, jcrcontent);
+            }
+        }
+        return subnodeList;
+    }
+
+    protected void determineNamespaces(List<String> keys) {
+        String primaryType = getPrimaryType();
+        addNameNamespace(keys, primaryType);
+        List<Property> properties = getPropertyList();
+        for (Property property : properties) {
+            String ns = property.getNs();
+            addNamespace(keys, ns);
+        }
+        addNameNamespace(keys, resource.getName());
+        for (Resource subnode : getSubnodeList()) {
+            SourceModel subnodeModel = new SourceModel(config, context, subnode);
+            if (subnodeModel.getRenderingType() == RenderingType.EMBEDDED) {
+                subnodeModel.determineNamespaces(keys);
+            }
+        }
+    }
+
+    protected void addNameNamespace(List<String> keys, String name) {
+        String ns = getNamespace(name);
+        addNamespace(keys, ns);
+    }
+
+    protected void addNamespace(List<String> keys, String ns) {
+        if (StringUtils.isNotBlank(ns) && !keys.contains(ns)) {
+            keys.add(ns);
+        }
+    }
+
+    protected String getNamespace(String name) {
+        int delim = name.indexOf(':');
+        return delim < 0 ? "" : name.substring(0, delim);
+    }
+
+    // Package output
+
+    /** Writes a complete package about the node - arguments specify the package metadata. */
+    public void writePackage(OutputStream output, String group, String name, String version)
+            throws IOException, RepositoryException {
+
+        String root = "jcr_root";
+        ZipOutputStream zipStream = new ZipOutputStream(output);
+        writePackageProperties(zipStream, group, name, version);
+        writeFilterXml(zipStream);
+        writeParents(zipStream, root, resource.getParent());
+        writeIntoZip(zipStream, root, true);
+        zipStream.flush();
+        zipStream.close();
+    }
+
+    /**
+     * Returns true if the nodes children are ordered. Works only for JCR resources - if we cannot determine this,
+     * we return null.
+     */
+    public Boolean hasOrderableSiblings() {
+        Boolean result = null;
+        if (hasOrderableSiblings == null) {
+            try {
+                Node node = getResource().getParent().adaptTo(Node.class);
+                if (node != null) {
+                    result = node.getPrimaryNodeType().hasOrderableChildNodes();
+                }
+            } catch (RepositoryException | RuntimeException e) {
+                LOG.error("Can't determine orderability of " + getPath(), e);
+            }
+            hasOrderableSiblings = new Boolean[]{result};
+        } else {
+            result = hasOrderableSiblings[0];
+        }
+        return result;
+    }
+
+    protected void writePackageProperties(ZipOutputStream zipStream, String group, String name, String version)
+            throws IOException {
+
+        ZipEntry entry;
+        entry = new ZipEntry("META-INF/vault/properties.xml");
+        zipStream.putNextEntry(entry);
+
+        Writer writer = new OutputStreamWriter(zipStream, UTF_8);
+        writer.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n")
+                .append("<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n")
+                .append("<properties>\n")
+                .append("<comment>FileVault Package Properties</comment>\n")
+                .append("<entry key=\"name\">")
+                .append(name)
+                .append("</entry>\n")
+                .append("<entry key=\"buildCount\">1</entry>\n")
+                .append("<entry key=\"version\">")
+                .append(version)
+                .append("</entry>\n")
+                .append("<entry key=\"packageFormatVersion\">2</entry>\n")
+                .append("<entry key=\"group\">")
+                .append(group)
+                .append("</entry>\n")
+                .append("<entry key=\"description\">created from source download</entry>\n")
+                .append("</properties>");
+
+        writer.flush(); // don't close since that closes the zipStream 8-{
+        zipStream.closeEntry();
+    }
+
+    protected void writeFilterXml(ZipOutputStream zipStream) throws IOException {
+
+        String path = resource.getPath();
+
+        ZipEntry entry;
+        entry = new ZipEntry("META-INF/vault/filter.xml");
+        zipStream.putNextEntry(entry);
+
+        Writer writer = new OutputStreamWriter(zipStream, UTF_8);
+        writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+                .append("<workspaceFilter version=\"1.0\">\n")
+                .append("    <filter root=\"")
+                .append(path)
+                .append("\"/>\n")
+                .append("</workspaceFilter>\n");
+
+        writer.flush(); // don't close since that closes the zipStream 8-{
+        zipStream.closeEntry();
+    }
+
+    /** Writes all the .content.xml of the parents of root into the zip. */
+    protected void writeParents(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Resource parent)
+            throws IOException, RepositoryException {
+        if (parent != null && !"/".equals(parent.getPath())) {
+            writeParents(zipStream, root, parent.getParent());
+            SourceModel parentModel = new SourceModel(config, context, parent);
+            parentModel.writeIntoZip(zipStream, root, false);
+        }
+    }
+
+    // ZIP output
+
+    /** Writes a "naked" Zip about the node: no package metadata, no parent nodes. */
+    public void writeArchive(@Nonnull OutputStream output)
+            throws IOException, RepositoryException {
+
+        ZipOutputStream zipStream = new ZipOutputStream(output);
+        writeIntoZip(zipStream, resource.getPath(), true);
+        zipStream.flush();
+        zipStream.close();
+    }
+
+    /**
+     * Writes a "naked" Zip about the node: no package metadata, no parent nodes. This might include entries about
+     * subnodes if {writeDeep}=true, and might include entries about binary properties.
+     *
+     * @param zipStream the stream to write to, not closed.
+     * @param writeDeep if true, we also write subnodes recursively. If not, only the properties of the node itself
+     *                  are written (not even jcr:content) - used for writing parents in a package
+     */
+    protected void writeIntoZip(@Nonnull ZipOutputStream zipStream, @Nonnull String root, boolean writeDeep)
+            throws IOException, RepositoryException {
+        if (resource == null || ResourceUtil.isNonExistingResource(resource)) { return; }
+        if (getRenderingType() == RenderingType.BINARYFILE) {
+            if (writeDeep) { writeFile(zipStream, root, resource); }
+            // not writeDeep: a .content.xml is not present for a file, so we can't do anything.
+            return;
+        }
+
+        ZipEntry entry;
+        FileTime lastModified = getLastModified(resource);
+        entry = new ZipEntry(getZipName(root));
+        if (lastModified != null) {
+            entry.setLastModifiedTime(lastModified);
+        }
+        zipStream.putNextEntry(entry);
+
+        Queue<String> binaryProperties = new ArrayDeque<>(); // these need to have an additional file
+        Writer writer = new OutputStreamWriter(zipStream, UTF_8);
+        writeXmlFile(writer, writeDeep, binaryProperties);
+        writer.flush(); // deliberately not close since that'd close the zip 8-/
+        zipStream.closeEntry();
+        writeBinaryProperties(zipStream, root, binaryProperties);
+
+        if (writeDeep) {
+            for (Resource subnode : getSubnodeList()) {
+                SourceModel subnodeModel = new SourceModel(config, context, subnode);
+                if (subnodeModel.getRenderingType() != RenderingType.EMBEDDED) { // embed was already done.
+                    subnodeModel.writeIntoZip(zipStream, root, true);
+                }
+            }
+        }
+    }
+
+    /**
+     * Writes the current node as a file node (not the jcr:content but the parent) incl. it's binary data and possibly
+     * additional data about nonstandard properties.
+     */
+    protected void writeFile(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nonnull ResourceHandle file)
+            throws IOException, RepositoryException {
+        if (file.getName().equals(JcrConstants.JCR_CONTENT)) {
+            // file format doesn't allow this - we need to write the file with the parent's name
+            file = file.getParent();
+        }
+
+        FileTime lastModified = getLastModified(file);
+        ZipEntry entry;
+        String path = file.getPath();
+        Binary binaryData = ResourceUtil.getBinaryData(file);
+        if (binaryData != null) {
+            entry = new ZipEntry(getZipName(root, path));
+            if (lastModified != null) {
+                entry.setLastModifiedTime(lastModified);
+            }
+            zipStream.putNextEntry(entry);
+            try (InputStream fileContent = binaryData.getStream()) {
+                IOUtils.copy(fileContent, zipStream);
+            }
+            zipStream.closeEntry();
+        } else {
+            LOG.warn("Can't get binary data for {}", path);
+        }
+
+        // if it's more than a nt:file/nt:resource construct that contains additional attributes we have to write
+        // an additional {file}.dir/.content.xml .
+        boolean fileIsNonstandard = file.getProperty(JCR_MIXINTYPES, new String[0].length) > 0
+                || !NT_FILE.equals(file.getProperty(JCR_PRIMARYTYPE, String.class));
+        boolean contentNodeIsNonstandard = file.getContentResource().getProperty(JCR_MIXINTYPES, new String[0]).length > 0
+                || !NT_RESOURCE.equals(file.getContentResource().getProperty(JCR_PRIMARYTYPE, String.class));
+        if (fileIsNonstandard || contentNodeIsNonstandard) {
+            Queue<String> binaryProperties = new ArrayDeque<>(); // these need to have an additional file
+            entry = new ZipEntry(getZipName(root, file.getPath() + ".dir/.content.xml"));
+            if (lastModified != null) {
+                entry.setLastModifiedTime(lastModified);
+            }
+            zipStream.putNextEntry(entry);
+            Writer writer = new OutputStreamWriter(zipStream, UTF_8);
+            SourceModel fileModel = new SourceModel(config, context, file);
+            fileModel.writeXmlFile(writer, true, binaryProperties);
+            writer.flush();
+            zipStream.closeEntry();
+            writeBinaryProperties(zipStream, root, binaryProperties);
+        }
+    }
+
+    /** Writes the binary properties collected in {binaryProperties} into entries in the zip file. */
+    protected void writeBinaryProperties(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Queue<String> binaryProperties) throws IOException {
+        if (binaryProperties == null || binaryProperties.isEmpty()) { return; }
+        for (String binPropPath : binaryProperties) {
+            Resource propertyResource = resolver.getResource(binPropPath);
+            try (InputStream inputStream = propertyResource != null ? propertyResource.adaptTo(InputStream.class) : null) {
+                if (inputStream != null) {
+                    FileTime lastModified = getLastModified(ResourceHandle.use(propertyResource));
+                    ZipEntry entry;
+                    entry = new ZipEntry(getZipName(root, binPropPath) + ".binary");
+                    if (lastModified != null) {
+                        entry.setLastModifiedTime(lastModified);
+                    }
+                    zipStream.putNextEntry(entry);
+                    IOUtils.copy(inputStream, zipStream);
+                    zipStream.closeEntry();
+                } else {
+                    LOG.warn("Can't get binary data for binary property {}", binPropPath);
+                }
+            }
+        }
+    }
+
+    /** Turns a resource path into a proper name for a zip file with the appropriate encoding of troublesome chars. */
+    protected String getZipName(@Nonnull String root, @Nonnull String resourcePath) {
+        String name = resourcePath;
+        if (name.startsWith(root)) {
+            name = name.substring(root.length() + 1);
+        } else {
+            name = root + name;
+        }
+        return filesystemName(name);
+    }
+
+    /** Returns the name for the zip entry for this resource. */
+    protected String getZipName(@Nonnull String root) {
+        switch (getRenderingType()) {
+            case FOLDER:
+                return getZipName(root, getPath() + "/.content.xml");
+            case BINARYFILE:
+                return getZipName(root, getPath());
+            case EMBEDDED: // this shouldn't happen - no sensible way to handle it, but can happen on unfortunate calls.
+            case XMLFILE:
+            default:
+                return getZipName(root, getPath() + ".xml");
+        }
+    }
+
+    /** Transforms the name into something usable for the filesystem. */
+    protected String filesystemName(String name) {
+        StringBuilder buf = new StringBuilder();
+        for (String part : name.split("/")) {
+            if (buf.length() > 0) { buf.append("/"); }
+            Matcher namesp = PAT_NAMESPACEPREFIX.matcher(part);
+            if (namesp.matches()) {
+                part = "_" + namesp.group(1) + "_" + namesp.group(2);
+            } else if (part.matches("_.*_.*")) { // would match result of this encoding -> "escape"
+                part = "_" + part;
+            }
+            part = Text.escape(part); // TODO - unclear what vault actually uses here. Spaces seem to be encoded to
+            // spaces, but this transforms them to %20
+            buf.append(part);
+        }
+        return buf.toString();
+    }
+
+    // XML output
+
+    /**
+     * Writes an XML file for the node, normally .content.xml, including an jcr:content node if present.
+     *
+     * @param writeDeep        also write subnodes; if false only properties of the node itself are written but no
+     *                         children (and no jcr:content).
+     * @param binaryProperties if given, collects the full paths to binary properties (except jcr:data which is
+     */
+    protected void writeXmlFile(@Nonnull Writer writer,
+                                boolean writeDeep,
+                                @Nullable Queue<String> binaryProperties)
+            throws IOException, RepositoryException {
+        List<String> namespaces = new ArrayList<>();
+        namespaces.add("jcr");
+        determineNamespaces(namespaces);
+        Collections.sort(namespaces);
+        writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        writer.append("<jcr:root");
+        writeNamespaceAttributes(writer, namespaces);
+        writeProperty(writer, "          ", JCR_PRIMARYTYPE, getPrimaryType());
+        String[] mixins = resource.getProperty(JCR_MIXINTYPES, String[].class);
+        if (mixins != null && mixins.length > 0) {
+            writeProperty(writer, "          ", JCR_MIXINTYPES, new Property(JCR_MIXINTYPES,
+                    mixins).getString(""));
+        }
+        writeProperties(writer, "          ", binaryProperties);
+        writer.append(">\n");
+        if (writeDeep) {
+            writeSubnodesAsXml(writer, BASIC_INDENT, binaryProperties);
+        }
+        writer.append("</jcr:root>\n");
+    }
+
+    protected void writeSubnodesAsXml(@Nonnull Writer writer, @Nonnull String indent,
+                                      @Nullable Queue<String> binaryProperties) throws IOException {
+        for (Resource subnode : getSubnodeList()) {
+            SourceModel subnodeModel = new SourceModel(config, context, subnode);
+            subnodeModel.writeXmlSubnode(writer, indent, binaryProperties);
+        }
+    }
+
+    /**
+     * Writes the node including subnodes as XML, using the base indentation.
+     */
+    protected void writeXmlSubnode(@Nonnull Writer writer, @Nonnull String indent, @Nullable Queue<String> binaryProperties) throws IOException {
+        String name = escapeXmlName(getName());
+        switch (getRenderingType()) {
+            case EMBEDDED:
+                writer.append(indent).append("<").append(name).append('\n');
+                writer.append(indent).append("        ").append("jcr:primaryType=\"").append(getPrimaryType()).append("\"");
+                writeProperties(writer, indent + "        ", binaryProperties);
+                if (getHasSubnodes()) {
+                    writer.append(">\n");
+                    writeSubnodesAsXml(writer, indent + BASIC_INDENT, binaryProperties);
+                    writer.append(indent).append("</").append(name).append(">\n");
+                } else {
+                    writer.append("/>\n");
+                }
+                break;
+            case FOLDER:
+            case XMLFILE:
+            case BINARYFILE: // FIXME(hps,17.02.20) check whether these will be rendered into add. files
+            default:
+                // If the node has orderable siblings, we write a stub node to specify the node order.
+                // The real content is in a separate file.
+                if (hasOrderableSiblings()) {
+                    writer.append(indent).append("<").append(name).append("/>\n");
+                }
+                break;
+        }
+    }
+
+    protected void writeProperties(@Nonnull Writer writer, @Nonnull String indent,
+                                   @Nullable Queue<String> binaryProperties) throws IOException {
+        for (Property property : getPropertyList()) {
+            if (binaryProperties != null && property.isBinary()) {
+                binaryProperties.add(getPath() + "/" + property.getName());
+            }
+            writeProperty(writer, indent, property.getName(), property.getString(indent));
+        }
+    }
+
+    protected void writeProperty(Writer writer, String indent, String propertyName, String value) throws IOException {
+        if (StringUtils.isNotEmpty(value)) {
+            writer.append("\n");
+            writer.append(indent);
+            writer.append(escapeXmlName(propertyName));
+            writer.append("=\"");
+            writer.append(escapeXmlAttribute(value));
+            writer.append("\"");
+        }
+    }
+
+    protected void writeNamespaceAttributes(Writer writer, List<String> namespaces) throws RepositoryException, IOException {
+        for (int i = 0; i < namespaces.size(); ) {
+            String ns = namespaces.get(i);
+            String url = getSession().getNamespaceURI(ns);
+            if (StringUtils.isNotBlank(url)) {
+                writer.append(" xmlns:").append(ns).append("=\"").append(url).append("\"");
+                if (++i < namespaces.size()) {
+                    writer.append("\n         ");
+                }
+            } else {
+                i++;
+            }
+        }
+    }
+
+    public String escapeXmlName(String propertyName) {
+        return ISO9075.encode(propertyName);
+    }
+
+    public String escapeXmlAttribute(String value) {
+        // TODO(hps,2019-07-11) use utilities? Should be consistent with package manager, though.
+        // This is probably not quite complete - what about other control characters?
+        // There is org.apache.jackrabbit.util.Text.encodeIllegalXMLCharacters , but that doesn't seem right.
+        return value
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll("\"", "&quot;")
+                .replaceAll("\t", "&#x9;")
+                .replaceAll("\n", "&#xa;")
+                .replaceAll("\r", "\n");
+    }
+
+    /** This encodes what nodes are presented in which way nodes are represented in a Zip / Package. */
+    protected RenderingType getRenderingType(Resource aResource) {
+        // The ordering of the rules is important, as it handles various special cases.
+        if (ResourceUtil.isFile(aResource)) { return RenderingType.BINARYFILE; }
+        if (PATH_WITHIN_JCR_CONTENT.matcher(aResource.getPath()).matches()) {
+            // we want everything below a jcr:content to stay in it's .content.xml except if it's binary
+            return RenderingType.EMBEDDED;
+        }
+        if (aResource.getChild(JcrConstants.JCR_CONTENT) != null) {
+            // jcr:content shall always be the top node of a .content.xml
+            return RenderingType.FOLDER;
+        }
+        if (RENDERFILTER_XMLFILE.accept(aResource)) {
+            // in theory it would be nice to have a rule here that everything below this stays in this file,
+            // even if it's a folder, but that'd be inefficient or a hack - let's see later whether it'd be worth it.
+            return RenderingType.XMLFILE;
+        }
+        if (ResourceUtil.isNodeType(aResource, ResourceUtil.NT_FOLDER)) { return RenderingType.FOLDER; }
+        return RenderingType.EMBEDDED;
+    }
+
+    protected RenderingType getRenderingType() {
+        if (renderingType == null) {
+            renderingType = getRenderingType(resource);
+        }
+        return renderingType;
+    }
+
+    /** How the node is rendered in a zip. */
+    protected enum RenderingType {
+        /** A single XML file named like the node - e.g. en.xml for mix:language. */
+        XMLFILE,
+        /**
+         * A folder with a .content.xml (the .content.xml might be missing if the node is of type nt:folder without
+         * any additional attributes).
+         */
+        FOLDER,
+        /**
+         * A file named like the node which just contains the binary content of the resource - typically for a
+         * nt:file/nt:resource combination, or a standalone nt:resource. If there are additional attributes, they are
+         * written into a {nodename}.dir/.content.xml.
+         */
+        BINARYFILE,
+        /**
+         * Just contained in whatever surrounds it - that is, an {@link #XMLFILE} or a {@link #FOLDER}'s .content
+         * .xml.
+         */
+        EMBEDDED
+    }
 
     public static class Property implements Comparable<Property> {
 
@@ -184,7 +792,7 @@ public class SourceModel extends ConsoleSlingBean {
                     string = string.replaceAll(",", "\\\\,");
                     if (StringUtils.isNotEmpty(lineBreak)) {
                         string = string.trim();
-                        buffer.append(indent).append("    ");
+                        buffer.append(indent).append(BASIC_INDENT);
                     }
                     buffer.append(string);
                     if (++i < array.length) {
@@ -270,528 +878,4 @@ public class SourceModel extends ConsoleSlingBean {
         }
     }
 
-    protected final NodesConfiguration config;
-
-    protected transient List<Property> propertyList;
-    protected transient List<Resource> subnodeList;
-    /**
-     * Whether the child nodes are known to be orderable - wrapped into array to distinguish "not known" from "not
-     * yet determined".
-     */
-    protected transient Boolean[] hasOrderableChildNodes;
-
-    public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
-        if ("/".equals(ResourceUtil.normalize(resource.getPath()))) {
-            throw new IllegalArgumentException("Cannot export the whole JCR - " + resource.getPath());
-        }
-        this.config = config;
-        initialize(context, resource);
-    }
-
-    @Override
-    public String getName() {
-        return resource.getName();
-    }
-
-    public String getPrimaryType() {
-        return StringUtils.defaultString(ResourceUtil.getPrimaryType(resource));
-    }
-
-    public FileTime getLastModified(ResourceHandle someResource) {
-        Calendar timestamp = someResource.getProperties().get(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
-        if (timestamp == null) {
-            timestamp = someResource.getProperties().get(JcrConstants.JCR_CREATED, Calendar.class);
-        }
-        if (timestamp == null) {
-            timestamp = someResource.getContentResource().getProperties().get(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
-        }
-        if (timestamp == null) {
-            timestamp = someResource.getContentResource().getProperties().get(JcrConstants.JCR_CREATED, Calendar.class);
-        }
-        if (timestamp == null) {
-            timestamp = someResource.getInherited(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
-        }
-        if (timestamp == null) {
-            timestamp = someResource.getInherited(JcrConstants.JCR_CREATED, Calendar.class);
-        }
-        return timestamp != null ?
-                FileTime.from(timestamp.getTimeInMillis(), TimeUnit.MILLISECONDS) : null;
-    }
-
-    public List<Property> getPropertyList() {
-        if (propertyList == null) {
-            propertyList = new ArrayList<>();
-            Node jcrNode = resource.adaptTo(Node.class);
-            for (Map.Entry<String, Object> entry : resource.getProperties().entrySet()) {
-                Integer type = null;
-                if (jcrNode != null) {
-                    try {
-                        javax.jcr.Property jcrProp = jcrNode.getProperty(entry.getKey());
-                        if (jcrProp.getDefinition().getRequiredType() == PropertyType.UNDEFINED) {
-                            // we need specific type information e.g. if it's PATH, REFERENCE, NAME, ...
-                            type = jcrProp.getType();
-                        }
-                        // otherwise the property has a required type - no point in forcing it to be displayed.
-                        // for instance you don't need to give {NAME} for jcr:mixinTypes which is forced to be name.
-                    } catch (RepositoryException e) { // shouldn't happen
-                        LOG.warn("Error reading property {}/{}", new Object[]{resource.getPath(), entry.getValue(), e});
-                    }
-                }
-                Property property = new Property(entry.getKey(), entry.getValue(), type);
-                if (!isExcluded(property)) {
-                    propertyList.add(property);
-                }
-            }
-            Collections.sort(propertyList);
-        }
-        return propertyList;
-    }
-
-    protected boolean isExcluded(Property property) {
-        for (Pattern rule : EXCLUDED_PROPS) {
-            if (rule.matcher(property.getName()).matches()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean getHasSubnodes() {
-        return !getSubnodeList().isEmpty();
-    }
-
-    public List<Resource> getSubnodeList() {
-        if (subnodeList == null) {
-            subnodeList = new ArrayList<>();
-            Iterator<Resource> iterator = resource.listChildren();
-            while (iterator.hasNext()) {
-                Resource subnode = iterator.next();
-                if (config.getSourceNodesFilter().accept(subnode)) {
-                    subnodeList.add(subnode);
-                }
-            }
-        }
-        return subnodeList;
-    }
-
-    public void determineNamespaces(List<String> keys, boolean contentOnly) {
-        String primaryType = getPrimaryType();
-        addNameNamespace(keys, primaryType);
-        List<Property> properties = getPropertyList();
-        for (Property property : properties) {
-            String ns = property.getNs();
-            addNamespace(keys, ns);
-        }
-        addNameNamespace(keys, resource.getName());
-        if (contentOnly) {
-            Resource contentResource;
-            if ((contentResource = resource.getChild(JcrConstants.JCR_CONTENT)) != null) {
-                SourceModel subnodeModel = new SourceModel(config, context, contentResource);
-                subnodeModel.determineNamespaces(keys, false);
-            }
-        } else {
-            for (Resource subnode : getSubnodeList()) {
-                SourceModel subnodeModel = new SourceModel(config, context, subnode);
-                subnodeModel.determineNamespaces(keys, false);
-            }
-        }
-    }
-
-    public void addNameNamespace(List<String> keys, String name) {
-        String ns = getNamespace(name);
-        addNamespace(keys, ns);
-    }
-
-    public void addNamespace(List<String> keys, String ns) {
-        if (StringUtils.isNotBlank(ns) && !keys.contains(ns)) {
-            keys.add(ns);
-        }
-    }
-
-    public String getNamespace(String name) {
-        int delim = name.indexOf(':');
-        return delim < 0 ? "" : name.substring(0, delim);
-    }
-
-    // Package output
-
-    /** Writes a complete package about the node - arguments specify the package metadata. */
-    public void writePackage(OutputStream output, String group, String name, String version)
-            throws IOException, RepositoryException {
-
-        String root = "jcr_root";
-        ZipOutputStream zipStream = new ZipOutputStream(output);
-        writePackageProperties(zipStream, group, name, version);
-        writeFilterXml(zipStream);
-        writeParents(zipStream, root, resource.getParent());
-        writeZip(zipStream, root, true);
-        zipStream.flush();
-        zipStream.close();
-    }
-
-    /**
-     * Returns true if the nodes children are ordered. Works only for JCR resources - if we cannot determine this,
-     * we return null.
-     */
-    public Boolean hasOrderableChildNodes() {
-        Boolean result = null;
-        if (hasOrderableChildNodes == null) {
-            try {
-                Node node = getResource().adaptTo(Node.class);
-                if (node != null) {
-                    result = node.getPrimaryNodeType().hasOrderableChildNodes();
-                }
-            } catch (RepositoryException e) {
-                LOG.error("" + e, e);
-            }
-            hasOrderableChildNodes = new Boolean[]{result};
-        } else {
-            result = hasOrderableChildNodes[0];
-        }
-        return result;
-    }
-
-    protected void writePackageProperties(ZipOutputStream zipStream, String group, String name, String version)
-            throws IOException {
-
-        ZipEntry entry;
-        entry = new ZipEntry("META-INF/vault/properties.xml");
-        zipStream.putNextEntry(entry);
-
-        Writer writer = new OutputStreamWriter(zipStream, UTF_8);
-        writer.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n")
-                .append("<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n")
-                .append("<properties>\n")
-                .append("<comment>FileVault Package Properties</comment>\n")
-                .append("<entry key=\"name\">")
-                .append(name)
-                .append("</entry>\n")
-                .append("<entry key=\"buildCount\">1</entry>\n")
-                .append("<entry key=\"version\">")
-                .append(version)
-                .append("</entry>\n")
-                .append("<entry key=\"packageFormatVersion\">2</entry>\n")
-                .append("<entry key=\"group\">")
-                .append(group)
-                .append("</entry>\n")
-                .append("<entry key=\"description\">created from source download</entry>\n")
-                .append("</properties>");
-
-        writer.flush(); // don't close since that closes the zipStream 8-{
-        zipStream.closeEntry();
-    }
-
-    protected void writeFilterXml(ZipOutputStream zipStream) throws IOException {
-
-        String path = resource.getPath();
-
-        ZipEntry entry;
-        entry = new ZipEntry("META-INF/vault/filter.xml");
-        zipStream.putNextEntry(entry);
-
-        Writer writer = new OutputStreamWriter(zipStream, UTF_8);
-        writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-                .append("<workspaceFilter version=\"1.0\">\n")
-                .append("    <filter root=\"")
-                .append(path)
-                .append("\"/>\n")
-                .append("</workspaceFilter>\n");
-
-        writer.flush(); // don't close since that closes the zipStream 8-{
-        zipStream.closeEntry();
-    }
-
-    /** Writes all the .content.xml of the parents of root into the zip. */
-    protected void writeParents(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Resource parent)
-            throws IOException, RepositoryException {
-        if (parent != null && !"/".equals(parent.getPath())) {
-            writeParents(zipStream, root, parent.getParent());
-            SourceModel parentModel = new SourceModel(config, context, parent);
-            parentModel.writeZip(zipStream, root, false);
-        }
-    }
-
-    // ZIP output
-
-    /** Writes a "naked" Zip about the node: no package metadata, no parent nodes. */
-    public void writeArchive(@Nonnull OutputStream output)
-            throws IOException, RepositoryException {
-
-        ZipOutputStream zipStream = new ZipOutputStream(output);
-        writeZip(zipStream, resource.getPath(), true);
-        zipStream.flush();
-        zipStream.close();
-    }
-
-    /**
-     * Writes a "naked" Zip about the node: no package metadata, no parent nodes.
-     *
-     * @param zipStream the stream to write to, not closed.
-     * @param writeDeep if true, we also write subnodes recursively. If not, only a jcr:content node is written, if
-     *                  present.
-     */
-    public void writeZip(@Nonnull ZipOutputStream zipStream, @Nonnull String root, boolean writeDeep)
-            throws IOException, RepositoryException {
-        if (resource == null || ResourceUtil.isNonExistingResource(resource)) {
-            return;
-        }
-        if (ResourceUtil.isFile(resource)) {
-            if (writeDeep) { writeFile(zipStream, root, resource); }
-            // not writeDeep: a .content.xml is not present for a file, so we can't do anything.
-        }
-
-        ZipEntry entry;
-        String path = resource.getPath();
-        FileTime lastModified = getLastModified(resource);
-
-        entry = new ZipEntry(getZipName(root, path + "/.content.xml"));
-        if (lastModified != null) {
-            entry.setLastModifiedTime(lastModified);
-        }
-        zipStream.putNextEntry(entry);
-        Queue<String> binaryProperties = new ArrayDeque<>(); // these need to have an additional file
-        Writer writer = new OutputStreamWriter(zipStream, UTF_8);
-        writeContentXmlFile(writer, true, false, binaryProperties);
-        writer.flush();
-        zipStream.closeEntry();
-        writeBinaryProperties(zipStream, root, binaryProperties);
-
-        if (writeDeep) {
-            for (Resource subnode : getSubnodeList()) {
-                if (!JcrConstants.JCR_CONTENT.equals(subnode.getName())) {
-                    if (ResourceUtil.isFile(subnode)) {
-                        writeFile(zipStream, root, ResourceHandle.use(subnode));
-                    } else {
-                        SourceModel subnodeModel = new SourceModel(config, context, subnode);
-                        subnodeModel.writeZip(zipStream, root, true);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Writes the current node as a file node (not the jcr:content but the parent) incl. it's binary data and possibly
-     * additional data about nonstandard properties.
-     */
-    protected void writeFile(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nonnull ResourceHandle file)
-            throws IOException, RepositoryException {
-        if (file.getName().equals(JcrConstants.JCR_CONTENT)) {
-            // file format doesn't allow this - we need to write the file with the parent's name
-            file = file.getParent();
-        }
-
-        FileTime lastModified = getLastModified(file);
-        ZipEntry entry;
-        String path = file.getPath();
-        Binary binaryData = ResourceUtil.getBinaryData(file);
-        if (binaryData != null) {
-            entry = new ZipEntry(getZipName(root, path));
-            if (lastModified != null) {
-                entry.setLastModifiedTime(lastModified);
-            }
-            zipStream.putNextEntry(entry);
-            try (InputStream fileContent = binaryData.getStream()) {
-                IOUtils.copy(fileContent, zipStream);
-            }
-            zipStream.closeEntry();
-        } else {
-            LOG.warn("Can't get binary data for {}", path);
-        }
-
-        // if it's more than a nt:file/nt:resource construct that contains additional attributes we have to write
-        // an additional {file}.dir/.content.xml .
-        boolean fileIsNonstandard = file.getProperty(JCR_MIXINTYPES, new String[0].length) > 0
-                || !NT_FILE.equals(file.getProperty(JCR_PRIMARYTYPE, String.class));
-        boolean contentNodeIsNonstandard = file.getContentResource().getProperty(JCR_MIXINTYPES, new String[0]).length > 0
-                || !NT_RESOURCE.equals(file.getContentResource().getProperty(JCR_PRIMARYTYPE, String.class));
-        if (fileIsNonstandard || contentNodeIsNonstandard) {
-            Queue<String> binaryProperties = new ArrayDeque<>(); // these need to have an additional file
-            entry = new ZipEntry(getZipName(root, file.getPath() + ".dir/.content.xml"));
-            if (lastModified != null) {
-                entry.setLastModifiedTime(lastModified);
-            }
-            zipStream.putNextEntry(entry);
-            Writer writer = new OutputStreamWriter(zipStream, UTF_8);
-            SourceModel fileModel = new SourceModel(config, context, file);
-            fileModel.writeContentXmlFile(writer, false, false, binaryProperties);
-            writer.flush();
-            zipStream.closeEntry();
-            writeBinaryProperties(zipStream, root, binaryProperties);
-        }
-    }
-
-    protected void writeBinaryProperties(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Queue<String> binaryProperties) throws IOException {
-        if (binaryProperties == null || binaryProperties.isEmpty()) { return; }
-        for (String binPropPath : binaryProperties) {
-            Resource propertyResource = resolver.getResource(binPropPath);
-            try (InputStream inputStream = propertyResource != null ? propertyResource.adaptTo(InputStream.class) : null) {
-                if (inputStream != null) {
-                    FileTime lastModified = getLastModified(ResourceHandle.use(propertyResource));
-                    ZipEntry entry;
-                    entry = new ZipEntry(getZipName(root, binPropPath) + ".binary");
-                    if (lastModified != null) {
-                        entry.setLastModifiedTime(lastModified);
-                    }
-                    zipStream.putNextEntry(entry);
-                    IOUtils.copy(inputStream, zipStream);
-                    zipStream.closeEntry();
-                } else {
-                    LOG.warn("Can't get binary data for binary property {}", binPropPath);
-                }
-            }
-        }
-    }
-
-    protected String getZipName(@Nonnull String root, @Nonnull String resourcePath) {
-        String name = resourcePath;
-        if (name.startsWith(root)) {
-            name = name.substring(root.length() + 1);
-        } else {
-            name = root + name;
-        }
-        return filesystemName(name);
-    }
-
-    protected static final Pattern PAT_NAMESPACEPREFIX = Pattern.compile("([^:_]+)+:([^:_]+)");
-
-    /** Transforms the name into something usable for the filesystem. */
-    protected String filesystemName(String name) {
-        StringBuilder buf = new StringBuilder();
-        for (String part : name.split("/")) {
-            if (buf.length() > 0) { buf.append("/"); }
-            Matcher namesp = PAT_NAMESPACEPREFIX.matcher(part);
-            if (namesp.matches()) {
-                part = "_" + namesp.group(1) + "_" + namesp.group(2);
-            } else if (part.matches("_.*_.*")) { // would match result of this encoding -> "escape"
-                part = "_" + part;
-            }
-            part = Text.escape(part); // TODO - unclear what vault actually uses here. Spaces seem to be encoded to
-            // spaces, but this transforms them to %20
-            buf.append(part);
-        }
-        return buf.toString();
-    }
-
-    // XML output
-
-    /**
-     * Writes the data for the .content.xml file for the node, including an jcr:content node if present.
-     *
-     * @param contentOnly      if true, subnodes other than jcr:content are also included
-     * @param noSubnodeNames   if false and the node has a jcr:content, we also write nodes for the names of the
-     *                         siblings of the jcr:content node to indicate the order of the subnodes.
-     * @param binaryProperties if given, collects the full paths to binary properties (except jcr:data which is
-     *                         handled separately.)
-     */
-    public void writeContentXmlFile(@Nonnull Writer writer, boolean contentOnly, boolean noSubnodeNames,
-                                    @Nullable Queue<String> binaryProperties)
-            throws IOException, RepositoryException {
-        List<String> namespaces = new ArrayList<>();
-        namespaces.add("jcr");
-        determineNamespaces(namespaces, contentOnly);
-        Collections.sort(namespaces);
-        writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        writer.append("<jcr:root");
-        writeNamespaceAttributes(writer, namespaces);
-        writeProperty(writer, "          ", "jcr:primaryType", getPrimaryType());
-        writeProperties(writer, "          ", binaryProperties);
-        writer.append(">\n");
-        Resource contentResource;
-        if ((contentResource = resource.getChild(JcrConstants.JCR_CONTENT)) != null) {
-            SourceModel subnodeModel = new SourceModel(config, context, contentResource);
-            subnodeModel.writeXml(writer, "    ", binaryProperties);
-            if (!noSubnodeNames && !Boolean.FALSE.equals(hasOrderableChildNodes())) { // rather do it if unknown
-                for (Resource subnode : getSubnodeList()) {
-                    String name = subnode.getName();
-                    if (!JcrConstants.JCR_CONTENT.equals(name)) {
-                        writer.append("    <").append(name).append("/>\n");
-                    }
-                }
-            }
-        } else {
-            if (!contentOnly) {
-                writeSubnodesAsXml(writer, "    ", binaryProperties);
-            }
-        }
-        writer.append("</jcr:root>\n");
-    }
-
-    /**
-     * Writes the node including subnodes as XML, using the base indentation. Only used from within
-     * {@link #writeContentXmlFile(Writer, boolean, boolean, Queue)}.
-     */
-    protected void writeXml(@Nonnull Writer writer, @Nonnull String indent, @Nullable Queue<String> binaryProperties) throws IOException {
-        String name = escapeXmlName(getName());
-        writer.append(indent).append("<").append(name).append('\n');
-        writer.append(indent).append("        ").append("jcr:primaryType=\"").append(getPrimaryType()).append("\"");
-        writeProperties(writer, indent + "        ", binaryProperties);
-        if (getHasSubnodes()) {
-            writer.append(">\n");
-            writeSubnodesAsXml(writer, indent + "    ", binaryProperties);
-            writer.append(indent).append("</").append(name).append(">\n");
-        } else {
-            writer.append("/>\n");
-        }
-    }
-
-    protected void writeSubnodesAsXml(@Nonnull Writer writer, @Nonnull String indent,
-                                      @Nullable Queue<String> binaryProperties) throws IOException {
-        for (Resource subnode : getSubnodeList()) {
-            SourceModel subnodeModel = new SourceModel(config, context, subnode);
-            subnodeModel.writeXml(writer, indent, binaryProperties);
-        }
-    }
-
-    protected void writeProperties(@Nonnull Writer writer, @Nonnull String indent,
-                                   @Nullable Queue<String> binaryProperties) throws IOException {
-        for (Property property : getPropertyList()) {
-            if (binaryProperties != null && property.isBinary()) {
-                binaryProperties.add(getPath() + "/" + property.getName());
-            }
-            writeProperty(writer, indent, property.getName(), property.getString(indent));
-        }
-    }
-
-    protected void writeProperty(Writer writer, String indent, String propertyName, String value)
-            throws IOException {
-        writer.append("\n");
-        writer.append(indent);
-        writer.append(escapeXmlName(propertyName));
-        writer.append("=\"");
-        writer.append(escapeXmlAttribute(value));
-        writer.append("\"");
-    }
-
-    protected void writeNamespaceAttributes(Writer writer, List<String> namespaces) throws RepositoryException, IOException {
-        for (int i = 0; i < namespaces.size(); ) {
-            String ns = namespaces.get(i);
-            String url = getSession().getNamespaceURI(ns);
-            if (StringUtils.isNotBlank(url)) {
-                writer.append(" xmlns:").append(ns).append("=\"").append(url).append("\"");
-                if (++i < namespaces.size()) {
-                    writer.append("\n         ");
-                }
-            } else {
-                i++;
-            }
-        }
-    }
-
-    public String escapeXmlName(String propertyName) {
-        return ISO9075.encode(propertyName);
-    }
-
-    public String escapeXmlAttribute(String value) {
-        // TODO(hps,2019-07-11) use utilities? Should be consistent with package manager, though.
-        // This is probably not quite complete - what about other control characters?
-        // There is org.apache.jackrabbit.util.Text.encodeIllegalXMLCharacters , but that doesn't seem right.
-        return value
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll("\"", "&quot;")
-                .replaceAll("\t", "&#x9;")
-                .replaceAll("\n", "&#xa;")
-                .replaceAll("\r", "\n");
-    }
 }
