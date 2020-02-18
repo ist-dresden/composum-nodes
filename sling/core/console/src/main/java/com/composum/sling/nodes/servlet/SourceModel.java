@@ -11,7 +11,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.util.ISO9075;
-import org.apache.jackrabbit.util.Text;
 import org.apache.jackrabbit.vault.util.PlatformNameFormat;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
@@ -42,7 +41,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -432,19 +430,23 @@ public class SourceModel extends ConsoleSlingBean {
         zipStream.putNextEntry(entry);
 
         Queue<String> binaryProperties = new ArrayDeque<>(); // these need to have an additional file
+        Queue<SourceModel> additionalFiles = new ArrayDeque<>();
         Writer writer = new OutputStreamWriter(zipStream, UTF_8);
-        writeXmlFile(writer, writeDeep, binaryProperties);
+        writeXmlFile(writer, writeDeep, binaryProperties, additionalFiles);
         writer.flush(); // deliberately not close since that'd close the zip 8-/
         zipStream.closeEntry();
-        writeBinaryProperties(zipStream, root, binaryProperties);
 
         if (writeDeep) {
-            for (Resource subnode : getSubnodeList()) {
-                SourceModel subnodeModel = new SourceModel(config, context, subnode);
-                if (subnodeModel.getRenderingType() != RenderingType.EMBEDDED) { // embed was already done.
-                    subnodeModel.writeIntoZip(zipStream, root, true);
-                }
+            writeBinaryProperties(zipStream, root, binaryProperties);
+            for (SourceModel binaryFile : additionalFiles) {
+                binaryFile.writeIntoZip(zipStream, root, writeDeep);
             }
+//            for (Resource subnode : getSubnodeList()) {
+//                SourceModel subnodeModel = new SourceModel(config, context, subnode);
+//                if (subnodeModel.getRenderingType() != RenderingType.EMBEDDED) { // embed was already done.
+//                    subnodeModel.writeIntoZip(zipStream, root, true);
+//                }
+//            }
         }
     }
 
@@ -485,6 +487,7 @@ public class SourceModel extends ConsoleSlingBean {
                 || !NT_RESOURCE.equals(file.getContentResource().getProperty(JCR_PRIMARYTYPE, String.class));
         if (fileIsNonstandard || contentNodeIsNonstandard) {
             Queue<String> binaryProperties = new ArrayDeque<>(); // these need to have an additional file
+            Queue<SourceModel> binaryFiles = new ArrayDeque<>();
             entry = new ZipEntry(getZipName(root, file.getPath() + ".dir/.content.xml"));
             if (lastModified != null) {
                 entry.setLastModifiedTime(lastModified);
@@ -492,10 +495,11 @@ public class SourceModel extends ConsoleSlingBean {
             zipStream.putNextEntry(entry);
             Writer writer = new OutputStreamWriter(zipStream, UTF_8);
             SourceModel fileModel = new SourceModel(config, context, file);
-            fileModel.writeXmlFile(writer, true, binaryProperties);
+            fileModel.writeXmlFile(writer, true, binaryProperties, binaryFiles);
             writer.flush();
             zipStream.closeEntry();
             writeBinaryProperties(zipStream, root, binaryProperties);
+            for (SourceModel binaryFile : binaryFiles) { binaryFile.writeIntoZip(zipStream, root, true); }
         }
     }
 
@@ -542,8 +546,9 @@ public class SourceModel extends ConsoleSlingBean {
                 return getZipName(root, getPath());
             case EMBEDDED: // this shouldn't happen - no sensible way to handle it, but can happen on unfortunate calls.
             case XMLFILE:
-            default:
                 return getZipName(root, getPath() + ".xml");
+            default:
+                throw new IllegalArgumentException("Impossible rendering type " + getRenderingType());
         }
     }
 
@@ -557,13 +562,24 @@ public class SourceModel extends ConsoleSlingBean {
     /**
      * Writes an XML file for the node, normally .content.xml, including an jcr:content node if present.
      *
+     * @param writeDeep also write subnodes; if false only properties of the node itself are written but no
+     *                  children (and no jcr:content).
+     */
+    public void writeXmlFile(@Nonnull Writer writer, boolean writeDeep) throws IOException, RepositoryException {
+        writeXmlFile(writer, true, null, null);
+    }
+
+    /**
+     * Writes an XML file for the node, normally .content.xml, including an jcr:content node if present.
+     *
      * @param writeDeep        also write subnodes; if false only properties of the node itself are written but no
      *                         children (and no jcr:content).
      * @param binaryProperties if given, collects the full paths to binary properties (except jcr:data which is
+     *                         written as a binary file
+     * @param additionalFiles  if given, collects the {@link SourceModel}s that have to be written into another file
      */
-    protected void writeXmlFile(@Nonnull Writer writer,
-                                boolean writeDeep,
-                                @Nullable Queue<String> binaryProperties)
+    protected void writeXmlFile(@Nonnull Writer writer, boolean writeDeep,
+                                @Nullable Queue<String> binaryProperties, @Nullable Queue<SourceModel> additionalFiles)
             throws IOException, RepositoryException {
         List<String> namespaces = new ArrayList<>();
         namespaces.add("jcr");
@@ -581,23 +597,26 @@ public class SourceModel extends ConsoleSlingBean {
         writeProperties(writer, "        ", binaryProperties);
         writer.append(">\n");
         if (writeDeep) {
-            writeSubnodesAsXml(writer, BASIC_INDENT, binaryProperties);
+            writeSubnodesAsXml(writer, BASIC_INDENT, binaryProperties, additionalFiles);
         }
         writer.append("</jcr:root>\n");
     }
 
     protected void writeSubnodesAsXml(@Nonnull Writer writer, @Nonnull String indent,
-                                      @Nullable Queue<String> binaryProperties) throws IOException {
+                                      @Nullable Queue<String> binaryProperties, @Nullable Queue<SourceModel> additionalFiles)
+            throws IOException {
         for (Resource subnode : getSubnodeList()) {
             SourceModel subnodeModel = new SourceModel(config, context, subnode);
-            subnodeModel.writeXmlSubnode(writer, indent, binaryProperties);
+            subnodeModel.writeXmlSubnode(writer, indent, binaryProperties, additionalFiles);
         }
     }
 
     /**
      * Writes the node including subnodes as XML, using the base indentation.
      */
-    protected void writeXmlSubnode(@Nonnull Writer writer, @Nonnull String indent, @Nullable Queue<String> binaryProperties) throws IOException {
+    protected void writeXmlSubnode(@Nonnull Writer writer, @Nonnull String indent,
+                                   @Nullable Queue<String> binaryProperties, @Nullable Queue<SourceModel> additionalFiles)
+            throws IOException {
         String name = escapeXmlName(getName());
         switch (getRenderingType()) {
             case EMBEDDED:
@@ -612,7 +631,7 @@ public class SourceModel extends ConsoleSlingBean {
                 writeProperties(writer, indent + "        ", binaryProperties);
                 if (getHasSubnodes()) {
                     writer.append(">\n");
-                    writeSubnodesAsXml(writer, indent + BASIC_INDENT, binaryProperties);
+                    writeSubnodesAsXml(writer, indent + BASIC_INDENT, binaryProperties, additionalFiles);
                     writer.append(indent).append("</").append(name).append(">\n");
                 } else {
                     writer.append("/>\n");
@@ -620,14 +639,18 @@ public class SourceModel extends ConsoleSlingBean {
                 break;
             case FOLDER:
             case XMLFILE:
-            case BINARYFILE: // FIXME(hps,17.02.20) check whether these will be rendered into add. files
-            default:
+            case BINARYFILE:
+                if (additionalFiles != null) {
+                    additionalFiles.add(this);
+                }
                 // If the node has orderable siblings, we write a stub node to specify the node order.
                 // The real content is in a separate file.
                 if (hasOrderableSiblings()) {
                     writer.append(indent).append("<").append(name).append("/>\n");
                 }
                 break;
+            default:
+                throw new IllegalArgumentException("Impossible rendering type " + getRenderingType());
         }
     }
 

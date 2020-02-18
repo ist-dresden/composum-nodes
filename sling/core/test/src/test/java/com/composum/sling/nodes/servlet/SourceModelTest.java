@@ -138,6 +138,8 @@ public class SourceModelTest {
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary.binary\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary with-weird na_me.binary\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/assets/withadditionaldata.jpg\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/assets/withadditionaldata.jpg.dir/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/__folder_wi%5cth weird %22char's/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/401.jsp\n"));
     }
@@ -148,28 +150,25 @@ public class SourceModelTest {
         model.writeArchive(out);
         String zipContents = getZipContentOverview(out, true, true);
         System.out.println(zipContents);
-        assertThat(zipContents, is(".content.xml : 211 | 2724194649\n" +
-                "i18n/.content.xml : 204 | 3438455284\n" +
-                "i18n/de/.content.xml : 317 | 3793538747\n" +
-                "i18n/de/cancel/.content.xml : 275 | 902577937\n" +
-                "i18n/de/configuration/.content.xml : 286 | 3561449388\n" +
-                "i18n/de/config/.content.xml : 196 | 1992426303\n" +
-                "i18n/de/config/CreateConfig/.content.xml : 301 | 2322230755\n" +
-                "i18n/de/config/ChangeConfig/.content.xml : 301 | 2706073434\n" +
-                "assetsfolder/.content.xml : 204 | 3438455284\n" +
+        assertThat(zipContents, is(".content.xml : 292 | 504953282\n" +
+                "i18n/.content.xml : 253 | 2815201407\n" +
+                "i18n/de.xml : 1071 | 2637794981\n" +
+                "assetsfolder/.content.xml : 200 | 2815730915\n" +
                 "assetsfolder/plain.jpg : 76910 | 2714537933\n" +
-                "assetsfolder/plain.jpg.dir/.content.xml : 344 | 1511749529\n" +
+                "assetsfolder/plain.jpg.dir/.content.xml : 340 | 1433276223\n" +
                 "assetsfolder/withadditionaldata.jpg : 76910 | 2714537933\n" +
-                "assetsfolder/withadditionaldata.jpg.dir/.content.xml : 1104 | 1828430221\n" +
+                "assetsfolder/withadditionaldata.jpg.dir/.content.xml : 1098 | 3497581146\n" +
                 "assetsfolder/_nt_resourcewithoutfile : 83358 | 2844564088\n" +
-                "assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 227 | 1283844817\n" +
-                "ntunstructuredwithjcrcontent/.content.xml : 456 | 1199963903\n" +
+                "assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 221 | 1068843391\n" +
+                "ntunstructuredwithjcrcontent/.content.xml : 450 | 1525816692\n" +
                 "ntunstructuredwithjcrcontent/folderbinprop.binary : 20 | 2592797726\n" +
                 "ntunstructuredwithjcrcontent/_jcr_content/binprop.binary : 20 | 2592797726\n" +
-                "subfolder/.content.xml : 4642 | 3242412671\n" +
+                "subfolder/.content.xml : 3385 | 2524265950\n" +
                 "subfolder/_jcr_content/propertytest/binary.binary : 86 | 1434328335\n" +
-                "subfolder/_jcr_content/propertytest/binary%20with-weird%20na_me.binary : 86 | 1434328335\n" +
-                "subfolder/__folder_wi%5cth%20weird%20%22char's/.content.xml : 204 | 3438455284\n" +
+                "subfolder/_jcr_content/propertytest/binary with-weird na_me.binary : 86 | 1434328335\n" +
+                "subfolder/_jcr_content/assets/withadditionaldata.jpg : 76910 | 2714537933\n" +
+                "subfolder/_jcr_content/assets/withadditionaldata.jpg.dir/.content.xml : 1098 | 3497581146\n" +
+                "subfolder/__folder_wi%5cth weird %22char's/.content.xml : 200 | 2815730915\n" +
                 "subfolder/401.jsp : 650 | 442210237\n"));
     }
 
@@ -204,7 +203,7 @@ public class SourceModelTest {
     @Test
     public void detailTest() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Resource detailResource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel/subfolder/jcr:content");
+        Resource detailResource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel/subfolder");
         SourceModel detailModel = new SourceModel(config, beanContext, detailResource);
         detailModel.writeArchive(out);
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))) {
