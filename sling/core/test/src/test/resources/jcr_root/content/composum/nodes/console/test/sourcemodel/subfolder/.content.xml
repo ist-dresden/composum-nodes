@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jcr:root
-        xmlns:jcr="http://www.jcp.org/jcr/1.0"
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0"
         xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
         xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
         jcr:primaryType="sling:Folder">
     <jcr:content
-            jcr:mixinTypes="[mix:title,mix:versionable]"
             jcr:primaryType="nt:unstructured"
+            jcr:mixinTypes="[mix:title,mix:versionable]"
             jcr:title="various cases">
-        <folder jcr:primaryType="sling:Folder"
+        <folder
+                jcr:primaryType="sling:Folder"
                 jcr:description="Should not have a folder"
-                _x0026__x003c__x003e__x0027__x005c_="attribute name crap &amp;&lt;>'\\"
-                äöüÄ_x005c__x0022__x0027_ÖÜñóáéíóú_x00ac_áßàèìùòâêîôû_x0020__x0026__x003c__x0026__x003e_xml_x003b__x0020__x0026_euro_x003b__x0020__x0040__x0025_25_x2030__x0020__x00bc__x00bd__x00be__x0020__x00ab__x2122__x00a9__x00ae__x00bb__x0020__x201e__x0024__x201d__x201c__x20ac__x201d__x2018__x00a3__x2019__x201a__x00a5__x2019__x0020__x003c_b_x003e__x0021__x003c_b_x003e_="unspeakable horrors"
-        />
-        <assets jcr:primaryType="nt:unstructured">
+                _x0026__x003c__x003e__x0027__x005c_="attribute name crap &amp;&lt;>'"
+                äöüÄ_x005c__x0022__x0027_ÖÜñóáéíóú_x00ac_áßàèìùòâêîôû_x0020__x0026__x003c__x0026__x003e_xml_x003b__x0020__x0026_euro_x003b__x0020__x0040__x0025__x2030__x0020__x00bc__x00bd__x00be__x0020__x00ab__x2122__x00a9__x00ae__x00bb__x0020__x201e__x0024__x201d__x201c__x20ac__x201d__x2018__x00a3__x2019__x201a__x00a5__x2019__x0020__x003c_b_x003e__x0021__x003c_b_x003e_="unspeakable horrors"/>
+        <assets
+                jcr:primaryType="nt:unstructured">
             <withadditionaldata.jpg/>
         </assets>
         <propertytest

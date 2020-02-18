@@ -4,6 +4,6 @@
         jcr:primaryType="nt:file">
     <jcr:content
             jcr:primaryType="nt:resource"
-            jcr:mimeType="image/jpeg"
-            jcr:mixinTypes="[mix:title,mix:versionable]"/>
+            jcr:mixinTypes="[mix:title,mix:versionable]"
+            jcr:mimeType="image/jpeg"/>
 </jcr:root>

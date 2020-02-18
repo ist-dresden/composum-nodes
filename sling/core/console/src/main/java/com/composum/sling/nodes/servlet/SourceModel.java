@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.util.ISO9075;
 import org.apache.jackrabbit.util.Text;
+import org.apache.jackrabbit.vault.util.PlatformNameFormat;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -548,20 +549,7 @@ public class SourceModel extends ConsoleSlingBean {
 
     /** Transforms the name into something usable for the filesystem. */
     protected String filesystemName(String name) {
-        StringBuilder buf = new StringBuilder();
-        for (String part : name.split("/")) {
-            if (buf.length() > 0) { buf.append("/"); }
-            Matcher namesp = PAT_NAMESPACEPREFIX.matcher(part);
-            if (namesp.matches()) {
-                part = "_" + namesp.group(1) + "_" + namesp.group(2);
-            } else if (part.matches("_.*_.*")) { // would match result of this encoding -> "escape"
-                part = "_" + part;
-            }
-            part = Text.escape(part); // TODO - unclear what vault actually uses here. Spaces seem to be encoded to
-            // spaces, but this transforms them to %20
-            buf.append(part);
-        }
-        return buf.toString();
+        return PlatformNameFormat.getPlatformPath(name);
     }
 
     // XML output
@@ -584,13 +572,13 @@ public class SourceModel extends ConsoleSlingBean {
         writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         writer.append("<jcr:root");
         writeNamespaceAttributes(writer, namespaces);
-        writeProperty(writer, "          ", JCR_PRIMARYTYPE, getPrimaryType());
+        writeProperty(writer, "        ", JCR_PRIMARYTYPE, getPrimaryType());
         String[] mixins = resource.getProperty(JCR_MIXINTYPES, String[].class);
         if (mixins != null && mixins.length > 0) {
-            writeProperty(writer, "          ", JCR_MIXINTYPES, new Property(JCR_MIXINTYPES,
-                    mixins).getString(""));
+            writeProperty(writer, "        ", JCR_MIXINTYPES,
+                    escapeXmlAttribute(new Property(JCR_MIXINTYPES, mixins).getString("")));
         }
-        writeProperties(writer, "          ", binaryProperties);
+        writeProperties(writer, "        ", binaryProperties);
         writer.append(">\n");
         if (writeDeep) {
             writeSubnodesAsXml(writer, BASIC_INDENT, binaryProperties);
@@ -615,6 +603,12 @@ public class SourceModel extends ConsoleSlingBean {
             case EMBEDDED:
                 writer.append(indent).append("<").append(name).append('\n');
                 writer.append(indent).append("        ").append("jcr:primaryType=\"").append(getPrimaryType()).append("\"");
+                String[] mixins = resource.getProperty(JCR_MIXINTYPES, String[].class);
+                if (mixins != null && mixins.length > 0) {
+                    writer.append("\n").append(indent).append("        ").append("jcr:mixinTypes=\"")
+                            .append(escapeXmlAttribute(new Property(JCR_MIXINTYPES, mixins).getString("")))
+                            .append("\"");
+                }
                 writeProperties(writer, indent + "        ", binaryProperties);
                 if (getHasSubnodes()) {
                     writer.append(">\n");
@@ -665,7 +659,7 @@ public class SourceModel extends ConsoleSlingBean {
             if (StringUtils.isNotBlank(url)) {
                 writer.append(" xmlns:").append(ns).append("=\"").append(url).append("\"");
                 if (++i < namespaces.size()) {
-                    writer.append("\n         ");
+                    writer.append("\n       ");
                 }
             } else {
                 i++;
@@ -681,19 +675,23 @@ public class SourceModel extends ConsoleSlingBean {
         // TODO(hps,2019-07-11) use utilities? Should be consistent with package manager, though.
         // This is probably not quite complete - what about other control characters?
         // There is org.apache.jackrabbit.util.Text.encodeIllegalXMLCharacters , but that doesn't seem right.
-        return value
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll("\"", "&quot;")
-                .replaceAll("\t", "&#x9;")
-                .replaceAll("\n", "&#xa;")
-                .replaceAll("\r", "\n");
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace("\"", "&quot;")
+                .replace("\t", "&#x9;")
+                .replace("\n", "&#xa;")
+                .replace("\r", "&#xc;")
+                .replace("\\", "\\\\");
     }
 
     /** This encodes what nodes are presented in which way nodes are represented in a Zip / Package. */
     protected RenderingType getRenderingType(Resource aResource) {
         // The ordering of the rules is important, as it handles various special cases.
-        if (ResourceUtil.isFile(aResource)) { return RenderingType.BINARYFILE; }
+        if (ResourceUtil.isNodeType(aResource, NT_FILE) ||
+                (ResourceUtil.isNodeType(aResource, NT_RESOURCE) && !ResourceUtil.isNodeType(aResource.getParent(), NT_FILE))
+        ) { // a nt:resource node without a nt:file as parent is a special case that's handled as file, too.
+            return RenderingType.BINARYFILE;
+        }
         if (PATH_WITHIN_JCR_CONTENT.matcher(aResource.getPath()).matches()) {
             // we want everything below a jcr:content to stay in it's .content.xml except if it's binary
             return RenderingType.EMBEDDED;

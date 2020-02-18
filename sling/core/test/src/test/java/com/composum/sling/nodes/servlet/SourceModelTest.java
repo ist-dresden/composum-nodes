@@ -92,7 +92,8 @@ public class SourceModelTest {
     public void testEscapeXmlAttribute() {
         String charsetstress = CharsetStress.getUTF8CharsetStress();
         // "äöüÄ\\&quot;'ÖÜñóáéíóú¬áßàèìùòâêîôû &amp;&lt;&amp;>xml; &amp;euro; @%‰ ¼½¾ «™©®» „$”“€”‘£’‚¥’ &lt;b>!&lt;/b>"
-        ec.checkThat(CharsetStress.bytes(model.escapeXmlAttribute(charsetstress)), is("[-61, -92, -61, -74, -61, -68, -61, -124, 92, 38, 113, 117, 111, 116, 59, 39, -61, -106, -61, -100, -61, -79, -61, -77, -61, -95, -61, -87, -61, -83, -61, -77, -61, -70, -62, -84, -61, -95, -61, -97, -61, -96, -61, -88, -61, -84, -61, -71, -61, -78, -61, -94, -61, -86, -61, -82, -61, -76, -61, -69, 32, 38, 97, 109, 112, 59, 38, 108, 116, 59, 38, 97, 109, 112, 59, 62, 120, 109, 108, 59, 32, 38, 97, 109, 112, 59, 101, 117, 114, 111, 59, 32, 64, 37, -30, -128, -80, 32, -62, -68, -62, -67, -62, -66, 32, -62, -85, -30, -124, -94, -62, -87, -62, -82, -62, -69, 32, -30, -128, -98, 36, -30, -128, -99, -30, -128, -100, -30, -126, -84, -30, -128, -99, -30, -128, -104, -62, -93, -30, -128, -103, -30, -128, -102, -62, -91, -30, -128, -103, 32, 38, 108, 116, 59, 98, 62, 33, 38, 108, 116, 59, 47, 98, 62]"));
+        ec.checkThat(model.escapeXmlAttribute(charsetstress),
+                CharsetStress.bytes(model.escapeXmlAttribute(charsetstress)), is("[-61, -92, -61, -74, -61, -68, -61, -124, 92, 92, 38, 113, 117, 111, 116, 59, 39, -61, -106, -61, -100, -61, -79, -61, -77, -61, -95, -61, -87, -61, -83, -61, -77, -61, -70, -62, -84, -61, -95, -61, -97, -61, -96, -61, -88, -61, -84, -61, -71, -61, -78, -61, -94, -61, -86, -61, -82, -61, -76, -61, -69, 32, 38, 97, 109, 112, 59, 38, 108, 116, 59, 38, 97, 109, 112, 59, 62, 120, 109, 108, 59, 32, 38, 97, 109, 112, 59, 101, 117, 114, 111, 59, 32, 64, 37, -30, -128, -80, 32, -62, -68, -62, -67, -62, -66, 32, -62, -85, -30, -124, -94, -62, -87, -62, -82, -62, -69, 32, -30, -128, -98, 36, -30, -128, -99, -30, -128, -100, -30, -126, -84, -30, -128, -99, -30, -128, -104, -62, -93, -30, -128, -103, -30, -128, -102, -62, -91, -30, -128, -103, 32, 38, 108, 116, 59, 98, 62, 33, 38, 108, 116, 59, 47, 98, 62]"));
         ec.checkThat(model.escapeXmlAttribute("<p><strong>This</strong> <em>is</em> <u>some</u>&nbsp;</p><p><strike>rich</strike> te<sup>xt</sup> ev<sub>en</sub>&nbsp;with <a href=\"http://www.example.net/\" title=\"example\" target=\"_blank\">links</a> and</p><p><ul><li>with&nbsp;</li></ul></p><p><ol><li>some&nbsp;<code>code</code>.</li></ol></p>"), is("&lt;p>&lt;strong>This&lt;/strong> &lt;em>is&lt;/em> &lt;u>some&lt;/u>&amp;nbsp;&lt;/p>&lt;p>&lt;strike>rich&lt;/strike> te&lt;sup>xt&lt;/sup> ev&lt;sub>en&lt;/sub>&amp;nbsp;with &lt;a href=&quot;http://www.example.net/&quot; title=&quot;example&quot; target=&quot;_blank&quot;>links&lt;/a> and&lt;/p>&lt;p>&lt;ul>&lt;li>with&amp;nbsp;&lt;/li>&lt;/ul>&lt;/p>&lt;p>&lt;ol>&lt;li>some&amp;nbsp;&lt;code>code&lt;/code>.&lt;/li>&lt;/ol>&lt;/p>"));
     }
 
@@ -136,8 +137,8 @@ public class SourceModelTest {
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/_jcr_content/binprop.binary\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary.binary\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary%20with-weird%20na_me.binary\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/__folder_wi%5cth%20weird%20%22char's/.content.xml\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary with-weird na_me.binary\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/__folder_wi%5cth weird %22char's/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/401.jsp\n"));
     }
 
@@ -203,7 +204,7 @@ public class SourceModelTest {
     @Test
     public void detailTest() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Resource detailResource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel/i18n");
+        Resource detailResource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel/subfolder/jcr:content");
         SourceModel detailModel = new SourceModel(config, beanContext, detailResource);
         detailModel.writeArchive(out);
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))) {

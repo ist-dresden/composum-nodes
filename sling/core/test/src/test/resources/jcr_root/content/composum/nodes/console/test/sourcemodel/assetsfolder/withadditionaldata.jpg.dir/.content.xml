@@ -5,8 +5,8 @@
         jcr:primaryType="nt:file">
     <jcr:content
             jcr:primaryType="nt:resource"
-            jcr:mimeType="image/jpeg"
-            jcr:mixinTypes="[cpl:Resource]">
+            jcr:mixinTypes="[cpl:Resource]"
+            jcr:mimeType="image/jpeg">
         <meta
                 jcr:primaryType="cpl:MetaData"
                 Color_x0020_Space="sRGB"
