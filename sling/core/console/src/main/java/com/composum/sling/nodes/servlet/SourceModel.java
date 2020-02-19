@@ -132,9 +132,9 @@ public class SourceModel extends ConsoleSlingBean {
      * @see "https://github.com/apache/jackrabbit-filevault/blob/trunk/vault-core/src/main/resources/org/apache/jackrabbit/vault/fs/config/defaultConfig-1.1.xml"
      */
     public static final ResourceFilter RENDERFILTER_XMLFILE =
-            new ResourceFilter.NodeTypeFilter(new StringFilter.WhiteList("mix:language", "rep:AccessControl",
-                    "rep:Policy", "cq:Widget", "cq:EditConfig", "cq:WorkflowModel", "vlt:FullCoverage", "mix:language",
-                    "sling:OsgiConfig"));
+            new ResourceFilter.NodeTypeFilter(new StringFilter.WhiteList("^mix:language$", "^rep:AccessControl$",
+                    "^rep:Policy$", "^cq:Widget$", "^cq:EditConfig$", "^cq:WorkflowModel$", "^vlt:FullCoverage$",
+                    "^mix:language$", "^sling:OsgiConfig$"));
 
     /** Pattern for {@link SimpleDateFormat} that creates a date suitable with XML sources. */
     public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
@@ -415,6 +415,12 @@ public class SourceModel extends ConsoleSlingBean {
     protected void writeIntoZip(@Nonnull ZipOutputStream zipStream, @Nonnull String root, boolean writeDeep)
             throws IOException, RepositoryException {
         if (resource == null || ResourceUtil.isNonExistingResource(resource)) { return; }
+        if (ResourceUtil.isResourceType(resource, ResourceUtil.TYPE_RESOURCE) && ResourceUtil.isResourceType(resource.getParent(), NT_FILE)) {
+            // there is no proper way to write a nt:resource of a nt:file into a package.
+            // We write the parent - nt:file - instead.
+            new SourceModel(config, context, resource.getParent()).writeIntoZip(zipStream, root, writeDeep);
+            return;
+        }
         if (getRenderingType() == RenderingType.BINARYFILE) {
             if (writeDeep) { writeFile(zipStream, root, resource); }
             // not writeDeep: a .content.xml is not present for a file, so we can't do anything.

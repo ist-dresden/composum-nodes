@@ -5,6 +5,7 @@ import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.test.util.CharsetStress;
 import com.composum.sling.test.util.JcrTestUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -176,8 +177,8 @@ public class SourceModelTest {
     protected String getZipContentOverview(ByteArrayOutputStream out, boolean details, boolean unpack) throws IOException {
         File basedir = new File("target").getAbsoluteFile();
         if (!basedir.exists() || !basedir.getAbsolutePath().endsWith("core/test/target")) { unpack = false; }
-        basedir = basedir.toPath().resolve("sourcemodel-test").toFile();
-        if (basedir.exists()) { basedir.delete(); }
+        basedir = basedir.toPath().resolve("sourcemodel-test-unpacked").toFile();
+        if (unpack && basedir.exists()) { FileUtils.deleteDirectory(basedir); }
         StringBuilder buf = new StringBuilder();
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))) {
             ZipEntry entry;
@@ -202,10 +203,11 @@ public class SourceModelTest {
     /** Not actually a test - mostly for debugging specific cases in the IDE. */
     @Test
     public void detailTest() throws Exception {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Resource detailResource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel/subfolder");
+        Resource detailResource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel" +
+                "/assetsfolder/plain.jpg/jcr:content");
         SourceModel detailModel = new SourceModel(config, beanContext, detailResource);
-        detailModel.writeArchive(out);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        detailModel.writePackage(out, "thegroup", "thename", "1.0");
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))) {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
