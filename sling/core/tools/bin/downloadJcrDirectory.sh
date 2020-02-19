@@ -52,8 +52,9 @@ fi
 
 TMPFIL=`mktemp -u`.zip
 trap "{ rm -f $TMPFIL; }" EXIT
-#echo temporary file: $TMPFIL
+# echo temporary file: $TMPFIL
 
 curl -s -S -o $TMPFIL -u $CPM_ADMINUSER:$CPM_ADMINPASSWD $CPM_PROTOCOL://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/source.zip/$1
 
 unzip -o -u $TMPFIL
+unzip -v $TMPFIL

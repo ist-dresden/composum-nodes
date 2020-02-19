@@ -164,7 +164,7 @@ public class SourceModelTest {
                 "ntunstructuredwithjcrcontent/.content.xml : 450 | 1525816692\n" +
                 "ntunstructuredwithjcrcontent/folderbinprop.binary : 20 | 2592797726\n" +
                 "ntunstructuredwithjcrcontent/_jcr_content/binprop.binary : 20 | 2592797726\n" +
-                "subfolder/.content.xml : 3385 | 2524265950\n" +
+                "subfolder/.content.xml : 3428 | 2058210054\n" +
                 "subfolder/_jcr_content/propertytest/binary.binary : 86 | 1434328335\n" +
                 "subfolder/_jcr_content/propertytest/binary with-weird na_me.binary : 86 | 1434328335\n" +
                 "subfolder/_jcr_content/assets/withadditionaldata.jpg : 76910 | 2714537933\n" +

@@ -235,7 +235,7 @@ public class SourceModel extends ConsoleSlingBean {
         return EXCLUDED_PROPS.accept(property.getName());
     }
 
-    public boolean getHasSubnodes() {
+    public boolean hasSubnodes() {
         return !getSubnodeList().isEmpty();
     }
 
@@ -447,12 +447,6 @@ public class SourceModel extends ConsoleSlingBean {
             for (SourceModel binaryFile : additionalFiles) {
                 binaryFile.writeIntoZip(zipStream, root, writeDeep);
             }
-//            for (Resource subnode : getSubnodeList()) {
-//                SourceModel subnodeModel = new SourceModel(config, context, subnode);
-//                if (subnodeModel.getRenderingType() != RenderingType.EMBEDDED) { // embed was already done.
-//                    subnodeModel.writeIntoZip(zipStream, root, true);
-//                }
-//            }
         }
     }
 
@@ -635,7 +629,7 @@ public class SourceModel extends ConsoleSlingBean {
                             .append("\"");
                 }
                 writeProperties(writer, indent + "        ", binaryProperties);
-                if (getHasSubnodes()) {
+                if (hasSubnodes()) {
                     writer.append(">\n");
                     writeSubnodesAsXml(writer, indent + BASIC_INDENT, binaryProperties, additionalFiles);
                     writer.append(indent).append("</").append(name).append(">\n");

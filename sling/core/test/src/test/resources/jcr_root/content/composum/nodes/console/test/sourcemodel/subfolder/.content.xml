@@ -32,18 +32,18 @@
                 long="{Long}17"
                 longmulti="{Long}[234,-151]"
                 name="{Name}anameisthis"
-                namemulti="[anameisthis,anothername]"
+                namemulti="{Name}[anameisthis,anothername]"
                 path="{Path}/content/composum"
-                pathmulti="[/content/composum,/public/composum/prototype]"
+                pathmulti="{Path}[/content/composum,/public/composum/prototype]"
                 plaintext="a&#x9;b&#xa;c"
                 reference="{Reference}54ab0ccd-2035-4eca-94e3-5fce589b171a"
-                referencemulti="[07937510-397d-4703-b62a-d3d99100adf4,5d058f77-5479-4527-9d3c-a58bf99113d9]"
+                referencemulti="{Reference}[07937510-397d-4703-b62a-d3d99100adf4,5d058f77-5479-4527-9d3c-a58bf99113d9]"
                 richtext="&lt;p>&lt;strong>This&lt;/strong> &lt;em>is&lt;/em> &lt;u>some&lt;/u>&amp;nbsp;&lt;/p>&lt;p>&lt;strike>rich&lt;/strike> te&lt;sup>xt&lt;/sup> ev&lt;sub>en&lt;/sub>&amp;nbsp;with &lt;a href=&quot;http://www.example.net/&quot; title=&quot;example&quot; target=&quot;_blank&quot;>links&lt;/a> and&lt;/p>&lt;p>&lt;ul>&lt;li>with&amp;nbsp;&lt;/li>&lt;/ul>&lt;/p>&lt;p>&lt;ol>&lt;li>some&amp;nbsp;&lt;code>code&lt;/code>.&lt;/li>&lt;/ol>&lt;/p>"
                 string="a string"
                 stringmulti="[false,two]"
                 uri="{URI}http://www.example.net/"
-                urimulti="[www.example.net,/nix/nux,http://www.example.net/]"
+                urimulti="{URI}[www.example.net,/nix/nux,http://www.example.net/]"
                 weakreference="{WeakReference}5d058f77-5479-4527-9d3c-a58bf99113d9"
-                weakreferencemulti="[5d058f77-5479-4527-9d3c-a58bf99113d9,54ab0ccd-2035-4eca-94e3-5fce589b171a]"/>
+                weakreferencemulti="{WeakReference}[5d058f77-5479-4527-9d3c-a58bf99113d9,54ab0ccd-2035-4eca-94e3-5fce589b171a]"/>
     </jcr:content>
 </jcr:root>
