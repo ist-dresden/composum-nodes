@@ -65,6 +65,9 @@ public class ResourceModel extends AbstractSlingBean {
         @SuppressWarnings("unchecked")
         @Override
         public <T> T get(@Nonnull String name, @Nonnull Class<T> type) {
+            if (name.startsWith("_jcr_")) {
+                name = "jcr:" + name.substring(5);
+            }
             Object value = super.get(name);
             if (value == null) {
                 value = getValue(name, type);
