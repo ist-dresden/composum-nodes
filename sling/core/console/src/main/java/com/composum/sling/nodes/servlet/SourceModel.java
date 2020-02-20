@@ -650,17 +650,17 @@ public class SourceModel extends ConsoleSlingBean {
             if (binaryProperties != null && property.isBinary()) {
                 binaryProperties.add(getPath() + "/" + property.getName());
             }
-            writeProperty(writer, indent, property.getName(), property.getString(indent));
+            writeProperty(writer, indent, property.getName(), property.getEscapedString(indent));
         }
     }
 
-    protected void writeProperty(Writer writer, String indent, String propertyName, String value) throws IOException {
-        if (StringUtils.isNotEmpty(value)) {
+    protected void writeProperty(Writer writer, String indent, String propertyName, String escapedValue) throws IOException {
+        if (StringUtils.isNotEmpty(escapedValue)) {
             writer.append("\n");
             writer.append(indent);
             writer.append(escapeXmlName(propertyName));
             writer.append("=\"");
-            writer.append(escapeXmlAttribute(value));
+            writer.append(escapedValue);
             writer.append("\"");
         }
     }
@@ -680,19 +680,6 @@ public class SourceModel extends ConsoleSlingBean {
 
     public String escapeXmlName(String propertyName) {
         return ISO9075.encode(propertyName);
-    }
-
-    public String escapeXmlAttribute(String value) {
-        // TODO(hps,2019-07-11) use utilities? Should be consistent with package manager, though.
-        // This is probably not quite complete - what about other control characters?
-        // There is org.apache.jackrabbit.util.Text.encodeIllegalXMLCharacters , but that doesn't seem right.
-        return value.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace("\"", "&quot;")
-                .replace("\t", "&#x9;")
-                .replace("\n", "&#xa;")
-                .replace("\r", "&#xc;")
-                .replace("\\", "\\\\");
     }
 
     /**
@@ -788,21 +775,22 @@ public class SourceModel extends ConsoleSlingBean {
             return name;
         }
 
-        public String getString(String indent) {
+        /** Properly escaped String that can be written as attribute value into an XML file. */
+        public String getEscapedString(String indent) {
 
             if (isMultiValue()) {
                 StringBuilder buffer = new StringBuilder();
                 buffer.append(getTypePrefix(value));
                 Object[] array = (Object[]) value;
                 String lineBreak = "";
-                if (array.length > 0 && getString(array[0]).startsWith(" ")) {
+                if (array.length > 0 && getEscapedString(array[0]).startsWith(" ")) {
                     // if string values of an array are beginning with spaces we assume that the values
                     // should be arranged as lines of string values with the current indent for each value
                     lineBreak = "\r"; // '\r' is replaced by '\n' after escaping of embedded '\n' characters
                 }
                 buffer.append("[").append(lineBreak);
                 for (int i = 0; i < array.length; ++i) {
-                    String string = getString(array[i]);
+                    String string = getEscapedString(array[i]);
                     string = string.replace(",", "\\,");
                     if (StringUtils.isNotEmpty(lineBreak)) {
                         string = string.trim();
@@ -820,22 +808,40 @@ public class SourceModel extends ConsoleSlingBean {
                 return buffer.toString();
             }
 
-            return getTypePrefix(value) + getString(value);
+            String typePrefix = getTypePrefix(value);
+            String valueString = getEscapedString(value);
+            if (StringUtils.startsWith(valueString, "[")) {
+                valueString = "\\" + valueString;
+            }
+            if (StringUtils.isNotBlank(typePrefix) || !StringUtils.startsWith(valueString, "{")) {
+                return typePrefix + valueString;
+            } else { // a value starting with { would be misinterpreted as type prefix -> escape it:
+                return "\\" + valueString;
+            }
         }
 
-        protected String getString(Object aValue) {
+        protected String getEscapedString(Object aValue) {
             if (aValue instanceof Calendar) {
                 DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-                return formatter.format(((Calendar) aValue).getTime());
+                return escapeXmlAttribute(formatter.format(((Calendar) aValue).getTime()));
             }
             if (aValue instanceof InputStream) { // actual value is exported in additional file.
                 return "";
             }
-            if (aValue instanceof String && ((String) aValue).startsWith("{")) {
-                // a value starting with { would be misinterpreted as type prefix -> escape it:
-                aValue = "\\" + aValue;
-            }
-            return aValue != null ? aValue.toString() : "";
+            return aValue != null ? escapeXmlAttribute(aValue.toString()) : "";
+        }
+
+        public String escapeXmlAttribute(String value) {
+            // TODO(hps,2019-07-11) use utilities? Should be consistent with package manager, though.
+            // This is probably not quite complete - what about other control characters?
+            // There is org.apache.jackrabbit.util.Text.encodeIllegalXMLCharacters , but that doesn't seem right.
+            return value.replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace("\"", "&quot;")
+                    .replace("\t", "&#x9;")
+                    .replace("\n", "&#xa;")
+                    .replace("\r", "&#xc;")
+                    .replace("\\", "\\\\");
         }
 
         protected int getOrderingLevel() {
@@ -895,7 +901,7 @@ public class SourceModel extends ConsoleSlingBean {
 
         @Override
         public String toString() {
-            return name + "=" + getString("");
+            return name + "=" + getEscapedString("");
         }
     }
 

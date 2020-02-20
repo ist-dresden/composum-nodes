@@ -25,8 +25,8 @@
                 charsetstress="äöüÄ\\&quot;'ÖÜñóáéíóú¬áßàèìùòâêîôû &amp;&lt;&amp;>xml; &amp;euro; @%‰ ¼½¾ «™©®» „$”“€”‘£’‚¥’ &lt;b>!&lt;/b>"
                 date="{Date}2020-02-19T11:46:09.000+01:00"
                 datemulti="{Date}[2020-02-06T11:46:09.000+01:00,2020-02-17T11:46:09.000+01:00]"
-                decimal="{Decimal}123231"
-                decimalmulti="{Decimal}[123231,4342]"
+                decimal="{Decimal}123.456"
+                decimalmulti="{Decimal}[123.231,434200]"
                 double="{Double}1242432.0"
                 doublemulti="{Double}[1242432.0,4324.23423]"
                 long="{Long}17"
@@ -45,5 +45,14 @@
                 urimulti="{URI}[www.example.net,/nix/nux,http://www.example.net/]"
                 weakreference="{WeakReference}5d058f77-5479-4527-9d3c-a58bf99113d9"
                 weakreferencemulti="{WeakReference}[5d058f77-5479-4527-9d3c-a58bf99113d9,54ab0ccd-2035-4eca-94e3-5fce589b171a]"/>
+        <quotingcheck
+                jcr:primaryType="nt:unstructured"
+                backslash="\\back\\slashed\\"
+                backslash2bracestart="\\\\{doublebackslashed}not type marker"
+                backslashbracestart="\\{backslashed}not type marker"
+                bracestart="\{not} a type marker"
+                bracketstart="\[notanarray]"
+                commastart=",hello"
+                stuffinarray="[\,with\,commata,[squared],{nottype}prefix,back\\slash]"/>
     </jcr:content>
 </jcr:root>

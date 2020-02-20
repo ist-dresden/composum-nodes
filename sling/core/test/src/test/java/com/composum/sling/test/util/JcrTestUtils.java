@@ -155,6 +155,7 @@ public class JcrTestUtils {
             importer.run(archive, resolver.getResource("/").adaptTo(Node.class));
             archive.close();
             if (importer.hasErrors()) { throw new IllegalArgumentException("Import failed!"); }
+            resolver.commit();
         } finally {
             writer.interrupt();
             if (writer.isAlive()) { Thread.sleep(500); }
