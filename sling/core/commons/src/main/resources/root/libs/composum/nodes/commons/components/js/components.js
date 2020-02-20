@@ -319,6 +319,8 @@
         /**
          * the 'checkbox-widget' core.components.CheckboxWidget)
          * possible attributes:
+         * - data-rules: 'required'
+         * - data-value: the initial 'value' (true/false) as an alternative to the 'checked' attribute
          */
         components.CheckboxWidget = widgets.Widget.extend({
 
@@ -326,8 +328,14 @@
                 widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.$typeHint = this.$('sling-post-type-hint');
                 this.$deleteHint = this.$('sling-post-delete-hint');
+                this.$defaultHint = this.$('sling-post-default-hint');
+                this.$useDefaultHint = this.$('sling-post-use-default-hint');
                 if (!this.$input.attr('value')) {
-                    this.$input.attr('value', 'true')
+                    this.$input.attr('value', 'true'); // the value which has to be sent if 'checked'
+                }
+                var value = this.$input.data('value');
+                if (value) {
+                    this.setValue(value);
                 }
             },
 
@@ -341,10 +349,14 @@
                     this.$input.attr(widgets.const.attr.name, name);
                     this.$typeHint.attr(widgets.const.attr.name, name + '@TypeHint');
                     this.$deleteHint.attr(widgets.const.attr.name, name + '@Delete');
+                    this.$defaultHint.attr(widgets.const.attr.name, name + '@DefaultValue');
+                    this.$useDefaultHint.attr(widgets.const.attr.name, name + '@UseDefaultWhenMissing');
                 } else {
                     this.$input.removeAttr(widgets.const.attr.name);
                     this.$typeHint.removeAttr(widgets.const.attr.name);
                     this.$deleteHint.removeAttr(widgets.const.attr.name);
+                    this.$defaultHint.removeAttr(widgets.const.attr.name);
+                    this.$useDefaultHint.removeAttr(widgets.const.attr.name);
                 }
             },
 
@@ -462,6 +474,9 @@
         /**
          * the 'select-widget' core.components.SelectWidget)
          * possible attributes:
+         * - data-rules: 'required'
+         * - data-options: a string of options (value1:label 1,value2,:no value label))
+         * - data-value: the current / initial value
          */
         components.SelectWidget = widgets.Widget.extend({
 
@@ -469,7 +484,11 @@
                 widgets.Widget.prototype.initialize.apply(this, [options]);
                 // scan 'rules / pattern' attributes
                 this.initRules();
-                var value = this.$el.data('default');
+                var optionSet = this.$el.data('options');
+                if (optionSet) {
+                    this.setOptions(optionSet);
+                }
+                var value = this.$el.data('value') || this.$el.data('default');
                 if (value) {
                     this.setValue(value);
                 }
@@ -496,6 +515,14 @@
 
             setOptions: function (options) {
                 this.$input.html('');
+                if (_.isString(options)) {
+                    var array = [];
+                    options.split(',').forEach(function (item) {
+                        var values = /^([^:]*)(:(.*))?$/.exec(item);
+                        array.push({value: values[1], label: values[3] ? values[3] : values[1]});
+                    });
+                    options = array;
+                }
                 if (_.isArray(options)) {
                     options.forEach(function (option) {
                         if (_.isObject(option)) {
