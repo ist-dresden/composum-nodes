@@ -10,7 +10,7 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.Importer;
-import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
+import org.apache.jackrabbit.vault.fs.io.ZipStreamArchive;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
@@ -74,12 +74,12 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         final String tmpPath = tmpdir.getPath();
 
         Importer importer;
+        ZipStreamArchive archive = null;
         ImportErrorListener errorListener = new ImportErrorListener();
         try {
             importer = new Importer();
-            // TODO(hps,11.02.20) Use ZipStreamArchive once that's public (in later vault versions)
-            MemoryArchive archive = new MemoryArchive(false);
-            archive.run(rawZipInputStream);
+            archive = new ZipStreamArchive(rawZipInputStream);
+            archive.open(true);
             importer.getOptions().setStrict(true);
             importer.getOptions().setListener(errorListener);
             importer.run(archive, tmpdir.adaptTo(Node.class));
@@ -88,6 +88,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         } catch (Exception e) {
             throw new IOException(e);
         } finally {
+            if (archive != null) { archive.close(); }
             rawZipInputStream.close();
         }
         if (importer.hasErrors()) {

@@ -26,6 +26,7 @@ import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.api.PathFilter;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
+import org.apache.jackrabbit.vault.fs.config.ConfigurationException;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
@@ -70,6 +71,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * The servlet to provide download and upload of content packages and package definitions.
@@ -1020,7 +1022,7 @@ public class PackageServlet extends AbstractServiceServlet {
         public final PathFilterSet filter;
 
         public FilterRequest(SlingHttpServletRequest request, Resource resource)
-                throws RepositoryException {
+                throws RepositoryException, ConfigurationException {
             this.request = request;
 
             manager = PackageUtil.getPackageManager(packaging, request);
@@ -1072,20 +1074,25 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            FilterRequest filterRequest = new FilterRequest(request, resource);
-            if (filterRequest.filter != null) {
-                int index = filterRequest.index;
-                if (index >= 0 && index < filterRequest.filters.size()) {
-                    filterRequest.filters.set(index, filterRequest.filter);
-                    filterRequest.definition.setFilter(filterRequest.workspaceFilter, true);
-                    PackageUtil.setLastModified(filterRequest.definition);
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    response.setContentLength(0);
+            try {
+                FilterRequest filterRequest = new FilterRequest(request, resource);
+                if (filterRequest.filter != null) {
+                    int index = filterRequest.index;
+                    if (index >= 0 && index < filterRequest.filters.size()) {
+                        filterRequest.filters.set(index, filterRequest.filter);
+                        filterRequest.definition.setFilter(filterRequest.workspaceFilter, true);
+                        PackageUtil.setLastModified(filterRequest.definition);
+                        response.setStatus(HttpServletResponse.SC_OK);
+                        response.setContentLength(0);
+                    } else {
+                        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter index '" + index + "'");
+                    }
                 } else {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter index '" + index + "'");
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter");
                 }
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter");
+            } catch (ConfigurationException | PatternSyntaxException e) {
+                LOG.info(e.toString(), e);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter: " + e.getMessage());
             }
         }
     }
@@ -1097,19 +1104,24 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            FilterRequest filterRequest = new FilterRequest(request, resource);
-            if (filterRequest.filter != null) {
-                int index = filterRequest.index;
-                if (index < 0 || index > filterRequest.filters.size()) {
-                    index = filterRequest.filters.size();
+            try {
+                FilterRequest filterRequest = new FilterRequest(request, resource);
+                if (filterRequest.filter != null) {
+                    int index = filterRequest.index;
+                    if (index < 0 || index > filterRequest.filters.size()) {
+                        index = filterRequest.filters.size();
+                    }
+                    filterRequest.filters.add(index, filterRequest.filter);
+                    filterRequest.definition.setFilter(filterRequest.workspaceFilter, true);
+                    PackageUtil.setLastModified(filterRequest.definition);
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setContentLength(0);
+                } else {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter");
                 }
-                filterRequest.filters.add(index, filterRequest.filter);
-                filterRequest.definition.setFilter(filterRequest.workspaceFilter, true);
-                PackageUtil.setLastModified(filterRequest.definition);
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.setContentLength(0);
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter");
+            } catch (ConfigurationException | PatternSyntaxException e) {
+                LOG.info(e.toString(), e);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter: " + e.getMessage());
             }
         }
     }
@@ -1121,16 +1133,21 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            FilterRequest filterRequest = new FilterRequest(request, resource);
-            int index = filterRequest.index;
-            if (index >= 0 && index < filterRequest.filters.size()) {
-                filterRequest.filters.remove(index);
-                filterRequest.definition.setFilter(filterRequest.workspaceFilter, true);
-                PackageUtil.setLastModified(filterRequest.definition);
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.setContentLength(0);
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter index '" + index + "'");
+            try {
+                FilterRequest filterRequest = new FilterRequest(request, resource);
+                int index = filterRequest.index;
+                if (index >= 0 && index < filterRequest.filters.size()) {
+                    filterRequest.filters.remove(index);
+                    filterRequest.definition.setFilter(filterRequest.workspaceFilter, true);
+                    PackageUtil.setLastModified(filterRequest.definition);
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setContentLength(0);
+                } else {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter index '" + index + "'");
+                }
+            } catch (ConfigurationException | PatternSyntaxException e) {
+                LOG.info(e.toString(), e);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter: " + e.getMessage());
             }
         }
     }
@@ -1149,22 +1166,27 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            FilterRequest filterRequest = new FilterRequest(request, resource);
-            int index = filterRequest.index;
-            if (index >= 0 && index < filterRequest.filters.size()) {
-                if (up) {
-                    if (index > 0) {
-                        move(filterRequest, index - 1);
+            try {
+                FilterRequest filterRequest = new FilterRequest(request, resource);
+                int index = filterRequest.index;
+                if (index >= 0 && index < filterRequest.filters.size()) {
+                    if (up) {
+                        if (index > 0) {
+                            move(filterRequest, index - 1);
+                        }
+                    } else {
+                        if (index < filterRequest.filters.size() - 1) {
+                            move(filterRequest, index + 1);
+                        }
                     }
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setContentLength(0);
                 } else {
-                    if (index < filterRequest.filters.size() - 1) {
-                        move(filterRequest, index + 1);
-                    }
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter index '" + index + "'");
                 }
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.setContentLength(0);
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter index '" + index + "'");
+            } catch (ConfigurationException | PatternSyntaxException e) {
+                LOG.info(e.toString(), e);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid filter: " + e.getMessage());
             }
         }
 
