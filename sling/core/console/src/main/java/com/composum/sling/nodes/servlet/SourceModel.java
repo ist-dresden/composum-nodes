@@ -108,6 +108,7 @@ import static org.apache.jackrabbit.JcrConstants.NT_RESOURCE;
  * </ul>
  *
  * @see "https://jackrabbit.apache.org/filevault/vaultfs.html"
+ * @see org/apache/jackrabbit/vault/fs/config/defaultConfig-1.1.xml
  */
 public class SourceModel extends ConsoleSlingBean {
 
@@ -156,8 +157,6 @@ public class SourceModel extends ConsoleSlingBean {
      * yet determined".
      */
     protected transient Boolean[] hasOrderableSiblings;
-
-    protected transient RenderingType renderingType;
 
     public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
         if ("/".equals(ResourceUtil.normalize(resource.getPath()))) {
@@ -261,7 +260,7 @@ public class SourceModel extends ConsoleSlingBean {
         return subnodeList;
     }
 
-    protected void determineNamespaces(List<String> keys) {
+    protected void determineNamespaces(List<String> keys, boolean inFullCoverage) {
         String primaryType = getPrimaryType();
         addNameNamespace(keys, primaryType);
         List<Property> properties = getPropertyList();
@@ -270,10 +269,11 @@ public class SourceModel extends ConsoleSlingBean {
             addNamespace(keys, ns);
         }
         addNameNamespace(keys, resource.getName());
+        boolean subnodeInFullCoverage = inFullCoverage || isFullCoverageNode();
         for (Resource subnode : getSubnodeList()) {
             SourceModel subnodeModel = new SourceModel(config, context, subnode);
-            if (subnodeModel.getRenderingType() == RenderingType.EMBEDDED) {
-                subnodeModel.determineNamespaces(keys);
+            if (subnodeModel.getRenderingType(subnodeModel.getResource(), subnodeInFullCoverage) == RenderingType.EMBEDDED) {
+                subnodeModel.determineNamespaces(keys, subnodeInFullCoverage);
             }
         }
     }
@@ -421,7 +421,7 @@ public class SourceModel extends ConsoleSlingBean {
             new SourceModel(config, context, resource.getParent()).writeIntoZip(zipStream, root, writeDeep);
             return;
         }
-        if (getRenderingType() == RenderingType.BINARYFILE) {
+        if (getRenderingType(resource, false) == RenderingType.BINARYFILE) {
             if (writeDeep) { writeFile(zipStream, root, resource); }
             // not writeDeep: a .content.xml is not present for a file, so we can't do anything.
             return;
@@ -456,7 +456,7 @@ public class SourceModel extends ConsoleSlingBean {
      */
     protected void writeFile(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nonnull ResourceHandle file)
             throws IOException, RepositoryException {
-        if (file.getName().equals(JcrConstants.JCR_CONTENT)) {
+        if (file.getName().equals(JCR_CONTENT)) {
             // file format doesn't allow this - we need to write the file with the parent's name
             file = file.getParent();
         }
@@ -539,7 +539,8 @@ public class SourceModel extends ConsoleSlingBean {
 
     /** Returns the name for the zip entry for this resource. */
     protected String getZipName(@Nonnull String root) {
-        switch (getRenderingType()) {
+        RenderingType renderingType = getRenderingType(resource, false);
+        switch (renderingType) {
             case FOLDER:
                 return getZipName(root, getPath() + "/.content.xml");
             case BINARYFILE:
@@ -548,7 +549,7 @@ public class SourceModel extends ConsoleSlingBean {
             case XMLFILE:
                 return getZipName(root, getPath() + ".xml");
             default:
-                throw new IllegalArgumentException("Impossible rendering type " + getRenderingType());
+                throw new IllegalArgumentException("Impossible rendering type " + renderingType);
         }
     }
 
@@ -566,7 +567,7 @@ public class SourceModel extends ConsoleSlingBean {
      *                  children (and no jcr:content).
      */
     public void writeXmlFile(@Nonnull Writer writer, boolean writeDeep) throws IOException, RepositoryException {
-        writeXmlFile(writer, true, null, null);
+        writeXmlFile(writer, writeDeep, null, null);
     }
 
     /**
@@ -583,7 +584,7 @@ public class SourceModel extends ConsoleSlingBean {
             throws IOException, RepositoryException {
         List<String> namespaces = new ArrayList<>();
         namespaces.add("jcr");
-        determineNamespaces(namespaces);
+        determineNamespaces(namespaces, isFullCoverageNode());
         Collections.sort(namespaces);
         writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         writer.append("<jcr:root");
@@ -597,28 +598,31 @@ public class SourceModel extends ConsoleSlingBean {
         writeProperties(writer, "        ", binaryProperties);
         writer.append(">\n");
         if (writeDeep) {
-            writeSubnodesAsXml(writer, BASIC_INDENT, binaryProperties, additionalFiles);
+            writeSubnodesAsXml(writer, BASIC_INDENT, isFullCoverageNode(), binaryProperties, additionalFiles);
         }
         writer.append("</jcr:root>\n");
     }
 
-    protected void writeSubnodesAsXml(@Nonnull Writer writer, @Nonnull String indent,
+    protected void writeSubnodesAsXml(@Nonnull Writer writer, @Nonnull String indent, boolean inFullCoverageNode,
                                       @Nullable Queue<String> binaryProperties, @Nullable Queue<SourceModel> additionalFiles)
             throws IOException {
         for (Resource subnode : getSubnodeList()) {
             SourceModel subnodeModel = new SourceModel(config, context, subnode);
-            subnodeModel.writeXmlSubnode(writer, indent, binaryProperties, additionalFiles);
+            subnodeModel.writeXmlSubnode(writer, indent, inFullCoverageNode,
+                    binaryProperties, additionalFiles);
         }
     }
 
     /**
      * Writes the node including subnodes as XML, using the base indentation.
      */
-    protected void writeXmlSubnode(@Nonnull Writer writer, @Nonnull String indent,
+    protected void writeXmlSubnode(@Nonnull Writer writer, @Nonnull String indent, boolean inFullCoverageNode,
                                    @Nullable Queue<String> binaryProperties, @Nullable Queue<SourceModel> additionalFiles)
             throws IOException {
         String name = escapeXmlName(getName());
-        switch (getRenderingType()) {
+        RenderingType renderingType = getRenderingType(resource, inFullCoverageNode);
+        boolean fullCoverage = inFullCoverageNode || isFullCoverageNode();
+        switch (renderingType) {
             case EMBEDDED:
                 writer.append(indent).append("<").append(name).append('\n');
                 writer.append(indent).append("        ").append("jcr:primaryType=\"").append(getPrimaryType()).append("\"");
@@ -631,7 +635,7 @@ public class SourceModel extends ConsoleSlingBean {
                 writeProperties(writer, indent + "        ", binaryProperties);
                 if (hasSubnodes()) {
                     writer.append(">\n");
-                    writeSubnodesAsXml(writer, indent + BASIC_INDENT, binaryProperties, additionalFiles);
+                    writeSubnodesAsXml(writer, indent + BASIC_INDENT, fullCoverage, binaryProperties, additionalFiles);
                     writer.append(indent).append("</").append(name).append(">\n");
                 } else {
                     writer.append("/>\n");
@@ -650,7 +654,7 @@ public class SourceModel extends ConsoleSlingBean {
                 }
                 break;
             default:
-                throw new IllegalArgumentException("Impossible rendering type " + getRenderingType());
+                throw new IllegalArgumentException("Impossible rendering type " + renderingType);
         }
     }
 
@@ -676,16 +680,14 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     protected void writeNamespaceAttributes(Writer writer, List<String> namespaces) throws RepositoryException, IOException {
-        for (int i = 0; i < namespaces.size(); ) {
+        for (int i = 0; i < namespaces.size(); ++i) {
             String ns = namespaces.get(i);
             String url = getSession().getNamespaceURI(ns);
             if (StringUtils.isNotBlank(url)) {
                 writer.append(" xmlns:").append(ns).append("=\"").append(url).append("\"");
-                if (++i < namespaces.size()) {
+                if (i + 1 < namespaces.size()) {
                     writer.append("\n       ");
                 }
-            } else {
-                i++;
             }
         }
     }
@@ -707,8 +709,13 @@ public class SourceModel extends ConsoleSlingBean {
                 .replace("\\", "\\\\");
     }
 
-    /** This encodes what nodes are presented in which way nodes are represented in a Zip / Package. */
-    protected RenderingType getRenderingType(Resource aResource) {
+    /**
+     * This encodes what nodes are presented in which way nodes are represented in a Zip / Package.
+     *
+     * @param inFullCoverageNode if true we suppress folders - e.g. if we are within a jcr:content node or
+     *                           an RenderingType.XMLFILE node.
+     */
+    protected RenderingType getRenderingType(Resource aResource, boolean inFullCoverageNode) {
         // The ordering of the rules is important, as it handles various special cases.
         if (ResourceUtil.isNodeType(aResource, NT_FILE) ||
                 (ResourceUtil.isNodeType(aResource, NT_RESOURCE) && !ResourceUtil.isNodeType(aResource.getParent(), NT_FILE))
@@ -719,7 +726,7 @@ public class SourceModel extends ConsoleSlingBean {
             // we want everything below a jcr:content to stay in it's .content.xml except if it's binary
             return RenderingType.EMBEDDED;
         }
-        if (aResource.getChild(JcrConstants.JCR_CONTENT) != null) {
+        if (aResource.getChild(JCR_CONTENT) != null) {
             // jcr:content shall always be the top node of a .content.xml
             return RenderingType.FOLDER;
         }
@@ -728,15 +735,15 @@ public class SourceModel extends ConsoleSlingBean {
             // even if it's a folder, but that'd be inefficient or a hack - let's see later whether it'd be worth it.
             return RenderingType.XMLFILE;
         }
-        if (ResourceUtil.isNodeType(aResource, ResourceUtil.NT_FOLDER)) { return RenderingType.FOLDER; }
+        if (!inFullCoverageNode && ResourceUtil.isNodeType(aResource, ResourceUtil.NT_HIERARCHYNODE)) {
+            return RenderingType.FOLDER;
+        }
         return RenderingType.EMBEDDED;
     }
 
-    protected RenderingType getRenderingType() {
-        if (renderingType == null) {
-            renderingType = getRenderingType(resource);
-        }
-        return renderingType;
+    protected boolean isFullCoverageNode() {
+        return resource.getName().equalsIgnoreCase(JCR_CONTENT) ||
+                RenderingType.XMLFILE == getRenderingType(resource, false);
     }
 
     /** How the node is rendered in a zip. */
@@ -808,7 +815,7 @@ public class SourceModel extends ConsoleSlingBean {
                     lineBreak = "\r"; // '\r' is replaced by '\n' after escaping of embedded '\n' characters
                 }
                 buffer.append("[").append(lineBreak);
-                for (int i = 0; i < array.length; ) {
+                for (int i = 0; i < array.length; ++i) {
                     String string = getString(array[i]);
                     string = string.replaceAll(",", "\\\\,");
                     if (StringUtils.isNotEmpty(lineBreak)) {
@@ -816,7 +823,7 @@ public class SourceModel extends ConsoleSlingBean {
                         buffer.append(indent).append(BASIC_INDENT);
                     }
                     buffer.append(string);
-                    if (++i < array.length) {
+                    if (i + 1 < array.length) {
                         buffer.append(',').append(lineBreak);
                     }
                 }

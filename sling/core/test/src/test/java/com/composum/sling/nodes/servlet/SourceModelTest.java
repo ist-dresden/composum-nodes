@@ -203,8 +203,7 @@ public class SourceModelTest {
     /** Not actually a test - mostly for debugging specific cases in the IDE. */
     @Test
     public void detailTest() throws Exception {
-        Resource detailResource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel" +
-                "/assetsfolder/plain.jpg/jcr:content");
+        Resource detailResource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel/i18n/de");
         SourceModel detailModel = new SourceModel(config, beanContext, detailResource);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         detailModel.writePackage(out, "thegroup", "thename", "1.0");
