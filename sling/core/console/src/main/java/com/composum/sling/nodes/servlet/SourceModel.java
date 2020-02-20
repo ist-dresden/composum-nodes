@@ -46,6 +46,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.requireNonNull;
 import static org.apache.jackrabbit.JcrConstants.JCR_CONTENT;
 import static org.apache.jackrabbit.JcrConstants.JCR_MIXINTYPES;
 import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE;
@@ -93,7 +94,7 @@ import static org.apache.jackrabbit.JcrConstants.NT_RESOURCE;
  *   <li>Resources with type nt:resource that are not below a nt:file are exported into a file named like the
  *   resource with an extension added according to the mime type.</li>
  *   <li>Binary resources (except jcr:data below nt:file + nt:resource) are exported as a file {resource}/{
- *   propertyname}.binary, with an entry <code>{propertyname}="{BINARY}"</code> in the .content.xml to declare the
+ *   propertyname}.binary, with an entry {@code {propertyname}="{BINARY}"} in the .content.xml to declare the
  *   attribute with it's type.</li>
  *   <li>If a node has orderable subnodes, it includes entries for all it's children - possibly empty nodes if they
  *   have their own folder / file according to the above rules.</li>
@@ -119,8 +120,7 @@ public class SourceModel extends ConsoleSlingBean {
      * <p>TODO move to configuration
      */
     public static final StringFilter EXCLUDED_PROPS = new StringFilter.WhiteList(
-            "^jcr:primaryType$", "^jcr:mixinTypes$" // both exported explicitly
-            , "^jcr:baseVersion$", "^jcr:predecessors$", "^jcr:versionHistory$", "^jcr:isCheckedOut$"
+            "^jcr:baseVersion$", "^jcr:predecessors$", "^jcr:versionHistory$", "^jcr:isCheckedOut$"
             , "^jcr:created", "^jcr:lastModified", "^jcr:uuid$", "^jcr:data$", "^cq:lastModified"
             , "^cq:lastReplicat" // used for staging
             // , "^cq:lastRolledout"
@@ -142,8 +142,6 @@ public class SourceModel extends ConsoleSlingBean {
 
     /** Indentation level for one level in the XML hierarchy in an XML document. */
     public static final String BASIC_INDENT = "    ";
-
-    protected static final Pattern PAT_NAMESPACEPREFIX = Pattern.compile("([^:_]+)+:([^:_]+)");
 
     protected static final Pattern PATH_WITHIN_JCR_CONTENT = Pattern.compile(".*/jcr:content(/.*)?$");
 
@@ -261,8 +259,7 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     protected void determineNamespaces(List<String> keys, boolean inFullCoverage) {
-        String primaryType = getPrimaryType();
-        addNameNamespace(keys, primaryType);
+        addNameNamespace(keys, getPrimaryType());
         List<Property> properties = getPropertyList();
         for (Property property : properties) {
             String ns = property.getNs();
@@ -278,8 +275,8 @@ public class SourceModel extends ConsoleSlingBean {
         }
     }
 
-    protected void addNameNamespace(List<String> keys, String name) {
-        String ns = getNamespace(name);
+    protected void addNameNamespace(List<String> keys, String aName) {
+        String ns = getNamespace(aName);
         addNamespace(keys, ns);
     }
 
@@ -289,20 +286,20 @@ public class SourceModel extends ConsoleSlingBean {
         }
     }
 
-    protected String getNamespace(String name) {
-        int delim = name.indexOf(':');
-        return delim < 0 ? "" : name.substring(0, delim);
+    protected String getNamespace(String aName) {
+        int delim = aName.indexOf(':');
+        return delim < 0 ? "" : aName.substring(0, delim);
     }
 
     // Package output
 
     /** Writes a complete package about the node - arguments specify the package metadata. */
-    public void writePackage(OutputStream output, String group, String name, String version)
+    public void writePackage(OutputStream output, String group, String packageName, String version)
             throws IOException, RepositoryException {
 
         String root = "jcr_root";
         ZipOutputStream zipStream = new ZipOutputStream(output);
-        writePackageProperties(zipStream, group, name, version);
+        writePackageProperties(zipStream, group, packageName, version);
         writeFilterXml(zipStream);
         writeParents(zipStream, root, resource.getParent());
         writeIntoZip(zipStream, root, true);
@@ -318,7 +315,7 @@ public class SourceModel extends ConsoleSlingBean {
         Boolean result = null;
         if (hasOrderableSiblings == null) {
             try {
-                Node node = getResource().getParent().adaptTo(Node.class);
+                Node node = requireNonNull(getResource().getParent()).adaptTo(Node.class);
                 if (node != null) {
                     result = node.getPrimaryNodeType().hasOrderableChildNodes();
                 }
@@ -332,20 +329,21 @@ public class SourceModel extends ConsoleSlingBean {
         return result;
     }
 
-    protected void writePackageProperties(ZipOutputStream zipStream, String group, String name, String version)
+    protected void writePackageProperties(ZipOutputStream zipStream, String group, String aName, String version)
             throws IOException {
 
         ZipEntry entry;
         entry = new ZipEntry("META-INF/vault/properties.xml");
         zipStream.putNextEntry(entry);
 
+        @SuppressWarnings("resource")
         Writer writer = new OutputStreamWriter(zipStream, UTF_8);
         writer.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n")
                 .append("<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n")
                 .append("<properties>\n")
                 .append("<comment>FileVault Package Properties</comment>\n")
                 .append("<entry key=\"name\">")
-                .append(name)
+                .append(aName)
                 .append("</entry>\n")
                 .append("<entry key=\"buildCount\">1</entry>\n")
                 .append("<entry key=\"version\">")
@@ -370,6 +368,7 @@ public class SourceModel extends ConsoleSlingBean {
         entry = new ZipEntry("META-INF/vault/filter.xml");
         zipStream.putNextEntry(entry);
 
+        @SuppressWarnings("resource")
         Writer writer = new OutputStreamWriter(zipStream, UTF_8);
         writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
                 .append("<workspaceFilter version=\"1.0\">\n")
@@ -463,7 +462,7 @@ public class SourceModel extends ConsoleSlingBean {
 
         FileTime lastModified = getLastModified(file);
         ZipEntry entry;
-        String path = file.getPath();
+        String path = requireNonNull(file).getPath();
         Binary binaryData = ResourceUtil.getBinaryData(file);
         if (binaryData != null) {
             entry = new ZipEntry(getZipName(root, path));
@@ -554,8 +553,8 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     /** Transforms the name into something usable for the filesystem. */
-    protected String filesystemName(String name) {
-        return PlatformNameFormat.getPlatformPath(name);
+    protected String filesystemName(String aName) {
+        return PlatformNameFormat.getPlatformPath(aName);
     }
 
     // XML output
@@ -589,12 +588,6 @@ public class SourceModel extends ConsoleSlingBean {
         writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         writer.append("<jcr:root");
         writeNamespaceAttributes(writer, namespaces);
-        writeProperty(writer, "        ", JCR_PRIMARYTYPE, getPrimaryType());
-        String[] mixins = resource.getProperty(JCR_MIXINTYPES, String[].class);
-        if (mixins != null && mixins.length > 0) {
-            writeProperty(writer, "        ", JCR_MIXINTYPES,
-                    escapeXmlAttribute(new Property(JCR_MIXINTYPES, mixins).getString("")));
-        }
         writeProperties(writer, "        ", binaryProperties);
         writer.append(">\n");
         if (writeDeep) {
@@ -624,14 +617,7 @@ public class SourceModel extends ConsoleSlingBean {
         boolean fullCoverage = inFullCoverageNode || isFullCoverageNode();
         switch (renderingType) {
             case EMBEDDED:
-                writer.append(indent).append("<").append(name).append('\n');
-                writer.append(indent).append("        ").append("jcr:primaryType=\"").append(getPrimaryType()).append("\"");
-                String[] mixins = resource.getProperty(JCR_MIXINTYPES, String[].class);
-                if (mixins != null && mixins.length > 0) {
-                    writer.append("\n").append(indent).append("        ").append("jcr:mixinTypes=\"")
-                            .append(escapeXmlAttribute(new Property(JCR_MIXINTYPES, mixins).getString("")))
-                            .append("\"");
-                }
+                writer.append(indent).append("<").append(name);
                 writeProperties(writer, indent + "        ", binaryProperties);
                 if (hasSubnodes()) {
                     writer.append(">\n");
@@ -817,7 +803,7 @@ public class SourceModel extends ConsoleSlingBean {
                 buffer.append("[").append(lineBreak);
                 for (int i = 0; i < array.length; ++i) {
                     String string = getString(array[i]);
-                    string = string.replaceAll(",", "\\\\,");
+                    string = string.replace(",", "\\,");
                     if (StringUtils.isNotEmpty(lineBreak)) {
                         string = string.trim();
                         buffer.append(indent).append(BASIC_INDENT);
@@ -837,60 +823,61 @@ public class SourceModel extends ConsoleSlingBean {
             return getTypePrefix(value) + getString(value);
         }
 
-        protected String getString(Object value) {
-            if (value instanceof Calendar) {
+        protected String getString(Object aValue) {
+            if (aValue instanceof Calendar) {
                 DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-                return formatter.format(((Calendar) value).getTime());
+                return formatter.format(((Calendar) aValue).getTime());
             }
-            if (value instanceof InputStream) { // actual value is exported in additional file.
+            if (aValue instanceof InputStream) { // actual value is exported in additional file.
                 return "";
             }
-            if (value instanceof String && ((String) value).startsWith("{")) {
+            if (aValue instanceof String && ((String) aValue).startsWith("{")) {
                 // a value starting with { would be misinterpreted as type prefix -> escape it:
-                value = "\\" + value;
+                aValue = "\\" + aValue;
             }
-            return value != null ? value.toString() : "";
+            return aValue != null ? aValue.toString() : "";
         }
 
-        protected String getTypePrefix(Object value) {
+        protected int getOrderingLevel() {
+            if (name.equals(JCR_PRIMARYTYPE)) { return 1; }
+            if (name.equals(JCR_MIXINTYPES)) { return 2; }
+            if (name.startsWith("sling:")) { return 3; }
+            return 4;
+        }
+
+        protected String getTypePrefix(Object aValue) {
             if (jcrType != null && jcrType != PropertyType.STRING) {
                 return "{" + PropertyType.nameFromValue(jcrType) + "}";
             }
-            if (value instanceof String || value instanceof String[]) {
+            if (aValue instanceof String || aValue instanceof String[]) {
                 return "";
-            } else if (value instanceof Boolean || value instanceof Boolean[]) {
+            } else if (aValue instanceof Boolean || aValue instanceof Boolean[]) {
                 return "{" + PropertyType.TYPENAME_BOOLEAN + "}";
-            } else if (value instanceof BigDecimal || value instanceof BigDecimal[]) {
+            } else if (aValue instanceof BigDecimal || aValue instanceof BigDecimal[]) {
                 return "{" + PropertyType.TYPENAME_DECIMAL + "}";
-            } else if (value instanceof Long || value instanceof Long[]) {
+            } else if (aValue instanceof Long || aValue instanceof Long[]) {
                 return "{" + PropertyType.TYPENAME_LONG + "}";
-            } else if (value instanceof Double || value instanceof Double[]) {
+            } else if (aValue instanceof Double || aValue instanceof Double[]) {
                 return "{" + PropertyType.TYPENAME_DOUBLE + "}";
-            } else if (value instanceof Calendar || value instanceof Calendar[]) {
+            } else if (aValue instanceof Calendar || aValue instanceof Calendar[]) {
                 return "{" + PropertyType.TYPENAME_DATE + "}";
-            } else if (value instanceof InputStream) {
+            } else if (aValue instanceof InputStream) {
                 return "{" + PropertyType.TYPENAME_BINARY + "}";
             }
             return "";
         }
 
-        @SuppressWarnings("NullableProblems")
         @Override
         public int compareTo(Property other) {
-            if (other == null) {
-                return 1;
-            }
+            if (other == null) { return 1;}
+            int level = getOrderingLevel();
+            int olevel = other.getOrderingLevel();
+            if (level != olevel) { return Integer.compare(level, olevel); }
             String ns = getNs();
             String ons = other.getNs();
-            if (ns.isEmpty() && !ons.isEmpty()) {
-                return 1;
-            }
-            if (!ns.isEmpty() && ons.isEmpty()) {
-                return -1;
-            }
-            if (!ns.equals(ons)) {
-                return ns.compareTo(ons);
-            }
+            if (ns.isEmpty() && !ons.isEmpty()) { return 1;}
+            if (!ns.isEmpty() && ons.isEmpty()) { return -1;}
+            if (!ns.equals(ons)) { return ns.compareTo(ons);}
             return getName().compareTo(other.getName());
         }
 
@@ -903,6 +890,12 @@ public class SourceModel extends ConsoleSlingBean {
         @Override
         public int hashCode() {
             return Objects.hashCode(name);
+        }
+
+
+        @Override
+        public String toString() {
+            return name + "=" + getString("");
         }
     }
 

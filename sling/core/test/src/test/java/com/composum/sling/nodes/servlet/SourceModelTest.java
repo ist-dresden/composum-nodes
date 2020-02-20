@@ -203,10 +203,12 @@ public class SourceModelTest {
     /** Not actually a test - mostly for debugging specific cases in the IDE. */
     @Test
     public void detailTest() throws Exception {
-        Resource detailResource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel/i18n/de");
+        Resource detailResource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel/subfolder" +
+                "/jcr:content/folder");
         SourceModel detailModel = new SourceModel(config, beanContext, detailResource);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        detailModel.writePackage(out, "thegroup", "thename", "1.0");
+        // detailModel.writePackage(out, "thegroup", "thename", "1.0");
+        detailModel.writeArchive(out);
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))) {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
