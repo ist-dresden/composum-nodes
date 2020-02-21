@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.servlet.jsp.JspWriter;
 import java.io.IOException;
 import java.text.Format;
@@ -70,6 +72,18 @@ public abstract class UrlTag extends TagBase {
         return formatter;
     }
 
+    @Nonnull
+    protected String buildUrl(@Nonnull String urlValue, @Nullable final Boolean map){
+        if (map != null) {
+            urlValue = map
+                    ? CpnlElFunctions.mappedUrl(request, urlValue)
+                    : CpnlElFunctions.unmappedUrl(request, urlValue);
+        } else {
+            urlValue = CpnlElFunctions.url(request, urlValue);
+        }
+        return urlValue;
+    }
+
     @Override
     protected void writeAttributes(JspWriter writer) throws IOException {
         writer.write(" ");
@@ -80,13 +94,7 @@ public abstract class UrlTag extends TagBase {
         if (format != null) {
             urlValue = format.format(urlValue);
         }
-        if (map != null) {
-            urlValue = map
-                    ? CpnlElFunctions.mappedUrl(request, urlValue)
-                    : CpnlElFunctions.unmappedUrl(request, urlValue);
-        } else {
-            urlValue = CpnlElFunctions.url(request, urlValue);
-        }
+        urlValue = buildUrl(urlValue, map);
         writer.write(urlValue);
         writer.write("\"");
         if (StringUtils.isNotBlank(role)) {
