@@ -1,10 +1,11 @@
 <%@page session="false" pageEncoding="utf-8"
         import="org.apache.sling.api.resource.Resource,
                 org.apache.sling.api.resource.ValueMap,
-                java.io.PrintWriter" %><%
+                java.io.PrintWriter,
+                com.composum.sling.core.util.XSS" %><%
 %><%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %><%
 %><sling:defineObjects/><%
-    String filename = slingRequest.getRequestPathInfo().getSuffix();
+    String filename = XSS.filter(slingRequest.getRequestPathInfo().getSuffix());
     if (filename == null) {
         filename = "query-export.csv";
     } else {
