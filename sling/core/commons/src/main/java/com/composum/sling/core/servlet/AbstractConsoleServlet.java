@@ -2,6 +2,7 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.util.LinkUtil;
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -54,7 +55,7 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
 
     protected String getRequestPath(SlingHttpServletRequest request) {
         RequestPathInfo reqPathInfo = request.getRequestPathInfo();
-        String suffix = reqPathInfo.getSuffix();
+        String suffix = XSS.filter(reqPathInfo.getSuffix());
         if (StringUtils.isBlank(suffix)) {
             suffix = "/";
         }

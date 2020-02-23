@@ -7,6 +7,7 @@ import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Component;
@@ -394,15 +395,15 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
     public NodeParameters getFormParameters(SlingHttpServletRequest request) {
         // copy parameters from request
         NodeParameters params = new NodeParameters();
-        params.name = request.getParameter(PARAM_NAME);
-        params.path = request.getParameter(PARAM_PATH);
-        params.before = request.getParameter(PARAM_BEFORE);
-        params.index = request.getParameter(PARAM_INDEX);
-        params.type = request.getParameter(PARAM_TYPE);
-        params.title = request.getParameter(PARAM_TITLE);
-        params.mimeType = request.getParameter(PARAM_MIME_TYPE);
-        params.resourceType = request.getParameter(PARAM_RESOURCE_TYPE);
-        params.jcrContent = request.getParameter(PARAM_JCR_CONTENT);
+        params.name = XSS.filter(request.getParameter(PARAM_NAME));
+        params.path = XSS.filter(request.getParameter(PARAM_PATH));
+        params.before = XSS.filter(request.getParameter(PARAM_BEFORE));
+        params.index = XSS.filter(request.getParameter(PARAM_INDEX));
+        params.type = XSS.filter(request.getParameter(PARAM_TYPE));
+        params.title = XSS.filter(request.getParameter(PARAM_TITLE));
+        params.mimeType = XSS.filter(request.getParameter(PARAM_MIME_TYPE));
+        params.resourceType = XSS.filter(request.getParameter(PARAM_RESOURCE_TYPE));
+        params.jcrContent = XSS.filter(request.getParameter(PARAM_JCR_CONTENT));
         return params;
     }
 

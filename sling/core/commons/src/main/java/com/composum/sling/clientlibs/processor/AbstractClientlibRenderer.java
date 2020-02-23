@@ -49,5 +49,4 @@ public abstract class AbstractClientlibRenderer implements ClientlibRenderer {
             }
         }
     }
-
 }

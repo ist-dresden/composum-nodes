@@ -3,6 +3,7 @@ package com.composum.sling.clientlibs.servlet;
 import com.composum.sling.clientlibs.handle.Clientlib;
 import com.composum.sling.clientlibs.handle.ClientlibLink;
 import com.composum.sling.clientlibs.handle.ClientlibRef;
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -71,7 +72,7 @@ public class ClientlibCategoryServlet extends AbstractClientlibServlet {
                 RequestPathInfo pathInfo = request.getRequestPathInfo();
                 String selectors = pathInfo.getSelectorString();
                 Clientlib.Type type = Clientlib.Type.valueOf(pathInfo.getExtension().toLowerCase());
-                Pair<String, String> categoryAndHash = parseCategoryAndHashFromSuffix(pathInfo.getSuffix());
+                Pair<String, String> categoryAndHash = parseCategoryAndHashFromSuffix(XSS.filter(pathInfo.getSuffix()));
 
                 ClientlibRef ref = ClientlibRef.forCategory(type, categoryAndHash.getLeft(), false, null);
                 if (LOG.isDebugEnabled()) {

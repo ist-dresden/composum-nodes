@@ -144,7 +144,7 @@ public class CpnlElFunctions {
     }
 
     public static String i18n(SlingHttpServletRequest request, String text) {
-        return I18N.get(request, text);
+        return text(I18N.get(request, text));
     }
 
     /**

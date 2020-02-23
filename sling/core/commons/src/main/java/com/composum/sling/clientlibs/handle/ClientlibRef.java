@@ -2,7 +2,11 @@ package com.composum.sling.clientlibs.handle;
 
 import com.composum.sling.core.util.LinkUtil;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -41,8 +45,8 @@ public class ClientlibRef {
         this.pattern = (!isUri && !isCategory) ? ruleToPattern(rule) : null;
         this.path = (!isUri && !isCategory) ? ruleToPath(rule) : null;
         this.category = isCategory ? rule.substring(PREFIX_CATEGORY.length()) : null;
-        this.properties = Collections.unmodifiableMap(properties != null ? new HashMap<>(properties) : new
-                HashMap<>());
+        this.properties = Collections.unmodifiableMap(properties != null
+                ? new HashMap<>(properties) : new HashMap<>());
     }
 
     public static ClientlibRef forCategory(Clientlib.Type type, String category, boolean optional, Map<String,

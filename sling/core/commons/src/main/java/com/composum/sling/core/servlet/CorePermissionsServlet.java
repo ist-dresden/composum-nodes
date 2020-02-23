@@ -1,6 +1,7 @@
 package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.service.PermissionsService;
+import com.composum.sling.core.util.XSS;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
@@ -53,7 +54,7 @@ public class CorePermissionsServlet extends SlingSafeMethodsServlet {
             userId = session.getUserID();
             RequestPathInfo pathInfo = request.getRequestPathInfo();
             List<String> selectors = Arrays.asList(pathInfo.getSelectors());
-            String[] memberValues = request.getParameterValues("member");
+            String[] memberValues = XSS.filter(request.getParameterValues("member"));
             if (memberValues != null) {
                 for (String members : memberValues) {
                     if (checkResult == null || checkResult) {
@@ -66,11 +67,11 @@ public class CorePermissionsServlet extends SlingSafeMethodsServlet {
                 }
             }
             if (checkResult == null || checkResult) {
-                String[] privilegeValues = request.getParameterValues("privilege");
+                String[] privilegeValues = XSS.filter(request.getParameterValues("privilege"));
                 if (privilegeValues != null) {
-                    path = request.getParameter("path");
+                    path = XSS.filter(request.getParameter("path"));
                     if (StringUtils.isBlank(path)) {
-                        path = pathInfo.getSuffix();
+                        path = XSS.filter(pathInfo.getSuffix());
                     }
                     if (StringUtils.isBlank(path)) {
                         Resource resource = request.getResource();

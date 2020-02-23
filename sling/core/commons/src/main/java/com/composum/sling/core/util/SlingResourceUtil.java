@@ -1,7 +1,6 @@
 package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jackrabbit.spi.commons.iterator.Iterators;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -11,8 +10,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;

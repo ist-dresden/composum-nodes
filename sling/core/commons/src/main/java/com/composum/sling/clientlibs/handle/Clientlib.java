@@ -52,7 +52,9 @@ public class Clientlib implements ClientlibElement {
     }
 
     /** Type of the element: {@link #link}, {@link #css}, {@link #js}, {@link #img}. */
-    public enum Type {link, css, js, img}
+    public enum Type {
+        link, css, js, img
+    }
 
     private final Type type;
     public final ResourceHandle resource;
