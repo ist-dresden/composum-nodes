@@ -474,4 +474,14 @@ public class Status {
         return setMessageLogger(logger);
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Status{");
+        sb.append("status=").append(status);
+        if (success) { sb.append(", success=").append(success); }
+        if (warning) { sb.append(", warning=").append(warning); }
+        if (StringUtils.isNotBlank(title)) { sb.append(", title='").append(title).append('\''); }
+        sb.append('}');
+        return sb.toString();
+    }
 }
