@@ -313,6 +313,27 @@ public class CpnlElFunctions {
     }
 
     /**
+     * Prevents the given value string from containing XSS stuff.
+     *
+     * @param value source string
+     * @return string that does not contain XSS stuff
+     */
+    public static String filter(String value) {
+        return XSS.filter(value);
+    }
+
+    /**
+     * Prevents the given value string from containing XSS stuff.
+     *
+     * @param context the name of the protection context to use
+     * @param value   source string
+     * @return string that does not contain XSS stuff
+     */
+    public static String context(String context, String value) {
+        return XSS.filter(context, value);
+    }
+
+    /**
      * Returns the encoded path of a of a repository path.
      *
      * @param value the path to encode

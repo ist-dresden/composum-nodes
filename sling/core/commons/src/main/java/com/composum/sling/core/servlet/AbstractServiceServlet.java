@@ -5,6 +5,7 @@ import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
@@ -152,7 +153,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         if (StringUtils.isBlank(path)) {
             path = request.getParameter(PARAM_PATH);
         }
-        return path;
+        return XSS.filter(path);
     }
 
     //

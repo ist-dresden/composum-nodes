@@ -569,6 +569,20 @@
     </function>
 
     <function>
+        <description>prevents the given value string from containing XSS stuff</description>
+        <name>filter</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String filter(java.lang.String)</function-signature>
+    </function>
+
+    <function>
+        <description>prevents the given value string from containing XSS stuff</description>
+        <name>context</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String context(java.lang.String,java.lang.String)</function-signature>
+    </function>
+
+    <function>
         <description>transforms a string value for URL path rendering</description>
         <name>path</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
