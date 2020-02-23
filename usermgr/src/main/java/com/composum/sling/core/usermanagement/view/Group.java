@@ -1,5 +1,6 @@
 package com.composum.sling.core.usermanagement.view;
 
+import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 
 /**
@@ -18,7 +19,7 @@ public class Group extends ConsoleSlingBean {
     }
 
     public String getSuffix() {
-        return getRequest().getRequestPathInfo().getSuffix();
+        return XSS.filter(getRequest().getRequestPathInfo().getSuffix());
     }
 
 

@@ -12,6 +12,7 @@ import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -269,7 +270,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            String suffix = request.getRequestPathInfo().getSuffix();
+            String suffix = XSS.filter(request.getRequestPathInfo().getSuffix());
             if (suffix.startsWith("/")) {
                 suffix = suffix.substring(1);
             }
@@ -326,9 +327,9 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            String group = request.getParameter(PARAM_GROUP);
-            String name = request.getParameter(PARAM_NAME);
-            String version = request.getParameter(PARAM_VERSION);
+            String group = XSS.filter(request.getParameter(PARAM_GROUP));
+            String name = XSS.filter(request.getParameter(PARAM_NAME));
+            String version = XSS.filter(request.getParameter(PARAM_VERSION));
 
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = manager.create(group, name, version);
@@ -352,11 +353,11 @@ public class PackageServlet extends AbstractServiceServlet {
                 if (param.length > 1) {
                     String[] values = new String[param.length];
                     for (int i = 0; i < param.length; i++) {
-                        values[i] = param[i].getString();
+                        values[i] = XSS.filter(param[i].getString());
                     }
                     value = values;
                 } else {
-                    value = param.length < 1 ? Boolean.TRUE : param[0].getString();
+                    value = param.length < 1 ? Boolean.TRUE : XSS.filter(param[0].getString());
                 }
                 result.put(key, value);
             }
@@ -376,9 +377,9 @@ public class PackageServlet extends AbstractServiceServlet {
                 if (jcrPackage != null) {
                     JcrPackageDefinition pckgDef = jcrPackage.getDefinition();
 
-                    String group = request.getParameter(PARAM_GROUP);
-                    String name = request.getParameter(PARAM_NAME);
-                    String version = request.getParameter(PARAM_VERSION);
+                    String group = XSS.filter(request.getParameter(PARAM_GROUP));
+                    String name = XSS.filter(request.getParameter(PARAM_NAME));
+                    String version = XSS.filter(request.getParameter(PARAM_VERSION));
 
                     if (StringUtils.isNotBlank(name) &&
                             (!PackageUtil.isGroup(pckgDef, group) ||
@@ -1033,17 +1034,17 @@ public class PackageServlet extends AbstractServiceServlet {
 
             index = RequestUtil.getParameter(request, "index", -1);
 
-            String root = request.getParameter("root");
+            String root = XSS.filter(request.getParameter("root"));
             if (StringUtils.isNotBlank(root)) {
 
                 filter = new PathFilterSet(root);
-                String importMode = request.getParameter("importMode");
+                String importMode = XSS.filter(request.getParameter("importMode"));
                 if (StringUtils.isNotBlank(importMode)) {
                     ImportMode mode = ImportMode.valueOf(importMode.toUpperCase());
                     filter.setImportMode(mode);
                 }
-                String[] ruleTypes = request.getParameterValues("ruleType");
-                String[] ruleExpressions = request.getParameterValues("ruleExpression");
+                String[] ruleTypes = XSS.filter(request.getParameterValues("ruleType"));
+                String[] ruleExpressions = XSS.filter(request.getParameterValues("ruleExpression"));
 
                 if (ruleTypes != null && ruleExpressions != null && ruleTypes.length == ruleExpressions.length) {
                     for (int i = 0; i < ruleTypes.length; i++) {

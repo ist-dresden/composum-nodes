@@ -8,6 +8,7 @@ import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
@@ -212,7 +213,7 @@ public class SystemServlet extends AbstractServiceServlet {
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws ServletException, IOException {
 
-            String query = request.getParameter(PARAM_QUERY);
+            String query = XSS.filter(request.getParameter(PARAM_QUERY));
 
             ResourceResolver resolver = request.getResourceResolver();
             @SuppressWarnings("unchecked")

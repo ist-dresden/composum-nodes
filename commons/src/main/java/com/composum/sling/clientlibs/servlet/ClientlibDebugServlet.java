@@ -11,6 +11,7 @@ import com.composum.sling.clientlibs.handle.ClientlibResourceFolder;
 import com.composum.sling.clientlibs.handle.ClientlibVisitor;
 import com.composum.sling.clientlibs.processor.AbstractClientlibVisitor;
 import com.composum.sling.clientlibs.service.ClientlibService;
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -88,14 +89,14 @@ public class ClientlibDebugServlet extends SlingSafeMethodsServlet {
         writer.println("<html><body><h1>Rough structure of client libraries</h1>");
 
         String typeString = request.getRequestPathInfo().getSelectorString();
-        if (isBlank(typeString) || null == request.getParameter("lib")) {
+        if (isBlank(typeString) || null == XSS.filter(request.getParameter("lib"))) {
             printUsage(request, writer);
             if (isNotBlank(typeString)) printAllLibs(request, writer, typeString);
             return;
         }
         Clientlib.Type type = Clientlib.Type.valueOf(typeString);
 
-        for (String lib : request.getParameterValues("lib")) {
+        for (String lib : XSS.filter(request.getParameterValues("lib"))) {
             ClientlibRef ref;
             if (lib.startsWith(PREFIX_CATEGORY)) {
                 ref = ClientlibRef.forCategory(type, lib.substring(PREFIX_CATEGORY.length()), false, null);

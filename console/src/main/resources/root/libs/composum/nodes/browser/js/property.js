@@ -150,7 +150,10 @@
                         var valueSet = _.isArray(value) ? value : [value];
                         for (var i = 0; i < valueSet.length; i++) {
                             if (valueSet[i].indexOf('</') >= 0) {
-                                subtype = 'richtext';
+                                subtype =
+                                    valueSet[i].indexOf('<script') >= 0 ||
+                                    valueSet[i].indexOf('<style') >= 0
+                                        ? 'plaintext' : 'richtext';
                                 break;
                             }
                             if (valueSet[i].indexOf('\n') >= 0) {

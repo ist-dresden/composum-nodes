@@ -12,6 +12,7 @@ import com.composum.sling.clientlibs.handle.ClientlibResourceFolder;
 import com.composum.sling.clientlibs.handle.ClientlibVisitor;
 import com.composum.sling.clientlibs.processor.AbstractClientlibVisitor;
 import com.composum.sling.clientlibs.service.ClientlibService;
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -112,20 +113,20 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             return;
         }
 
-        String impersonation = request.getParameter(REQUEST_PARAM_IMPERSONATE);
+        String impersonation = XSS.filter(request.getParameter(REQUEST_PARAM_IMPERSONATE));
         PrintWriter writer = response.getWriter();
         final Processor processor = new Processor(request, impersonation, writer);
         try {
             initResolvers(processor, impersonation);
 
-            if (StringUtils.isNotBlank(request.getParameter(REQUEST_PARAM_CLEAR_CACHE))) {
+            if (StringUtils.isNotBlank(XSS.filter(request.getParameter(REQUEST_PARAM_CLEAR_CACHE)))) {
                 clientlibService.clearCache(processor.adminResolver);
                 String location = request.getRequestURI() + "?" + request.getQueryString().replaceAll(REQUEST_PARAM_CLEAR_CACHE, REQUEST_PARAM_CLEAR_CACHE + "Done");
                 processor.adminResolver.commit();
                 response.sendRedirect(location);
                 return;
             }
-            if (StringUtils.isNotBlank(request.getParameter(REQUEST_PARAM_CLEAR_CACHE + "Done"))) {
+            if (StringUtils.isNotBlank(XSS.filter(request.getParameter(REQUEST_PARAM_CLEAR_CACHE + "Done")))) {
                 writer.println("<br><br><br><h3>The complete clientlib cache was cleared.</h3><br>");
             }
 
@@ -137,7 +138,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             writer.println("</h2>");
 
             processor.requestedType = requestedClientlibType(request);
-            if (processor.requestedType == null && null == request.getParameter(REQUEST_PARAM_LIB)) {
+            if (processor.requestedType == null && null == XSS.filter(request.getParameter(REQUEST_PARAM_LIB))) {
                 processor.printUsage();
             }
             processor.printForm();
@@ -146,9 +147,9 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             List<Type> printTypes = processor.requestedType == null ? Arrays.asList(Type.values()) : Collections.singletonList(processor.requestedType);
             for (Type type : printTypes) {
                 processor.type = type;
-                if (StringUtils.isBlank(request.getParameter(REQUEST_PARAM_LIB)))
+                if (StringUtils.isBlank(XSS.filter(request.getParameter(REQUEST_PARAM_LIB))))
                     processor.printAllLibs();
-                else for (String lib : request.getParameterValues(REQUEST_PARAM_LIB)) {
+                else for (String lib : XSS.filter(request.getParameterValues(REQUEST_PARAM_LIB))) {
                     ClientlibRef ref;
                     if (lib.startsWith(PREFIX_CATEGORY)) {
                         ref = ClientlibRef.forCategory(type, lib.substring(PREFIX_CATEGORY.length()), false, null);
@@ -203,7 +204,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
         Matcher matcher = SELECTOR_REGEX.matcher(uri);
         if (matcher.matches())
             type = Type.valueOf(matcher.group(1));
-        String typeParameter = request.getParameter(REQUEST_PARAM_TYPE);
+        String typeParameter = XSS.filter(request.getParameter(REQUEST_PARAM_TYPE));
         if (StringUtils.isNotBlank(typeParameter)) {
             type = "all".equalsIgnoreCase(typeParameter) ? null : Type.valueOf(typeParameter);
         }
@@ -443,7 +444,5 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             super.visit(externalUri, mode, parent);
             indentation--;
         }
-
     }
-
 }
