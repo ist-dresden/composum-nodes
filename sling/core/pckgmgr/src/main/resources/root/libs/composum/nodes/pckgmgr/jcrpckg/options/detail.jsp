@@ -26,11 +26,11 @@
         </div>
         <div class="provider-url link-option option-field">
             <div class="name-line">Provider URL</div>
-            <div class="value-line"><a href="${pckg.providerUrl}" class="link value-text">${pckg.providerUrl}</a></div>
+            <div class="value-line"><a href="${cpn:url(slingRequest,pckg.providerUrl)}" class="link value-text">${cpn:text(pckg.providerUrl)}</a></div>
         </div>
         <div class="provider-link link-option option-field">
             <div class="name-line">Provider Link</div>
-            <div class="value-line"><a href="${pckg.providerLink}" class="link value-text">${pckg.providerLink}</a></div>
+            <div class="value-line"><a href="${cpn:url(slingRequest,pckg.providerLink)}" class="link value-text">${cpn:text(pckg.providerLink)}</a></div>
         </div>
     </div>
     <div class="relations-view">
