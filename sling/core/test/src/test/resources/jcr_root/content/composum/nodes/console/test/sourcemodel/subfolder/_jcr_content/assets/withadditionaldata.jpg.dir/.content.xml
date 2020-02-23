@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:cpl="http://sling.composum.com/platform/1.0"
+        xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+        jcr:primaryType="nt:file">
+    <jcr:content
+            jcr:primaryType="nt:resource"
+            jcr:mixinTypes="[cpl:Resource]"
+            jcr:mimeType="image/jpeg">
+        <meta
+                jcr:primaryType="cpl:MetaData"
+                Color_x0020_Space="sRGB"
+                Compression_x0020_Type="Baseline"
+                Content-Type="image/jpeg"
+                Data_x0020_Precision="8 bits"
+                File_x0020_Size="76910 bytes"
+                Image_x0020_Height="1200 pixels"
+                Image_x0020_Width="1600 pixels"
+                Orientation="Top, left side (Horizontal / normal)"
+                Resolution_x0020_Units="none"
+                X_x0020_Resolution="72 dots"
+                Y_x0020_Resolution="72 dots"
+                height="{Long}1200"
+                size="{Long}76910"
+                width="{Long}1600"/>
+    </jcr:content>
+</jcr:root>
