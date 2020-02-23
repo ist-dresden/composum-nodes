@@ -270,7 +270,7 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            String suffix = request.getRequestPathInfo().getSuffix();
+            String suffix = XSS.filter(request.getRequestPathInfo().getSuffix());
             if (suffix.startsWith("/")) {
                 suffix = suffix.substring(1);
             }
@@ -1038,13 +1038,13 @@ public class PackageServlet extends AbstractServiceServlet {
             if (StringUtils.isNotBlank(root)) {
 
                 filter = new PathFilterSet(root);
-                String importMode = request.getParameter("importMode");
+                String importMode = XSS.filter(request.getParameter("importMode"));
                 if (StringUtils.isNotBlank(importMode)) {
                     ImportMode mode = ImportMode.valueOf(importMode.toUpperCase());
                     filter.setImportMode(mode);
                 }
-                String[] ruleTypes = request.getParameterValues("ruleType");
-                String[] ruleExpressions = request.getParameterValues("ruleExpression");
+                String[] ruleTypes = XSS.filter(request.getParameterValues("ruleType"));
+                String[] ruleExpressions = XSS.filter(request.getParameterValues("ruleExpression"));
 
                 if (ruleTypes != null && ruleExpressions != null && ruleTypes.length == ruleExpressions.length) {
                     for (int i = 0; i < ruleTypes.length; i++) {

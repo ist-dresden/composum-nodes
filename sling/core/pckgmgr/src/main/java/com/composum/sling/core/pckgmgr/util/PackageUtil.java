@@ -95,9 +95,9 @@ public class PackageUtil {
 
     public static String getPath(SlingHttpServletRequest request) {
         RequestPathInfo reqPathInfo = request.getRequestPathInfo();
-        String path = reqPathInfo.getSuffix();
+        String path = XSS.filter(reqPathInfo.getSuffix());
         if (StringUtils.isBlank(path)) {
-            final String pathParam = request.getParameter("path");
+            final String pathParam = XSS.filter(request.getParameter("path"));
             if (StringUtils.isBlank(pathParam)) {
                 path = "/";
             } else {
