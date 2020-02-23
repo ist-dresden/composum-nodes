@@ -2,6 +2,7 @@ package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.JsonUtil;
+import com.composum.sling.core.util.XSS;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
@@ -44,7 +45,7 @@ public class ExportQueryJson extends SlingAllMethodsServlet {
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json; charset=UTF-8");
 
-        String filename = request.getRequestPathInfo().getSuffix();
+        String filename = XSS.filter(request.getRequestPathInfo().getSuffix());
         if (filename != null) {
             while (filename.startsWith("/")) {
                 filename = filename.substring(1);

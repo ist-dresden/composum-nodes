@@ -1,10 +1,9 @@
 package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.servlet.AbstractServiceServlet;
-import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.nodes.update.SourceUpdateService;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
@@ -13,19 +12,14 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.request.RequestPathInfo;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 import javax.jcr.RepositoryException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
 
@@ -82,7 +76,8 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
             switch (pathInfo.getExtension()) {
 
                 case "zip":
-                    sourceUpdateService.updateFromZip(request.getResourceResolver(), file.getInputStream(), pathInfo.getSuffix());
+                    sourceUpdateService.updateFromZip(request.getResourceResolver(),
+                            file.getInputStream(), XSS.filter(pathInfo.getSuffix()));
 
                     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                     break;
