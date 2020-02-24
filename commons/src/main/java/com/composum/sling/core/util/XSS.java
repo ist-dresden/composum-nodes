@@ -25,7 +25,7 @@ public class XSS {
         return XSSFilter_HANDLE.getService();
     }
 
-    private XSS() {
+    protected XSS() {
     }
 
     //
