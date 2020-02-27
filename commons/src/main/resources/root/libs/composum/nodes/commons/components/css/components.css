@@ -439,7 +439,8 @@ fieldset {
     font-size: 22px;
 }
 
-.modal-dialog .modal-footer button.delete {
+.modal-dialog .modal-footer button.delete,
+.modal-dialog .modal-footer button.button-left {
     float: left;
 }
 
