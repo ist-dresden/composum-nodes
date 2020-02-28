@@ -48,7 +48,7 @@ public class DomIdentifiers {
             long idValue = nextId();
             this.id = (path.substring(path.lastIndexOf('/') + 1).replaceAll("jcr:", "_jcr_")
                     + "-" + type.substring(type.lastIndexOf('/') + 1))
-                    .replaceAll("[:]", "-") + "-" + idValue;
+                    .replaceAll("[^a-zA-Z0-9_-]", "-") + "-" + idValue;
         }
     }
 
