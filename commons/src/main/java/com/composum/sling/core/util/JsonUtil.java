@@ -760,14 +760,21 @@ public class JsonUtil {
                 writer.name("name").value(name);
                 writer.name("value");
             }
+            StringBuilder valueString = new StringBuilder();
             if (property.isMultiple()) {
                 writer.beginArray();
                 for (Value value : property.getValues()) {
                     JsonUtil.writeJsonValue(writer, node, name, value, type, mapping);
+                    if (valueString.length() > 0) {
+                        valueString.append(',');
+                    }
+                    valueString.append(value.getString());
                 }
                 writer.endArray();
             } else {
-                JsonUtil.writeJsonValue(writer, node, name, property.getValue(), type, mapping);
+                Value value = property.getValue();
+                JsonUtil.writeJsonValue(writer, node, name, value, type, mapping);
+                valueString.append(value.getString());
             }
             if (mapping.propertyFormat.scope != MappingRules.PropertyFormat.Scope.value) {
                 writer.name("type").value(PropertyType.nameFromValue(type));
@@ -776,6 +783,9 @@ public class JsonUtil {
                     PropertyDefinition definition = property.getDefinition();
                     writer.name("auto").value(definition.isAutoCreated());
                     writer.name("protected").value(definition.isProtected());
+                    if (type == PropertyType.STRING) {
+                        writer.name("subtype").value(PropertyUtil.getStringSubtype(valueString.toString()).name());
+                    }
                 }
                 writer.endObject();
             }
