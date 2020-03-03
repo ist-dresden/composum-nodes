@@ -5,11 +5,17 @@ import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.Importer;
 import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
-import org.apache.sling.api.resource.*;
+import org.apache.sling.api.resource.ModifiableValueMap;
+import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +26,23 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeDefinition;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 
-import static com.composum.sling.core.util.ResourceUtil.*;
+import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
+import static com.composum.sling.core.util.ResourceUtil.PROP_MIXINTYPES;
+import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_LAST_MODIFIED;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_SLING_FOLDER;
 
 
 @Component(
@@ -53,10 +73,15 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         Resource tmpdir = makeTempdir(resolver);
         final String tmpPath = tmpdir.getPath();
 
+        Importer importer;
+        ImportErrorListener errorListener = new ImportErrorListener();
         try {
-            Importer importer = new Importer();
+            importer = new Importer();
+            // TODO(hps,11.02.20) Use ZipStreamArchive once that's public (in later vault versions)
             MemoryArchive archive = new MemoryArchive(false);
             archive.run(rawZipInputStream);
+            importer.getOptions().setStrict(true);
+            importer.getOptions().setListener(errorListener);
             importer.run(archive, tmpdir.adaptTo(Node.class));
         } catch (IOException | RepositoryException e) {
             throw e;
@@ -65,24 +90,32 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         } finally {
             rawZipInputStream.close();
         }
+        if (importer.hasErrors()) {
+            StringBuilder buf = new StringBuilder("Errors during import: ");
+            errorListener.errors.forEach(e ->
+                    buf.append(e.getLeft()).append(" : ").append(String.valueOf(e.getRight())).append("\n"));
+            throw new RepositoryException(buf.toString());
+        }
 
         try {
             Resource topnode = tmpdir.getChild(nodePath.replaceFirst("^/+", ""));
-            if (topnode == null)
+            if (topnode == null) {
                 throw new IllegalArgumentException("Archive does not contain given root path " + nodePath);
-            if (StringUtils.countMatches(nodePath, "/") < 3)
+            }
+            if (StringUtils.countMatches(nodePath, "/") < 3) {
                 throw new IllegalArgumentException("Suspicious / short root path: " + nodePath);
+            }
             Resource resource = resolver.getResource(nodePath);
-            if (resource == null)
+            if (resource == null) {
                 throw new IllegalArgumentException("Node does not exist, so we cannot update it: " + nodePath);
+            }
             equalize(topnode, resource, session);
 
             LOG.info("Have changes: {}", session.hasPendingChanges());
             session.save();
         } finally {
             session.refresh(false); // discard - if it went OK it's already saved.
-            if (resolver.getResource(tmpPath) != null)
-                session.removeItem(tmpdir.getPath());
+            if (resolver.getResource(tmpPath) != null) { session.removeItem(tmpdir.getPath()); }
             session.save();
         }
     }
@@ -97,19 +130,16 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         boolean thisNodeChanged = false;
         ValueMap templatevalues = ResourceUtil.getValueMap(templateresource);
         ModifiableValueMap newvalues = resource.adaptTo(ModifiableValueMap.class);
-        if (newvalues == null) throw new IllegalArgumentException("Node not modifiable: " + resource.getPath());
+        if (newvalues == null) { throw new IllegalArgumentException("Node not modifiable: " + resource.getPath()); }
 
         // first copy type information since this changes attributes
         newvalues.put(PROP_PRIMARY_TYPE, templatevalues.get(PROP_PRIMARY_TYPE));
         String[] mixins = templatevalues.get(PROP_MIXINTYPES, new String[0]);
-        if (mixins.length > 0)
-            newvalues.put(PROP_MIXINTYPES, mixins);
-        else
-            newvalues.remove(PROP_MIXINTYPES);
+        if (mixins.length > 0) { newvalues.put(PROP_MIXINTYPES, mixins); } else { newvalues.remove(PROP_MIXINTYPES); }
 
         Node node = resource.adaptTo(Node.class);
         NodeDefinition definition = node.getDefinition();
-        if (definition.allowsSameNameSiblings()) checkForSamenameSiblings(templateresource, resource);
+        if (definition.allowsSameNameSiblings()) { checkForSamenameSiblings(templateresource, resource); }
 
         try {
             for (Map.Entry<String, Object> entry : templatevalues.entrySet()) {
@@ -158,8 +188,9 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
 
         if (thisNodeChanged) {
             Resource modifcandidate = resource;
-            while (modifcandidate != null && !ResourceUtil.isNodeType(modifcandidate, TYPE_LAST_MODIFIED))
+            while (modifcandidate != null && !ResourceUtil.isNodeType(modifcandidate, TYPE_LAST_MODIFIED)) {
                 modifcandidate = modifcandidate.getParent();
+            }
             if (modifcandidate != null) {
                 ResourceHandle.use(modifcandidate).setProperty(PROP_LAST_MODIFIED, Calendar.getInstance());
             }
@@ -169,12 +200,13 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
     private void ensureSameOrdering(List<Resource> templatechildren, Resource resource) throws RepositoryException {
         Node node = Objects.requireNonNull(resource.adaptTo(Node.class));
         List<Resource> resourcechildren = IteratorUtils.toList(resource.listChildren());
-        if (templatechildren.size() != resourcechildren.size())
+        if (templatechildren.size() != resourcechildren.size()) {
             throw new IllegalStateException("Bug: template and resource of " + resource.getPath() +
                     " should have same size now but have " + templatechildren.size() + " and " + resourcechildren.size());
-        if (resourcechildren.size() < 2) return;
+        }
+        if (resourcechildren.size() < 2) { return; }
         Map<String, Resource> nameToNode = new HashMap<>();
-        for (Resource child : resourcechildren) nameToNode.put(child.getName(), child);
+        for (Resource child : resourcechildren) { nameToNode.put(child.getName(), child); }
         for (int i = 0; i < resourcechildren.size(); ++i) {
             if (!StringUtils.equals(resourcechildren.get(i).getName(), templatechildren.get(i).getName())) {
                 node.orderBefore(templatechildren.get(i).getName(), resourcechildren.get(i).getName());
@@ -200,4 +232,18 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         }
     }
 
+    protected static class ImportErrorListener implements ProgressTrackerListener {
+
+        public final List<Pair<String, Exception>> errors = new ArrayList<>();
+
+        @Override
+        public void onMessage(Mode mode, String action, String path) {
+            // ignore
+        }
+
+        @Override
+        public void onError(Mode mode, String path, Exception e) {
+            errors.add(Pair.of(path, e));
+        }
+    }
 }

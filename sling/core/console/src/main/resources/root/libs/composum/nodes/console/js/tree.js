@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('console');
 
-    core.console = core.console || {};
-
-    (function (console) {
+    (function (console, core) {
 
         console.Tree = core.components.Tree.extend({
 
@@ -373,6 +372,6 @@
             }
         });
 
-    })(core.console);
+    })(CPM.console, CPM.core);
 
-})(window.core);
+})();

@@ -1,29 +1,49 @@
-'use strict';
 /**
  *
  *
  */
-(function (core) {
+(function () {
+    'use strict';
+    CPM.namespace('console');
+    core.console = CPM.console; // core.console for compatibility ... @deprecated
 
-    core.console = core.console || {};
+    (function (console, core) {
 
-    core.initPermissions = function () {
-        location.reload(); // FIXME: to refactor
-    };
-
-    (function (console) {
+        core.initPermissions = function () {
+            location.reload(); // FIXME: to refactor
+        };
 
         console.getProfile = function () {
             return console.profile;
         };
 
-        console.getUserLoginDialog = function () {
-            return core.getView('#user-status-dialog', console.UserLoginDialog);
+        console.openUserLoginDialog = function (action) {
+            var loginDialog = core.getView('#user-status-dialog', console.UserLoginDialog);
+            if (!loginDialog) {
+                core.getHtml('/libs/composum/nodes/console/dialogs.user-status.html',
+                    _.bind(function (content) {
+                        loginDialog = core.addLoadedDialog(console.UserLoginDialog, content);
+                        if (loginDialog) {
+                            if (_.isFunction(action)) {
+                                action(loginDialog);
+                            } else {
+                                loginDialog.show();
+                            }
+                        }
+                    }, this));
+            } else {
+                if (_.isFunction(action)) {
+                    action(loginDialog);
+                } else {
+                    loginDialog.show();
+                }
+            }
         };
 
         console.authorize = function (retryThisFailedCall) {
-            var loginDialog = console.getUserLoginDialog();
-            loginDialog.handleUnauthorized(retryThisFailedCall);
+            console.openUserLoginDialog(_.bind(function (loginDialog) {
+                loginDialog.handleUnauthorized(retryThisFailedCall);
+            }, this));
         };
 
         //
@@ -126,8 +146,26 @@
             initialize: function () {
                 var consoleId = $('body').attr('id');
                 this.$('.nav-item.' + consoleId).addClass('active');
-                var loginDialog = console.getUserLoginDialog();
-                this.$('.nav-user-status').on('click', _.bind(loginDialog.show, loginDialog));
+                this.$('.nav-user-status').on('click', _.bind(function () {
+                    console.openUserLoginDialog();
+                }, this));
+                this.$status = this.$('.system-health-monitor');
+                this.$healthState = this.$status.find('span');
+                this.$status.click(_.bind(this.showStatus, this));
+                this.system = core.getWidget(this.$status, '.composum-nodes-system', CPM.nodes.system.Status);
+                $(document).on('system:health', _.bind(this.onSystemHealth, this));
+            },
+
+            onSystemHealth: function (event, status, data) {
+                this.$healthState.removeClass().addClass(
+                    'system-health-state system-health-' + (status ? status : 'unknown'));
+            },
+
+            showStatus: function () {
+                if (this.$healthState.is('.system-health-state')) { // if status visible (accessible and loaded)...
+                    core.openFormDialog('/libs/composum/nodes/commons/components/system/dialog.html',
+                        CPM.nodes.system.StatusDialog);
+                }
             }
         });
 
@@ -526,7 +564,7 @@
                 }
                 var path = this.getCurrentPath();
                 if (name && path) {
-                    var uri = new core.SlingUrl(this.getTabUri(name) + window.core.encodePath(path), parameters);
+                    var uri = new core.SlingUrl(this.getTabUri(name) + core.encodePath(path), parameters);
                     this.$detailContent.load(core.getContextUrl(uri.build()), _.bind(function () {
                         if (_.isFunction(refreshTabState)) {
                             refreshTabState();
@@ -548,6 +586,6 @@
             }
         });
 
-    })(core.console);
+    })(CPM.console, CPM.core);
 
-})(window.core);
+})();

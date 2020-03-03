@@ -2,10 +2,25 @@
  *
  *
  */
-(function (window) {
+(function () {
     'use strict';
 
-    window.core = {
+    window.composum = window.CPM = window.CPM || {};
+
+    /**
+     * ensure presence of a 'namespace' object
+     * @param pckge the 'package' name to use as 'namespace'
+     */
+    CPM.namespace = function (pckge, base = window.CPM) {
+        pckge.split('.').forEach(function (segment) {
+            if (!_.isObject(base[segment])) {
+                base[segment] = {};
+            }
+            base = base[segment];
+        });
+    };
+
+    window.core = CPM.core = { // window.core for compatibility ... @deprecated
 
         const: {
             url: {
@@ -278,9 +293,11 @@
         },
 
         getContextUrl: function (url) {
-            var contextPath = $('html').data('context-path');
-            if (contextPath && url.indexOf(contextPath) !== 0) {
-                url = contextPath + url;
+            if (url && !url.match(/^https?:\/\//i)) {  // ignore 'external' URLs
+                var contextPath = $('html').data('context-path');
+                if (contextPath && url.indexOf(contextPath) !== 0) {
+                    url = contextPath + url;
+                }
             }
             return url;
         },
@@ -392,6 +409,21 @@
         },
 
         /**
+         * @param action (alertDialog) the action th show the loaded 'alertDialog' (required)
+         */
+        openAlertDialog: function (action) {
+            var alertDialog = core.getView('#alert-dialog', core.components.Dialog);
+            if (!alertDialog) { // if not static included load dialog dynamically
+                core.getHtml('/libs/composum/nodes/commons/dialogs.alert.html',
+                    _.bind(function (content) {
+                        action(core.addLoadedDialog(core.components.Dialog, content));
+                    }, this));
+            } else {
+                action(alertDialog);
+            }
+        },
+
+        /**
          * displays a short 'alert' dialog with a single message
          * @param typeOrResult the message error level (success, info, warning, danger) or a request result object
          * @param title the message text to display in the heading of the dialog
@@ -414,10 +446,11 @@
                 core.alert(result.responseJSON)
             } else {
                 typeOrResult = core.getAlertType(typeOrResult);
-                var dialog = core.getView('#alert-dialog', core.components.Dialog);
-                dialog.$('.modal-header h4').text(title || 'Alert');
-                dialog.show(_.bind(function () {
-                    dialog.alert(typeOrResult, message, result);
+                core.openAlertDialog(_.bind(function (alertDialog) {
+                    alertDialog.$('.modal-header h4').text(title || 'Alert');
+                    alertDialog.show(_.bind(function () {
+                        alertDialog.alert(typeOrResult, message, result);
+                    }, this));
                 }, this));
             }
         },
@@ -430,10 +463,11 @@
          */
         messages: function (type, title, messages) {
             type = core.getAlertType(type);
-            var dialog = core.getView('#alert-dialog', core.components.Dialog);
-            dialog.$('.modal-header h4').text(title);
-            dialog.show(_.bind(function () {
-                dialog.messages(type, undefined, messages);
+            core.openAlertDialog(_.bind(function (alertDialog) {
+                alertDialog.$('.modal-header h4').text(title);
+                alertDialog.show(_.bind(function () {
+                    alertDialog.messages(type, undefined, messages);
+                }, this));
             }, this));
         },
 
@@ -482,6 +516,7 @@
 
         encodePath: function (path) {
             path = encodeURI(path); // except: ',/?:@&=+$#' ...
+            path = path.replace('/jcr:', '/_jcr_');
             path = path.replace('\?', '%3F');
             path = path.replace('=', '%3D');
             path = path.replace(':', '%3A');
@@ -532,12 +567,12 @@
         }
     };
 
-    window.core.LocalProfile = function (key) {
+    CPM.core.LocalProfile = function (key) {
         this.profileKey = key;
         this.aspects = {};
     };
 
-    _.extend(window.core.LocalProfile.prototype, {
+    _.extend(CPM.core.LocalProfile.prototype, {
 
         get: function (aspect, key, defaultValue) {
             var object = this.aspects[aspect];
@@ -574,9 +609,9 @@
         }
     });
 
-    window.core.SlingUrl = function (url, parameters) {
+    CPM.core.SlingUrl = function (url, parameters) {
         this.url = url;
-        var parts = window.core.const.url.sling.exec(url);
+        var parts = CPM.core.const.url.sling.exec(url);
         this.scheme = parts[2];
         this.host = parts[3];
         this.port = parts[5];
@@ -612,7 +647,7 @@
         }
     };
 
-    _.extend(window.core.SlingUrl.prototype, {
+    _.extend(CPM.core.SlingUrl.prototype, {
 
         build: function () {
             this.url = "";
@@ -674,4 +709,4 @@
         }
     });
 
-})(window);
+})();

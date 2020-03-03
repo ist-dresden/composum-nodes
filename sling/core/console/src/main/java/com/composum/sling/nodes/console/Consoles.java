@@ -2,10 +2,11 @@ package com.composum.sling.nodes.console;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.CoreConfiguration;
-import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.util.LinkUtil;
+import com.composum.sling.core.util.XSS;
+import com.composum.sling.nodes.NodesConfiguration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.sling.api.resource.Resource;
@@ -116,7 +117,7 @@ public class Consoles extends ConsolePage {
         }
 
         public String getUrl() {
-            String suffix = getRequest().getRequestPathInfo().getSuffix();
+            String suffix = XSS.filter(getRequest().getRequestPathInfo().getSuffix());
             return LinkUtil.getUnmappedUrl(getRequest(), getPath())
                     .replaceAll("\\$\\{path}", StringUtils.isNotBlank(suffix) ? suffix : "");
         }

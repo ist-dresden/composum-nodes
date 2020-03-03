@@ -372,7 +372,7 @@ public abstract class AbstractSlingBean implements SlingBean {
         if (id.equals(jvmId)) {
             builder.append(jvmId);
         } else {
-            jvmId = jvmId.substring(jvmId.indexOf('@' + 1));
+            jvmId = jvmId.substring(jvmId.indexOf('@') + 1);
             builder.append(getClass().getSimpleName());
             builder.append('(').append(id).append('/').append(jvmId).append(')');
         }

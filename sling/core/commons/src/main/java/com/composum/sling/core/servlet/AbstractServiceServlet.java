@@ -5,6 +5,7 @@ import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
@@ -17,6 +18,7 @@ import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -138,6 +140,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
      * @param request the sling request with the resource path in the suffix
      * @return the resource (NOT <code>null</code>; returns a handle with an invalid resource if not resolvable)
      */
+    @Nonnull
     public static ResourceHandle getResource(SlingHttpServletRequest request) {
         ResourceResolver resolver = request.getResourceResolver();
         String path = getPath(request);
@@ -150,7 +153,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         if (StringUtils.isBlank(path)) {
             path = request.getParameter(PARAM_PATH);
         }
-        return path;
+        return XSS.filter(path);
     }
 
     //

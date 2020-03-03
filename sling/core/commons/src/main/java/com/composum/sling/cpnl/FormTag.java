@@ -1,7 +1,10 @@
 package com.composum.sling.cpnl;
 
+import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.servlet.jsp.JspWriter;
 import java.io.IOException;
 
@@ -45,6 +48,17 @@ public class FormTag extends UrlTag {
 
     public void setCharset(String charset) {
         this.charset = charset;
+    }
+
+    @Override
+    @Nonnull
+    protected String buildUrl(@Nonnull String urlValue, @Nullable final Boolean map){
+        if (map != null) {
+            urlValue = super.buildUrl(urlValue, map);
+        } else {
+            urlValue = LinkUtil.getUrl(request, urlValue, ""); // no extension!
+        }
+        return urlValue;
     }
 
     @Override

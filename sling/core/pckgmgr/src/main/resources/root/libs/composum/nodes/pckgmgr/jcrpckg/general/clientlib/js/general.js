@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.pckgmgr');
 
-    core.pckgmgr = core.pckgmgr || {};
-
-    (function (pckgmgr) {
+    (function (pckgmgr, core) {
 
         pckgmgr.getUpdatePackageDialog = function () {
             return core.getView('#pckg-update-dialog', pckgmgr.UpdatePackageDialog);
@@ -200,6 +199,6 @@
             }
         });
 
-    })(core.pckgmgr);
+    })(CPM.nodes.pckgmgr, CPM.core);
 
-})(window.core);
+})();

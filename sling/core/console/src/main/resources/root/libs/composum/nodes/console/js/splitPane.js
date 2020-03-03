@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('console.components');
 
-    core.components = core.components || {};
-
-    (function (components) {
+    (function (components, core) {
 
         components.SplitView = Backbone.View.extend({
 
@@ -20,9 +19,9 @@
                     top: true
                 });
                 this.horizontalSplit = core.getWidget(this.$el,
-                    '#split-view-horizontal-split', core.components.HorizontalSplitPane);
+                    '#split-view-horizontal-split', components.HorizontalSplitPane);
                 this.verticalSplit = core.getWidget(this.$el,
-                    '#split-view-vertical-split', core.components.VerticalSplitPane);
+                    '#split-view-vertical-split', components.VerticalSplitPane);
                 if (this.profile.left) {
                     this.horizontalSplit.setPosition(this.horizontalSplit.checkPosition(this.profile.horizontal));
                 } else {
@@ -233,6 +232,6 @@
             }
         });
 
-    })(core.components);
+    })(CPM.console.components, CPM.core);
 
-})(window.core);
+})();

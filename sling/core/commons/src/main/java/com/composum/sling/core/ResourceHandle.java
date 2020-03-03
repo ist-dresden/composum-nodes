@@ -26,7 +26,11 @@ import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -194,10 +198,12 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
         return contentResource;
     }
 
+    /** Returns a property of the {@link #getContentResource()}. */
     public <T> T getContentProperty(String key, Class<T> type) {
         return getContentResource().getProperty(key, type);
     }
 
+    /** Returns a property of the {@link #getContentResource()}. */
     public <T> T getContentProperty(String key, T defaultValue) {
         return getContentResource().getProperty(key, defaultValue);
     }
@@ -400,6 +406,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
             Resource parent = super.getParent();
             if (parent == null && isSynthetic()) {
                 final String parentPath = getParentPath();
+                if (StringUtils.isBlank(parentPath)) { return null; }
                 return ResourceHandle.use(getResourceResolver().resolve(parentPath));
             } else if (parent == null) {
                 return null;

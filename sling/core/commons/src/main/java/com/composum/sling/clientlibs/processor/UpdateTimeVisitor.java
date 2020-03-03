@@ -1,6 +1,11 @@
 package com.composum.sling.clientlibs.processor;
 
-import com.composum.sling.clientlibs.handle.*;
+import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.handle.ClientlibElement;
+import com.composum.sling.clientlibs.handle.ClientlibFile;
+import com.composum.sling.clientlibs.handle.ClientlibLink;
+import com.composum.sling.clientlibs.handle.ClientlibResourceFolder;
+import com.composum.sling.clientlibs.handle.ClientlibVisitor;
 import com.composum.sling.clientlibs.service.ClientlibService;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;

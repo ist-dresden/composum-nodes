@@ -181,10 +181,12 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
                 || isPrimaryType(resource, resourceType) || isNodeType(resource, resourceType)));
     }
 
+    /** True if the {@link #getPrimaryType(Resource)} of the resource is exactly primaryType. */
     public static boolean isPrimaryType(Resource resource, String primaryType) {
         return (primaryType.equals(getPrimaryType(resource)));
     }
 
+    /** Returns true if this node is of the specified primary node type or mixin type, or a subtype thereof. Returns false otherwise. */
     public static boolean isNodeType(Resource resource, String primaryType) {
         if (resource != null) {
             try {
@@ -274,8 +276,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
     public static Resource getOrCreateResource(ResourceResolver resolver, String path, String primaryTypes)
             throws RepositoryException {
         Resource resource = resolver.getResource(path);
-        if (resource == null) {
-            path = normalize(path);
+        if (resource == null && (path = normalize(path)) != null) {
             int lastPathSegment = path.lastIndexOf('/');
             String parentPath = "/";
             String name = path;

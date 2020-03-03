@@ -65,6 +65,18 @@
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.Boolean</type>
         </attribute>
+        <attribute>
+            <name>path</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <name>resource</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>org.apache.sling.api.resource.Resource</type>
+        </attribute>
     </tag>
 
     <tag>
@@ -554,6 +566,20 @@
         <name>rich</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String rich(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
+    </function>
+
+    <function>
+        <description>prevents the given value string from containing XSS stuff</description>
+        <name>filter</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String filter(java.lang.String)</function-signature>
+    </function>
+
+    <function>
+        <description>prevents the given value string from containing XSS stuff</description>
+        <name>context</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String context(java.lang.String,java.lang.String)</function-signature>
     </function>
 
     <function>

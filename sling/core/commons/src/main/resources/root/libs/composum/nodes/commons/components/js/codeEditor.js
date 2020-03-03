@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('core.components');
 
-    core.components = core.components || {};
-
-    (function (components, widgets) {
+    (function (components, widgets, core) {
 
         /**
          * the 'code-editor-widget'
@@ -87,7 +86,7 @@
             setValue: function (value, triggerChange) {
                 this.ace.setValue(value);
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             },
 
@@ -295,6 +294,6 @@
             }
         });
 
-    })(core.components, window.widgets);
+    })(CPM.core.components, CPM.widgets, CPM.core);
 
-})(window.core);
+})();

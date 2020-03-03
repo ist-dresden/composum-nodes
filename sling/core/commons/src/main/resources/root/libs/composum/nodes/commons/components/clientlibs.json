@@ -68,7 +68,8 @@
         "jslibs/underscore/(1.*:1.9.1)/underscore.js",
         "jslibs/backbone/(1.*:1.4.0)/backbone.js",
         "composum/nodes/commons/components/js/core.js",
-        "composum/nodes/commons/components/js/i18n.js"
+        "composum/nodes/commons/components/js/i18n.js",
+        "composum/nodes/commons/components/js/nodes.js"
       ]
     }
   },
@@ -90,7 +91,8 @@
       "embed": [
         "category:composum.components.base",
         "composum/nodes/commons/components/js/core.js",
-        "composum/nodes/commons/components/js/i18n.js"
+        "composum/nodes/commons/components/js/i18n.js",
+        "composum/nodes/commons/components/js/nodes.js"
       ]
     }
   },
@@ -110,6 +112,7 @@
         "jslibs/bootstrap-slider/(9.*|10.*:10.6.1)/css/bootstrap-slider.css",
         "jslibs/bootstrap-colorpicker/([2-3].*:3.1.2)/css/bootstrap-colorpicker.css",
         "jslibs/bootstrap-fileinput/([4-5].*:4.3.6)/css/fileinput.css",
+        "jslibs/jstree/3.3.8/themes/proton/style.css",
         "jslibs/trumbowyg/(2.*:2.3.0)/ui/trumbowyg.css"
       ],
       "embed": [
@@ -132,6 +135,7 @@
         "jslibs/bootstrap-slider/(9.*|10.*:10.6.1)/bootstrap-slider.js",
         "jslibs/bootstrap-colorpicker/([2-3].*:3.1.2)/js/bootstrap-colorpicker.js",
         "jslibs/bootstrap-fileinput/([4-5].*:4.3.6)/js/fileinput.js",
+        "jslibs/jstree/3.3.8/jstree.js",
         "jslibs/ace/1.4.4/ace.js",
         "jslibs/trumbowyg/(2.*:2.3.0)/trumbowyg.js"
       ],

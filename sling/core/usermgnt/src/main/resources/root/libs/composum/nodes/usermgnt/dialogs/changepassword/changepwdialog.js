@@ -1,9 +1,8 @@
-(function(core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.usermanagement');
 
-    core.usermanagement = core.usermanagement || {};
-
-    (function(usermanagement) {
+    (function (usermanagement, core) {
 
         usermanagement.getChangePasswordDialog = function () {
             return core.getView('#user-changepw-dialog', usermanagement.ChangePasswordDialog);
@@ -50,6 +49,6 @@
             }
         });
 
-    })(core.usermanagement);
+    })(CPM.nodes.usermanagement, CPM.core);
 
-})(window.core);
+})();

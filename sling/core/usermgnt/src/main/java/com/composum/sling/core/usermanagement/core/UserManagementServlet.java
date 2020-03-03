@@ -1,5 +1,6 @@
 package com.composum.sling.core.usermanagement.core;
 
+import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
@@ -332,8 +333,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
-            String authorizableName = request.getParameter("authorizable");
-            String groupName = request.getParameter("group");
+            String authorizableName = XSS.filter(request.getParameter("authorizable"));
+            String groupName = XSS.filter(request.getParameter("group"));
             final Authorizable authorizable = userManager.getAuthorizable(authorizableName);
             final Group group = (Group) userManager.getAuthorizable(groupName);
             boolean b = group.addMember(authorizable);
@@ -354,8 +355,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             @SuppressWarnings("unchecked") final Map<String, String> p = gson.fromJson(
                     new InputStreamReader(request.getInputStream(), MappingRules.CHARSET.name()),
                     Map.class);
-            String authorizableName = p.get("authorizable");
-            String groupName = p.get("group");
+            String authorizableName = XSS.filter(p.get("authorizable"));
+            String groupName = XSS.filter(p.get("group"));
             final Authorizable authorizable = userManager.getAuthorizable(authorizableName);
             final Group group = (Group) userManager.getAuthorizable(groupName);
             group.removeMember(authorizable);
@@ -512,8 +513,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
-            String username = request.getParameter("username");
-            String password = request.getParameter("password");
+            String username = XSS.filter(request.getParameter("username"));
+            String password = XSS.filter(request.getParameter("password"));
 
             final Authorizable authorizable = userManager.getAuthorizable(username);
             final User target = (User) authorizable;
@@ -523,7 +524,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 //admin can do it without knowing the old password for every user
                 target.changePassword(password);
             } else {
-                String oldPassword = request.getParameter("oldPassword");
+                String oldPassword = XSS.filter(request.getParameter("oldPassword"));
                 target.changePassword(password, oldPassword);
             }
 
@@ -541,8 +542,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
-            String username = request.getParameter("username");
-            String reason = request.getParameter("reason");
+            String username = XSS.filter(request.getParameter("username"));
+            String reason = XSS.filter(request.getParameter("reason"));
 
             final Authorizable authorizable = userManager.getAuthorizable(username);
             User user = (User) authorizable;
@@ -612,8 +613,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
                 final UserManager userManager = session.getUserManager();
-                final String username = request.getParameter("username");
-                String intermediatePath = request.getParameter("intermediatePath");
+                final String username = XSS.filter(request.getParameter("username"));
+                String intermediatePath = XSS.filter(request.getParameter("intermediatePath"));
                 //public User createSystemUser(String userID, String intermediatePath)
                 Method method = userManager.getClass().getMethod("createSystemUser", String.class, String.class);
                 Object newUser = method.invoke(userManager, username, StringUtils.isEmpty(intermediatePath) ? null : intermediatePath);
@@ -651,9 +652,9 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
                 final UserManager userManager = session.getUserManager();
-                final String username = request.getParameter("username");
-                String password = request.getParameter("password");
-                String intermediatePath = request.getParameter("intermediatePath");
+                final String username = XSS.filter(request.getParameter("username"));
+                String password = XSS.filter(request.getParameter("password"));
+                String intermediatePath = XSS.filter(request.getParameter("intermediatePath"));
                 final User newUser;
                 if (StringUtils.isEmpty(intermediatePath)) {
                     newUser = userManager.createUser(username, password);
@@ -729,8 +730,8 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             final UserManager userManager = session.getUserManager();
-            final String name = request.getParameter("groupname");
-            String intermediatePath = request.getParameter("intermediatePath");
+            final String name = XSS.filter(request.getParameter("groupname"));
+            String intermediatePath = XSS.filter(request.getParameter("intermediatePath"));
             final Group newGroup;
             if (StringUtils.isEmpty(intermediatePath)) {
                 newGroup = userManager.createGroup(name);
@@ -843,5 +844,4 @@ public class UserManagementServlet extends AbstractServiceServlet {
             return groupEntry;
         }
     }
-
 }

@@ -2,15 +2,14 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.browser');
 
-    core.browser = core.browser || {};
-
-    (function (browser) {
+    (function (browser, core) {
 
         browser.getPropertyDialog = function () {
-            return core.getView('#browser-view-property-dialog', window.core.browser.PropertyDialog);
+            return core.getView('#browser-view-property-dialog', browser.PropertyDialog);
         };
 
         browser.openNewPropertyDialog = function (callback) {
@@ -39,8 +38,8 @@
                 var name = this.get('name');
                 var type = this.get('type');
                 return (path && path.trim().length > 0 &&
-                name && name.trim().length > 0 &&
-                type && type.trim().length > 0);
+                    name && name.trim().length > 0 &&
+                    type && type.trim().length > 0);
             },
 
             save: function (onSuccess, onError, data) {
@@ -145,22 +144,7 @@
                 if (name) {
                     value = property.get('value');
                 }
-                var subtype = 'string';
-                if (type === 'String') {
-                    if (value) {
-                        var valueSet = _.isArray(value) ? value : [value];
-                        for (var i = 0; i < valueSet.length; i++) {
-                            if (valueSet[i].indexOf('</') >= 0) {
-                                subtype = 'richtext';
-                                break;
-                            }
-                            if (valueSet[i].indexOf('\n') >= 0) {
-                                subtype = 'plaintext';
-                                break;
-                            }
-                        }
-                    }
-                }
+                var subtype = property.get('subtype') || 'string';
                 this.$path.val(path);
                 this.subtype.setValue(subtype);
                 if (name) {
@@ -363,7 +347,7 @@
                 return value;
             },
 
-            setValue: function (value) {
+            setValue: function (value, triggerChange) {
                 if (this.multiValue && _.isArray(value)) {
                     this.reset(value.length);
                     var values = this.$('[name="value"]');
@@ -374,9 +358,12 @@
                     this.reset();
                     this.setWidgetValue('[name="value"]', value);
                 }
+                if (triggerChange) {
+                    this.$el.trigger('change', [value]);
+                }
             }
         });
 
-    })(core.browser);
+    })(CPM.nodes.browser, CPM.core);
 
-})(window.core);
+})();

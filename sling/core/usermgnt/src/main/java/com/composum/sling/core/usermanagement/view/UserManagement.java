@@ -1,7 +1,8 @@
 package com.composum.sling.core.usermanagement.view;
 
-import com.composum.sling.nodes.console.ConsoleSlingBean;
 import com.composum.sling.core.filter.StringFilter;
+import com.composum.sling.core.util.XSS;
+import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
@@ -18,7 +19,7 @@ public class UserManagement extends ConsoleSlingBean {
         try {
             final JackrabbitSession session = (JackrabbitSession) getSession();
             final UserManager userManager = session.getUserManager();
-            String suffix = getRequest().getRequestPathInfo().getSuffix();
+            String suffix = XSS.filter(getRequest().getRequestPathInfo().getSuffix());
             if (suffix != null) {
                 Authorizable authorizableByPath = userManager.getAuthorizableByPath(suffix);
                 if (authorizableByPath == null) {
@@ -37,7 +38,7 @@ public class UserManagement extends ConsoleSlingBean {
     }
 
     public String getPath() {
-        String suffix = getRequest().getRequestPathInfo().getSuffix();
+        String suffix = XSS.filter(getRequest().getRequestPathInfo().getSuffix());
         return suffix;
     }
 

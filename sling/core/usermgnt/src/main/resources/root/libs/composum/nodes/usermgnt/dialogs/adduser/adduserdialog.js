@@ -1,9 +1,8 @@
-(function(core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.usermanagement');
 
-    core.usermanagement = core.usermanagement || {};
-
-    (function(usermanagement) {
+    (function (usermanagement, core) {
 
         usermanagement.getAddUserDialog = function () {
             return core.getView('#user-create-dialog', usermanagement.AddUserDialog);
@@ -35,14 +34,14 @@
                     {
                         dataType: 'post'
                     },
-                    _.bind(function(result) {
+                    _.bind(function (result) {
                         this.hide();
-                        usermanagement.tree.refresh(function() {
+                        usermanagement.tree.refresh(function () {
                             var path = JSON.parse(result.responseText).path;
                             $(document).trigger("path:select", [path]);
                         });
                     }, this),
-                    _.bind(function(result) {
+                    _.bind(function (result) {
                         this.hide();
                         core.alert('danger', 'Error', 'Error creating user', result);
                     }, this));
@@ -50,6 +49,6 @@
             }
         });
 
-    })(core.usermanagement);
+    })(CPM.nodes.usermanagement, CPM.core);
 
-})(window.core);
+})();

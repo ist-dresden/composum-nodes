@@ -1,9 +1,8 @@
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('core.components');
 
-    core.components = core.components || {};
-
-    (function (components) {
+    (function (components, core) {
 
         components.const = _.extend(components.const || {}, {
             slider: {
@@ -13,10 +12,10 @@
             }
         });
 
-        components.SliderWidget = window.widgets.Widget.extend({
+        components.SliderWidget = CPM.widgets.Widget.extend({
 
             initialize: function (options) {
-                window.widgets.Widget.prototype.initialize.apply(this, [options]);
+                CPM.widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.$input.attr('data-slider-value', this.$input.val());
                 this.$input.slider();
             },
@@ -28,7 +27,7 @@
             setValue: function (value, triggerChange) {
                 this.$input.val(value);
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             },
 
@@ -37,7 +36,7 @@
             }
         });
 
-        window.widgets.register(window.widgets.const.css.selector.prefix +
+        CPM.widgets.register(CPM.widgets.const.css.selector.prefix +
             components.const.slider.css.base, components.SliderWidget, {
 
             /**
@@ -48,6 +47,6 @@
             }
         });
 
-    })(core.components);
+    })(CPM.core.components, CPM.core);
 
-})(window.core);
+})();

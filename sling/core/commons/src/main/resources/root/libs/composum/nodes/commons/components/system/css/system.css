@@ -1,0 +1,100 @@
+
+.composum-nodes-system-dialog .composum-nodes-system-dialog_form {
+    margin: 0;
+}
+
+.composum-nodes-system-dialog .composum-commons-form-tab-nav {
+    margin: 0 -15px;
+    padding: 0 15px;
+}
+
+.composum-commons-form-tab-panel .composum-nodes-system-felix {
+    position: relative;
+    padding: 15px 0 0;
+}
+
+.composum-nodes-system-felix .composum-nodes-system-felix_tags {
+    position: absolute;
+    top: 15px;
+    right: 0;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.composum-nodes-system-felix .composum-nodes-system-felix_tags .input-group {
+    display: inline-table;
+    vertical-align: middle;
+}
+
+@media (max-width: 767px) {
+    .composum-nodes-system-felix .composum-nodes-system-felix_tags .input-group {
+        max-width: 40%;
+    }
+}
+
+.composum-nodes-system-felix .composum-nodes-system-felix_content {
+    min-height: 300px;
+    padding-top: 34px;
+}
+
+.composum-nodes-system-felix_content h1,
+.composum-nodes-system-felix_content .helpText {
+    display: none;
+}
+
+.composum-nodes-system-felix_content > div {
+    width: 100%;
+    overflow: auto;
+}
+
+.composum-nodes-system-felix_content > div > p > span {
+    position: absolute;
+    top: 15px;
+    left: 0;
+    display: inline-block;
+    line-height: 26px;
+    font-size: 14px;
+}
+
+.composum-nodes-system-felix_content > div > p > span > strong {
+    padding: 0 4px;
+}
+
+.composum-nodes-system-felix_content table {
+    width: 100%;
+    margin: 15px 0 0;
+}
+
+.composum-nodes-system-felix_content table th,
+.composum-nodes-system-felix_content table td {
+    font-size: 14px;
+}
+
+.composum-nodes-system-felix_content table th {
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+.composum-nodes-system-felix_content table td p {
+    margin: 0;
+}
+
+.composum-nodes-system-felix_content .statusOK {
+    background-color: #CCFFCC;
+}
+
+.composum-nodes-system-felix_content .statusWARN {
+    background-color: #FFE569;
+}
+
+.composum-nodes-system-felix_content .statusTEMPORARILY_UNAVAILABLE {
+    background-color: #dab6fc;
+}
+
+.composum-nodes-system-felix_content .statusCRITICAL {
+    background-color: #F0975A;
+}
+
+.composum-nodes-system-felix_content .statusHEALTH_CHECK_ERROR {
+    background-color: #F16D4E;
+}

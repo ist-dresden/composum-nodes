@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('core.components');
 
-    core.components = core.components || {};
-
-    (function (components) {
+    (function (components, core) {
 
         /**
          * the node type declarations for the tree (defines the icon classes of the nodes)
@@ -614,7 +613,7 @@
                         path = node.original.path
                     }
                 }
-                path = window.core.encodePath(path ? path : this.getRootPath());
+                path = CPM.core.encodePath(path ? path : this.getRootPath());
                 if (_.isFunction(this.dataUrlForPath)) {
                     return this.dataUrlForPath(path);
                 }
@@ -869,6 +868,6 @@
             }
         });
 
-    })(core.components);
+    })(CPM.core.components, CPM.core);
 
-})(window.core);
+})();

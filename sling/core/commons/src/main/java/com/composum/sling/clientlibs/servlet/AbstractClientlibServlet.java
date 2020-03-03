@@ -96,7 +96,7 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
                     long timeInMillis = hints.lastModified.getTimeInMillis();
                     response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, timeInMillis);
                     if (get) {
-                        if (!HttpUtil.isModifiedSince(ifModifiedSince, timeInMillis)) {
+                        if (HttpUtil.notModifiedSince(ifModifiedSince, timeInMillis)) {
                             if (LOG.isDebugEnabled()) {
                                 LOG.debug("Skipping retransmission because " + HttpConstants.HEADER_IF_MODIFIED_SINCE +
                                         "={} but modified {}", ifModifiedSince, timeInMillis);

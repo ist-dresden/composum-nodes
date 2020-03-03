@@ -1,5 +1,6 @@
 package com.composum.sling.core.servlet;
 
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -76,7 +77,7 @@ public class ThreaddumpConsolePlugin extends HttpServlet {
             this.writer = writer;
             this.request = request;
 
-            String[] statiArray = request.getParameterValues(PARAM_STATE);
+            String[] statiArray = XSS.filter(request.getParameterValues(PARAM_STATE));
             if (statiArray != null && statiArray.length > 0) {
                 stati = new HashSet<>();
                 for (String stateStr : statiArray) {
@@ -85,8 +86,8 @@ public class ThreaddumpConsolePlugin extends HttpServlet {
                 }
             }
 
-            if (StringUtils.isNotBlank(request.getParameter(PARAM_NAMEREGEX))) {
-                nameRegexStr = request.getParameter(PARAM_NAMEREGEX);
+            if (StringUtils.isNotBlank(XSS.filter(request.getParameter(PARAM_NAMEREGEX)))) {
+                nameRegexStr = XSS.filter(request.getParameter(PARAM_NAMEREGEX));
                 try {
                     nameRegex = Pattern.compile(nameRegexStr);
                 } catch (PatternSyntaxException e) {
@@ -156,7 +157,7 @@ public class ThreaddumpConsolePlugin extends HttpServlet {
                         .append(stackTraceElement.getFileName())
                         .append(":")
                         .append(stackTraceElement.getLineNumber())
-                        .append("\n");
+                        .append(")\n");
 
             }
             return buf.toString();

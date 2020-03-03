@@ -30,10 +30,12 @@ import java.util.HashMap;
 
 /**
  * the abstract observer implementation to react on property changes
+ * @deprecated Please prefer to use the Sling mechanisms (ResourceListener) to the JCR mechanisms
  */
+@Deprecated
 public abstract class AbstractChangeObserver implements EventListener {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractChangeObserver.class);
+    private final Logger LOG = LoggerFactory.getLogger(getClass());
 
     public static final int EVENT_TYPES = Event.NODE_ADDED |
             Event.NODE_REMOVED |
@@ -47,7 +49,7 @@ public abstract class AbstractChangeObserver implements EventListener {
     public static final String LOG_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     /**
-     * ignore 'jcr:..' properties except: 'jcr:title', 'jcr:description'
+     * ignore 'jcr:..' properties except: 'jcr:title', 'jcr:description', 'jcr:data'
      */
     public static final StringFilter PROPERTY_PATH_FILTER =
             new StringFilter.FilterSet(StringFilter.FilterSet.Rule.or,
@@ -210,10 +212,14 @@ public abstract class AbstractChangeObserver implements EventListener {
                                 if (isPropertyEvent(type)) {
                                     if (getPropertyPathFilter().accept(path)) {
                                         changedNodes.registerChange(session, resolver, path, time, user);
+                                    } else {
+                                        LOG.debug("property change {} ignored {}", type, path);
                                     }
                                 } else {
                                     if (getNodePathFilter().accept(path)) {
                                         changedNodes.registerChange(session, resolver, path, time, user);
+                                    } else {
+                                        LOG.debug("node change {} ignored {}", type, path);
                                     }
                                 }
                             }
@@ -238,6 +244,8 @@ public abstract class AbstractChangeObserver implements EventListener {
                 } finally {
                     resolver.close();
                 }
+            } else {
+                LOG.warn("Can't get resolver. {} ({})", getClass().getName(), System.identityHashCode(this));
             }
         } catch (LoginException ex) {
             LOG.error(ex.getMessage(), ex);
@@ -284,7 +292,7 @@ public abstract class AbstractChangeObserver implements EventListener {
 
     @Activate
     @Modified
-    protected void activate(ComponentContext context) {
+    public void activate(ComponentContext context) {
         bundleContext = context.getBundleContext();
         try {
             Session session = getSession();
@@ -294,15 +302,18 @@ public abstract class AbstractChangeObserver implements EventListener {
         } catch (RepositoryException ex) {
             LOG.error(ex.getMessage(), ex);
         }
+        LOG.info("{} activated ({})", getClass().getName(), System.identityHashCode(this));
     }
 
     @Deactivate
-    protected void deactivate() {
+    public void deactivate() {
+        bundleContext = null;
         try {
             Session session = getSession();
             session.getWorkspace().getObservationManager().removeEventListener(this);
         } catch (RepositoryException ex) {
             LOG.error(ex.getMessage(), ex);
         }
+        LOG.info("{} deactivated ({})", getClass().getName(), System.identityHashCode(this));
     }
 }

@@ -1,9 +1,8 @@
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('core.components');
 
-    core.components = core.components || {};
-
-    (function (components) {
+    (function (components, core) {
 
         components.const = _.extend(components.const || {}, {
             colorpicker: {
@@ -13,10 +12,10 @@
             }
         });
 
-        components.ColorpickerWidget = window.widgets.Widget.extend({
+        components.ColorpickerWidget = CPM.widgets.Widget.extend({
 
             initialize: function (options) {
-                window.widgets.Widget.prototype.initialize.apply(this, [options]);
+                CPM.widgets.Widget.prototype.initialize.apply(this, [options]);
                 // scan 'rules' attribute
                 this.initRules(this.$el);
                 options = _.extend({
@@ -42,7 +41,7 @@
                     this.$input.val(undefined);
                 }
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             },
 
@@ -64,9 +63,9 @@
             }
         });
 
-        window.widgets.register(window.widgets.const.css.selector.prefix +
+        CPM.widgets.register(CPM.widgets.const.css.selector.prefix +
             components.const.colorpicker.css.base, components.ColorpickerWidget);
 
-    })(core.components);
+    })(CPM.core.components, CPM.core);
 
-})(window.core);
+})();

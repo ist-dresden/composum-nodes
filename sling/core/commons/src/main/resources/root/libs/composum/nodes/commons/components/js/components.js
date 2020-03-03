@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('core.components');
 
-    core.components = core.components || {};
-
-    (function (components, widgets) {
+    (function (components, widgets, core) {
 
         //
         // Form
@@ -26,6 +25,18 @@
                     },
                     selector: {
                         item: '.multi-form-item'
+                    },
+                    tab: {
+                        base: 'composum-commons-form-tab',
+                        tabbed: 'composum-commons-form-tabbed',
+                        _nav: '-nav',
+                        _panel: '-panel'
+                    }
+                },
+                translate: {
+                    uri: {
+                        object: '/bin/cpm/core/translate.object.json',
+                        status: '/bin/cpm/core/translate.status.json'
                     }
                 }
             }
@@ -45,6 +56,25 @@
             initialize: function (options) {
                 var c = components.const.form;
                 this.isSlingPost = this.$el.hasClass(c.css.action.slingPost);
+                this.initTabs();
+            },
+
+            registerWidget: function (widget) {
+                widget.changed('FormWidget', _.bind(this.onChanged, this));
+            },
+
+            /**
+             * sets the 'formChanged' to 'true' - form isChanged(): 'true'
+             */
+            onChanged: function (event) {
+                this.formChanged = true;
+            },
+
+            /**
+             * @return 'true' if any widgets value in the form is changed
+             */
+            isChanged: function () {
+                return this.formChanged === true;
             },
 
             /**
@@ -55,12 +85,68 @@
                 return this.validate(alertMethod);
             },
 
+            /**
+             * if the form is marked as 'tabbed' find the tab navigation and insert an item for each tab panel
+             */
+            initTabs: function () {
+                var c = components.const.form.css.tab;
+                if (this.$('.' + c.tabbed).length === 1) {
+                    this.tabbed = {
+                        $el: this.$('.' + c.tabbed)
+                    };
+                    var $tabNav = this.tabbed.$nav = this.$('.' + c.base + c._nav);
+                    var tabList = this.tabbed.list = [];
+                    var tabMap = this.tabbed.map = {};
+                    $tabNav.html('');
+                    this.tabbed.$el.find('.' + c.base + c._panel).each(function () {
+                        var $tabPanel = $(this);
+                        var tabId = $tabPanel.attr('id');
+                        var tabLabel = $tabPanel.data('label');
+                        $tabNav.append('<li role="presentation"><a role="tab" data-toggle="tab" href="#'
+                            + tabId + '" data-key="' + $tabPanel.data('key') + '">' + tabLabel + '</a></li>');
+                        tabList.push($tabPanel);
+                        tabMap[tabId] = {
+                            id: tabId,
+                            label: tabLabel,
+                            panel: $tabPanel
+                        }
+                    });
+                }
+            },
+
             validationReset: function () {
+                var c = components.const.form.css;
+                if (this.tabbed) {
+                    this.tabbed.$nav.find('li').removeClass('has-error');
+                }
                 this.$(widgets.const.css.selector.general).each(function () {
                     if (this.view && _.isFunction(this.view.validationReset)) {
                         this.view.validationReset.apply(this.view);
                     }
                 });
+                this.$el.removeClass(c.status.invalid);
+                this.$el.addClass(c.status.valid);
+            },
+
+            onValidationFault: function () {
+                var c = components.const.form.css;
+                this.$el.removeClass(c.status.valid);
+                this.$el.addClass(c.status.invalid);
+                if (this.tabbed) {
+                    var dialog = this;
+                    var $first = undefined;
+                    this.tabbed.list.forEach(function (item) {
+                        var $tab = $(item);
+                        if ($tab.find('.has-error').length > 0) {
+                            var $tabLink = dialog.tabbed.$nav.find('[href="#' + $tab[0].id + '"]');
+                            $tabLink.parent().addClass('has-error');
+                            if (!$first) {
+                                $first = $tabLink;
+                                $first.tab('show');
+                            }
+                        }
+                    });
+                }
             },
 
             /**
@@ -68,7 +154,6 @@
              * the class of the form signals the result ('valid-form / 'invalid-form')
              */
             validate: function (alertMethod) {
-                var c = components.const.form;
                 var valid = true;
                 this.$(widgets.const.css.selector.general).each(function () {
                     if (this.view) {
@@ -78,13 +163,6 @@
                         }
                     }
                 });
-                if (valid) {
-                    this.$el.removeClass(c.css.status.invalid);
-                    this.$el.addClass(c.css.status.valid);
-                } else {
-                    this.$el.removeClass(c.css.status.valid);
-                    this.$el.addClass(c.css.status.invalid);
-                }
                 return valid;
             },
 
@@ -152,10 +230,11 @@
                         }
                     }
                 });
+                this.formChanged = false;
             },
 
             /**
-             * prepare the validation and a following submit (adjust names and values is useful)
+             * prepare the validation and a following submit (adjust names and values if useful)
              */
             prepare: function () {
                 var c = components.const.form;
@@ -170,7 +249,7 @@
             },
 
             /**
-             * finalize all date before the following submit (prepare data for storing)
+             * finalize all data (values) before the following submit (prepare data for storing)
              */
             finalize: function () {
                 var c = components.const.form;
@@ -185,17 +264,49 @@
             },
 
             /**
+             * the general submit action; if a 'doValidate(alertMethod, onSuccess, onError)' function is avaialable
+             * at the form widget this validation is called instead of the general 'validate(alertMethod)'
+             * @param alertMethod (type, label, message, hint) - on validation fault
+             * @param onSuccess () - optional
+             * @param onError () - optional
+             */
+            doFormSubmit: function (alertMethod, onSuccess, onError) {
+                this.prepare();
+                if (_.isFunction(this.doValidate)) {
+                    this.doValidate(alertMethod, _.bind(function () {
+                        this.finalize();
+                        this.submitForm(onSuccess, onError);
+                    }, this), onError);
+                } else {
+                    if (this.validate(alertMethod)) {
+                        this.finalize();
+                        this.submitForm(onSuccess, onError);
+                    }
+                }
+            },
+
+            /**
              * Submit the form of the dialog.
              */
             submitForm: function (onSuccess, onError, onComplete) {
-                core.submitForm(this.el, onSuccess, onError, onComplete);
+                core.submitForm(this.el, _.bind(function (result) {
+                    this.formChanged = false;
+                    if (_.isFunction(onSuccess)) {
+                        onSuccess(result);
+                    }
+                }, this), onError, onComplete);
             },
 
             /**
              * Submit the form data using the 'PUT' method instead of 'POST'.
              */
             submitFormPut: function (onSuccess, onError, onComplete) {
-                core.submitFormPut(this.el, this.getValues(), onSuccess, onError, onComplete);
+                core.submitFormPut(this.el, this.getValues(), _.bind(function (result) {
+                    this.formChanged = false;
+                    if (_.isFunction(onSuccess)) {
+                        onSuccess(result);
+                    }
+                }, this), onError, onComplete);
             }
         });
 
@@ -206,8 +317,10 @@
         //
 
         /**
-         * the 'checkbox-widget' (window.core.components.CheckboxWidget)
+         * the 'checkbox-widget' core.components.CheckboxWidget)
          * possible attributes:
+         * - data-rules: 'required'
+         * - data-value: the initial 'value' (true/false) as an alternative to the 'checked' attribute
          */
         components.CheckboxWidget = widgets.Widget.extend({
 
@@ -215,8 +328,14 @@
                 widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.$typeHint = this.$('sling-post-type-hint');
                 this.$deleteHint = this.$('sling-post-delete-hint');
+                this.$defaultHint = this.$('sling-post-default-hint');
+                this.$useDefaultHint = this.$('sling-post-use-default-hint');
                 if (!this.$input.attr('value')) {
-                    this.$input.attr('value', 'true')
+                    this.$input.attr('value', 'true'); // the value which has to be sent if 'checked'
+                }
+                var value = this.$input.data('value');
+                if (value) {
+                    this.setValue(value);
                 }
             },
 
@@ -230,10 +349,14 @@
                     this.$input.attr(widgets.const.attr.name, name);
                     this.$typeHint.attr(widgets.const.attr.name, name + '@TypeHint');
                     this.$deleteHint.attr(widgets.const.attr.name, name + '@Delete');
+                    this.$defaultHint.attr(widgets.const.attr.name, name + '@DefaultValue');
+                    this.$useDefaultHint.attr(widgets.const.attr.name, name + '@UseDefaultWhenMissing');
                 } else {
                     this.$input.removeAttr(widgets.const.attr.name);
                     this.$typeHint.removeAttr(widgets.const.attr.name);
                     this.$deleteHint.removeAttr(widgets.const.attr.name);
+                    this.$defaultHint.removeAttr(widgets.const.attr.name);
+                    this.$useDefaultHint.removeAttr(widgets.const.attr.name);
                 }
             },
 
@@ -254,8 +377,11 @@
             /**
              * defines the (initial) value of the input field
              */
-            setValue: function (value) {
+            setValue: function (value, triggerChange) {
                 this.$input.prop('checked', value === 'false' ? false : value);
+                if (triggerChange) {
+                    this.$el.trigger('change', [value]);
+                }
             },
 
             /**
@@ -269,7 +395,7 @@
         widgets.register('.widget.checkbox-widget', components.CheckboxWidget);
 
         /**
-         * the 'select-buttons-widget' (window.core.components.SelectButtonsWidget)
+         * the 'select-buttons-widget' core.components.SelectButtonsWidget)
          * possible attributes:
          */
         components.SelectButtonsWidget = widgets.Widget.extend({
@@ -297,7 +423,7 @@
                 this.$('.btn[data-value="' + value + '"]').addClass('active');
                 this.value = this.$('.active').attr('data-value');
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             }
         });
@@ -305,7 +431,7 @@
         widgets.register('.widget.select-buttons-widget', components.SelectButtonsWidget);
 
         /**
-         * the 'radio-group-widget' (window.core.components.RadioGroupWidget)
+         * the 'radio-group-widget' core.components.RadioGroupWidget)
          * possible attributes:
          */
         components.RadioGroupWidget = widgets.Widget.extend({
@@ -334,7 +460,7 @@
                 $radio.prop("checked", true);
                 this.getValue();
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             },
 
@@ -346,8 +472,11 @@
         widgets.register('.widget.radio-group-widget', components.RadioGroupWidget);
 
         /**
-         * the 'select-widget' (window.core.components.SelectWidget)
+         * the 'select-widget' core.components.SelectWidget)
          * possible attributes:
+         * - data-rules: 'required'
+         * - data-options: a string of options (value1:label 1,value2,:no value label))
+         * - data-value: the current / initial value
          */
         components.SelectWidget = widgets.Widget.extend({
 
@@ -355,6 +484,14 @@
                 widgets.Widget.prototype.initialize.apply(this, [options]);
                 // scan 'rules / pattern' attributes
                 this.initRules();
+                var optionSet = this.$el.data('options');
+                if (optionSet) {
+                    this.setOptions(optionSet);
+                }
+                var value = this.$el.data('value') || this.$el.data('default');
+                if (value) {
+                    this.setValue(value);
+                }
             },
 
             retrieveInput: function () {
@@ -368,7 +505,7 @@
             setValue: function (value, triggerChange) {
                 this.$input.val(value);
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [this.getValue()]);
                 }
             },
 
@@ -378,10 +515,19 @@
 
             setOptions: function (options) {
                 this.$input.html('');
+                if (_.isString(options)) {
+                    var array = [];
+                    options.split(',').forEach(function (item) {
+                        var values = /^([^:]*)(:(.*))?$/.exec(item);
+                        array.push({value: values[1], label: values[3] ? values[3] : values[1]});
+                    });
+                    options = array;
+                }
                 if (_.isArray(options)) {
                     options.forEach(function (option) {
                         if (_.isObject(option)) {
-                            this.$input.append('<option value="' + (option.value || option.key) + '">' + (option.label || option.name) + '</option>');
+                            this.$input.append('<option value="' + (option.value || option.key || option.name) + '">'
+                                + (option.label || option.name || option.key || option.value) + '</option>');
                         } else {
                             this.$input.append('<option>' + option + '</option>');
                         }
@@ -446,7 +592,7 @@
                     this.$('input[type="checkbox"][value="' + val + '"]').prop('checked', true);
                 }, this));
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             }
         });
@@ -454,7 +600,7 @@
         widgets.register('.widget.table-select-widget', components.TableSelectWidget);
 
         /**
-         * the 'text-field-widget' (window.core.components.TextFieldWidget)
+         * the 'text-field-widget' core.components.TextFieldWidget)
          *
          * this is the basic class ('superclass') of all text input field based widgets; it is also usable
          * as is for normal text input fields; it implements the general validation and reset functions
@@ -627,7 +773,7 @@
         widgets.register('.widget.combobox-widget', components.ComboBoxWidget);
 
         /**
-         * the 'text-field-widget' (window.core.components.TextFieldWidget)
+         * the 'text-field-widget' core.components.TextFieldWidget)
          *
          * this is the basic class ('superclass') of all text input field based widgets; it is also usable
          * as is for normal text input fields; it implements the general validation and reset functions
@@ -744,7 +890,7 @@
         });
 
         /**
-         * the 'path-widget' (window.core.components.PathWidget)
+         * the 'path-widget' core.components.PathWidget)
          *
          * the widget behaviour to extend an input or an input group to select repository path values
          * - adds a typeahead function for the last path segment during input on the input element
@@ -794,10 +940,10 @@
                 this.dialogTitle = this.$el.attr('title');
                 this.dialogLabel = this.$el.data('label');
                 this.config = {
-                    rootPath: this.$el.data('root') || '/'
+                    rootPath: options.rootPath || this.$el.data('root') || '/'
                 };
                 this.setRootPath(this.config.rootPath);
-                this.filter = this.$el.data('filter');
+                this.setFilter(options.filter || this.$el.data('filter'));
                 // set up '.select' button if present
                 this.$selectButton = this.$('button.select');
                 if (this.$selectButton.length > 0) {
@@ -809,16 +955,31 @@
              * the callback for the '.select' button opens set dialog with the tree view
              */
             selectPath: function (event) {
-                var selectDialog = core.getView('#path-select-dialog', components.SelectPathDialog);
+                if (!this.isDisabled()) {
+                    var selectDialog = core.getView('#path-select-dialog', components.SelectPathDialog);
+                    if (!selectDialog) {
+                        var u = components.const.dialog.load;
+                        core.getHtml(u.base + u._path,
+                            _.bind(function (content) {
+                                selectDialog = core.addLoadedDialog(components.SelectPathDialog, content);
+                                this.openDialog(selectDialog);
+                            }, this));
+                    } else {
+                        this.openDialog(selectDialog);
+                    }
+                }
+            },
+
+            openDialog: function (selectDialog) {
                 selectDialog.setTitle(this.dialogTitle);
                 selectDialog.setLabel(this.dialogLabel);
                 selectDialog.setRootPath(this.getRootPath());
-                selectDialog.setFilter(this.filter);
+                selectDialog.setFilter(this.getFilter());
                 selectDialog.show(_.bind(function () {
                         this.getPath(_.bind(selectDialog.setValue, selectDialog));
                     }, this),
-                    _.bind(function () {
-                        this.setPath(selectDialog.getValue());
+                    _.bind(function (path) {
+                        this.setPath(path);
                     }, this));
             },
 
@@ -843,15 +1004,62 @@
                 this.setValue(path, oldValue !== path);
             },
 
+            /**
+             * @returns the repository path with the root path prependet if a root is declared
+             */
+            getValue: function () {
+                return this.applyRootPath(components.TextFieldWidget.prototype.getValue.call(this), false);
+            },
+
+            /**
+             * sets the value of the input field without a probably declared root path
+             */
+            setValue: function (value, triggerChange) {
+                components.TextFieldWidget.prototype.setValue.call(this, this.applyRootPath(value, true), triggerChange);
+            },
+
             getRootPath: function () {
                 return this.rootPath ? this.rootPath : '/';
             },
 
             setRootPath: function (path) {
+                var value = this.getValue();
+                var placeholder = this.applyRootPath(this.$input.prop('placeholder'), false);
                 this.rootPath = this.adjustRootPath(path ? path : this.config.rootPath);
+                if (placeholder) {
+                    this.$input.prop('placeholder', this.applyRootPath(placeholder, true));
+                }
+                this.setValue(value, false);
+            },
+
+            getFilter: function () {
+                return this.filter;
+            },
+
+            setFilter: function (filter) {
+                this.filter = filter;
             },
 
             adjustRootPath: function (path) {
+                return path;
+            },
+
+            applyRootPath: function (path, shorten) {
+                if (path) {
+                    if (shorten) {
+                        if (this.rootPath && this.rootPath !== '/'
+                            && (path === this.rootPath || path.indexOf(this.rootPath + '/') === 0)) {
+                            path = path.substring(this.rootPath.length);
+                            if (!path) {
+                                path = '/';
+                            }
+                        }
+                    } else {
+                        if (this.rootPath && this.rootPath !== '/') {
+                            path = path === '/' ? this.rootPath : this.rootPath + path;
+                        }
+                    }
+                }
                 return path;
             }
         });
@@ -859,14 +1067,14 @@
         widgets.register('.widget.path-widget', components.PathWidget);
 
         /**
-         * the 'reference-widget' (window.core.components.ReferenceWidget)
+         * the 'reference-widget' core.components.ReferenceWidget)
          */
         components.ReferenceWidget = components.PathWidget.extend({
 
             initialize: function (options) {
                 components.PathWidget.prototype.initialize.apply(this, [options]);
-                if (!this.filter) {
-                    this.filter = 'referenceable';
+                if (!this.getFilter()) {
+                    this.setFilter('referenceable');
                 }
             },
 
@@ -919,7 +1127,7 @@
         widgets.register('.widget.reference-widget', components.ReferenceWidget);
 
         /**
-         * the 'number-field-widget' (window.core.components.NumberFieldWidget)
+         * the 'number-field-widget' core.components.NumberFieldWidget)
          * possible attributes:
          *   - data-options: '[min][:step[:max[:default]]]'
          */
@@ -995,14 +1203,16 @@
             increment: function () {
                 if (this.stepSize) {
                     var value = this.getNumber();
-                    this.setValue(value !== undefined ? (value + this.stepSize) : this.minValue, true);
+                    this.setValue(value !== undefined ? (value + this.stepSize)
+                        : (this.defValue !== undefined ? this.defValue : this.minValue), true);
                 }
             },
 
             decrement: function () {
                 if (this.stepSize) {
                     var value = this.getNumber();
-                    this.setValue(value !== undefined ? (value - this.stepSize) : this.maxValue, true);
+                    this.setValue(value !== undefined ? (value - this.stepSize)
+                        : (this.defValue !== undefined ? this.defValue : this.maxValue), true);
                 }
             },
 
@@ -1028,7 +1238,7 @@
         widgets.register('.widget.number-field-widget', components.NumberFieldWidget);
 
         /**
-         * the 'date-time-widget' (window.core.components.DateTimeWidget)
+         * the 'date-time-widget' core.components.DateTimeWidget)
          * possible attributes:
          */
         components.DateTimeWidget = components.TextFieldWidget.extend({
@@ -1100,7 +1310,7 @@
                 this.datetimepicker.date(value ? moment(value, this.data.format) : null);
                 this.validate();
                 if (triggerChange) {
-                    this.$el.trigger('change');
+                    this.$el.trigger('change', [value]);
                 }
             }
         });
@@ -1108,7 +1318,7 @@
         widgets.register('.widget.date-time-widget', components.DateTimeWidget);
 
         /**
-         * the 'file-upload-widget' (window.core.components.FileUploadWidget)
+         * the 'file-upload-widget' core.components.FileUploadWidget)
          * possible attributes:
          * - data-options: 'hidePreview' (no file preview), 'showUpload' (the direct upload button)
          *  'browse:<Label>(:<Title>)', 'remove:<Label>(:<Title>)','upload:<Label>(:<Title>)',
@@ -1160,7 +1370,7 @@
             /**
              * defines the (initial) value of the input field
              */
-            setValue: function (value) {
+            setValue: function (value, triggerChange) {
             },
 
             grabFocus: function () {
@@ -1187,7 +1397,7 @@
         widgets.register('.widget.file-upload-widget', components.FileUploadWidget);
 
         /**
-         * the 'property-name-widget' (window.core.components.RepositoryNameWidget)
+         * the 'property-name-widget' core.components.RepositoryNameWidget)
          */
         components.PropertyNameWidget = components.TextFieldWidget.extend({
 
@@ -1216,7 +1426,7 @@
         widgets.register('.widget.property-name-widget', components.PropertyNameWidget);
 
         /**
-         * the 'repository-name-widget' (window.core.components.RepositoryNameWidget)
+         * the 'repository-name-widget' core.components.RepositoryNameWidget)
          */
         components.RepositoryNameWidget = components.TextFieldWidget.extend({
 
@@ -1233,7 +1443,7 @@
         widgets.register('.widget.repository-name-widget', components.RepositoryNameWidget);
 
         /**
-         * the 'primary-type-widget' (window.core.components.PrimaryTypeWidget)
+         * the 'primary-type-widget' core.components.PrimaryTypeWidget)
          */
         components.PrimaryTypeWidget = components.TextFieldWidget.extend({
 
@@ -1247,7 +1457,7 @@
         widgets.register('.widget.primary-type-widget', components.PrimaryTypeWidget);
 
         /**
-         * the 'mixin-type-widget' (window.core.components.MixinTypeWidget)
+         * the 'mixin-type-widget' core.components.MixinTypeWidget)
          */
         components.MixinTypeWidget = components.TextFieldWidget.extend({
 
@@ -1260,6 +1470,6 @@
 
         widgets.register('.widget.mixin-type-widget', components.MixinTypeWidget);
 
-    })(core.components, window.widgets);
+    })(CPM.core.components, CPM.widgets, CPM.core);
 
-})(window.core);
+})();

@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.composum.sling.core</groupId>
         <artifactId>composum-sling-core-parent</artifactId>
-        <version>1.11.6</version>
+        <version>1.12.0</version>
         <relativePath>../.parent</relativePath>
     </parent>
 
@@ -49,6 +49,7 @@
                             root/libs/jslibs/bootstrap-slider/10.6.1;path:=/libs/jslibs/bootstrap-slider/10.6.1;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/bootstrap-table/1.7.0;path:=/libs/jslibs/bootstrap-table/1.7.0;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/bootstrap-table/1.14.2;path:=/libs/jslibs/bootstrap-table/1.14.2;overwrite:=true;ignoreImportProviders:="json,xml",
+                            root/libs/jslibs/bootstrap-vertical-tabs/1.2.2;path:=/libs/jslibs/bootstrap-vertical-tabs/1.2.2;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/highlight/9.8.0;path:=/libs/jslibs/highlight/9.8.0;overwrite:=true,
                             root/libs/jslibs/highlight/9.15.6;path:=/libs/jslibs/highlight/9.15.6;overwrite:=true,
                             root/libs/jslibs/iframeResizer/4.0.4;path:=/libs/jslibs/iframeResizer/4.0.4;overwrite:=true,

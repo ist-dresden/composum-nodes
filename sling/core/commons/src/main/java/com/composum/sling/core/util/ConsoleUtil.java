@@ -28,7 +28,7 @@ public class ConsoleUtil extends SlingSafeMethodsServlet {
         // use the suffix as the resource path if the resource is not defined or references a servlet
         if (StringUtils.isBlank(path) || path.startsWith("/bin/")) {
             RequestPathInfo requestPathInfo = request.getRequestPathInfo();
-            path = requestPathInfo.getSuffix();
+            path = XSS.filter(requestPathInfo.getSuffix());
             resource = null;
         }
         if (resource == null && StringUtils.isNotBlank(path)) {

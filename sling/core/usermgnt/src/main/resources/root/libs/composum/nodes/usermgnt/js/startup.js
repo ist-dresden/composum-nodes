@@ -2,13 +2,13 @@
  * final startup code which needs all components present
  *
  */
-'use strict';
+(function () {
+    'use strict';
+    CPM.namespace('nodes.usermanagement');
 
-(function(core) {
+    (function (usermanagement, core) {
 
-(function(usermanagement) {
+        
+    })(CPM.nodes.usermanagement, CPM.core);
 
-
-})(core.usermanagement);
-
-})(window.core);
+})();

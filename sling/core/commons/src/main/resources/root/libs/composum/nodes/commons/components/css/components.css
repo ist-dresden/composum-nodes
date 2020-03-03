@@ -148,6 +148,7 @@ fieldset {
 
 .checkbox-widget.form-control {
     border: none;
+    box-shadow: none;
     padding-left: 0;
 }
 
@@ -241,6 +242,10 @@ fieldset {
     padding-left: 25px;
 }
 
+.multi-form-widget.readonly .multi-form-item {
+    padding-left: 0;
+}
+
 .multi-form-item.current {
 }
 
@@ -253,11 +258,20 @@ fieldset {
     box-shadow: none;
 }
 
+.multi-form-widget.readonly .multi-form-item .item-select {
+    display: none;
+}
+
 .multi-form-widget .action-bar,
 .property-value-widget .action-bar {
     padding-top: 2px;
     padding-left: 25px;
     border: none;
+}
+
+.multi-form-widget.readonly .action-bar,
+.property-value-widget.readonly .action-bar {
+    display: none;
 }
 
 /**
@@ -289,11 +303,12 @@ fieldset {
  */
 .form-group .tree-panel {
     position: relative;
+    top: 0;
+    left: 0;
     min-height: 200px;
     max-height: 350px;
     overflow: auto;
     width: 100%;
-    margin: 0 0 0 -5px;
     padding: 10px;
     background-color: #fff;
     background-image: none;
@@ -413,7 +428,19 @@ fieldset {
     font-size: 21px;
 }
 
-.modal-dialog .modal-footer button.delete {
+.modal-dialog button.modal-dialog_close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    border: none;
+    padding: 5px;
+    background: transparent;
+    color: #aaa;
+    font-size: 22px;
+}
+
+.modal-dialog .modal-footer button.delete,
+.modal-dialog .modal-footer button.button-left {
     float: left;
 }
 

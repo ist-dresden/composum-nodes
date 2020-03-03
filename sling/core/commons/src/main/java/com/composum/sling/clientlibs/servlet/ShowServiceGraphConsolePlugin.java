@@ -1,5 +1,6 @@
 package com.composum.sling.clientlibs.servlet;
 
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.collections.ComparatorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -100,12 +101,12 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
             return;
         }
 
-        String type = StringUtils.defaultIfBlank(request.getParameter(PARAM_TYPE), "graph").toLowerCase();
+        String type = StringUtils.defaultIfBlank(XSS.filter(request.getParameter(PARAM_TYPE)), "graph").toLowerCase();
         boolean isText = type.equals("text");
         boolean isGraph = type.equals("graph");
         boolean isConsole = request.getRequestURI().contains("console");
-        boolean showBundles = StringUtils.defaultIfBlank(request.getParameter(PARAM_BUNDLE), "true").toLowerCase().equals("true");
-        String classRegex = StringUtils.defaultIfBlank(request.getParameter(PARAM_CLASSREGEX), "^com.composum");
+        boolean showBundles = StringUtils.defaultIfBlank(XSS.filter(request.getParameter(PARAM_BUNDLE)), "true").toLowerCase().equals("true");
+        String classRegex = StringUtils.defaultIfBlank(XSS.filter(request.getParameter(PARAM_CLASSREGEX)), "^com.composum");
         Pattern classPattern = Pattern.compile(classRegex);
 
         PrintWriter writer = response.getWriter();

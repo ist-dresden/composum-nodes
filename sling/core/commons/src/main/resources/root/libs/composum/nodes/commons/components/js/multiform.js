@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('core.components');
 
-    core.components = core.components || {};
-
-    (function (components, widgets) {
+    (function (components, widgets, core) {
 
         //
         // Multi 'Form'
@@ -145,6 +144,7 @@
 
             initialize: function (options) {
                 var c = components.const.multiform;
+                widgets.Widget.prototype.initialize.apply(this, [options]);
                 this.itemList = [];
                 this.itemType = options.itemType || components.MultiFormItem;
                 this.name = this.$el.data(c.data.name) || 'name';
@@ -166,10 +166,31 @@
                         '</div>' +
                         '</div>');
                 }
-                this.$(c.css.selector.actions + ' button.add').unbind('click').on('click', _.bind(this.add, this));
-                this.$(c.css.selector.actions + ' button.remove').unbind('click').on('click', _.bind(this.remove, this));
-                this.$(c.css.selector.actions + ' button.move-up').unbind('click').on('click', _.bind(this.moveUp, this));
-                this.$(c.css.selector.actions + ' button.move-down').unbind('click').on('click', _.bind(this.moveDown, this));
+                this.buttons = {
+                    $add: this.$(c.css.selector.actions + ' button.add'),
+                    $remove: this.$(c.css.selector.actions + ' button.remove'),
+                    $up: this.$(c.css.selector.actions + ' button.move-up'),
+                    $down: this.$(c.css.selector.actions + ' button.move-down')
+                };
+                this.initRules();
+                this.buttons.$add.unbind('click').on('click', _.bind(this.add, this));
+                this.buttons.$remove.unbind('click').on('click', _.bind(this.remove, this));
+                this.buttons.$up.unbind('click').on('click', _.bind(this.moveUp, this));
+                this.buttons.$down.unbind('click').on('click', _.bind(this.moveDown, this));
+                this.setDisabled(this.isDisabled());
+            },
+
+            setDisabled: function (disabled) {
+                widgets.Widget.prototype.setDisabled.call(this, disabled);
+                for (var i = 0; i < this.itemList.length; i++) {
+                    if (this.itemList[i].$input) {
+                        this.itemList[i].$input.prop('disabled', disabled);
+                    }
+                }
+                this.buttons.$add.prop('disabled', disabled);
+                this.buttons.$remove.prop('disabled', disabled);
+                this.buttons.$up.prop('disabled', disabled);
+                this.buttons.$down.prop('disabled', disabled);
             },
 
             declareName: function (name) {
@@ -188,7 +209,7 @@
                 return valueSet;
             },
 
-            setValue: function (valueSet) {
+            setValue: function (valueSet, triggerChange) {
                 if (valueSet) {
                     this.reset(valueSet.length);
                     for (var i = 0; i < this.itemList.length; i++) {
@@ -196,6 +217,19 @@
                     }
                 } else {
                     this.reset(0);
+                }
+                if (triggerChange) {
+                    this.$el.trigger('change', [valueSet]);
+                }
+            },
+
+            /**
+             * prevent from triggering value 'changed' events on item selection change
+             */
+            onWidgetChange: function (event, value) {
+                var c = components.const.multiform;
+                if (!$(event.target).is(c.css.selector.handle)) {
+                    widgets.Widget.prototype.onWidgetChange.call(this, event, value);
                 }
             },
 
@@ -248,14 +282,14 @@
                     }
                     $handle.prop('checked', false);
                     $handle.unbind('click').on('click', _.bind(this.onSelect, this));
-                    window.widgets.setUp(item.el);
+                    CPM.widgets.setUp(item.el);
                 }, this), this.itemType !== components.MultiFormItem);
                 return item;
             },
 
-            onSelect: function (event) {
+            onSelect: function (event, item) {
                 var c = components.const.multiform;
-                var itemElement = $(event.currentTarget).closest('.multi-form-item')[0];
+                var itemElement = item || $(event.currentTarget).closest('.multi-form-item')[0];
                 for (var i = 0; i < this.itemList.length; i++) {
                     if (itemElement === this.itemList[i].el) {
                         var $handle = this.itemList[i].$(c.css.selector.handle);
@@ -298,6 +332,7 @@
                 newItem.reset();
                 this.itemList[this.itemList.length] = newItem;
                 this.current(currentState);
+                this.$el.trigger('change', [this.getValue()]);
             },
 
             remove: function () {
@@ -312,6 +347,7 @@
                 } else {
                     this.itemList[0].reset();
                 }
+                this.$el.trigger('change', [this.getValue()]);
             },
 
             moveUp: function () {
@@ -321,6 +357,7 @@
                     var tail = index < this.itemList.length - 1 ? _.rest(this.itemList, index + 1) : [];
                     this.itemList = _.union(head, [this.currentItem], [this.itemList[index - 1]], tail);
                     this.currentItem.$el.insertBefore(this.currentItem.$el.prev());
+                    this.$el.trigger('change', [this.getValue()]);
                 }
             },
 
@@ -331,6 +368,7 @@
                     var tail = index < this.itemList.length - 2 ? _.rest(this.itemList, index + 2) : [];
                     this.itemList = _.union(head, [this.itemList[index + 1]], [this.currentItem], tail);
                     this.currentItem.$el.insertAfter(this.currentItem.$el.next());
+                    this.$el.trigger('change', [this.getValue()]);
                 }
             },
 
@@ -358,6 +396,6 @@
         widgets.register(widgets.const.css.selector.prefix +
             components.const.multiform.css.base, components.MultiFormWidget);
 
-    })(core.components, window.widgets);
+    })(CPM.core.components, CPM.widgets, CPM.core);
 
-})(window.core);
+})();

@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('nodes.browser');
 
-    core.browser = core.browser || {};
-
-    (function (browser) {
+    (function (browser, core) {
 
         browser.getPropertiesTab = function () {
             return core.getView('.node-view-panel .properties', browser.PropertiesTab);
@@ -267,6 +266,7 @@
                                         path: browser.getCurrentPath(),
                                         name: row.name,
                                         type: row.type,
+                                        subtype: row.subtype,
                                         multi: row.multi,
                                         value: row.value
                                     })
@@ -297,6 +297,6 @@
             }
         });
 
-    })(core.browser);
+    })(CPM.nodes.browser, CPM.core);
 
-})(window.core);
+})();

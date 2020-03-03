@@ -29,10 +29,10 @@ public class DomIdentifiers {
     protected DomIdentifiers() {
     }
 
-    private Integer identifierCount = 0;
+    private Long identifierCount = System.currentTimeMillis();
     private Map<String, Element> registeredElements = new HashMap<>();
 
-    private synchronized int nextId() {
+    private synchronized long nextId() {
         return ++identifierCount;
     }
 
@@ -45,9 +45,10 @@ public class DomIdentifiers {
         public Element(String path, String type) {
             this.path = path;
             this.type = StringUtils.isNotBlank(type) ? type : "any";
-            int idValue = nextId();
-            this.id = path.substring(path.lastIndexOf('/') + 1) + "-"
-                    + type.substring(type.lastIndexOf('/') + 1) + "-" + idValue;
+            long idValue = nextId();
+            this.id = (path.substring(path.lastIndexOf('/') + 1).replaceAll("jcr:", "_jcr_")
+                    + "-" + type.substring(type.lastIndexOf('/') + 1))
+                    .replaceAll("[^a-zA-Z0-9_-]", "-") + "-" + idValue;
         }
     }
 

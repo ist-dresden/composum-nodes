@@ -2,12 +2,11 @@
  *
  *
  */
-(function (core) {
+(function () {
     'use strict';
+    CPM.namespace('core.components');
 
-    core.components = core.components || {};
-
-    (function (components) {
+    (function (components, core) {
 
         components.const = components.const || {};
         components.const.dialog = {
@@ -22,6 +21,10 @@
                     object: '/bin/cpm/core/translate.object.json',
                     status: '/bin/cpm/core/translate.status.json'
                 }
+            },
+            load: {
+                base: '/libs/composum/nodes/commons/components/dialogs',
+                _path: '.path-select.html'
             }
         };
 
@@ -31,15 +34,19 @@
         components.Dialog = Backbone.View.extend({
 
             initialize: function (options) {
+                this.isLoaded = options.loaded || false;
                 this.$alert = this.$('.alert');
                 this.$messageHead = this.$('.messages .panel-heading');
                 this.$messageBody = this.$('.messages .panel-body');
                 this.setUpWidgets(this.el);
                 this.$el.on('shown.bs.modal', _.bind(this.onShown, this));
+                if (this.isLoaded) { // remove a loaded dialog on close
+                    this.$el.on('hidden.bs.modal', _.bind(this.destroy, this));
+                }
             },
 
             setUpWidgets: function (root) {
-                window.widgets.setUp(root);
+                CPM.widgets.setUp(root);
             },
 
             /**
@@ -63,7 +70,9 @@
             },
 
             resetOnShown: function () {
-                this.reset();
+                if (!this.isLoaded) { // asuming that loaded dialogs are pre filled
+                    this.reset();
+                }
             },
 
             hide: function () {
@@ -87,6 +96,13 @@
                         }
                     }
                 });
+            },
+
+            /**
+             * remove dialog from the DOM (on closing loaded dialogs)
+             */
+            destroy: function (event) {
+                this.$el.remove();
             },
 
             /**
@@ -269,33 +285,52 @@
         });
 
         /**
-         * the dialog to select a repository path in a tree view
+         * a dialog which can be 'opened' inside of another open dialog
          */
-        components.SelectPathDialog = components.Dialog.extend({
+        components.StackableDialog = components.Dialog.extend({
 
             initialize: function (options) {
-                components.Dialog.prototype.initialize.apply(this, [options]);
-                this.busy = false;
-                this.tree = core.getView(this.$('.path-select-tree'), components.Tree);
-                this.tree.onNodeSelected = _.bind(this.onNodeSelected, this);
-                this.$title = this.$('.modal-title');
-                this.$label = this.$('.path-input-label');
-                this.input = core.getView(this.$('input.path-input'), components.PathWidget);
-                this.input.$el.on('change', _.bind(this.inputChanged, this));
-                this.$('button.select').click(_.bind(function () {
-                    if (_.isFunction(this.callback)) {
-                        this.callback(this.getValue());
-                    }
-                    this.hide();
-                }, this));
+                core.components.Dialog.prototype.initialize.call(this, options);
             },
 
             /**
-             * initialization after shown...
+             *
+             */
+            show: function (initView, callback) {
+                core.components.Dialog.prototype.show.call(this, initView, callback);
+            },
+
+            hide: function () {
+                core.components.Dialog.prototype.hide.call(this);
+            }
+        });
+
+        components.AbstractPathSelectDialog = components.StackableDialog.extend({
+
+            initialize: function (options) {
+                components.StackableDialog.prototype.initialize.call(this, options);
+                this.$title = this.$('.modal-title');
+                this.$label = this.$('.path-input-label');
+                this.input = core.getView(this.$(options.inputSelector || 'input.path-input'),
+                    options.inputType || core.components.PathWidget);
+                this.input.$el.on('change', _.bind(this.inputChanged, this));
+            },
+
+            /**
+             * @extends components.StackableDialog - initialization after shown...
              */
             onShown: function () {
-                core.components.Dialog.prototype.onShown.apply(this);
-                this.inputChanged(); // simulate a change after shown to initialize the tree
+                components.StackableDialog.prototype.onShown.call(this);
+                this.inputChanged(); // simulate a change after shown to initialize the view
+            },
+
+            /**
+             * @override prevent from default callback handling;
+             * the callback must be triggerded by 'select' with the value (path) as parameter
+             */
+            hide: function () {
+                this.$el.modal('hide');
+                this.reset();
             },
 
             /**
@@ -313,10 +348,64 @@
             },
 
             /**
-             * defines the root path for the tree (default: '/')
+             * defines the root path for the selector (default: '/')
              */
             setRootPath: function (rootPath) {
                 this.input.setRootPath(rootPath);
+            },
+
+            /**
+             * defines the node filter for the view; should be set according to the current value type
+             */
+            setFilter: function (filter) {
+                this.input.setFilter(filter);
+            },
+
+            /**
+             * returns the current path value selected in this dialog
+             */
+            getValue: function () {
+                return this.input.getValue();
+            },
+
+            /**
+             * defines the (initial) value - the current / old value
+             */
+            setValue: function (value) {
+                this.input.setValue(value);
+                this.inputChanged(); // trigger state refresh
+            },
+
+            /**
+             * @abstract the callback on each change in the input field
+             */
+            inputChanged: function () {
+            }
+        });
+
+        /**
+         * the dialog to select a repository path in a tree view
+         */
+        components.SelectPathDialog = components.AbstractPathSelectDialog.extend({
+
+            initialize: function (options) {
+                components.AbstractPathSelectDialog.prototype.initialize.apply(this, [options]);
+                this.busy = false;
+                this.tree = core.getView(this.$('.path-select-tree'), components.Tree);
+                this.tree.onNodeSelected = _.bind(this.onNodeSelected, this);
+                this.$('button.select').click(_.bind(function () {
+                    if (_.isFunction(this.callback)) {
+                        this.callback(this.getValue());
+                    }
+                    this.hide();
+                }, this));
+            },
+
+            /**
+             * defines the root path for the tree (default: '/')
+             */
+            setRootPath: function (rootPath) {
+                components.AbstractPathSelectDialog.prototype.setRootPath.call(this, rootPath);
                 this.tree.setRootPath(rootPath);
             },
 
@@ -324,45 +413,8 @@
              * defines the node filter for the tree; should be set according to the current value type
              */
             setFilter: function (filter) {
+                components.AbstractPathSelectDialog.prototype.setFilter.call(this, filter);
                 this.tree.setFilter(filter);
-            },
-
-            /**
-             * returns the current path value selected in this dialog
-             */
-            getValue: function () {
-                var path = this.input.getValue();
-                if (path && !_.isEmpty(path = path.trim())) {
-                    var rootPath = this.tree.getRootPath();
-                    if (rootPath !== '/') {
-                        if (path.indexOf('/') === 0) {
-                            path = rootPath + path;
-                        } else {
-                            path = rootPath + '/' + path;
-                        }
-                    }
-                }
-                return path;
-            },
-
-            /**
-             * defines the (initial) value - the current / old value
-             */
-            setValue: function (value) {
-                if (value && !_.isEmpty(value = value.trim())) {
-                    var rootPath = this.tree.getRootPath();
-                    if (rootPath !== '/') {
-                        if (value === rootPath) {
-                            value = '/';
-                        } else {
-                            if (value.indexOf(rootPath + '/') === 0) {
-                                value = value.substring(rootPath.length);
-                            }
-                        }
-                    }
-                }
-                this.input.setValue(value);
-                this.inputChanged(); // select value in the tree
             },
 
             /**
@@ -398,35 +450,42 @@
              * extended to reset the selection in the tree
              */
             reset: function () {
-                components.Dialog.prototype.reset.apply(this);
+                components.AbstractPathSelectDialog.prototype.reset.apply(this);
                 this.tree.reset.apply(this.tree);
             }
         });
 
+        /**
+         * load dialogs on demand and remove them on close
+         */
         components.LoadedDialog = components.Dialog.extend({
 
             initialize: function (options) {
-                core.components.Dialog.prototype.initialize.apply(this, [options]);
-                this.$el.on('hidden.bs.modal', _.bind(this.onClose, this));
-            },
-
-            resetOnShown: function () {
-                // the loaded dialog should contain all values after load - prevent from reset
-            },
-
-            onClose: function (event) {
-                this.$el.remove();
+                core.components.Dialog.prototype.initialize.call(this, _.extend({
+                    loaded: true
+                }, options));
             }
         });
 
-        core.showLoadedDialog = function (viewType, html, initView, callback) {
+        core.addLoadedDialog = function (viewType, html, config) {
             var $body = $('body');
             $body.append(html);
             var $dialog = $body.children(':last-child');
-            var dialog = core.getWidget($body, $dialog[0], viewType);
+            return core.getWidget($body, $dialog[0], viewType, config
+                ? _.extend({loaded: true}, config) : {loaded: true});
+        };
+
+        core.showLoadedDialog = function (viewType, html, config, initView, callback) {
+            var dialog = core.addLoadedDialog(viewType, html, config);
             if (dialog) {
                 dialog.show(initView, callback);
             }
+        };
+
+        core.openLoadedDialog = function (url, viewType, config, initView, callback) {
+            core.getHtml(url, function (content) {
+                core.showLoadedDialog(viewType, content, config, initView, callback);
+            });
         };
 
         /**
@@ -439,17 +498,16 @@
         components.FormDialog = components.LoadedDialog.extend({
 
             initialize: function (options) {
-                core.components.LoadedDialog.prototype.initialize.apply(this, [options]);
-                this.form = core.getWidget(this.el, "form", core.components.FormWidget);
+                var formType = options ? (options.formType || core.components.FormWidget) : core.components.FormWidget;
+                this.form = core.getWidget(this.el, "form", formType);
+                core.components.LoadedDialog.prototype.initialize.call(this, options);
                 this.validationHints = [];
                 this.initView();
                 this.initSubmit();
             },
 
             getConfig: function () {
-                return _.extend({
-                    validationUrl: components.const.dialog.translate.uri.status
-                }, this.config);
+                return this.config;
             },
 
             dialogData: function () {
@@ -471,6 +529,7 @@
             },
 
             onValidationFault: function () {
+                this.form.onValidationFault();
             },
 
             message: function (type, label, message, hint) {
@@ -494,9 +553,7 @@
 
             validateForm: function () {
                 this.validationReset();
-                return this.form.validate(_.bind(function (type, label, message, hint) {
-                    this.validationHint(type, label, message, hint)
-                }, this));
+                return this.form.validate(_.bind(this.validationHint, this));
             },
 
             /**
@@ -519,7 +576,7 @@
             doValidate: function (onSuccess, onError) {
                 var valid = this.validateForm();
                 var config = this.getConfig();
-                if (config.validationUrl) {
+                if (config && config.validationUrl) {
                     var url = _.isFunction(config.validationUrl) ? config.validationUrl() : config.validationUrl;
                     var data = this.validationData();
                     core.ajaxPut(url, JSON.stringify(data), {
@@ -550,6 +607,13 @@
             },
 
             /**
+             * @default the simplest 'save and return' - no message - override if not enough
+             */
+            doSubmit: function () {
+                this.submitForm();
+            },
+
+            /**
              * triggered if the submit button is clicked or activated somewhere else
              */
             onSubmit: function (event) {
@@ -563,8 +627,13 @@
                         this.showResult(result);
                     }, this));
                 }, this), _.bind(function () {
-                    this.messages('warning', this.validationHints.length < 1 ? core.i18n.get('Validation error') : undefined,
-                        this.validationHints);
+                    if (this.validationHints.length < 1) {
+                        core.i18n.get('Validation error', _.bind(function (text) {
+                            this.messages('warning', text, this.validationHints);
+                        }, this));
+                    } else {
+                        this.messages('warning', undefined, this.validationHints);
+                    }
                     this.onValidationFault();
                 }, this));
                 return false;
@@ -583,10 +652,16 @@
             }
         });
 
-        core.showFormDialog = function (viewType, html, initView, callback) {
-            core.showLoadedDialog(viewType, html, initView, callback);
+        core.showFormDialog = function (viewType, html, config, initView, callback) {
+            core.showLoadedDialog(viewType, html, config, initView, callback);
         };
 
-    })(core.components);
+        core.openFormDialog = function (url, viewType, config, initView, callback) {
+            core.getHtml(url, function (content) {
+                core.showLoadedDialog(viewType, content, config, initView, callback);
+            });
+        };
 
-})(window.core);
+    })(CPM.core.components, CPM.core);
+
+})();
