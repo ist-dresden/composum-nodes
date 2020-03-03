@@ -144,25 +144,7 @@
                 if (name) {
                     value = property.get('value');
                 }
-                var subtype = 'string';
-                if (type === 'String') {
-                    if (value) {
-                        var valueSet = _.isArray(value) ? value : [value];
-                        for (var i = 0; i < valueSet.length; i++) {
-                            if (valueSet[i].indexOf('</') >= 0) {
-                                subtype =
-                                    valueSet[i].indexOf('<script') >= 0 ||
-                                    valueSet[i].indexOf('<style') >= 0
-                                        ? 'plaintext' : 'richtext';
-                                break;
-                            }
-                            if (valueSet[i].indexOf('\n') >= 0) {
-                                subtype = 'plaintext';
-                                break;
-                            }
-                        }
-                    }
-                }
+                var subtype = property.get('subtype') || 'string';
                 this.$path.val(path);
                 this.subtype.setValue(subtype);
                 if (name) {
