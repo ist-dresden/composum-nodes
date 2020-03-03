@@ -1,17 +1,16 @@
 package com.composum.sling.core.usermanagement.view;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.jcr.RepositoryException;
-
+import com.composum.sling.core.util.XSS;
+import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
 
-import com.composum.sling.nodes.console.ConsoleSlingBean;
+import javax.jcr.RepositoryException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by mzeibig on 16.11.15.
@@ -23,7 +22,8 @@ public class User extends ConsoleSlingBean {
         if (this.user == null)  {
             final JackrabbitSession session = (JackrabbitSession) getSession();
             final UserManager userManager = session.getUserManager();
-            Authorizable authorizableByPath = userManager.getAuthorizableByPath(getRequest().getRequestPathInfo().getSuffix());
+            Authorizable authorizableByPath = userManager.getAuthorizableByPath(
+                    XSS.filter(getRequest().getRequestPathInfo().getSuffix()));
             this.user = (org.apache.jackrabbit.api.security.user.User) authorizableByPath;
         }
         return this.user;
@@ -60,7 +60,7 @@ public class User extends ConsoleSlingBean {
     }
 
     public String getSuffix() {
-        return getRequest().getRequestPathInfo().getSuffix();
+        return XSS.filter(getRequest().getRequestPathInfo().getSuffix());
     }
 
     /**

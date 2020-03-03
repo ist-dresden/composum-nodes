@@ -13,9 +13,9 @@
                     </div>
                 </div>
                 <div class="identifiers">
-                    <h3>${pckg.group}&nbsp;</h3>
-                    <h1>${pckg.name}</h1>
-                    <h2>${pckg.version}&nbsp;</h2>
+                    <h3>${cpn:text(pckg.group)}&nbsp;</h3>
+                    <h1>${cpn:text(pckg.name)}</h1>
+                    <h2>${cpn:text(pckg.version)}&nbsp;</h2>
                     <div>last modified: ${pckg.lastModified} by ${pckg.lastModifiedBy}</div>
                 </div>
                 <sling:include replaceSelectors="status" />

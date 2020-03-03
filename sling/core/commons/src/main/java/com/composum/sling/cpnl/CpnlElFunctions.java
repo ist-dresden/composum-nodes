@@ -144,7 +144,7 @@ public class CpnlElFunctions {
     }
 
     public static String i18n(SlingHttpServletRequest request, String text) {
-        return I18N.get(request, text);
+        return text(I18N.get(request, text));
     }
 
     /**
@@ -310,6 +310,27 @@ public class CpnlElFunctions {
             result.append(value, pos, len);
         }
         return result.toString();
+    }
+
+    /**
+     * Prevents the given value string from containing XSS stuff.
+     *
+     * @param value source string
+     * @return string that does not contain XSS stuff
+     */
+    public static String filter(String value) {
+        return XSS.filter(value);
+    }
+
+    /**
+     * Prevents the given value string from containing XSS stuff.
+     *
+     * @param context the name of the protection context to use
+     * @param value   source string
+     * @return string that does not contain XSS stuff
+     */
+    public static String context(String context, String value) {
+        return XSS.filter(context, value);
     }
 
     /**

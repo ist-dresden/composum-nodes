@@ -7,6 +7,7 @@ import com.composum.sling.core.concurrent.JobUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
@@ -411,9 +412,9 @@ public class JobControlServlet extends AbstractServiceServlet {
             Map<String, String[]> parameters = request.getParameterMap();
             for (Map.Entry<String, String[]> parameter : parameters.entrySet()) {
                 if (parameter.getKey().equals("event.job.topic")) {
-                    topic = parameter.getValue()[0];
+                    topic = XSS.filter(parameter.getValue()[0]);
                 } else {
-                    String[] value = parameter.getValue();
+                    String[] value = XSS.filter(parameter.getValue());
                     if (value.length == 1) {
                         properties.put(parameter.getKey(), value[0]);
                     } else {

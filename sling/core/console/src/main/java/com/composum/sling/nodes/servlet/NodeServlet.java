@@ -17,6 +17,7 @@ import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.composum.sling.cpnl.CpnlElFunctions;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonReader;
@@ -575,7 +576,7 @@ public class NodeServlet extends NodeTreeServlet {
                                         ResourceFilter filter, ResourceResolver resolver)
                 throws ServletException, IOException {
 
-            String rendererType = request.getParameter("export");
+            String rendererType = XSS.filter(request.getParameter("export"));
 
             String syntheticPath = "/libs/composum/nodes/browser/query/export";
             SyntheticQueryResult resultResource = new SyntheticQueryResult(resolver, syntheticPath, result, filter, rendererType);

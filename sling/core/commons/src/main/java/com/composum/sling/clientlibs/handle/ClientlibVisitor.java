@@ -14,7 +14,6 @@ public interface ClientlibVisitor {
         EMBEDDED,
         /** Visited object is dependency of the parent. */
         DEPENDS
-
     }
 
     /**

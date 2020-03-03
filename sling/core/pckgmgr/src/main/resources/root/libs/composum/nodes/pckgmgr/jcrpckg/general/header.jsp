@@ -13,11 +13,11 @@
             </a>
         </div>
         <div class="identifiers">
-            <h3>${pckg.group}&nbsp;</h3>
-            <h1>${pckg.name}</h1>
-            <h2>${pckg.version}&nbsp;</h2>
+            <h3>${cpn:text(pckg.group)}&nbsp;</h3>
+            <h1>${cpn:text(pckg.name)}</h1>
+            <h2>${cpn:text(pckg.version)}&nbsp;</h2>
         </div>
-        <div class="description">${pckg.description}</div>
+        <div class="description">${cpn:rich(slingRequest,pckg.description)}</div>
     </div>
     <div class="panel-body status">
         <sling:include replaceSelectors="summary"/>
