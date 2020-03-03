@@ -18,6 +18,21 @@ public class PropertyUtil {
 
     public static final String FORBIDDEN_NAME_CHARS = "/";
 
+    enum StringSubtype {string, plaintext, richtext}
+
+    /**
+     * Determines a string value 'subtype' (the type of the editing widget) derived from the value itself.
+     *
+     * @param value the string value
+     * @return the subtype
+     */
+    public static StringSubtype getStringSubtype(String value) {
+        return value.contains("</") ? (value
+                .replaceAll("\"", "&quot;") // is filtered but ok
+                .equals(XSS.filter(value)) ? StringSubtype.richtext : StringSubtype.plaintext)
+                : (value.contains("\n") ? StringSubtype.plaintext : StringSubtype.string);
+    }
+
     public static <T> Class<T> getType(T defaultValue) {
         Class<T> type;
         if (defaultValue != null) {
@@ -137,14 +152,20 @@ public class PropertyUtil {
 
     // some 'property' strategies
 
-    /** some property names with special functions or filters */
+    /**
+     * some property names with special functions or filters
+     */
     public static final String PROP_PRIMARY_TYPE = "jcr:primaryType";
     public static final String PROP_MIXIN_TYPES = "jcr:mixinTypes";
 
-    /**  */
+    /**
+     *
+     */
     public static final SetPropertyStrategy DEFAULT_PROPERTY_STRATEGY = new SetPropertyStrategy.Property();
 
-    /**  */
+    /**
+     *
+     */
     public static final Map<String, SetPropertyStrategy> SET_PROPERTY_STRATEGY_MAP;
 
     static {
@@ -153,7 +174,9 @@ public class PropertyUtil {
         SET_PROPERTY_STRATEGY_MAP.put(PROP_MIXIN_TYPES, new SetPropertyStrategy.MixinTypes());
     }
 
-    /** The most appropriate Java type for a {@link PropertyType}. */
+    /**
+     * The most appropriate Java type for a {@link PropertyType}.
+     */
     protected static final Map<Integer, Class> DEFAULT_PROPERTY_TYPES = new HashMap<Integer, Class>() {{
         put(PropertyType.STRING, String.class);
         put(PropertyType.BINARY, Binary.class);
@@ -290,7 +313,9 @@ public class PropertyUtil {
         return jcrValue;
     }
 
-    /** Reads the value of a property as the given type. */
+    /**
+     * Reads the value of a property as the given type.
+     */
     public static <T> T readValue(Value value, Class<T> type) throws RepositoryException {
         try {
             if (null == value) return null;

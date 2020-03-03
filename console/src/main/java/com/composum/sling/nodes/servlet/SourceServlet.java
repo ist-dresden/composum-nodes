@@ -1,8 +1,8 @@
 package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.BeanContext;
-import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
@@ -53,7 +53,7 @@ public class SourceServlet extends SlingSafeMethodsServlet {
 
         Resource resource = null;
         RequestPathInfo pathInfo = request.getRequestPathInfo();
-        String resourcePath = pathInfo.getSuffix();
+        String resourcePath = XSS.filter(pathInfo.getSuffix());
         if (StringUtils.isNotBlank(resourcePath)) {
             ResourceResolver resolver = request.getResourceResolver();
             resource = resolver.getResource(resourcePath);
@@ -78,9 +78,7 @@ public class SourceServlet extends SlingSafeMethodsServlet {
                         //response.setContentType("application/octet-stream");
                         response.setHeader("Content-Disposition", "inline; filename=.content.xml");
 
-                        sourceModel.writeContentXmlFile(response.getWriter(),
-                                RequestUtil.checkSelector(request, "content"),
-                                RequestUtil.checkSelector(request, "node"));
+                        sourceModel.writeXmlFile(response.getWriter(), true);
                         break;
 
                     // a content hierarchy in a zipped structure with '.content.xml' for the content within

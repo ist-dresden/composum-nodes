@@ -2,6 +2,7 @@ package com.composum.sling.nodes.query;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.util.RequestUtil;
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
@@ -49,7 +50,7 @@ public class ExportCfg extends ConfigItem {
     }
 
     public String getQuery() {
-        return Base64.encodeBase64String(request.getParameter(PROP_QUERY).getBytes(StandardCharsets.UTF_8));
+        return Base64.encodeBase64String(XSS.filter(request.getParameter(PROP_QUERY)).getBytes(StandardCharsets.UTF_8));
     }
 
     public String getFilter() {

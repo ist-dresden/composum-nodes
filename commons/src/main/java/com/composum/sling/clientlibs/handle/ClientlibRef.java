@@ -45,7 +45,8 @@ public class ClientlibRef {
         this.pattern = (!isUri && !isCategory) ? ruleToPattern(rule) : null;
         this.path = (!isUri && !isCategory) ? ruleToPath(rule) : null;
         this.category = isCategory ? rule.substring(PREFIX_CATEGORY.length()) : null;
-        this.properties = Collections.unmodifiableMap(properties != null ? new HashMap<>(properties) : new HashMap<>());
+        this.properties = Collections.unmodifiableMap(properties != null
+                ? new HashMap<>(properties) : new HashMap<>());
     }
 
     public static ClientlibRef forCategory(Clientlib.Type type, String category, boolean optional, Map<String,

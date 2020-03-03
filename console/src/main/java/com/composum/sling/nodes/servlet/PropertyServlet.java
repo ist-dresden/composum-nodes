@@ -11,6 +11,7 @@ import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.PropertyUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
@@ -174,7 +175,7 @@ public class PropertyServlet extends AbstractServiceServlet {
             try {
                 Node node = resource.adaptTo(Node.class);
 
-                String name = request.getParameter(PARAM_NAME);
+                String name = XSS.filter(request.getParameter(PARAM_NAME));
                 if (StringUtils.isNotBlank(name)) {
 
                     response.setStatus(HttpServletResponse.SC_OK);

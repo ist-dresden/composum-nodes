@@ -126,13 +126,13 @@ public class RequestUtil extends org.apache.sling.api.request.RequestUtil {
     public static String getParameter(RequestParameterMap parameters, String name, String defaultValue) {
         RequestParameter parameter = parameters.getValue(name);
         String string;
-        return parameter != null && StringUtils.isNotBlank(string = parameter.getString())
+        return parameter != null && StringUtils.isNotBlank(string = XSS.filter(parameter.getString()))
                 ? string : defaultValue;
     }
 
     public static String getParameter(SlingHttpServletRequest request, String name, String defaultValue) {
-        String result = request.getParameter(name);
-        return result != null && StringUtils.isNotBlank(result) ? result : defaultValue;
+        String result = XSS.filter(request.getParameter(name));
+        return StringUtils.isNotBlank(result) ? result : defaultValue;
     }
 
     public static Integer getParameter(RequestParameterMap parameters, String name, Integer defaultValue) {

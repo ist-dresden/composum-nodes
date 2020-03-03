@@ -3,6 +3,7 @@ package com.composum.sling.core.pckgmgr.util;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.util.XSS;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
@@ -15,7 +16,6 @@ import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.Packaging;
-import org.apache.jackrabbit.vault.packaging.PackagingService;
 import org.apache.jackrabbit.vault.util.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestPathInfo;
@@ -95,9 +95,9 @@ public class PackageUtil {
 
     public static String getPath(SlingHttpServletRequest request) {
         RequestPathInfo reqPathInfo = request.getRequestPathInfo();
-        String path = reqPathInfo.getSuffix();
+        String path = XSS.filter(reqPathInfo.getSuffix());
         if (StringUtils.isBlank(path)) {
-            final String pathParam = request.getParameter("path");
+            final String pathParam = XSS.filter(request.getParameter("path"));
             if (StringUtils.isBlank(pathParam)) {
                 path = "/";
             } else {
@@ -783,7 +783,7 @@ public class PackageUtil {
         class StringSetter implements DefinitionSetter<String> {
 
             public String get(JsonReader reader) throws IOException {
-                return reader.nextString();
+                return XSS.filter(reader.nextString());
             }
 
             public void set(JcrPackageDefinition pckgDef, String key, Object value, boolean save) {
@@ -798,11 +798,11 @@ public class PackageUtil {
                 if (reader.peek() == JsonToken.BEGIN_ARRAY) {
                     reader.beginArray();
                     while (reader.peek() != JsonToken.END_ARRAY) {
-                        set.add(reader.nextString());
+                        set.add(XSS.filter(reader.nextString()));
                     }
                     reader.endArray();
                 } else {
-                    set.add(reader.nextString());
+                    set.add(XSS.filter(reader.nextString()));
                 }
                 return set.toArray(new String[set.size()]);
             }

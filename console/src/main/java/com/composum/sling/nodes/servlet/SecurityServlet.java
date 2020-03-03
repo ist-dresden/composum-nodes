@@ -1,7 +1,5 @@
 package com.composum.sling.nodes.servlet;
 
-import com.composum.sling.cpnl.CpnlElFunctions;
-import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
@@ -9,6 +7,9 @@ import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
+import com.composum.sling.cpnl.CpnlElFunctions;
+import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonWriter;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
@@ -250,8 +251,8 @@ public class SecurityServlet extends AbstractServiceServlet {
 
                 final String path = AbstractServiceServlet.getPath(request);
 
-                final String object = request.getParameter("object");
-                final String before = request.getParameter("before");
+                final String object = XSS.filter(request.getParameter("object"));
+                final String before = XSS.filter(request.getParameter("before"));
                 final AccessPolicyEntry entryObject = getJsonObject(object, AccessPolicyEntry.class);
                 final AccessPolicyEntry entryBefore = getJsonObject(before, AccessPolicyEntry.class);
                 final JackrabbitAccessControlList policy = AccessControlUtils.getAccessControlList(acManager, path);

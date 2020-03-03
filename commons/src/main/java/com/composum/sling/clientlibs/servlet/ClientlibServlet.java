@@ -5,6 +5,7 @@ import com.composum.sling.clientlibs.handle.ClientlibLink;
 import com.composum.sling.clientlibs.handle.ClientlibRef;
 import com.composum.sling.clientlibs.service.ClientlibConfiguration;
 import com.composum.sling.clientlibs.service.ClientlibService;
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -77,7 +78,7 @@ public class ClientlibServlet extends AbstractClientlibServlet {
                     String selectors = pathInfo.getSelectorString();
                     Clientlib.Type type = Clientlib.Type.valueOf(extension.toLowerCase());
                     String path = pathInfo.getResourcePath();
-                    String hash = parseHashFromSuffix(pathInfo.getSuffix());
+                    String hash = parseHashFromSuffix(XSS.filter(pathInfo.getSuffix()));
 
                     ClientlibRef ref = new ClientlibRef(type, path, false, null);
                     if (LOG.isDebugEnabled()) {

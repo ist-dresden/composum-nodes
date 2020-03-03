@@ -266,6 +266,7 @@
                                         path: browser.getCurrentPath(),
                                         name: row.name,
                                         type: row.type,
+                                        subtype: row.subtype,
                                         multi: row.multi,
                                         value: row.value
                                     })
