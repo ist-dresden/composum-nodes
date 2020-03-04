@@ -486,7 +486,7 @@
                 this.initRules();
                 var optionSet = this.$el.data('options');
                 if (optionSet) {
-                    this.setOptions(optionSet);
+                    this.setOptions(optionSet.indexOf('[') === 0 ? JSON.parse(optionSet) : optionSet);
                 }
                 var value = this.$el.data('value') || this.$el.data('default');
                 if (value) {
@@ -510,7 +510,7 @@
             },
 
             reset: function () {
-                this.$input.val(undefined);
+                this.$input.val(this.$el.data('default'));
             },
 
             setOptions: function (options) {
@@ -526,7 +526,8 @@
                 if (_.isArray(options)) {
                     options.forEach(function (option) {
                         if (_.isObject(option)) {
-                            this.$input.append('<option value="' + (option.value || option.key || option.name) + '">'
+                            this.$input.append('<option value="' + (option.value || option.value === '' ? option.value
+                                : option.key || option.key === '' ? option.key : option.name || '') + '">'
                                 + (option.label || option.name || option.key || option.value) + '</option>');
                         } else {
                             this.$input.append('<option>' + option + '</option>');
