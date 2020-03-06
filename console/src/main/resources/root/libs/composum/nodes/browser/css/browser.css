@@ -310,8 +310,7 @@
     color: #337ab7; /* info */
 }
 
-#browser-query .query-head .query-actions .query-input-form .input-group-addon.filter,
-#browser-view .node-view-content .detail-toolbar .resolver.on {
+#browser-query .query-head .query-actions .query-input-form .input-group-addon.filter {
     position: relative;
     padding: 1px 8px 0;
 }
