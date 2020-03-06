@@ -406,6 +406,15 @@ public class LinkUtil {
         return path;
     }
 
+    public static String decodeUrl(String path) {
+        if (path != null) {
+            path = path.replaceAll("%20", " ");
+            path = path.replaceAll("%3C", "<");
+            path = path.replaceAll("%3E", ">");
+        }
+        return path;
+    }
+
     /**
      * URL encoding for a resource path (without the encoding for the '/' path delimiters).
      *
@@ -423,6 +432,21 @@ public class LinkUtil {
             path = path.replaceAll("\\+", "%2B");
             path = path.replaceAll("&", "%26");
             path = path.replaceAll("#", "%23");
+        }
+        return path;
+    }
+
+    public static String decodePath(String path) {
+        if (path != null) {
+            path = path.replaceAll("%23", "#");
+            path = path.replaceAll("%26", "&");
+            path = path.replaceAll("%2B", "+");
+            path = path.replaceAll("%3A", ":");
+            path = path.replaceAll("%3B", ";");
+            path = path.replaceAll("%3D", "=");
+            path = path.replaceAll("%3F", "?");
+            path = path.replaceAll("/_jcr_", "/jcr:");
+            path = decodeUrl(path);
         }
         return path;
     }
