@@ -90,7 +90,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
             if (parent != null) {
                 int index = 0;
                 for (Resource child : parent.getChildren()) {
-                    if (type == null || child.isResourceType(type)) {
+                    if (child.isResourceType(type)) {
                         if (name.equals(child.getName())) {
                             return index;
                         }
@@ -110,7 +110,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
             if (parent != null) {
                 boolean returnNext = false;
                 for (Resource child : parent.getChildren()) {
-                    if (type == null || child.isResourceType(type)) {
+                    if (child.isResourceType(type)) {
                         if (returnNext) {
                             return child;
                         }
@@ -121,7 +121,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
                 }
                 if (returnNext && wrapAround) {
                     for (Resource child : parent.getChildren()) {
-                        if (type == null || child.isResourceType(type)) {
+                        if (child.isResourceType(type)) {
                             return child;
                         }
                     }

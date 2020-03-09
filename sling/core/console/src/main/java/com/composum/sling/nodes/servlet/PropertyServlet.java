@@ -6,6 +6,7 @@ import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
+import com.composum.sling.core.servlet.Status;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.PropertyUtil;
@@ -30,6 +31,8 @@ import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -47,6 +50,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+
+import static javax.servlet.http.HttpServletResponse.SC_OK;
 
 /**
  * The service servlet handling one single JCR property for one resource.
@@ -71,7 +76,7 @@ public class PropertyServlet extends AbstractServiceServlet {
 
     public enum Extension {json, bin}
 
-    public enum Operation {get, put, update, map, copy, remove}
+    public enum Operation {get, put, update, map, copy, remove, xss}
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
@@ -96,6 +101,8 @@ public class PropertyServlet extends AbstractServiceServlet {
                 Operation.get, new GetOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.map, new MapGetOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.xss, new CheckXssOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.bin,
                 Operation.get, new GetBinaryOperation());
 
@@ -116,6 +123,28 @@ public class PropertyServlet extends AbstractServiceServlet {
         // DELETE
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json,
                 Operation.remove, new RemoveOperation());
+    }
+
+    protected class CheckXssOperation implements ServletOperation {
+
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource)
+                throws RepositoryException, IOException, ServletException {
+            Status status = new Status(request, response);
+            String[] value = request.getParameterValues(PARAM_VALUE);
+            boolean result = true;
+            if (value != null && value.length > 0) {
+                for (int i = 0; result && i < value.length; i++) {
+                    result = PropertyUtil.xssCheck(value[i]);
+                }
+            }
+            if (!result) {
+                status.warn("XSS check failed");
+            }
+            status.sendJson();
+        }
     }
 
     protected class MapGetOperation implements ServletOperation {
@@ -143,7 +172,7 @@ public class PropertyServlet extends AbstractServiceServlet {
 
                 JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
 
-                response.setStatus(HttpServletResponse.SC_OK);
+                response.setStatus(SC_OK);
 
                 Node node = resource.adaptTo(Node.class);
                 if (node != null) {
@@ -178,7 +207,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                 String name = XSS.filter(request.getParameter(PARAM_NAME));
                 if (StringUtils.isNotBlank(name)) {
 
-                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setStatus(SC_OK);
 
                     ResponseUtil.writeJsonProperty(response, node, name);
 
@@ -220,7 +249,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                     session.save();
 
                     // answer 'OK' (200)
-                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setStatus(SC_OK);
 
                     if (available) {
                         // answer with property reloaded and transformed to JSON
@@ -273,7 +302,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                     // parse parameters from JSON into a POJO of type BulkParameters
                     BulkParameters parameters = getJsonObject(request, BulkParameters.class);
 
-                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setStatus(SC_OK);
                     JsonWriter writer = ResponseUtil.getJsonWriter(response);
                     if (parameters != null) {
                         doIt(request, response, resource, node, parameters, writer);
@@ -422,7 +451,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                             }
 
                             response.setContentLength((int) binary.getSize());
-                            response.setStatus(HttpServletResponse.SC_OK);
+                            response.setStatus(SC_OK);
 
                             InputStream input = binary.getStream();
                             BufferedInputStream buffered = new BufferedInputStream(input);
@@ -493,7 +522,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                         session.save();
 
                         response.setContentLength(0);
-                        response.setStatus(HttpServletResponse.SC_OK);
+                        response.setStatus(SC_OK);
 
                     } else {
                         LOG.error(resource.getPath() + ": invalid file update POST - no file/binary content");
@@ -535,7 +564,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                     session.save();
 
                     response.setContentLength(0);
-                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setStatus(SC_OK);
 
                 } else {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST,

@@ -79,7 +79,10 @@
 
                 this.loadTypes();
                 this.$type.on('change', _.bind(this.typeChanged, this));
-                this.subtype.$el.on('change', _.bind(this.typeChanged, this));
+                this.subtype.changed('PropertyDialog', _.bind(this.subtypeChanged, this));
+                this.subtype.$input.focus(_.bind(function () {
+                    this.subtype.lastValue = this.subtype.getValue();
+                }, this));
                 this.$multi.on('change', _.bind(this.multiChanged, this));
                 this.$name.on('change', _.bind(this.nameChanged, this));
 
@@ -114,6 +117,27 @@
                 }
                 if (currentValue) {
                     this.valueWidget.setValue(currentValue);
+                }
+            },
+
+            subtypeChanged: function (event, value) {
+                if (value === 'richtext') {
+                    core.getJson('/bin/cpm/nodes/property.xss.json?value=' + encodeURIComponent(this.valueWidget.getValue()),
+                        _.bind(function (data) {
+                            if (data.warning) {
+                                core.i18n.get('The value contains XSS stuff. A switch could trigger its execution. Do you really want to switch?', _.bind(function (text) {
+                                    if (confirm(text)) {
+                                        this.typeChanged();
+                                    } else {
+                                        this.subtype.setValue(this.subtype.lastValue);
+                                    }
+                                }, this));
+                            } else {
+                                this.typeChanged();
+                            }
+                        }, this))
+                } else {
+                    this.typeChanged();
                 }
             },
 

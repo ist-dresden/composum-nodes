@@ -1,0 +1,16 @@
+{
+  "jcr:primaryType": "sling:Folder",
+  "jcr:language": "de",
+  "jcr:mixinTypes": [
+    "mix:language"
+  ],
+  "sling:basename": "composum-nodes",
+  "property": {
+    "jcr:primaryType": "sling:Folder",
+    "xss-confirm": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "The value contains XSS stuff. A switch could trigger its execution. Do you really want to switch?",
+      "sling:message": "Der Wert enthält XSS-Zeug. Ein Umschalten könnten dessen Ausführung auslösen. Wollen Sie wirklich umschalten?"
+    }
+  }
+}
