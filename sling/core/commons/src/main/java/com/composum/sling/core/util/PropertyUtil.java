@@ -27,10 +27,17 @@ public class PropertyUtil {
      * @return the subtype
      */
     public static StringSubtype getStringSubtype(String value) {
-        return value.contains("</") ? (value
-                .replaceAll("\"", "&quot;") // is filtered but ok
-                .equals(XSS.filter(value)) ? StringSubtype.richtext : StringSubtype.plaintext)
+        return value.contains("</") ? (xssCheck(value) ? StringSubtype.richtext : StringSubtype.plaintext)
                 : (value.contains("\n") ? StringSubtype.plaintext : StringSubtype.string);
+    }
+
+    /**
+     * @return 'true' if the value seems to be free from XSS stuff
+     */
+    public static boolean xssCheck(String value) {
+        return value == null || value
+                .replaceAll("\"", "&quot;") // is filtered but ok
+                .equals(XSS.filter(value));
     }
 
     public static <T> Class<T> getType(T defaultValue) {
