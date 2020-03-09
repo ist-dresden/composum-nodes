@@ -7,11 +7,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -72,9 +68,15 @@ public class SlingResourceUtil {
      * @return true if descendant is a descendant of parent , false if any is null.
      */
     public static boolean isSameOrDescendant(@Nullable String parent, @Nullable String descendant) {
-        if (parent == null || descendant == null) { return false; }
-        if (parent.equals(descendant) || parent.equals("/")) { return true; }
-        if (descendant.startsWith(parent + '/')) { return true; }
+        if (parent == null || descendant == null) {
+            return false;
+        }
+        if (parent.equals(descendant) || parent.equals("/")) {
+            return true;
+        }
+        if (descendant.startsWith(parent + '/') && !descendant.contains("..")) {
+            return true;
+        }
         String parentNormalized = ResourceUtil.normalize(parent);
         String descendantNormalized = ResourceUtil.normalize(descendant);
         return parentNormalized.equals(descendantNormalized) || parentNormalized.equals("/")
