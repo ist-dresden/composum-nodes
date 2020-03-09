@@ -1019,6 +1019,11 @@
                 components.TextFieldWidget.prototype.setValue.call(this, this.applyRootPath(value, true), triggerChange);
             },
 
+            finalize: function () {
+                // set the full path (prpendet with the declared root) on finalizing the form (before save)
+                components.TextFieldWidget.prototype.setValue.call(this, this.getValue());
+            },
+
             getRootPath: function () {
                 return this.rootPath ? this.rootPath : '/';
             },
