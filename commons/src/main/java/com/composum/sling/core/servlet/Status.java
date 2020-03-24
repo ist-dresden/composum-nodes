@@ -260,6 +260,7 @@ public class Status {
      */
     public void error(@Nonnull String text, @Nonnull Throwable exception) {
         getMessages().add(Message.error(text, exception.getLocalizedMessage()), exception);
+        adjustToMessageLevel(Level.error);
     }
 
     /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
@@ -368,25 +369,36 @@ public class Status {
      */
     @Nonnull
     public Message addMessage(@Nonnull final Message message) {
-        if (messages == null) { messages = new MessageContainer(messageLogger); }
-        if (message.getLevel() == Level.error) {
+        if (messages == null) {
+            messages = new MessageContainer(messageLogger);
+        }
+        adjustToMessageLevel(message.getLevel());
+        messages.add(message);
+        return message;
+    }
+
+    /**
+     * Adjusts title, status and success / warning according to message level.
+     */
+    protected void adjustToMessageLevel(Level level) {
+        if (level == Level.error) {
             status = SC_BAD_REQUEST;
             success = false;
             if (!hasTitle()) {
                 setTitle("Error");
             }
-        } else if (message.getLevel() == Level.warn && status == SC_OK) {
+        } else if (level == Level.warn && status == SC_OK) {
             status = SC_ACCEPTED; // 202 - accepted but there is a warning
             warning = true;
             if (!hasTitle()) {
                 setTitle("Warning");
             }
         }
-        messages.add(message);
-        return message;
     }
 
-    /** Writes this object as JSON using {@link Gson}. */
+    /**
+     * Writes this object as JSON using {@link Gson}.
+     */
     public void toJson(@Nonnull final JsonWriter writer) throws IOException {
         try {
             gson.toJson(this, getClass(), writer);

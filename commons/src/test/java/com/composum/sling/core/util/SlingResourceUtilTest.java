@@ -36,6 +36,7 @@ public class SlingResourceUtilTest extends SlingResourceUtil {
         ec.checkThat(callRelativePath("/blu/la/lu", "/"), equalTo("../../../"));
         ec.checkThat(callRelativePath("/blu/la/lu", "/x"), equalTo("../../../x"));
         ec.checkThat(callRelativePath("/", "/"), equalTo(""));
+        ec.checkThat(SlingResourceUtil.relativePath("/", "//bla/blu"), equalTo("bla/blu"));
     }
 
     private String callRelativePath(String parent, String child) {
