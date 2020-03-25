@@ -22,24 +22,12 @@ import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.math.BigDecimal;
 import java.nio.file.attribute.FileTime;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -47,11 +35,7 @@ import java.util.zip.ZipOutputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
-import static org.apache.jackrabbit.JcrConstants.JCR_CONTENT;
-import static org.apache.jackrabbit.JcrConstants.JCR_MIXINTYPES;
-import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE;
-import static org.apache.jackrabbit.JcrConstants.NT_FILE;
-import static org.apache.jackrabbit.JcrConstants.NT_RESOURCE;
+import static org.apache.jackrabbit.JcrConstants.*;
 
 /**
  * <p>
@@ -137,10 +121,14 @@ public class SourceModel extends ConsoleSlingBean {
                     "^rep:Policy$", "^cq:Widget$", "^cq:EditConfig$", "^cq:WorkflowModel$", "^vlt:FullCoverage$",
                     "^mix:language$", "^sling:OsgiConfig$"));
 
-    /** Pattern for {@link SimpleDateFormat} that creates a date suitable with XML sources. */
+    /**
+     * Pattern for {@link SimpleDateFormat} that creates a date suitable with XML sources.
+     */
     public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
-    /** Indentation level for one level in the XML hierarchy in an XML document. */
+    /**
+     * Indentation level for one level in the XML hierarchy in an XML document.
+     */
     public static final String BASIC_INDENT = "    ";
 
     protected static final Pattern PATH_WITHIN_JCR_CONTENT = Pattern.compile(".*/jcr:content(/.*)?$");
@@ -293,9 +281,16 @@ public class SourceModel extends ConsoleSlingBean {
 
     // Package output
 
-    /** Writes a complete package about the node - arguments specify the package metadata. */
+    /**
+     * Writes a complete package about the node - arguments specify the package metadata.
+     *
+     * @throws IOException on IO errors
+     * @throws {@link      IOErrorOnCloseException} is thrown when an IO error appears during {@link ZipOutputStream#close()},
+     *                     which writes the central directory of the zip which is not read by some consumers. We give them
+     *                     the possibility to distinguish these.
+     */
     public void writePackage(OutputStream output, String group, String packageName, String version)
-            throws IOException, RepositoryException {
+            throws IOException, IOErrorOnCloseException, RepositoryException {
 
         String root = "jcr_root";
         ZipOutputStream zipStream = new ZipOutputStream(output);
@@ -304,7 +299,11 @@ public class SourceModel extends ConsoleSlingBean {
         writeParents(zipStream, root, resource.getParent());
         writeIntoZip(zipStream, root, true);
         zipStream.flush();
-        zipStream.close();
+        try {
+            zipStream.close();
+        } catch (IOException e) {
+            throw new IOErrorOnCloseException(e);
+        }
     }
 
     /**
@@ -381,7 +380,9 @@ public class SourceModel extends ConsoleSlingBean {
         zipStream.closeEntry();
     }
 
-    /** Writes all the .content.xml of the parents of root into the zip. */
+    /**
+     * Writes all the .content.xml of the parents of root into the zip.
+     */
     protected void writeParents(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Resource parent)
             throws IOException, RepositoryException {
         if (parent != null && !"/".equals(parent.getPath())) {
@@ -393,7 +394,9 @@ public class SourceModel extends ConsoleSlingBean {
 
     // ZIP output
 
-    /** Writes a "naked" Zip about the node: no package metadata, no parent nodes. */
+    /**
+     * Writes a "naked" Zip about the node: no package metadata, no parent nodes.
+     */
     public void writeArchive(@Nonnull OutputStream output)
             throws IOException, RepositoryException {
 
@@ -413,7 +416,9 @@ public class SourceModel extends ConsoleSlingBean {
      */
     protected void writeIntoZip(@Nonnull ZipOutputStream zipStream, @Nonnull String root, boolean writeDeep)
             throws IOException, RepositoryException {
-        if (resource == null || ResourceUtil.isNonExistingResource(resource)) { return; }
+        if (resource == null || ResourceUtil.isNonExistingResource(resource)) {
+            return;
+        }
         if (ResourceUtil.isResourceType(resource, ResourceUtil.TYPE_RESOURCE) && ResourceUtil.isResourceType(resource.getParent(), NT_FILE)) {
             // there is no proper way to write a nt:resource of a nt:file into a package.
             // We write the parent - nt:file - instead.
@@ -421,7 +426,9 @@ public class SourceModel extends ConsoleSlingBean {
             return;
         }
         if (getRenderingType(resource, false) == RenderingType.BINARYFILE) {
-            if (writeDeep) { writeFile(zipStream, root, resource); }
+            if (writeDeep) {
+                writeFile(zipStream, root, resource);
+            }
             // not writeDeep: a .content.xml is not present for a file, so we can't do anything.
             return;
         }
@@ -498,13 +505,19 @@ public class SourceModel extends ConsoleSlingBean {
             writer.flush();
             zipStream.closeEntry();
             writeBinaryProperties(zipStream, root, binaryProperties);
-            for (SourceModel binaryFile : binaryFiles) { binaryFile.writeIntoZip(zipStream, root, true); }
+            for (SourceModel binaryFile : binaryFiles) {
+                binaryFile.writeIntoZip(zipStream, root, true);
+            }
         }
     }
 
-    /** Writes the binary properties collected in {binaryProperties} into entries in the zip file. */
+    /**
+     * Writes the binary properties collected in {binaryProperties} into entries in the zip file.
+     */
     protected void writeBinaryProperties(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Queue<String> binaryProperties) throws IOException {
-        if (binaryProperties == null || binaryProperties.isEmpty()) { return; }
+        if (binaryProperties == null || binaryProperties.isEmpty()) {
+            return;
+        }
         for (String binPropPath : binaryProperties) {
             Resource propertyResource = resolver.getResource(binPropPath);
             try (InputStream inputStream = propertyResource != null ? propertyResource.adaptTo(InputStream.class) : null) {
@@ -525,7 +538,9 @@ public class SourceModel extends ConsoleSlingBean {
         }
     }
 
-    /** Turns a resource path into a proper name for a zip file with the appropriate encoding of troublesome chars. */
+    /**
+     * Turns a resource path into a proper name for a zip file with the appropriate encoding of troublesome chars.
+     */
     protected String getZipName(@Nonnull String root, @Nonnull String resourcePath) {
         String name = resourcePath;
         if (name.startsWith(root)) {
@@ -536,7 +551,9 @@ public class SourceModel extends ConsoleSlingBean {
         return filesystemName(name);
     }
 
-    /** Returns the name for the zip entry for this resource. */
+    /**
+     * Returns the name for the zip entry for this resource.
+     */
     protected String getZipName(@Nonnull String root) {
         RenderingType renderingType = getRenderingType(resource, false);
         switch (renderingType) {
@@ -552,7 +569,9 @@ public class SourceModel extends ConsoleSlingBean {
         }
     }
 
-    /** Transforms the name into something usable for the filesystem. */
+    /**
+     * Transforms the name into something usable for the filesystem.
+     */
     protected String filesystemName(String aName) {
         return PlatformNameFormat.getPlatformPath(aName);
     }
@@ -719,9 +738,13 @@ public class SourceModel extends ConsoleSlingBean {
                 RenderingType.XMLFILE == getRenderingType(resource, false);
     }
 
-    /** How the node is rendered in a zip. */
+    /**
+     * How the node is rendered in a zip.
+     */
     protected enum RenderingType {
-        /** A single XML file named like the node - e.g. en.xml for mix:language. */
+        /**
+         * A single XML file named like the node - e.g. en.xml for mix:language.
+         */
         XMLFILE,
         /**
          * A folder with a .content.xml (the .content.xml might be missing if the node is of type nt:folder without
@@ -745,7 +768,9 @@ public class SourceModel extends ConsoleSlingBean {
 
         protected final String name;
         protected final Object value;
-        /** JCR {@link PropertyType} since that cannot be guessed from the value in various cases. */
+        /**
+         * JCR {@link PropertyType} since that cannot be guessed from the value in various cases.
+         */
         protected final Integer jcrType;
 
         public Property(String name, Object value, Integer jcrType) {
@@ -775,7 +800,9 @@ public class SourceModel extends ConsoleSlingBean {
             return name;
         }
 
-        /** Properly escaped String that can be written as attribute value into an XML file. */
+        /**
+         * Properly escaped String that can be written as attribute value into an XML file.
+         */
         public String getEscapedString(String indent) {
 
             if (isMultiValue()) {
@@ -845,9 +872,15 @@ public class SourceModel extends ConsoleSlingBean {
         }
 
         protected int getOrderingLevel() {
-            if (name.equals(JCR_PRIMARYTYPE)) { return 1; }
-            if (name.equals(JCR_MIXINTYPES)) { return 2; }
-            if (name.startsWith("sling:")) { return 3; }
+            if (name.equals(JCR_PRIMARYTYPE)) {
+                return 1;
+            }
+            if (name.equals(JCR_MIXINTYPES)) {
+                return 2;
+            }
+            if (name.startsWith("sling:")) {
+                return 3;
+            }
             return 4;
         }
 
@@ -875,21 +908,33 @@ public class SourceModel extends ConsoleSlingBean {
 
         @Override
         public int compareTo(Property other) {
-            if (other == null) { return 1;}
+            if (other == null) {
+                return 1;
+            }
             int level = getOrderingLevel();
             int olevel = other.getOrderingLevel();
-            if (level != olevel) { return Integer.compare(level, olevel); }
+            if (level != olevel) {
+                return Integer.compare(level, olevel);
+            }
             String ns = getNs();
             String ons = other.getNs();
-            if (ns.isEmpty() && !ons.isEmpty()) { return 1;}
-            if (!ns.isEmpty() && ons.isEmpty()) { return -1;}
-            if (!ns.equals(ons)) { return ns.compareTo(ons);}
+            if (ns.isEmpty() && !ons.isEmpty()) {
+                return 1;
+            }
+            if (!ns.isEmpty() && ons.isEmpty()) {
+                return -1;
+            }
+            if (!ns.equals(ons)) {
+                return ns.compareTo(ons);
+            }
             return getName().compareTo(other.getName());
         }
 
         @Override
         public boolean equals(Object o) {
-            if (!(o instanceof Property)) { return false; }
+            if (!(o instanceof Property)) {
+                return false;
+            }
             return compareTo((Property) o) == 0;
         }
 
@@ -902,6 +947,17 @@ public class SourceModel extends ConsoleSlingBean {
         @Override
         public String toString() {
             return name + "=" + getEscapedString("");
+        }
+    }
+
+    /**
+     * Is thrown when an exception appears during {@link ZipOutputStream#close()}. This might happen
+     * when a consumer of the stream does read all contents, but does not read the central directory that is written
+     * during close.
+     */
+    public static class IOErrorOnCloseException extends IOException {
+        public IOErrorOnCloseException(IOException e) {
+            super(e);
         }
     }
 
