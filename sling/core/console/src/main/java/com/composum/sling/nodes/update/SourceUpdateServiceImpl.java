@@ -121,7 +121,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
     }
 
     protected Resource makeTempdir(ResourceResolver resolver) throws RepositoryException {
-        String path = "/var/tmp/" + UUID.randomUUID().toString();
+        String path = "/tmp/composum/nodes/SourceUpdateService/" + UUID.randomUUID().toString();
         return ResourceUtil.getOrCreateResource(resolver, path, TYPE_SLING_FOLDER);
     }
 

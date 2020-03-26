@@ -448,11 +448,9 @@ public class SourceModel extends ConsoleSlingBean {
         writer.flush(); // deliberately not close since that'd close the zip 8-/
         zipStream.closeEntry();
 
-        if (writeDeep) {
-            writeBinaryProperties(zipStream, root, binaryProperties);
-            for (SourceModel binaryFile : additionalFiles) {
-                binaryFile.writeIntoZip(zipStream, root, writeDeep);
-            }
+        writeBinaryProperties(zipStream, root, binaryProperties);
+        for (SourceModel binaryFile : additionalFiles) {
+            binaryFile.writeIntoZip(zipStream, root, writeDeep);
         }
     }
 
