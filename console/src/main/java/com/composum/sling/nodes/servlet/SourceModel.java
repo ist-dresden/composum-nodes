@@ -865,7 +865,7 @@ public class SourceModel extends ConsoleSlingBean {
                     .replace("\"", "&quot;")
                     .replace("\t", "&#x9;")
                     .replace("\n", "&#xa;")
-                    .replace("\r", "&#xc;")
+                    .replace("\r", "&#xd;")
                     .replace("\\", "\\\\");
         }
 
