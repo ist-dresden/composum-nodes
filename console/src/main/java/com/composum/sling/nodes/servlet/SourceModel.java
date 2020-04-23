@@ -9,6 +9,7 @@ import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.concurrent.LazyInitializer;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.util.ISO9075;
 import org.apache.jackrabbit.vault.util.PlatformNameFormat;
@@ -139,10 +140,15 @@ public class SourceModel extends ConsoleSlingBean {
     protected transient List<Property> propertyList;
     protected transient List<Resource> subnodeList;
     /**
-     * Whether the child nodes are known to be orderable - wrapped into array to distinguish "not known" from "not
+     * Whether the siblings are known to be orderable - wrapped into array to distinguish "not known" from "not
      * yet determined".
      */
     protected transient Boolean[] hasOrderableSiblings;
+    /**
+     * Whether the child nodes are known to be orderable - wrapped into array to distinguish "not known" from "not
+     * yet determined".
+     */
+    protected transient Boolean[] hasOrderableChildren;
 
     public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
         if ("/".equals(ResourceUtil.normalize(resource.getPath()))) {
@@ -307,25 +313,50 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     /**
-     * Returns true if the nodes children are ordered. Works only for JCR resources - if we cannot determine this,
+     * Returns true if the nodes siblings are ordered. Works only for JCR resources - if we cannot determine this,
      * we return null.
      */
     public Boolean hasOrderableSiblings() {
+        ResourceHandle parent = getResource().getParent();
         Boolean result = null;
         if (hasOrderableSiblings == null) {
-            try {
-                Node node = requireNonNull(getResource().getParent()).adaptTo(Node.class);
-                if (node != null) {
-                    result = node.getPrimaryNodeType().hasOrderableChildNodes();
-                }
-            } catch (RepositoryException | RuntimeException e) {
-                LOG.error("Can't determine orderability of " + getPath(), e);
-            }
+            result = hasOrderableChildren(parent);
             hasOrderableSiblings = new Boolean[]{result};
         } else {
             result = hasOrderableSiblings[0];
         }
         return result;
+    }
+
+    /**
+     * Returns true if the nodes children are ordered. Works only for JCR resources - if we cannot determine this,
+     * we return null.
+     */
+    public Boolean hasOrderableChildren() {
+        Boolean result = null;
+        if (hasOrderableChildren == null) {
+            result = hasOrderableChildren(resource);
+            hasOrderableChildren = new Boolean[]{result};
+        } else {
+            result = hasOrderableChildren[0];
+        }
+        return result;
+    }
+
+    /**
+     * Returns true if the nodes children are ordered. Works only for JCR resources - if we cannot determine this,
+     * we return null.
+     */
+    protected Boolean hasOrderableChildren(ResourceHandle resource) {
+        try {
+            Node node = requireNonNull(resource).adaptTo(Node.class);
+            if (node != null) {
+                return node.getPrimaryNodeType().hasOrderableChildNodes();
+            }
+        } catch (RepositoryException | RuntimeException e) {
+            LOG.warn("Can't determine orderability of " + getPath(), e);
+        }
+        return null;
     }
 
     protected void writePackageProperties(ZipOutputStream zipStream, String group, String aName, String version)
@@ -609,6 +640,8 @@ public class SourceModel extends ConsoleSlingBean {
         writer.append(">\n");
         if (writeDeep) {
             writeSubnodesAsXml(writer, BASIC_INDENT, isFullCoverageNode(), binaryProperties, additionalFiles);
+        } else {
+            writeSiblings(writer, BASIC_INDENT);
         }
         writer.append("</jcr:root>\n");
     }
@@ -652,12 +685,23 @@ public class SourceModel extends ConsoleSlingBean {
                 }
                 // If the node has orderable siblings, we write a stub node to specify the node order.
                 // The real content is in a separate file.
-                if (hasOrderableSiblings()) {
+                if (hasOrderableChildren(resource)) {
                     writer.append(indent).append("<").append(name).append("/>\n");
                 }
                 break;
             default:
                 throw new IllegalArgumentException("Impossible rendering type " + renderingType);
+        }
+    }
+
+    /**
+     * If the node has orderable siblings, we write a stub node to specify the node order.
+     */
+    protected void writeSiblings(Writer writer, String indent) throws IOException {
+        if (hasOrderableSiblings() && getSubnodeList().size() > 1) {
+            for (Resource subnode : getSubnodeList()) {
+                writer.append(indent).append("<").append(escapeXmlName(subnode.getName())).append("/>\n");
+            }
         }
     }
 
