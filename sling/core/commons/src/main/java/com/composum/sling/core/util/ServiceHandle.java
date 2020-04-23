@@ -43,7 +43,7 @@ public class ServiceHandle<T> {
             if (serviceTracker != null) {
                 service = serviceTracker.waitForService();
             }
-            Objects.requireNonNull(service);
+            Objects.requireNonNull(service, "No service for type " + type);
         }
         return service;
     }
