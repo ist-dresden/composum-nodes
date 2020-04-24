@@ -27,6 +27,8 @@ import java.math.BigDecimal;
 import java.nio.file.attribute.FileTime;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -376,6 +378,7 @@ public class SourceModel extends ConsoleSlingBean {
                 .append("<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n")
                 .append("<properties>\n")
                 .append("<comment>FileVault Package Properties</comment>\n")
+                .append("<entry key=\"packageType\">content</entry> ")
                 .append("<entry key=\"name\">")
                 .append(aName)
                 .append("</entry>\n")
@@ -388,8 +391,13 @@ public class SourceModel extends ConsoleSlingBean {
                 .append(group)
                 .append("</entry>\n")
                 .append("<entry key=\"description\">created from source download</entry>\n")
+                .append("<entry key=\"createdBy\">")
+                .append(getResolver().getUserID())
+                .append("</entry>\n")
+                .append("<entry key=\"created\">")
+                .append(ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT))
+                .append("</entry>\n")
                 .append("</properties>");
-
         writer.flush(); // don't close since that closes the zipStream 8-{
         zipStream.closeEntry();
     }
