@@ -13,11 +13,7 @@ import org.slf4j.helpers.MessageFormatter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * A container for a message, e.g. about internal processes, that can be presented to the user. It could be localized,
@@ -34,7 +30,9 @@ public class Message implements Cloneable {
 
     private static final Logger LOG = LoggerFactory.getLogger(Message.class);
 
-    /** @see #getLevel() */
+    /**
+     * @see #getLevel()
+     */
     protected Level level;
 
     /**
@@ -46,11 +44,15 @@ public class Message implements Cloneable {
     @Nullable
     protected Level logLevel;
 
-    /** @see #getContext() */
+    /**
+     * @see #getContext()
+     */
     @Nullable
     protected String context;
 
-    /** @see #getLabel() */
+    /**
+     * @see #getLabel()
+     */
     @Nullable
     protected String label;
 
@@ -66,22 +68,38 @@ public class Message implements Cloneable {
      */
     protected String rawText;
 
-    /** @see #getArguments() */
+    /**
+     * Optional resource path this message is about.
+     */
+    @Nullable
+    protected String path;
+
+    /**
+     * @see #getArguments()
+     */
     @Nullable
     protected Object[] arguments;
 
-    /** @see #getCategory() */
+    /**
+     * @see #getCategory()
+     */
     @Nullable
     protected String category;
 
-    /** @see #getDetails() */
+    /**
+     * @see #getDetails()
+     */
     @Nullable
     protected List<Message> details;
 
-    /** @see #getTimestamp() */
+    /**
+     * @see #getTimestamp()
+     */
     protected Long timestamp;
 
-    /** @deprecated only for JSON deserialization. */
+    /**
+     * @deprecated only for JSON deserialization.
+     */
     @Deprecated
     public Message() {
         // empty
@@ -203,24 +221,32 @@ public class Message implements Cloneable {
      */
     @Nonnull
     public Message addDetail(@Nonnull Message detailMessage) {
-        if (details == null) { details = new ArrayList<>(); }
+        if (details == null) {
+            details = new ArrayList<>();
+        }
         details.add(detailMessage);
         return this;
     }
 
-    /** Time the message was created, as in {@link System#currentTimeMillis()}. */
+    /**
+     * Time the message was created, as in {@link System#currentTimeMillis()}.
+     */
     @Nullable
     public Long getTimestamp() {
         return timestamp;
     }
 
-    /** Time the message was created. */
+    /**
+     * Time the message was created.
+     */
     @Nullable
     public Date getTimestampAsDate() {
         return timestamp != null ? new Date(timestamp) : null;
     }
 
-    /** The kind of message - informational, warning, error. Default is {@link Level#info}. */
+    /**
+     * The kind of message - informational, warning, error. Default is {@link Level#info}.
+     */
     @Nonnull
     public Level getLevel() {
         return level != null ? level : Level.info;
@@ -268,8 +294,12 @@ public class Message implements Cloneable {
      */
     @Nonnull
     public String getText() {
-        if (text != null) { return text; }
-        if (rawText == null) { return ""; }
+        if (text != null) {
+            return text;
+        }
+        if (rawText == null) {
+            return "";
+        }
         text = rawText;
         if (arguments != null && arguments.length > 0) {
             text = LoggerFormat.format(text, arguments);
@@ -277,7 +307,9 @@ public class Message implements Cloneable {
         return text;
     }
 
-    /** Like {@link #getText()}, but returns the text i18n-ed for the request and parameters replaced. */
+    /**
+     * Like {@link #getText()}, but returns the text i18n-ed for the request and parameters replaced.
+     */
     public String getMessage(@Nullable SlingHttpServletRequest request) {
         if (request == null) {
             return getText();
@@ -295,6 +327,25 @@ public class Message implements Cloneable {
             i18nMessage = "";
         }
         return i18nMessage;
+    }
+
+    /**
+     * Optional resource path this message is about.
+     */
+    @Nullable
+    public String getPath() {
+        return path;
+    }
+
+    /**
+     * Sets the optional resource path this message is about, and returns this message for builder style construction.
+     *
+     * @return this
+     */
+    @Nullable
+    public Message setPath(@Nullable String path) {
+        this.path = path;
+        return this;
     }
 
     /**
@@ -498,8 +549,12 @@ public class Message implements Cloneable {
         buf.append(indent);
         boolean differingLoglevel = logLevel != null && logLevel != level;
         if (level != null && baseLevel != null && level != baseLevel || differingLoglevel) {
-            if (level != null) { buf.append(level.name()); }
-            if (differingLoglevel) { buf.append("(").append(logLevel.name()).append(")"); }
+            if (level != null) {
+                buf.append(level.name());
+            }
+            if (differingLoglevel) {
+                buf.append("(").append(logLevel.name()).append(")");
+            }
             buf.append(": ");
         }
         if (arguments != null) {
@@ -518,7 +573,9 @@ public class Message implements Cloneable {
         }
     }
 
-    /** Kind of message, also used as loglevel when this is logged. */
+    /**
+     * Kind of message, also used as loglevel when this is logged.
+     */
     public enum Level {
 
         /**
@@ -533,7 +590,9 @@ public class Message implements Cloneable {
          */
         warn,
 
-        /** Informational messages for further details. */
+        /**
+         * Informational messages for further details.
+         */
         info,
 
         /**
@@ -542,7 +601,9 @@ public class Message implements Cloneable {
          */
         debug,
 
-        /** Special category mainly useful as {@link #getLogLevel()} which means the message is not being logged. */
+        /**
+         * Special category mainly useful as {@link #getLogLevel()} which means the message is not being logged.
+         */
         none;
 
     }
