@@ -342,7 +342,7 @@ public class Message implements Cloneable {
      *
      * @return this
      */
-    @Nullable
+    @Nonnull
     public Message setPath(@Nullable String path) {
         this.path = path;
         return this;
@@ -605,6 +605,13 @@ public class Message implements Cloneable {
          * Special category mainly useful as {@link #getLogLevel()} which means the message is not being logged.
          */
         none;
+
+        /**
+         * Returns true if the level is an error - that is, the user needs to be informed in any case.
+         */
+        public boolean isError() {
+            return this == error;
+        }
 
     }
 
