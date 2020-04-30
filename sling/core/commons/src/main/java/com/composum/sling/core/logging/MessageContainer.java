@@ -7,28 +7,32 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Spliterator;
+import java.util.*;
 import java.util.function.Consumer;
 
-/** A collection of {@link Message}s for humans - also meant for transmitting them via JSON. */
+/**
+ * A collection of {@link Message}s for humans - also meant for transmitting them via JSON.
+ */
 @ThreadSafe
 @JsonAdapter(MessageTypeAdapterFactory.class)
 public class MessageContainer implements Iterable<Message> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageContainer.class);
 
-    /** A logger where {@link #add(Message)} automatically logs to. */
+    /**
+     * A logger where {@link #add(Message)} automatically logs to.
+     */
     @Nullable
     protected volatile transient Logger log;
 
-    /** Synchronizing on this when accessing messages. */
+    /**
+     * Synchronizing on this when accessing messages.
+     */
     protected transient final Object lockObject = new Object();
 
-    /** @see #getMessages() */
+    /**
+     * @see #getMessages()
+     */
     @Nullable
     protected List<Message> messages;
 
@@ -49,7 +53,9 @@ public class MessageContainer implements Iterable<Message> {
         this.log = log;
     }
 
-    /** A (unmodifiable) snapshot of the list of messages. */
+    /**
+     * A (unmodifiable) snapshot of the list of messages.
+     */
     @Nonnull
     public List<Message> getMessages() {
         synchronized (lockObject) {
@@ -68,7 +74,9 @@ public class MessageContainer implements Iterable<Message> {
     public MessageContainer add(@Nullable Message message, @Nullable Throwable throwable) {
         if (message != null) {
             synchronized (lockObject) {
-                if (messages == null) { messages = new ArrayList<>(); }
+                if (messages == null) {
+                    messages = new ArrayList<>();
+                }
                 messages.add(message);
             }
             if (log != null) {
@@ -92,11 +100,26 @@ public class MessageContainer implements Iterable<Message> {
     }
 
     /**
+     * Adds all messages of a {@link MessageContainer} to this container.
+     */
+    @Nonnull
+    public MessageContainer addAll(@Nullable MessageContainer messageContainer) {
+        if (messageContainer != null) {
+            for (Message m : messageContainer) {
+                add(m);
+            }
+        }
+        return this;
+    }
+
+    /**
      * Logs the messages into the given container. This is automatically done on {@link #add(Message)} if a logger
      * is set, but this might be necessary after deserializing the container.
      */
     public void logInto(@Nullable Logger logger) {
-        if (logger == null) { return; }
+        if (logger == null) {
+            return;
+        }
         for (Message message : getMessages()) {
             message.logInto(logger);
         }
@@ -115,26 +138,46 @@ public class MessageContainer implements Iterable<Message> {
         return this;
     }
 
-    /** Whether there are any messages. */
+    /**
+     * Whether there are any messages.
+     */
     public boolean isEmpty() {
         synchronized (lockObject) {
             return messages == null || messages.isEmpty();
         }
     }
 
-    /** Iterates over a readonly view. */
+    /**
+     * True if a MessageContainer contains a message with an {@link com.composum.sling.core.logging.Message.Level#error}.
+     */
+    public boolean hasError() {
+        synchronized (lockObject) {
+            if (null != messages) {
+                return messages.stream().anyMatch((m) -> m.getLevel().isError());
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Iterates over a readonly view.
+     */
     @Override
     public Iterator<Message> iterator() {
         return getMessages().iterator();
     }
 
-    /** Iterates over a readonly view. */
+    /**
+     * Iterates over a readonly view.
+     */
     @Override
     public void forEach(Consumer<? super Message> action) {
         getMessages().forEach(action);
     }
 
-    /** Iterates over a readonly view. */
+    /**
+     * Iterates over a readonly view.
+     */
     @Override
     public Spliterator<Message> spliterator() {
         return getMessages().spliterator();
