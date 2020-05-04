@@ -70,7 +70,7 @@
         </repository>
         <snapshotRepository>
             <id>archiva</id>
-            <url>https://build.ist-software.com/nexus/repository/maven-snapshots/</url>
+            <url>https://build.ist-software.com/nexus/repository/maven-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
