@@ -161,7 +161,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     //
 
     protected void jsonAnswerItemExists(SlingHttpServletRequest request, SlingHttpServletResponse response)
-            throws IOException {
+            throws IOException { // TODO use Status. Unfortunately somewhat risky.
         response.setStatus(HttpServletResponse.SC_CONFLICT);
         JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
         jsonWriter.beginObject();
