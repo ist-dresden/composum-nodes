@@ -27,7 +27,7 @@
             <id>archiva</id>
             <name>archiva</name>
             <mirrorOf>*</mirrorOf>
-            <url>https://build.ist-software.com/archiva/repository/mirror</url>
+            <url>https://build.ist-software.com/nexus/repository/maven-public</url>
         </mirror>
         <!-- -->
     </mirrors>
@@ -47,7 +47,7 @@
             <id>develop</id>
             <properties>
                 <release.repository.id>archiva-internal</release.repository.id>
-                <release.repository.url>https://build.ist-software.com/archiva/repository/internal/</release.repository.url>
+                <release.repository.url>https://build.ist-software.com/nexus/repository/maven-releases</release.repository.url>
                 <deploy.bundle>true</deploy.bundle>
                 <sling.scheme>https</sling.scheme>
                 <sling.secure>true</sling.secure>
@@ -87,7 +87,7 @@
                 <repository>
                     <id>archiva-internal</id>
                     <name>archiva</name>
-                    <url>https://build.ist-software.com/archiva/repository/internal</url>
+                    <url>https://build.ist-software.com/nexus/repository/maven-releases</url>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
@@ -95,7 +95,7 @@
                 <repository>
                     <id>archiva-snapshots</id>
                     <name>archiva</name>
-                    <url>https://build.ist-software.com/archiva/repository/snapshots</url>
+                    <url>https://build.ist-software.com/nexus/repository/maven-snapshots</url>
                     <snapshots>
                         <enabled>true</enabled>
                     </snapshots>
@@ -105,7 +105,7 @@
                 <pluginRepository>
                     <id>archiva-internal</id>
                     <name>archiva</name>
-                    <url>https://build.ist-software.com/archiva/repository/internal</url>
+                    <url>https://build.ist-software.com/nexus/repository/maven-releases</url>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
@@ -113,7 +113,7 @@
                 <pluginRepository>
                     <id>archiva-snapshots</id>
                     <name>archiva</name>
-                    <url>https://build.ist-software.com/archiva/repository/snapshots</url>
+                    <url>https://build.ist-software.com/nexus/repository/maven-snapshots</url>
                     <snapshots>
                         <enabled>true</enabled>
                     </snapshots>
