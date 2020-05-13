@@ -62,6 +62,9 @@
         },
 
         ajaxPost: function (url, data, config, onSuccess, onError, onComplete) {
+            if (!data._charset_) {
+                data._charset_ = "UTF-8";
+            }
             var ajaxConf = _.extend({
                 type: 'POST',
                 url: core.getContextUrl(url),
@@ -172,6 +175,9 @@
             }
             var action = $form.attr("action");
             var formData = new FormData($form[0]);
+            if (!formData.get('_charset_')) {
+                formData.set('_charset_', 'UTF-8');
+            }
             $.ajax({
                 type: 'POST',
                 url: core.getContextUrl(action),
