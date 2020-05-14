@@ -6,6 +6,9 @@
 package com.composum.sling.core.util;
 
 import com.composum.sling.core.ResourceHandle;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.EncoderException;
+import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
@@ -15,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -43,6 +47,8 @@ public class LinkUtil {
     public static final Pattern SPECIAL_URL_PATTERN = Pattern.compile(SPECIAL_URL_STRING, Pattern.CASE_INSENSITIVE);
 
     public static final Pattern SELECTOR_PATTERN = Pattern.compile("^(.*/[^/]+)(\\.[^.]+)$");
+
+    public static final URLCodec urlCodec = new URLCodec(StandardCharsets.UTF_8.name());
 
     /**
      * Builds a mapped link to a path (resource path) without selectors and a determined extension.
@@ -399,6 +405,12 @@ public class LinkUtil {
      */
     public static String encodeUrl(String path) {
         if (path != null) {
+            try {
+                path = urlCodec.encode(path);
+                path = path.replaceAll("%2F", "/");
+            } catch (EncoderException ex) {
+                LOG.error(ex.getMessage(), ex);
+            }
             path = path.replaceAll(">", "%3E");
             path = path.replaceAll("<", "%3C");
             path = path.replaceAll(" ", "%20");
@@ -411,6 +423,11 @@ public class LinkUtil {
             path = path.replaceAll("%20", " ");
             path = path.replaceAll("%3C", "<");
             path = path.replaceAll("%3E", ">");
+            try {
+                path = urlCodec.decode(path);
+            } catch (DecoderException ex) {
+                LOG.error(ex.getMessage(), ex);
+            }
         }
         return path;
     }
