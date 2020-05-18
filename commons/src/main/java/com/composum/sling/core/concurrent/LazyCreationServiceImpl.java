@@ -3,33 +3,26 @@ package com.composum.sling.core.concurrent;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.Validate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingException;
 import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.resource.PersistenceException;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.api.resource.*;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.*;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 
-import javax.jcr.ItemExistsException;
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
+import javax.annotation.Nonnull;
+import javax.jcr.*;
 import javax.jcr.lock.Lock;
 import javax.jcr.lock.LockException;
 import javax.jcr.lock.LockManager;
 import java.util.Calendar;
 import java.util.Map;
+import java.util.Objects;
 
-import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_CREATED;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_LAST_MODIFIED;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_LOCKABLE;
+import static com.composum.sling.core.util.ResourceUtil.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -39,33 +32,23 @@ import static org.slf4j.LoggerFactory.getLogger;
  * ignored.
  */
 @Component(
-        label = "Composum lazy creation service",
-        description = "provides a cluster-safe 'get or create' pattern",
-        immediate = true,
-        metatype = true
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum lazy creation service"
+        },
+        immediate = true
 )
-@Service
+@Designate(ocd = LazyCreationServiceImpl.Configuration.class)
 public class LazyCreationServiceImpl implements LazyCreationService {
 
     private static final Logger LOG = getLogger(LazyCreationServiceImpl.class);
-
-    public static final String MAXIMUM_LOCKWAIT_TIME_SEC = "lazycreation.maximumlockwait";
-    @Property(
-            name = MAXIMUM_LOCKWAIT_TIME_SEC,
-            label = "Maximum lock wait time",
-            description = "Maximum time in seconds for which the service waits until it assumes another cluster node " +
-                    "tried to create a resource and the attempt hangs. The lock is broken after that and another " +
-                    "attempt is started.",
-            intValue = 30
-    )
-    protected int maximumLockWaitTimeSec;
-
 
     @Reference
     protected ResourceResolverFactory resolverFactory;
 
     @Reference
     protected SequencerService sequencer;
+
+    protected volatile Configuration config;
 
     @Override
     public <T> T getOrCreate(ResourceResolver resolver, String path, RetrievalStrategy<T> getter,
@@ -163,7 +146,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
      * set when retrieving the item.
      * <p>
      * If the item exists but is locked, we wait until it is unlocked and then return what's there. If we exceed the
-     * {@link #maximumLockWaitTimeSec} when waiting for the lock, we break the lock and create it ourselves.
+     * {@link Configuration#maximumLockWaitTimeSec()} when waiting for the lock, we break the lock and create it ourselves.
      */
     @Override
     public <T> T getOrCreate(final ResourceResolver resolver, final String path, RetrievalStrategy<T> getter,
@@ -246,7 +229,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
     }
 
     /**
-     * If it is not initialized, try to lock it for up to {@link #maximumLockWaitTimeSec}.
+     * If it is not initialized, try to lock it for up to {@link Configuration#maximumLockWaitTimeSec()}.
      *
      * @return the lock it is locked, null if it is already initialized by someone else
      * @throws javax.jcr.lock.LockException if we couldn't get a lock
@@ -257,7 +240,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         Calendar resourceLockTime = ResourceHandle.use(adminResolver.getResource(path))
                 .getProperty(PROP_LAST_MODIFIED, Calendar.getInstance());
         long lockTime = Math.max(resourceLockTime.getTimeInMillis(), System.currentTimeMillis());
-        final long stopPollingTime = lockTime + maximumLockWaitTimeSec * 1000;
+        final long stopPollingTime = lockTime + getConfiguration().maximumLockWaitTimeSec() * 1000;
         long waitStep = 0;
         long restWait;
         Exception lastFail = null;
@@ -374,8 +357,12 @@ public class LazyCreationServiceImpl implements LazyCreationService {
     @Override
     public boolean isInitialized(Resource resource) throws RepositoryException {
         ResourceHandle handle = ResourceHandle.use(resource);
-        if (!handle.isValid()) { return false; }
-        if (handle.getProperty(PROP_LAST_MODIFIED) == null) { return false; }
+        if (!handle.isValid()) {
+            return false;
+        }
+        if (handle.getProperty(PROP_LAST_MODIFIED) == null) {
+            return false;
+        }
         LockManager lockManager = handle.getResourceResolver().adaptTo(Session.class).getWorkspace().getLockManager();
         boolean locked = lockManager.holdsLock(handle.getPath());
         return !locked;
@@ -394,7 +381,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         if (null == resource) return null;
         if (isInitialized(resource)) return resource;
 
-        final long stopPollingTime = System.currentTimeMillis() + maximumLockWaitTimeSec * 1000;
+        final long stopPollingTime = System.currentTimeMillis() + getConfiguration().maximumLockWaitTimeSec() * 1000;
         long waitStep = 0;
         long restWait;
         do {
@@ -464,7 +451,9 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         }
     }
 
-    /** Resets unmodified resources to the currently saved state. */
+    /**
+     * Resets unmodified resources to the currently saved state.
+     */
     protected void refreshSession(ResourceResolver resolver, boolean keepChanges) {
         try {
             Session session = resolver.adaptTo(Session.class);
@@ -474,7 +463,9 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         }
     }
 
-    /** Make administrative resolver with the necessary permissions to create stuff. Remember to close it! */
+    /**
+     * Make administrative resolver with the necessary permissions to create stuff. Remember to close it!
+     */
     protected ResourceResolver createAdministrativeResolver() {
         // used for maximum backwards compatibility; TODO recheck and decide from time to time
         try {
@@ -483,4 +474,31 @@ public class LazyCreationServiceImpl implements LazyCreationService {
             throw new SlingException("Configuration problem: we cannot get an administrative resolver ", e);
         }
     }
+
+    @Activate @Modified
+    protected void activate(Configuration config) {
+        this.config = config;
+    }
+
+    @Deactivate
+    protected void deactivate() {
+        this.config = null;
+    }
+
+    @Nonnull
+    protected Configuration getConfiguration() {
+        return Objects.requireNonNull(this.config, "Method called on deactivated service");
+    }
+
+    @ObjectClassDefinition(name = "Composum lazy creation service", description = "provides a cluster-safe 'get or create' pattern")
+    public @interface Configuration {
+
+        @AttributeDefinition(name = "Maximum lock wait time", description =
+                "Maximum time in seconds for which the service waits until it assumes another cluster node \" +\n" +
+                        "                    \"tried to create a resource and the attempt hangs. The lock is broken after that and another \" +\n" +
+                        "                    \"attempt is started.")
+        int maximumLockWaitTimeSec() default 30;
+
+    }
+
 }
