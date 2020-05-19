@@ -52,6 +52,7 @@
                 </executions>
             </plugin>
 
+            <!-- FIXME why do I need to exclude junit and why is org.apache.sling.api.resource neccessary? -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -69,7 +70,9 @@
                             groovy.*;version="[2.2,4]",
                             org.codehaus.groovy.*;version="[2.2,4]",
                             javax.annotation.*;version="[0,4)",
+                            org.apache.sling.api.resource.*;version="[2.11,3)",
                             !sun.*,
+                            !junit.*,
                             *
                         </Import-Package>
                         <Export-Package>
