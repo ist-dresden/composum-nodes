@@ -18,9 +18,11 @@
     <build>
         <plugins>
 
+            <!-- FIXME Upgrade version -->
             <plugin>
                 <groupId>org.apache.sling</groupId>
                 <artifactId>slingstart-maven-plugin</artifactId>
+                <version>1.3.6</version>
                 <extensions>true</extensions>
                 <configuration>
                     <usePomDependencies>true</usePomDependencies>

@@ -130,10 +130,60 @@
 
     <dependencies>
 
+        <!-- OSGi, Felix -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation</artifactId>
+        </dependency>
+
         <!-- YUICompressor -->
         <dependency>
             <groupId>com.yahoo.platform.yui</groupId>
             <artifactId>yuicompressor</artifactId>
+        </dependency>
+
+        <!-- JCR API, Jackrabbit -->
+        <dependency>
+            <groupId>javax.jcr</groupId>
+            <artifactId>jcr</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-jcr-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit.vault</groupId>
+            <artifactId>org.apache.jackrabbit.vault</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-atinject_1.0_spec</artifactId>
         </dependency>
 
         <!-- Apache Sling -->
@@ -152,6 +202,11 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.xss</artifactId>
+            <!-- This is an evil JAR with several old versions of libraries as embedded dependencies that aren't exported
+            and can conflict with your code. Scope optional at least means that that doesn't conflict with artefacts
+            using a bundle that uses the sling.xss bundle.
+             -->
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
@@ -207,42 +262,6 @@
             <artifactId>adapter-annotations</artifactId>
         </dependency>
 
-        <!-- JCR API, Jackrabbit -->
-        <dependency>
-            <groupId>javax.jcr</groupId>
-            <artifactId>jcr</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>jackrabbit-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>jackrabbit-jcr-commons</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>jackrabbit-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jackrabbit.vault</groupId>
-            <artifactId>org.apache.jackrabbit.vault</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet.jsp</groupId>
-            <artifactId>jsp-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-        </dependency>
-
         <!-- JSON -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -256,16 +275,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- OSGi, Felix -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>osgi.cmpn</artifactId>
-        </dependency>
-        <!-- deprecated! -->
+        <!-- deprecated! FIXME -->
         <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.scr</artifactId>

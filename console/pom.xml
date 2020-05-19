@@ -101,6 +101,11 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.xss</artifactId>
+            <!-- This is an evil JAR with several old versions of libraries as embedded dependencies that aren't exported
+            and can conflict with your code. Scope optional at least means that that doesn't conflict with artefacts
+            using a bundle that uses the sling.xss bundle.
+             -->
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
@@ -176,15 +181,15 @@
 
         <dependency>
             <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
+            <artifactId>javax.servlet-api</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.servlet.jsp</groupId>
             <artifactId>jsp-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-atinject_1.0_spec</artifactId>
         </dependency>
 
         <!-- JSON -->
@@ -201,6 +206,10 @@
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>osgi.cmpn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation</artifactId>
         </dependency>
         <!-- deprecated! -->
         <dependency>
