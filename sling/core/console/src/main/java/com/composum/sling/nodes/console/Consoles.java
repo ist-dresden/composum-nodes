@@ -118,8 +118,8 @@ public class Consoles extends ConsolePage {
 
         public String getUrl() {
             String suffix = XSS.filter(getRequest().getRequestPathInfo().getSuffix());
-            return LinkUtil.getUnmappedUrl(getRequest(), getPath())
-                    .replaceAll("\\$\\{path}", StringUtils.isNotBlank(suffix) ? suffix : "");
+            return StringUtils.replace(LinkUtil.getUnmappedUrl(getRequest(), getPath()),
+                    "${path}", StringUtils.isNotBlank(suffix) ? suffix : "");
         }
 
         public String getLinkAttributes() {
