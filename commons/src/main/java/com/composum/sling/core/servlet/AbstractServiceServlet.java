@@ -4,6 +4,8 @@ import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.JsonUtil;
+import com.composum.sling.core.util.LinkUtil;
+import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.ResponseUtil;
 import com.composum.sling.core.util.XSS;
 import com.google.gson.Gson;
@@ -15,6 +17,7 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 
@@ -144,7 +147,12 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     public static ResourceHandle getResource(SlingHttpServletRequest request) {
         ResourceResolver resolver = request.getResourceResolver();
         String path = getPath(request);
-        return ResourceHandle.use(resolver.resolve(path));
+        Resource resource = resolver.resolve(path);
+        if (ResourceUtil.isNonExistingResource(resource)) {
+            String decoded = LinkUtil.decodePath(path);
+            resource = resolver.resolve(decoded);
+        }
+        return ResourceHandle.use(resource);
     }
 
     public static String getPath(SlingHttpServletRequest request) {
@@ -153,7 +161,9 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         if (StringUtils.isBlank(path)) {
             path = request.getParameter(PARAM_PATH);
         }
-        return XSS.filter(path);
+        path = XSS.filter(path);
+        path = path.replaceAll("&amp;","&"); // rollback encoding of '&' done by the filter()
+        return path;
     }
 
     //
