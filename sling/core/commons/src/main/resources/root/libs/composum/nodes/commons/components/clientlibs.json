@@ -22,8 +22,7 @@
       "jcr:primaryType": "sling:OrderedFolder",
       "jquery": {
         "embed": [
-          "jslibs/jquery/([2-3].*:3.4.1)/jquery.js",
-          "jslibs/jquery/base64/jquery.base64.js"
+          "jslibs/jquery/([2-3].*:3.4.1)/jquery.js"
         ]
       },
       "aem-6.1": {
@@ -36,6 +35,7 @@
       "libs": {
         "embed": [
           "jslibs/loglevel/1.6.1/loglevel.js",
+          "jslibs/js-base64/2.5.2/base64.js",
           "jslibs/underscore/(1.*:1.9.1)/underscore.js",
           "jslibs/moment/(2.*:2.24.0)/moment-with-locales.js",
           "jslibs/backbone/(1.*:1.4.0)/backbone.js",
@@ -124,7 +124,7 @@
       "jcr:primaryType": "sling:OrderedFolder",
       "depends": [
         "jslibs/jquery/([2-3].*:3.4.1)/jquery.js",
-        "jslibs/jquery/base64/jquery.base64.js",
+        "jslibs/js-base64/2.5.2/base64.js",
         "jslibs/loglevel/(1.*:1.6.1)/loglevel.js",
         "jslibs/underscore/(1.*:1.9.1)/underscore.js",
         "jslibs/moment/(2.*:2.24.0)/moment-with-locales.js",
