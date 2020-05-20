@@ -342,6 +342,22 @@ public class SlingUrl {
         return this;
     }
 
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object other) {
+        return toString().equals(other.toString());
+    }
+
+    @Override
+    public String toString() {
+        return getUrl();
+    }
+
     public String getUrl() {
         if (url == null) {
             url = buildUrl();
