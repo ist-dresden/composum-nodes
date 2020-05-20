@@ -146,7 +146,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
      * set when retrieving the item.
      * <p>
      * If the item exists but is locked, we wait until it is unlocked and then return what's there. If we exceed the
-     * {@link Configuration#maximumLockWaitTimeSec()} when waiting for the lock, we break the lock and create it ourselves.
+     * {@link Configuration#lazycreation_maximumlockwait()} when waiting for the lock, we break the lock and create it ourselves.
      */
     @Override
     public <T> T getOrCreate(final ResourceResolver resolver, final String path, RetrievalStrategy<T> getter,
@@ -229,7 +229,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
     }
 
     /**
-     * If it is not initialized, try to lock it for up to {@link Configuration#maximumLockWaitTimeSec()}.
+     * If it is not initialized, try to lock it for up to {@link Configuration#lazycreation_maximumlockwait()}.
      *
      * @return the lock it is locked, null if it is already initialized by someone else
      * @throws javax.jcr.lock.LockException if we couldn't get a lock
@@ -240,7 +240,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         Calendar resourceLockTime = ResourceHandle.use(adminResolver.getResource(path))
                 .getProperty(PROP_LAST_MODIFIED, Calendar.getInstance());
         long lockTime = Math.max(resourceLockTime.getTimeInMillis(), System.currentTimeMillis());
-        final long stopPollingTime = lockTime + getConfiguration().maximumLockWaitTimeSec() * 1000;
+        final long stopPollingTime = lockTime + getConfiguration().lazycreation_maximumlockwait() * 1000;
         long waitStep = 0;
         long restWait;
         Exception lastFail = null;
@@ -381,7 +381,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         if (null == resource) return null;
         if (isInitialized(resource)) return resource;
 
-        final long stopPollingTime = System.currentTimeMillis() + getConfiguration().maximumLockWaitTimeSec() * 1000;
+        final long stopPollingTime = System.currentTimeMillis() + getConfiguration().lazycreation_maximumlockwait() * 1000;
         long waitStep = 0;
         long restWait;
         do {
@@ -490,14 +490,15 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         return Objects.requireNonNull(this.config, "Method called on deactivated service");
     }
 
-    @ObjectClassDefinition(name = "Composum lazy creation service", description = "provides a cluster-safe 'get or create' pattern")
+    @ObjectClassDefinition(name = "Composum Lazy Creation Service", description = "Provides a cluster-safe 'get or create' pattern")
     public @interface Configuration {
 
         @AttributeDefinition(name = "Maximum lock wait time", description =
                 "Maximum time in seconds for which the service waits until it assumes another cluster node \" +\n" +
                         "                    \"tried to create a resource and the attempt hangs. The lock is broken after that and another \" +\n" +
                         "                    \"attempt is started.")
-        int maximumLockWaitTimeSec() default 30;
+                // naming is due to
+        int lazycreation_maximumlockwait() default 30;
 
     }
 

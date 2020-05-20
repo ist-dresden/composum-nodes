@@ -96,7 +96,7 @@ public class LazyCreationServiceImplTest {
                 }
 
                 @Override
-                public int maximumLockWaitTimeSec() {
+                public int lazycreation_maximumlockwait() {
                     return 2;
                 }
             };
