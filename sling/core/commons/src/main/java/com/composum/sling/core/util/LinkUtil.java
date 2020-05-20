@@ -6,9 +6,6 @@
 package com.composum.sling.core.util;
 
 import com.composum.sling.core.ResourceHandle;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.EncoderException;
-import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
@@ -18,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -46,9 +42,7 @@ public class LinkUtil {
     public static final String SPECIAL_URL_STRING = "^(?:(mailto|tel):)(.+)$";
     public static final Pattern SPECIAL_URL_PATTERN = Pattern.compile(SPECIAL_URL_STRING, Pattern.CASE_INSENSITIVE);
 
-    public static final Pattern SELECTOR_PATTERN = Pattern.compile("^(.*/[^/]+)(\\.[^.]+)$");
-
-    public static final URLCodec urlCodec = new URLCodec(StandardCharsets.UTF_8.name());
+    public static final LinkCodec CODEC = new LinkCodec();
 
     /**
      * Builds a mapped link to a path (resource path) without selectors and a determined extension.
@@ -154,29 +148,17 @@ public class LinkUtil {
                 extension = getExtension(resource, extension);
             }
 
-            // map the path (the url) with the resource resolver (encodes the url)
-            if (mapper != null) {
-                result = mapper.mapUri(request, result);
-                result = adjustMappedUrl(request, result);
-            }
-
-            if (StringUtils.isNotBlank(extension)) {
-                result += extension;   // extension starts with a '.'
-            }
-
-            // inject selectors into the complete URL because
-            // it's possible, that the name always contains the extension...
-            if (StringUtils.isNotBlank(selectors)) {
-                if (!selectors.startsWith(".")) {
-                    selectors = "." + selectors;
+            try {
+                SlingUrl slingUrl = new SlingUrl(request, url, false, mapper);
+                if (StringUtils.isNotBlank(selectors)) {
+                    slingUrl.selectors(selectors);
                 }
-
-                Matcher matcher = SELECTOR_PATTERN.matcher(result);
-                if (matcher.matches()) {
-                    result = matcher.group(1) + selectors + matcher.group(2);
+                if (StringUtils.isNotBlank(extension)) {
+                    slingUrl.extension(extension);
                 }
+                result = slingUrl.getUrl();
+            } catch (IllegalArgumentException ignore) {
             }
-            result = LinkUtil.encodeUrl(result);
         }
 
         LOG.debug("Mapped '{}' to '{}'", url, result);
@@ -398,38 +380,17 @@ public class LinkUtil {
     }
 
     /**
-     * URL encoding for a resource path (without the encoding for the '/' path delimiters).
+     * URL encoding for URL constructed form repository entities.
      *
-     * @param path the path to encode
-     * @return the URL encoded path
+     * @param url the url to encode
+     * @return the encoded URL
      */
-    public static String encodeUrl(String path) {
-        if (path != null) {
-            try {
-                path = urlCodec.encode(path);
-                path = path.replaceAll("%2F", "/");
-            } catch (EncoderException ex) {
-                LOG.error(ex.getMessage(), ex);
-            }
-            path = path.replaceAll(">", "%3E");
-            path = path.replaceAll("<", "%3C");
-            path = path.replaceAll(" ", "%20");
-        }
-        return path;
+    public static String encodeUrl(String url) {
+        return CODEC.encodeUrl(url);
     }
 
-    public static String decodeUrl(String path) {
-        if (path != null) {
-            path = path.replaceAll("%20", " ");
-            path = path.replaceAll("%3C", "<");
-            path = path.replaceAll("%3E", ">");
-            try {
-                path = urlCodec.decode(path);
-            } catch (DecoderException ex) {
-                LOG.error(ex.getMessage(), ex);
-            }
-        }
-        return path;
+    public static String decodeUrl(String url) {
+        return CODEC.decode(url);
     }
 
     /**
@@ -440,14 +401,14 @@ public class LinkUtil {
      */
     public static String encodePath(String path) {
         if (path != null) {
-            path = encodeUrl(path);
             path = path.replaceAll("/jcr:", "/_jcr_");
+            path = encode(path);
             path = path.replaceAll("\\?", "%3F");
             path = path.replaceAll("=", "%3D");
             path = path.replaceAll(";", "%3B");
             path = path.replaceAll(":", "%3A");
-            path = path.replaceAll("\\+", "%2B");
             path = path.replaceAll("&", "%26");
+            path = path.replaceAll("\\$", "%24");
             path = path.replaceAll("#", "%23");
         }
         return path;
@@ -455,16 +416,23 @@ public class LinkUtil {
 
     public static String decodePath(String path) {
         if (path != null) {
-            path = path.replaceAll("%23", "#");
-            path = path.replaceAll("%26", "&");
-            path = path.replaceAll("%2B", "+");
-            path = path.replaceAll("%3A", ":");
-            path = path.replaceAll("%3B", ";");
-            path = path.replaceAll("%3D", "=");
-            path = path.replaceAll("%3F", "?");
+            path = decode(path);
             path = path.replaceAll("/_jcr_", "/jcr:");
-            path = decodeUrl(path);
         }
         return path;
+    }
+
+    /**
+     * URL encoding for a resource path (without the encoding for the '/' path delimiters).
+     *
+     * @param component the value to encode
+     * @return the URL encoded value
+     */
+    public static String encode(String value) {
+        return CODEC.encode(value);
+    }
+
+    public static String decode(String value) {
+        return CODEC.decode(value);
     }
 }

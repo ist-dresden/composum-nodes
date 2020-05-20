@@ -43,6 +43,7 @@ import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
@@ -109,7 +110,9 @@ public class NodeServlet extends NodeTreeServlet {
     public static final String KEY_REFERENCEABLE = "referenceable";
     public static final String KEY_UNFILTERD = "unfiltered";
 
-    public static final Pattern NODE_PATH_PATTERN = Pattern.compile("^(/[^/]+)+$");
+    public static final String ILLEGAL_NAME_CHARS = "<>?&";
+    public static final Pattern NODE_NAME_PATTERN = Pattern.compile("^[^/" + ILLEGAL_NAME_CHARS + "]+$");
+    public static final Pattern NODE_PATH_PATTERN = Pattern.compile("^(/[^/" + ILLEGAL_NAME_CHARS + "]+)+$");
 
     @Reference
     protected NodesConfiguration nodesConfig;
@@ -191,6 +194,14 @@ public class NodeServlet extends NodeTreeServlet {
             filter = nodesConfig.getDefaultNodeFilter();
         }
         return filter;
+    }
+
+    protected boolean checkNodeName(@Nullable final String name) {
+        return name != null && NODE_NAME_PATTERN.matcher(name).matches();
+    }
+
+    protected boolean checkNodePath(@Nullable final String path) {
+        return path != null && NODE_PATH_PATTERN.matcher(path).matches();
     }
 
     //
@@ -977,7 +988,7 @@ public class NodeServlet extends NodeTreeServlet {
                 }
                 newPath += name;
 
-                if (NODE_PATH_PATTERN.matcher(newPath).matches()) {
+                if (checkNodePath(newPath)) {
                     Session session = node.getSession();
 
                     String oldPath = node.getPath();
@@ -1120,7 +1131,7 @@ public class NodeServlet extends NodeTreeServlet {
                 if (StringUtils.isBlank(params.type)) {
                     throw new ParameterValidationException("invalid node type '" + params.type + "'");
                 }
-                if (StringUtils.isBlank(name)) {
+                if (!checkNodeName(name)) {
                     throw new ParameterValidationException("invalid node name '" + name + "'");
                 }
 
@@ -1187,40 +1198,48 @@ public class NodeServlet extends NodeTreeServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            Node node = resource.adaptTo(Node.class);
+            try {
+                Node node = resource.adaptTo(Node.class);
 
-            if (node != null) {
-                Session session = node.getSession();
-                ResourceResolver resolver = resource.getResourceResolver();
-                NodeParameters params = getNodeParameters(request);
-                String path = params.path;
-                Node templateNode;
+                if (node != null) {
+                    Session session = node.getSession();
+                    ResourceResolver resolver = resource.getResourceResolver();
+                    NodeParameters params = getNodeParameters(request);
+                    String path = params.path;
+                    Node templateNode;
 
-                if (StringUtils.isNotBlank(path) && (templateNode = session.getNode(path)) != null) {
+                    if (StringUtils.isNotBlank(path) && (templateNode = session.getNode(path)) != null) {
 
-                    try {
-                        String newNodePath = node.getPath() + "/"
-                                + (StringUtils.isNotBlank(params.name) ? params.name : templateNode.getName());
+                        try {
+                            String name = StringUtils.isNotBlank(params.name) ? params.name : templateNode.getName();
 
-                        Workspace workspace = session.getWorkspace();
-                        workspace.copy(path, newNodePath);
-                        session.save();
+                            if (!checkNodeName(name)) {
+                                throw new ParameterValidationException("invalid node name '" + name + "'");
+                            }
+                            String newNodePath = node.getPath() + "/" + name;
 
-                        ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newNodePath));
-                        JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                        writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY,
-                                newResource, LabelType.name, false);
+                            Workspace workspace = session.getWorkspace();
+                            workspace.copy(path, newNodePath);
+                            session.save();
 
-                    } catch (ItemExistsException itex) {
-                        jsonAnswerItemExists(request, response);
+                            ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newNodePath));
+                            JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                            writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY,
+                                    newResource, LabelType.name, false);
+
+                        } catch (ItemExistsException itex) {
+                            jsonAnswerItemExists(request, response);
+                        }
+                    } else {
+                        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                                "can't determine template node '" + path + "'");
                     }
                 } else {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            "can't determine template node '" + path + "'");
+                            "can't determine parent node '" + resource.getPath() + "'");
                 }
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "can't determine parent node '" + resource.getPath() + "'");
+            } catch (ParameterValidationException pvex) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, pvex.getMessage());
             }
         }
 
