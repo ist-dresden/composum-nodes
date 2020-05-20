@@ -20,6 +20,12 @@ public class MessageContainer implements Iterable<Message> {
     private static final Logger LOG = LoggerFactory.getLogger(MessageContainer.class);
 
     /**
+     * Used to sort messages by their time.
+     */
+    protected static final Comparator<Message> MESSAGE_TIME_COMPARATOR =
+            Comparator.nullsFirst(Comparator.comparing(Message::getTimestamp));
+
+    /**
      * A logger where {@link #add(Message)} automatically logs to.
      */
     @Nullable
@@ -77,7 +83,11 @@ public class MessageContainer implements Iterable<Message> {
                 if (messages == null) {
                     messages = new ArrayList<>();
                 }
+                boolean doSort = messages.size() > 0 && MESSAGE_TIME_COMPARATOR.compare(messages.get(messages.size() - 1), message) > 0;
                 messages.add(message);
+                if (doSort) {
+                    messages.sort(MESSAGE_TIME_COMPARATOR);
+                }
             }
             if (log != null) {
                 message.logInto(log, throwable);
@@ -106,7 +116,7 @@ public class MessageContainer implements Iterable<Message> {
     public MessageContainer addAll(@Nullable MessageContainer messageContainer) {
         if (messageContainer != null) {
             for (Message m : messageContainer) {
-                add(m);
+                add(m); // TODO if these are very many, there might be some performance issue because of sorting
             }
         }
         return this;
