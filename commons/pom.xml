@@ -22,11 +22,6 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-scr-plugin</artifactId>
-            </plugin>
-
-            <plugin>
                 <!-- Minify the JS-Resources - needs the build-helper-maven-plugin -->
                 <groupId>com.samaxes.maven</groupId>
                 <artifactId>minify-maven-plugin</artifactId>
@@ -58,7 +53,10 @@
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
+                    <exportScr>true</exportScr>
                     <instructions>
+                        <_dsannotations>*</_dsannotations>
+                        <_metatypeannotations>*</_metatypeannotations>
                         <Bundle-Category>${bundle.category}</Bundle-Category>
                         <Bundle-SymbolicName>${bundle.name}</Bundle-SymbolicName>
                         <Include-Resource>
@@ -146,7 +144,6 @@
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.annotation</artifactId>
         </dependency>
-
         <!-- YUICompressor -->
         <dependency>
             <groupId>com.yahoo.platform.yui</groupId>

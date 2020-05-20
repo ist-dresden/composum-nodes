@@ -42,7 +42,7 @@
         <module>corepckg</module>
 
         <!-- Test modules - no deployed code contained -->
-        <module>test</module>
+        <!-- FIXME reintroduce <module>test</module> -->
     </modules>
 
     <build>
