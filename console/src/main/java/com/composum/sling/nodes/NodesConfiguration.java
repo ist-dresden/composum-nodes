@@ -11,8 +11,6 @@ import java.util.Dictionary;
  */
 public interface NodesConfiguration {
 
-    String ERRORPAGE_STATUS = "errorpage.status";
-
     boolean checkConsoleAccess();
 
     @Nonnull

@@ -5,6 +5,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.Dictionary;
@@ -15,24 +16,12 @@ import java.util.Dictionary;
 public interface CoreConfiguration {
 
     String ERRORPAGE_STATUS = "errorpage.status";
-    String ERRORPAGES_PATH = "errorpages.path";
-    String DEFAULT_ERRORPAGES = "errorpages.default";
-
-    String TREE_INTERMEDIATE_FILTER_KEY = "tree.intermediate.filter";
-
-    String SYSTEM_SERVLET_ENABLED = "system.servlet.enabled";
-
-    String TRANSLATION_SERVLET_ENABLED = "validation.servlet.enabled";
-
-    String FORWARDED_SSL_PORT = "network.forward.ssl.port";
 
     /**
-     * Parameter that is appended to {@link #getLoginUrl()} to save the current rendered resource, to allow
+     * Parameter that can be appended to {@link #getLoginUrl()} to save the current rendered resource, to allow
      * re-rendering it after the user logged in.
      */
     public static final String RESOURCE_PARAMETER = "resource";
-
-    int getForwardedSslPort();
 
     boolean isEnabled(AbstractServiceServlet servlet);
 
@@ -58,5 +47,10 @@ public interface CoreConfiguration {
      */
     String getLoginUrl();
 
-    Dictionary getProperties();
+    /**
+     * The (readonly) properties useable for extensions. E.g. introduce a new property in a newer nodes version, and use
+     * it if accessible already when depending on an older nodes version.
+     */
+    @Nonnull
+    Dictionary<String, Object> getProperties();
 }

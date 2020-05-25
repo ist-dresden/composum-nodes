@@ -21,6 +21,7 @@ import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -56,8 +57,8 @@ import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
  * @since 10/2017
  */
 @Component (service = Servlet.class,
-        name = "Composum Clientlib Webconsole Plugin",
         property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Clientlib Webconsole Plugin",
                 "felix.webconsole.category=Composum",
                 "felix.webconsole.label=clientlibs",
                 "felix.webconsole.title=Composum Client Libraries",

@@ -168,13 +168,12 @@ public class NodesConfigImpl implements NodesConfiguration {
 
     @Nonnull
     private Configuration getConfig() {
-        return Objects.requireNonNull(config, "NodesConfig is not active");
+        return Objects.requireNonNull(config, "NodesConfigImpl is not active");
     }
 
     @Override
     public boolean isEnabled(Servlet servlet) {
-        Boolean result = enabledServlets.get(servlet.getClass().getSimpleName());
-        return result != null ? result : false;
+        return enabledServlets != null && Boolean.TRUE.equals(enabledServlets.get(servlet.getClass().getSimpleName()));
     }
 
     @Override

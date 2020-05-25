@@ -6,6 +6,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -42,8 +43,8 @@ import java.util.regex.Pattern;
  * @see "https://github.com/magjac/d3-graphviz"
  */
 @Component(service = Servlet.class,
-        name = "Composum Service Graph Webconsole Plugin",
         property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Service Graph Webconsole Plugin",
                 "felix.webconsole.category=Composum",
                 "felix.webconsole.label=servicegraph",
                 "felix.webconsole.title=Service Graph",
