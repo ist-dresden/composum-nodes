@@ -497,7 +497,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
                 "Maximum time in seconds for which the service waits until it assumes another cluster node \" +\n" +
                         "                    \"tried to create a resource and the attempt hangs. The lock is broken after that and another \" +\n" +
                         "                    \"attempt is started.")
-                // naming is due to
+                // naming of this method is due to backwards compatibility
         int lazycreation_maximumlockwait() default 30;
 
     }
