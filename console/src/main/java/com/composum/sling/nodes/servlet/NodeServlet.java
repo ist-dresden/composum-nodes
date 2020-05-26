@@ -134,7 +134,7 @@ public class NodeServlet extends NodeTreeServlet {
     @Reference(service = FilterConfiguration.class,
             cardinality = ReferenceCardinality.MULTIPLE,
             policy = ReferencePolicy.DYNAMIC)
-    protected List<FilterConfiguration> filterConfigurations;
+    protected volatile List<FilterConfiguration> filterConfigurations;
 
     /**
      * for each configured filter in the OSGi configuration

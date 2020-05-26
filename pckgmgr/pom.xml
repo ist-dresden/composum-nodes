@@ -23,11 +23,6 @@
         <plugins>
 
             <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-scr-plugin</artifactId>
-            </plugin>
-
-            <plugin>
                 <!-- Minify the JS-Resources - needs the build-helper-maven-plugin -->
                 <groupId>com.samaxes.maven</groupId>
                 <artifactId>minify-maven-plugin</artifactId>

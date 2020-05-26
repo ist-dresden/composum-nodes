@@ -61,26 +61,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <!-- http://felix.apache.org/documentation/subprojects/apache-felix-maven-scr-plugin/apache-felix-maven-scr-plugin-use.html -->
-                <!-- Only for the test classes to use MockOSGI.activate. -->
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-scr-plugin</artifactId>
-                <version>1.26.2</version>
-                <executions>
-                    <execution>
-                        <id>generate-scr-scrdescriptor</id>
-                        <goals>
-                            <goal>scr</goal>
-                        </goals>
-                        <configuration>
-                            <properties>
-                                <service.vendor>IST GmbH Dresden</service.vendor>
-                            </properties>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
 
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>

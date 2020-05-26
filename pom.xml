@@ -115,27 +115,6 @@
                     </executions>
                 </plugin>
 
-
-                <!-- FIXME(hps,18.05.20) remove this when not used anymore. -->
-                <plugin>
-                    <groupId>org.apache.felix</groupId>
-                    <artifactId>maven-scr-plugin</artifactId>
-                    <version>1.26.2</version>
-                    <executions>
-                        <execution>
-                            <id>generate-scr-scrdescriptor</id>
-                            <goals>
-                                <goal>scr</goal>
-                            </goals>
-                            <configuration>
-                                <properties>
-                                    <service.vendor>IST GmbH Dresden</service.vendor>
-                                </properties>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-
             </plugins>
         </pluginManagement>
     </build>

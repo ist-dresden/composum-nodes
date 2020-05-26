@@ -23,11 +23,6 @@
         <plugins>
 
             <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-scr-plugin</artifactId>
-            </plugin>
-
-            <plugin>
                 <!-- Minify the JS-Resources - needs the build-helper-maven-plugin -->
                 <groupId>com.samaxes.maven</groupId>
                 <artifactId>minify-maven-plugin</artifactId>
@@ -65,6 +60,20 @@
     </build>
 
     <dependencies>
+
+        <!-- OSGi, Felix -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation</artifactId>
+        </dependency>
 
         <!-- Composum -->
         <dependency>
@@ -120,20 +129,6 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-        </dependency>
-
-        <!-- OSGi, Felix -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>osgi.cmpn</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.annotation</artifactId>
         </dependency>
 
         <!-- Apache Commons -->
