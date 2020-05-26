@@ -5,26 +5,35 @@ import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import javax.jcr.RepositoryException;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@SlingServlet(
-        methods = {"GET"},
-        paths = "/bin/cpm/nodes/source",
-        extensions = {"xml", "zip", "pkg"}
+@Component(service = Servlet.class,
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Source Servlet",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/nodes/source",
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=xml",
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=zip",
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=pkg"
+        }
 )
 public class SourceServlet extends SlingSafeMethodsServlet {
 

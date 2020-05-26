@@ -4,17 +4,21 @@ import com.composum.sling.core.service.PermissionsService;
 import com.composum.sling.core.util.XSS;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.Session;
+import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,11 +32,14 @@ import java.util.List;
  * each parameter can be a ',' separated list combined with OR; multiple parameters are combined with AND
  * response: {"result":true/false,"userId":...,"path":...,...matching permissions}
  */
-@SlingServlet(
-        resourceTypes = "sling/servlet/default",
-        selectors = "cpm.permissions",
-        extensions = "json",
-        methods = {"GET"}
+@Component(service = Servlet.class,
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Core Permissions Servlet",
+                ServletResolverConstants.SLING_SERVLET_RESOURCE_TYPES + "=sling/servlet/default",
+                ServletResolverConstants.SLING_SERVLET_SELECTORS + "=cpm.permissions",
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=json",
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+        }
 )
 public class CorePermissionsServlet extends SlingSafeMethodsServlet {
 
