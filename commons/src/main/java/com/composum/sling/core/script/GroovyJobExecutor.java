@@ -1,63 +1,58 @@
 package com.composum.sling.core.script;
 
 import com.composum.sling.core.concurrent.AbstractJobExecutor;
+import com.composum.sling.core.concurrent.SequencerService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
-import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.consumer.JobExecutionContext;
 import org.apache.sling.event.jobs.consumer.JobExecutor;
-import org.osgi.service.component.ComponentContext;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.*;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
 
 import static com.composum.sling.core.script.GroovyRunner.DEFAULT_SETUP_SCRIPT;
-import static com.composum.sling.core.util.ResourceUtil.CONTENT_NODE;
-import static com.composum.sling.core.util.ResourceUtil.PROP_DATA;
-import static com.composum.sling.core.util.ResourceUtil.PROP_MIME_TYPE;
-import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_FILE;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_RESOURCE;
+import static com.composum.sling.core.util.ResourceUtil.*;
 
 @Component(
-        label = "Groovy Job Executor Service",
-        description = "Provides the execution of groovy scripts in the repository context.",
-        immediate = true,
-        metatype = true
+        service = {JobExecutor.class, EventHandler.class},
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Groovy Job Executor Service",
+                JobExecutor.PROPERTY_TOPICS + "=" + GroovyJobExecutor.GROOVY_TOPIC,
+                EventConstants.EVENT_TOPIC + "=" + "org/apache/sling/event/notification/job/*"
+        },
+        immediate = true
 )
-@Service(value = {JobExecutor.class, EventHandler.class})
-@Properties({
-        @Property(
-                name = JobExecutor.PROPERTY_TOPICS,
-                value = GroovyJobExecutor.GROOVY_TOPIC,
-                propertyPrivate = true),
-        @Property(
-                name = EventConstants.EVENT_TOPIC,
-                value = {"org/apache/sling/event/notification/job/*"},
-                propertyPrivate = true)
-})
+@Designate(ocd = GroovyJobExecutor.Configuration.class)
 public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
+
+    @ObjectClassDefinition(name = "Composum Groovy Job Executor Service",
+            description = "Provides the execution of groovy scripts in the repository context.")
+    public @interface Configuration {
+        @AttributeDefinition(name = "Groovy setup script",
+                description = "the optional path to a custom groovy script to setup a groovy runner script object")
+        String groovy_setup_script() default DEFAULT_SETUP_SCRIPT;
+    }
 
     private static final Logger LOG = LoggerFactory.getLogger(GroovyJobExecutor.class);
     static final String GROOVY_TOPIC = "com/composum/sling/core/script/GroovyJobExecutor";
@@ -65,34 +60,50 @@ public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
 
     private static final String AUDIT_BASE_PATH = AUDIT_ROOT_PATH + "com.composum.sling.core.script.GroovyJobExecutor";
 
-    public static final String GROOVY_SETUP_SCRIPT = "groovy.setup.script";
-    @Property(
-            name = GROOVY_SETUP_SCRIPT,
-            label = "Groovy setup script",
-            description = "the optional path to a custom groovy script to setup a groovy runner script object",
-            value = ""
-    )
-    protected String groovySetupScript;
+    private volatile String groovySetupScript;
 
     @Reference
-    protected DynamicClassLoaderManager dynamicClassLoaderManager;
+    private ResourceResolverFactory resolverFactory;
 
-    @Override
-    @Activate
-    protected void activate(ComponentContext context) throws Exception {
-        Dictionary<String, Object> properties = context.getProperties();
-        groovySetupScript = PropertiesUtil.toString(properties.get(GROOVY_SETUP_SCRIPT), DEFAULT_SETUP_SCRIPT);
-        if (StringUtils.isBlank(groovySetupScript)) {
-            groovySetupScript = DEFAULT_SETUP_SCRIPT;
-        }
+    @Reference
+    private SequencerService<SequencerService.Token> sequencer;
+
+    @Reference
+    private DynamicClassLoaderManager dynamicClassLoaderManager;
+
+    @Nonnull
+    protected ResourceResolverFactory getResolverFactory() {
+        return resolverFactory;
     }
 
+    @Nonnull
+    protected SequencerService<SequencerService.Token> getSequencer() {
+        return sequencer;
+    }
+
+    @Nonnull
+    protected DynamicClassLoaderManager getDynamicClassLoaderManager() {
+        return dynamicClassLoaderManager;
+    }
+
+    @Activate @Modified
+    protected void activate(Configuration configuration) {
+        groovySetupScript = StringUtils.defaultIfBlank(configuration.groovy_setup_script(), DEFAULT_SETUP_SCRIPT);
+    }
+
+    @Deactivate
+    protected void deactivate() {
+        groovySetupScript = null;
+    }
+
+    @Nonnull
     @Override
     protected String getJobTopic() {
         return GROOVY_TOPIC;
     }
 
     @Override
+    @Nonnull
     protected String getAuditBasePath() {
         return AUDIT_BASE_PATH;
     }

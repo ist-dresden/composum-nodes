@@ -2,62 +2,55 @@ package com.composum.sling.core.pckgmgr;
 
 import com.composum.sling.core.concurrent.AbstractJobExecutor;
 import com.composum.sling.core.concurrent.JobFailureException;
+import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.pckgmgr.util.PackageProgressTracker;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.io.ImportOptions;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.PackageException;
 import org.apache.jackrabbit.vault.packaging.Packaging;
-import org.apache.jackrabbit.vault.packaging.PackagingService;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.commons.osgi.PropertiesUtil;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.consumer.JobExecutionContext;
 import org.apache.sling.event.jobs.consumer.JobExecutor;
-import org.osgi.service.component.ComponentContext;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.*;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Dictionary;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.core.pckgmgr.util.PackageUtil.IMPORT_DONE;
+import static com.composum.sling.core.script.GroovyRunner.DEFAULT_SETUP_SCRIPT;
 
 @Component(
-        label = "Package Job Executor Service",
-        description = "Provides the execution of package operations the repository context.",
-        immediate = true,
-        metatype = true
+        service = {JobExecutor.class, EventHandler.class},
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Package Job Executor Service",
+                JobExecutor.PROPERTY_TOPICS + "=" + PackageJobExecutor.TOPIC,
+                EventConstants.EVENT_TOPIC + "=" + "org/apache/sling/event/notification/job/*"
+        },
+        immediate = true
 )
-@Service(value = {JobExecutor.class, EventHandler.class})
-@Properties({
-        @Property(
-                name = JobExecutor.PROPERTY_TOPICS,
-                value = PackageJobExecutor.TOPIC,
-                propertyPrivate = true),
-        @Property(
-                name = EventConstants.EVENT_TOPIC,
-                value = {"org/apache/sling/event/notification/job/*"},
-                propertyPrivate = true)
-})
+@Designate(ocd = PackageJobExecutor.Configuration.class)
 public class PackageJobExecutor extends AbstractJobExecutor<String> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageJobExecutor.class);
@@ -70,36 +63,48 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
 
     public static final String AUDIT_BASE_PATH = AUDIT_ROOT_PATH + PackageJobExecutor.class.getName();
 
-    public static final String DEFAULT_SAVE_THRESHOLD = "package.save.threshold";
-    @Property(
-            name = DEFAULT_SAVE_THRESHOLD,
-            label = "save threshold",
-            intValue = 1024
-    )
-    protected int defaultSaveThreshold;
-
-    public static final String PROGRESS_TRACK_IDLE_TIME = "package.progress.wait";
-    @Property(
-            name = PROGRESS_TRACK_IDLE_TIME,
-            label = "track idle time",
-            description = "idle time in seconds for the progress tracker to check the operations end",
-            intValue = 10
-    )
-    protected int progressTrackIdleTime;
-
     protected final Lock lock = new ReentrantLock(true);
 
     @Reference
     private Packaging packaging;
 
-    @Override
-    @Activate
-    protected void activate(ComponentContext context) throws Exception {
-        Dictionary<String, Object> properties = context.getProperties();
-        defaultSaveThreshold = PropertiesUtil.toInteger(properties.get(DEFAULT_SAVE_THRESHOLD), 1024);
-        progressTrackIdleTime = PropertiesUtil.toInteger(properties.get(PROGRESS_TRACK_IDLE_TIME), 10);
+    @Reference
+    private ResourceResolverFactory resolverFactory;
+
+    @Reference
+    private SequencerService<SequencerService.Token> sequencer;
+
+    @Reference
+    private DynamicClassLoaderManager dynamicClassLoaderManager;
+
+    private volatile Configuration config;
+
+    @Nonnull
+    protected ResourceResolverFactory getResolverFactory() {
+        return resolverFactory;
     }
 
+    @Nonnull
+    protected SequencerService<SequencerService.Token> getSequencer() {
+        return sequencer;
+    }
+
+    @Nonnull
+    protected DynamicClassLoaderManager getDynamicClassLoaderManager() {
+        return dynamicClassLoaderManager;
+    }
+
+    @Activate @Modified
+    protected void activate(Configuration configuration) {
+        this.config = configuration;
+    }
+
+    @Deactivate
+    protected void deactivate() {
+        this.config = null;
+    }
+
+    @Nonnull
     @Override
     protected String getJobTopic() {
         return TOPIC;
@@ -221,9 +226,9 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
         protected ImportOptions createImportOptions() {
             ImportOptions options = new ImportOptions();
             options.setDryRun(getProperty(job, JOB_PROPERTY_DRY_RUN, false));
-            options.setAutoSaveThreshold(getProperty(job, JOB_PROPERTY_SAVE_THRESHOLD, defaultSaveThreshold));
+            options.setAutoSaveThreshold(getProperty(job, JOB_PROPERTY_SAVE_THRESHOLD, config.package_save_threshold()));
             options.setImportMode(getProperty(job, JOB_PROPERTY_IMPORT_MODE, ImportMode.REPLACE));
-            options.setHookClassLoader(dynamicClassLoaderManager.getDynamicClassLoader());
+            options.setHookClassLoader(getDynamicClassLoaderManager().getDynamicClassLoader());
             return options;
         }
 
@@ -312,7 +317,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             }
 
             public boolean isOperationDone() {
-                return operationDone || ++waitLoopCount > progressTrackIdleTime * 2;
+                return operationDone || ++waitLoopCount > config.package_progress_wait() * 2;
             }
 
             @Override
@@ -328,4 +333,16 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             }
         }
     }
+
+    @ObjectClassDefinition(name = "Composum Package Job Executor Service",
+            description = "Provides the execution of package operations the repository context.")
+    public @interface Configuration {
+        @AttributeDefinition(name = "save threshold", description = "the auto-save threshold for the package import")
+        int package_save_threshold() default 1024;
+
+        @AttributeDefinition(name = "track idle time",
+                description = "idle time in seconds for the progress tracker to check the operations end")
+        int package_progress_wait() default 10;
+    }
+
 }

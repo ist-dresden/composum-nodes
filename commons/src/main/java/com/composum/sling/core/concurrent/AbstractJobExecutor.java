@@ -1,9 +1,5 @@
 package com.composum.sling.core.concurrent;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.PersistenceException;
@@ -16,11 +12,13 @@ import org.apache.sling.event.jobs.consumer.JobExecutionContext;
 import org.apache.sling.event.jobs.consumer.JobExecutionResult;
 import org.apache.sling.event.jobs.consumer.JobExecutor;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
@@ -67,7 +65,6 @@ import static org.apache.sling.event.jobs.NotificationConstants.TOPIC_JOB_CANCEL
 import static org.apache.sling.event.jobs.NotificationConstants.TOPIC_JOB_FAILED;
 import static org.apache.sling.event.jobs.NotificationConstants.TOPIC_JOB_FINISHED;
 
-@Component(componentAbstract = true)
 public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractJobExecutor.class);
@@ -88,14 +85,14 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
         CRUD_AUDIT_FOLDER_PROPS = Collections.unmodifiableMap(map);
     }
 
-    @Reference
-    protected ResourceResolverFactory resolverFactory;
+    @Nonnull
+    protected abstract ResourceResolverFactory getResolverFactory();
 
-    @Reference
-    protected SequencerService<SequencerService.Token> sequencer;
+    @Nonnull
+    protected abstract SequencerService<SequencerService.Token> getSequencer();
 
-    @Reference
-    protected DynamicClassLoaderManager dynamicClassLoaderManager;
+    @Nonnull
+    protected abstract DynamicClassLoaderManager getDynamicClassLoaderManager();
 
     protected abstract String getJobTopic();
 
@@ -154,7 +151,7 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
         ResourceResolver adminResolver;
         File tempFile = new File(outfile);
         try {
-            adminResolver = resolverFactory.getAdministrativeResourceResolver(null);
+            adminResolver = getResolverFactory().getAdministrativeResourceResolver(null);
         } catch (LoginException e) {
             return context.result().message(e.getMessage()).cancelled();
         }
@@ -263,7 +260,7 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
             return resolver.getResource("/");
 
         Resource resource = null;
-        SequencerService.Token token = sequencer.acquire(path);
+        SequencerService.Token token = getSequencer().acquire(path);
         try {
             resource = resolver.getResource(path);
             if (resource == null) {
@@ -279,7 +276,7 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
                 }
             }
         } finally {
-            sequencer.release(token);
+            getSequencer().release(token);
         }
         return resource;
     }
@@ -296,7 +293,7 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
                 final String auditPath = buildAuditPathIntern(script, eventJobStartedTime);
                 ResourceResolver adminResolver = null;
                 try {
-                    adminResolver = resolverFactory.getAdministrativeResourceResolver(null);
+                    adminResolver = getResolverFactory().getAdministrativeResourceResolver(null);
                     final Resource auditResource = adminResolver.getResource(auditPath);
                     final ModifiableValueMap map = auditResource.adaptTo(ModifiableValueMap.class);
                     if (event.containsProperty(PROPERTY_RESULT_MESSAGE)) {
