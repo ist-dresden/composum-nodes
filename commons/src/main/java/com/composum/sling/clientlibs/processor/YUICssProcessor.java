@@ -18,7 +18,7 @@ import java.io.PipedOutputStream;
 
 @Component(
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Clientlib CSS Processor (YUI)"
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Clientlib CSS Processor (YUI)"
         }
 )
 public class YUICssProcessor extends AbstractClientlibRenderer implements CssProcessor {

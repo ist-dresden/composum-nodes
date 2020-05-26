@@ -14,7 +14,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 @Component(
         name = "ComposumFilterConfiguration",
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Filter Configuration"
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Filter Configuration"
         },
         configurationPolicy = ConfigurationPolicy.REQUIRE,
         immediate = true)

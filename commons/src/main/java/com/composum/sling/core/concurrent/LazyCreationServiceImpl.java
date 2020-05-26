@@ -33,7 +33,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Component(
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Lazy Creation service"
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Lazy Creation service"
         },
         immediate = true
 )

@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @Component(
         service = Servlet.class,
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Threaddump Webconsole Plugin : Prints stacktraces for all threads",
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Threaddump Webconsole Plugin : Prints stacktraces for all threads",
                 "felix.webconsole.label=threaddump",
                 "felix.webconsole.title=Threaddump",
                 "felix.webconsole.category=Composum",

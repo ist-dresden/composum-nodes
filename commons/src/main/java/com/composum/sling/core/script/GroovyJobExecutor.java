@@ -37,7 +37,7 @@ import static com.composum.sling.core.util.ResourceUtil.*;
 @Component(
         service = {JobExecutor.class, EventHandler.class},
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Groovy Job Executor Service",
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Groovy Job Executor Service",
                 JobExecutor.PROPERTY_TOPICS + "=" + GroovyJobExecutor.GROOVY_TOPIC,
                 EventConstants.EVENT_TOPIC + "=" + "org/apache/sling/event/notification/job/*"
         },

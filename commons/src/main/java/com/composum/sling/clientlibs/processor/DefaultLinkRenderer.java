@@ -7,7 +7,7 @@ import org.osgi.service.component.annotations.Reference;
 
 @Component(
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Clientlib Link Processor"
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Clientlib Link Processor"
         }
 )
 public class DefaultLinkRenderer extends AbstractClientlibRenderer implements LinkRenderer {

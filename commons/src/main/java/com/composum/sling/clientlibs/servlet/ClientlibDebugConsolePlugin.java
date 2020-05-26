@@ -58,7 +58,7 @@ import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
  */
 @Component (service = Servlet.class,
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Clientlib Webconsole Plugin",
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Clientlib Webconsole Plugin",
                 "felix.webconsole.category=Composum",
                 "felix.webconsole.label=clientlibs",
                 "felix.webconsole.title=Composum Client Libraries",

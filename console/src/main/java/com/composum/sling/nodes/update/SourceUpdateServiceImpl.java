@@ -47,7 +47,7 @@ import static com.composum.sling.core.util.ResourceUtil.TYPE_SLING_FOLDER;
 
 @Component(
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Source Update Service : service to update content trees from XML"
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Source Update Service : service to update content trees from XML"
         }
 )
 public class SourceUpdateServiceImpl implements SourceUpdateService {

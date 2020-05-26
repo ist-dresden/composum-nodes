@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
  */
 @Component(service = Servlet.class,
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Service Graph Webconsole Plugin",
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Service Graph Webconsole Plugin",
                 "felix.webconsole.category=Composum",
                 "felix.webconsole.label=servicegraph",
                 "felix.webconsole.title=Service Graph",

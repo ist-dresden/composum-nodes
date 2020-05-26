@@ -44,7 +44,7 @@ import static com.composum.sling.core.script.GroovyRunner.DEFAULT_SETUP_SCRIPT;
 @Component(
         service = {JobExecutor.class, EventHandler.class},
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Package Job Executor Service",
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Package Job Executor Service",
                 JobExecutor.PROPERTY_TOPICS + "=" + PackageJobExecutor.TOPIC,
                 EventConstants.EVENT_TOPIC + "=" + "org/apache/sling/event/notification/job/*"
         },
