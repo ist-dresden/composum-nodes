@@ -19,22 +19,11 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
-import org.apache.jackrabbit.vault.fs.api.FilterSet;
-import org.apache.jackrabbit.vault.fs.api.ImportMode;
-import org.apache.jackrabbit.vault.fs.api.PathFilter;
-import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
-import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
+import org.apache.jackrabbit.vault.fs.api.*;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
-import org.apache.jackrabbit.vault.packaging.JcrPackage;
-import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
-import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
-import org.apache.jackrabbit.vault.packaging.PackageException;
-import org.apache.jackrabbit.vault.packaging.Packaging;
+import org.apache.jackrabbit.vault.packaging.*;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
@@ -42,10 +31,19 @@ import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
+import org.osgi.framework.Constants;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,46 +52,37 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The servlet to provide download and upload of content packages and package definitions.
  */
-@SlingServlet(
-        paths = "/bin/cpm/package",
-        methods = {"GET", "POST", "PUT", "DELETE"},
-        metatype = true,
-        label = "Composum PackageServlet")
+@Component(service = Servlet.class,
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Package Servlet",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/package",
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_DELETE
+        }
+)
+@Designate(ocd = PackageServlet.Configuration.class)
 public class PackageServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageServlet.class);
 
     public static final String PARAM_GROUP = "group";
     public static final String PARAM_FORCE = "force";
-    private static final String PACKAGE_JOB_TIMEOUT = "package.job.timeout";
 
-    @org.apache.felix.scr.annotations.Property(
-            name = PACKAGE_JOB_TIMEOUT,
-            label = "package job timeout",
-            longValue = 60L * 1000L
-    )
-    private long jobIdleTimeout;
+    private volatile long jobIdleTimeout;
 
     public static final String ZIP_CONTENT_TYPE = "application/zip";
 
@@ -136,12 +125,10 @@ public class PackageServlet extends AbstractServiceServlet {
         return nodesConfig.isEnabled(this);
     }
 
-    @Activate
-    protected void activate(ComponentContext context) {
-        Dictionary<String, Object> properties = context.getProperties();
-        jobIdleTimeout = PropertiesUtil.toLong(properties.get(PACKAGE_JOB_TIMEOUT), 60L * 1000L);
+    @Activate @Modified
+    protected void activate(Configuration configuration) {
+        jobIdleTimeout = configuration.package_job_timeout();
     }
-
 
     /**
      * setup of the servlet operation set for this servlet instance
@@ -1240,4 +1227,14 @@ public class PackageServlet extends AbstractServiceServlet {
         }
         reader.endObject();
     }
+
+    @ObjectClassDefinition(name = "Composum Nodes Package Servlet")
+    public @interface Configuration {
+
+        @AttributeDefinition(name = "package job timeout", description =
+                "Time in milliseconds a package job can be idle")
+        long package_job_timeout() default 60L * 1000L;
+
+    }
+
 }

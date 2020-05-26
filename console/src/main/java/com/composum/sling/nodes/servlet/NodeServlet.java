@@ -24,10 +24,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.ReferenceCardinality;
-import org.apache.felix.scr.annotations.ReferencePolicy;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -39,7 +35,13 @@ import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.tika.mime.MimeType;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +63,7 @@ import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import javax.servlet.RequestDispatcher;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
@@ -89,10 +92,16 @@ import static com.composum.sling.core.mapping.MappingRules.CHARSET;
 /**
  * The JCR nodes service servlet to walk though and modify the entire hierarchy.
  */
-@SlingServlet(
-        paths = "/bin/cpm/nodes/node",
-        methods = {"GET", "POST", "PUT", "DELETE"}
-)
+@Component(service = Servlet.class,
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Node Servlet",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/nodes/node",
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_DELETE
+        }
+        )
 public class NodeServlet extends NodeTreeServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodeServlet.class);
@@ -122,8 +131,8 @@ public class NodeServlet extends NodeTreeServlet {
     /**
      * injection of the filter configurations provided by the OSGi configuration
      */
-    @Reference(referenceInterface = FilterConfiguration.class,
-            cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE,
+    @Reference(service = FilterConfiguration.class,
+            cardinality = ReferenceCardinality.MULTIPLE,
             policy = ReferencePolicy.DYNAMIC)
     protected List<FilterConfiguration> filterConfigurations;
 
