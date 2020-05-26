@@ -2,18 +2,12 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
-import com.composum.sling.core.util.I18N;
-import com.composum.sling.core.util.JsonUtil;
-import com.composum.sling.core.util.LinkUtil;
-import com.composum.sling.core.util.ResourceUtil;
-import com.composum.sling.core.util.ResponseUtil;
-import com.composum.sling.core.util.XSS;
+import com.composum.sling.core.util.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Component;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
@@ -24,11 +18,7 @@ import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -37,7 +27,6 @@ import java.util.Map;
 /**
  * A basic class for all '/bin/{service}/path/to/resource' servlets.
  */
-@Component(componentAbstract = true)
 public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
 
     public static final String PARAM_FILE = "file";

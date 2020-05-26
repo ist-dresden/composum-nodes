@@ -8,9 +8,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingHttpServletRequest;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
 
 import javax.annotation.Nonnull;
 import java.io.Reader;
@@ -18,9 +18,10 @@ import java.io.Writer;
 import java.util.Map;
 
 @Component(
-        label = "Composum Nodes Translations Service"
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Translations Service"
+        }
 )
-@Service
 public class CoreTranslationService implements TranslationService {
 
     protected static Gson gson = new GsonBuilder().create();

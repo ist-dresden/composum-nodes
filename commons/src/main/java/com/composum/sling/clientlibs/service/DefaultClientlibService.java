@@ -98,7 +98,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Component(
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Delivers the composed clientlib content bundled and compressed."
+                Constants.SERVICE_DESCRIPTION + "=Composum Clientlib Service: Delivers the composed clientlib content bundled and compressed."
         }
 )
 public class DefaultClientlibService implements ClientlibService {

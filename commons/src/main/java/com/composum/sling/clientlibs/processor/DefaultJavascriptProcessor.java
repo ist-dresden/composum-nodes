@@ -16,7 +16,7 @@ import java.io.InputStream;
  */
 @Component(
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Clientlib Default Javascript Processor"
+                Constants.SERVICE_DESCRIPTION + "=Composum Clientlib Default Javascript Processor"
         }
 )
 public class DefaultJavascriptProcessor extends AbstractClientlibRenderer implements JavascriptProcessor {

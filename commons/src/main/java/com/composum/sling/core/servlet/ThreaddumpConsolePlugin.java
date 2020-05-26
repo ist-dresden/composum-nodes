@@ -4,10 +4,8 @@ import com.composum.sling.core.util.XSS;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
@@ -16,13 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -31,18 +23,20 @@ import java.util.stream.Collectors;
  * Displays the stacktraces of active or all threads. Use as console plugin:
  * http://localhost:9090/system/console/threaddump
  */
-@Component(label = "Composum Threaddump Webconsole Plugin",
-        description = "Prints stacktraces for all threads")
-@Service(value = Servlet.class)
-@Properties({
-        @Property(name = "felix.webconsole.label", value = "threaddump"),
-        @Property(name = "felix.webconsole.title", value = "Threaddump"),
-        @Property(name = "felix.webconsole.category", value = "Composum"),
-        @Property(name = "felix.webconsole.css", value = "threaddump/" + ThreaddumpConsolePlugin.LOC_CSS),
-})
+@Component(
+        service = Servlet.class,
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Threaddump Webconsole Plugin : Prints stacktraces for all threads",
+                "felix.webconsole.label=threaddump",
+                "felix.webconsole.title=Threaddump",
+                "felix.webconsole.category=Composum",
+                "felix.webconsole.css=threaddump/" + ThreaddumpConsolePlugin.LOC_CSS
+        })
 public class ThreaddumpConsolePlugin extends HttpServlet {
 
-    /** Location for the CSS. */
+    /**
+     * Location for the CSS.
+     */
     protected static final String LOC_CSS = "slingconsole/threaddumpplugin.css";
 
     public static final String PARAM_STATE = "state";

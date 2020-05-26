@@ -1,28 +1,20 @@
 package com.composum.sling.core.pckginstall;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.Packaging;
-import org.apache.jackrabbit.vault.packaging.PackagingService;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
 import org.apache.sling.installer.api.InstallableResource;
-import org.apache.sling.installer.api.tasks.InstallTask;
-import org.apache.sling.installer.api.tasks.InstallTaskFactory;
-import org.apache.sling.installer.api.tasks.InstallationContext;
-import org.apache.sling.installer.api.tasks.RegisteredResource;
-import org.apache.sling.installer.api.tasks.ResourceState;
-import org.apache.sling.installer.api.tasks.ResourceTransformer;
-import org.apache.sling.installer.api.tasks.TaskResource;
-import org.apache.sling.installer.api.tasks.TaskResourceGroup;
-import org.apache.sling.installer.api.tasks.TransformationResult;
+import org.apache.sling.installer.api.tasks.*;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.Version;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jcr.Repository;
 import javax.jcr.Session;
@@ -34,10 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-@Service
 @Component
 public class PackageTransformer implements ResourceTransformer, InstallTaskFactory {
 

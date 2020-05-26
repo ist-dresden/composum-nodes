@@ -1,10 +1,9 @@
 package com.composum.sling.core.concurrent;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Deactivate;
-import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +16,6 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 @Component(immediate = true)
-@Service
 public class SemaphoreSequencer implements SequencerService<SemaphoreSequencer.Token> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SemaphoreSequencer.class);

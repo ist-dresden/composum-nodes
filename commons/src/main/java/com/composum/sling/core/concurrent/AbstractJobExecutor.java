@@ -97,11 +97,6 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
     @Reference
     protected DynamicClassLoaderManager dynamicClassLoaderManager;
 
-    @Activate
-    protected void activate(ComponentContext context) throws Exception {
-        Dictionary<String, Object> properties = context.getProperties();
-    }
-
     protected abstract String getJobTopic();
 
     protected abstract String getAuditBasePath();

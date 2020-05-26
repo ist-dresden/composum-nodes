@@ -37,7 +37,7 @@ import java.util.Objects;
 @Component(
         service = CoreConfiguration.class,
         property = {
-                Constants.SERVICE_DESCRIPTION + "=the configuration service for all servlets in the core bundle"
+                Constants.SERVICE_DESCRIPTION + "=Composum Core Configuration Service: the configuration service for all servlets in the core bundle"
         },
         immediate = true
 )

@@ -16,7 +16,7 @@ import java.util.zip.GZIPOutputStream;
 
 @Component(
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Clientlib Default Zip Processor"
+                Constants.SERVICE_DESCRIPTION + "=Composum Clientlib Default Zip Processor"
         }
 )
 public class DefaultGzipProcessor implements GzipProcessor {
