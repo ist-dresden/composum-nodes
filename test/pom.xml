@@ -141,12 +141,6 @@
             <artifactId>commons-codec</artifactId>
             <version>1.5</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.scr.annotations</artifactId>
-            <version>1.9.10</version>
-            <scope>provided</scope>
-        </dependency>
 
         <!-- More testing dependencies -->
         <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->

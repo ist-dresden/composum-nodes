@@ -275,16 +275,6 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- deprecated! FIXME -->
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.scr</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.scr.annotations</artifactId>
-        </dependency>
-
         <!-- Apache Commons -->
         <dependency>
             <groupId>commons-collections</groupId>
