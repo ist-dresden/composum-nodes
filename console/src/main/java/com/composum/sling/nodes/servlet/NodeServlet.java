@@ -131,11 +131,11 @@ public class NodeServlet extends NodeTreeServlet {
     /**
      * injection of the filter configurations provided by the OSGi configuration
      */
+    protected volatile List<FilterConfiguration> filterConfigurations;
+
     @Reference(service = FilterConfiguration.class,
             cardinality = ReferenceCardinality.MULTIPLE,
             policy = ReferencePolicy.DYNAMIC)
-    protected volatile List<FilterConfiguration> filterConfigurations;
-
     /**
      * for each configured filter in the OSGi configuration
      * a tree filter is added to the filter set
