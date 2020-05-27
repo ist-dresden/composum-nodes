@@ -42,14 +42,14 @@
         <module>corepckg</module>
 
         <!-- Test modules - no deployed code contained -->
-        <!-- FIXME reintroduce <module>test</module> -->
+        <module>test</module>
     </modules>
 
     <build>
         <pluginManagement>
             <plugins>
 
-                <!-- FIXME change this if possible to the general setup in the parent pom -->
+                <!-- This is different than the Composum parent pom's setup since everything here are bundles, not packages.  -->
                 <plugin>
                     <!-- If this is included, the build-helper-maven-plugin is also needed to actually include the minifed stuff into the JAR. -->
                     <groupId>com.samaxes.maven</groupId>
