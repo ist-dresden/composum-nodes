@@ -144,6 +144,7 @@
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.annotation</artifactId>
         </dependency>
+
         <!-- YUICompressor -->
         <dependency>
             <groupId>com.yahoo.platform.yui</groupId>

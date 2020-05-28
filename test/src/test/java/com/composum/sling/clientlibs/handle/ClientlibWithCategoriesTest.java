@@ -1,17 +1,12 @@
 package com.composum.sling.clientlibs.handle;
 
 import com.composum.sling.clientlibs.processor.RenderingVisitor;
-import com.composum.sling.clientlibs.service.ClientlibPermissionPlugin;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
-import com.composum.sling.core.util.ResourceUtil;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.theories.suppliers.TestedOn;
 import org.mockito.Mockito;
 
-import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,8 +16,7 @@ import static com.composum.sling.clientlibs.handle.Clientlib.Type.js;
 import static com.composum.sling.clientlibs.handle.ClientlibResourceFolder.PROP_DEPENDS;
 import static com.composum.sling.clientlibs.handle.ClientlibResourceFolder.PROP_EMBED;
 import static com.composum.sling.core.util.ResourceUtil.*;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests related to clientlibs with categories. This verifies only that categories are used correctly to
