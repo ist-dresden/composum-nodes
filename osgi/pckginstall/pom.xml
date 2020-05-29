@@ -34,7 +34,7 @@
                         <Include-Resource>{maven-resources}</Include-Resource>
                         <Import-Package>*</Import-Package>
                         <Export-Package>
-                            com.composum.core.pckginstall.*
+                            com.composum.sling.core.pckginstall.*
                         </Export-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>
                     </instructions>
