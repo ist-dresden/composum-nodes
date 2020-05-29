@@ -25,7 +25,14 @@ public class SlingUrl {
     public static final LinkCodec CODEC = new LinkCodec();
 
     public static final Pattern URL_PATTERN = Pattern.compile(
-            "(([a-zA-Z]+):)?((//([^/:]+)(:([0-9]+))?)?(/([^/.?]*/)*)?([^/.?]*)(\\.[^/?#]*)?(/[^?#]*)?(\\?[^?#]*)?(#.*)?)$"
+            "((?<scheme>[a-zA-Z]+):)?" +
+                    "(?<withoutscheme>" +
+                    "(?<hostandport>//(?<host>[^/:]+)(:(?<port>[0-9]+))?)?" +
+                    "(?<pathnoext>/([^/.?]*/)*)?" +
+                    "(?<filenoext>[^/.?]*)(?<extensions>\\.[^/?#]*)?" +
+                    "(?<suffix>/[^?#]*)?" +
+                    "(?<query>\\?[^?#]*)?(?<fragment>#.*)?" +
+                    ")$"
     );
 
     public static final Pattern HTTP_SCHEME = Pattern.compile("^https?$", Pattern.CASE_INSENSITIVE);
@@ -451,7 +458,7 @@ public class SlingUrl {
             throw new IllegalArgumentException("can't parse URL '" + url + "'");
         }
         String value;
-        if (StringUtils.isNotBlank(value = matcher.group(2))) {
+        if (StringUtils.isNotBlank(value = matcher.group("scheme"))) {
             scheme = value;
             external = true;
             special = SPECIAL_SCHEME.matcher(scheme).matches();
@@ -460,15 +467,15 @@ public class SlingUrl {
             special = false;
         }
         if (special) {
-            name = matcher.group(3);
+            name = matcher.group("withoutscheme");
         } else {
-            if (StringUtils.isNotBlank(value = matcher.group(5))) {
+            if (StringUtils.isNotBlank(value = matcher.group("host"))) {
                 host = value;
             }
-            if (StringUtils.isNotBlank(value = matcher.group(7))) {
+            if (StringUtils.isNotBlank(value = matcher.group("port"))) {
                 port = Integer.parseInt(value);
             }
-            if (StringUtils.isNotBlank(value = matcher.group(8))) {
+            if (StringUtils.isNotBlank(value = matcher.group("pathnoext"))) {
                 path = decode ? CODEC.decode(value) : value;
                 String contextPath = request.getContextPath();
                 if (StringUtils.isNotBlank(contextPath) && path.startsWith(contextPath + "/")) {
@@ -476,21 +483,21 @@ public class SlingUrl {
                     path = path.substring(contextPath.length());
                 }
             }
-            name = StringUtils.isNotBlank(value = matcher.group(10)) ? (decode ? CODEC.decode(value) : value) : "";
-            if (StringUtils.isNotBlank(value = matcher.group(11))) {
+            name = StringUtils.isNotBlank(value = matcher.group("filenoext")) ? (decode ? CODEC.decode(value) : value) : "";
+            if (StringUtils.isNotBlank(value = matcher.group("extensions"))) {
                 String[] selExt = StringUtils.split(value.substring(1), '.');
                 for (int i = 0; i < selExt.length - 1; i++) {
                     selectors.add(decode ? CODEC.decode(selExt[i]) : selExt[i]);
                 }
                 extension = CODEC.decode(decode ? selExt[selExt.length - 1] : selExt[selExt.length - 1]);
             }
-            if (StringUtils.isNotBlank(value = matcher.group(12))) {
+            if (StringUtils.isNotBlank(value = matcher.group("suffix"))) {
                 suffix = decode ? CODEC.decode(value) : value;
             }
-            if (StringUtils.isNotBlank(value = matcher.group(13))) {
+            if (StringUtils.isNotBlank(value = matcher.group("query"))) {
                 parseParameters(value, decode);
             }
-            if (StringUtils.isNotBlank(value = matcher.group(14))) {
+            if (StringUtils.isNotBlank(value = matcher.group("fragment"))) {
                 fragment = (decode ? CODEC.decode(value) : value).substring(1);
             }
         }
