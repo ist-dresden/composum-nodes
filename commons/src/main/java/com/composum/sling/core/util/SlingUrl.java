@@ -1,44 +1,85 @@
 package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.core.util.LinkUtil.adjustMappedUrl;
 
 /**
- * a Sling URL parser / builder class
+ * A Sling URL parser / builder class supporting the
+ * <a href="https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html">Sling URL decomposition</a>
+ * (and composition / modification by using the builder methods) and provides builder methods to change e.g. selectors and extension,
+ * but can also represent other URL types.
+ * It is meant to represent every user input without failing - if it's not a known URL scheme and thus cannot be parsed
+ * it'll just return the input unchanged, and the modification methods fail silently.
  */
 public class SlingUrl {
 
+    /**
+     * Characterizes the type of the URL.
+     */
+    public enum UrlType {
+        /**
+         * Sling URL (or other URL, since these cannot necessarily be distinguished).
+         * It can have a scheme ({@link #isExternal()}) or no scheme.
+         */
+        URL,
+        /**
+         * A relative URL - has no scheme but represents a (relative) path which possibly has selectors, extension, suffix etc.
+         */
+        RELATIVE,
+        /**
+         * Special URL format that doesn't have a path, like mailto: or tel: .
+         * Since it cannot be parsed, the get-Methods mostly do not provide a value here, except {@link #getUrl()}.
+         */
+        SPECIAL,
+        /**
+         * Anything else that cannot be represented here - including invalid input.
+         * Since it cannot be parsed, the get-Methods mostly do not provide a value here, except {@link #getUrl()}.
+         */
+        OTHER
+    }
+
     public static final LinkCodec CODEC = new LinkCodec();
 
-    public static final Pattern URL_PATTERN = Pattern.compile(
-            "((?<scheme>[a-zA-Z]+):)?" +
+    protected static final Pattern SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>[a-zA-Z-]+):)");
+    protected static final Pattern USERNAMEPASSWORD = Pattern.compile("((?<username>[^:@/]+)(:(?<password>[^:@/]+))?@)");
+
+    /**
+     * Regex matching various variants of Sling-URLs.
+     * <p>
+     * About the implementation: A suffix can only exist if there is a
+     * <p>
+     * Debug e.g. with http://www.softlion.com/webtools/regexptest/ .
+     */
+    protected static final Pattern URL_PATTERN = Pattern.compile(
+            "(" + SCHEME_PATTERN.pattern() + "?" +
                     "(?<withoutscheme>" +
-                    "(?<hostandport>//(?<host>[^/:]+)(:(?<port>[0-9]+))?)?" +
-                    "(?<pathnoext>/([^/.?]*/)*)?" +
-                    "(?<filenoext>[^/.?]*)(?<extensions>\\.[^/?#]*)?" +
-                    "(?<suffix>/[^?#]*)?" +
-                    "(?<query>\\?[^?#]*)?(?<fragment>#.*)?" +
-                    ")$"
+                    "(?<hostandport>//" + USERNAMEPASSWORD + "?(?<host>[^/:]+)(:(?<port>[0-9]+))?)?" +
+                    "(?<pathnoext>/([^/.?]+/|\\.\\./)*)?" +
+                    "(?<filenoext>[^/.?]+)" +
+                    "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" +
+                    "(?<query>\\?[^?#]*)?" +
+                    "(?<fragment>#.*)?" +
+                    "))"
     );
 
     public static final Pattern HTTP_SCHEME = Pattern.compile("^https?$", Pattern.CASE_INSENSITIVE);
-    public static final Pattern SPECIAL_SCHEME = Pattern.compile("^(mailto|tel)$", Pattern.CASE_INSENSITIVE);
+    public static final Pattern SPECIAL_SCHEME = Pattern.compile("^(mailto|tel|fax)$", Pattern.CASE_INSENSITIVE);
 
+    protected UrlType type;
     protected String scheme;
+    protected String username;
+    protected String password;
     protected String host;
     protected Integer port;
     protected String contextPath;
@@ -107,6 +148,7 @@ public class SlingUrl {
         this.resourcePath = resource.getPath();
         this.name = StringUtils.substringAfterLast(resourcePath, "/");
         this.path = resourcePath.substring(0, resourcePath.length() - name.length());
+        this.type = UrlType.URL;
         setSelectors(selectors);
         setExtension(extension);
         setSuffix(suffix);
@@ -174,7 +216,7 @@ public class SlingUrl {
     }
 
     public String getPath() {
-        return path + name;
+        return StringUtils.defaultString(path) + name;
     }
 
     @Nonnull
@@ -503,13 +545,13 @@ public class SlingUrl {
         }
         if (!external) {
             ResourceResolver resolver = request.getResourceResolver();
-            resourcePath = path + name;
+            resourcePath = StringUtils.defaultString(path) + name;
             if (StringUtils.isNotBlank(extension)) {
                 resourcePath += '.' + extension;
             }
             resource = resolver.getResource(resourcePath);
             if (resource == null) {
-                resourcePath = path + name;
+                resourcePath = StringUtils.defaultString(path) + name;
                 resource = resolver.getResource(resourcePath);
             }
         }
@@ -536,5 +578,63 @@ public class SlingUrl {
             }
         }
         return linkMapper;
+    }
+
+    /**
+     * Lists the internal parse results - mainly for debugging purposes.
+     */
+    public String toDebugString() {
+        ToStringBuilder builder = new ToStringBuilder(this);
+        if (type != null) {
+            builder.append("type", type);
+        }
+        if (scheme != null) {
+            builder.append("scheme", scheme);
+        }
+        if (username != null) {
+            builder.append("username", username);
+        }
+        if (password != null) {
+            builder.append("password", password);
+        }
+        if (host != null) {
+            builder.append("host", host);
+        }
+        if (port != null) {
+            builder.append("port", port);
+        }
+        if (contextPath != null) {
+            builder.append("contextPath", contextPath);
+        }
+        if (path != null) {
+            builder.append("path", path);
+        }
+        if (name != null) {
+            builder.append("name", name);
+        }
+        if (selectors != null) {
+            builder.append("selectors", selectors);
+        }
+        if (extension != null) {
+            builder.append("extension", extension);
+        }
+        if (suffix != null) {
+            builder.append("suffix", suffix);
+        }
+        if (parameters != null) {
+            builder.append("parameters", parameters);
+        }
+        if (fragment != null) {
+            builder.append("fragment", fragment);
+        }
+        if (url != null) {
+            builder.append("url", url);
+        }
+        builder.append("external", external);
+        // builder.append("special", special); // FIXME(hps,02.06.20) to remove.
+        if (resourcePath != null) {
+            builder.append("resourcePath", resourcePath);
+        }
+        return builder.toString();
     }
 }
