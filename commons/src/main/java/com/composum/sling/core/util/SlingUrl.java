@@ -535,7 +535,7 @@ public class SlingUrl {
             external = true;
             if (SPECIAL_SCHEME.matcher(scheme).matches()) { // mailto, tel, ... - unprocessed
                 type = UrlType.SPECIAL;
-                name = CODEC.decode(url.substring(schemeMatcher.end(), url.length()));
+                name = decode(url.substring(schemeMatcher.end(), url.length()), decode);
             } else { // non-special scheme
                 Matcher matcher = URL_PATTERN.matcher(url);
                 if (matcher.matches()) { // normal URL
@@ -543,7 +543,7 @@ public class SlingUrl {
                     assignFromGroups(matcher, decode, true);
                 } else { // doesn't match URL_PATTERN, can't parse -> other
                     type = UrlType.OTHER;
-                    name = CODEC.decode(url.substring(schemeMatcher.end(), url.length()));
+                    name = decode(url.substring(schemeMatcher.end(), url.length()), decode);
                 }
             }
 
@@ -593,30 +593,34 @@ public class SlingUrl {
             }
         }
         if (isNotBlank(value = matcher.group("pathnoext"))) {
-            path = decode ? CODEC.decode(value) : value;
+            path = decode(value, decode);
             String contextPath = request.getContextPath();
             if (isNotBlank(contextPath) && path.startsWith(contextPath + "/")) {
                 this.contextPath = contextPath;
                 path = path.substring(contextPath.length());
             }
         }
-        name = isNotBlank(value = matcher.group("filenoext")) ? (decode ? CODEC.decode(value) : value) : "";
+        name = isNotBlank(value = matcher.group("filenoext")) ? decode(value, decode) : "";
         if (isNotBlank(value = matcher.group("extensions"))) {
             String[] selExt = StringUtils.split(value.substring(1), '.');
             for (int i = 0; i < selExt.length - 1; i++) {
-                selectors.add(decode ? CODEC.decode(selExt[i]) : selExt[i]);
+                selectors.add(decode(selExt[i], decode));
             }
-            extension = CODEC.decode(decode ? selExt[selExt.length - 1] : selExt[selExt.length - 1]);
+            extension = decode(selExt[selExt.length - 1], decode);
         }
         if (isNotBlank(value = matcher.group("suffix"))) {
-            suffix = decode ? CODEC.decode(value) : value;
+            suffix = decode(value, decode);
         }
         if (isNotBlank(value = matcher.group("query"))) {
             parseParameters(value, decode);
         }
         if (isNotBlank(value = matcher.group("fragment"))) {
-            fragment = (decode ? CODEC.decode(value) : value).substring(1);
+            fragment = decode(value, decode).substring(1);
         }
+    }
+
+    protected String decode(String value, boolean decode) {
+        return decode ? CODEC.decode(value) : value;
     }
 
     protected void parseParameters(@Nonnull String parameterString, boolean decode) {
@@ -626,8 +630,8 @@ public class SlingUrl {
         }
         for (String param : StringUtils.split(parameterString, '&')) {
             String[] nameVal = StringUtils.split(param, "=", 2);
-            addParameter(decode ? CODEC.decode(nameVal[0]) : nameVal[0],
-                    nameVal.length > 1 ? (decode ? CODEC.decode(nameVal[1]) : nameVal[1]) : null);
+            addParameter(decode(nameVal[0], decode),
+                    nameVal.length > 1 ? decode(nameVal[1], decode) : null);
         }
     }
 
