@@ -65,7 +65,7 @@ public class SlingUrl {
      */
     protected static final Pattern URL_PATTERN = Pattern.compile("" +
             SCHEME_PATTERN.pattern() + "?" +
-            "(?<hostandport>//" + USERNAMEPASSWORD + "?(?<host>[^/:]+)(:(?<port>[0-9]+))?)?" +
+            "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:]+)(:(?<port>[0-9]+))?)?)?" +
             "(?<pathnoext>(/([^/.?]+|\\.\\.))*/)" +
             "(" +
             "(?<filenoext>[^/.?]+)" +

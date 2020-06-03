@@ -214,14 +214,14 @@ public class SlingUrlTest {
 
         url = new SlingUrl(request, "file:///etc/fstab");
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,scheme=file,name=///etc/fstab,external=true]"));
-        ec.checkThat(url.getUrl(), is("file:///etc/fstab"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=URL,scheme=file,path=/etc/,name=fstab,external=true]"));
+        ec.checkThat(url.getUrl(), is("file:/etc/fstab"));
 
 
         url = new SlingUrl(request, "file:///c:/WINDOWS/clock.avi");
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,scheme=file,name=///c:/WINDOWS/clock.avi,external=true]"));
-        ec.checkThat(url.getUrl(), is("file:///c%3A/WINDOWS/clock.avi"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=URL,scheme=file,path=/c:/WINDOWS/,name=clock,extension=avi,external=true]"));
+        ec.checkThat(url.getUrl(), is("file:/c:/WINDOWS/clock.avi"));
 
 
         url = new SlingUrl(request, "file:/path/");
