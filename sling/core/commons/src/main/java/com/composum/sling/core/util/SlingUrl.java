@@ -242,11 +242,11 @@ public class SlingUrl {
         return selectors;
     }
 
-    public SlingUrl selector(String... value) {
+    public SlingUrl selector(@Nullable String... value) {
         return addSelector(value);
     }
 
-    public SlingUrl addSelector(String... value) {
+    public SlingUrl addSelector(@Nullable String... value) {
         clearUrl();
         if (value != null) {
             selectors.addAll(Arrays.asList(value));
@@ -264,6 +264,9 @@ public class SlingUrl {
         return setSelectors(selectors);
     }
 
+    /**
+     * Sets the selectors to the given string - can contain multiple selectors separated with period.
+     */
     public SlingUrl setSelectors(@Nullable final String selectors) {
         clearSelectors();
         if (selectors != null) {
@@ -359,6 +362,9 @@ public class SlingUrl {
         return this;
     }
 
+    /**
+     * Adds parameters parsed from an HTTP query string.
+     */
     public SlingUrl addParameters(String parameterString, boolean decode) {
         if (parameterString != null) {
             parseParameters(parameterString, decode);
@@ -420,6 +426,9 @@ public class SlingUrl {
         return toString().equals(other.toString());
     }
 
+    /**
+     * Same as {@link #getUrl()}.
+     */
     @Override
     public String toString() {
         return getUrl();
@@ -434,6 +443,39 @@ public class SlingUrl {
 
     public void clearUrl() {
         this.url = null;
+    }
+
+    @Nullable
+    public String getScheme() {
+        return scheme;
+    }
+
+    @Nullable
+    public String getUsername() {
+        return username;
+    }
+
+    @Nullable
+    public String getPassword() {
+        return password;
+    }
+
+    @Nullable
+    public String getHost() {
+        return host;
+    }
+
+    @Nullable
+    public Integer getPort() {
+        return port;
+    }
+
+    /**
+     * The type of URL.
+     */
+    @Nonnull
+    public UrlType getType() {
+        return type;
     }
 
     public void reset() {
