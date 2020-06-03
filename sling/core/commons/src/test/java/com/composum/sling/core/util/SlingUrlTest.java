@@ -127,7 +127,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getUrl(), is("https://www.google.com/ä-@ß$?x=yßz&a#aa"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=URL,scheme=https,host=www.google.com,path=/,name=ä-@ß$,parameters={x=[yßz], a=[]},fragment=aa,external=true]"));
 
-        url = new SlingUrl(request, "mailto:%C3%A4.user%40%C3%B6.domain.x"); // "mailto:ä.user@ö.domain.x"
+        url = new SlingUrl(request, "mailto:%C3%A4.user%40%C3%B6.domain.x", true); // "mailto:ä.user@ö.domain.x" in UTF-8
         printChecks(url);
         ec.checkThat(url.getContextPath(), is("/ctx"));
         ec.checkThat(url.getExtension(), nullValue());
@@ -139,7 +139,12 @@ public class SlingUrlTest {
         ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user%40%C3%B6.domain.x"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=ä.user@ö.domain.x,external=true]"));
 
-        url = new SlingUrl(request, "tel:%2B01%20123%20/%203456-78%20999"); // +01 123 / 3456-78 999
+        url = new SlingUrl(request, "mailto:ä.user@ö.domain.x");
+        printChecks(url);
+        ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user%40%C3%B6.domain.x"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=ä.user@ö.domain.x,external=true]"));
+
+        url = new SlingUrl(request, "tel:%2B01%20123%20/%203456-78%20999", true); // +01 123 / 3456-78 999
         printChecks(url);
         ec.checkThat(url.getContextPath(), is("/ctx"));
         ec.checkThat(url.getExtension(), nullValue());
@@ -148,6 +153,11 @@ public class SlingUrlTest {
         ec.checkThat(url.getPath(), is("+01 123 / 3456-78 999"));
         ec.checkThat(url.getResourcePath(), nullValue());
         ec.checkThat(url.getSuffix(), nullValue());
+        ec.checkThat(url.getUrl(), is("tel:%2B01%20123%20/%203456-78%20999"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=tel,name=+01 123 / 3456-78 999,external=true]"));
+
+        url = new SlingUrl(request, "tel:+01 123 / 3456-78 999");
+        printChecks(url);
         ec.checkThat(url.getUrl(), is("tel:%2B01%20123%20/%203456-78%20999"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=tel,name=+01 123 / 3456-78 999,external=true]"));
 
@@ -175,8 +185,6 @@ public class SlingUrlTest {
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,name=../img/loading.gif,resourcePath=../img/loading.gif]"));
         ec.checkThat(url.getUrl(), equalTo("../img/loading.gif"));
     }
-
-    // FIXME(hps,03.06.20) path / url ending with / , ftp , file, userpwd
 
     @Test
     public void additionalTests() {
@@ -224,9 +232,9 @@ public class SlingUrlTest {
 
         url = new SlingUrl(request, "mailto:ä.user@ö.domain.x", false);
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=?.user@?.domain.x,external=true]"));
-        ec.checkThat(url.getUrl(), is("mailto:%3F.user%40%3F.domain.x"));
-        
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=ä.user@ö.domain.x,external=true]"));
+        ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user%40%C3%B6.domain.x"));
+
     }
 
     protected void printChecks(SlingUrl url) {
