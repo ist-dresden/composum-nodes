@@ -2,6 +2,7 @@ package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -13,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.core.util.LinkUtil.adjustMappedUrl;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  * A Sling URL parser / builder class supporting the
@@ -61,16 +63,36 @@ public class SlingUrl {
      * <p>
      * Debug e.g. with http://www.softlion.com/webtools/regexptest/ .
      */
-    protected static final Pattern URL_PATTERN = Pattern.compile(
-            "(" + SCHEME_PATTERN.pattern() + "?" +
-                    "(?<withoutscheme>" +
-                    "(?<hostandport>//" + USERNAMEPASSWORD + "?(?<host>[^/:]+)(:(?<port>[0-9]+))?)?" +
-                    "(?<pathnoext>/([^/.?]+/|\\.\\./)*)?" +
-                    "(?<filenoext>[^/.?]+)" +
-                    "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" +
-                    "(?<query>\\?[^?#]*)?" +
-                    "(?<fragment>#.*)?" +
-                    "))"
+    protected static final Pattern URL_PATTERN = Pattern.compile("" +
+            SCHEME_PATTERN.pattern() + "?" +
+            "(?<hostandport>//" + USERNAMEPASSWORD + "?(?<host>[^/:]+)(:(?<port>[0-9]+))?)?" +
+            "(?<pathnoext>(/([^/.?]+|\\.\\.))*/)" +
+            "(" +
+            "(?<filenoext>[^/.?]+)" +
+            "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" +
+            ")?" +
+            "(?<query>\\?[^?#]*)?" +
+            "(?<fragment>#.*)?"
+    );
+
+    protected static final Pattern ABSOLUTE_PATH_PATTERN = Pattern.compile("" +
+            "(?<pathnoext>(/([^/.?]+|\\.\\.))*/)" +
+            "(" +
+            "(?<filenoext>[^/.?]+)" +
+            "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" +
+            ")?" +
+            "(?<query>\\?[^?#]*)?" +
+            "(?<fragment>#.*)?"
+    );
+
+    protected static final Pattern RELATIVE_PATH_PATTERN = Pattern.compile("" +
+            "(?<pathnoext>(([^/.?]+|\\.\\.))*/)?" +
+            "(" +
+            "(?<filenoext>[^/.?]+)" +
+            "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" +
+            ")?" +
+            "(?<query>\\?[^?#]*)?" +
+            "(?<fragment>#.*)?"
     );
 
     public static final Pattern HTTP_SCHEME = Pattern.compile("^https?$", Pattern.CASE_INSENSITIVE);
@@ -83,7 +105,14 @@ public class SlingUrl {
     protected String host;
     protected Integer port;
     protected String contextPath;
+    /**
+     * Contains the path inclusive leading and trailing / , not the file/resource itself: for /a/b/c it's /a/b/ .
+     * Emptly for relative paths / unparseable stuff.
+     */
     protected String path;
+    /**
+     * The filename; if the url could not be parsed ({@link UrlType#SPECIAL} or {@link UrlType#OTHER}), this contains the url without the scheme.
+     */
     protected String name;
     protected final List<String> selectors = new ArrayList<>();
     protected String extension;
@@ -93,7 +122,6 @@ public class SlingUrl {
 
     private transient String url;
     protected boolean external;
-    protected boolean special;  // true, if phone or mail or ... link
 
     protected String resourcePath;
     protected Resource resource;
@@ -189,19 +217,6 @@ public class SlingUrl {
         return this;
     }
 
-    public boolean isSpecial() {
-        return special;
-    }
-
-    public SlingUrl special(boolean value) {
-        return setSpecial(value);
-    }
-
-    public SlingUrl setSpecial(boolean value) {
-        external = value;
-        return this;
-    }
-
     public String getResourcePath() {
         return resourcePath;
     }
@@ -212,9 +227,12 @@ public class SlingUrl {
     }
 
     public String getContextPath() {
-        return StringUtils.isNotBlank(contextPath) ? contextPath : request.getContextPath();
+        return isNotBlank(contextPath) ? contextPath : request.getContextPath();
     }
 
+    /**
+     * The path to the file, including the filename. Does not include the extension, selectors etc.
+     */
     public String getPath() {
         return StringUtils.defaultString(path) + name;
     }
@@ -250,7 +268,7 @@ public class SlingUrl {
         clearSelectors();
         if (selectors != null) {
             for (String sel : StringUtils.split(selectors, '.')) {
-                if (StringUtils.isNotBlank(sel)) {
+                if (isNotBlank(sel)) {
                     this.selectors.add(sel);
                 }
             }
@@ -306,7 +324,7 @@ public class SlingUrl {
 
     public SlingUrl suffix(@Nullable final Resource resource, @Nullable final String extension) {
         return setSuffix(resource != null ? resource.getPath()
-                + (StringUtils.isNotBlank(extension) ? ("." + extension) : "") : null);
+                + (isNotBlank(extension) ? ("." + extension) : "") : null);
     }
 
     public SlingUrl suffix(@Nullable final String suffix) {
@@ -419,6 +437,7 @@ public class SlingUrl {
     }
 
     public void reset() {
+        type = null;
         scheme = null;
         host = null;
         port = null;
@@ -431,40 +450,51 @@ public class SlingUrl {
         parameters.clear();
         fragment = null;
         clearUrl();
-        external = special = false;
+        external = false;
         resourcePath = null;
         resource = null;
     }
 
     protected String buildUrl() {
-        StringBuilder prepend = new StringBuilder();
-        String uri = special ? name : external ? (path + name) : LinkUtil.encodePath(path + name);
-        if (!external && linkMapper != null) {
-            uri = linkMapper.mapUri(request, uri);
-            uri = adjustMappedUrl(request, uri);
+        StringBuilder builder = new StringBuilder();
+        if (isNotBlank(scheme)) {
+            builder.append(scheme).append(':');
+        }
+        if (type == UrlType.SPECIAL || type == UrlType.OTHER) {
+            builder.append(CODEC.encode(name));
         } else {
-            if (StringUtils.isNotBlank(scheme)) {
-                prepend.append(scheme).append(':');
-            }
-            if (StringUtils.isNotBlank(host)) {
-                prepend.append("//").append(host);
+            if (isNotBlank(host)) {
+                builder.append("//");
+                if (isNotBlank(username)) {
+                    builder.append(CODEC.encode(username));
+                    if (isNotBlank(password)) {
+                        builder.append(":").append(CODEC.encode(password));
+                    }
+                    builder.append("@");
+                }
+                builder.append(CODEC.encode(host));
                 if (port != null) {
-                    prepend.append(":").append(port);
+                    builder.append(":").append(port);
                 }
             }
-        }
-        StringBuilder builder = new StringBuilder(prepend.toString());
-        builder.append(uri);
-        for (String value : selectors) {
-            builder.append('.').append(external ? value : CODEC.encode(value));
-        }
-        if (StringUtils.isNotBlank(extension)) {
-            builder.append('.').append(extension);
-        }
-        if (StringUtils.isNotBlank(suffix)) {
-            builder.append(external ? suffix : LinkUtil.encodePath(suffix));
-        }
-        if (!special) {
+
+            String pathAndName = external ? (path + name) : LinkUtil.encodePath(path + name);
+            if (!external && linkMapper != null && type != UrlType.RELATIVE) {
+                pathAndName = linkMapper.mapUri(request, pathAndName);
+                pathAndName = adjustMappedUrl(request, pathAndName);
+            }
+            builder.append(pathAndName);
+
+            for (String value : selectors) {
+                builder.append('.').append(external ? value : CODEC.encode(value));
+            }
+            if (isNotBlank(extension)) {
+                builder.append('.').append(CODEC.encode(extension));
+            }
+            if (isNotBlank(suffix)) {
+                builder.append(external ? suffix : LinkUtil.encodePath(suffix));
+            }
+
             if (parameters.size() > 0) {
                 int index = 0;
                 for (Map.Entry<String, List<String>> param : parameters.entrySet()) {
@@ -486,7 +516,8 @@ public class SlingUrl {
                     }
                 }
             }
-            if (StringUtils.isNotBlank(fragment)) {
+
+            if (isNotBlank(fragment)) {
                 builder.append('#').append(external ? fragment : CODEC.encode(fragment));
             }
         }
@@ -495,58 +526,46 @@ public class SlingUrl {
 
     protected void parseUrl(@Nonnull final String url, final boolean decode) throws IllegalArgumentException {
         reset();
-        Matcher matcher = URL_PATTERN.matcher(url);
-        if (!matcher.matches()) {
-            throw new IllegalArgumentException("can't parse URL '" + url + "'");
+        Matcher schemeMatcher = SCHEME_PATTERN.matcher(url);
+        if (schemeMatcher.lookingAt()) {
+            scheme = schemeMatcher.group("scheme");
         }
-        String value;
-        if (StringUtils.isNotBlank(value = matcher.group("scheme"))) {
-            scheme = value;
+
+        if (isNotBlank(scheme)) {
             external = true;
-            special = SPECIAL_SCHEME.matcher(scheme).matches();
-        } else {
-            external = false;
-            special = false;
-        }
-        if (special) {
-            name = matcher.group("withoutscheme");
-        } else {
-            if (StringUtils.isNotBlank(value = matcher.group("host"))) {
-                host = value;
-            }
-            if (StringUtils.isNotBlank(value = matcher.group("port"))) {
-                port = Integer.parseInt(value);
-            }
-            if (StringUtils.isNotBlank(value = matcher.group("pathnoext"))) {
-                path = decode ? CODEC.decode(value) : value;
-                String contextPath = request.getContextPath();
-                if (StringUtils.isNotBlank(contextPath) && path.startsWith(contextPath + "/")) {
-                    this.contextPath = contextPath;
-                    path = path.substring(contextPath.length());
+            if (SPECIAL_SCHEME.matcher(scheme).matches()) { // mailto, tel, ... - unprocessed
+                type = UrlType.SPECIAL;
+                name = CODEC.decode(url.substring(schemeMatcher.end(), url.length()));
+            } else { // non-special scheme
+                Matcher matcher = URL_PATTERN.matcher(url);
+                if (matcher.matches()) { // normal URL
+                    type = UrlType.URL;
+                    assignFromGroups(matcher, decode, true);
+                } else { // doesn't match URL_PATTERN, can't parse -> other
+                    type = UrlType.OTHER;
+                    name = CODEC.decode(url.substring(schemeMatcher.end(), url.length()));
                 }
             }
-            name = StringUtils.isNotBlank(value = matcher.group("filenoext")) ? (decode ? CODEC.decode(value) : value) : "";
-            if (StringUtils.isNotBlank(value = matcher.group("extensions"))) {
-                String[] selExt = StringUtils.split(value.substring(1), '.');
-                for (int i = 0; i < selExt.length - 1; i++) {
-                    selectors.add(decode ? CODEC.decode(selExt[i]) : selExt[i]);
-                }
-                extension = CODEC.decode(decode ? selExt[selExt.length - 1] : selExt[selExt.length - 1]);
+
+        } else { // no scheme : path or other
+            Matcher matcher;
+            if ((matcher = ABSOLUTE_PATH_PATTERN.matcher(url)).matches()) {
+                type = UrlType.URL;
+                assignFromGroups(matcher, decode, false);
+            } else if ((matcher = RELATIVE_PATH_PATTERN.matcher(url)).matches()) {
+                type = UrlType.RELATIVE;
+                assignFromGroups(matcher, decode, false);
+            } else { // doesn't match URL_PATTERN, can't parse -> other
+                type = UrlType.OTHER;
+                name = url;
             }
-            if (StringUtils.isNotBlank(value = matcher.group("suffix"))) {
-                suffix = decode ? CODEC.decode(value) : value;
-            }
-            if (StringUtils.isNotBlank(value = matcher.group("query"))) {
-                parseParameters(value, decode);
-            }
-            if (StringUtils.isNotBlank(value = matcher.group("fragment"))) {
-                fragment = (decode ? CODEC.decode(value) : value).substring(1);
-            }
+
         }
+
         if (!external) {
             ResourceResolver resolver = request.getResourceResolver();
             resourcePath = StringUtils.defaultString(path) + name;
-            if (StringUtils.isNotBlank(extension)) {
+            if (isNotBlank(extension)) {
                 resourcePath += '.' + extension;
             }
             resource = resolver.getResource(resourcePath);
@@ -554,6 +573,49 @@ public class SlingUrl {
                 resourcePath = StringUtils.defaultString(path) + name;
                 resource = resolver.getResource(resourcePath);
             }
+        }
+    }
+
+    protected void assignFromGroups(Matcher matcher, boolean decode, boolean hostAndPort) {
+        String value;
+        if (hostAndPort) {
+            if (isNotBlank(value = matcher.group("host"))) {
+                host = value;
+            }
+            if (isNotBlank(value = matcher.group("port"))) {
+                port = Integer.parseInt(value);
+            }
+            if (isNotBlank(value = matcher.group("username"))) {
+                username = value;
+            }
+            if (isNotBlank(value = matcher.group("password"))) {
+                password = value;
+            }
+        }
+        if (isNotBlank(value = matcher.group("pathnoext"))) {
+            path = decode ? CODEC.decode(value) : value;
+            String contextPath = request.getContextPath();
+            if (isNotBlank(contextPath) && path.startsWith(contextPath + "/")) {
+                this.contextPath = contextPath;
+                path = path.substring(contextPath.length());
+            }
+        }
+        name = isNotBlank(value = matcher.group("filenoext")) ? (decode ? CODEC.decode(value) : value) : "";
+        if (isNotBlank(value = matcher.group("extensions"))) {
+            String[] selExt = StringUtils.split(value.substring(1), '.');
+            for (int i = 0; i < selExt.length - 1; i++) {
+                selectors.add(decode ? CODEC.decode(selExt[i]) : selExt[i]);
+            }
+            extension = CODEC.decode(decode ? selExt[selExt.length - 1] : selExt[selExt.length - 1]);
+        }
+        if (isNotBlank(value = matcher.group("suffix"))) {
+            suffix = decode ? CODEC.decode(value) : value;
+        }
+        if (isNotBlank(value = matcher.group("query"))) {
+            parseParameters(value, decode);
+        }
+        if (isNotBlank(value = matcher.group("fragment"))) {
+            fragment = (decode ? CODEC.decode(value) : value).substring(1);
         }
     }
 
@@ -584,7 +646,7 @@ public class SlingUrl {
      * Lists the internal parse results - mainly for debugging purposes.
      */
     public String toDebugString() {
-        ToStringBuilder builder = new ToStringBuilder(this);
+        ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE);
         if (type != null) {
             builder.append("type", type);
         }
@@ -612,7 +674,7 @@ public class SlingUrl {
         if (name != null) {
             builder.append("name", name);
         }
-        if (selectors != null) {
+        if (selectors != null && !selectors.isEmpty()) {
             builder.append("selectors", selectors);
         }
         if (extension != null) {
@@ -621,20 +683,19 @@ public class SlingUrl {
         if (suffix != null) {
             builder.append("suffix", suffix);
         }
-        if (parameters != null) {
+        if (parameters != null && !parameters.isEmpty()) {
             builder.append("parameters", parameters);
         }
         if (fragment != null) {
             builder.append("fragment", fragment);
         }
-        if (url != null) {
-            builder.append("url", url);
+        if (external) {
+            builder.append("external", external);
         }
-        builder.append("external", external);
-        // builder.append("special", special); // FIXME(hps,02.06.20) to remove.
         if (resourcePath != null) {
             builder.append("resourcePath", resourcePath);
         }
         return builder.toString();
     }
+
 }
