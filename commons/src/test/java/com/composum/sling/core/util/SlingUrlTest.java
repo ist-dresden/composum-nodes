@@ -235,6 +235,11 @@ public class SlingUrlTest {
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=ä.user@ö.domain.x,external=true]"));
         ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user%40%C3%B6.domain.x"));
 
+        url = new SlingUrl(request, "//host/path", false); // "protocol relative URL"
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,name=//host/path,resourcePath=//host/path]"));
+        ec.checkThat(url.getUrl(), is("//host/path"));
+
     }
 
     protected void printChecks(SlingUrl url) {
