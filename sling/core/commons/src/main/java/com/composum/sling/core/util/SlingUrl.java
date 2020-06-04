@@ -9,11 +9,13 @@ import org.apache.sling.api.resource.ResourceResolver;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.core.util.LinkUtil.adjustMappedUrl;
+import static org.apache.commons.lang3.StringUtils.defaultString;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
@@ -217,24 +219,28 @@ public class SlingUrl {
         return external;
     }
 
-    public SlingUrl external(boolean value) {
-        return setExternal(value);
-    }
 
-    public SlingUrl setExternal(boolean value) {
-        external = value;
-        return this;
-    }
-
+    /**
+     * For internal urls the path to the rendered resource. The path to {@link #getResource()} if that exists.
+     */
+    @Nullable
     public String getResourcePath() {
         return resourcePath;
     }
 
+    /**
+     * For internal urls: if this is a path to a resource, this returns it (suffix, selectors and parameters ignored, if present).
+     */
     @Nullable
     public Resource getResource() {
         return resource;
     }
 
+    /**
+     * If an internal path starts with the {@link HttpServletRequest#getContextPath()}, this contains the context path,
+     * and the context path is removed from {@link #getPath()}.
+     */
+    @Nullable
     public String getContextPath() {
         return isNotBlank(contextPath) ? contextPath : request.getContextPath();
     }
@@ -243,7 +249,7 @@ public class SlingUrl {
      * The path to the file, including the filename. Does not include the extension, selectors etc.
      */
     public String getPath() {
-        return StringUtils.defaultString(path) + name;
+        return defaultString(path) + name;
     }
 
     @Nonnull
@@ -349,9 +355,14 @@ public class SlingUrl {
         return this;
     }
 
+    /**
+     * Unmodifiable map of the contained parameters.
+     * <p>
+     * This is unmodifiable since otherwise we would have to trust the user to call {@link #clearUrl()} on every change.
+     */
     @Nonnull
     Map<String, List<String>> getParameters() {
-        return parameters;
+        return Collections.unmodifiableMap(parameters);
     }
 
     public SlingUrl parameter(String name, String... value) {
@@ -429,6 +440,9 @@ public class SlingUrl {
         return toString().hashCode();
     }
 
+    /**
+     * Just compares {@link #toString()} - that is, the url.
+     */
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object other) {
@@ -450,7 +464,10 @@ public class SlingUrl {
         return url;
     }
 
-    public void clearUrl() {
+    /**
+     * Internal reset method for the cached URL called when anything changes.
+     */
+    protected void clearUrl() {
         this.url = null;
     }
 
@@ -531,7 +548,7 @@ public class SlingUrl {
                 }
             }
 
-            String pathAndName = external ? (path + name) : LinkUtil.encodePath(path + name);
+            String pathAndName = external ? CODEC.encode(path + name) : LinkUtil.encodePath(path + name);
             if (!external && linkMapper != null && type != UrlType.RELATIVE) {
                 pathAndName = linkMapper.mapUri(request, pathAndName);
                 pathAndName = adjustMappedUrl(request, pathAndName);
@@ -539,13 +556,13 @@ public class SlingUrl {
             builder.append(pathAndName);
 
             for (String value : selectors) {
-                builder.append('.').append(external ? value : CODEC.encode(value));
+                builder.append('.').append(CODEC.encode(value));
             }
             if (isNotBlank(extension)) {
                 builder.append('.').append(CODEC.encode(extension));
             }
             if (isNotBlank(suffix)) {
-                builder.append(external ? suffix : LinkUtil.encodePath(suffix));
+                builder.append(external ? CODEC.encode(suffix) : LinkUtil.encodePath(suffix));
             }
 
             if (parameters.size() > 0) {
@@ -556,22 +573,22 @@ public class SlingUrl {
                     if (values.size() > 0) {
                         for (String val : values) {
                             builder.append(index == 0 ? '?' : '&');
-                            builder.append(external ? name : CODEC.encode(name));
+                            builder.append(CODEC.encode(name));
                             if (val != null) {
-                                builder.append("=").append(external ? val : CODEC.encode(val));
+                                builder.append("=").append(CODEC.encode(val));
                             }
                             index++;
                         }
                     } else {
                         builder.append(index == 0 ? '?' : '&');
-                        builder.append(external ? name : CODEC.encode(name));
+                        builder.append(CODEC.encode(name));
                         index++;
                     }
                 }
             }
 
             if (isNotBlank(fragment)) {
-                builder.append('#').append(external ? fragment : CODEC.encode(fragment));
+                builder.append('#').append(CODEC.encode(fragment));
             }
         }
         return builder.toString();
@@ -617,13 +634,13 @@ public class SlingUrl {
 
         if (!external) {
             ResourceResolver resolver = request.getResourceResolver();
-            resourcePath = StringUtils.defaultString(path) + name;
+            resourcePath = defaultString(path) + name;
             if (isNotBlank(extension)) {
                 resourcePath += '.' + extension;
             }
             resource = resolver.getResource(resourcePath);
             if (resource == null) {
-                resourcePath = StringUtils.defaultString(path) + name;
+                resourcePath = defaultString(path) + name;
                 resource = resolver.getResource(resourcePath);
             }
         }
