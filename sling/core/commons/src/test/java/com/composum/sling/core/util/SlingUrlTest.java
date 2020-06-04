@@ -4,9 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ErrorCollector;
 
 import java.util.regex.Matcher;
@@ -26,6 +24,7 @@ public class SlingUrlTest {
     protected SlingHttpServletRequest request;
     protected ResourceResolver resolver;
     protected SlingUrl url;
+    protected StringBuilder linkexamples = new StringBuilder();
 
     @Before
     public void setup() {
@@ -215,19 +214,19 @@ public class SlingUrlTest {
         url = new SlingUrl(request, "file:///etc/fstab");
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=URL,scheme=file,path=/etc/,name=fstab,external=true]"));
-        ec.checkThat(url.getUrl(), is("file:/etc/fstab"));
+        ec.checkThat(url.getUrl(), is("file:///etc/fstab"));
 
 
         url = new SlingUrl(request, "file:///c:/WINDOWS/clock.avi");
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=URL,scheme=file,path=/c:/WINDOWS/,name=clock,extension=avi,external=true]"));
-        ec.checkThat(url.getUrl(), is("file:/c:/WINDOWS/clock.avi"));
+        ec.checkThat(url.getUrl(), is("file:///c:/WINDOWS/clock.avi"));
 
 
-        url = new SlingUrl(request, "file:/path/");
+        url = new SlingUrl(request, "file:///path/");
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=URL,scheme=file,path=/path/,name=,external=true]"));
-        ec.checkThat(url.getUrl(), is("file:/path/"));
+        ec.checkThat(url.getUrl(), is("file:///path/"));
 
 
         url = new SlingUrl(request, "mailto:ä.user@ö.domain.x", false);
@@ -242,14 +241,60 @@ public class SlingUrlTest {
 
     }
 
+    @Test
+    public void emailFormats() {
+        url = new SlingUrl(request, "mailto:ä.user@ö.domain.x");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=ä.user@ö.domain.x,external=true]"));
+        ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user%40%C3%B6.domain.x"));
+
+        url = new SlingUrl(request, "mailto:John Smith <john.smith@example.org>");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=John Smith <john.smith@example.org>,external=true]"));
+        ec.checkThat(url.getUrl(), is("mailto:John%20Smith%20%3Cjohn.smith%40example.org%3E"));
+
+        url = new SlingUrl(request, "mailto:\"john..doe\"@example.org");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=\"john..doe\"@example.org,external=true]"));
+        ec.checkThat(url.getUrl(), is("mailto:%22john..doe%22%40example.org"));
+
+        url = new SlingUrl(request, "mailto:with+symbol@example.com");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=with+symbol@example.com,external=true]"));
+        ec.checkThat(url.getUrl(), is("mailto:with%2Bsymbol%40example.com"));
+
+        url = new SlingUrl(request, "mailto:us'%20%%r%example.com@example.org");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=us'%20%%r%example.com@example.org,external=true]"));
+        ec.checkThat(url.getUrl(), is("mailto:us%27%2520%25%25r%25example.com%40example.org"));
+
+        url = new SlingUrl(request, "mailto:=?utf-8?B?w5xtbMOkdXR0ZcOfdA==?= <umlauttest@example.com>");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name==?utf-8?B?w5xtbMOkdXR0ZcOfdA==?= <umlauttest@example.com>,external=true]"));
+        ec.checkThat(url.getUrl(), is("mailto:%3D%3Futf-8%3FB%3Fw5xtbMOkdXR0ZcOfdA%3D%3D%3F%3D%20%3Cumlauttest%40example.com%3E"));
+    }
+
+    /**
+     * Generates code to easily create many examples.
+     */
     protected void printChecks(SlingUrl url) {
-        // hook for using assertion code generator
-        System.out.println(new StringBuilder()
-                .append("\n\n        url = new SlingUrl(request, \"").append(url.getUrl()).append("\");")
+        linkexamples.append("<p><a href=\"").append(url.getUrl()).append("\">").append(url.getUrl()).append("</a></p>\n");
+        StringBuilder builder = new StringBuilder();
+        builder.append("\n\n        url = new SlingUrl(request, \"").append(url.getUrl()).append("\");")
                 .append("\n        printChecks(url);")
                 .append("\n        ec.checkThat(url.toDebugString(), is(\"").append(url.toDebugString()).append("\"));")
-                .append("\n        ec.checkThat(url.getUrl(), is(\"").append(url.getUrl()).append("\"));")
-        );
+                .append("\n        ec.checkThat(url.getUrl(), is(\"").append(url.getUrl()).append("\"));");
+        System.out.println(builder);
+    }
+
+    /**
+     * Prints examples for manual check in browser, e.g. with https://www.w3schools.com/html/tryit.asp?filename=tryhtml_links_w3schools .
+     */
+    @After
+    public void printLinks() {
+        System.out.println();
+        System.out.println(linkexamples);
+        linkexamples.setLength(0);
     }
 
     @Test
