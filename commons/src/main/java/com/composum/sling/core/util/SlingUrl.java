@@ -183,15 +183,24 @@ public class SlingUrl {
         setParameters(parameterString, decodeParameters);
     }
 
+    /**
+     * Parses the url without URL-decoding it.
+     */
     public SlingUrl(@Nonnull final SlingHttpServletRequest request, @Nonnull final String url) {
         this(request, url, false);
     }
 
+    /**
+     * Parses the url, possibly URL-decoding it when decode = true.
+     */
     public SlingUrl(@Nonnull final SlingHttpServletRequest request, @Nonnull final String url,
                     boolean decode) {
         this(request, url, decode, getLinkMapper(request, null));
     }
 
+    /**
+     * Parses the url, possibly URL-decoding it when decode = true. A linkmapper can be given if the url is a path.
+     */
     public SlingUrl(@Nonnull final SlingHttpServletRequest request, @Nonnull final String url,
                     boolean decode, @Nullable LinkMapper linkMapper) {
         this.request = request;
@@ -505,8 +514,10 @@ public class SlingUrl {
         if (type == UrlType.SPECIAL || type == UrlType.OTHER) {
             builder.append(CODEC.encode(name));
         } else {
-            if (isNotBlank(host)) {
+            if (isNotBlank(scheme)) {
                 builder.append("//");
+            }
+            if (isNotBlank(host)) {
                 if (isNotBlank(username)) {
                     builder.append(CODEC.encode(username));
                     if (isNotBlank(password)) {
