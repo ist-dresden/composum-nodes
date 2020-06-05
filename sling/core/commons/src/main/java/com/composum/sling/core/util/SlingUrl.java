@@ -34,10 +34,15 @@ public class SlingUrl {
      */
     public enum UrlType {
         /**
-         * Sling URL (or other URL, since these cannot necessarily be distinguished).
-         * It can have a scheme ({@link #isExternal()}) or no scheme.
+         * HTTP(S) Sling URL (or other URL, since these cannot necessarily be distinguished).
+         * It can have a scheme ({@link #isExternal()}) or be an absolute path without a scheme - in this case
+         * it'll be turned into a HTTP(S) URL on {@link #getUrl()} by the {@link LinkMapper}.
          */
-        URL,
+        HTTP,
+        /**
+         * A file or ftp (<em>file</em> transfer protocol) URL.
+         */
+        FILE,
         /**
          * A relative URL - has no scheme but represents a (relative) path which possibly has selectors, extension, suffix etc.
          */
@@ -62,11 +67,21 @@ public class SlingUrl {
     /**
      * Regex matching various variants of Sling-URLs.
      * <p>
-     * About the implementation: A suffix can only exist if there is a
-     * <p>
-     * Debug e.g. with http://www.softlion.com/webtools/regexptest/ .
+     * Debug regex e.g. with http://www.softlion.com/webtools/regexptest/ .
      */
-    protected static final Pattern URL_PATTERN = Pattern.compile("" +
+    protected static final Pattern HTTP_URL_PATTERN = Pattern.compile("" +
+            SCHEME_PATTERN.pattern() + "?" +
+            "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:]+)(:(?<port>[0-9]+))?)?)?" +
+            "(?<pathnoext>(/([^/.?]+|\\.\\.))*/)" +
+            "(" +
+            "(?<filenoext>[^/.?]+)" +
+            "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" + // A suffix can only exist if there is an extension.
+            ")?" +
+            "(?<query>\\?[^?#]*)?" +
+            "(?<fragment>#.*)?"
+    );
+
+    protected static final Pattern FILE_URL_PATTERN = Pattern.compile("" +
             SCHEME_PATTERN.pattern() + "?" +
             "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:]+)(:(?<port>[0-9]+))?)?)?" +
             "(?<pathnoext>(/([^/.?]+|\\.\\.))*/)" +
@@ -74,8 +89,7 @@ public class SlingUrl {
             "(?<filenoext>[^/.?]+)" +
             "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" +
             ")?" +
-            "(?<query>\\?[^?#]*)?" +
-            "(?<fragment>#.*)?"
+            "(?<query>)(?<fragment>)" // empty groups to allow easier reading out of the matcher
     );
 
     protected static final Pattern ABSOLUTE_PATH_PATTERN = Pattern.compile("" +
@@ -98,8 +112,9 @@ public class SlingUrl {
             "(?<fragment>#.*)?"
     );
 
-    public static final Pattern HTTP_SCHEME = Pattern.compile("^https?$", Pattern.CASE_INSENSITIVE);
-    public static final Pattern SPECIAL_SCHEME = Pattern.compile("^(mailto|tel|fax)$", Pattern.CASE_INSENSITIVE);
+    protected static final Pattern HTTP_SCHEME = Pattern.compile("^https?$", Pattern.CASE_INSENSITIVE);
+    protected static final Pattern FILE_SCHEME = Pattern.compile("^(file|ftp)$", Pattern.CASE_INSENSITIVE);
+    protected static final Pattern SPECIAL_SCHEME = Pattern.compile("^(mailto|tel|fax)$", Pattern.CASE_INSENSITIVE);
 
     protected UrlType type;
     protected String scheme;
@@ -178,7 +193,7 @@ public class SlingUrl {
         this.resourcePath = resource.getPath();
         this.name = StringUtils.substringAfterLast(resourcePath, "/");
         this.path = resourcePath.substring(0, resourcePath.length() - name.length());
-        this.type = UrlType.URL;
+        this.type = UrlType.HTTP;
         setSelectors(selectors);
         setExtension(extension);
         setSuffix(suffix);
@@ -227,7 +242,7 @@ public class SlingUrl {
      */
     @Nullable
     public String getResourcePath() {
-        if (resourcePath == null && !isExternal() && type == UrlType.URL) { // FIXME(hps,05.06.20) only for http, too!
+        if (resourcePath == null && !isExternal() && type == UrlType.HTTP) {
             ResourceResolver resolver = request.getResourceResolver();
             resourcePath = defaultString(path) + name;
             if (isNotBlank(extension)) {
@@ -799,34 +814,45 @@ public class SlingUrl {
             scheme = schemeMatcher.group("scheme");
         }
 
+        boolean other = false;
         if (isNotBlank(scheme)) {
-            if (SPECIAL_SCHEME.matcher(scheme).matches()) { // mailto, tel, ... - unprocessed
+            if (HTTP_SCHEME.matcher(scheme).matches()) {
+                Matcher matcher = HTTP_URL_PATTERN.matcher(url);
+                if (matcher.matches()) { // normal URL
+                    type = UrlType.HTTP;
+                    assignFromGroups(matcher, decode, true);
+                } else { // doesn't match URL_PATTERN, can't parse -> other
+                    other = true;
+                }
+            } else if (FILE_SCHEME.matcher(scheme).matches()) {
+                Matcher matcher = FILE_URL_PATTERN.matcher(url);
+                if (matcher.matches()) { // normal URL
+                    type = UrlType.FILE;
+                    assignFromGroups(matcher, decode, true);
+                } else { // doesn't match URL_PATTERN, can't parse -> other
+                    other = true;
+                }
+            } else if (SPECIAL_SCHEME.matcher(scheme).matches()) { // mailto, tel, ... - unprocessed
                 type = UrlType.SPECIAL;
                 name = decode(url.substring(schemeMatcher.end()), decode);
             } else { // non-special scheme
-                Matcher matcher = URL_PATTERN.matcher(url);
-                if (matcher.matches()) { // normal URL
-                    type = UrlType.URL;
-                    assignFromGroups(matcher, decode, true);
-                } else { // doesn't match URL_PATTERN, can't parse -> other
-                    type = UrlType.OTHER;
-                    name = decode(url.substring(schemeMatcher.end()), decode);
-                }
+                other = true;
             }
-
         } else { // no scheme : path or other
             Matcher matcher;
             if ((matcher = ABSOLUTE_PATH_PATTERN.matcher(url)).matches()) {
-                type = UrlType.URL;
+                type = UrlType.HTTP; // it'll turn into HTTP on getUrl().
                 assignFromGroups(matcher, decode, false);
             } else if ((matcher = RELATIVE_PATH_PATTERN.matcher(url)).matches()) {
                 type = UrlType.RELATIVE;
                 assignFromGroups(matcher, decode, false);
             } else { // doesn't match URL_PATTERN, can't parse -> other
-                type = UrlType.OTHER;
-                name = url;
+                other = true;
             }
-
+        }
+        if (other) {
+            type = UrlType.OTHER;
+            name = url;
         }
     }
 
