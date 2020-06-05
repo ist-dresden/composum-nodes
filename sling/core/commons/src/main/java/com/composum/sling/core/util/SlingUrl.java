@@ -26,6 +26,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * It is meant to represent every user input without failing - if it's not a known URL scheme and thus cannot be parsed
  * it'll just return the input unchanged, and the modification methods fail silently.
  */
+@SuppressWarnings({"unused", "ParameterHidesMemberVariable", "UnusedReturnValue"})
 public class SlingUrl {
 
     /**
@@ -88,7 +89,7 @@ public class SlingUrl {
     );
 
     protected static final Pattern RELATIVE_PATH_PATTERN = Pattern.compile("" +
-            "(?<pathnoext>(([^/.?]+|\\.\\.))*/)?" +
+            "(?<pathnoext>([^/.?]+|\\.\\.)*/)?" +
             "(" +
             "(?<filenoext>[^/.?]+)" +
             "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" +
@@ -246,7 +247,7 @@ public class SlingUrl {
      */
     @Nullable
     public Resource getResource() {
-        getResourcePath();
+        getResourcePath(); // possibly initialize
         return resource;
     }
 
@@ -765,12 +766,12 @@ public class SlingUrl {
             if (parameters.size() > 0) {
                 int index = 0;
                 for (Map.Entry<String, List<String>> param : parameters.entrySet()) {
-                    String name = param.getKey();
+                    String paramName = param.getKey();
                     List<String> values = param.getValue();
                     if (values.size() > 0) {
                         for (String val : values) {
                             builder.append(index == 0 ? '?' : '&');
-                            builder.append(CODEC.encode(name));
+                            builder.append(CODEC.encode(paramName));
                             if (val != null) {
                                 builder.append("=").append(CODEC.encode(val));
                             }
@@ -778,7 +779,7 @@ public class SlingUrl {
                         }
                     } else {
                         builder.append(index == 0 ? '?' : '&');
-                        builder.append(CODEC.encode(name));
+                        builder.append(CODEC.encode(paramName));
                         index++;
                     }
                 }
@@ -801,7 +802,7 @@ public class SlingUrl {
         if (isNotBlank(scheme)) {
             if (SPECIAL_SCHEME.matcher(scheme).matches()) { // mailto, tel, ... - unprocessed
                 type = UrlType.SPECIAL;
-                name = decode(url.substring(schemeMatcher.end(), url.length()), decode);
+                name = decode(url.substring(schemeMatcher.end()), decode);
             } else { // non-special scheme
                 Matcher matcher = URL_PATTERN.matcher(url);
                 if (matcher.matches()) { // normal URL
@@ -809,7 +810,7 @@ public class SlingUrl {
                     assignFromGroups(matcher, decode, true);
                 } else { // doesn't match URL_PATTERN, can't parse -> other
                     type = UrlType.OTHER;
-                    name = decode(url.substring(schemeMatcher.end(), url.length()), decode);
+                    name = decode(url.substring(schemeMatcher.end()), decode);
                 }
             }
 
@@ -931,7 +932,7 @@ public class SlingUrl {
         if (name != null) {
             builder.append("name", name);
         }
-        if (selectors != null && !selectors.isEmpty()) {
+        if (!selectors.isEmpty()) {
             builder.append("selectors", selectors);
         }
         if (extension != null) {
@@ -940,7 +941,7 @@ public class SlingUrl {
         if (suffix != null) {
             builder.append("suffix", suffix);
         }
-        if (parameters != null && !parameters.isEmpty()) {
+        if (!parameters.isEmpty()) {
             builder.append("parameters", parameters);
         }
         if (fragment != null) {
