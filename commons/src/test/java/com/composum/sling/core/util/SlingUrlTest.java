@@ -168,13 +168,13 @@ public class SlingUrlTest {
 
         url = new SlingUrl(request, "some/path.ext");
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=RELATIVE,path=some/,name=path,extension=ext,resourcePath=some/path]"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=RELATIVE,path=some/,name=path,extension=ext]"));
         ec.checkThat(url.getContextPath(), is("/ctx"));
         ec.checkThat(url.getExtension(), is("ext"));
         ec.checkThat(url.isExternal(), is(false));
         ec.checkThat(url.getFragment(), nullValue());
         ec.checkThat(url.getPath(), is("some/path"));
-        ec.checkThat(url.getResourcePath(), is("some/path"));
+        ec.checkThat(url.getResourcePath(), nullValue());
         ec.checkThat(url.getSuffix(), nullValue());
         ec.checkThat(url.getUrl(), is("some/path.ext"));
 
@@ -187,7 +187,7 @@ public class SlingUrlTest {
 
         url = new SlingUrl(request, "../img/loading.gif");
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,name=../img/loading.gif,resourcePath=../img/loading.gif]"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,name=../img/loading.gif]"));
         ec.checkThat(url.getUrl(), equalTo("../img/loading.gif"));
     }
 
@@ -204,6 +204,11 @@ public class SlingUrlTest {
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=URL,scheme=ftp,username=myname,host=host.dom,path=/etc/,name=motd,extension=txt,external=true]"));
         ec.checkThat(url.getUrl(), is("ftp://myname@host.dom/etc/motd.txt"));
+
+        url = new SlingUrl(request, "ftp://ftp.cs.brown.edu/pub/Effective_C%2B%2B_errata.txt", true);
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=URL,scheme=ftp,host=ftp.cs.brown.edu,path=/pub/,name=Effective_C++_errata,extension=txt,external=true]"));
+        ec.checkThat(url.getUrl(), is("ftp://ftp.cs.brown.edu/pub/Effective_C%2B%2B_errata.txt"));
 
         url = new SlingUrl(request, "ftp://myname:pass@host.dom/etc/");
         printChecks(url);
@@ -241,7 +246,7 @@ public class SlingUrlTest {
 
         url = new SlingUrl(request, "//host/path", false); // "protocol relative URL"
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,name=//host/path,resourcePath=//host/path]"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,name=//host/path]"));
         ec.checkThat(url.getUrl(), is("//host/path"));
 
     }
