@@ -123,10 +123,9 @@ public class SlingUrl {
     protected String fragment;
 
     private transient String url;
-    protected boolean external;
 
-    protected String resourcePath;
-    protected Resource resource;
+    protected transient String resourcePath;
+    protected transient Resource resource;
 
     protected final SlingHttpServletRequest request;
     protected final LinkMapper linkMapper;
@@ -172,7 +171,7 @@ public class SlingUrl {
                     @Nullable final String suffix,
                     @Nullable final String parameterString, boolean decodeParameters,
                     @Nullable LinkMapper linkMapper) {
-        this.request = request;
+        this.request = Objects.requireNonNull(request, "request required");
         this.linkMapper = linkMapper;
         this.resource = resource;
         this.resourcePath = resource.getPath();
@@ -205,7 +204,7 @@ public class SlingUrl {
      */
     public SlingUrl(@Nonnull final SlingHttpServletRequest request, @Nonnull final String url,
                     boolean decode, @Nullable LinkMapper linkMapper) {
-        this.request = request;
+        this.request = Objects.requireNonNull(request, "request required");
         this.linkMapper = linkMapper;
         parseUrl(url, decode);
     }
@@ -215,16 +214,30 @@ public class SlingUrl {
         return request;
     }
 
+    /**
+     * An external URL: we assume it's external when a scheme is set.
+     */
     public boolean isExternal() {
-        return external;
+        return isNotBlank(scheme);
     }
-
 
     /**
      * For internal urls the path to the rendered resource. The path to {@link #getResource()} if that exists.
      */
     @Nullable
     public String getResourcePath() {
+        if (resourcePath == null && !isExternal() && type == UrlType.URL) { // FIXME(hps,05.06.20) only for http, too!
+            ResourceResolver resolver = request.getResourceResolver();
+            resourcePath = defaultString(path) + name;
+            if (isNotBlank(extension)) {
+                resourcePath += '.' + extension;
+            }
+            resource = resolver.getResource(resourcePath);
+            if (resource == null) {
+                resourcePath = defaultString(path) + name;
+                resource = resolver.getResource(resourcePath);
+            }
+        }
         return resourcePath;
     }
 
@@ -233,6 +246,7 @@ public class SlingUrl {
      */
     @Nullable
     public Resource getResource() {
+        getResourcePath();
         return resource;
     }
 
@@ -241,7 +255,7 @@ public class SlingUrl {
      * and the context path is removed from {@link #getPath()}.
      */
     @Nullable
-    public String getContextPath() {
+    public String getContextPath() { // FIXME(hps,05.06.20) setter for contextPath?
         return isNotBlank(contextPath) ? contextPath : request.getContextPath();
     }
 
@@ -262,7 +276,7 @@ public class SlingUrl {
     }
 
     public SlingUrl addSelector(@Nullable String... value) {
-        clearUrl();
+        clearTransients();
         if (value != null) {
             selectors.addAll(Arrays.asList(value));
         }
@@ -295,7 +309,7 @@ public class SlingUrl {
     }
 
     public SlingUrl removeSelector(String... value) {
-        clearUrl();
+        clearTransients();
         if (value != null) {
             for (String val : value) {
                 selectors.remove(val);
@@ -305,7 +319,7 @@ public class SlingUrl {
     }
 
     public SlingUrl clearSelectors() {
-        clearUrl();
+        clearTransients();
         selectors.clear();
         return this;
     }
@@ -320,7 +334,6 @@ public class SlingUrl {
     }
 
     public SlingUrl setExtension(@Nullable String extension) {
-        clearUrl();
         if (extension != null) {
             int dot = extension.lastIndexOf(".");
             if (dot >= 0) {
@@ -328,6 +341,7 @@ public class SlingUrl {
             }
         }
         this.extension = extension;
+        clearTransients();
         return this;
     }
 
@@ -350,15 +364,15 @@ public class SlingUrl {
     }
 
     public SlingUrl setSuffix(@Nullable final String suffix) {
-        clearUrl();
         this.suffix = suffix;
+        clearTransients();
         return this;
     }
 
     /**
      * Unmodifiable map of the contained parameters.
      * <p>
-     * This is unmodifiable since otherwise we would have to trust the user to call {@link #clearUrl()} on every change.
+     * This is unmodifiable since otherwise we would have to trust the user to call {@link #clearTransients()} on every change.
      */
     @Nonnull
     Map<String, List<String>> getParameters() {
@@ -370,7 +384,7 @@ public class SlingUrl {
     }
 
     public SlingUrl addParameter(String name, String... value) {
-        clearUrl();
+        clearTransients();
         List<String> values = parameters.computeIfAbsent(name, k -> new ArrayList<>());
         if (value != null) {
             for (String val : value) {
@@ -409,31 +423,49 @@ public class SlingUrl {
     }
 
     public SlingUrl removeParameter(String name) {
-        clearUrl();
+        clearTransients();
         parameters.remove(name);
         return this;
     }
 
     public SlingUrl clearParameters() {
-        clearUrl();
+        clearTransients();
         parameters.clear();
         return this;
     }
 
+    /**
+     * The fragment part of the URL. Caution: this isn't available on all types.
+     */
     @Nullable
     public String getFragment() {
         return fragment;
     }
 
-    public SlingUrl fragment(@Nullable final String fragment) {
-        return setFragment(fragment);
+    /**
+     * Sets the fragment. Caution: this isn't available on all types.
+     * Same as {@link #fragment(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl setFragment(@Nullable String fragment) {
+        return fragment(fragment);
     }
 
-    public SlingUrl setFragment(@Nullable final String fragment) {
-        clearUrl();
+    /**
+     * Sets the fragment part of the URL. Caution: this isn't available on all types.
+     * Same as {@link #setFragment(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl fragment(@Nullable String fragment) {
         this.fragment = fragment;
+        clearTransients();
         return this;
     }
+
 
     @Override
     public int hashCode() {
@@ -457,6 +489,9 @@ public class SlingUrl {
         return getUrl();
     }
 
+    /**
+     * Builds the URL from its parts saved in the builder.
+     */
     public String getUrl() {
         if (url == null) {
             url = buildUrl();
@@ -465,43 +500,206 @@ public class SlingUrl {
     }
 
     /**
-     * Internal reset method for the cached URL called when anything changes.
+     * Internal reset method for the calculated transient values like the URL, called when anything changes.
      */
-    protected void clearUrl() {
+    protected void clearTransients() {
         this.url = null;
+        this.resource = null;
+        this.resourcePath = null;
     }
 
+    /**
+     * The scheme part of an URL. Caution: this isn't available on all types.
+     */
     @Nullable
     public String getScheme() {
         return scheme;
     }
 
+    /**
+     * Sets the scheme. Caution: this isn't available on all types.
+     * Same as {@link #scheme(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl setScheme(@Nullable String scheme) {
+        return scheme(scheme);
+    }
+
+    /**
+     * Sets the scheme part of an URL. Caution: this isn't available on all types.
+     * Same as {@link #setScheme(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl scheme(@Nullable String scheme) {
+        this.scheme = scheme;
+        clearTransients();
+        return this;
+    }
+
+
+    /**
+     * The username part of an URL. Caution: this isn't available on all types.
+     */
     @Nullable
     public String getUsername() {
         return username;
     }
 
+    /**
+     * Sets the username. Caution: this isn't available on all types.
+     * Same as {@link #username(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl setUsername(@Nullable String username) {
+        return username(username);
+    }
+
+    /**
+     * Sets the username part of an URL. Caution: this isn't available on all types.
+     * Same as {@link #setUsername(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl username(@Nullable String username) {
+        this.username = username;
+        clearTransients();
+        return this;
+    }
+
+
+    /**
+     * The password part of an URL. Caution: this isn't available on all types.
+     */
     @Nullable
     public String getPassword() {
         return password;
     }
 
+    /**
+     * Sets the password. Caution: this isn't available on all types.
+     * Same as {@link #password(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl setPassword(@Nullable String password) {
+        return password(password);
+    }
+
+    /**
+     * Sets the password part of an URL. Caution: this isn't available on all types.
+     * Same as {@link #setPassword(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl password(@Nullable String password) {
+        this.password = password;
+        clearTransients();
+        return this;
+    }
+
+    /**
+     * The host part of the URL. Caution: this isn't available on all types.
+     */
     @Nullable
     public String getHost() {
         return host;
     }
 
+    /**
+     * Sets the host part of the URL. Caution: this isn't available on all types.
+     * Same as {@link #host(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl setHost(@Nullable String host) {
+        return host(host);
+    }
+
+    /**
+     * Sets the host part of the URL. Caution: this isn't available on all types.
+     * Same as {@link #setHost(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl host(@Nullable String host) {
+        this.host = host;
+        clearTransients();
+        return this;
+    }
+
+    /**
+     * The port part of the URL. Caution: this isn't available on all types.
+     */
     @Nullable
     public Integer getPort() {
         return port;
     }
 
     /**
-     * The type of URL.
+     * Sets the port. Caution: this isn't available on all types.
+     * Same as {@link #port(Integer)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl setPort(@Nullable Integer port) {
+        return port(port);
+    }
+
+    /**
+     * Sets the port part of the URL. Caution: this isn't available on all types.
+     * Same as {@link #setPort(Integer)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl port(@Nullable Integer port) {
+        this.port = port;
+        clearTransients();
+        return this;
+    }
+
+    /**
+     * The type of the URL. Caution: this isn't available on all types.
      */
     @Nonnull
     public UrlType getType() {
         return type;
+    }
+
+    /**
+     * Sets the type. Caution: this isn't available on all types.
+     * Same as {@link #type(UrlType)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl setType(@Nonnull UrlType type) {
+        return type(type);
+    }
+
+    /**
+     * Sets the type of the URL. Caution: this isn't available on all types.
+     * Same as {@link #setType(UrlType)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl type(@Nonnull UrlType type) {
+        this.type = Objects.requireNonNull(type);
+        clearTransients();
+        return this;
     }
 
     public void reset() {
@@ -517,8 +715,7 @@ public class SlingUrl {
         suffix = null;
         parameters.clear();
         fragment = null;
-        clearUrl();
-        external = false;
+        clearTransients();
         resourcePath = null;
         resource = null;
     }
@@ -548,8 +745,8 @@ public class SlingUrl {
                 }
             }
 
-            String pathAndName = external ? CODEC.encode(path + name) : LinkUtil.encodePath(path + name);
-            if (!external && linkMapper != null && type != UrlType.RELATIVE) {
+            String pathAndName = isExternal() ? CODEC.encode(path + name) : LinkUtil.encodePath(path + name);
+            if (!isExternal() && linkMapper != null && type != UrlType.RELATIVE) {
                 pathAndName = linkMapper.mapUri(request, pathAndName);
                 pathAndName = adjustMappedUrl(request, pathAndName);
             }
@@ -562,7 +759,7 @@ public class SlingUrl {
                 builder.append('.').append(CODEC.encode(extension));
             }
             if (isNotBlank(suffix)) {
-                builder.append(external ? CODEC.encode(suffix) : LinkUtil.encodePath(suffix));
+                builder.append(isExternal() ? CODEC.encode(suffix) : LinkUtil.encodePath(suffix));
             }
 
             if (parameters.size() > 0) {
@@ -602,7 +799,6 @@ public class SlingUrl {
         }
 
         if (isNotBlank(scheme)) {
-            external = true;
             if (SPECIAL_SCHEME.matcher(scheme).matches()) { // mailto, tel, ... - unprocessed
                 type = UrlType.SPECIAL;
                 name = decode(url.substring(schemeMatcher.end(), url.length()), decode);
@@ -630,19 +826,6 @@ public class SlingUrl {
                 name = url;
             }
 
-        }
-
-        if (!external) {
-            ResourceResolver resolver = request.getResourceResolver();
-            resourcePath = defaultString(path) + name;
-            if (isNotBlank(extension)) {
-                resourcePath += '.' + extension;
-            }
-            resource = resolver.getResource(resourcePath);
-            if (resource == null) {
-                resourcePath = defaultString(path) + name;
-                resource = resolver.getResource(resourcePath);
-            }
         }
     }
 
@@ -763,10 +946,10 @@ public class SlingUrl {
         if (fragment != null) {
             builder.append("fragment", fragment);
         }
-        if (external) {
-            builder.append("external", external);
+        if (isExternal()) {
+            builder.append("external", true);
         }
-        if (resourcePath != null) {
+        if (getResourcePath() != null) {
             builder.append("resourcePath", resourcePath);
         }
         return builder.toString();
