@@ -25,6 +25,13 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * but can also represent other URL types.
  * It is meant to represent every user input without failing - if it's not a known URL scheme and thus cannot be parsed
  * it'll just return the input unchanged, and the modification methods fail silently.
+ * <p>
+ * <em>Caution:</em> this does not consider the resource tree to parse URLs from String form, so there will be cases
+ * where this differs from {@link ResourceResolver#resolve(HttpServletRequest, String)} : e.g. we consider
+ * in /foo/a.b/bar/c.d the /bar/c.d as suffix, while this might be different in reality!
+ * </p>
+ *
+ * @see https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html
  */
 @SuppressWarnings({"unused", "ParameterHidesMemberVariable", "UnusedReturnValue"})
 public class SlingUrl {
@@ -202,6 +209,9 @@ public class SlingUrl {
 
     /**
      * Parses the url without URL-decoding it.
+     * <em>Caution:</em> if the url contains several periods like e.g. http://host/a.b/c.d/suffix , this
+     * might parse it wrong, since we'd have to consult the resource tree to determine whether the resource path
+     * is /a or /a.b/c .
      */
     public SlingUrl(@Nonnull final SlingHttpServletRequest request, @Nonnull final String url) {
         this(request, url, false);
@@ -209,6 +219,9 @@ public class SlingUrl {
 
     /**
      * Parses the url, possibly URL-decoding it when decode = true.
+     * <em>Caution:</em> if the url contains several periods like e.g. http://host/a.b/c.d/suffix , this
+     * might parse it wrong, since we'd have to consult the resource tree to determine whether the resource path
+     * is /a or /a.b/c .
      */
     public SlingUrl(@Nonnull final SlingHttpServletRequest request, @Nonnull final String url,
                     boolean decode) {
@@ -268,7 +281,7 @@ public class SlingUrl {
 
     /**
      * If an internal path starts with the {@link HttpServletRequest#getContextPath()}, this contains the context path,
-     * and the context path is removed from {@link #getPath()}.
+     * and the context path is removed from {@link #getPathAndName()}.
      */
     @Nullable
     public String getContextPath() { // FIXME(hps,05.06.20) setter for contextPath?
@@ -276,10 +289,76 @@ public class SlingUrl {
     }
 
     /**
-     * The path to the file, including the filename. Does not include the extension, selectors etc.
+     * The path to the file including the filename, but not the extension, selectors etc.
      */
-    public String getPath() {
-        return defaultString(path) + name;
+    @Nonnull
+    public String getPathAndName() {
+        return defaultString(path) + defaultString(name);
+    }
+
+    /**
+     * The path to the file including the filename and the extension, but no selectors.
+     */
+    @Nonnull
+    public String getPathAndNameExt() {
+        return defaultString(path) + defaultString(name) +
+                (isNotBlank(extension) ? "." + extension : "");
+    }
+
+    /**
+     * Sets the path, name and extension from the given e.g. resource path.
+     * Caution: if the fullpath contains several periods, you'll get a mess out of this.
+     *
+     * @return this for builder style chaining
+     */
+    public SlingUrl setPathAndNameExt(@Nullable String fullpath) {
+        this.path = null;
+        this.name = null;
+        this.extension = null;
+        clearTransients();
+        if (isNotBlank(fullpath)) {
+            int endpath = fullpath.lastIndexOf('/');
+            String newPath = null;
+            String newName = null;
+            String newExtension = null;
+            if (endpath >= 0) {
+                newPath = fullpath.substring(0, endpath + 1);
+                fullpath = fullpath.substring(endpath);
+            }
+            int period = fullpath.indexOf('.');
+            if (period >= 0) {
+                newName = fullpath.substring(0, period - 1);
+                newExtension = fullpath.substring(period);
+            }
+            this.path = newPath;
+            this.name = newName;
+            this.extension = newExtension;
+        }
+        return this;
+    }
+
+    /**
+     * Sets the path and name from the given e.g. resource path, but does not touch the {@link #getExtension()}.
+     *
+     * @param fullpath the path and filename to be set. We do not check for periods in there.
+     * @return this for builder style chaining
+     */
+    public SlingUrl setPathAndName(@Nullable String fullpath) {
+        this.path = null;
+        this.name = null;
+        clearTransients();
+        if (isNotBlank(fullpath)) {
+            int endpath = fullpath.lastIndexOf('/');
+            String newPath = null;
+            String newName = null;
+            if (endpath >= 0) {
+                newPath = fullpath.substring(0, endpath + 1);
+                newName = fullpath.substring(endpath);
+            }
+            this.path = newPath;
+            this.name = newName;
+        }
+        return this;
     }
 
     @Nonnull
@@ -714,6 +793,38 @@ public class SlingUrl {
     @Nonnull
     public SlingUrl type(@Nonnull UrlType type) {
         this.type = Objects.requireNonNull(type);
+        clearTransients();
+        return this;
+    }
+
+    /**
+     * The filename; in case of type OTHER this contains the whole URL but the scheme and colon. Caution: this isn't available on all types.
+     */
+    @Nullable
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Sets the name. Caution: this isn't available on all types.
+     * Same as {@link #name(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl setName(@Nullable String name) {
+        return name(name);
+    }
+
+    /**
+     * Sets the filename; in case of type OTHER this contains the whole URL but the scheme and colon. Caution: this isn't available on all types.
+     * Same as {@link #setName(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl name(@Nullable String name) {
+        this.name = name;
         clearTransients();
         return this;
     }

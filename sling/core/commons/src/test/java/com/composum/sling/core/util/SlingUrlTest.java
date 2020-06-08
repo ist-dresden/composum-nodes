@@ -54,7 +54,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getExtension(), is("html"));
         ec.checkThat(url.isExternal(), is(false));
         ec.checkThat(url.getFragment(), nullValue());
-        ec.checkThat(url.getPath(), is("/a/bb/ccc"));
+        ec.checkThat(url.getPathAndName(), is("/a/bb/ccc"));
         ec.checkThat(url.getResourcePath(), is("/a/bb/ccc"));
         ec.checkThat(url.getSuffix(), nullValue());
         ec.checkThat(url.getUrl(), is("/ctx/a/bb/ccc.html"));
@@ -67,7 +67,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getExtension(), is("json"));
         ec.checkThat(url.isExternal(), is(false));
         ec.checkThat(url.getFragment(), nullValue());
-        ec.checkThat(url.getPath(), is("/a/bb/ddd"));
+        ec.checkThat(url.getPathAndName(), is("/a/bb/ddd"));
         ec.checkThat(url.getResourcePath(), is("/a/bb/ddd"));
         ec.checkThat(url.getSuffix(), is("/ddd/eee/xxx.json"));
         ec.checkThat(url.getUrl(), is("/ctx/a/bb/ddd.m.n.json/ddd/eee/xxx.json?d&c=x%20y"));
@@ -79,7 +79,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getExtension(), is("html"));
         ec.checkThat(url.isExternal(), is(false));
         ec.checkThat(url.getFragment(), nullValue());
-        ec.checkThat(url.getPath(), is("/x/bb/ccc/öä ü"));
+        ec.checkThat(url.getPathAndName(), is("/x/bb/ccc/öä ü"));
         ec.checkThat(url.getResourcePath(), is("/x/bb/ccc/öä ü"));
         ec.checkThat(url.getSuffix(), is("/x/x/z.html"));
         ec.checkThat(url.getUrl(), is("http://host.xxx/bb/ccc/%C3%B6%C3%A4%20%C3%BC.s.x.html/x/x/z.html?a=b&c"));
@@ -97,7 +97,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getExtension(), is("html"));
         ec.checkThat(url.isExternal(), is(false));
         ec.checkThat(url.getFragment(), is("%%$&"));
-        ec.checkThat(url.getPath(), is("/x/bb/ccc/öä ü"));
+        ec.checkThat(url.getPathAndName(), is("/x/bb/ccc/öä ü"));
         ec.checkThat(url.getResourcePath(), is("/x/bb/ccc/öä ü"));
         ec.checkThat(url.getSuffix(), is("/c/dd/e#e"));
         ec.checkThat(url.getUrl(), is("http://host.xxx/bb/ccc/%C3%B6%C3%A4%20%C3%BC.s.sel.html/c/dd/e%23e?c&x=a%C3%B6%C3%BC&%C3%96%C3%9F=%26%2012&%24#%25%25%24%26"));
@@ -109,7 +109,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getExtension(), nullValue());
         ec.checkThat(url.isExternal(), is(true));
         ec.checkThat(url.getFragment(), nullValue());
-        ec.checkThat(url.getPath(), is("/"));
+        ec.checkThat(url.getPathAndName(), is("/"));
         ec.checkThat(url.getResourcePath(), nullValue());
         ec.checkThat(url.getSuffix(), nullValue());
         ec.checkThat(url.getUrl(), is("https://www.google.com/"));
@@ -122,7 +122,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getExtension(), nullValue());
         ec.checkThat(url.isExternal(), is(true));
         ec.checkThat(url.getFragment(), is("aa"));
-        ec.checkThat(url.getPath(), is("/ä-@ß$"));
+        ec.checkThat(url.getPathAndName(), is("/ä-@ß$"));
         ec.checkThat(url.getResourcePath(), nullValue());
         ec.checkThat(url.getSuffix(), nullValue());
         ec.checkThat(url.getUrl(), is("https://www.google.com/%C3%A4-%40%C3%9F%24?x=y%C3%9Fz&a#aa"));
@@ -134,7 +134,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getExtension(), nullValue());
         ec.checkThat(url.isExternal(), is(true));
         ec.checkThat(url.getFragment(), nullValue());
-        ec.checkThat(url.getPath(), is("ä.user@ö.domain.x"));
+        ec.checkThat(url.getPathAndName(), is("ä.user@ö.domain.x"));
         ec.checkThat(url.getResourcePath(), nullValue());
         ec.checkThat(url.getSuffix(), nullValue());
         ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user%40%C3%B6.domain.x"));
@@ -151,7 +151,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getExtension(), nullValue());
         ec.checkThat(url.isExternal(), is(true));
         ec.checkThat(url.getFragment(), nullValue());
-        ec.checkThat(url.getPath(), is("+01 123 / 3456-78 999"));
+        ec.checkThat(url.getPathAndName(), is("+01 123 / 3456-78 999"));
         ec.checkThat(url.getResourcePath(), nullValue());
         ec.checkThat(url.getSuffix(), nullValue());
         ec.checkThat(url.getUrl(), is("tel:%2B01%20123%20/%203456-78%20999"));
@@ -169,7 +169,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getExtension(), is("ext"));
         ec.checkThat(url.isExternal(), is(false));
         ec.checkThat(url.getFragment(), nullValue());
-        ec.checkThat(url.getPath(), is("some/path"));
+        ec.checkThat(url.getPathAndName(), is("some/path"));
         ec.checkThat(url.getResourcePath(), nullValue());
         ec.checkThat(url.getSuffix(), nullValue());
         ec.checkThat(url.getUrl(), is("some/path.ext"));
@@ -278,6 +278,33 @@ public class SlingUrlTest {
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name==?utf-8?B?w5xtbMOkdXR0ZcOfdA==?= <umlauttest@example.com>,external=true]"));
         ec.checkThat(url.getUrl(), is("mailto:%3D%3Futf-8%3FB%3Fw5xtbMOkdXR0ZcOfdA%3D%3D%3F%3D%20%3Cumlauttest%40example.com%3E"));
+    }
+
+    /**
+     * This checks what it does when parsing cases that cannot be parsed unambiguously from the URL String.
+     * We'd have to consult the resource tree, which we do not do. Better avoid such cases.
+     *
+     * @see "https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html#overview"
+     */
+    @Test
+    public void ambiguousSpecialCases() {
+        url = new SlingUrl(request, "http://host/a.b/c.d/suffix");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=host,path=/,name=a,extension=b,suffix=/c.d/suffix,external=true]"));
+        ec.checkThat(url.getUrl(), is("http://host/a.b/c.d/suffix"));
+    }
+
+    @Test
+    public void weirdCharacters() {
+        url = new SlingUrl(request, "/a resource/with spaces");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/a resource/,name=with spaces,resourcePath=/a resource/with spaces]"));
+        ec.checkThat(url.getUrl(), is("/ctx/a%20resource/with%20spaces"));
+
+        url = new SlingUrl(request, "/a.resource/with.periods");
+        printChecks(url); // this is parsed wrong
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/,name=a,extension=resource,suffix=/with.periods,resourcePath=/a]"));
+        ec.checkThat(url.getUrl(), is("/ctx/a.resource/with.periods"));
     }
 
     /**
