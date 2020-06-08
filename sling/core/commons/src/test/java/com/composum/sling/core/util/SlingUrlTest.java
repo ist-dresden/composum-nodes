@@ -19,6 +19,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * Some tests for {@link SlingUrl}, but compare also SlingUrlCompareToResolverTest in the test project, which uses an actual resolver.
+ */
 public class SlingUrlTest {
 
     @Rule
