@@ -34,7 +34,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * @see https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html
  */
 @SuppressWarnings({"unused", "ParameterHidesMemberVariable", "UnusedReturnValue"})
-public class SlingUrl {
+public class SlingUrl implements Cloneable {
 
     /**
      * Characterizes the type of the URL.
@@ -68,7 +68,7 @@ public class SlingUrl {
 
     public static final LinkCodec CODEC = new LinkCodec();
 
-    protected static final Pattern SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>[a-zA-Z-]+):)");
+    protected static final Pattern SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>[a-zA-Z+.-]+):)");
     protected static final Pattern USERNAMEPASSWORD = Pattern.compile("((?<username>[^:@/]+)(:(?<password>[^:@/]+))?@)");
 
     /**
@@ -208,13 +208,32 @@ public class SlingUrl {
     }
 
     /**
+     * Constructs a yet invalid SlingUrl that has to be initialized with one of the from* methods.
+     * A linkmapper can be given if the url is a path.
+     */
+    public SlingUrl(@Nonnull final SlingHttpServletRequest request, @Nullable LinkMapper linkMapper) {
+        this.request = Objects.requireNonNull(request, "request required");
+        this.linkMapper = linkMapper;
+    }
+
+    /**
+     * Constructs a yet invalid SlingUrl that has to be initialized with one of the from* methods.
+     */
+    public SlingUrl(@Nonnull final SlingHttpServletRequest request) {
+        this(request, getLinkMapper(request, null));
+    }
+
+    /**
      * Parses the url without URL-decoding it.
      * <em>Caution:</em> if the url contains several periods like e.g. http://host/a.b/c.d/suffix , this
      * might parse it wrong, since we'd have to consult the resource tree to determine whether the resource path
      * is /a or /a.b/c .
+     *
+     * @return this for builder style chaining
      */
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request, @Nonnull final String url) {
-        this(request, url, false);
+    @Nonnull
+    public SlingUrl fromUrl(@Nonnull final String url) {
+        return fromUrl(url, false);
     }
 
     /**
@@ -223,19 +242,25 @@ public class SlingUrl {
      * might parse it wrong, since we'd have to consult the resource tree to determine whether the resource path
      * is /a or /a.b/c .
      */
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request, @Nonnull final String url,
-                    boolean decode) {
-        this(request, url, decode, getLinkMapper(request, null));
+    @Nonnull
+    public SlingUrl fromUrl(@Nonnull final String url, boolean decode) {
+        reset();
+        parseUrl(url, decode);
+        return this;
     }
 
     /**
-     * Parses the url, possibly URL-decoding it when decode = true. A linkmapper can be given if the url is a path.
+     * Initializes the SlingUrl from a resource path, absolute or relative.
+     *
+     * @param resourcePath an absolute or relative path
+     * @return this for builder style chaining
      */
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request, @Nonnull final String url,
-                    boolean decode, @Nullable LinkMapper linkMapper) {
-        this.request = Objects.requireNonNull(request, "request required");
-        this.linkMapper = linkMapper;
-        parseUrl(url, decode);
+    @Nonnull
+    public SlingUrl fromPath(@Nonnull String resourcePath) {
+        reset();
+        type = resourcePath.startsWith("/") ? UrlType.HTTP : UrlType.RELATIVE;
+        setResourcePath(resourcePath);
+        return this;
     }
 
     @Nonnull
@@ -339,26 +364,50 @@ public class SlingUrl {
 
     /**
      * Sets the path and name from the given e.g. resource path, but does not touch the {@link #getExtension()}.
+     * Alias for {@link #setResourcePath(String)}
      *
      * @param fullpath the path and filename to be set. We do not check for periods in there.
      * @return this for builder style chaining
      */
     public SlingUrl setPathAndName(@Nullable String fullpath) {
+        return setResourcePath(resourcePath);
+    }
+
+    /**
+     * Sets the resource path encoded in the URL to the given path. This touches path and {@link #getName()},
+     * but not selectors and extension, works also when the resource path contains periods.
+     *
+     * @param resourcePath an absolute or possibly relative path. We do not check for periods in there.
+     * @return this for builder style chaining
+     */
+    public SlingUrl setResourcePath(@Nullable String resourcePath) {
         this.path = null;
         this.name = null;
         clearTransients();
-        if (isNotBlank(fullpath)) {
-            int endpath = fullpath.lastIndexOf('/');
+        if (isNotBlank(resourcePath)) {
+            int endpath = resourcePath.lastIndexOf('/');
             String newPath = null;
             String newName = null;
             if (endpath >= 0) {
-                newPath = fullpath.substring(0, endpath + 1);
-                newName = fullpath.substring(endpath);
+                newPath = resourcePath.substring(0, endpath + 1);
+                newName = resourcePath.substring(endpath + 1);
             }
             this.path = newPath;
             this.name = newName;
         }
         return this;
+    }
+
+    /**
+     * Sets the resource path encoded in the URL to the given path. This touches path and {@link #getName()},
+     * but not selectors and extension, works also when the resource path contains periods.
+     * Alias for {@link #setResourcePath(String)}.
+     *
+     * @param resourcePath an absolute or possibly relative path. We do not check for periods in there.
+     * @return this for builder style chaining
+     */
+    public SlingUrl resourcePath(@Nullable String resourcePath) {
+        return setResourcePath(resourcePath);
     }
 
     @Nonnull
@@ -829,6 +878,15 @@ public class SlingUrl {
         return this;
     }
 
+    @Override
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) { // Should be impossible.
+            throw new IllegalArgumentException("Bug: clone threw error for " + getClass().toString(), e);
+        }
+    }
+
     public void reset() {
         type = null;
         scheme = null;
@@ -921,7 +979,8 @@ public class SlingUrl {
     protected void parseUrl(@Nonnull final String url, final boolean decode) throws IllegalArgumentException {
         reset();
         Matcher schemeMatcher = SCHEME_PATTERN.matcher(url);
-        if (schemeMatcher.lookingAt()) {
+        boolean hasScheme = schemeMatcher.lookingAt();
+        if (hasScheme) {
             scheme = schemeMatcher.group("scheme");
         }
 
@@ -963,7 +1022,8 @@ public class SlingUrl {
         }
         if (other) {
             type = UrlType.OTHER;
-            name = url;
+            name = hasScheme ? url.substring(schemeMatcher.end()) : url;
+            if (decode) name = CODEC.decode(name);
         }
     }
 

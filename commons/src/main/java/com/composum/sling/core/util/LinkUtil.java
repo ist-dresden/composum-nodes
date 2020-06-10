@@ -148,17 +148,14 @@ public class LinkUtil {
                 extension = getExtension(resource, extension);
             }
 
-            try {
-                SlingUrl slingUrl = new SlingUrl(request, url, false, mapper);
-                if (StringUtils.isNotBlank(selectors)) {
-                    slingUrl.selectors(selectors);
-                }
-                if (StringUtils.isNotBlank(extension)) {
-                    slingUrl.extension(extension);
-                }
-                result = slingUrl.getUrl();
-            } catch (IllegalArgumentException ignore) {
+            SlingUrl slingUrl = new SlingUrl(request, mapper).fromPath(url);
+            if (StringUtils.isNotBlank(selectors)) {
+                slingUrl.selectors(selectors);
             }
+            if (StringUtils.isNotBlank(extension)) {
+                slingUrl.extension(extension);
+            }
+            result = slingUrl.getUrl();
         }
 
         LOG.debug("Mapped '{}' to '{}'", url, result);
