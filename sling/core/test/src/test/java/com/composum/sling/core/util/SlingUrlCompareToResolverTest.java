@@ -15,7 +15,7 @@ import java.util.Arrays;
 import static org.hamcrest.Matchers.*;
 
 /**
- * We compare the parsing of {@link SlingUrl} with {@link ResourceResolver#resolve(HttpServletRequest, String)} for special cases.
+ * We compare the parsing of {@link SlingUrl} with {@link org.apache.sling.api.resource.ResourceResolver#resolve(HttpServletRequest, String)} for special cases.
  */
 public class SlingUrlCompareToResolverTest {
 
@@ -84,7 +84,7 @@ public class SlingUrlCompareToResolverTest {
      * If invert is true, we expect a different result - that is not good, but sometimes inevitable.
      */
     protected void checkUrl(String url, boolean expectedEqual) {
-        SlingUrl slingUrl = new SlingUrl(context.request(), url);
+        SlingUrl slingUrl = new SlingUrl(context.request()).fromUrl(url);
         Resource resolved = context.resourceResolver().resolve(context.request(), url);
         ec.checkThat(url, resolved, notNullValue());
         String resolvedPath = resolved != null ? resolved.getPath() : null;
