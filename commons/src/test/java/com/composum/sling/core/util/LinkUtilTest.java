@@ -32,7 +32,7 @@ public class LinkUtilTest {
         MockitoAnnotations.initMocks(this);
         when(request.getResourceResolver()).thenReturn(resolver);
         when(resolver.map(any(), anyString())).thenAnswer(
-                (invocation) -> invocation.getArgument(1)
+                (invocation) -> LinkUtil.encodePath(invocation.getArgument(1))
         );
     }
 

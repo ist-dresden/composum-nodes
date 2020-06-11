@@ -110,4 +110,27 @@ public class SlingUrlCompareToResolverTest {
                         + StringUtils.rightPad(slingUrl.getResourcePath(), pad));
     }
 
+    @Test
+    public void pathEncodingAndMapping() {
+        String path = "/content/a b+c%d/e#f?g";
+        SlingUrl slingUrl;
+        context.request().setContextPath("/ctx");
+
+        slingUrl = new SlingUrl(context.request()).fromPath(path);
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e#f?g,resourcePath=/content/a b+c%d/e#f?g]"));
+        ec.checkThat(slingUrl.getUrl(), is("/ctx/a%20b%2Bc%25d/e#f?g"));
+
+        slingUrl = new SlingUrl(context.request(), LinkMapper.RESOLVER).fromPath(path);
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e#f?g,resourcePath=/content/a b+c%d/e#f?g]"));
+        ec.checkThat(slingUrl.getUrl(), is("/ctx/a%20b%2Bc%25d/e#f?g"));
+
+        slingUrl = new SlingUrl(context.request(), LinkMapper.CONTEXT).fromPath(path);
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e#f?g,resourcePath=/content/a b+c%d/e#f?g]"));
+        ec.checkThat(slingUrl.getUrl(), is("/ctx/content/a%20b%2Bc%25d/e%23f%3Fg"));
+
+        slingUrl = new SlingUrl(context.request(), (LinkMapper) null).fromPath(path);
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e#f?g,resourcePath=/content/a b+c%d/e#f?g]"));
+        ec.checkThat(slingUrl.getUrl(), is("/content/a%20b%2Bc%25d/e%23f%3Fg"));
+    }
+
 }

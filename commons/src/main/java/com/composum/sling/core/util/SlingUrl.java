@@ -930,10 +930,14 @@ public class SlingUrl implements Cloneable {
                 }
             }
 
-            String pathAndName = isExternal() ? CODEC.encode(path + name) : LinkUtil.encodePath(path + name);
-            if (!isExternal() && linkMapper != null && type != UrlType.RELATIVE) {
+            String pathAndName = defaultString(path) + defaultString(name);
+            if (isExternal()) {
+                pathAndName = CODEC.encode(pathAndName);
+            } else if (linkMapper != null && type != UrlType.RELATIVE) {
                 pathAndName = linkMapper.mapUri(request, pathAndName);
                 pathAndName = adjustMappedUrl(request, pathAndName);
+            } else {
+                pathAndName = LinkUtil.encodePath(pathAndName);
             }
             builder.append(pathAndName);
 
