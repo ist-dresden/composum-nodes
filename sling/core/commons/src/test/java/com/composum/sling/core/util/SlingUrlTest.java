@@ -4,9 +4,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,7 +44,8 @@ public class SlingUrlTest {
             String uri = invocation.getArgument(1, String.class);
             Pattern hostMapping = Pattern.compile("^/x(/.*)?$");
             Matcher matcher = hostMapping.matcher(uri);
-            return matcher.matches() ? "http://host.xxx" + matcher.group(1) : req.getContextPath() + uri;
+            return matcher.matches() ? "http://host.xxx" + LinkUtil.encodePath(matcher.group(1))
+                    : req.getContextPath() + LinkUtil.encodePath(uri);
         });
         when(request.getContextPath()).thenReturn("/ctx");
         when(request.getResourceResolver()).thenReturn(resolver);
@@ -297,6 +303,7 @@ public class SlingUrlTest {
     @Test
     public void weirdCharacters() {
         url = new SlingUrl(request).fromUrl("/a resource/with spaces");
+        ec.checkThat(url.getUrl(), is("/ctx/a%20resource/with%20spaces"));
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/a resource/,name=with spaces,resourcePath=/a resource/with spaces]"));
         ec.checkThat(url.getUrl(), is("/ctx/a%20resource/with%20spaces"));
@@ -310,9 +317,8 @@ public class SlingUrlTest {
     /**
      * What about + in URLs?
      */
-    @Ignore
     @Test
-    public void plusEncoding() {
+    public void plusEncoding() throws URISyntaxException {
         url = new SlingUrl(request).fromUrl("git+ht-tp://bla.example.net/buf+bla?foo=bar+baz", true);
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,scheme=git+ht-tp,name=//bla.example.net/buf+bla?foo=bar+baz,external=true]"));
@@ -322,17 +328,23 @@ public class SlingUrlTest {
         url = new SlingUrl(request).fromUrl("http://bla.example.net/buf+bla?foo=bar+baz", true);
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=bla.example.net,path=/,name=buf+bla,parameters={foo=[bar+baz]},external=true]"));
-        ec.checkThat(url.getUrl(), is("http://bla.example.net/buf+bla?foo=bar%2Bbaz"));
+        ec.checkThat(url.getUrl(), is("http://bla.example.net/buf%2Bbla?foo=bar%2Bbaz"));
+        // ec.checkThat(url.getUrl(), is("http://bla.example.net/buf+bla?foo=bar%2Bbaz")); FIXME(hps,11.06.20) possibly buf+bla instead of buf%2Bbla
 
         url = new SlingUrl(request).fromUrl("http://some-where.0.net/").resourcePath("/with space/with+plus/filä").extension("txt").selectors("raw.sel")
                 .parameter("the+first paräm", "the+first valuä")
                 .parameter("se&c/n%d", "va/&u%e")
                 .parameter("%20", "1")
                 .parameter("%20", "2")
-        ;
+                .fragment("nä x%20t");
+        url.getUrl();
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=some-where.0.net,path=/with space/with+plus/,name=/filä,selectors=[raw, sel],extension=txt,parameters={the+first paräm=[the+first valuä], se&c/n%d=[va/&u%e], %20=[1, 2]},external=true]"));
-        ec.checkThat(url.getUrl(), is("http://some-where.0.net/with%20space/with%2Bplus//fil%C3%A4.raw.sel.txt?the%2Bfirst%20par%C3%A4m=the%2Bfirst%20valu%C3%A4&se%26c/n%25d=va/%26u%25e&%2520=1&%2520=2"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=some-where.0.net,path=/with space/with+plus/,name=filä,selectors=[raw, sel],extension=txt,parameters={the+first paräm=[the+first valuä], se&c/n%d=[va/&u%e], %20=[1, 2]},external=true]"));
+        ec.checkThat(url.getUrl(), is("http://some-where.0.net/with%20space/with%2Bplus/fil%C3%A4.raw.sel.txt?the%2Bfirst%20par%C3%A4m=the%2Bfirst%20valu%C3%A4&se%26c/n%25d=va/%26u%25e&%2520=1&%2520=2#n%C3%A4%20x%2520t"));
+        URI uri = new URI(url.getUrl());
+        ec.checkThat(uri.getPath(), is("/with space/with+plus/filä.raw.sel.txt"));
+        ec.checkThat(uri.getFragment(), is("nä x%20t"));
+        ec.checkThat(uri.getQuery(), is("the+first paräm=the+first valuä&se&c/n%d=va/&u%e&%20=1&%20=2"));
     }
 
     /**
