@@ -339,7 +339,7 @@ public class SlingUrlTest {
                 .fragment("nä x%20t");
         url.getUrl();
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=some-where.0.net,path=/with space/with+plus/,name=filä,selectors=[raw, sel],extension=txt,parameters={the+first paräm=[the+first valuä], se&c/n%d=[va/&u%e], %20=[1, 2]},external=true]"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=some-where.0.net,path=/with space/with+plus/,name=filä,selectors=[raw, sel],extension=txt,parameters={the+first paräm=[the+first valuä], se&c/n%d=[va/&u%e], %20=[1, 2]},fragment=nä x%20t,external=true]"));
         ec.checkThat(url.getUrl(), is("http://some-where.0.net/with%20space/with%2Bplus/fil%C3%A4.raw.sel.txt?the%2Bfirst%20par%C3%A4m=the%2Bfirst%20valu%C3%A4&se%26c/n%25d=va/%26u%25e&%2520=1&%2520=2#n%C3%A4%20x%2520t"));
         URI uri = new URI(url.getUrl());
         ec.checkThat(uri.getPath(), is("/with space/with+plus/filä.raw.sel.txt"));

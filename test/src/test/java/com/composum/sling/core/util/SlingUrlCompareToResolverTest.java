@@ -2,6 +2,7 @@ package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceUtil;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
@@ -10,6 +11,11 @@ import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static org.hamcrest.Matchers.*;
@@ -112,25 +118,54 @@ public class SlingUrlCompareToResolverTest {
 
     @Test
     public void pathEncodingAndMapping() {
-        String path = "/content/a b+c%d/e#f?g";
+        String path = "/content/a b+c%d/e<f]g";
         SlingUrl slingUrl;
         context.request().setContextPath("/ctx");
 
         slingUrl = new SlingUrl(context.request()).fromPath(path);
-        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e#f?g,resourcePath=/content/a b+c%d/e#f?g]"));
-        ec.checkThat(slingUrl.getUrl(), is("/ctx/a%20b%2Bc%25d/e#f?g"));
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e<f]g,resourcePath=/content/a b+c%d/e<f]g]"));
+        ec.checkThat(slingUrl.getUrl(), is("/ctx/a%20b%2Bc%25d/e%3Cf%5Dg"));
 
         slingUrl = new SlingUrl(context.request(), LinkMapper.RESOLVER).fromPath(path);
-        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e#f?g,resourcePath=/content/a b+c%d/e#f?g]"));
-        ec.checkThat(slingUrl.getUrl(), is("/ctx/a%20b%2Bc%25d/e#f?g"));
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e<f]g,resourcePath=/content/a b+c%d/e<f]g]"));
+        ec.checkThat(slingUrl.getUrl(), is("/ctx/a%20b%2Bc%25d/e%3Cf%5Dg"));
 
         slingUrl = new SlingUrl(context.request(), LinkMapper.CONTEXT).fromPath(path);
-        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e#f?g,resourcePath=/content/a b+c%d/e#f?g]"));
-        ec.checkThat(slingUrl.getUrl(), is("/ctx/content/a%20b%2Bc%25d/e%23f%3Fg"));
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e<f]g,resourcePath=/content/a b+c%d/e<f]g]"));
+        ec.checkThat(slingUrl.getUrl(), is("/ctx/content/a%20b%2Bc%25d/e%3Cf%5Dg"));
 
         slingUrl = new SlingUrl(context.request(), (LinkMapper) null).fromPath(path);
-        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e#f?g,resourcePath=/content/a b+c%d/e#f?g]"));
-        ec.checkThat(slingUrl.getUrl(), is("/content/a%20b%2Bc%25d/e%23f%3Fg"));
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e<f]g,resourcePath=/content/a b+c%d/e<f]g]"));
+        ec.checkThat(slingUrl.getUrl(), is("/content/a%20b%2Bc%25d/e%3Cf%5Dg"));
+
+        slingUrl = new SlingUrl(context.request(), LinkMapper.RESOLVER).fromPath("/content/rpage-_@%(){}$!'+,=-\\X");
+        ec.checkThat(slingUrl.getUrl(), is("/ctx/rpage-_@%25()%7B%7D$!'%2B,=-%5CX"));
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/,name=rpage-_@%(){}$!'+,=-\\X,resourcePath=/content/rpage-_@%(){}$!'+,=-\\X]"));
+    }
+
+    /**
+     * Checks for encoding problems using special characters.
+     *
+     * @see "https://issues.apache.org/jira/browse/SLING-9514"
+     */
+    @Test
+    public void resolverMapCheck() throws UnsupportedEncodingException, URISyntaxException {
+        ResourceResolver resolver = context.resourceResolver();
+        // we explicitly don't check # and ? which are legal in resource names, but using them is probably a very bad idea.
+        for (char specialChar : ":_&@%[](){}<$>!'\"*+,;=-/|\\".toCharArray()) {
+            String path = "/bla/r" + specialChar + "r";
+            String url = resolver.map(context.request(), path);
+            Resource resource = resolver.resolve(URLDecoder.decode(url, StandardCharsets.UTF_8.name()));
+            // System.out.println(path + "\t" + url + "\t" + resource.getPath());
+            ec.checkThat("" + specialChar, resource.getPath(), is(path));
+            ec.checkThat("" + specialChar, new URI(url).getPath(), is(path));
+
+            // LinkMapper should treat everything right, too
+            url = LinkMapper.RESOLVER.mapUri(context.request(), path);
+            resource = resolver.resolve(URLDecoder.decode(url, StandardCharsets.UTF_8.name()));
+            ec.checkThat("" + specialChar, resource.getPath(), is(path));
+            ec.checkThat("" + specialChar, new URI(url).getPath(), is(path));
+        }
     }
 
 }
