@@ -32,6 +32,9 @@ public interface LinkMapper {
         @Override
         public String mapUri(SlingHttpServletRequest request, String uri) {
             ResourceResolver resolver = request.getResourceResolver();
+            // caution: resolver.map doesn't encode many other special characters like #,? like LinkUtil.encodePath does.
+            // it should work, though, except for # and ? who are legal in JCR resource names, but a very bad idea, anyway.
+            // As of 1.6.12 it treats ? and # as parameter and comment separator, and doesn't percent-encode the rest.
             return LinkUtil.isExternalUrl(uri) ? uri : resolver.map(request, uri);
         }
     }
