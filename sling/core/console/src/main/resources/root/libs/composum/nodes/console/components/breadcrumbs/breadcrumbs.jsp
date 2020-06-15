@@ -6,8 +6,9 @@
 <cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
     <ol class="breadcrumbs">
         <c:forEach var="parent" items="${browser.parents}">
-            <li><cpn:link href="/bin/browser.html${parent.pathEncoded}">${parent.nameEscaped}</cpn:link></li>
+            <li><cpn:link href="/bin/browser.html${parent.path}">${parent.nameEscaped}</cpn:link></li>
         </c:forEach>
-        <li class="active"><cpn:link href="/bin/browser.html${browser.current.pathEncoded}">${browser.current.nameEscaped}</cpn:link></li>
+        <li class="active"><cpn:link
+                href="/bin/browser.html${browser.current.path}">${browser.current.nameEscaped}</cpn:link></li>
     </ol>
 </cpn:component>
