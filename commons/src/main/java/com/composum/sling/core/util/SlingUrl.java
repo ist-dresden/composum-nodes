@@ -25,6 +25,20 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * but can also represent other URL types.
  * It is meant to represent every user input without failing - if it's not a known URL scheme and thus cannot be parsed
  * it'll just return the input unchanged, and the modification methods fail silently.
+ * <h2>Major usecases</h2>
+ * <h3>Building URLs for resources</h3>
+ * <p>
+ * With the constructors with a {@link Resource} parameter, e.g. {@link #SlingUrl(SlingHttpServletRequest, Resource)},
+ * it's possible to generate an URL and give it some {@link #selectors(String)}, {@link #extension(String)} or
+ * and {@link #suffix(Resource)} and {@link #parameter(String, String...)}. If only the path of the resource is known,
+ * that'd start with {@link #SlingUrl(SlingHttpServletRequest)} and initalized with {@link #fromPath(String)}.
+ * </p>
+ * <h3>Modifying userspecified URLs</h3>
+ * Another usecase is to parse user specified URLs. If these should be modified, this has, however, some challenges.
+ * If it's an URL following the Sling rules <a href="https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html">URL decomposition</a>,
+ * it's not possible.
+ * <p>
+ * A challenge is that this should parse user input, for which we don't know wheter it's even valid.
  * <p>
  * <em>Caution:</em> this does not consider the resource tree to parse URLs from String form, so there will be cases
  * where this differs from {@link ResourceResolver#resolve(HttpServletRequest, String)} : e.g. we consider
@@ -68,7 +82,12 @@ public class SlingUrl implements Cloneable {
 
     public static final LinkCodec CODEC = new LinkCodec();
 
-    protected static final Pattern SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>[a-zA-Z+.-]+):)");
+    /**
+     * Marker for {@link #getScheme()} for a protocol relative URL, e.g. //www/something.css - just the empty string, as opposed to null for no scheme as in {@link UrlType#RELATIVE}.
+     */
+    public static final String SCHEME_PROTOCOL_RELATIVE_URL = "";
+
+    protected static final Pattern SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>[a-zA-Z0-9+.-]+):)");
     protected static final Pattern USERNAMEPASSWORD = Pattern.compile("((?<username>[^:@/]+)(:(?<password>[^:@/]+))?@)");
 
     /**
@@ -124,6 +143,10 @@ public class SlingUrl implements Cloneable {
     protected static final Pattern SPECIAL_SCHEME = Pattern.compile("^(mailto|tel|fax)$", Pattern.CASE_INSENSITIVE);
 
     protected UrlType type;
+    /**
+     * The scheme of the URL. To be able to represent protocol-relative URL, we distinguish here null and the empty string:
+     * null is no scheme, empty string is a protocol-relative URL (e.g. //www/something.css).
+     */
     protected String scheme;
     protected String username;
     protected String password;
@@ -247,6 +270,35 @@ public class SlingUrl implements Cloneable {
         reset();
         parseUrl(url, decode);
         return this;
+    }
+
+    /**
+     * Initializes from an url or an absolute resource path, possibly URL-decoding it when decode = true.
+     * If pathOrUrl starts with a single slash, this is the same as {@link #fromPath(String)}, otherwise the same as
+     * {@link #fromUrl(String, boolean)}.
+     *
+     * @return this for builder style chaining
+     */
+    public SlingUrl fromPathOrUrl(@Nonnull final String pathOrUrl, boolean decode) {
+        if (isAbsolutePath(pathOrUrl)) return fromPath(pathOrUrl);
+        else return fromUrl(pathOrUrl, true);
+    }
+
+    /**
+     * Initializes from an url or an absolute resource path.
+     * If pathOrUrl starts with a single slash, this is the same as {@link #fromPath(String)}, otherwise the same as
+     * {@link #fromUrl(String)}.
+     *
+     * @return this for builder style chaining
+     */
+    public SlingUrl fromPathOrUrl(@Nonnull final String pathOrUrl) {
+        if (isAbsolutePath(pathOrUrl)) return fromPath(pathOrUrl);
+        else return fromUrl(pathOrUrl, true);
+    }
+
+    protected boolean isAbsolutePath(String pathOrUrl) {
+        return StringUtils.startsWith(pathOrUrl, "/") &&
+                !StringUtils.startsWith(pathOrUrl, "//"); // not a protocol relative url
     }
 
     /**
@@ -652,8 +704,12 @@ public class SlingUrl implements Cloneable {
         this.resourcePath = null;
     }
 
+
     /**
      * The scheme part of an URL. Caution: this isn't available on all types.
+     * To be able to represent protocol-relative URL, we distinguish here null and the empty string:
+     * null is no scheme applicable, as in {@link UrlType#RELATIVE},
+     * empty string is a protocol-relative URL (e.g. //www/something.css).
      */
     @Nullable
     public String getScheme() {
@@ -662,6 +718,8 @@ public class SlingUrl implements Cloneable {
 
     /**
      * Sets the scheme. Caution: this isn't available on all types.
+     * To be able to represent protocol-relative URL, we distinguish here null and the empty string:
+     * null is no scheme, empty string is a protocol-relative URL (e.g. //www/something.css).
      * Same as {@link #scheme(String)}.
      *
      * @return this for builder style chaining
@@ -913,7 +971,7 @@ public class SlingUrl implements Cloneable {
         if (type == UrlType.SPECIAL || type == UrlType.OTHER) {
             builder.append(CODEC.encode(name));
         } else {
-            if (isNotBlank(scheme)) {
+            if (scheme != null) { // scheme="" is a protocol relative URL starting with // .
                 builder.append("//");
             }
             if (isNotBlank(host)) {
@@ -983,14 +1041,18 @@ public class SlingUrl implements Cloneable {
     protected void parseUrl(@Nonnull final String url, final boolean decode) throws IllegalArgumentException {
         reset();
         Matcher schemeMatcher = SCHEME_PATTERN.matcher(url);
-        boolean hasScheme = schemeMatcher.lookingAt();
-        if (hasScheme) {
+        int schemeLength = 0;
+        if (schemeMatcher.lookingAt()) {
             scheme = schemeMatcher.group("scheme");
+            schemeLength = schemeMatcher.end();
+        } else if (url.startsWith("//")) {
+            scheme = SCHEME_PROTOCOL_RELATIVE_URL; // special marker for protocol relative URL
+            schemeLength = 0;
         }
 
         boolean other = false;
-        if (isNotBlank(scheme)) {
-            if (HTTP_SCHEME.matcher(scheme).matches()) {
+        if (scheme != null) {
+            if (HTTP_SCHEME.matcher(scheme).matches() || SCHEME_PROTOCOL_RELATIVE_URL.equals(scheme)) {
                 Matcher matcher = HTTP_URL_PATTERN.matcher(url);
                 if (matcher.matches()) { // normal URL
                     type = UrlType.HTTP;
@@ -1026,7 +1088,7 @@ public class SlingUrl implements Cloneable {
         }
         if (other) {
             type = UrlType.OTHER;
-            name = hasScheme ? url.substring(schemeMatcher.end()) : url;
+            name = url.substring(schemeLength);
             if (decode) name = CODEC.decode(name);
         }
     }

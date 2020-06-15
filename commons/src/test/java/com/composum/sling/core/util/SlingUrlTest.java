@@ -4,16 +4,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ErrorCollector;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -248,9 +248,18 @@ public class SlingUrlTest {
 
         url = new SlingUrl(request).fromUrl("//host/path", false); // "protocol relative URL"
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,name=//host/path]"));
-        ec.checkThat(url.getUrl(), is("//host/path"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=,host=host,path=/,name=path,resourcePath=/path]"));
+        ec.checkThat(url.getUrl(), is("//host/ctx/path"));
 
+        url = new SlingUrl(request).fromUrl("//host/path/file.sel.txt/the/suffix", false); // "protocol relative URL with extension etc."
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=,host=host,path=/path/,name=file,selectors=[sel],extension=txt,suffix=/the/suffix,resourcePath=/path/file]"));
+        ec.checkThat(url.getUrl(), is("//host/ctx/path/file.sel.txt/the/suffix"));
+
+        url = new SlingUrl(request).fromUrl("http://host/path/file.sel.txt/the/suffix", false).setScheme(SlingUrl.SCHEME_PROTOCOL_RELATIVE_URL); // "protocol relative URL with extension etc."
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=,host=host,path=/path/,name=file,selectors=[sel],extension=txt,suffix=/the/suffix,resourcePath=/path/file]"));
+        ec.checkThat(url.getUrl(), is("//host/ctx/path/file.sel.txt/the/suffix"));
     }
 
     @Test
@@ -398,4 +407,115 @@ public class SlingUrlTest {
         when(resolver.getResource(path)).thenReturn(resource);
         return resource;
     }
+
+    /**
+     * Verifies that these are the same URL wrt. java.net.{@link URI}.
+     */
+    protected void verifySameUrl(String url1, String url2) {
+        try {
+            String msg = url1 + " vs. " + url2;
+            URI u1 = new URI(url1);
+            URI u2 = new URI(url2);
+            ec.checkThat(msg, u1.getScheme(), is(u2.getScheme()));
+            ec.checkThat(msg, u1.getHost(), is(u2.getHost()));
+            ec.checkThat(msg, u1.getPort(), is(u2.getPort()));
+            ec.checkThat(msg, u1.getPath(), is(u2.getPath()));
+            ec.checkThat(msg, u1.getAuthority(), is(u2.getAuthority()));
+            ec.checkThat(msg, u1.getFragment(), is(u2.getFragment()));
+            ec.checkThat(msg, u1.getUserInfo(), is(u2.getUserInfo()));
+            ec.checkThat(msg, u1.getSchemeSpecificPart(), is(u2.getSchemeSpecificPart()));
+            ec.checkThat(msg, u1.getQuery(), is(u2.getQuery()));
+        } catch (URISyntaxException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    /**
+     * @see "https://en.wikipedia.org/wiki/List_of_URI_schemes"
+     */
+    protected final List<String> MISCURL_COLLECTION =
+            Pattern.compile("\\|").splitAsStream("" +
+                    "|afp://us%C3%A4r@host:4242/the%20pa%2Bth" +
+                    "|jar:http://www.foo.com/bar/baz.jar!/COM/foo/Qu%ux.class" +
+                    "|mailto:jsmith@example.com?subject=A%20Test&body=My%20idea%20is%3A%20%0A" +
+                    "|s3://mybucket/puppy.jpg" +
+                    "|sftp://us%C3%A4r;fingerprint=4342234@host:4242/some/path/file.txt" +
+                    "|smb://workgroup;user:password@server/share/folder/file.txt" +
+                    "|ssh://us%C3%A4r;fingerprint=8483823423@host:4242" +
+                    "|telnet://us%C3%A4r:pas+sw=ord@host:4242/" +
+                    "|telnet://us%C3%A4r:pas%swo&rd@host" +
+                    "|geo:37.786971,-122.399677;crs=Moon-2011;u=35"
+            )
+                    .map(StringUtils::defaultString)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+    /**
+     * Checks that various examples of URLs of other protocols are treated correctly.
+     */
+    @Test
+    @Ignore
+    // FIXME(hps,15.06.20) imlement
+    public void checkMiscUrlsDecoded() {
+        for (String urlString : MISCURL_COLLECTION) {
+            ec.checkSucceeds(() -> {
+                SlingUrl url, url2;
+                url = new SlingUrl(request).fromUrl(urlString, true);
+                linkexamples.append("<p><a href=\"").append(url.getUrl()).append("\">").append(url.getUrl()).append("</a></p>\n");
+                System.out.println("\n" + urlString + "\n" + url.toDebugString() + "\n" + url.getUrl());
+                verifySameUrl(urlString, url.getUrl());
+                url2 = new SlingUrl(request).fromUrl(url.getUrl(), true);
+                ec.checkThat(urlString, url.getUrl(), is(url2.getUrl()));
+                return null;
+            });
+        }
+    }
+
+    /**
+     * Checks that various examples of URLs of other protocols are treated correctly.
+     */
+    @Test
+    @Ignore
+    // FIXME(hps,15.06.20) imlement
+    public void checkMiscUrlsUndecoded() {
+        for (String urlString : MISCURL_COLLECTION) {
+            ec.checkSucceeds(() -> {
+                SlingUrl url, url2;
+                url = new SlingUrl(request).fromUrl(urlString);
+                linkexamples.append("<p><a href=\"").append(url.getUrl()).append("\">").append(url.getUrl()).append("</a></p>\n");
+                System.out.println("\n" + urlString + "\n" + url.toDebugString() + "\n" + url.getUrl());
+                verifySameUrl(urlString, url.getUrl());
+                url2 = new SlingUrl(request).fromUrl(url.getUrl(), true);
+                ec.checkThat(urlString, url.getUrl(), is(url2.getUrl()));
+                return null;
+            });
+        }
+    }
+
+    @Test
+    public void pathEncodingAndMapping() {
+        String path = "/x/a b+c%d/e<f]g";
+        SlingUrl slingUrl;
+
+        slingUrl = new SlingUrl(request).fromPath(path);
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
+        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/a%20b%2Bc%25d/e%3Cf%5Dg"));
+
+        slingUrl = new SlingUrl(request, LinkMapper.RESOLVER).fromPath(path);
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
+        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/a%20b%2Bc%25d/e%3Cf%5Dg"));
+
+        slingUrl = new SlingUrl(request, LinkMapper.CONTEXT).fromPath(path);
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
+        ec.checkThat(slingUrl.getUrl(), is("/ctx/x/a%20b%2Bc%25d/e%3Cf%5Dg"));
+
+        slingUrl = new SlingUrl(request, (LinkMapper) null).fromPath(path);
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
+        ec.checkThat(slingUrl.getUrl(), is("/x/a%20b%2Bc%25d/e%3Cf%5Dg"));
+
+        slingUrl = new SlingUrl(request, LinkMapper.RESOLVER).fromPath("/x/rpage-_@%(){}$!'+,=-\\X");
+        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/,name=rpage-_@%(){}$!'+,=-\\X,resourcePath=/x/rpage-_@%(){}$!'+,=-\\X]"));
+        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/rpage-_%40%25%28%29%7B%7D%24%21%27%2B%2C%3D-%5CX"));
+    }
+
 }
