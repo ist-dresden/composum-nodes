@@ -89,10 +89,10 @@ public class SlingUrlTest {
         ec.checkThat(url.getResourcePath(), is("/x/bb/ccc/öä ü"));
         ec.checkThat(url.getSuffix(), is("/x/x/z.html"));
         ec.checkThat(url.getUrl(), is("http://host.xxx/bb/ccc/%C3%B6%C3%A4%20%C3%BC.s.x.html/x/x/z.html?a=b&c"));
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,contextPath=/ctx,path=/x/bb/ccc/,name=öä ü,selectors=[s, x],extension=html,suffix=/x/x/z.html,parameters={a=[b], c=[]},resourcePath=/x/bb/ccc/öä ü]"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/x/bb/ccc/,name=öä ü,selectors=[s, x],extension=html,suffix=/x/x/z.html,parameters={a=[b], c=[]},resourcePath=/x/bb/ccc/öä ü]"));
 
         url.selector("sel").removeSelector("x")
-                .suffix(newResource(resolver, "/c/dd/e#e"))
+                .suffix(newResource(resolver, "/c/dd/e%e"))
                 .removeParameter("a")
                 .parameter("x", "aöü")
                 .parameter("Öß", "& 12")
@@ -105,9 +105,9 @@ public class SlingUrlTest {
         ec.checkThat(url.getFragment(), is("%%$&"));
         ec.checkThat(url.getPathAndName(), is("/x/bb/ccc/öä ü"));
         ec.checkThat(url.getResourcePath(), is("/x/bb/ccc/öä ü"));
-        ec.checkThat(url.getSuffix(), is("/c/dd/e#e"));
-        ec.checkThat(url.getUrl(), is("http://host.xxx/bb/ccc/%C3%B6%C3%A4%20%C3%BC.s.sel.html/c/dd/e%23e?c&x=a%C3%B6%C3%BC&%C3%96%C3%9F=%26%2012&%24#%25%25%24%26"));
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,contextPath=/ctx,path=/x/bb/ccc/,name=öä ü,selectors=[s, sel],extension=html,suffix=/c/dd/e#e,parameters={c=[], x=[aöü], Öß=[& 12], $=[]},fragment=%%$&,resourcePath=/x/bb/ccc/öä ü]"));
+        ec.checkThat(url.getSuffix(), is("/c/dd/e%e"));
+        ec.checkThat(url.getUrl(), is("http://host.xxx/bb/ccc/%C3%B6%C3%A4%20%C3%BC.s.sel.html/c/dd/e%25e?c&x=a%C3%B6%C3%BC&%C3%96%C3%9F=%26%2012&%24#%25%25%24%26"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/x/bb/ccc/,name=öä ü,selectors=[s, sel],extension=html,suffix=/c/dd/e%e,parameters={c=[], x=[aöü], Öß=[& 12], $=[]},fragment=%%$&,resourcePath=/x/bb/ccc/öä ü]"));
 
         url = new SlingUrl(request).fromUrl("https://www.google.com/");
         printChecks(url);
@@ -331,7 +331,7 @@ public class SlingUrlTest {
         url = new SlingUrl(request).fromUrl("git+ht-tp://bla.example.net/buf+bla?foo=bar+baz", true);
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,scheme=git+ht-tp,name=//bla.example.net/buf+bla?foo=bar+baz,external=true]"));
-        ec.checkThat(url.getUrl(), is("git+ht-tp://bla.example.net/buf%2Bbla%3Ffoo%3Dbar%2Bbaz"));
+        ec.checkThat(url.getUrl(), is("git+ht-tp://bla.example.net/buf+bla?foo=bar+baz"));
 
         // + is a valid character in a path and should not be encoded.
         url = new SlingUrl(request).fromUrl("http://bla.example.net/buf+bla?foo=bar+baz", true);
@@ -369,8 +369,21 @@ public class SlingUrlTest {
         System.out.println(builder);
 
         // sanity check: the url decoded again and encoded again should get us the same things
-        SlingUrl url2 = new SlingUrl(request).fromUrl(url.getUrl(), true);
+        SlingUrl url2 = new SlingUrl(request, url.linkMapper).fromUrl(url.getUrl(), true);
         ec.checkThat(url2.toDebugString(), url2.getUrl(), is(url.getUrl()));
+        if (!"host.xxx".equals(url2.getHost())) { // host.xxx has been a significant change in the url by the linkmapper
+            ec.checkThat(url2.toDebugString(), url2.toDebugString(), is(url.toDebugString()));
+        }
+
+        try {
+            URI uri = new URI(url.getUrl());
+            SlingUrl url3 = new SlingUrl(request, url.linkMapper).fromUri(uri);
+            ec.checkThat(uri + " -> " + url3.toDebugString(), url3.getUrl(), is(url.getUrl()));
+            // url2 as reference because mapping can introduce host.xxx
+            ec.checkThat(uri + " -> " + url3.toDebugString(), url3.toDebugString(), is(url2.toDebugString()));
+        } catch (URISyntaxException e) {
+            System.out.println("Not an URI: " + url.getUrl() + " - " + e);
+        }
     }
 
     /**
@@ -424,6 +437,9 @@ public class SlingUrlTest {
             ec.checkThat(msg, u1.getFragment(), is(u2.getFragment()));
             ec.checkThat(msg, u1.getUserInfo(), is(u2.getUserInfo()));
             ec.checkThat(msg, u1.getSchemeSpecificPart(), is(u2.getSchemeSpecificPart()));
+            if (!u1.getSchemeSpecificPart().equals(u2.getSchemeSpecificPart())) {
+                System.out.println("AAAH");
+            }
             ec.checkThat(msg, u1.getQuery(), is(u2.getQuery()));
         } catch (URISyntaxException e) {
             throw new AssertionError(e);
@@ -436,14 +452,14 @@ public class SlingUrlTest {
     protected final List<String> MISCURL_COLLECTION =
             Pattern.compile("\\|").splitAsStream("" +
                     "|afp://us%C3%A4r@host:4242/the%20pa%2Bth" +
-                    "|jar:http://www.foo.com/bar/baz.jar!/COM/foo/Qu%ux.class" +
+                    "|jar:http://www.foo.com/bar/baz.jar!/COM/foo/Qu%2Bux.class" +
                     "|mailto:jsmith@example.com?subject=A%20Test&body=My%20idea%20is%3A%20%0A" +
                     "|s3://mybucket/puppy.jpg" +
                     "|sftp://us%C3%A4r;fingerprint=4342234@host:4242/some/path/file.txt" +
                     "|smb://workgroup;user:password@server/share/folder/file.txt" +
                     "|ssh://us%C3%A4r;fingerprint=8483823423@host:4242" +
                     "|telnet://us%C3%A4r:pas+sw=ord@host:4242/" +
-                    "|telnet://us%C3%A4r:pas%swo&rd@host" +
+                    "|telnet://us%C3%A4r:pas%25swo&rd@host" +
                     "|geo:37.786971,-122.399677;crs=Moon-2011;u=35"
             )
                     .map(StringUtils::defaultString)
@@ -454,8 +470,6 @@ public class SlingUrlTest {
      * Checks that various examples of URLs of other protocols are treated correctly.
      */
     @Test
-    @Ignore
-    // FIXME(hps,15.06.20) imlement
     public void checkMiscUrlsDecoded() {
         for (String urlString : MISCURL_COLLECTION) {
             ec.checkSucceeds(() -> {
@@ -473,10 +487,10 @@ public class SlingUrlTest {
 
     /**
      * Checks that various examples of URLs of other protocols are treated correctly.
+     * Nonsense.
      */
-    @Test
     @Ignore
-    // FIXME(hps,15.06.20) imlement
+    @Test
     public void checkMiscUrlsUndecoded() {
         for (String urlString : MISCURL_COLLECTION) {
             ec.checkSucceeds(() -> {
