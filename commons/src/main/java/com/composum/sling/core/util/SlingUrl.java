@@ -10,6 +10,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -273,6 +274,69 @@ public class SlingUrl implements Cloneable {
     }
 
     /**
+     * Assigns from the given uri, trying to parse extension and suffix from it.
+     * This avoids any issues with character encoding and broken URLs.
+     * <em>Caution:</em> if the url contains several periods like e.g. http://host/a.b/c.d/suffix , this
+     * * might parse it wrong, since we'd have to consult the resource tree to determine whether the resource path
+     * * is /a or /a.b/c .
+     */
+    public SlingUrl fromUri(@Nonnull URI uri) {
+        reset();
+        boolean isHttp = uri.getScheme() != null && HTTP_SCHEME.matcher(uri.getScheme()).matches();
+        boolean isFile = uri.getScheme() != null && FILE_SCHEME.matcher(uri.getScheme()).matches();
+        boolean isSpecial = uri.getScheme() != null && SPECIAL_SCHEME.matcher(uri.getScheme()).matches();
+        if (isSpecial) {
+            this.type = UrlType.SPECIAL;
+            this.scheme = uri.getScheme();
+            this.name = uri.getSchemeSpecificPart();
+            if (uri.getFragment() != null) {
+                this.name = this.name + "#" + uri.getFragment();
+            }
+        } else if (uri.isOpaque() || isNotBlank(uri.getScheme()) && !isFile && !isHttp) {
+            this.type = UrlType.OTHER;
+            this.scheme = uri.getScheme();
+            this.name = uri.getRawSchemeSpecificPart();
+            if (uri.getRawFragment() != null) {
+                this.name = this.name + "#" + uri.getRawFragment();
+            }
+        } else {
+            this.host = uri.getHost();
+            if (uri.getPort() >= 0) {
+                this.port = uri.getPort();
+            }
+            this.scheme = uri.getScheme();
+            if (this.scheme == null && StringUtils.isNotBlank(uri.getHost())) {
+                this.scheme = SCHEME_PROTOCOL_RELATIVE_URL;
+            }
+            if (scheme == null && !StringUtils.startsWith(uri.getSchemeSpecificPart(), "/")) {
+                this.type = UrlType.RELATIVE;
+            } else {
+                this.type = isFile ? UrlType.FILE : UrlType.HTTP;
+            }
+            if (uri.getUserInfo() != null) { // this fails if username contains an encoded :
+                this.username = StringUtils.defaultIfBlank(StringUtils.substringBefore(uri.getUserInfo(), ":"), null);
+                this.password = StringUtils.defaultIfBlank(StringUtils.substringAfter(uri.getUserInfo(), ":"), null);
+            }
+            this.fragment = uri.getFragment();
+            Matcher matcher = ABSOLUTE_PATH_PATTERN.matcher(uri.getPath());
+            if (matcher.matches()) {
+                assignFromGroups(matcher, false, false);
+            } else if ((matcher = RELATIVE_PATH_PATTERN.matcher(uri.getPath())).matches()) {
+                assignFromGroups(matcher, false, false);
+            } else { // unparseable path - fall back to OTHER :-(
+                reset();
+                this.type = UrlType.OTHER;
+                this.name = uri.getRawSchemeSpecificPart();
+                this.fragment = StringUtils.defaultIfBlank(uri.getRawFragment(), null);
+            }
+            if (uri.getRawQuery() != null) {
+                parseParameters(uri.getRawQuery(), true);
+            }
+        }
+        return this;
+    }
+
+    /**
      * Initializes from an url or an absolute resource path, possibly URL-decoding it when decode = true.
      * If pathOrUrl starts with a single slash, this is the same as {@link #fromPath(String)}, otherwise the same as
      * {@link #fromUrl(String, boolean)}.
@@ -384,7 +448,7 @@ public class SlingUrl implements Cloneable {
 
     /**
      * Sets the path, name and extension from the given e.g. resource path.
-     * Caution: if the fullpath contains several periods, you'll get a mess out of this.
+     * Caution: if the fullpath contains several periods, the result can be different than you expect and broken.
      *
      * @return this for builder style chaining
      */
@@ -968,7 +1032,9 @@ public class SlingUrl implements Cloneable {
         if (isNotBlank(scheme)) {
             builder.append(scheme).append(':');
         }
-        if (type == UrlType.SPECIAL || type == UrlType.OTHER) {
+        if (type == UrlType.OTHER) {
+            builder.append(name); // do not encode anything in OTHER - that can trash meta-characters
+        } else if (type == UrlType.SPECIAL) {
             builder.append(CODEC.encode(name));
         } else {
             if (scheme != null) { // scheme="" is a protocol relative URL starting with // .
@@ -1087,9 +1153,8 @@ public class SlingUrl implements Cloneable {
             }
         }
         if (other) {
-            type = UrlType.OTHER;
+            type = UrlType.OTHER; // do not decode anything in OTHER since that can trash meta-characters
             name = url.substring(schemeLength);
-            if (decode) name = CODEC.decode(name);
         }
     }
 
@@ -1186,9 +1251,7 @@ public class SlingUrl implements Cloneable {
         if (port != null) {
             builder.append("port", port);
         }
-        if (contextPath != null) {
-            builder.append("contextPath", contextPath);
-        }
+        // deliberately no context path since that's calculated on demand
         if (path != null) {
             builder.append("path", path);
         }
