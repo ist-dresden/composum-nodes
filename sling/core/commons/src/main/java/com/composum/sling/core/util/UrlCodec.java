@@ -1,5 +1,6 @@
 package com.composum.sling.core.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,10 +9,7 @@ import javax.annotation.Nullable;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CoderResult;
+import java.nio.charset.*;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,11 +26,21 @@ public class UrlCodec {
     private static final Logger LOG = LoggerFactory.getLogger(UrlCodec.class);
 
     /**
-     * Matches one or several encoded characters.
+     * Matches one or several percent encoded bytes.
      */
     public static final Pattern ENCODED_CHARACTERS = Pattern.compile("(%([0-9a-fA-F][0-9a-fA-F]))+");
+
+    /**
+     * Matches a percent sign followed by something that's not a hexadecimally encoded byte.
+     */
     public static final Pattern INVALID_ENCODED_CHARACTER = Pattern.compile("%(?![0-9a-fA-F][0-9a-fA-F]).{0,2}");
+
+    /**
+     * {@value #INVALID_CHARACTER_MARKER} is inserted whenever something could not be decoded.
+     */
     public static final String INVALID_CHARACTER_MARKER = "\ufffd";
+
+    protected static final String HEXDIGITS = "0123456789ABCDEF";
 
     protected final Charset charset;
     protected final String admissiblCharacters;
@@ -49,15 +57,30 @@ public class UrlCodec {
     public UrlCodec(@Nonnull String admissibleCharacters, @Nonnull Charset charset) throws IllegalArgumentException, PatternSyntaxException {
         this.charset = Objects.requireNonNull(charset);
         this.admissiblCharacters = Objects.requireNonNull(admissibleCharacters);
-        this.invalidCharRegex = Pattern.compile("[^" + admissibleCharacters + "]");
+        this.invalidCharRegex = Pattern.compile("([^" + admissibleCharacters + "])+");
         if (invalidCharRegex.matcher("%").matches()) {
             throw new IllegalArgumentException("Quoting character '%' is not admissible.");
         }
     }
 
+    /**
+     * Encodes all characters which are not admissible to percent-encodings wrt. the given charset.
+     * If characters are not in the charset, they will silently be encoded as '?'.
+     */
     @Nullable
     public String encode(@Nullable String encoded) {
-        throw new UnsupportedOperationException("Not implemented yet."); // FIXME hps 17.06.20 not implemented
+        return encode(encoded, false);
+    }
+
+    /**
+     * Encodes all characters which are not admissible to percent-encodings wrt. the given charset.
+     * If characters are not in the charset, we will throw an {@link IllegalArgumentException}.
+     *
+     * @throws IllegalArgumentException if a character cannot be encoded
+     */
+    @Nullable
+    public String encodeValidated(@Nullable String encoded) throws IllegalArgumentException {
+        return encode(encoded, true);
     }
 
     /**
@@ -69,6 +92,55 @@ public class UrlCodec {
     @Nullable
     public String decode(@Nullable String encoded) {
         return decode(encoded, false);
+    }
+
+    @Nullable
+    protected String encode(@Nullable String encoded, boolean doThrow) {
+        if (encoded == null || encoded.isEmpty()) {
+            return encoded;
+        }
+        Matcher m = invalidCharRegex.matcher(encoded);
+        ByteBuffer bytes = ByteBuffer.allocate(100);
+        CharsetEncoder charsetEncoder = charset.newEncoder();
+        StringBuffer out = new StringBuffer();
+        while (m.find()) {
+            m.appendReplacement(out, "");
+            CharSequence match = encoded.subSequence(m.start(), m.end());
+            CharBuffer matchBuffer;
+            boolean overflow, error = true;
+            do {
+                bytes.clear();
+                charsetEncoder.reset();
+                matchBuffer = CharBuffer.wrap(match);
+                CoderResult result1 = charsetEncoder.encode(matchBuffer, bytes, true);
+                CoderResult result2 = charsetEncoder.flush(bytes);
+                overflow = result1.isOverflow() || result2.isOverflow();
+                if (overflow) {
+                    bytes = ByteBuffer.allocate((int) Math.max(2 * bytes.capacity(),
+                            match.length() * charsetEncoder.maxBytesPerChar() * 1.2
+                    ));
+                } else {
+                    error = result1.isError() || result2.isError();
+                }
+            } while (overflow);
+            bytes.flip().rewind();
+            while (bytes.hasRemaining()) {
+                int b = (bytes.get() + 0x100) & 0xff;
+                out.append('%')
+                        .append(HEXDIGITS.charAt(b / 0x10))
+                        .append(HEXDIGITS.charAt(b % 0x10));
+            }
+            if (error) {
+                LOG.debug("Could not encode {} to {}", m.group(), charset.name());
+                if (doThrow) {
+                    throw new IllegalArgumentException("Could not encode " + m.group());
+                } else { // TODO what to do??? This is likely not valid, but a '?' neither.
+                    out.append(StringUtils.repeat(INVALID_CHARACTER_MARKER, m.end() - m.start() - matchBuffer.position()));
+                }
+            }
+        }
+        m.appendTail(out);
+        return out.toString();
     }
 
     /**
@@ -84,7 +156,7 @@ public class UrlCodec {
 
     @Nullable
     protected String decode(@Nullable String encoded, boolean doThrow) throws IllegalArgumentException {
-        if (encoded == null || !encoded.contains("%")) {
+        if (encoded == null || encoded.isEmpty() || !encoded.contains("%")) {
             return encoded;
         }
         if (doThrow) {
@@ -94,7 +166,7 @@ public class UrlCodec {
             }
         }
         Matcher m = ENCODED_CHARACTERS.matcher(encoded);
-        CharBuffer out = CharBuffer.allocate(encoded.length());
+        CharBuffer out = CharBuffer.allocate(encoded.length() + 100);
         ByteBuffer bytes = ByteBuffer.allocate(100);
         CharsetDecoder charsetDecoder = charset.newDecoder();
         int appended = 0;
@@ -105,6 +177,7 @@ public class UrlCodec {
                 if (bytes.capacity() < (m.end() - m.start()) / 3) {
                     bytes = ByteBuffer.allocate(m.end() - m.start());
                 }
+                bytes.clear();
                 for (int i = m.start() + 1; i < m.end(); i += 3) {
                     bytes.put((byte) (16 * unhex(encoded.charAt(i)) + unhex(encoded.charAt(i + 1))));
                 }
@@ -114,10 +187,9 @@ public class UrlCodec {
                 checkResult(encoded, doThrow, out, result);
                 result = charsetDecoder.flush(out);
                 checkResult(encoded, doThrow, out, result);
-                bytes.clear();
             }
             out.append(encoded, appended, encoded.length());
-        } catch (BufferOverflowException e) {
+        } catch (BufferOverflowException e) { // impossible
             LOG.error("Bug: Buffer overflow in decoding {}", encoded, e);
             if (doThrow) {
                 throw e;
