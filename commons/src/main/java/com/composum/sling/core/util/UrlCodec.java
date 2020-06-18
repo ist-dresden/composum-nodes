@@ -26,25 +26,47 @@ public class UrlCodec {
     private static final Logger LOG = LoggerFactory.getLogger(UrlCodec.class);
 
     /**
+     * The characters which can always appear in any URL without being encoded: the <a href="https://tools.ietf.org/html/rfc3986#section-2.3">"unreserved"
+     * chars.</a> Unfortunately there are different recommendations about encoding $!*'(), so we exclude them.
+     * Possibly we could include the "extra" chars !*'(), .
+     */
+    protected static final String URL_SAFECHARS = "-0-9a-zA-Z._+~";
+
+    /**
+     * Codec for the path part of an URL.
+     */
+    public static final UrlCodec PATH_CODEC = new UrlCodec(URL_SAFECHARS + "/", StandardCharsets.UTF_8);
+
+    /**
      * Matches one or several percent encoded bytes.
      */
-    public static final Pattern ENCODED_CHARACTERS = Pattern.compile("(%([0-9a-fA-F][0-9a-fA-F]))+");
+    protected static final Pattern ENCODED_CHARACTERS = Pattern.compile("(%([0-9a-fA-F][0-9a-fA-F]))+");
 
     /**
      * Matches a percent sign followed by something that's not a hexadecimally encoded byte.
      */
-    public static final Pattern INVALID_ENCODED_CHARACTER = Pattern.compile("%(?![0-9a-fA-F][0-9a-fA-F]).{0,2}");
+    protected static final Pattern INVALID_ENCODED_CHARACTER = Pattern.compile("%(?![0-9a-fA-F][0-9a-fA-F]).{0,2}");
 
     /**
-     * {@value #INVALID_CHARACTER_MARKER} is inserted whenever something could not be decoded.
+     * {@value #INVALID_CHARACTER_MARKER} is inserted whenever something could not be decoded,
+     * or sometimes when it's encoded - see {@link #encode(String)}.
      */
-    public static final String INVALID_CHARACTER_MARKER = "\ufffd";
+    protected static final String INVALID_CHARACTER_MARKER = "\ufffd";
 
     protected static final String HEXDIGITS = "0123456789ABCDEF";
 
     protected final Charset charset;
-    protected final String admissiblCharacters;
-    protected final Pattern invalidCharRegex;
+    protected final String admissibleCharacters;
+    /**
+     * Matches one or more characters not in the {@link #admissibleCharacters}.
+     */
+    protected final Pattern notadmissibleCharRegex;
+    /**
+     * Matches an arbitrarily long sequence of admissible chars and percent encodings.
+     */
+    protected final Pattern validationRegex;
+
+    protected transient String invalidCharacterMarkerForEncoding;
 
     /**
      * Initializes the Codec with a range of admissible characters.
@@ -56,16 +78,19 @@ public class UrlCodec {
      */
     public UrlCodec(@Nonnull String admissibleCharacters, @Nonnull Charset charset) throws IllegalArgumentException, PatternSyntaxException {
         this.charset = Objects.requireNonNull(charset);
-        this.admissiblCharacters = Objects.requireNonNull(admissibleCharacters);
-        this.invalidCharRegex = Pattern.compile("([^" + admissibleCharacters + "])+");
-        if (invalidCharRegex.matcher("%").matches()) {
-            throw new IllegalArgumentException("Quoting character '%' is not admissible.");
+        this.admissibleCharacters = Objects.requireNonNull(admissibleCharacters);
+        this.notadmissibleCharRegex = Pattern.compile("([^" + admissibleCharacters + "])+");
+        if (!notadmissibleCharRegex.matcher("%").matches()) {
+            throw new IllegalArgumentException("Quoting character '%' cannot be admissible.");
         }
+        this.validationRegex = Pattern.compile("([" + admissibleCharacters + "]|%[0-9a-fA-F][0-9a-fA-F])*");
     }
 
     /**
      * Encodes all characters which are not admissible to percent-encodings wrt. the given charset.
-     * If characters are not in the charset, they will silently be encoded as '?'.
+     * If characters are not in the charset, they will silently be encoded as a replacement character,
+     * which is either {@value #INVALID_CHARACTER_MARKER} or '?' if one of these is admissible, or the encoding
+     * of {@value #INVALID_CHARACTER_MARKER} for the charset (which might be an encoded '?').
      */
     @Nullable
     public String encode(@Nullable String encoded) {
@@ -99,13 +124,14 @@ public class UrlCodec {
         if (encoded == null || encoded.isEmpty()) {
             return encoded;
         }
-        Matcher m = invalidCharRegex.matcher(encoded);
+        Matcher matcher = notadmissibleCharRegex.matcher(encoded);
         ByteBuffer bytes = ByteBuffer.allocate(100);
         CharsetEncoder charsetEncoder = charset.newEncoder();
         StringBuffer out = new StringBuffer();
-        while (m.find()) {
-            m.appendReplacement(out, "");
-            CharSequence match = encoded.subSequence(m.start(), m.end());
+        while (matcher.find()) { // found some not admissible characters we need to encode
+            matcher.appendReplacement(out, "");
+
+            CharSequence match = encoded.subSequence(matcher.start(), matcher.end());
             CharBuffer matchBuffer;
             boolean overflow, error = true;
             do {
@@ -115,32 +141,63 @@ public class UrlCodec {
                 CoderResult result1 = charsetEncoder.encode(matchBuffer, bytes, true);
                 CoderResult result2 = charsetEncoder.flush(bytes);
                 overflow = result1.isOverflow() || result2.isOverflow();
-                if (overflow) {
+                error = result1.isError() || result2.isError();
+
+                if (overflow) { // enlarge byte buffer and try again
                     bytes = ByteBuffer.allocate((int) Math.max(2 * bytes.capacity(),
                             match.length() * charsetEncoder.maxBytesPerChar() * 1.2
                     ));
-                } else {
-                    error = result1.isError() || result2.isError();
                 }
             } while (overflow);
+
+            // percent encode the bytes encoded from the not admissible characters
             bytes.flip().rewind();
-            while (bytes.hasRemaining()) {
-                int b = (bytes.get() + 0x100) & 0xff;
-                out.append('%')
-                        .append(HEXDIGITS.charAt(b / 0x10))
-                        .append(HEXDIGITS.charAt(b % 0x10));
-            }
+            writePercentEncoded(bytes, out);
+
             if (error) {
-                LOG.debug("Could not encode {} to {}", m.group(), charset.name());
+                LOG.debug("Could not encode {} to {}", matcher.group(), charset.name());
                 if (doThrow) {
-                    throw new IllegalArgumentException("Could not encode " + m.group());
-                } else { // TODO what to do??? This is likely not valid, but a '?' neither.
-                    out.append(StringUtils.repeat(INVALID_CHARACTER_MARKER, m.end() - m.start() - matchBuffer.position()));
+                    throw new IllegalArgumentException("Could not encode " + matcher.group());
+                } else { // TODO what to do here??? This is likely not valid, but a '?' neither.
+                    // FIXME(hps,17.06.20) use encoding of character ? like URLEncoder does. Or possibly
+                    // an encoded INVALID_CHARACTER_MARKER if that belongs to the charset?
+                    out.append(StringUtils.repeat(getInvalidCharacterMarkerForEncoding(),
+                            matcher.end() - matcher.start() - matchBuffer.position()));
                 }
             }
         }
-        m.appendTail(out);
+        matcher.appendTail(out);
         return out.toString();
+    }
+
+    protected void writePercentEncoded(ByteBuffer bytes, StringBuffer out) {
+        while (bytes.hasRemaining()) {
+            int b = (bytes.get() + 0x100) & 0xff;
+            out.append('%')
+                    .append(HEXDIGITS.charAt(b / 0x10))
+                    .append(HEXDIGITS.charAt(b % 0x10));
+        }
+    }
+
+    /**
+     * To mark characters that could not properly be encoded, we use {@value #INVALID_CHARACTER_MARKER} or ? if
+     * one of these is admissible, or {@value #INVALID_CHARACTER_MARKER} encoded if that belongs to the charset, or ? encoded if
+     * it's not.
+     */
+    protected String getInvalidCharacterMarkerForEncoding() {
+        if (invalidCharacterMarkerForEncoding == null) {
+            if (!notadmissibleCharRegex.matcher(INVALID_CHARACTER_MARKER).matches()) {
+                invalidCharacterMarkerForEncoding = INVALID_CHARACTER_MARKER;
+            } else if (!notadmissibleCharRegex.matcher("?").matches()) {
+                invalidCharacterMarkerForEncoding = "?";
+            } else {
+                ByteBuffer byteBuffer = charset.encode(INVALID_CHARACTER_MARKER);
+                StringBuffer buf = new StringBuffer();
+                writePercentEncoded(byteBuffer, buf);
+                invalidCharacterMarkerForEncoding = buf.toString();
+            }
+        }
+        return invalidCharacterMarkerForEncoding;
     }
 
     /**
@@ -231,15 +288,20 @@ public class UrlCodec {
         if (encoded == null) {
             return true;
         }
-        Matcher matcher = invalidCharRegex.matcher(encoded);
-        if (matcher.find()) {
-            LOG.debug("Inadmissible character {} in input {}", matcher.group(), encoded);
+        if (!validationRegex.matcher(encoded).matches()) {
+            if (LOG.isDebugEnabled()) {
+                Matcher m = validationRegex.matcher(encoded);
+                if (m.lookingAt()) { // happens always
+                    String invalidChars = StringUtils.abbreviate(encoded.substring(m.end()), 4);
+                    LOG.debug("Inadmissible character(s) at {} in input {}", invalidChars, encoded);
+                }
+            }
             return false;
         }
         if (!encoded.contains("%")) {
             return true;
         }
-        matcher = INVALID_ENCODED_CHARACTER.matcher(encoded);
+        Matcher matcher = INVALID_ENCODED_CHARACTER.matcher(encoded);
         if (matcher.find()) {
             LOG.debug("Invalidly encoded character {} in input {}", matcher.group(), encoded);
             return false;
@@ -252,4 +314,11 @@ public class UrlCodec {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return "UrlCodec{" +
+                "charset=" + charset +
+                ", admissibleCharacters='" + admissibleCharacters + '\'' +
+                '}';
+    }
 }

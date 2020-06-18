@@ -22,8 +22,10 @@ public class UrlCodecTest {
     @Rule
     public final ErrorCollector ec = new ErrorCollector();
 
-    protected UrlCodec codec = new UrlCodec("-+a-zA-Z0-9%", StandardCharsets.UTF_8);
-    protected UrlCodec isocodec = new UrlCodec("%a-zA-Z0-9", Charset.forName("ISO-8859-1"));
+    protected final UrlCodec codec = new UrlCodec("-+a-zA-Z0-9", StandardCharsets.UTF_8);
+    protected final UrlCodec isocodec = new UrlCodec("a-zA-Z0-9", Charset.forName("ISO-8859-1"));
+
+    protected final String URL_UNSAFE_CHARS = "\"<>#%{}|\\^~[]`"; // always encode
 
     @Test
     public void encode() throws UnsupportedEncodingException {
@@ -31,16 +33,27 @@ public class UrlCodecTest {
         ec.checkThat(codec.encode(""), is(""));
         ec.checkThat(codec.encode("ab-cd+"), is("ab-cd+"));
         ec.checkThat(codec.encode("ä"), is("%C3%A4"));
-        ec.checkThat(codec.encode("a$bäc"), is("a%24b%C3%A4c"));
+        ec.checkThat(codec.encode("a$bäc%x"), is("a%24b%C3%A4c%25x"));
         ec.checkThat(codec.encode(StringUtils.repeat("ä", 1024)), is(StringUtils.repeat("%C3%A4", 1024)));
         ec.checkThat(codec.encode("()$äöü@"), is(URLEncoder.encode("()$äöü@", "UTF-8")));
 
         ec.checkThat(isocodec.encode("äöü"), is("%E4%F6%FC"));
+    }
 
-        ec.checkThat(isocodec.encode("notiso‰"), is("notiso\ufffd"));
-        ec.checkThat(isocodec.encode("‰notiso"), is("\ufffdnotiso"));
+    @Test
+    public void encodeInvalidChars() throws UnsupportedEncodingException {
+        ec.checkThat(isocodec.encode("notiso‰"), is("notiso%3F"));
+        ec.checkThat(isocodec.encode("‰notiso"), is("%3Fnotiso"));
         ec.checkThat(isocodec.encode("not*‰¼½¾™„”“”‘’‚’/iso"),
-                is("not%2A" + StringUtils.repeat("\ufffd", 14) + "iso"));
+                is("not%2A" + StringUtils.repeat("%3F", 14) + "iso"));
+
+        UrlCodec isocodecWithQMark = new UrlCodec("?a-zA-Z0-9", Charset.forName("ISO-8859-1"));
+
+        ec.checkThat(isocodecWithQMark.encode("not*‰¼½¾™„”“”‘’‚’/iso"),
+                is("not%2A" + StringUtils.repeat("?", 14) + "iso"));
+
+        // for reference: URLEncoder encodes unknown characters as ?
+        ec.checkThat(URLEncoder.encode("€", "ISO-8859-1"), is("%3F"));
     }
 
     @Test
@@ -63,7 +76,7 @@ public class UrlCodecTest {
         ec.checkThat(codec.decode(""), is(""));
         ec.checkThat(codec.decode("unencoded"), is("unencoded"));
         ec.checkThat(codec.decode("%C3%A4"), is("ä"));
-        ec.checkThat(codec.decode("start%C3%A4end"), is("startäend"));
+        ec.checkThat(codec.decode("sta%25rt%C3%A4end"), is("sta%rtäend"));
         ec.checkThat(codec.decode("äöstart%C3%A4mid%C3%A4end"), is("äöstartämidäend"));
         ec.checkThat(codec.decode("%C3"), is("\ufffd"));
         ec.checkThat(codec.decode("bla%C3blu"), is("bla\ufffdblu"));
