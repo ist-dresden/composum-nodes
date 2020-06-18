@@ -28,24 +28,78 @@ public class UrlCodec {
     /**
      * The characters which can always appear in any URL without being encoded: the <a href="https://tools.ietf.org/html/rfc3986#section-2.3">"unreserved"
      * chars.</a> Unfortunately there are different recommendations about encoding $!*'(), so we exclude them.
-     * Possibly we could include the "extra" chars !*'(), .
+     * Possibly we could include the "extra" chars !*'(), . We exlude ~ since it was declared unsafe in RFC1728.
      */
-    protected static final String URL_SAFECHARS = "-0-9a-zA-Z._+~";
+    protected static final String PART_URL_SAFECHARS = "-0-9a-zA-Z._+";
 
     /**
-     * Codec for the path part of an URL.
+     * Codec quoting everything other than the chars which are safe in every part of the URL.
      */
-    public static final UrlCodec PATH_CODEC = new UrlCodec(URL_SAFECHARS + "/", StandardCharsets.UTF_8);
+    public static final UrlCodec URLSAFE = new UrlCodec(PART_URL_SAFECHARS, StandardCharsets.UTF_8);
+
+    /**
+     * Codec for the <a href="https://tools.ietf.org/html/rfc3986#section-3.3">path part</a> of an URL.
+     */
+    public static final UrlCodec PATH = new UrlCodec(PART_URL_SAFECHARS + "/:@" +
+            "!$&'()*+,;=" // the sub-delims  https://tools.ietf.org/html/rfc3986#section-2.2
+            // FIXME(hps,18.06.20) how about ; at the end? unclear whether to admit these.
+            , StandardCharsets.UTF_8);
+
+    /**
+     * Codec for the <a href="https://tools.ietf.org/html/rfc3986#section-3.2.1">authority</a> of an URL.
+     */
+    public static final UrlCodec AUTHORITY = new UrlCodec(PART_URL_SAFECHARS +
+            "!$&'()*+,;=" // sub-delims
+            , StandardCharsets.UTF_8);
+
+    /**
+     * Codec for the <a href="https://tools.ietf.org/html/rfc3986#section-3.4">query part</a> of an URL.
+     */
+    public static final UrlCodec QUERYPART = new UrlCodec(PART_URL_SAFECHARS + "/:@"
+            + "!$'()*,;" // the sub-delims, we exclude & and = since they are meta-characters here, and & of course
+            // also + since that encodes space and would have to be handled differently, and & of course
+            , StandardCharsets.UTF_8) {
+
+        @Override
+        protected String charsToEncode(String admissibleCharacters) {
+            return admissibleCharacters.replaceAll("\\+", " ");
+        }
+
+        @Override
+        protected void encodePostprocess(StringBuffer out) {
+            for (int i = 0; i < out.length(); ++i) {
+                if (out.charAt(i) == ' ') {
+                    out.setCharAt(i, '+');
+                }
+            }
+        }
+
+        @Override
+        protected String decodePreprocess(String encoded) {
+            return StringUtils.replaceChars(encoded, '+', ' ');
+        }
+    };
+
+    /**
+     * Codec for the <a href="https://tools.ietf.org/html/rfc3986#section-3.5">fragment part</a> of an URL.
+     */
+    public static final UrlCodec FRAGMENT = new UrlCodec(PART_URL_SAFECHARS + "!$&'()*+,;=" +
+            "/?", StandardCharsets.UTF_8);
+
+    /**
+     * Codec for opaque URLs that are not parsed. Contains all unreserved, reserved and extra characters
+     */
+    public static final UrlCodec OPAQUE = new UrlCodec(PART_URL_SAFECHARS + "$.!*'()," + ";/?:@=&", StandardCharsets.UTF_8);
 
     /**
      * Matches one or several percent encoded bytes.
      */
-    protected static final Pattern ENCODED_CHARACTERS = Pattern.compile("(%([0-9a-fA-F][0-9a-fA-F]))+");
+    protected static final Pattern PAT_ENCODED_CHARACTERS = Pattern.compile("(%[0-9a-fA-F][0-9a-fA-F])+");
 
     /**
      * Matches a percent sign followed by something that's not a hexadecimally encoded byte.
      */
-    protected static final Pattern INVALID_ENCODED_CHARACTER = Pattern.compile("%(?![0-9a-fA-F][0-9a-fA-F]).{0,2}");
+    protected static final Pattern PAT_INVALID_ENCODED_CHARACTER = Pattern.compile("%(?![0-9a-fA-F][0-9a-fA-F]).{0,2}");
 
     /**
      * {@value #INVALID_CHARACTER_MARKER} is inserted whenever something could not be decoded,
@@ -56,11 +110,13 @@ public class UrlCodec {
     protected static final String HEXDIGITS = "0123456789ABCDEF";
 
     protected final Charset charset;
+
     protected final String admissibleCharacters;
+
     /**
      * Matches one or more characters not in the {@link #admissibleCharacters}.
      */
-    protected final Pattern notadmissibleCharRegex;
+    protected final Pattern charsToEncodeRegex;
     /**
      * Matches an arbitrarily long sequence of admissible chars and percent encodings.
      */
@@ -79,11 +135,18 @@ public class UrlCodec {
     public UrlCodec(@Nonnull String admissibleCharacters, @Nonnull Charset charset) throws IllegalArgumentException, PatternSyntaxException {
         this.charset = Objects.requireNonNull(charset);
         this.admissibleCharacters = Objects.requireNonNull(admissibleCharacters);
-        this.notadmissibleCharRegex = Pattern.compile("([^" + admissibleCharacters + "])+");
-        if (!notadmissibleCharRegex.matcher("%").matches()) {
+        this.charsToEncodeRegex = Pattern.compile("([^" + charsToEncode(admissibleCharacters) + "])+");
+        if (!charsToEncodeRegex.matcher("%").matches()) {
             throw new IllegalArgumentException("Quoting character '%' cannot be admissible.");
         }
         this.validationRegex = Pattern.compile("([" + admissibleCharacters + "]|%[0-9a-fA-F][0-9a-fA-F])*");
+    }
+
+    /**
+     * Hook to calculate the set of characters to encode from the admissibleCharacters
+     */
+    protected String charsToEncode(String admissibleCharacters) {
+        return admissibleCharacters;
     }
 
     /**
@@ -124,7 +187,7 @@ public class UrlCodec {
         if (encoded == null || encoded.isEmpty()) {
             return encoded;
         }
-        Matcher matcher = notadmissibleCharRegex.matcher(encoded);
+        Matcher matcher = charsToEncodeRegex.matcher(encoded);
         ByteBuffer bytes = ByteBuffer.allocate(100);
         CharsetEncoder charsetEncoder = charset.newEncoder();
         StringBuffer out = new StringBuffer();
@@ -167,7 +230,14 @@ public class UrlCodec {
             }
         }
         matcher.appendTail(out);
+        encodePostprocess(out);
         return out.toString();
+    }
+
+    /**
+     * Hook for finalizing encoding
+     */
+    protected void encodePostprocess(StringBuffer out) {
     }
 
     protected void writePercentEncoded(ByteBuffer bytes, StringBuffer out) {
@@ -186,9 +256,9 @@ public class UrlCodec {
      */
     protected String getInvalidCharacterMarkerForEncoding() {
         if (invalidCharacterMarkerForEncoding == null) {
-            if (!notadmissibleCharRegex.matcher(INVALID_CHARACTER_MARKER).matches()) {
+            if (!charsToEncodeRegex.matcher(INVALID_CHARACTER_MARKER).matches()) {
                 invalidCharacterMarkerForEncoding = INVALID_CHARACTER_MARKER;
-            } else if (!notadmissibleCharRegex.matcher("?").matches()) {
+            } else if (!charsToEncodeRegex.matcher("?").matches()) {
                 invalidCharacterMarkerForEncoding = "?";
             } else {
                 ByteBuffer byteBuffer = charset.encode(INVALID_CHARACTER_MARKER);
@@ -213,16 +283,17 @@ public class UrlCodec {
 
     @Nullable
     protected String decode(@Nullable String encoded, boolean doThrow) throws IllegalArgumentException {
+        encoded = decodePreprocess(encoded);
         if (encoded == null || encoded.isEmpty() || !encoded.contains("%")) {
             return encoded;
         }
         if (doThrow) {
-            Matcher fail = INVALID_ENCODED_CHARACTER.matcher(encoded);
+            Matcher fail = PAT_INVALID_ENCODED_CHARACTER.matcher(encoded);
             if (fail.find()) {
                 throw new IllegalArgumentException("Invalid encoded character " + fail.group());
             }
         }
-        Matcher m = ENCODED_CHARACTERS.matcher(encoded);
+        Matcher m = PAT_ENCODED_CHARACTERS.matcher(encoded);
         CharBuffer out = CharBuffer.allocate(encoded.length() + 100);
         ByteBuffer bytes = ByteBuffer.allocate(100);
         CharsetDecoder charsetDecoder = charset.newDecoder();
@@ -257,6 +328,13 @@ public class UrlCodec {
         return out.flip().toString();
     }
 
+    /**
+     * Hook to preprocess something about to be decoded.
+     */
+    protected String decodePreprocess(String encoded) {
+        return encoded;
+    }
+
     protected void checkResult(@Nonnull String encoded, boolean doThrow, CharBuffer out, CoderResult result) throws IllegalArgumentException {
         if (result.isError()) {
             if (doThrow) {
@@ -285,7 +363,7 @@ public class UrlCodec {
      * Verifies that the given String is encoded: all characters are admissible and % is always followed by a hexadecimal number.
      */
     public boolean isValid(@Nullable String encoded) {
-        if (encoded == null) {
+        if (encoded == null || encoded.isEmpty()) {
             return true;
         }
         if (!validationRegex.matcher(encoded).matches()) {
@@ -301,7 +379,7 @@ public class UrlCodec {
         if (!encoded.contains("%")) {
             return true;
         }
-        Matcher matcher = INVALID_ENCODED_CHARACTER.matcher(encoded);
+        Matcher matcher = PAT_INVALID_ENCODED_CHARACTER.matcher(encoded);
         if (matcher.find()) {
             LOG.debug("Invalidly encoded character {} in input {}", matcher.group(), encoded);
             return false;

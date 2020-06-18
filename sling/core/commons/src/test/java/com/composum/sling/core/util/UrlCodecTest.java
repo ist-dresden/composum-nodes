@@ -121,4 +121,13 @@ public class UrlCodecTest {
         ec.checkThat(codec.isValid("%E1%A0%C0"), is(false));
     }
 
+    @Test
+    public void queryPart() {
+        ec.checkThat(UrlCodec.QUERYPART.encode("a b+c"), is("a+b%2Bc"));
+        ec.checkThat(UrlCodec.QUERYPART.encodeValidated("a b+c"), is("a+b%2Bc"));
+        ec.checkThat(UrlCodec.QUERYPART.decode("a+b%2Bc"), is("a b+c"));
+        ec.checkThat(UrlCodec.QUERYPART.decodeValidated("a+b%2Bc"), is("a b+c"));
+        ec.checkThat(UrlCodec.QUERYPART.isValid("a+b%2Bc"), is(true));
+    }
+
 }
