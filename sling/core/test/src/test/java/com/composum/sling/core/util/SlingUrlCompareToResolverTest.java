@@ -130,11 +130,11 @@ public class SlingUrlCompareToResolverTest {
 
         slingUrl = new SlingUrl(context.request(), LinkMapper.CONTEXT).fromPath(path);
         ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e<f]g,resourcePath=/content/a b+c%d/e<f]g]"));
-        ec.checkThat(slingUrl.getUrl(), is("/ctx/content/a%20b%2Bc%25d/e%3Cf%5Dg"));
+        ec.checkThat(slingUrl.getUrl(), is("/ctx/content/a%20b+c%25d/e%3Cf%5Dg"));
 
         slingUrl = new SlingUrl(context.request(), (LinkMapper) null).fromPath(path);
         ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/content/a b+c%d/,name=e<f]g,resourcePath=/content/a b+c%d/e<f]g]"));
-        ec.checkThat(slingUrl.getUrl(), is("/content/a%20b%2Bc%25d/e%3Cf%5Dg"));
+        ec.checkThat(slingUrl.getUrl(), is("/content/a%20b+c%25d/e%3Cf%5Dg"));
 
         slingUrl = new SlingUrl(context.request(), LinkMapper.RESOLVER).fromPath("/content/rpage-_@%(){}$!'+,=-\\X");
         ec.checkThat(slingUrl.getUrl(), is("/ctx/rpage-_@%25()%7B%7D$!'%2B,=-%5CX"));

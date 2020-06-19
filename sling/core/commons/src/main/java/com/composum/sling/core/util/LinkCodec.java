@@ -11,6 +11,13 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 
+/**
+ * Replaced by {@link UrlCodec} with its various codecs for URL parts.
+ *
+ * @deprecated use {@link UrlCodec} codecs / {@link LinkUtil} methods
+ */
+// FIXME(hps,19.06.20) remove this
+@Deprecated
 public class LinkCodec extends URLCodec {
 
     private static final Logger LOG = LoggerFactory.getLogger(LinkCodec.class);
@@ -75,6 +82,7 @@ public class LinkCodec extends URLCodec {
     @Override
     public String decode(String value) {
         try {
+            // FIXME(hps,19.06.20) + handling is broken.
             value = value.replaceAll("\\+", "%2B"); // keep '+' as is
             return super.decode(value);
         } catch (DecoderException ex) {

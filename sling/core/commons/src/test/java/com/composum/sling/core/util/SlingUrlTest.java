@@ -530,23 +530,23 @@ public class SlingUrlTest {
 
         slingUrl = new SlingUrl(request).fromPath(path);
         ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
-        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/a%20b%2Bc%25d/e%3Cf%5Dg"));
+        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/a%20b+c%25d/e%3Cf%5Dg"));
 
         slingUrl = new SlingUrl(request, LinkMapper.RESOLVER).fromPath(path);
         ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
-        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/a%20b%2Bc%25d/e%3Cf%5Dg"));
+        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/a%20b+c%25d/e%3Cf%5Dg"));
 
         slingUrl = new SlingUrl(request, LinkMapper.CONTEXT).fromPath(path);
         ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
-        ec.checkThat(slingUrl.getUrl(), is("/ctx/x/a%20b%2Bc%25d/e%3Cf%5Dg"));
+        ec.checkThat(slingUrl.getUrl(), is("/ctx/x/a%20b+c%25d/e%3Cf%5Dg"));
 
         slingUrl = new SlingUrl(request, (LinkMapper) null).fromPath(path);
         ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
-        ec.checkThat(slingUrl.getUrl(), is("/x/a%20b%2Bc%25d/e%3Cf%5Dg"));
+        ec.checkThat(slingUrl.getUrl(), is("/x/a%20b+c%25d/e%3Cf%5Dg"));
 
         slingUrl = new SlingUrl(request, LinkMapper.RESOLVER).fromPath("/x/rpage-_@%(){}$!'+,=-\\X");
         ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/,name=rpage-_@%(){}$!'+,=-\\X,resourcePath=/x/rpage-_@%(){}$!'+,=-\\X]"));
-        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/rpage-_%40%25%28%29%7B%7D%24%21%27%2B%2C%3D-%5CX"));
+        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/rpage-_@%25()%7B%7D$!'+,=-%5CX"));
     }
 
     /**

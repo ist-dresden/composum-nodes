@@ -42,8 +42,6 @@ public class LinkUtil {
     public static final String SPECIAL_URL_STRING = "^(?:(mailto|tel):)(.+)$";
     public static final Pattern SPECIAL_URL_PATTERN = Pattern.compile(SPECIAL_URL_STRING, Pattern.CASE_INSENSITIVE);
 
-    public static final LinkCodec CODEC = new LinkCodec();
-
     /**
      * Builds a mapped link to a path (resource path) without selectors and a determined extension.
      *
@@ -377,17 +375,14 @@ public class LinkUtil {
     }
 
     /**
-     * URL encoding for URL constructed form repository entities.
+     * URL encoding for URL constructed form repository entities. E.g. when URL from user-input was saved
+     * into the repository, this will fix it up if it contains unquoted characters.
      *
      * @param url the url to encode
      * @return the encoded URL
      */
-    public static String encodeUrl(String url) {
-        return CODEC.encodeUrl(url);
-    }
-
-    public static String decodeUrl(String url) {
-        return CODEC.decode(url);
+    public static String encodeUrl(SlingHttpServletRequest request, String url) {
+        return new SlingUrl(request).fromUrl(url).getUrl();
     }
 
     /**
@@ -399,22 +394,18 @@ public class LinkUtil {
     public static String encodePath(String path) {
         if (path != null) {
             path = path.replaceAll("/jcr:", "/_jcr_");
-            path = encode(path);
-            path = path.replaceAll("\\?", "%3F");
-            path = path.replaceAll("=", "%3D");
-            path = path.replaceAll(";", "%3B");
-            path = path.replaceAll(":", "%3A");
-            path = path.replaceAll("&", "%26");
-            path = path.replaceAll("\\$", "%24");
-            path = path.replaceAll("#", "%23");
+            path = UrlCodec.PATH.encode(path);
         }
         return path;
     }
 
+    /**
+     * URL-decode a path (same as {@link #decode(String)} but also fixes the external naming /_jcr_ to /jcr:).
+     */
     public static String decodePath(String path) {
         if (path != null) {
             path = decode(path);
-            path = path.replaceAll("/_jcr_", "/jcr:");
+            path = path != null ? path.replaceAll("/_jcr_", "/jcr:") : path;
         }
         return path;
     }
@@ -426,10 +417,20 @@ public class LinkUtil {
      * @return the URL encoded value
      */
     public static String encode(String value) {
-        return CODEC.encode(value);
+        return UrlCodec.PATH.encode(value);
     }
 
+    /**
+     * Decodes percent encodings in a value. Caution: for parameter values use {@link #decodeInQuery(String)}
+     */
     public static String decode(String value) {
-        return CODEC.decode(value);
+        return UrlCodec.URLSAFE.decode(value);
+    }
+
+    /**
+     * Decodes percent encodings in name or value in a query, as well as turns '+' into ' '.
+     */
+    public static String decodeInQuery(String value) {
+        return UrlCodec.QUERYPART.decode(value);
     }
 }
