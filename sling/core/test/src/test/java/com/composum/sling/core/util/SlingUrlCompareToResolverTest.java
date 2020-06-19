@@ -149,7 +149,7 @@ public class SlingUrlCompareToResolverTest {
      * @see "https://issues.apache.org/jira/browse/SLING-9514"
      */
     @Test
-    public void resolverMapCheck() throws UnsupportedEncodingException, URISyntaxException {
+    public void resolverMapCheck() throws Exception {
         ResourceResolver resolver = context.resourceResolver();
         // we explicitly don't check # and ? which are legal in resource names, but using them is probably a very bad idea.
         for (char specialChar : ":_&@%[](){}<$>!'\"*+,;=-/|\\".toCharArray()) {

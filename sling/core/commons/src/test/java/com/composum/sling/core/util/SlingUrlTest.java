@@ -1,5 +1,8 @@
 package com.composum.sling.core.util;
 
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.EncoderException;
+import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
@@ -76,7 +79,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getPathAndName(), is("/a/bb/ddd"));
         ec.checkThat(url.getResourcePath(), is("/a/bb/ddd"));
         ec.checkThat(url.getSuffix(), is("/ddd/eee/xxx.json"));
-        ec.checkThat(url.getUrl(), is("/ctx/a/bb/ddd.m.n.json/ddd/eee/xxx.json?d&c=x%20y"));
+        ec.checkThat(url.getUrl(), is("/ctx/a/bb/ddd.m.n.json/ddd/eee/xxx.json?d&c=x+y"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/a/bb/,name=ddd,selectors=[m, n],extension=json,suffix=/ddd/eee/xxx.json,parameters={d=[], c=[x y]},resourcePath=/a/bb/ddd]"));
 
         url = new SlingUrl(request).fromUrl("/ctx/x/bb/ccc/öä ü.s.x.html/x/x/z.html?a=b&c", false);
@@ -106,7 +109,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getPathAndName(), is("/x/bb/ccc/öä ü"));
         ec.checkThat(url.getResourcePath(), is("/x/bb/ccc/öä ü"));
         ec.checkThat(url.getSuffix(), is("/c/dd/e%e"));
-        ec.checkThat(url.getUrl(), is("http://host.xxx/bb/ccc/%C3%B6%C3%A4%20%C3%BC.s.sel.html/c/dd/e%25e?c&x=a%C3%B6%C3%BC&%C3%96%C3%9F=%26%2012&%24#%25%25%24%26"));
+        ec.checkThat(url.getUrl(), is("http://host.xxx/bb/ccc/%C3%B6%C3%A4%20%C3%BC.s.sel.html/c/dd/e%25e?c&x=a%C3%B6%C3%BC&%C3%96%C3%9F=%26+12&$#%25%25$&"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/x/bb/ccc/,name=öä ü,selectors=[s, sel],extension=html,suffix=/c/dd/e%e,parameters={c=[], x=[aöü], Öß=[& 12], $=[]},fragment=%%$&,resourcePath=/x/bb/ccc/öä ü]"));
 
         url = new SlingUrl(request).fromUrl("https://www.google.com/");
@@ -131,10 +134,10 @@ public class SlingUrlTest {
         ec.checkThat(url.getPathAndName(), is("/ä-@ß$"));
         ec.checkThat(url.getResourcePath(), nullValue());
         ec.checkThat(url.getSuffix(), nullValue());
-        ec.checkThat(url.getUrl(), is("https://www.google.com/%C3%A4-%40%C3%9F%24?x=y%C3%9Fz&a#aa"));
+        ec.checkThat(url.getUrl(), is("https://www.google.com/%C3%A4-@%C3%9F$?x=y%C3%9Fz&a#aa"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=https,host=www.google.com,path=/,name=ä-@ß$,parameters={x=[yßz], a=[]},fragment=aa,external=true]"));
 
-        url = new SlingUrl(request).fromUrl("mailto:%C3%A4.user%40%C3%B6.domain.x", true); // "mailto:ä.user@ö.domain.x" in UTF-8
+        url = new SlingUrl(request).fromUrl("mailto:%C3%A4.user@%C3%B6.domain.x", true); // "mailto:ä.user@ö.domain.x" in UTF-8
         printChecks(url);
         ec.checkThat(url.getContextPath(), is("/ctx"));
         ec.checkThat(url.getExtension(), nullValue());
@@ -143,12 +146,12 @@ public class SlingUrlTest {
         ec.checkThat(url.getPathAndName(), is("ä.user@ö.domain.x"));
         ec.checkThat(url.getResourcePath(), nullValue());
         ec.checkThat(url.getSuffix(), nullValue());
-        ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user%40%C3%B6.domain.x"));
+        ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user@%C3%B6.domain.x"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=ä.user@ö.domain.x,external=true]"));
 
         url = new SlingUrl(request).fromUrl("mailto:ä.user@ö.domain.x");
         printChecks(url);
-        ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user%40%C3%B6.domain.x"));
+        ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user@%C3%B6.domain.x"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=ä.user@ö.domain.x,external=true]"));
 
         url = new SlingUrl(request).fromUrl("tel:%2B01%20123%20/%203456-78%20999", true); // +01 123 / 3456-78 999
@@ -160,12 +163,12 @@ public class SlingUrlTest {
         ec.checkThat(url.getPathAndName(), is("+01 123 / 3456-78 999"));
         ec.checkThat(url.getResourcePath(), nullValue());
         ec.checkThat(url.getSuffix(), nullValue());
-        ec.checkThat(url.getUrl(), is("tel:%2B01%20123%20/%203456-78%20999"));
+        ec.checkThat(url.getUrl(), is("tel:+01%20123%20/%203456-78%20999"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=tel,name=+01 123 / 3456-78 999,external=true]"));
 
         url = new SlingUrl(request).fromUrl("tel:+01 123 / 3456-78 999");
         printChecks(url);
-        ec.checkThat(url.getUrl(), is("tel:%2B01%20123%20/%203456-78%20999"));
+        ec.checkThat(url.getUrl(), is("tel:+01%20123%20/%203456-78%20999"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=tel,name=+01 123 / 3456-78 999,external=true]"));
 
         url = new SlingUrl(request).fromUrl("some/path.ext");
@@ -210,7 +213,7 @@ public class SlingUrlTest {
         url = new SlingUrl(request).fromUrl("ftp://ftp.cs.brown.edu/pub/Effective_C%2B%2B_errata.txt", true);
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=FILE,scheme=ftp,host=ftp.cs.brown.edu,path=/pub/,name=Effective_C++_errata,extension=txt,external=true]"));
-        ec.checkThat(url.getUrl(), is("ftp://ftp.cs.brown.edu/pub/Effective_C%2B%2B_errata.txt"));
+        ec.checkThat(url.getUrl(), is("ftp://ftp.cs.brown.edu/pub/Effective_C++_errata.txt"));
 
         url = new SlingUrl(request).fromUrl("ftp://myname:pass@host.dom/etc/");
         printChecks(url);
@@ -228,11 +231,15 @@ public class SlingUrlTest {
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=FILE,scheme=file,path=/etc/,name=fstab,external=true]"));
         ec.checkThat(url.getUrl(), is("file:///etc/fstab"));
 
+        url = new SlingUrl(request).fromUrl("file:/etc/fstab"); // this is "normalized" to file:///etc/fstab
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=FILE,scheme=file,path=/etc/,name=fstab,external=true]"));
+        ec.checkThat(url.getUrl(), is("file:///etc/fstab"));
 
         url = new SlingUrl(request).fromUrl("file:///c:/WINDOWS/clock.avi");
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=FILE,scheme=file,path=/c:/WINDOWS/,name=clock,extension=avi,external=true]"));
-        ec.checkThat(url.getUrl(), is("file:///c%3A/WINDOWS/clock.avi"));
+        ec.checkThat(url.getUrl(), is("file:///c:/WINDOWS/clock.avi"));
 
 
         url = new SlingUrl(request).fromUrl("file:///path/");
@@ -244,7 +251,7 @@ public class SlingUrlTest {
         url = new SlingUrl(request).fromUrl("mailto:ä.user@ö.domain.x", false);
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=ä.user@ö.domain.x,external=true]"));
-        ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user%40%C3%B6.domain.x"));
+        ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user@%C3%B6.domain.x"));
 
         url = new SlingUrl(request).fromUrl("//host/path", false); // "protocol relative URL"
         printChecks(url);
@@ -267,32 +274,34 @@ public class SlingUrlTest {
         url = new SlingUrl(request).fromUrl("mailto:ä.user@ö.domain.x");
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=ä.user@ö.domain.x,external=true]"));
-        ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user%40%C3%B6.domain.x"));
+        ec.checkThat(url.getUrl(), is("mailto:%C3%A4.user@%C3%B6.domain.x"));
 
         url = new SlingUrl(request).fromUrl("mailto:John Smith <john.smith@example.org>");
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=John Smith <john.smith@example.org>,external=true]"));
-        ec.checkThat(url.getUrl(), is("mailto:John%20Smith%20%3Cjohn.smith%40example.org%3E"));
+        ec.checkThat(url.getUrl(), is("mailto:John%20Smith%20%3Cjohn.smith@example.org%3E"));
 
         url = new SlingUrl(request).fromUrl("mailto:\"john..doe\"@example.org");
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=\"john..doe\"@example.org,external=true]"));
-        ec.checkThat(url.getUrl(), is("mailto:%22john..doe%22%40example.org"));
+        ec.checkThat(url.getUrl(), is("mailto:%22john..doe%22@example.org"));
 
         url = new SlingUrl(request).fromUrl("mailto:with+symbol@example.com");
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=with+symbol@example.com,external=true]"));
-        ec.checkThat(url.getUrl(), is("mailto:with%2Bsymbol%40example.com"));
+        ec.checkThat(url.getUrl(), is("mailto:with+symbol@example.com"));
 
-        url = new SlingUrl(request).fromUrl("mailto:us'%20%%r%example.com@example.org");
+        url = new SlingUrl(request).fromUrl("mailto:us'%20%%r%example.com@example.org"); // broken: literal % signs
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=us'%20%%r%example.com@example.org,external=true]"));
-        ec.checkThat(url.getUrl(), is("mailto:us%27%2520%25%25r%25example.com%40example.org"));
+        ec.checkThat(url.getName(), is("us' %%r%example.com@example.org"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=us' %%r%example.com@example.org,external=true]"));
+        ec.checkThat(url.getUrl(), is("mailto:us'%20%25%25r%25example.com@example.org"));
 
+        // unclear whether this actually works in practice - that utf-8 encoding disagrees at least with chrome + mac email
         url = new SlingUrl(request).fromUrl("mailto:=?utf-8?B?w5xtbMOkdXR0ZcOfdA==?= <umlauttest@example.com>");
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name==?utf-8?B?w5xtbMOkdXR0ZcOfdA==?= <umlauttest@example.com>,external=true]"));
-        ec.checkThat(url.getUrl(), is("mailto:%3D%3Futf-8%3FB%3Fw5xtbMOkdXR0ZcOfdA%3D%3D%3F%3D%20%3Cumlauttest%40example.com%3E"));
+        ec.checkThat(url.getUrl(), is("mailto:=?utf-8?B?w5xtbMOkdXR0ZcOfdA==?=%20%3Cumlauttest@example.com%3E"));
     }
 
     /**
@@ -328,32 +337,33 @@ public class SlingUrlTest {
      */
     @Test
     public void plusEncoding() throws URISyntaxException {
-        url = new SlingUrl(request).fromUrl("git+ht-tp://bla.example.net/buf+bla?foo=bar+baz", true);
+        url = new SlingUrl(request).fromUrl("git+ht-tp://bla.example.net/buf+bla?foo+bar=bar+baz", true);
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,scheme=git+ht-tp,name=//bla.example.net/buf+bla?foo=bar+baz,external=true]"));
-        ec.checkThat(url.getUrl(), is("git+ht-tp://bla.example.net/buf+bla?foo=bar+baz"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,scheme=git+ht-tp,name=//bla.example.net/buf+bla?foo+bar=bar+baz,external=true]"));
+        ec.checkThat(url.getUrl(), is("git+ht-tp://bla.example.net/buf+bla?foo+bar=bar+baz"));
 
         // + is a valid character in a path and should not be encoded.
-        url = new SlingUrl(request).fromUrl("http://bla.example.net/buf+bla?foo=bar+baz", true);
+        url = new SlingUrl(request).fromUrl("http://bla.example.net/buf+bla?foo+bar=bar+baz", true);
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=bla.example.net,path=/,name=buf+bla,parameters={foo=[bar+baz]},external=true]"));
-        ec.checkThat(url.getUrl(), is("http://bla.example.net/buf%2Bbla?foo=bar%2Bbaz"));
-        // ec.checkThat(url.getUrl(), is("http://bla.example.net/buf+bla?foo=bar%2Bbaz")); FIXME(hps,11.06.20) possibly buf+bla instead of buf%2Bbla
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=bla.example.net,path=/,name=buf+bla,parameters={foo bar=[bar baz]},external=true]"));
+        ec.checkThat(url.getUrl(), is("http://bla.example.net/buf+bla?foo+bar=bar+baz"));
 
         url = new SlingUrl(request).fromUrl("http://some-where.0.net/").resourcePath("/with space/with+plus/filä").extension("txt").selectors("raw.sel")
                 .parameter("the+first paräm", "the+first valuä")
                 .parameter("se&c/n%d", "va/&u%e")
                 .parameter("%20", "1")
                 .parameter("%20", "2")
+                // .parameter("with space", "space value")
                 .fragment("nä x%20t");
         url.getUrl();
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=some-where.0.net,path=/with space/with+plus/,name=filä,selectors=[raw, sel],extension=txt,parameters={the+first paräm=[the+first valuä], se&c/n%d=[va/&u%e], %20=[1, 2]},fragment=nä x%20t,external=true]"));
-        ec.checkThat(url.getUrl(), is("http://some-where.0.net/with%20space/with%2Bplus/fil%C3%A4.raw.sel.txt?the%2Bfirst%20par%C3%A4m=the%2Bfirst%20valu%C3%A4&se%26c/n%25d=va/%26u%25e&%2520=1&%2520=2#n%C3%A4%20x%2520t"));
+        ec.checkThat(url.getUrl(), is("http://some-where.0.net/with%20space/with+plus/fil%C3%A4.raw.sel.txt?the%2Bfirst+par%C3%A4m=the%2Bfirst+valu%C3%A4&se%26c/n%25d=va/%26u%25e&%2520=1&%2520=2#n%C3%A4%20x%2520t"));
         URI uri = new URI(url.getUrl());
         ec.checkThat(uri.getPath(), is("/with space/with+plus/filä.raw.sel.txt"));
         ec.checkThat(uri.getFragment(), is("nä x%20t"));
-        ec.checkThat(uri.getQuery(), is("the+first paräm=the+first valuä&se&c/n%d=va/&u%e&%20=1&%20=2"));
+        // interestingly, this yields nonsense, since both space and + are + :
+        ec.checkThat(uri.getQuery(), is("the+first+paräm=the+first+valuä&se&c/n%d=va/&u%e&%20=1&%20=2"));
     }
 
     /**
@@ -487,7 +497,7 @@ public class SlingUrlTest {
 
     /**
      * Checks that various examples of URLs of other protocols are treated correctly.
-     * Nonsense.
+     * Does not make much sense.
      */
     @Ignore
     @Test
@@ -530,6 +540,43 @@ public class SlingUrlTest {
         slingUrl = new SlingUrl(request, LinkMapper.RESOLVER).fromPath("/x/rpage-_@%(){}$!'+,=-\\X");
         ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/,name=rpage-_@%(){}$!'+,=-\\X,resourcePath=/x/rpage-_@%(){}$!'+,=-\\X]"));
         ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/rpage-_%40%25%28%29%7B%7D%24%21%27%2B%2C%3D-%5CX"));
+    }
+
+    /**
+     * Demonstrates behavior of {@link org.apache.commons.codec.net.URLCodec}.
+     */
+    @Test
+    public void urlCodecTest() throws EncoderException, DecoderException {
+        URLCodec codec = new URLCodec(); // UTF-8
+        ec.checkThat(codec.encode(" <>#%\"{}|\\^[]`"), is("+%3C%3E%23%25%22%7B%7D%7C%5C%5E%5B%5D%60")); // excluded characters
+        ec.checkThat(codec.encode("-_.!+~*'()"), is("-_.%21%2B%7E*%27%28%29")); // "unreserved" characters
+        ec.checkThat(codec.encode(";/?:@&=+$,"), is("%3B%2F%3F%3A%40%26%3D%2B%24%2C")); // reserved characters
+        ec.checkThat(codec.encode("abzABZ09"), is("abzABZ09")); // alphanum
+        ec.checkThat(codec.encode("ä-ö-\u20AC"), is("%C3%A4-%C3%B6-%E2%82%AC")); // examples of other stuff. (last one is euro symbol)
+        ec.checkThat(codec.decode("+%3C%3E%23%25%22%7B%7D%7C%5C%5E%5B%5D%60-_.%21%2B%7E*%27%28%29%3B%2F%3F%3A%40%26%3D%2B%24%2CabzABZ09%C3%A4-%C3%B6-%E2%82%AC"), is(" <>#%\"{}|\\" +
+                "^[]`-_.!+~*'();/?:@&=+$,abzABZ09ä-ö-€"));
+        ec.checkThat(codec.decode("^[]`-_.!+~*'();/?:@&=+$,abzABZ09ä-ö-€"), is("^[]`-_.! ~*'();/?:@&= $,abzABZ09?-?-?")); // replaces invalid characters by ?
+        ec.checkThat(codec.encode(" "), is("+"));
+        ec.checkThat(codec.decode("+"), is(" "));
+    }
+
+    /**
+     * Demonstrates behavior of {@link LinkCodec}.
+     */
+    @Test
+    public void linkCodecTest() throws EncoderException, DecoderException {
+        LinkCodec codec = new LinkCodec(); // UTF-8
+        ec.checkThat(codec.encode(" <>#%\"{}|\\^[]`"), is("%20%3C%3E%23%25%22%7B%7D%7C%5C%5E%5B%5D%60")); // excluded characters
+        ec.checkThat(codec.encode("-_.!+~*'()"), is("-_.%21%2B%7E*%27%28%29")); // "unreserved" characters
+        ec.checkThat(codec.encode(";/?:@&=+$,"), is("%3B/%3F%3A%40%26%3D%2B%24%2C")); // reserved characters
+        ec.checkThat(codec.encode("abzABZ09"), is("abzABZ09")); // alphanum
+        ec.checkThat(codec.encode("ä-ö-\u20AC"), is("%C3%A4-%C3%B6-%E2%82%AC")); // examples of other stuff. (last one is euro symbol)
+        ec.checkThat(codec.decode("+%3C%3E%23%25%22%7B%7D%7C%5C%5E%5B%5D%60-_.%21%2B%7E*%27%28%29%3B%2F%3F%3A%40%26%3D%2B%24%2CabzABZ09%C3%A4-%C3%B6-%E2%82%AC"), is("+<>#%\"{}|\\" +
+                "^[]`-_.!+~*'();/?:@&=+$,abzABZ09ä-ö-€")); // wrong: + should be space!
+        ec.checkThat(codec.decode("^[]`-_.!+~*'();/?:@&=+$,abzABZ09ä-ö-€"), is("^[]`-_.!+~*'();/?:@&=+$,abzABZ09?-?-?")); // replaces invalid characters by ?
+
+        ec.checkThat(codec.encode("a b+c"), is("a%20b%2Bc")); // for queries this is wrong
+        ec.checkThat(codec.decode("a+b%2Bc"), is("a+b+c"));
     }
 
 }
