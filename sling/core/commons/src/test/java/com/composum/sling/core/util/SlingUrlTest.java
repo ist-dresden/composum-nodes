@@ -203,6 +203,13 @@ public class SlingUrlTest {
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=ends.with,path=/slash/,name=,external=true]"));
         ec.checkThat(url.getUrl(), is("http://ends.with/slash/"));
 
+        // ; in the path is encoded since path parameters aren't normally used in Sling, but it's admissible in JCR resource names and only works there when quoted
+        // FIXME(hps,19.06.20) demote URL with path parameters to OTHER
+        url = new SlingUrl(request).fromUrl("http://path.param/res;parm=val?quer=ry");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=path.param,path=/,name=res;parm=val,parameters={quer=[ry]},external=true]"));
+        ec.checkThat(url.getUrl(), is("http://path.param/res%3Bparm=val?quer=ry"));
+
         // there are exotic things like "ftp://myname@host.dom/%2Fetc/motd.txt" but that's a weird special case we ignore.
 
         url = new SlingUrl(request).fromUrl("ftp://myname@host.dom/etc/motd.txt");
@@ -439,18 +446,18 @@ public class SlingUrlTest {
             String msg = url1 + " vs. " + url2;
             URI u1 = new URI(url1);
             URI u2 = new URI(url2);
-            ec.checkThat(msg, u1.getScheme(), is(u2.getScheme()));
-            ec.checkThat(msg, u1.getHost(), is(u2.getHost()));
-            ec.checkThat(msg, u1.getPort(), is(u2.getPort()));
-            ec.checkThat(msg, u1.getPath(), is(u2.getPath()));
-            ec.checkThat(msg, u1.getAuthority(), is(u2.getAuthority()));
-            ec.checkThat(msg, u1.getFragment(), is(u2.getFragment()));
-            ec.checkThat(msg, u1.getUserInfo(), is(u2.getUserInfo()));
-            ec.checkThat(msg, u1.getSchemeSpecificPart(), is(u2.getSchemeSpecificPart()));
-            if (!u1.getSchemeSpecificPart().equals(u2.getSchemeSpecificPart())) {
+            ec.checkThat(msg, u2.getScheme(), is(u1.getScheme()));
+            ec.checkThat(msg, u2.getHost(), is(u1.getHost()));
+            ec.checkThat(msg, u2.getPort(), is(u1.getPort()));
+            ec.checkThat(msg, u2.getPath(), is(u1.getPath()));
+            ec.checkThat(msg, u2.getAuthority(), is(u1.getAuthority()));
+            ec.checkThat(msg, u2.getFragment(), is(u1.getFragment()));
+            ec.checkThat(msg, u2.getUserInfo(), is(u1.getUserInfo()));
+            ec.checkThat(msg, u2.getSchemeSpecificPart(), is(u1.getSchemeSpecificPart()));
+            if (!u2.getSchemeSpecificPart().equals(u1.getSchemeSpecificPart())) {
                 System.out.println("AAAH");
             }
-            ec.checkThat(msg, u1.getQuery(), is(u2.getQuery()));
+            ec.checkThat(msg, u2.getQuery(), is(u1.getQuery()));
         } catch (URISyntaxException e) {
             throw new AssertionError(e);
         }
@@ -497,7 +504,7 @@ public class SlingUrlTest {
 
     /**
      * Checks that various examples of URLs of other protocols are treated correctly.
-     * Does not make much sense.
+     * Ignored, since it does not make much sense.
      */
     @Ignore
     @Test
@@ -505,7 +512,7 @@ public class SlingUrlTest {
         for (String urlString : MISCURL_COLLECTION) {
             ec.checkSucceeds(() -> {
                 SlingUrl url, url2;
-                url = new SlingUrl(request).fromUrl(urlString);
+                url = new SlingUrl(request).fromUrl(urlString, false);
                 linkexamples.append("<p><a href=\"").append(url.getUrl()).append("\">").append(url.getUrl()).append("</a></p>\n");
                 System.out.println("\n" + urlString + "\n" + url.toDebugString() + "\n" + url.getUrl());
                 verifySameUrl(urlString, url.getUrl());
