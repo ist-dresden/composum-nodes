@@ -39,14 +39,26 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * If it's an URL following the Sling rules <a href="https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html">URL decomposition</a>,
  * it's not possible.
  * <p>
- * A challenge is that this should parse user input, for which we don't know wheter it's even valid.
+ * A challenge is that this should parse user input, for which we don't know whether it's even valid.
  * <p>
  * <em>Caution:</em> this does not consider the resource tree to parse URLs from String form, so there will be cases
  * where this differs from {@link ResourceResolver#resolve(HttpServletRequest, String)} : e.g. we consider
  * in /foo/a.b/bar/c.d the /bar/c.d as suffix, while this might be different in reality!
  * </p>
+ * <h2>Rationale of decoding / encoding behaviour</h2>
+ * <p>
+ * </p>
+ * <h1>Design idea</h1>
+ * The class is meant to represent all types of URL (including invalid ones), and parse them in a do-what-I-mean fashion,
+ * so that they can be modified according to Sling rules, as far as possible. There are constructo
+ * // FIXME(hps,15.06.20) extend this.
  *
- * @see https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html
+ * <h2>Implementation details and relevant stuff</h2>
+ * <h3>Allowed characters in URLs</h3>
+ * The {@link URI} documentation has a nice description of URLs.
+ *
+ * @see "https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html"
+ * @see "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/net/URI.html"
  */
 @SuppressWarnings({"unused", "ParameterHidesMemberVariable", "UnusedReturnValue"})
 public class SlingUrl implements Cloneable {
@@ -81,15 +93,13 @@ public class SlingUrl implements Cloneable {
         OTHER
     }
 
-    public static final LinkCodec CODEC = new LinkCodec();
-
     /**
      * Marker for {@link #getScheme()} for a protocol relative URL, e.g. //www/something.css - just the empty string, as opposed to null for no scheme as in {@link UrlType#RELATIVE}.
      */
     public static final String SCHEME_PROTOCOL_RELATIVE_URL = "";
 
     protected static final Pattern SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>[a-zA-Z0-9+.-]+):)");
-    protected static final Pattern USERNAMEPASSWORD = Pattern.compile("((?<username>[^:@/]+)(:(?<password>[^:@/]+))?@)");
+    protected static final Pattern USERNAMEPASSWORD = Pattern.compile("((?<username>[^:@/?#]+)(:(?<password>[^:@/?#]+))?@)");
 
     /**
      * Regex matching various variants of Sling-URLs.
@@ -98,10 +108,10 @@ public class SlingUrl implements Cloneable {
      */
     protected static final Pattern HTTP_URL_PATTERN = Pattern.compile("" +
             SCHEME_PATTERN.pattern() + "?" +
-            "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:]+)(:(?<port>[0-9]+))?)?)?" +
-            "(?<pathnoext>(/([^/.?]+|\\.\\.))*/)" +
+            "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:?#]+)(:(?<port>[0-9]+))?)?)?" +
+            "(?<pathnoext>(/([^/.?#]+|\\.\\.))*/)" +
             "(" +
-            "(?<filenoext>[^/.?]+)" +
+            "(?<filenoext>[^/.?#]+)" +
             "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" + // A suffix can only exist if there is an extension.
             ")?" +
             "(?<query>\\?[^?#]*)?" +
@@ -110,10 +120,10 @@ public class SlingUrl implements Cloneable {
 
     protected static final Pattern FILE_URL_PATTERN = Pattern.compile("" +
             SCHEME_PATTERN.pattern() + "?" +
-            "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:]+)(:(?<port>[0-9]+))?)?)?" +
-            "(?<pathnoext>(/([^/.?]+|\\.\\.))*/)" +
+            "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:?#]+)(:(?<port>[0-9]+))?)?)?" +
+            "(?<pathnoext>(/([^/.?#]+|\\.\\.))*/)" +
             "(" +
-            "(?<filenoext>[^/.?]+)" +
+            "(?<filenoext>[^/.?#]+)" +
             "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" +
             ")?" +
             "(?<query>)(?<fragment>)" // empty groups to allow easier reading out of the matcher
@@ -248,16 +258,23 @@ public class SlingUrl implements Cloneable {
     }
 
     /**
-     * Parses the url without URL-decoding it.
+     * Parses the url.
      * <em>Caution:</em> if the url contains several periods like e.g. http://host/a.b/c.d/suffix , this
      * might parse it wrong, since we'd have to consult the resource tree to determine whether the resource path
      * is /a or /a.b/c .
+     * <em>Caution 2:</em>
+     * This applies URL-decoding that replaces percent encoded characters (%[0-9a-fA-F][0-9a-fA-F]) by their decoded counterparts
+     * before saving the URL (except if it'll be of type {@link UrlType#OTHER}, where we don't touch anything).
+     * If there are characters outside the URL range (say, the user types an url http://www/päth) these are left untouched for now.
+     * When the URL is reconstructed in {@link #getUrl()}, such characters are encoded (to http://www/p%C3A4th).
+     * This might however lead to some rare trouble when there is something in there that looks like a percent encoded character
+     * but isn't meant as such, e.g. '%effect', but that won't work right in a browser, too.
      *
      * @return this for builder style chaining
      */
     @Nonnull
     public SlingUrl fromUrl(@Nonnull final String url) {
-        return fromUrl(url, false);
+        return fromUrl(url, true);
     }
 
     /**
@@ -425,7 +442,7 @@ public class SlingUrl implements Cloneable {
      * and the context path is removed from {@link #getPathAndName()}.
      */
     @Nullable
-    public String getContextPath() { // FIXME(hps,05.06.20) setter for contextPath?
+    public String getContextPath() {
         return isNotBlank(contextPath) ? contextPath : request.getContextPath();
     }
 
@@ -1035,20 +1052,20 @@ public class SlingUrl implements Cloneable {
         if (type == UrlType.OTHER) {
             builder.append(name); // do not encode anything in OTHER - that can trash meta-characters
         } else if (type == UrlType.SPECIAL) {
-            builder.append(CODEC.encode(name));
+            builder.append(UrlCodec.OPAQUE.encode(name)); // weakest possible codec
         } else {
             if (scheme != null) { // scheme="" is a protocol relative URL starting with // .
                 builder.append("//");
             }
             if (isNotBlank(host)) {
                 if (isNotBlank(username)) {
-                    builder.append(CODEC.encode(username));
+                    builder.append(UrlCodec.AUTHORITY.encode(username));
                     if (isNotBlank(password)) {
-                        builder.append(":").append(CODEC.encode(password));
+                        builder.append(":").append(UrlCodec.AUTHORITY.encode(password));
                     }
                     builder.append("@");
                 }
-                builder.append(CODEC.encode(host));
+                builder.append(UrlCodec.AUTHORITY.encode(host));
                 if (port != null) {
                     builder.append(":").append(port);
                 }
@@ -1056,7 +1073,7 @@ public class SlingUrl implements Cloneable {
 
             String pathAndName = defaultString(path) + defaultString(name);
             if (isExternal()) {
-                pathAndName = CODEC.encode(pathAndName);
+                pathAndName = UrlCodec.PATH.encode(pathAndName);
             } else if (linkMapper != null && type != UrlType.RELATIVE) {
                 pathAndName = linkMapper.mapUri(request, pathAndName);
                 pathAndName = adjustMappedUrl(request, pathAndName);
@@ -1066,13 +1083,13 @@ public class SlingUrl implements Cloneable {
             builder.append(pathAndName);
 
             for (String value : selectors) {
-                builder.append('.').append(CODEC.encode(value));
+                builder.append('.').append(UrlCodec.PATH.encode(value));
             }
             if (isNotBlank(extension)) {
-                builder.append('.').append(CODEC.encode(extension));
+                builder.append('.').append(UrlCodec.PATH.encode(extension));
             }
             if (isNotBlank(suffix)) {
-                builder.append(isExternal() ? CODEC.encode(suffix) : LinkUtil.encodePath(suffix));
+                builder.append(isExternal() ? UrlCodec.PATH.encode(suffix) : LinkUtil.encodePath(suffix));
             }
 
             if (parameters.size() > 0) {
@@ -1083,22 +1100,22 @@ public class SlingUrl implements Cloneable {
                     if (values.size() > 0) {
                         for (String val : values) {
                             builder.append(index == 0 ? '?' : '&');
-                            builder.append(CODEC.encode(paramName));
+                            builder.append(UrlCodec.QUERYPART.encode(paramName));
                             if (val != null) {
-                                builder.append("=").append(CODEC.encode(val));
+                                builder.append("=").append(UrlCodec.QUERYPART.encode(val));
                             }
                             index++;
                         }
                     } else {
                         builder.append(index == 0 ? '?' : '&');
-                        builder.append(CODEC.encode(paramName));
+                        builder.append(UrlCodec.QUERYPART.encode(paramName));
                         index++;
                     }
                 }
             }
 
             if (isNotBlank(fragment)) {
-                builder.append('#').append(CODEC.encode(fragment));
+                builder.append('#').append(UrlCodec.FRAGMENT.encode(fragment));
             }
         }
         return builder.toString();
@@ -1202,7 +1219,8 @@ public class SlingUrl implements Cloneable {
     }
 
     protected String decode(String value, boolean decode) {
-        return decode ? CODEC.decode(value) : value;
+        // here any decoder is OK, since we just want to resolve percent encodings
+        return decode ? UrlCodec.URLSAFE.decode(value) : value;
     }
 
     protected void parseParameters(@Nonnull String parameterString, boolean decode) {
@@ -1212,8 +1230,11 @@ public class SlingUrl implements Cloneable {
         }
         for (String param : StringUtils.split(parameterString, '&')) {
             String[] nameVal = StringUtils.split(param, "=", 2);
-            addParameter(decode(nameVal[0], decode),
-                    nameVal.length > 1 ? decode(nameVal[1], decode) : null);
+            addParameter(
+                    decode ? UrlCodec.QUERYPART.decode(nameVal[0]) : nameVal[0],
+                    nameVal.length > 1 ?
+                            (decode ? UrlCodec.QUERYPART.decode(nameVal[1]) : nameVal[1])
+                            : null);
         }
     }
 
