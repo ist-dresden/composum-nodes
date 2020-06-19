@@ -41,8 +41,9 @@ public class UrlCodec {
      * Codec for the <a href="https://tools.ietf.org/html/rfc3986#section-3.3">path part</a> of an URL.
      */
     public static final UrlCodec PATH = new UrlCodec(PART_URL_SAFECHARS + "/:@" +
-            "!$&'()*+,;=" // the sub-delims  https://tools.ietf.org/html/rfc3986#section-2.2
-            // FIXME(hps,18.06.20) how about ; at the end? unclear whether to admit these.
+            "!$&'()*+,=" // the sub-delims  https://tools.ietf.org/html/rfc3986#section-2.2
+            // We omit ; which is admissible in JCR resources, but is removed from the suffix in
+            // SlingPathInfo if not quoted.
             , StandardCharsets.UTF_8);
 
     /**
