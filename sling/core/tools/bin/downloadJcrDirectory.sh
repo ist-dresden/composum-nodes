@@ -56,5 +56,15 @@ trap "{ rm -f $TMPFIL; }" EXIT
 
 curl -s -S -o $TMPFIL -u $CPM_ADMINUSER:$CPM_ADMINPASSWD $CPM_PROTOCOL://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/source.zip/$1
 
-unzip -o -u $TMPFIL
+echo
+echo FILES:
+echo
 unzip -l $TMPFIL
+
+echo
+echo EXTRACTION:
+echo
+unzip -o -u $TMPFIL
+echo
+echo DONE
+echo

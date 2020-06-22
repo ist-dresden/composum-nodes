@@ -393,7 +393,7 @@ public class LinkUtil {
      */
     public static String encodePath(String path) {
         if (path != null) {
-            path = path.replaceAll("/jcr:", "/_jcr_");
+            path = namespacePrefixEscape(path);
             path = UrlCodec.PATH.encode(path);
         }
         return path;
@@ -405,9 +405,67 @@ public class LinkUtil {
     public static String decodePath(String path) {
         if (path != null) {
             path = decode(path);
-            path = path != null ? path.replaceAll("/_jcr_", "/jcr:") : path;
+            path = path != null ? namespacePrefixUnescape(path) : path;
         }
         return path;
+    }
+
+    protected static final Pattern UNESCAPED_PATHSEGMENT = Pattern.compile("(?<=^|/)(" +
+            "(?<prefix>[^/:_]+):" +
+            "|_(?<uprefix>[^/]+)_" +
+            ")");
+
+    /**
+     * For <a href="https://jackrabbit.apache.org/filevault/vaultfs.html#Filename_escaping">Filename escaping</a>:
+     * replace namespace prefix with _ quoting, e.g. jcr:content with _jcr_content in path.
+     */
+    public static String namespacePrefixEscape(String path) {
+        String result = path;
+        if (path != null && (path.contains(":") || path.contains("_"))) {
+            StringBuffer buf = new StringBuffer();
+            Matcher matcher = UNESCAPED_PATHSEGMENT.matcher(path);
+            while (matcher.find()) {
+                matcher.appendReplacement(buf, "");
+                String prefix = matcher.group("prefix");
+                if (prefix != null) {
+                    buf.append("_").append(prefix).append("_");
+                } else { // prefix with _ to avoid confusion with _ quoted prefix
+                    buf.append("__").append(matcher.group("uprefix")).append("_");
+                }
+            }
+            matcher.appendTail(buf);
+            result = buf.toString();
+        }
+        return result;
+    }
+
+    protected static final Pattern ESCAPED_PATHSEGMENT = Pattern.compile("(?<=^|/)(" +
+            "_(?<prefix>[^/:_]+)_" +
+            "|__(?<uprefix>[^/]+)_" +
+            ")");
+
+    /**
+     * Undo name space prefix replacement for <a href="https://jackrabbit.apache.org/filevault/vaultfs.html#Filename_escaping">filename escaping</a>:
+     * replace e.g. _jcr_content with jcr:content in path.
+     */
+    public static String namespacePrefixUnescape(String path) {
+        String result = path;
+        if (path != null && path.contains("_")) {
+            StringBuffer buf = new StringBuffer();
+            Matcher matcher = ESCAPED_PATHSEGMENT.matcher(path);
+            while (matcher.find()) {
+                matcher.appendReplacement(buf, "");
+                String prefix = matcher.group("prefix");
+                if (prefix != null) {
+                    buf.append(prefix).append(":");
+                } else { // remove additional _ that was added in escape
+                    buf.append("_").append(matcher.group("uprefix")).append("_");
+                }
+            }
+            matcher.appendTail(buf);
+            result = buf.toString();
+        }
+        return result;
     }
 
     /**
