@@ -12,9 +12,9 @@ import org.mockito.MockitoAnnotations;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -59,6 +59,23 @@ public class LinkUtilTest {
     }
 
     @Test
+    public void testNamespacePrefixUnEscaping() {
+        for (String untouched : Arrays.asList(null, "", "/", "//", "/bla", "bla/", "/bla/", "a/b//c",
+                "test_image.jpg", "_testimage.jpg", ":foo", ":foo:foo", "_blo:foo")) {
+            namespacePrefixEscapeCheck(untouched, untouched);
+        }
+        namespacePrefixEscapeCheck("jcr:content", "_jcr_content");
+        namespacePrefixEscapeCheck("_un_der", "__un_der");
+        namespacePrefixEscapeCheck("cq:test:image.jpg", "_cq_test:image.jpg");
+        namespacePrefixEscapeCheck("cq:content/a/jcr:content/b/_un_der", "_cq_content/a/_jcr_content/b/__un_der");
+    }
+
+    private void namespacePrefixEscapeCheck(String path, String escapedPath) {
+        ec.checkThat(path, LinkUtil.namespacePrefixEscape(path), is(escapedPath));
+        ec.checkThat(path, LinkUtil.namespacePrefixUnescape(escapedPath), is(path));
+    }
+
+    @Test
     public void testCodecs() throws Exception {
         String toencode =
                 "/jcr:___ ~?=;:&%#___-_*@___(){}[]___'!$+___|\\^`___<>%\"___äöü___abc123";
@@ -74,7 +91,7 @@ public class LinkUtilTest {
         ));
         ec.checkThat(LinkUtil.encodeUrl(request, toencode), is(
                 // this test is no longer meaningful since that does a real URL parsing and rebuilding. That's the reason the = vanishes.
-                "/_jcr____%20%7E?;:&%25#___-_*%40___()%7B%7D%5B%5D___'!$+___%7C%5C%5E%60___%3C%3E%25%22___%C3%A4%C3%B6%C3%BC___abc123"
+                "/_jcr____%20%7E?;:&%25#___-_*@___()%7B%7D%5B%5D___'!$+___%7C%5C%5E%60___%3C%3E%25%22___%C3%A4%C3%B6%C3%BC___abc123"
                 // orig LinkCodec: "/jcr:___%20%7E?=;:&%25#___-_*@___%28%29%7B%7D%5B%5D___%27%21%24%2B___%7C%5C%5E%60___%3C%3E%25%22___%C3%A4%C3%B6%C3%BC___abc123"
                 // -> @ encoded, but ()'!$+ not.
                 // FIXME(hps,19.06.20) where is the =???

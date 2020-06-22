@@ -85,7 +85,7 @@ public class UrlCodec {
      * Codec for the <a href="https://tools.ietf.org/html/rfc3986#section-3.5">fragment part</a> of an URL.
      */
     public static final UrlCodec FRAGMENT = new UrlCodec(PART_URL_SAFECHARS + "!$&'()*+,;=" +
-            "/?", StandardCharsets.UTF_8);
+            "/?:@", StandardCharsets.UTF_8);
 
     /**
      * Codec for opaque URLs that are not parsed. Contains all unreserved, reserved and extra characters

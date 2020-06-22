@@ -232,8 +232,9 @@ public class SlingUrl implements Cloneable {
         this.linkMapper = linkMapper;
         this.resource = resource;
         this.resourcePath = resource.getPath();
-        this.name = StringUtils.substringAfterLast(resourcePath, "/");
-        this.path = resourcePath.substring(0, resourcePath.length() - name.length());
+        String escapedResourcePath = LinkUtil.namespacePrefixEscape(resourcePath);
+        this.name = StringUtils.substringAfterLast(escapedResourcePath, "/");
+        this.path = escapedResourcePath.substring(0, escapedResourcePath.length() - name.length());
         this.type = UrlType.HTTP;
         setSelectors(selectors);
         setExtension(extension);
@@ -335,11 +336,11 @@ public class SlingUrl implements Cloneable {
                 this.password = StringUtils.defaultIfBlank(StringUtils.substringAfter(uri.getUserInfo(), ":"), null);
             }
             this.fragment = uri.getFragment();
-            Matcher matcher = ABSOLUTE_PATH_PATTERN.matcher(uri.getPath());
+            Matcher matcher = ABSOLUTE_PATH_PATTERN.matcher(uri.getRawPath());
             if (matcher.matches()) {
-                assignFromGroups(matcher, false, false);
-            } else if ((matcher = RELATIVE_PATH_PATTERN.matcher(uri.getPath())).matches()) {
-                assignFromGroups(matcher, false, false);
+                assignFromGroups(matcher, true, false);
+            } else if ((matcher = RELATIVE_PATH_PATTERN.matcher(uri.getRawPath())).matches()) {
+                assignFromGroups(matcher, true, false);
             } else { // unparseable path - fall back to OTHER :-(
                 reset();
                 this.type = UrlType.OTHER;
@@ -405,7 +406,7 @@ public class SlingUrl implements Cloneable {
      * An external URL: we assume it's external when a scheme is set.
      */
     public boolean isExternal() {
-        return isNotBlank(scheme);
+        return scheme != null;
     }
 
     /**
@@ -415,14 +416,15 @@ public class SlingUrl implements Cloneable {
     public String getResourcePath() {
         if (resourcePath == null && !isExternal() && type == UrlType.HTTP) {
             ResourceResolver resolver = request.getResourceResolver();
-            resourcePath = defaultString(path) + name;
+            String candidateResourcePath = LinkUtil.namespacePrefixUnescape(defaultString(path) + defaultString(name));
+            this.resourcePath = candidateResourcePath;
             if (isNotBlank(extension)) {
-                resourcePath += '.' + extension;
+                this.resourcePath += '.' + extension;
             }
-            resource = resolver.getResource(resourcePath);
+            resource = resolver.getResource(this.resourcePath);
             if (resource == null) {
-                resourcePath = defaultString(path) + name;
-                resource = resolver.getResource(resourcePath);
+                this.resourcePath = candidateResourcePath;
+                resource = resolver.getResource(this.resourcePath);
             }
         }
         return resourcePath;
@@ -481,12 +483,12 @@ public class SlingUrl implements Cloneable {
             String newExtension = null;
             if (endpath >= 0) {
                 newPath = fullpath.substring(0, endpath + 1);
-                fullpath = fullpath.substring(endpath);
+                fullpath = fullpath.substring(endpath + 1);
             }
             int period = fullpath.indexOf('.');
             if (period >= 0) {
                 newName = fullpath.substring(0, period - 1);
-                newExtension = fullpath.substring(period);
+                newExtension = fullpath.substring(period + 1);
             }
             this.path = newPath;
             this.name = newName;
@@ -518,12 +520,13 @@ public class SlingUrl implements Cloneable {
         this.name = null;
         clearTransients();
         if (isNotBlank(resourcePath)) {
-            int endpath = resourcePath.lastIndexOf('/');
+            String escapedPath = LinkUtil.namespacePrefixEscape(resourcePath);
+            int endpath = escapedPath.lastIndexOf('/');
             String newPath = null;
             String newName = null;
             if (endpath >= 0) {
-                newPath = resourcePath.substring(0, endpath + 1);
-                newName = resourcePath.substring(endpath + 1);
+                newPath = escapedPath.substring(0, endpath + 1);
+                newName = escapedPath.substring(endpath + 1);
             }
             this.path = newPath;
             this.name = newName;
@@ -1075,7 +1078,7 @@ public class SlingUrl implements Cloneable {
             if (isExternal()) {
                 pathAndName = UrlCodec.PATH.encode(pathAndName);
             } else if (linkMapper != null && type != UrlType.RELATIVE) {
-                pathAndName = linkMapper.mapUri(request, pathAndName);
+                pathAndName = linkMapper.mapUri(request, LinkUtil.namespacePrefixUnescape(pathAndName));
                 pathAndName = adjustMappedUrl(request, pathAndName);
             } else {
                 pathAndName = LinkUtil.encodePath(pathAndName);

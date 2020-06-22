@@ -262,18 +262,18 @@ public class SlingUrlTest {
 
         url = new SlingUrl(request).fromUrl("//host/path", false); // "protocol relative URL"
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=,host=host,path=/,name=path,resourcePath=/path]"));
-        ec.checkThat(url.getUrl(), is("//host/ctx/path"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=,host=host,path=/,name=path,external=true]"));
+        ec.checkThat(url.getUrl(), is("//host/path"));
 
         url = new SlingUrl(request).fromUrl("//host/path/file.sel.txt/the/suffix", false); // "protocol relative URL with extension etc."
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=,host=host,path=/path/,name=file,selectors=[sel],extension=txt,suffix=/the/suffix,resourcePath=/path/file]"));
-        ec.checkThat(url.getUrl(), is("//host/ctx/path/file.sel.txt/the/suffix"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=,host=host,path=/path/,name=file,selectors=[sel],extension=txt,suffix=/the/suffix,external=true]"));
+        ec.checkThat(url.getUrl(), is("//host/path/file.sel.txt/the/suffix"));
 
         url = new SlingUrl(request).fromUrl("http://host/path/file.sel.txt/the/suffix", false).setScheme(SlingUrl.SCHEME_PROTOCOL_RELATIVE_URL); // "protocol relative URL with extension etc."
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=,host=host,path=/path/,name=file,selectors=[sel],extension=txt,suffix=/the/suffix,resourcePath=/path/file]"));
-        ec.checkThat(url.getUrl(), is("//host/ctx/path/file.sel.txt/the/suffix"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=,host=host,path=/path/,name=file,selectors=[sel],extension=txt,suffix=/the/suffix,external=true]"));
+        ec.checkThat(url.getUrl(), is("//host/path/file.sel.txt/the/suffix"));
     }
 
     @Test
@@ -337,6 +337,12 @@ public class SlingUrlTest {
         printChecks(url); // this is parsed wrong
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/,name=a,extension=resource,suffix=/with.periods,resourcePath=/a]"));
         ec.checkThat(url.getUrl(), is("/ctx/a.resource/with.periods"));
+
+        url = new SlingUrl(request).fromUrl("http://somewhere.net/bla%25/name%25.ext%25?parm%25=val%25#frag%25"
+                .replaceAll("%25", "%3A%3F%26%23%40%25%2B%3D"));
+        printChecks(url); // this is parsed wrong
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=somewhere.net,path=/bla:?&#@%+=/,name=name:?&#@%+=,extension=ext:?&#@%+=,parameters={parm:?&#@%+==[val:?&#@%+=]},fragment=frag:?&#@%+=,external=true]"));
+        ec.checkThat(url.getUrl(), is("http://somewhere.net/bla:%3F&%23@%25+=/name:%3F&%23@%25+=.ext:%3F&%23@%25+=?parm:%3F%26%23@%25%2B%3D=val:%3F%26%23@%25%2B%3D#frag:?&%23@%25+="));
     }
 
     /**
@@ -373,6 +379,30 @@ public class SlingUrlTest {
         ec.checkThat(uri.getQuery(), is("the+first+paräm=the+first+valuä&se&c/n%d=va/&u%e&%20=1&%20=2"));
     }
 
+    @Test
+    public void namespacePrefixes() {
+        url = new SlingUrl(request, newResource(resolver, "/a/bb/jcr:content/ccc"), "html");
+        printChecks(url);
+        ec.checkThat(url.getPathAndName(), is("/a/bb/_jcr_content/ccc"));
+        ec.checkThat(url.getResourcePath(), is("/a/bb/jcr:content/ccc"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/a/bb/_jcr_content/,name=ccc,extension=html,resourcePath=/a/bb/jcr:content/ccc]"));
+        ec.checkThat(url.getUrl(), is("/ctx/a/bb/_jcr_content/ccc.html"));
+
+        url = new SlingUrl(request).fromPath("/bla/jcr:content/blu");
+        printChecks(url);
+        ec.checkThat(url.getPathAndName(), is("/bla/_jcr_content/blu"));
+        ec.checkThat(url.getResourcePath(), is("/bla/jcr:content/blu"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/bla/_jcr_content/,name=blu,resourcePath=/bla/jcr:content/blu]"));
+        ec.checkThat(url.getUrl(), is("/ctx/bla/_jcr_content/blu"));
+
+        url = new SlingUrl(request).fromUrl("/__bla_x/_jcr_content");
+        printChecks(url);
+        ec.checkThat(url.getPathAndName(), is("/__bla_x/_jcr_content"));
+        ec.checkThat(url.getResourcePath(), is("/_bla_x/jcr:content"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/__bla_x/,name=_jcr_content,resourcePath=/_bla_x/jcr:content]"));
+        ec.checkThat(url.getUrl(), is("/ctx/__bla_x/_jcr_content"));
+    }
+
     /**
      * Generates code to easily create many examples.
      */
@@ -394,6 +424,7 @@ public class SlingUrlTest {
 
         try {
             URI uri = new URI(url.getUrl());
+            ec.checkThat(uri.toString(), is(url.getUrl()));
             SlingUrl url3 = new SlingUrl(request, url.linkMapper).fromUri(uri);
             ec.checkThat(uri + " -> " + url3.toDebugString(), url3.getUrl(), is(url.getUrl()));
             // url2 as reference because mapping can introduce host.xxx
