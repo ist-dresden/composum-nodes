@@ -14,7 +14,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -37,20 +37,6 @@ public class LinkUtilTest {
         when(resolver.map(any(), anyString())).thenAnswer(
                 (invocation) -> LinkUtil.encodePath(invocation.getArgument(1))
         );
-    }
-
-    @Test
-    public void codecTest() throws Exception {
-        LinkCodec codec = new LinkCodec();
-        String input, output;
-        ec.checkThat(output = codec.encode(
-                input = "/a/bb/ccc/d ef?äö=#+*:.;,_-$%&"),
-                equalTo("/a/bb/ccc/d%20ef%3F%C3%A4%C3%B6%3D%23%2B*%3A.%3B%2C_-%24%25%26"));
-        ec.checkThat(codec.decode(output), equalTo(input));
-        ec.checkThat(output = codec.encodeUrl(
-                input = "/a/bb/ccc/d ef?äö=#+*:.;,_-$%&"),
-                equalTo("/a/bb/ccc/d%20ef?%C3%A4%C3%B6=#%2B*:.;%2C_-%24%25&"));
-        ec.checkThat(codec.decode(output), equalTo(input));
     }
 
     @Test
