@@ -598,23 +598,4 @@ public class SlingUrlTest {
         ec.checkThat(codec.decode("+"), is(" "));
     }
 
-    /**
-     * Demonstrates behavior of {@link LinkCodec}.
-     */
-    @Test
-    public void linkCodecTest() throws EncoderException, DecoderException {
-        LinkCodec codec = new LinkCodec(); // UTF-8
-        ec.checkThat(codec.encode(" <>#%\"{}|\\^[]`"), is("%20%3C%3E%23%25%22%7B%7D%7C%5C%5E%5B%5D%60")); // excluded characters
-        ec.checkThat(codec.encode("-_.!+~*'()"), is("-_.%21%2B%7E*%27%28%29")); // "unreserved" characters
-        ec.checkThat(codec.encode(";/?:@&=+$,"), is("%3B/%3F%3A%40%26%3D%2B%24%2C")); // reserved characters
-        ec.checkThat(codec.encode("abzABZ09"), is("abzABZ09")); // alphanum
-        ec.checkThat(codec.encode("ä-ö-\u20AC"), is("%C3%A4-%C3%B6-%E2%82%AC")); // examples of other stuff. (last one is euro symbol)
-        ec.checkThat(codec.decode("+%3C%3E%23%25%22%7B%7D%7C%5C%5E%5B%5D%60-_.%21%2B%7E*%27%28%29%3B%2F%3F%3A%40%26%3D%2B%24%2CabzABZ09%C3%A4-%C3%B6-%E2%82%AC"), is("+<>#%\"{}|\\" +
-                "^[]`-_.!+~*'();/?:@&=+$,abzABZ09ä-ö-€")); // wrong: + should be space!
-        ec.checkThat(codec.decode("^[]`-_.!+~*'();/?:@&=+$,abzABZ09ä-ö-€"), is("^[]`-_.!+~*'();/?:@&=+$,abzABZ09?-?-?")); // replaces invalid characters by ?
-
-        ec.checkThat(codec.encode("a b+c"), is("a%20b%2Bc")); // for queries this is wrong
-        ec.checkThat(codec.decode("a+b%2Bc"), is("a+b+c"));
-    }
-
 }
