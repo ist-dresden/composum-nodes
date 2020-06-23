@@ -222,9 +222,7 @@ public class UrlCodec {
                 LOG.debug("Could not encode {} to {}", matcher.group(), charset.name());
                 if (doThrow) {
                     throw new IllegalArgumentException("Could not encode " + matcher.group());
-                } else { // TODO what to do here??? This is likely not valid, but a '?' neither.
-                    // FIXME(hps,17.06.20) use encoding of character ? like URLEncoder does. Or possibly
-                    // an encoded INVALID_CHARACTER_MARKER if that belongs to the charset?
+                } else {
                     out.append(StringUtils.repeat(getInvalidCharacterMarkerForEncoding(),
                             matcher.end() - matcher.start() - matchBuffer.position()));
                 }
