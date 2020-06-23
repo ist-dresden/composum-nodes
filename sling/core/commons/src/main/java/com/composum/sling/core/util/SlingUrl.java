@@ -258,6 +258,13 @@ public class SlingUrl implements Cloneable {
         this(request, getLinkMapper(request, null));
     }
 
+    // FIXME(hps,23.06.20) remove after merging and adapting other projects
+    @Deprecated
+    public SlingUrl(@Nonnull final SlingHttpServletRequest request, String url) {
+        this(request);
+        fromUrl(url);
+    }
+
     /**
      * Parses the url.
      * <em>Caution:</em> if the url contains several periods like e.g. http://host/a.b/c.d/suffix , this

@@ -94,7 +94,7 @@ public class LinkUtilTest {
                 "/_jcr____%20%7E?;:&%25#___-_*@___()%7B%7D%5B%5D___'!$+___%7C%5C%5E%60___%3C%3E%25%22___%C3%A4%C3%B6%C3%BC___abc123"
                 // orig LinkCodec: "/jcr:___%20%7E?=;:&%25#___-_*@___%28%29%7B%7D%5B%5D___%27%21%24%2B___%7C%5C%5E%60___%3C%3E%25%22___%C3%A4%C3%B6%C3%BC___abc123"
                 // -> @ encoded, but ()'!$+ not.
-                // FIXME(hps,19.06.20) where is the =???
+                // The = disappears here since that is actually parsed as an URL, which it isn't really.
                 // originally: "/jcr%3A___+%7E%3F%3D%3B%3A%26%25%23___-_*%40___%28%29%7B%7D%5B%5D___%27%21%24%2B___%7C%5C%5E%60___%3C%3E%25%22___%C3%A4%C3%B6%C3%BC___abc123"
                 // + instead of space, encodes :?=;:&#@
         ));
