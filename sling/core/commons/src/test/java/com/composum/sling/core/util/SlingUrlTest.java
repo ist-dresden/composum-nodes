@@ -203,12 +203,13 @@ public class SlingUrlTest {
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=ends.with,path=/slash/,name=,external=true]"));
         ec.checkThat(url.getUrl(), is("http://ends.with/slash/"));
 
-        // ; in the path is encoded since path parameters aren't normally used in Sling, but it's admissible in JCR resource names and only works there when quoted
-        // FIXME(hps,19.06.20) demote URL with path parameters to OTHER
+        // ; in the path is encoded since path parameters aren't normally used in Sling,
+        // but it's admissible in JCR resource names and only works there when quoted.
+        // so we use type OTHER when it's not encoded in the URL - probably some outside thing.
         url = new SlingUrl(request).fromUrl("http://path.param/res;parm=val?quer=ry");
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=path.param,path=/,name=res;parm=val,parameters={quer=[ry]},external=true]"));
-        ec.checkThat(url.getUrl(), is("http://path.param/res%3Bparm=val?quer=ry"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,scheme=http,name=//path.param/res;parm=val?quer=ry,external=true]"));
+        ec.checkThat(url.getUrl(), is("http://path.param/res;parm=val?quer=ry"));
 
         // there are exotic things like "ftp://myname@host.dom/%2Fetc/motd.txt" but that's a weird special case we ignore.
 
