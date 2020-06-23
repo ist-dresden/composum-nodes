@@ -109,10 +109,10 @@ public class SlingUrl implements Cloneable {
     protected static final Pattern HTTP_URL_PATTERN = Pattern.compile("" +
             SCHEME_PATTERN.pattern() + "?" +
             "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:?#]+)(:(?<port>[0-9]+))?)?)?" +
-            "(?<pathnoext>(/([^/.?#]+|\\.\\.))*/)" +
+            "(?<pathnoext>(/([^/.?#;]+|\\.\\.))*/)" +
             "(" +
-            "(?<filenoext>[^/.?#]+)" +
-            "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" + // A suffix can only exist if there is an extension.
+            "(?<filenoext>[^/.?#;]+)" +
+            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" + // A suffix can only exist if there is an extension.
             ")?" +
             "(?<query>\\?[^?#]*)?" +
             "(?<fragment>#.*)?"
@@ -121,10 +121,10 @@ public class SlingUrl implements Cloneable {
     protected static final Pattern FILE_URL_PATTERN = Pattern.compile("" +
             SCHEME_PATTERN.pattern() + "?" +
             "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:?#]+)(:(?<port>[0-9]+))?)?)?" +
-            "(?<pathnoext>(/([^/.?#]+|\\.\\.))*/)" +
+            "(?<pathnoext>(/([^/.?#;]+|\\.\\.))*/)" +
             "(" +
-            "(?<filenoext>[^/.?#]+)" +
-            "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" +
+            "(?<filenoext>[^/.?#;]+)" +
+            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" +
             ")?" +
             "(?<query>)(?<fragment>)" // empty groups to allow easier reading out of the matcher
     );
@@ -132,18 +132,18 @@ public class SlingUrl implements Cloneable {
     protected static final Pattern ABSOLUTE_PATH_PATTERN = Pattern.compile("" +
             "(?<pathnoext>(/([^/.?]+|\\.\\.))*/)" +
             "(" +
-            "(?<filenoext>[^/.?]+)" +
-            "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" +
+            "(?<filenoext>[^/.?;]+)" +
+            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" +
             ")?" +
             "(?<query>\\?[^?#]*)?" +
             "(?<fragment>#.*)?"
     );
 
     protected static final Pattern RELATIVE_PATH_PATTERN = Pattern.compile("" +
-            "(?<pathnoext>([^/.?]+|\\.\\.)*/)?" +
+            "(?!/)(?<pathnoext>([^/.?;]+|\\.\\.)*/)?" +
             "(" +
-            "(?<filenoext>[^/.?]+)" +
-            "((?<extensions>(\\.[^./?#]+)+)(?<suffix>/[^?#]*)?)?" +
+            "(?<filenoext>[^/.?;]+)" +
+            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" +
             ")?" +
             "(?<query>\\?[^?#]*)?" +
             "(?<fragment>#.*)?"
@@ -325,24 +325,7 @@ public class SlingUrl implements Cloneable {
                 this.name = this.name + "#" + uri.getRawFragment();
             }
         } else {
-            this.host = uri.getHost();
-            if (uri.getPort() >= 0) {
-                this.port = uri.getPort();
-            }
-            this.scheme = uri.getScheme();
-            if (this.scheme == null && StringUtils.isNotBlank(uri.getHost())) {
-                this.scheme = SCHEME_PROTOCOL_RELATIVE_URL;
-            }
-            if (scheme == null && !StringUtils.startsWith(uri.getSchemeSpecificPart(), "/")) {
-                this.type = UrlType.RELATIVE;
-            } else {
-                this.type = isFile ? UrlType.FILE : UrlType.HTTP;
-            }
-            if (uri.getUserInfo() != null) { // this fails if username contains an encoded :
-                this.username = StringUtils.defaultIfBlank(StringUtils.substringBefore(uri.getUserInfo(), ":"), null);
-                this.password = StringUtils.defaultIfBlank(StringUtils.substringAfter(uri.getUserInfo(), ":"), null);
-            }
-            this.fragment = uri.getFragment();
+            // first we parse the path since that might cause a reset
             Matcher matcher = ABSOLUTE_PATH_PATTERN.matcher(uri.getRawPath());
             if (matcher.matches()) {
                 assignFromGroups(matcher, true, false);
@@ -354,8 +337,28 @@ public class SlingUrl implements Cloneable {
                 this.name = uri.getRawSchemeSpecificPart();
                 this.fragment = StringUtils.defaultIfBlank(uri.getRawFragment(), null);
             }
-            if (uri.getRawQuery() != null) {
-                parseParameters(uri.getRawQuery(), true);
+            this.scheme = uri.getScheme();
+            if (this.scheme == null && StringUtils.isNotBlank(uri.getHost())) {
+                this.scheme = SCHEME_PROTOCOL_RELATIVE_URL;
+            }
+            if (type != UrlType.OTHER) {
+                this.host = uri.getHost();
+                if (uri.getPort() >= 0) {
+                    this.port = uri.getPort();
+                }
+                if (scheme == null && !StringUtils.startsWith(uri.getSchemeSpecificPart(), "/")) {
+                    this.type = UrlType.RELATIVE;
+                } else {
+                    this.type = isFile ? UrlType.FILE : UrlType.HTTP;
+                }
+                if (uri.getUserInfo() != null) { // this fails if username contains an encoded :
+                    this.username = StringUtils.defaultIfBlank(StringUtils.substringBefore(uri.getUserInfo(), ":"), null);
+                    this.password = StringUtils.defaultIfBlank(StringUtils.substringAfter(uri.getUserInfo(), ":"), null);
+                }
+                this.fragment = uri.getFragment();
+                if (uri.getRawQuery() != null) {
+                    parseParameters(uri.getRawQuery(), true);
+                }
             }
         }
         return this;
