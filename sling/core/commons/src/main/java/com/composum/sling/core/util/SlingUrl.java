@@ -35,27 +35,15 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * that'd start with {@link #SlingUrl(SlingHttpServletRequest)} and initalized with {@link #fromPath(String)}.
  * </p>
  * <h3>Modifying userspecified URLs</h3>
- * Another usecase is to parse user specified URLs. If these should be modified, this has, however, some challenges.
- * If it's an URL following the Sling rules <a href="https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html">URL decomposition</a>,
- * it's not possible.
- * <p>
- * A challenge is that this should parse user input, for which we don't know whether it's even valid.
+ * The class is meant to represent all types of URL (including invalid ones), and parse them in a do-what-I-mean fashion,
+ * so that they can be modified according to Sling rules, as far as possible. There are direct constructors from a Resource,
+ * and various ways to initialize it mit a method starting with from (e.g. {@link #fromPathOrUrl(String)})
+ * after creating a basic builder with {@link #SlingUrl(SlingHttpServletRequest)} or {@link #SlingUrl(SlingHttpServletRequest, LinkMapper)}.
  * <p>
  * <em>Caution:</em> this does not consider the resource tree to parse URLs from String form, so there will be cases
  * where this differs from {@link ResourceResolver#resolve(HttpServletRequest, String)} : e.g. we consider
  * in /foo/a.b/bar/c.d the /bar/c.d as suffix, while this might be different in reality!
  * </p>
- * <h2>Rationale of decoding / encoding behaviour</h2>
- * <p>
- * </p>
- * <h1>Design idea</h1>
- * The class is meant to represent all types of URL (including invalid ones), and parse them in a do-what-I-mean fashion,
- * so that they can be modified according to Sling rules, as far as possible. There are constructo
- * // FIXME(hps,15.06.20) extend this.
- *
- * <h2>Implementation details and relevant stuff</h2>
- * <h3>Allowed characters in URLs</h3>
- * The {@link URI} documentation has a nice description of URLs.
  *
  * @see "https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html"
  * @see "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/net/URI.html"
