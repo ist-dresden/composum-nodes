@@ -497,7 +497,9 @@ public class SlingUrlTest {
 
     /**
      * @see "https://en.wikipedia.org/wiki/List_of_URI_schemes"
+     * @see "https://raw.githubusercontent.com/web-platform-tests/wpt/master/url/resources/urltestdata.json"
      */
+    // TODO perhaps extend with stuff from https://raw.githubusercontent.com/web-platform-tests/wpt/master/url/resources/urltestdata.json
     protected final List<String> MISCURL_COLLECTION =
             Pattern.compile("\\|").splitAsStream("" +
                     "|afp://us%C3%A4r@host:4242/the%20pa%2Bth" +

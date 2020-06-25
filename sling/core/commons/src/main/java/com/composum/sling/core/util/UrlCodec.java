@@ -28,7 +28,7 @@ public class UrlCodec {
     /**
      * The characters which can always appear in any URL without being encoded: the <a href="https://tools.ietf.org/html/rfc3986#section-2.3">"unreserved"
      * chars.</a> Unfortunately there are different recommendations about encoding $!*'(), so we exclude them.
-     * Possibly we could include the "extra" chars !*'(), . We exlude ~ since it was declared unsafe in RFC1728.
+     * Possibly we could include the "extra" chars !*'(), . We exlude ~ since it was declared unsafe in <a href="https://tools.ietf.org/html/rfc1738>RFC 1738</a>.
      */
     protected static final String PART_URL_SAFECHARS = "-0-9a-zA-Z._+";
 
