@@ -68,6 +68,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getSuffix(), nullValue());
         ec.checkThat(url.getUrl(), is("/ctx/a/bb/ccc.html"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/a/bb/,name=ccc,extension=html,resourcePath=/a/bb/ccc]"));
+        ec.checkThat(url.getResource().getPath(), is("/a/bb/ccc"));
 
         url = new SlingUrl(request, newResource(resolver, "/a/bb/ddd"))
                 .selectors("m.n").extension("json").suffix("/ddd/eee/xxx.json").parameters("d&c=x%20y");
@@ -81,18 +82,19 @@ public class SlingUrlTest {
         ec.checkThat(url.getSuffix(), is("/ddd/eee/xxx.json"));
         ec.checkThat(url.getUrl(), is("/ctx/a/bb/ddd.m.n.json/ddd/eee/xxx.json?d&c=x+y"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/a/bb/,name=ddd,selectors=[m, n],extension=json,suffix=/ddd/eee/xxx.json,parameters={d=[], c=[x y]},resourcePath=/a/bb/ddd]"));
+        ec.checkThat(url.getResource().getPath(), is("/a/bb/ddd"));
 
-        url = new SlingUrl(request).fromUrl("/ctx/x/bb/ccc/öä ü.s.x.html/x/x/z.html?a=b&c", false);
+        url = new SlingUrl(request).fromUrl("/ctx/x/bb/ccc/öä ü.s.x.html/x/x/z.html?a=b&c#fragged", false);
         printChecks(url);
         ec.checkThat(url.getContextPath(), is("/ctx"));
         ec.checkThat(url.getExtension(), is("html"));
         ec.checkThat(url.isExternal(), is(false));
-        ec.checkThat(url.getFragment(), nullValue());
+        ec.checkThat(url.getFragment(), is("fragged"));
         ec.checkThat(url.getPathAndName(), is("/x/bb/ccc/öä ü"));
         ec.checkThat(url.getResourcePath(), is("/x/bb/ccc/öä ü"));
         ec.checkThat(url.getSuffix(), is("/x/x/z.html"));
-        ec.checkThat(url.getUrl(), is("http://host.xxx/bb/ccc/%C3%B6%C3%A4%20%C3%BC.s.x.html/x/x/z.html?a=b&c"));
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/x/bb/ccc/,name=öä ü,selectors=[s, x],extension=html,suffix=/x/x/z.html,parameters={a=[b], c=[]},resourcePath=/x/bb/ccc/öä ü]"));
+        ec.checkThat(url.getUrl(), is("http://host.xxx/bb/ccc/%C3%B6%C3%A4%20%C3%BC.s.x.html/x/x/z.html?a=b&c#fragged"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/x/bb/ccc/,name=öä ü,selectors=[s, x],extension=html,suffix=/x/x/z.html,parameters={a=[b], c=[]},fragment=fragged,resourcePath=/x/bb/ccc/öä ü]"));
 
         url.selector("sel").removeSelector("x")
                 .suffix(newResource(resolver, "/c/dd/e%e"))
@@ -198,10 +200,10 @@ public class SlingUrlTest {
 
     @Test
     public void additionalTests() {
-        url = new SlingUrl(request).fromUrl("http://ends.with/slash/");
+        url = new SlingUrl(request).fromUrl("http://ends.with:987/slash/");
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=ends.with,path=/slash/,name=,external=true]"));
-        ec.checkThat(url.getUrl(), is("http://ends.with/slash/"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=ends.with,port=987,path=/slash/,name=,external=true]"));
+        ec.checkThat(url.getUrl(), is("http://ends.with:987/slash/"));
 
         // ; in the path is encoded since path parameters aren't normally used in Sling,
         // but it's admissible in JCR resource names and only works there when quoted.
@@ -275,6 +277,10 @@ public class SlingUrlTest {
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=,host=host,path=/path/,name=file,selectors=[sel],extension=txt,suffix=/the/suffix,external=true]"));
         ec.checkThat(url.getUrl(), is("//host/path/file.sel.txt/the/suffix"));
+
+        newResource(resolver, "/bla/blu");
+        url = new SlingUrl(request).fromPathOrUrl("/bla/blu");
+        ec.checkThat(url.getResource().getPath(), is("/bla/blu"));
     }
 
     @Test
@@ -486,9 +492,6 @@ public class SlingUrlTest {
             ec.checkThat(msg, u2.getFragment(), is(u1.getFragment()));
             ec.checkThat(msg, u2.getUserInfo(), is(u1.getUserInfo()));
             ec.checkThat(msg, u2.getSchemeSpecificPart(), is(u1.getSchemeSpecificPart()));
-            if (!u2.getSchemeSpecificPart().equals(u1.getSchemeSpecificPart())) {
-                System.out.println("AAAH");
-            }
             ec.checkThat(msg, u2.getQuery(), is(u1.getQuery()));
         } catch (URISyntaxException e) {
             throw new AssertionError(e);
@@ -540,18 +543,19 @@ public class SlingUrlTest {
      * Checks that various examples of URLs of other protocols are treated correctly.
      * Ignored, since it does not make much sense.
      */
-    @Ignore
     @Test
     public void checkMiscUrlsUndecoded() {
         for (String urlString : MISCURL_COLLECTION) {
             ec.checkSucceeds(() -> {
-                SlingUrl url, url2;
-                url = new SlingUrl(request).fromUrl(urlString, false);
-                linkexamples.append("<p><a href=\"").append(url.getUrl()).append("\">").append(url.getUrl()).append("</a></p>\n");
-                System.out.println("\n" + urlString + "\n" + url.toDebugString() + "\n" + url.getUrl());
-                verifySameUrl(urlString, url.getUrl());
-                url2 = new SlingUrl(request).fromUrl(url.getUrl(), true);
-                ec.checkThat(urlString, url.getUrl(), is(url2.getUrl()));
+                if (!urlString.contains("mailto:")) { // the mailto example is currently the only one where there are %.
+                    SlingUrl url, url2;
+                    url = new SlingUrl(request).fromUrl(urlString, false);
+                    linkexamples.append("<p><a href=\"").append(url.getUrl()).append("\">").append(url.getUrl()).append("</a></p>\n");
+                    System.out.println("\n" + urlString + "\n" + url.toDebugString() + "\n" + url.getUrl());
+                    verifySameUrl(urlString, url.getUrl());
+                    url2 = new SlingUrl(request).fromUrl(url.getUrl(), true);
+                    ec.checkThat(urlString, url.getUrl(), is(url2.getUrl()));
+                }
                 return null;
             });
         }
@@ -560,27 +564,26 @@ public class SlingUrlTest {
     @Test
     public void pathEncodingAndMapping() {
         String path = "/x/a b+c%d/e<f]g";
-        SlingUrl slingUrl;
 
-        slingUrl = new SlingUrl(request).fromPath(path);
-        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
-        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/a%20b+c%25d/e%3Cf%5Dg"));
+        url = new SlingUrl(request).fromPath(path);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
+        ec.checkThat(url.getUrl(), is("http://host.xxx/a%20b+c%25d/e%3Cf%5Dg"));
 
-        slingUrl = new SlingUrl(request, LinkMapper.RESOLVER).fromPath(path);
-        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
-        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/a%20b+c%25d/e%3Cf%5Dg"));
+        url = new SlingUrl(request, LinkMapper.RESOLVER).fromPath(path);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
+        ec.checkThat(url.getUrl(), is("http://host.xxx/a%20b+c%25d/e%3Cf%5Dg"));
 
-        slingUrl = new SlingUrl(request, LinkMapper.CONTEXT).fromPath(path);
-        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
-        ec.checkThat(slingUrl.getUrl(), is("/ctx/x/a%20b+c%25d/e%3Cf%5Dg"));
+        url = new SlingUrl(request, LinkMapper.CONTEXT).fromPath(path);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
+        ec.checkThat(url.getUrl(), is("/ctx/x/a%20b+c%25d/e%3Cf%5Dg"));
 
-        slingUrl = new SlingUrl(request, (LinkMapper) null).fromPath(path);
-        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
-        ec.checkThat(slingUrl.getUrl(), is("/x/a%20b+c%25d/e%3Cf%5Dg"));
+        url = new SlingUrl(request, (LinkMapper) null).fromPath(path);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/x/a b+c%d/,name=e<f]g,resourcePath=/x/a b+c%d/e<f]g]"));
+        ec.checkThat(url.getUrl(), is("/x/a%20b+c%25d/e%3Cf%5Dg"));
 
-        slingUrl = new SlingUrl(request, LinkMapper.RESOLVER).fromPath("/x/rpage-_@%(){}$!'+,=-\\X");
-        ec.checkThat(slingUrl.toDebugString(), is("SlingUrl[type=HTTP,path=/x/,name=rpage-_@%(){}$!'+,=-\\X,resourcePath=/x/rpage-_@%(){}$!'+,=-\\X]"));
-        ec.checkThat(slingUrl.getUrl(), is("http://host.xxx/rpage-_@%25()%7B%7D$!'+,=-%5CX"));
+        url = new SlingUrl(request, LinkMapper.RESOLVER).fromPath("/x/rpage-_@%(){}$!'+,=-\\X");
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/x/,name=rpage-_@%(){}$!'+,=-\\X,resourcePath=/x/rpage-_@%(){}$!'+,=-\\X]"));
+        ec.checkThat(url.getUrl(), is("http://host.xxx/rpage-_@%25()%7B%7D$!'+,=-%5CX"));
     }
 
     /**
@@ -599,6 +602,48 @@ public class SlingUrlTest {
         ec.checkThat(codec.decode("^[]`-_.!+~*'();/?:@&=+$,abzABZ09ä-ö-€"), is("^[]`-_.! ~*'();/?:@&= $,abzABZ09?-?-?")); // replaces invalid characters by ?
         ec.checkThat(codec.encode(" "), is("+"));
         ec.checkThat(codec.decode("+"), is(" "));
+    }
+
+    @Test
+    public void percentInSpecialOrOther() {
+        url = new SlingUrl(request).fromUrl("mailto:the%having <mailadd@ress.com>");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=SPECIAL,scheme=mailto,name=the%having <mailadd@ress.com>,external=true]"));
+        ec.checkThat(url.getUrl(), is("mailto:the%25having%20%3Cmailadd@ress.com%3E"));
+
+        url = new SlingUrl(request).fromUrl("impo+ssible:whata%sign");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=OTHER,scheme=impo+ssible,name=whata%sign,external=true]"));
+        ec.checkThat(url.getUrl(), is("impo+ssible:whata%sign"));
+    }
+
+    @Test
+    public void specialAccessors() {
+        url = new SlingUrl(request).fromPath("/a/b/c");
+        ec.checkThat(url.getPathAndNameExt(), is("/a/b/c"));
+        printChecks(url);
+        ec.checkThat(this.url.toDebugString(), is("SlingUrl[type=HTTP,path=/a/b/,name=c,resourcePath=/a/b/c]"));
+        ec.checkThat(this.url.getUrl(), is("/ctx/a/b/c"));
+
+        url = new SlingUrl(request).setPathAndNameExt("bla/name.ext");
+        ec.checkThat(url.getPathAndNameExt(), is("bla/name.ext"));
+        printChecks(url);
+        ec.checkThat(this.url.toDebugString(), is("SlingUrl[type=RELATIVE,path=bla/,name=name,extension=ext]"));
+        ec.checkThat(this.url.getUrl(), is("bla/name.ext"));
+
+        url = new SlingUrl(request).setPathAndNameExt("/bla/name.and.ext");
+        ec.checkThat(url.getPathAndNameExt(), is("/bla/name.and.ext"));
+        ec.checkThat(this.url.toDebugString(), is("SlingUrl[type=HTTP,path=/bla/,name=name.and,extension=ext,resourcePath=/bla/name.and]"));
+        ec.checkThat(this.url.getUrl(), is("/ctx/bla/name.and.ext"));
+
+        url.setExtension(".bla");
+        ec.checkThat(this.url.toDebugString(), is("SlingUrl[type=HTTP,path=/bla/,name=name.and,extension=bla,resourcePath=/bla/name.and]"));
+        ec.checkThat(this.url.getUrl(), is("/ctx/bla/name.and.bla"));
+
+        url.selector("sel1", "sel2");
+        url.setExtension("blub");
+        ec.checkThat(this.url.toDebugString(), is("SlingUrl[type=HTTP,path=/bla/,name=name.and,selectors=[sel1, sel2],extension=blub,resourcePath=/bla/name.and]"));
+        ec.checkThat(this.url.getUrl(), is("/ctx/bla/name.and.sel1.sel2.blub")); // dangerous: parse this again and it's wrong.
     }
 
 }
