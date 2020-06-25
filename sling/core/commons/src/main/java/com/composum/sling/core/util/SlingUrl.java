@@ -6,6 +6,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -50,6 +52,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  */
 @SuppressWarnings({"unused", "ParameterHidesMemberVariable", "UnusedReturnValue"})
 public class SlingUrl implements Cloneable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SlingUrl.class);
 
     /**
      * Characterizes the type of the URL.
@@ -246,6 +250,9 @@ public class SlingUrl implements Cloneable {
         this(request, getLinkMapper(request, null));
     }
 
+    /**
+     * @deprecated use new SlingUrl(request).fromUrl(url)
+     */
     // FIXME(hps,23.06.20) remove after merging and adapting other projects
     @Deprecated
     public SlingUrl(@Nonnull final SlingHttpServletRequest request, String url) {
@@ -475,6 +482,9 @@ public class SlingUrl implements Cloneable {
         this.extension = null;
         clearTransients();
         if (isNotBlank(fullpath)) {
+            if (type == null) {
+                type = fullpath.startsWith("/") ? UrlType.HTTP : UrlType.RELATIVE;
+            }
             int endpath = fullpath.lastIndexOf('/');
             String newPath = null;
             String newName = null;
@@ -483,9 +493,9 @@ public class SlingUrl implements Cloneable {
                 newPath = fullpath.substring(0, endpath + 1);
                 fullpath = fullpath.substring(endpath + 1);
             }
-            int period = fullpath.indexOf('.');
+            int period = fullpath.lastIndexOf('.');
             if (period >= 0) {
-                newName = fullpath.substring(0, period - 1);
+                newName = fullpath.substring(0, period);
                 newExtension = fullpath.substring(period + 1);
             }
             this.path = newPath;
@@ -1019,9 +1029,9 @@ public class SlingUrl implements Cloneable {
     }
 
     @Override
-    public Object clone() {
+    public SlingUrl clone() {
         try {
-            return super.clone();
+            return (SlingUrl) super.clone();
         } catch (CloneNotSupportedException e) { // Should be impossible.
             throw new IllegalArgumentException("Bug: clone threw error for " + getClass().toString(), e);
         }
@@ -1050,7 +1060,9 @@ public class SlingUrl implements Cloneable {
         if (isNotBlank(scheme)) {
             builder.append(scheme).append(':');
         }
-        if (type == UrlType.OTHER) {
+        if (type == null) {
+            LOG.error("NO TYPE! {}", this.toDebugString());
+        } else if (type == UrlType.OTHER) {
             builder.append(name); // do not encode anything in OTHER - that can trash meta-characters
         } else if (type == UrlType.SPECIAL) {
             builder.append(UrlCodec.OPAQUE.encode(name)); // weakest possible codec
