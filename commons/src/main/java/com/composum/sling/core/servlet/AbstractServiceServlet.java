@@ -155,6 +155,24 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         return path;
     }
 
+    /**
+     * @return the given resource if valid, otherwise the resource referenced by the raw suffix (no XSS filter)
+     * if such a resource is available - to support select and rename of nodes with invalid names (node repair)
+     */
+    @Nonnull
+    public static ResourceHandle tryToUseRawSuffix(@Nonnull final SlingHttpServletRequest request,
+                                                   @Nonnull ResourceHandle resource) {
+        if (!resource.isValid()) {
+            // try to use the resource path as requested (without XSS filter) - in console context only!
+            String resourcePath = request.getRequestPathInfo().getSuffix();
+            Resource requested = request.getResourceResolver().getResource(resourcePath);
+            if (requested != null) {
+                resource = ResourceHandle.use(requested);
+            }
+        }
+        return resource;
+    }
+
     //
     // default responses...
     //

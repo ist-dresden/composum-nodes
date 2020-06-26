@@ -981,6 +981,7 @@ public class NodeServlet extends NodeTreeServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
+            resource = AbstractServiceServlet.tryToUseRawSuffix(request, resource);
             Node node = resource.adaptTo(Node.class);
 
             if (node != null) {
