@@ -151,7 +151,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
             path = request.getParameter(PARAM_PATH);
         }
         path = XSS.filter(path);
-        path = path.replaceAll("&amp;","&"); // rollback encoding of '&' done by the filter()
+        path = path.replaceAll("&amp;", "&"); // rollback encoding of '&' done by the filter()
         return path;
     }
 
