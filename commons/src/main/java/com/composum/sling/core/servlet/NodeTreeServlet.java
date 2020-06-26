@@ -133,7 +133,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (!resource.isValid()) {
+            if (!(resource = AbstractServiceServlet.tryToUseRawSuffix(request, resource)).isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
