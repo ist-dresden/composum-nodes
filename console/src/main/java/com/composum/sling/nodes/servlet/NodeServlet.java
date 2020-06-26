@@ -119,7 +119,7 @@ public class NodeServlet extends NodeTreeServlet {
     public static final String KEY_REFERENCEABLE = "referenceable";
     public static final String KEY_UNFILTERD = "unfiltered";
 
-    public static final String ILLEGAL_NAME_CHARS = "<>?&";
+    public static final String ILLEGAL_NAME_CHARS = "<>&\"";
     public static final Pattern NODE_NAME_PATTERN = Pattern.compile("^[^/" + ILLEGAL_NAME_CHARS + "]+$");
     public static final Pattern NODE_PATH_PATTERN = Pattern.compile("^(/[^/" + ILLEGAL_NAME_CHARS + "]+)+$");
 
