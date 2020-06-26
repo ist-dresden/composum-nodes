@@ -49,7 +49,8 @@
         },
 
         isFavorite: function (path) {
-            return this.getFavorite(path) !== undefined;
+            var $favorite = this.getFavorite(path);
+            return $favorite && $favorite.length > 0;
         },
 
         onToggleFavorite: function (event, path) {
@@ -65,8 +66,13 @@
         },
 
         getFavorite: function (path) {
-            var $item = this.$favoritesList.find('a[data-path="' + path + '"]');
-            return $item && $item.length > 0 ? $item : undefined;
+            var found = [];
+            this.$favoritesList.find('a[data-path]').each(function () {
+                if ($(this).data('path') === path) {
+                    found.push(this);
+                }
+            });
+            return $(found);
         },
 
         addFavorite: function (path) {
@@ -91,26 +97,26 @@
         },
 
         removeFavorite: function (path) {
-            var $item = this.getFavorite(path);
-            if ($item) {
-                $item.remove();
-                this.saveProfile();
-            }
+            this.getFavorite(path).each(function () {
+                $(this).remove();
+            });
+            this.saveProfile();
         },
 
         onPathSelected: function (event, path) {
             this.notifyUsage(path);
             this.$favoritesList.children().removeClass('active');
-            var $favorite = this.getFavorite(path);
-            if ($favorite) {
-                $favorite.addClass('active');
-            }
+            this.getFavorite(path).each(function(){
+                $(this).addClass('active');
+            });
         },
 
         notifyUsage: function (path) {
-            var $item = this.$recentlyList.find('a[data-path="' + path + '"]');
-            $item.each(function () {
-                this.remove();
+            this.$recentlyList.find('a[data-path]').each(function () {
+                var $item = $(this);
+                if ($item.data('path') === path) {
+                    this.remove();
+                }
             });
             this.$recentlyList.prepend(this.createItem(path));
             var $listContent = this.$recentlyList.children();
