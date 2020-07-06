@@ -60,7 +60,15 @@ echo URL: $CPM_PROTOCOL://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/sourceupload.zip/${p
 TMPFIL=`mktemp -u`.zip
 trap "{ rm -f $TMPFIL; }" EXIT
 
-zip -r $TMPFIL $path
+if command -v 7z &> /dev/null
+then
+  7z a $TMPFIL $path
+  7z l $TMPFIL
+else
+  zip -vr $TMPFIL $path
+  echo
+  echo "WARNING: arc not found -> using zip which might not support unicode."
+fi
 
 # the parameter :operation=updatetree currently serves no purpose but to sneakily prevent the Sling POST servlet to
 # create a node at /bin/cpm/... when the servlet is present.
