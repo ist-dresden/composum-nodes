@@ -696,7 +696,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
             if (path != null) {
                 String authorizableName = path.substring(path.lastIndexOf('/') + 1);
                 if (authorizableName.equals("admin") || authorizableName.equals("anonymous")) {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, authorizableName + " deleted. System destroyed.");
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, authorizableName + " deletion denied. System would have been destroyed.");
                 } else {
                     Authorizable authorizable = userManager.getAuthorizable(authorizableName);
                     if (authorizable == null) {

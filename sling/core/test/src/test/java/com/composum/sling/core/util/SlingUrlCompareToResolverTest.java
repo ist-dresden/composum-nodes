@@ -1,11 +1,14 @@
 package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.*;
 import org.apache.sling.api.resource.ResourceUtil;
+import org.apache.sling.hamcrest.ResourceMatchers;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
+import org.apache.sling.testing.mock.sling.servlet.MockSlingHttpServletRequest;
+import org.hamcrest.Matchers;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -16,6 +19,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import static com.composum.sling.core.util.SlingResourceUtil.getPath;
 import static org.hamcrest.Matchers.*;
 
 /**
@@ -31,8 +35,18 @@ public class SlingUrlCompareToResolverTest {
 
     protected boolean firstLine = true;
 
+    protected ResourceResolver resolver;
+
+    protected MockSlingHttpServletRequest request;
+
     protected Resource newResource(String path) {
         return context.build().resource(path).commit().getCurrentParent();
+    }
+
+    @Before
+    public void setup() {
+        resolver = context.resourceResolver();
+        request = context.request();
     }
 
     /**
@@ -148,7 +162,6 @@ public class SlingUrlCompareToResolverTest {
      */
     @Test
     public void resolverMapCheck() throws Exception {
-        ResourceResolver resolver = context.resourceResolver();
         // we explicitly don't check # and ? which are legal in resource names, but using them is probably a very bad idea.
         for (char specialChar : ":_&@%[](){}<$>!'\"*+,;=-/|\\".toCharArray()) {
             String path = "/bla/r" + specialChar + "r";
@@ -164,6 +177,47 @@ public class SlingUrlCompareToResolverTest {
             ec.checkThat("" + specialChar, resource.getPath(), is(path));
             ec.checkThat("" + specialChar, new URI(url).getPath(), is(path));
         }
+    }
+
+    /**
+     * Demonstrates the rules of
+     * <a href="https://sling.apache.org/documentation/the-sling-engine/url-decomposition.html">Sling URL decomposition</a>
+     * on some examples.
+     */
+    @Test
+    public void decompositionCheck() {
+        ec.checkThat(resolver.resolve(request, "/a/not.there.at.all.ext"), // NOT the resource:
+                Matchers.allOf(ResourceMatchers.path("/a/not.there.at.all.ext"),
+                        Matchers.instanceOf(NonExistingResource.class)));
+
+        newResource("/a/b");
+        ec.checkThat(getPath(resolver.resolve(request, "/a/b")), is("/a/b"));
+        ec.checkThat(getPath(resolver.resolve(request, "/a/b.c")), is("/a/b"));
+        ec.checkThat(getPath(resolver.resolve(request, "/a/b.c.png")), is("/a/b"));
+        ec.checkThat(getPath(resolver.resolve(request, "/a/b.c.png/suffix")), is("/a/b"));
+        ec.checkThat(getPath(resolver.resolve(request, "/a/b.c.png?query#fragment")), is("/a/b"));
+        ec.checkThat(getPath(resolver.resolve(request, "/a/b.c.png/suff.ix?query#fragment")), is("/a/b"));
+
+        newResource("/a/d.e/f");
+        ec.checkThat(getPath(resolver.resolve(request, "/a/not.there")), is("/a/not.there"));
+        ec.checkThat(getPath(resolver.resolve(request, "/a/d.e/f.g/suff.ix?query#fragment")), is("/a/d.e/f"));
+
+        newResource("/a/j.png");
+        ec.checkThat(getPath(resolver.resolve(request, "/a/j")), is("/a/j"));
+        ec.checkThat(getPath(resolver.resolve(request, "/a/j.png")), is("/a/j.png"));
+        ec.checkThat(getPath(resolver.resolve(request, "/a/j.png.l")), is("/a/j.png"));
+        ec.checkThat(getPath(resolver.resolve(request, "/a/j.png.l.png")), is("/a/j.png"));
+        ec.checkThat(resolver.resolve(request, "/a/j.l.png"), // NOT the resource:
+                Matchers.allOf(ResourceMatchers.path("/a/j.l.png"),
+                        Matchers.instanceOf(NonExistingResource.class)));
+
+        newResource("/a/m.n.ext");
+        ec.checkThat(getPath(resolver.resolve(request, "/a/m.n.ext")), is("/a/m.n.ext"));
+        ec.checkThat(getPath(resolver.resolve(request, "/a/m.n.ext.ext2")), is("/a/m.n.ext"));
+        ec.checkThat(getPath(resolver.resolve(request, "/a/m.n.ext.sel.ext2")), is("/a/m.n.ext"));
+        ec.checkThat(resolver.resolve(request, "/a/m.n.sel.ext"), // NOT the resource:
+                Matchers.allOf(ResourceMatchers.path("/a/m.n.sel.ext"),
+                        Matchers.instanceOf(NonExistingResource.class)));
     }
 
 }
