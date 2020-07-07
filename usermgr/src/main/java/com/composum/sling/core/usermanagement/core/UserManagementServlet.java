@@ -621,9 +621,9 @@ public class UserManagementServlet extends AbstractServiceServlet {
                 session.save();
                 UserEntry userEntry = UserEntry.fromUser((User) newUser);
                 String s = new GsonBuilder().create().toJson(userEntry);
-                PrintWriter writer = response.getWriter();
                 response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
                 response.setCharacterEncoding(MappingRules.CHARSET.name());
+                PrintWriter writer = response.getWriter();
                 writer.write(s);
                 writer.write('\n');
                 writer.flush();

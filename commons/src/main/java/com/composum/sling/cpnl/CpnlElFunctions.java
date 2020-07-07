@@ -334,7 +334,7 @@ public class CpnlElFunctions {
     }
 
     /**
-     * Returns the encoded path of a of a repository path.
+     * URL encoding for a resource path (without the encoding for the '/' path delimiters).
      *
      * @param value the path to encode
      * @return the encoded path
