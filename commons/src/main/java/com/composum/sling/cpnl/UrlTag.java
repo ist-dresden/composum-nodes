@@ -58,7 +58,7 @@ public abstract class UrlTag extends TagBase {
     }
 
     /**
-     * @param format the fmt to set to build a url from the 'url' value
+     * @param format The format to set to build a url from the 'url' value: {} or {0} is replaced by the url.
      */
     public void setFormat(String format) {
         this.format = format;
