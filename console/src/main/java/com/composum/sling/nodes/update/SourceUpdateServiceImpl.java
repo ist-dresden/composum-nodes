@@ -130,16 +130,22 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         boolean thisNodeChanged = false;
         ValueMap templatevalues = ResourceUtil.getValueMap(templateresource);
         ModifiableValueMap newvalues = resource.adaptTo(ModifiableValueMap.class);
-        if (newvalues == null) { throw new IllegalArgumentException("Node not modifiable: " + resource.getPath()); }
+        if (newvalues == null) {
+            throw new IllegalArgumentException("Node not modifiable: " + resource.getPath());
+        }
 
         // first copy type information since this changes attributes
         newvalues.put(PROP_PRIMARY_TYPE, templatevalues.get(PROP_PRIMARY_TYPE));
         String[] mixins = templatevalues.get(PROP_MIXINTYPES, new String[0]);
-        if (mixins.length > 0) { newvalues.put(PROP_MIXINTYPES, mixins); } else { newvalues.remove(PROP_MIXINTYPES); }
-
+        if (mixins.length > 0 || newvalues.containsKey(PROP_MIXINTYPES)) {
+            newvalues.put(PROP_MIXINTYPES, mixins);
+        }
+        
         Node node = resource.adaptTo(Node.class);
         NodeDefinition definition = node.getDefinition();
-        if (definition.allowsSameNameSiblings()) { checkForSamenameSiblings(templateresource, resource); }
+        if (definition.allowsSameNameSiblings()) {
+            checkForSamenameSiblings(templateresource, resource);
+        }
 
         try {
             for (Map.Entry<String, Object> entry : templatevalues.entrySet()) {
