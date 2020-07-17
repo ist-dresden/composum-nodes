@@ -1,6 +1,8 @@
 package com.composum.sling.core.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.junit.Before;
 import org.junit.Rule;
@@ -30,6 +32,9 @@ public class LinkUtilTest {
     @Mock
     protected ResourceResolver resolver = Mockito.mock(ResourceResolver.class);
 
+    @Mock
+    protected Resource resource = Mockito.mock(Resource.class);
+
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
@@ -37,6 +42,9 @@ public class LinkUtilTest {
         when(resolver.map(any(), anyString())).thenAnswer(
                 (invocation) -> LinkUtil.encodePath(invocation.getArgument(1))
         );
+        when(resolver.getResource(anyString())).then((invocation ->
+                StringUtils.equals(resource.getPath(), invocation.getArgument(0)) ? resource : null
+        ));
     }
 
     @Test
@@ -106,4 +114,5 @@ public class LinkUtilTest {
         ec.checkThat(LinkUtil.decodePath(encoded), is(toencode));
 //        ec.checkThat(LinkUtil.decodeUrl(request, encoded), is(toencode));
     }
+
 }
