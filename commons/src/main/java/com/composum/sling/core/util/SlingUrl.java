@@ -531,7 +531,7 @@ public class SlingUrl implements Cloneable {
             String escapedPath = LinkUtil.namespacePrefixEscape(resourcePath);
             int endpath = escapedPath.lastIndexOf('/');
             String newPath = null;
-            String newName = null;
+            String newName = escapedPath;
             if (endpath >= 0) {
                 newPath = escapedPath.substring(0, endpath + 1);
                 newName = escapedPath.substring(endpath + 1);
@@ -1212,7 +1212,7 @@ public class SlingUrl implements Cloneable {
                 path = path.substring(contextPath.length());
             }
         }
-        name = isNotBlank(value = matcher.group("filenoext")) ? decode(value, decode) : "";
+        name = isNotBlank(value = matcher.group("filenoext")) ? decode(value, decode) : null;
         if (isNotBlank(value = matcher.group("extensions"))) {
             String[] selExt = StringUtils.split(value.substring(1), '.');
             for (int i = 0; i < selExt.length - 1; i++) {

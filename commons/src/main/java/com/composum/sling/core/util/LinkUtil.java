@@ -14,6 +14,7 @@ import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -328,6 +329,7 @@ public class LinkUtil {
      * @param detectMimeTypeExtension if 'true' an extension according to the mime type will be detected
      * @return the string which has to add to the resources path; '' if nothing should add
      */
+    @Nonnull
     public static String getExtension(ResourceHandle resource, String extension, boolean detectMimeTypeExtension) {
         if (StringUtils.isBlank(extension) && detectMimeTypeExtension) {
             if (resource.isFile()) {
