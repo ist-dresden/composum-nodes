@@ -291,10 +291,10 @@ public class SlingUrlTest {
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=RELATIVE,parameters={foo=[bar]}]"));
         ec.checkThat(url.getUrl(), is("?foo=bar"));
 
-        url = new SlingUrl(request).fromPath("?foo=bar");
+        url = new SlingUrl(request).fromPath("?foo=bar"); // this is nonsensical since it is no path
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=RELATIVE,name=?foo=bar]"));
-        ec.checkThat(url.getUrl(), is("%3Ffoo=bar")); // FIXME(hps,16.07.20) doubtful
+        ec.checkThat(url.getUrl(), is("%3Ffoo=bar")); // a bit doubtful, but what should we do?
     }
 
     @Test
@@ -607,9 +607,9 @@ public class SlingUrlTest {
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/x/,name=a?bla=blu,resourcePath=/x/a?bla=blu]"));
         ec.checkThat(url.getUrl(), is("http://host.xxx/a%3Fbla=blu"));
 
-        url = new SlingUrl(request).fromPath("?bla=blu");
+        url = new SlingUrl(request).fromPath("?bla=blu"); // nonsensical since this is no path
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=RELATIVE,name=?bla=blu]"));
-        ec.checkThat(url.getUrl(), is("%3Fbla=blu")); // FIXME(hps,16.07.20) doubtful
+        ec.checkThat(url.getUrl(), is("%3Fbla=blu")); // doubtful but what should we do?
 
         url = new SlingUrl(request).fromPath("something");
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=RELATIVE,name=something]"));

@@ -74,12 +74,16 @@ public abstract class UrlTag extends TagBase {
 
     @Nonnull
     protected String buildUrl(@Nonnull String urlValue, @Nullable final Boolean map){
-        if (map != null) {
-            urlValue = map
-                    ? CpnlElFunctions.mappedUrl(request, urlValue)
-                    : CpnlElFunctions.unmappedUrl(request, urlValue);
-        } else {
-            urlValue = CpnlElFunctions.url(request, urlValue);
+        if (StringUtils.startsWith(urlValue, "/") && !StringUtils.startsWith(urlValue, "//")) {
+            // this should be a path; if it isn't a path we do not modify the href.
+            // relative paths wouldn't make any sense here, anyway, so we ignore these.
+            if (map != null) {
+                urlValue = map
+                        ? CpnlElFunctions.mappedUrl(request, urlValue)
+                        : CpnlElFunctions.unmappedUrl(request, urlValue);
+            } else {
+                urlValue = CpnlElFunctions.url(request, urlValue);
+            }
         }
         return urlValue;
     }
