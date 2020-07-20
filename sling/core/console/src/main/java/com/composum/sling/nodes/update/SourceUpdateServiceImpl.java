@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.Importer;
 import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
@@ -54,9 +55,24 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceUpdateServiceImpl.class);
 
+    /**
+     * Attributes that are not modified on the target.
+     * See result of JCR query <code>/jcr:system/jcr:nodeTypes/*[jcr:isMixin=true]/rep:namedPropertyDefinitions//*[jcr:protected=true]</code>.
+     */
     private static final Collection<String> ignoredMetadataAttributes = new HashSet<>(Arrays.asList("jcr:uuid", "jcr:lastModified",
             "jcr:lastModifiedBy", "jcr:created", "jcr:createdBy", "jcr:isCheckedOut", "jcr:baseVersion",
-            "jcr:versionHistory", "jcr:predecessors", "jcr:mergeFailed", "jcr:mergeFailed", "jcr:configuration"));
+            "jcr:versionHistory", "jcr:predecessors", "jcr:mergeFailed", "jcr:mergeFailed", "jcr:configuration",
+            "jcr:activity", "jcr:etag", "rep:hold", "rep:retentionPolicy", "rep:versions",
+            JcrConstants.JCR_MIXINTYPES // mixinTypes is treated separately
+    ));
+
+    /**
+     * Mixins that should not be removed from the target.
+     */
+    private static final Collection<String> noRemoveMixins = new HashSet<>(Arrays.asList(
+            // various internal Jackrabbit stuff - we rather not touch that.
+            "rep:AccessControllable", "rep:RepoAccessControllable", "rep:Impersonatable", "rep:VersionablePaths", "rep:VersionReference", "rep:RetentionManageable", "mix:indexable"
+    ));
 
     /**
      * {@inheritDoc}
@@ -115,7 +131,9 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             session.save();
         } finally {
             session.refresh(false); // discard - if it went OK it's already saved.
-            if (resolver.getResource(tmpPath) != null) { session.removeItem(tmpdir.getPath()); }
+            if (resolver.getResource(tmpPath) != null) {
+                session.removeItem(tmpdir.getPath());
+            }
             session.save();
         }
     }
@@ -134,20 +152,25 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             throw new IllegalArgumentException("Node not modifiable: " + resource.getPath());
         }
 
-        // first copy type information since this changes attributes
-        newvalues.put(PROP_PRIMARY_TYPE, templatevalues.get(PROP_PRIMARY_TYPE));
-        String[] mixins = templatevalues.get(PROP_MIXINTYPES, new String[0]);
-        if (mixins.length > 0 || newvalues.containsKey(PROP_MIXINTYPES)) {
-            newvalues.put(PROP_MIXINTYPES, mixins);
-        }
-        
-        Node node = resource.adaptTo(Node.class);
-        NodeDefinition definition = node.getDefinition();
-        if (definition.allowsSameNameSiblings()) {
-            checkForSamenameSiblings(templateresource, resource);
-        }
-
         try {
+            // first copy type information since this changes attributes
+            newvalues.put(PROP_PRIMARY_TYPE, templatevalues.get(PROP_PRIMARY_TYPE));
+            List<String> newMixins = new ArrayList<>(Arrays.asList(templatevalues.get(PROP_MIXINTYPES, new String[0])));
+            for (String mixin : newvalues.get(PROP_MIXINTYPES, new String[0])) {
+                if (noRemoveMixins.contains(mixin) && !newMixins.contains(mixin)) {
+                    newMixins.add(mixin);
+                }
+            }
+            if (!newMixins.isEmpty() || newvalues.containsKey(PROP_MIXINTYPES)) {
+                newvalues.put(PROP_MIXINTYPES, newMixins.toArray(new String[newMixins.size()]));
+            }
+
+            Node node = resource.adaptTo(Node.class);
+            NodeDefinition definition = node.getDefinition();
+            if (definition.allowsSameNameSiblings()) {
+                checkForSamenameSiblings(templateresource, resource);
+            }
+
             for (Map.Entry<String, Object> entry : templatevalues.entrySet()) {
                 if (!ignoredMetadataAttributes.contains(entry.getKey()) &&
                         ObjectUtils.notEqual(entry.getValue(), newvalues.get(entry.getKey()))) {
@@ -187,19 +210,18 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                 ensureSameOrdering(templatechildren, resource);
             }
 
+            if (thisNodeChanged) {
+                Resource modifcandidate = resource;
+                while (modifcandidate != null && !ResourceUtil.isNodeType(modifcandidate, TYPE_LAST_MODIFIED)) {
+                    modifcandidate = modifcandidate.getParent();
+                }
+                if (modifcandidate != null) {
+                    ResourceHandle.use(modifcandidate).setProperty(PROP_LAST_MODIFIED, Calendar.getInstance());
+                }
+            }
         } catch (PersistenceException | RepositoryException | RuntimeException e) {
             LOG.error("Error at {} : {}", resource.getPath(), e.toString());
             throw e;
-        }
-
-        if (thisNodeChanged) {
-            Resource modifcandidate = resource;
-            while (modifcandidate != null && !ResourceUtil.isNodeType(modifcandidate, TYPE_LAST_MODIFIED)) {
-                modifcandidate = modifcandidate.getParent();
-            }
-            if (modifcandidate != null) {
-                ResourceHandle.use(modifcandidate).setProperty(PROP_LAST_MODIFIED, Calendar.getInstance());
-            }
         }
     }
 
