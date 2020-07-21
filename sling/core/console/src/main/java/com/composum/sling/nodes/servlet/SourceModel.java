@@ -112,6 +112,10 @@ public class SourceModel extends ConsoleSlingBean {
             // , "^cq:lastRolledout"
     );
 
+    /** Matches mixins that do not belong into a source. E.g. rep:AccessControllable doesn't make sense
+     * since we do not export ACLs, anyway, and adding ACLs automatically adds this mixin. */
+    public static final StringFilter EXCLUDED_MIXINS = new StringFilter.WhiteList("^rep:AccessControllable$");
+
     /**
      * Filter matching nodes that are rendered as an XML file named like the node - "Full coverage aggregate" in
      * Vault.
@@ -903,7 +907,10 @@ public class SourceModel extends ConsoleSlingBean {
             if (isMultiValue()) {
                 StringBuilder buffer = new StringBuilder();
                 buffer.append(getTypePrefix(value));
-                Object[] array = (Object[]) value;
+                Object[] array = cleanupArray((Object[]) value);
+                if (array == null || array.length == 0) {
+                    return null;
+                }
                 String lineBreak = "";
                 if (array.length > 0 && getEscapedString(array[0]).startsWith(" ")) {
                     // if string values of an array are beginning with spaces we assume that the values
@@ -940,6 +947,19 @@ public class SourceModel extends ConsoleSlingBean {
             } else { // a value starting with { would be misinterpreted as type prefix -> escape it:
                 return "\\" + valueString;
             }
+        }
+
+        /**
+         * Cleanup of array values - if this is {@value JcrConstants#JCR_MIXINTYPES} we filter out {@link #EXCLUDED_MIXINS}.
+         */
+        protected Object[] cleanupArray(Object[] value) {
+            Object[] result = value;
+            if (JCR_MIXINTYPES.equals(name) && value != null) {
+                result = Arrays.asList(value).stream()
+                        .filter(o -> !EXCLUDED_MIXINS.accept(String.valueOf(o)))
+                        .toArray();
+            }
+            return result;
         }
 
         protected String getEscapedString(Object aValue) {

@@ -57,6 +57,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
 
     /**
      * Mixins that should not be removed from the target.
+     * See result of JCR query <code>/jcr:system/jcr:nodeTypes/*[jcr:isMixin=true]</code>
      */
     private static final Collection<String> noRemoveMixins = new HashSet<>(Arrays.asList(
             // various internal Jackrabbit stuff - we rather not touch that.
