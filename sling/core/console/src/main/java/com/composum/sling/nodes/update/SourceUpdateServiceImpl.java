@@ -12,11 +12,7 @@ import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.Importer;
 import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
-import org.apache.sling.api.resource.ModifiableValueMap;
-import org.apache.sling.api.resource.PersistenceException;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.api.resource.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,23 +23,9 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeDefinition;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
-import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
-import static com.composum.sling.core.util.ResourceUtil.PROP_MIXINTYPES;
-import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_LAST_MODIFIED;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_SLING_FOLDER;
+import static com.composum.sling.core.util.ResourceUtil.*;
 
 
 @Component(
@@ -65,6 +47,13 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             "jcr:activity", "jcr:etag", "rep:hold", "rep:retentionPolicy", "rep:versions",
             JcrConstants.JCR_MIXINTYPES // mixinTypes is treated separately
     ));
+
+    /**
+     * Nodes that should not be removed from the target.
+     * See result of JCR query <code>/jcr:system/jcr:nodeTypes//element(*,nt:childNodeDefinition)[jcr:name]</code>
+     * and <code>/jcr:system/jcr:nodeTypes//rep:namedChildNodeDefinitions</code>
+     */
+    private static final Collection<String> noRemoveNodeNames = new HashSet<>(Arrays.asList("rep:policy", "oak:index", "rep:repoPolicy"));
 
     /**
      * Mixins that should not be removed from the target.
@@ -189,8 +178,15 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             for (Resource child : resource.getChildren()) {
                 Resource templateChild = templateresource.getChild(child.getName());
                 if (templateChild == null) {
-                    thisNodeChanged = true;
-                    resource.getResourceResolver().delete(child);
+                    if (!noRemoveNodeNames.contains(child.getName())) {
+                        thisNodeChanged = true;
+                        try {
+                            resource.getResourceResolver().delete(child);
+                        } catch (PersistenceException | RuntimeException e) {
+                            LOG.error("Can't delete {}", child.getPath(), e);
+                            throw e;
+                        }
+                    }
                 } else {
                     equalize(templateChild, child, session);
                 }
@@ -232,9 +228,13 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             throw new IllegalStateException("Bug: template and resource of " + resource.getPath() +
                     " should have same size now but have " + templatechildren.size() + " and " + resourcechildren.size());
         }
-        if (resourcechildren.size() < 2) { return; }
+        if (resourcechildren.size() < 2) {
+            return;
+        }
         Map<String, Resource> nameToNode = new HashMap<>();
-        for (Resource child : resourcechildren) { nameToNode.put(child.getName(), child); }
+        for (Resource child : resourcechildren) {
+            nameToNode.put(child.getName(), child);
+        }
         for (int i = 0; i < resourcechildren.size(); ++i) {
             if (!StringUtils.equals(resourcechildren.get(i).getName(), templatechildren.get(i).getName())) {
                 node.orderBefore(templatechildren.get(i).getName(), resourcechildren.get(i).getName());
