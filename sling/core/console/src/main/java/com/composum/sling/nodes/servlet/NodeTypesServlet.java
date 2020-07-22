@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 
 /**
  * A servlet that exports the nodetypes in the format used in nodetypes.cnd.
- * E.g. <code>http://localhost:9090/bin/cpm/nodes/debug/nodetypes?nodetyperegex=cpp%3A.%2A</code>
+ * E.g. <code>http://localhost:9090/bin/cpm/nodes/debug/nodetypes?nameregex=cpp%3A.%2A</code>
  */
 @SlingServlet(
         paths = "/bin/cpm/nodes/debug/nodetypes",
@@ -36,7 +36,7 @@ public class NodeTypesServlet extends SlingSafeMethodsServlet {
     /**
      * Request parameter with a regular expression to select the nodetypes to write.
      */
-    public static final String PARAM_NODETYPEREGEX = "nodetyperegex";
+    public static final String PARAM_NODETYPEREGEX = "nameregex";
 
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
