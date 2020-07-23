@@ -1,6 +1,7 @@
 package com.composum.sling.nodes.consoleplugin;
 
 import com.composum.sling.core.util.XSS;
+import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.*;
@@ -14,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeDefinition;
-import javax.jcr.nodetype.NodeTypeIterator;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -22,6 +22,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -119,9 +122,9 @@ public class NodetypesPlugin extends HttpServlet {
 
         protected void writeNodetypes(Session session, PrintWriter writer, Pattern nodetypeSelector) throws RepositoryException, IOException {
             final CompactNodeTypeDefWriter cnd = new CompactNodeTypeDefWriter(writer, session, true);
-            final NodeTypeIterator iter = session.getWorkspace().getNodeTypeManager().getAllNodeTypes();
-            while (iter.hasNext()) {
-                NodeTypeDefinition definition = iter.nextNodeType();
+            final List<NodeTypeDefinition> nodetypes = IteratorUtils.toList(session.getWorkspace().getNodeTypeManager().getAllNodeTypes());
+            Collections.sort(nodetypes, Comparator.comparing(NodeTypeDefinition::getName));
+            for (NodeTypeDefinition definition : nodetypes) {
                 if (nodetypeSelector != null && !nodetypeSelector.matcher(definition.getName()).matches()) {
                     continue;
                 }
