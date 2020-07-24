@@ -69,6 +69,7 @@ public class LinkTagTest {
 
         xssapi = mock(XSSAPI.class, new ThrowsException(new IllegalStateException("Not mocked")));
         Mockito.doAnswer(invocation -> invocation.getArgument(0)).when(xssapi).encodeForHTML(anyString());
+        Mockito.doAnswer(invocation -> invocation.getArgument(0)).when(xssapi).getValidHref(anyString());
         ServiceHandle xssapihandle = (ServiceHandle) FieldUtils.readStaticField(com.composum.sling.core.util.XSS.class, "XSSAPI_HANDLE", true);
         FieldUtils.writeField(xssapihandle, "service", xssapi, true);
     }
