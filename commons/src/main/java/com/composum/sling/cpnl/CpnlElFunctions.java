@@ -167,7 +167,7 @@ public class CpnlElFunctions {
      * @return the URL built in the context of the requested domain host
      */
     public static String url(SlingHttpServletRequest request, String path) {
-        return LinkUtil.getUrl(request, path);
+        return XSS.getValidHref(LinkUtil.getUrl(request, path));
     }
 
     /**
@@ -178,7 +178,7 @@ public class CpnlElFunctions {
      * @return the URL built in the context of the requested domain host
      */
     public static String mappedUrl(SlingHttpServletRequest request, String path) {
-        return LinkUtil.getMappedUrl(request, path);
+        return XSS.getValidHref(LinkUtil.getMappedUrl(request, path));
     }
 
     /**
@@ -189,7 +189,7 @@ public class CpnlElFunctions {
      * @return the URL built in the context of the requested domain host
      */
     public static String unmappedUrl(SlingHttpServletRequest request, String path) {
-        return LinkUtil.getUnmappedUrl(request, path);
+        return XSS.getValidHref(LinkUtil.getUnmappedUrl(request, path));
     }
 
     /**
@@ -200,7 +200,7 @@ public class CpnlElFunctions {
      * @return the URL built in the context of the requested domain host
      */
     public static String externalUrl(SlingHttpServletRequest request, String path) {
-        return LinkUtil.getAbsoluteUrl(request, LinkUtil.getUrl(request, path));
+        return XSS.getValidHref(LinkUtil.getAbsoluteUrl(request, LinkUtil.getUrl(request, path)));
     }
 
     /**
@@ -211,7 +211,7 @@ public class CpnlElFunctions {
      * @return the URL built in the context of the requested domain host
      */
     public static String mappedExternalUrl(SlingHttpServletRequest request, String path) {
-        return LinkUtil.getAbsoluteUrl(request, LinkUtil.getMappedUrl(request, path));
+        return XSS.getValidHref(LinkUtil.getAbsoluteUrl(request, LinkUtil.getMappedUrl(request, path)));
     }
 
     /**
@@ -222,7 +222,7 @@ public class CpnlElFunctions {
      * @return the URL built in the context of the requested domain host
      */
     public static String unmappedExternalUrl(SlingHttpServletRequest request, String path) {
-        return LinkUtil.getAbsoluteUrl(request, LinkUtil.getUnmappedUrl(request, path));
+        return XSS.getValidHref(LinkUtil.getAbsoluteUrl(request, LinkUtil.getUnmappedUrl(request, path)));
     }
 
     /**
