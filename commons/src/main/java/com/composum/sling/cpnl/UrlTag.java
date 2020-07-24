@@ -1,5 +1,6 @@
 package com.composum.sling.cpnl;
 
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +86,7 @@ public abstract class UrlTag extends TagBase {
                 urlValue = CpnlElFunctions.url(request, urlValue);
             }
         }
-        return urlValue;
+        return XSS.getValidHref(urlValue);
     }
 
     @Override
