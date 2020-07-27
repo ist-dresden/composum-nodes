@@ -45,6 +45,8 @@ public class LinkUtilTest {
         when(resolver.getResource(anyString())).then((invocation ->
                 StringUtils.equals(resource.getPath(), invocation.getArgument(0)) ? resource : null
         ));
+
+        XssApiMocking.setupXssMock();
     }
 
     @Test

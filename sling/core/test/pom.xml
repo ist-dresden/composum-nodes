@@ -165,6 +165,12 @@
             <version>2.18.2</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.xss</artifactId>
+            <version>2.0.12</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- More testing dependencies -->
         <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->

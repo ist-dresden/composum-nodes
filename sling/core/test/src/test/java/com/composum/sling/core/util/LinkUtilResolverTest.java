@@ -1,18 +1,24 @@
 package com.composum.sling.core.util;
 
 import com.composum.sling.core.ResourceHandle;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.resourcebuilder.api.ResourceBuilder;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.apache.sling.testing.mock.sling.servlet.MockSlingHttpServletRequest;
+import org.apache.sling.xss.XSSAPI;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
+import org.mockito.Mockito;
+import org.mockito.internal.stubbing.answers.ThrowsException;
 
 import static com.composum.sling.core.util.MimeTypeUtil.*;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for LinkUtil using a real resolver.
@@ -36,7 +42,7 @@ public class LinkUtilResolverTest {
     protected ResourceHandle imgOtherExtension;
 
     @Before
-    public void setup() {
+    public void setup() throws IllegalAccessException {
         resolver = context.resourceResolver();
         request = context.request();
         plainResource = ResourceHandle.use(context.build().resource("/content/plain",
@@ -46,6 +52,11 @@ public class LinkUtilResolverTest {
         imgNoExtension = makeImage("/content/imgNoExt");
         imgWithExtension = makeImage("/content/img.jpg");
         imgOtherExtension = makeImage("/content/img.jpeg");
+
+        XSSAPI xssapi = mock(XSSAPI.class, new ThrowsException(new IllegalStateException("Not mocked")));
+        Mockito.doAnswer(invocation -> invocation.getArgument(0)).when(xssapi).getValidHref(anyString());
+        ServiceHandle xssapihandle = (ServiceHandle) FieldUtils.readStaticField(com.composum.sling.core.util.XSS.class, "XSSAPI_HANDLE", true);
+        FieldUtils.writeField(xssapihandle, "service", xssapi, true);
     }
 
     @Test
