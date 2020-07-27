@@ -1131,7 +1131,7 @@ public class SlingUrl implements Cloneable {
                 builder.append('#').append(UrlCodec.FRAGMENT.encode(fragment));
             }
         }
-        return builder.toString();
+        return XSS.getValidHref(builder.toString());
     }
 
     protected void parseUrl(@Nonnull final String url, final boolean decode) throws IllegalArgumentException {

@@ -4,11 +4,15 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.xss.XSSAPI;
 import org.junit.*;
 import org.junit.rules.ErrorCollector;
+import org.mockito.Mockito;
+import org.mockito.internal.stubbing.answers.ThrowsException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -38,7 +42,7 @@ public class SlingUrlTest {
     protected StringBuilder linkexamples = new StringBuilder();
 
     @Before
-    public void setup() {
+    public void setup() throws IllegalAccessException {
         request = mock(SlingHttpServletRequest.class);
         resolver = mock(ResourceResolver.class);
         when(resolver.getResource(anyString())).thenReturn(null);
@@ -53,6 +57,8 @@ public class SlingUrlTest {
         when(request.getContextPath()).thenReturn("/ctx");
         when(request.getResourceResolver()).thenReturn(resolver);
         when(request.getAttribute(LinkMapper.LINK_MAPPER_REQUEST_ATTRIBUTE)).thenReturn(null);
+
+        XssApiMocking.setupXssMock();
     }
 
     @Test
