@@ -51,10 +51,33 @@ if [ -z $1 ]; then
 fi
 
 TMPFIL=`mktemp -u`.zip
-trap "{ rm -f $TMPFIL; }" EXIT
+trap "{ /bin/rm -f $TMPFIL; }" EXIT
 # echo temporary file: $TMPFIL
 
 curl -s -S -o $TMPFIL -u $CPM_ADMINUSER:$CPM_ADMINPASSWD $CPM_PROTOCOL://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/source.zip/$1
 
-unzip -o -u $TMPFIL
-unzip -l $TMPFIL
+echo
+echo FILES:
+echo
+
+if command -v 7z &> /dev/null
+then
+  7z l $TMPFIL
+else
+  unzip -l $TMPFIL
+fi
+
+echo
+echo EXTRACTION:
+echo
+if command -v 7z &> /dev/null
+then
+  7z -y x $TMPFIL
+else
+  unzip -o -u $TMPFIL
+  echo
+  echo "WARNING: arc not found -> using unzip which might not support unicode."
+fi
+echo
+echo DONE
+echo

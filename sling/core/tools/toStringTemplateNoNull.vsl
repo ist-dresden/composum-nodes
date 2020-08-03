@@ -1,0 +1,25 @@
+## toString template for IntelliJ that only outputs fields with nonnull values
+## see https://www.jetbrains.com/help/idea/generate-tostring-settings-dialog.html
+## https://velocity.apache.org/engine/1.7/user-guide.html
+##
+public java.lang.String toString() {
+org.apache.commons.lang3.builder.ToStringBuilder builder = new org.apache.commons.lang3.builder.ToStringBuilder(this);
+#foreach ($member in $members)
+    #if ( $member.boolean )
+    if (Boolean.TRUE.equals($member.accessor)) {
+    builder.append("$member.name", $member.accessor);
+    }
+    #elseif ( $member.primitive )
+    builder.append("$member.name", $member.accessor);
+    #elseif ( $member.map || $member.collection )
+    if ($member.accessor != null && ! $member.accessor .isEmpty()) {
+    builder.append("$member.name", $member.accessor);
+    }
+    #else
+    if ($member.accessor != null) {
+    builder.append("$member.name", $member.accessor);
+    }
+    #end
+#end
+return builder.toString();
+}

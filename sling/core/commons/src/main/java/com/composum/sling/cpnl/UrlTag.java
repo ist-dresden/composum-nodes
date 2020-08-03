@@ -1,5 +1,6 @@
 package com.composum.sling.cpnl;
 
+import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +59,7 @@ public abstract class UrlTag extends TagBase {
     }
 
     /**
-     * @param format the fmt to set to build a url from the 'url' value
+     * @param format The format to set to build a url from the 'url' value: {} or {0} is replaced by the url.
      */
     public void setFormat(String format) {
         this.format = format;
@@ -74,14 +75,18 @@ public abstract class UrlTag extends TagBase {
 
     @Nonnull
     protected String buildUrl(@Nonnull String urlValue, @Nullable final Boolean map){
-        if (map != null) {
-            urlValue = map
-                    ? CpnlElFunctions.mappedUrl(request, urlValue)
-                    : CpnlElFunctions.unmappedUrl(request, urlValue);
-        } else {
-            urlValue = CpnlElFunctions.url(request, urlValue);
+        if (StringUtils.startsWith(urlValue, "/") && !StringUtils.startsWith(urlValue, "//")) {
+            // this should be a path; if it isn't a path we do not modify the href.
+            // relative paths wouldn't make any sense here, anyway, so we ignore these.
+            if (map != null) {
+                urlValue = map
+                        ? CpnlElFunctions.mappedUrl(request, urlValue)
+                        : CpnlElFunctions.unmappedUrl(request, urlValue);
+            } else {
+                urlValue = CpnlElFunctions.url(request, urlValue);
+            }
         }
-        return urlValue;
+        return XSS.getValidHref(urlValue);
     }
 
     @Override
