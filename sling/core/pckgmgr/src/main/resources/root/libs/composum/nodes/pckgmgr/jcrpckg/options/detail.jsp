@@ -22,7 +22,7 @@
         </div>
         <div class="provider-name text-option option-field">
             <div class="name-line" class="label">Provider Name</div>
-            <div class="value-line value-text">${pckg.providerName}</div>
+            <div class="value-line value-text">${cpn:text(pckg.providerName)}</div>
         </div>
         <div class="provider-url link-option option-field">
             <div class="name-line">Provider URL</div>
@@ -44,7 +44,7 @@
                 <tbody>
                 <c:forEach items="${pckg.dependencies}" var="relation">
                     <tr>
-                        <td class="relation">${relation}</td>
+                        <td class="relation">${cpn:text(relation)}</td>
                     </tr>
                 </c:forEach>
                 </tbody>
@@ -60,7 +60,7 @@
                 <tbody>
                 <c:forEach items="${pckg.replaces}" var="relation">
                     <tr>
-                        <td class="relation">${relation}</td>
+                        <td class="relation">${cpn:text(relation)}</td>
                     </tr>
                 </c:forEach>
                 </tbody>

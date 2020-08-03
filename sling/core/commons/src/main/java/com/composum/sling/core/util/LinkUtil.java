@@ -14,6 +14,7 @@ import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,8 +42,6 @@ public class LinkUtil {
     public static final Pattern URL_PATTERN = Pattern.compile(URL_PATTERN_STRING, Pattern.CASE_INSENSITIVE);
     public static final String SPECIAL_URL_STRING = "^(?:(mailto|tel):)(.+)$";
     public static final Pattern SPECIAL_URL_PATTERN = Pattern.compile(SPECIAL_URL_STRING, Pattern.CASE_INSENSITIVE);
-
-    public static final LinkCodec CODEC = new LinkCodec();
 
     /**
      * Builds a mapped link to a path (resource path) without selectors and a determined extension.
@@ -148,17 +147,14 @@ public class LinkUtil {
                 extension = getExtension(resource, extension);
             }
 
-            try {
-                SlingUrl slingUrl = new SlingUrl(request, url, false, mapper);
-                if (StringUtils.isNotBlank(selectors)) {
-                    slingUrl.selectors(selectors);
-                }
-                if (StringUtils.isNotBlank(extension)) {
-                    slingUrl.extension(extension);
-                }
-                result = slingUrl.getUrl();
-            } catch (IllegalArgumentException ignore) {
+            SlingUrl slingUrl = new SlingUrl(request, mapper).fromPath(url);
+            if (StringUtils.isNotBlank(selectors)) {
+                slingUrl.selectors(selectors);
             }
+            if (StringUtils.isNotBlank(extension)) {
+                slingUrl.extension(extension);
+            }
+            result = slingUrl.getUrl();
         }
 
         LOG.debug("Mapped '{}' to '{}'", url, result);
@@ -333,6 +329,7 @@ public class LinkUtil {
      * @param detectMimeTypeExtension if 'true' an extension according to the mime type will be detected
      * @return the string which has to add to the resources path; '' if nothing should add
      */
+    @Nonnull
     public static String getExtension(ResourceHandle resource, String extension, boolean detectMimeTypeExtension) {
         if (StringUtils.isBlank(extension) && detectMimeTypeExtension) {
             if (resource.isFile()) {
@@ -380,17 +377,14 @@ public class LinkUtil {
     }
 
     /**
-     * URL encoding for URL constructed form repository entities.
+     * URL encoding for URL constructed form repository entities. E.g. when URL from user-input was saved
+     * into the repository, this will fix it up if it contains unquoted characters.
      *
      * @param url the url to encode
      * @return the encoded URL
      */
-    public static String encodeUrl(String url) {
-        return CODEC.encodeUrl(url);
-    }
-
-    public static String decodeUrl(String url) {
-        return CODEC.decode(url);
+    public static String encodeUrl(SlingHttpServletRequest request, String url) {
+        return new SlingUrl(request).fromUrl(url).getUrl();
     }
 
     /**
@@ -401,25 +395,79 @@ public class LinkUtil {
      */
     public static String encodePath(String path) {
         if (path != null) {
-            path = path.replaceAll("/jcr:", "/_jcr_");
-            path = encode(path);
-            path = path.replaceAll("\\?", "%3F");
-            path = path.replaceAll("=", "%3D");
-            path = path.replaceAll(";", "%3B");
-            path = path.replaceAll(":", "%3A");
-            path = path.replaceAll("&", "%26");
-            path = path.replaceAll("\\$", "%24");
-            path = path.replaceAll("#", "%23");
+            path = namespacePrefixEscape(path);
+            path = UrlCodec.PATH.encode(path);
         }
         return path;
     }
 
+    /**
+     * URL-decode a path (same as {@link #decode(String)} but also fixes the external naming /_jcr_ to /jcr:).
+     */
     public static String decodePath(String path) {
         if (path != null) {
             path = decode(path);
-            path = path.replaceAll("/_jcr_", "/jcr:");
+            path = path != null ? namespacePrefixUnescape(path) : path;
         }
         return path;
+    }
+
+    protected static final Pattern UNESCAPED_PATHSEGMENT = Pattern.compile("(?<=^|/)(" +
+            "(?<prefix>[^/:_]+):" +
+            "|_(?<uprefix>[^/]+)_" +
+            ")");
+
+    /**
+     * For <a href="https://jackrabbit.apache.org/filevault/vaultfs.html#Filename_escaping">Filename escaping</a>:
+     * replace namespace prefix with _ quoting, e.g. jcr:content with _jcr_content in path.
+     */
+    public static String namespacePrefixEscape(String path) {
+        String result = path;
+        if (path != null && (path.contains(":") || path.contains("_"))) {
+            StringBuffer buf = new StringBuffer();
+            Matcher matcher = UNESCAPED_PATHSEGMENT.matcher(path);
+            while (matcher.find()) {
+                matcher.appendReplacement(buf, "");
+                String prefix = matcher.group("prefix");
+                if (prefix != null) {
+                    buf.append("_").append(prefix).append("_");
+                } else { // prefix with _ to avoid confusion with _ quoted prefix
+                    buf.append("__").append(matcher.group("uprefix")).append("_");
+                }
+            }
+            matcher.appendTail(buf);
+            result = buf.toString();
+        }
+        return result;
+    }
+
+    protected static final Pattern ESCAPED_PATHSEGMENT = Pattern.compile("(?<=^|/)(" +
+            "_(?<prefix>[^/:_]+)_" +
+            "|__(?<uprefix>[^/]+)_" +
+            ")");
+
+    /**
+     * Undo name space prefix replacement for <a href="https://jackrabbit.apache.org/filevault/vaultfs.html#Filename_escaping">filename escaping</a>:
+     * replace e.g. _jcr_content with jcr:content in path.
+     */
+    public static String namespacePrefixUnescape(String path) {
+        String result = path;
+        if (path != null && path.contains("_")) {
+            StringBuffer buf = new StringBuffer();
+            Matcher matcher = ESCAPED_PATHSEGMENT.matcher(path);
+            while (matcher.find()) {
+                matcher.appendReplacement(buf, "");
+                String prefix = matcher.group("prefix");
+                if (prefix != null) {
+                    buf.append(prefix).append(":");
+                } else { // remove additional _ that was added in escape
+                    buf.append("_").append(matcher.group("uprefix")).append("_");
+                }
+            }
+            matcher.appendTail(buf);
+            result = buf.toString();
+        }
+        return result;
     }
 
     /**
@@ -429,10 +477,20 @@ public class LinkUtil {
      * @return the URL encoded value
      */
     public static String encode(String value) {
-        return CODEC.encode(value);
+        return UrlCodec.PATH.encode(value);
     }
 
+    /**
+     * Decodes percent encodings in a value. Caution: for parameter values use {@link #decodeInQuery(String)}
+     */
     public static String decode(String value) {
-        return CODEC.decode(value);
+        return UrlCodec.URLSAFE.decode(value);
+    }
+
+    /**
+     * Decodes percent encodings in name or value in a query, as well as turns '+' into ' '.
+     */
+    public static String decodeInQuery(String value) {
+        return UrlCodec.QUERYPART.decode(value);
     }
 }
