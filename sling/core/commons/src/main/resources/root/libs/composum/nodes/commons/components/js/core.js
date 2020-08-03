@@ -62,6 +62,9 @@
         },
 
         ajaxPost: function (url, data, config, onSuccess, onError, onComplete) {
+            if (!data._charset_) {
+                data._charset_ = "UTF-8";
+            }
             var ajaxConf = _.extend({
                 type: 'POST',
                 url: core.getContextUrl(url),
@@ -172,6 +175,9 @@
             }
             var action = $form.attr("action");
             var formData = new FormData($form[0]);
+            if (!formData.get('_charset_')) {
+                formData.set('_charset_', 'UTF-8');
+            }
             $.ajax({
                 type: 'POST',
                 url: core.getContextUrl(action),
@@ -514,14 +520,27 @@
             return nodePath.substring(0, lastSlash > 0 ? lastSlash : lastSlash + 1);
         },
 
+        decodeUri: function (uri) {
+            uri = uri.replace('\+', '%2B'); // keep '+' as is
+            uri = decodeURI(uri);
+            return uri;
+        },
+
+        encodeUri: function (uri) {
+            uri = encodeURI(uri);
+            return uri;
+        },
+
         encodePath: function (path) {
-            path = encodeURI(path); // except: ',/?:@&=+$#' ...
+            path = core.encodeUri(path); // except: ',/?:@&=+$#' ...
             path = path.replace('/jcr:', '/_jcr_');
             path = path.replace('\?', '%3F');
             path = path.replace('=', '%3D');
+            path = path.replace(';', '%3B');
             path = path.replace(':', '%3A');
             path = path.replace('\+', '%2B');
             path = path.replace('&', '%26');
+            path = path.replace('\$', '%24');
             path = path.replace('#', '%23');
             path = path.replace(' ', '%20');
             return path;

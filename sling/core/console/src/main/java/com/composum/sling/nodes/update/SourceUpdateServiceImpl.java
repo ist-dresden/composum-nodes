@@ -8,14 +8,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.Importer;
 import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
-import org.apache.sling.api.resource.ModifiableValueMap;
-import org.apache.sling.api.resource.PersistenceException;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.api.resource.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,23 +23,9 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeDefinition;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
-import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
-import static com.composum.sling.core.util.ResourceUtil.PROP_MIXINTYPES;
-import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_LAST_MODIFIED;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_SLING_FOLDER;
+import static com.composum.sling.core.util.ResourceUtil.*;
 
 
 @Component(
@@ -54,9 +37,32 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceUpdateServiceImpl.class);
 
+    /**
+     * Attributes that are not modified on the target.
+     * See result of JCR query <code>/jcr:system/jcr:nodeTypes/*[jcr:isMixin=true]/rep:namedPropertyDefinitions//*[jcr:protected=true]</code>.
+     */
     private static final Collection<String> ignoredMetadataAttributes = new HashSet<>(Arrays.asList("jcr:uuid", "jcr:lastModified",
             "jcr:lastModifiedBy", "jcr:created", "jcr:createdBy", "jcr:isCheckedOut", "jcr:baseVersion",
-            "jcr:versionHistory", "jcr:predecessors", "jcr:mergeFailed", "jcr:mergeFailed", "jcr:configuration"));
+            "jcr:versionHistory", "jcr:predecessors", "jcr:mergeFailed", "jcr:mergeFailed", "jcr:configuration",
+            "jcr:activity", "jcr:etag", "rep:hold", "rep:retentionPolicy", "rep:versions",
+            JcrConstants.JCR_MIXINTYPES // mixinTypes is treated separately
+    ));
+
+    /**
+     * Nodes that should not be removed from the target.
+     * See result of JCR query <code>/jcr:system/jcr:nodeTypes//element(*,nt:childNodeDefinition)[jcr:name]</code>
+     * and <code>/jcr:system/jcr:nodeTypes//rep:namedChildNodeDefinitions</code>
+     */
+    private static final Collection<String> noRemoveNodeNames = new HashSet<>(Arrays.asList("rep:policy", "oak:index", "rep:repoPolicy"));
+
+    /**
+     * Mixins that should not be removed from the target.
+     * See result of JCR query <code>/jcr:system/jcr:nodeTypes/*[jcr:isMixin=true]</code>
+     */
+    private static final Collection<String> noRemoveMixins = new HashSet<>(Arrays.asList(
+            // various internal Jackrabbit stuff - we rather not touch that.
+            "rep:AccessControllable", "rep:RepoAccessControllable", "rep:Impersonatable", "rep:VersionablePaths", "rep:VersionReference", "rep:RetentionManageable", "mix:indexable"
+    ));
 
     /**
      * {@inheritDoc}
@@ -115,13 +121,15 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             session.save();
         } finally {
             session.refresh(false); // discard - if it went OK it's already saved.
-            if (resolver.getResource(tmpPath) != null) { session.removeItem(tmpdir.getPath()); }
+            if (resolver.getResource(tmpPath) != null) {
+                session.removeItem(tmpdir.getPath());
+            }
             session.save();
         }
     }
 
     protected Resource makeTempdir(ResourceResolver resolver) throws RepositoryException {
-        String path = "/var/tmp/" + UUID.randomUUID().toString();
+        String path = "/tmp/composum/nodes/SourceUpdateService/" + UUID.randomUUID().toString();
         return ResourceUtil.getOrCreateResource(resolver, path, TYPE_SLING_FOLDER);
     }
 
@@ -130,18 +138,29 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         boolean thisNodeChanged = false;
         ValueMap templatevalues = ResourceUtil.getValueMap(templateresource);
         ModifiableValueMap newvalues = resource.adaptTo(ModifiableValueMap.class);
-        if (newvalues == null) { throw new IllegalArgumentException("Node not modifiable: " + resource.getPath()); }
-
-        // first copy type information since this changes attributes
-        newvalues.put(PROP_PRIMARY_TYPE, templatevalues.get(PROP_PRIMARY_TYPE));
-        String[] mixins = templatevalues.get(PROP_MIXINTYPES, new String[0]);
-        if (mixins.length > 0) { newvalues.put(PROP_MIXINTYPES, mixins); } else { newvalues.remove(PROP_MIXINTYPES); }
-
-        Node node = resource.adaptTo(Node.class);
-        NodeDefinition definition = node.getDefinition();
-        if (definition.allowsSameNameSiblings()) { checkForSamenameSiblings(templateresource, resource); }
+        if (newvalues == null) {
+            throw new IllegalArgumentException("Node not modifiable: " + resource.getPath());
+        }
 
         try {
+            // first copy type information since this changes attributes
+            newvalues.put(PROP_PRIMARY_TYPE, templatevalues.get(PROP_PRIMARY_TYPE));
+            List<String> newMixins = new ArrayList<>(Arrays.asList(templatevalues.get(PROP_MIXINTYPES, new String[0])));
+            for (String mixin : newvalues.get(PROP_MIXINTYPES, new String[0])) {
+                if (noRemoveMixins.contains(mixin) && !newMixins.contains(mixin)) {
+                    newMixins.add(mixin);
+                }
+            }
+            if (!newMixins.isEmpty() || newvalues.containsKey(PROP_MIXINTYPES)) {
+                newvalues.put(PROP_MIXINTYPES, newMixins.toArray(new String[newMixins.size()]));
+            }
+
+            Node node = resource.adaptTo(Node.class);
+            NodeDefinition definition = node.getDefinition();
+            if (definition.allowsSameNameSiblings()) {
+                checkForSamenameSiblings(templateresource, resource);
+            }
+
             for (Map.Entry<String, Object> entry : templatevalues.entrySet()) {
                 if (!ignoredMetadataAttributes.contains(entry.getKey()) &&
                         ObjectUtils.notEqual(entry.getValue(), newvalues.get(entry.getKey()))) {
@@ -160,8 +179,15 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             for (Resource child : resource.getChildren()) {
                 Resource templateChild = templateresource.getChild(child.getName());
                 if (templateChild == null) {
-                    thisNodeChanged = true;
-                    resource.getResourceResolver().delete(child);
+                    if (!noRemoveNodeNames.contains(child.getName())) {
+                        thisNodeChanged = true;
+                        try {
+                            resource.getResourceResolver().delete(child);
+                        } catch (PersistenceException | RuntimeException e) {
+                            LOG.error("Can't delete {}", child.getPath(), e);
+                            throw e;
+                        }
+                    }
                 } else {
                     equalize(templateChild, child, session);
                 }
@@ -181,19 +207,18 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                 ensureSameOrdering(templatechildren, resource);
             }
 
+            if (thisNodeChanged) {
+                Resource modifcandidate = resource;
+                while (modifcandidate != null && !ResourceUtil.isNodeType(modifcandidate, TYPE_LAST_MODIFIED)) {
+                    modifcandidate = modifcandidate.getParent();
+                }
+                if (modifcandidate != null) {
+                    ResourceHandle.use(modifcandidate).setProperty(PROP_LAST_MODIFIED, Calendar.getInstance());
+                }
+            }
         } catch (PersistenceException | RepositoryException | RuntimeException e) {
             LOG.error("Error at {} : {}", resource.getPath(), e.toString());
             throw e;
-        }
-
-        if (thisNodeChanged) {
-            Resource modifcandidate = resource;
-            while (modifcandidate != null && !ResourceUtil.isNodeType(modifcandidate, TYPE_LAST_MODIFIED)) {
-                modifcandidate = modifcandidate.getParent();
-            }
-            if (modifcandidate != null) {
-                ResourceHandle.use(modifcandidate).setProperty(PROP_LAST_MODIFIED, Calendar.getInstance());
-            }
         }
     }
 
@@ -204,9 +229,13 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             throw new IllegalStateException("Bug: template and resource of " + resource.getPath() +
                     " should have same size now but have " + templatechildren.size() + " and " + resourcechildren.size());
         }
-        if (resourcechildren.size() < 2) { return; }
+        if (resourcechildren.size() < 2) {
+            return;
+        }
         Map<String, Resource> nameToNode = new HashMap<>();
-        for (Resource child : resourcechildren) { nameToNode.put(child.getName(), child); }
+        for (Resource child : resourcechildren) {
+            nameToNode.put(child.getName(), child);
+        }
         for (int i = 0; i < resourcechildren.size(); ++i) {
             if (!StringUtils.equals(resourcechildren.get(i).getName(), templatechildren.get(i).getName())) {
                 node.orderBefore(templatechildren.get(i).getName(), resourcechildren.get(i).getName());

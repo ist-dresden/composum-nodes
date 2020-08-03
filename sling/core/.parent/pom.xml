@@ -5,7 +5,7 @@
     <groupId>com.composum.sling.core</groupId>
     <artifactId>composum-sling-core-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.12.1</version>
+    <version>1.12.2</version>
 
     <name>Composum Core Parent</name>
     <description>Maven parent for Composum Sling Core bundles</description>
@@ -70,7 +70,7 @@
         </repository>
         <snapshotRepository>
             <id>archiva</id>
-            <url>https://build.ist-software.com/archiva/repository/snapshots/</url>
+            <url>https://build.ist-software.com/nexus/repository/maven-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -138,6 +138,35 @@
                     <version>3.1.1</version>
                 </plugin>
 
+                <!-- https://mvnrepository.com/artifact/pl.project13.maven/git-commit-id-plugin -->
+                <plugin>
+                    <groupId>pl.project13.maven</groupId>
+                    <artifactId>git-commit-id-plugin</artifactId>
+                    <version>4.0.0</version>
+                    <executions>
+                        <execution>
+                            <id>get-the-git-infos</id>
+                            <goals>
+                                <goal>revision</goal>
+                            </goals>
+                            <phase>initialize</phase>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <offline>true</offline>
+                        <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                        <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties
+                        </generateGitPropertiesFilename>
+                        <includeOnlyProperties>
+                            <includeOnlyProperty>^git.branch$</includeOnlyProperty>
+                            <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
+                            <includeOnlyProperty>^git.commit.id.(abbrev|full|describe|time)$</includeOnlyProperty>
+                            <includeOnlyProperty>^git.dirty$</includeOnlyProperty>
+                        </includeOnlyProperties>
+                        <commitIdGenerationMode>full</commitIdGenerationMode>
+                    </configuration>
+                </plugin>
+
                 <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-jar-plugin -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -183,6 +212,9 @@
                             <Bundle-Category>composum</Bundle-Category>
                             <Bundle-Vendor>IST GmbH Dresden</Bundle-Vendor>
                             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                            <Build-Date>${build.timestamp}</Build-Date>
+                            <SCM-Revision>${git.commit.id.describe}</SCM-Revision>
+                            <SCM-Branch>${git.branch}</SCM-Branch>
                         </instructions>
                     </configuration>
                 </plugin>

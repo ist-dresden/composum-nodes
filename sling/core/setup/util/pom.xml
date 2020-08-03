@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.sling.core.setup</groupId>
         <artifactId>composum-sling-core-setup-parent</artifactId>
-        <version>1.12.1</version>
+        <version>1.12.2</version>
     </parent>
 
     <artifactId>composum-sling-core-setup-util</artifactId>
@@ -14,6 +14,15 @@
 
     <name>Composum Nodes setup library</name>
     <description>the setup implementation code for reuse</description>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
 

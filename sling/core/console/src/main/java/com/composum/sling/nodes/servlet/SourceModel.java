@@ -22,24 +22,14 @@ import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.math.BigDecimal;
 import java.nio.file.attribute.FileTime;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Queue;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -47,11 +37,7 @@ import java.util.zip.ZipOutputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
-import static org.apache.jackrabbit.JcrConstants.JCR_CONTENT;
-import static org.apache.jackrabbit.JcrConstants.JCR_MIXINTYPES;
-import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE;
-import static org.apache.jackrabbit.JcrConstants.NT_FILE;
-import static org.apache.jackrabbit.JcrConstants.NT_RESOURCE;
+import static org.apache.jackrabbit.JcrConstants.*;
 
 /**
  * <p>
@@ -126,6 +112,10 @@ public class SourceModel extends ConsoleSlingBean {
             // , "^cq:lastRolledout"
     );
 
+    /** Matches mixins that do not belong into a source. E.g. rep:AccessControllable doesn't make sense
+     * since we do not export ACLs, anyway, and adding ACLs automatically adds this mixin. */
+    public static final StringFilter EXCLUDED_MIXINS = new StringFilter.WhiteList("^rep:AccessControllable$");
+
     /**
      * Filter matching nodes that are rendered as an XML file named like the node - "Full coverage aggregate" in
      * Vault.
@@ -137,24 +127,32 @@ public class SourceModel extends ConsoleSlingBean {
                     "^rep:Policy$", "^cq:Widget$", "^cq:EditConfig$", "^cq:WorkflowModel$", "^vlt:FullCoverage$",
                     "^mix:language$", "^sling:OsgiConfig$"));
 
-    /** Pattern for {@link SimpleDateFormat} that creates a date suitable with XML sources. */
+    /**
+     * Pattern for {@link SimpleDateFormat} that creates a date suitable with XML sources.
+     */
     public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
-    /** Indentation level for one level in the XML hierarchy in an XML document. */
+    /**
+     * Indentation level for one level in the XML hierarchy in an XML document.
+     */
     public static final String BASIC_INDENT = "    ";
 
-    protected static final Pattern PATH_WITHIN_JCR_CONTENT = Pattern.compile(".*/jcr:content(/.*)?$");
-
+    protected static final Pattern PATH_WITHIN_JCR_CONTENT = Pattern.compile(".*/jcr:content/.*$");
 
     protected final NodesConfiguration config;
 
     protected transient List<Property> propertyList;
     protected transient List<Resource> subnodeList;
     /**
-     * Whether the child nodes are known to be orderable - wrapped into array to distinguish "not known" from "not
+     * Whether the siblings are known to be orderable - wrapped into array to distinguish "not known" from "not
      * yet determined".
      */
     protected transient Boolean[] hasOrderableSiblings;
+    /**
+     * Whether the child nodes are known to be orderable - wrapped into array to distinguish "not known" from "not
+     * yet determined".
+     */
+    protected transient Boolean[] hasOrderableChildren;
 
     public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
         if ("/".equals(ResourceUtil.normalize(resource.getPath()))) {
@@ -293,40 +291,82 @@ public class SourceModel extends ConsoleSlingBean {
 
     // Package output
 
-    /** Writes a complete package about the node - arguments specify the package metadata. */
+    /**
+     * Writes a complete package about the node - arguments specify the package metadata.
+     *
+     * @throws IOException             on IO errors
+     * @throws IOErrorOnCloseException is thrown when an IO error appears during {@link ZipOutputStream#close()},
+     *                                 which writes the central directory of the zip which is not read by some consumers. We give them
+     *                                 the possibility to distinguish these.
+     */
     public void writePackage(OutputStream output, String group, String packageName, String version)
-            throws IOException, RepositoryException {
+            throws IOException, IOErrorOnCloseException, RepositoryException {
 
         String root = "jcr_root";
         ZipOutputStream zipStream = new ZipOutputStream(output);
         writePackageProperties(zipStream, group, packageName, version);
         writeFilterXml(zipStream);
-        writeParents(zipStream, root, resource.getParent());
-        writeIntoZip(zipStream, root, true);
+        if (ResourceUtil.CONTENT_NODE.equals(getName())) {
+            SourceModel parentModel = new SourceModel(config, context, resource.getParent());
+            writeParents(zipStream, root, parentModel.getResource().getParent());
+            parentModel.writeIntoZip(zipStream, root, DepthMode.DEEP);
+        } else {
+            writeParents(zipStream, root, resource.getParent());
+            writeIntoZip(zipStream, root, DepthMode.DEEP);
+        }
         zipStream.flush();
-        zipStream.close();
+        try {
+            zipStream.close();
+        } catch (IOException e) {
+            throw new IOErrorOnCloseException(e);
+        }
+    }
+
+    /**
+     * Returns true if the nodes siblings are ordered. Works only for JCR resources - if we cannot determine this,
+     * we return null.
+     */
+    public Boolean hasOrderableSiblings() {
+        ResourceHandle parent = getResource().getParent();
+        Boolean result;
+        if (hasOrderableSiblings == null) {
+            result = hasOrderableChildren(parent);
+            hasOrderableSiblings = new Boolean[]{result};
+        } else {
+            result = hasOrderableSiblings[0];
+        }
+        return result;
     }
 
     /**
      * Returns true if the nodes children are ordered. Works only for JCR resources - if we cannot determine this,
      * we return null.
      */
-    public Boolean hasOrderableSiblings() {
-        Boolean result = null;
-        if (hasOrderableSiblings == null) {
-            try {
-                Node node = requireNonNull(getResource().getParent()).adaptTo(Node.class);
-                if (node != null) {
-                    result = node.getPrimaryNodeType().hasOrderableChildNodes();
-                }
-            } catch (RepositoryException | RuntimeException e) {
-                LOG.error("Can't determine orderability of " + getPath(), e);
-            }
-            hasOrderableSiblings = new Boolean[]{result};
+    public Boolean hasOrderableChildren() {
+        Boolean result;
+        if (hasOrderableChildren == null) {
+            result = hasOrderableChildren(resource);
+            hasOrderableChildren = new Boolean[]{result};
         } else {
-            result = hasOrderableSiblings[0];
+            result = hasOrderableChildren[0];
         }
         return result;
+    }
+
+    /**
+     * Returns true if the nodes children are ordered. Works only for JCR resources - if we cannot determine this,
+     * we return null.
+     */
+    protected Boolean hasOrderableChildren(ResourceHandle aResource) {
+        try {
+            Node node = requireNonNull(aResource).adaptTo(Node.class);
+            if (node != null) {
+                return node.getPrimaryNodeType().hasOrderableChildNodes();
+            }
+        } catch (RepositoryException | RuntimeException e) {
+            LOG.warn("Can't determine orderability of {}", getPath(), e);
+        }
+        return null;
     }
 
     protected void writePackageProperties(ZipOutputStream zipStream, String group, String aName, String version)
@@ -342,6 +382,7 @@ public class SourceModel extends ConsoleSlingBean {
                 .append("<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n")
                 .append("<properties>\n")
                 .append("<comment>FileVault Package Properties</comment>\n")
+                .append("<entry key=\"packageType\">content</entry> ")
                 .append("<entry key=\"name\">")
                 .append(aName)
                 .append("</entry>\n")
@@ -354,8 +395,13 @@ public class SourceModel extends ConsoleSlingBean {
                 .append(group)
                 .append("</entry>\n")
                 .append("<entry key=\"description\">created from source download</entry>\n")
+                .append("<entry key=\"createdBy\">")
+                .append(getResolver().getUserID())
+                .append("</entry>\n")
+                .append("<entry key=\"created\">")
+                .append(ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT))
+                .append("</entry>\n")
                 .append("</properties>");
-
         writer.flush(); // don't close since that closes the zipStream 8-{
         zipStream.closeEntry();
     }
@@ -381,24 +427,28 @@ public class SourceModel extends ConsoleSlingBean {
         zipStream.closeEntry();
     }
 
-    /** Writes all the .content.xml of the parents of root into the zip. */
+    /**
+     * Writes all the .content.xml of the parents of root into the zip.
+     */
     protected void writeParents(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Resource parent)
             throws IOException, RepositoryException {
         if (parent != null && !"/".equals(parent.getPath())) {
             writeParents(zipStream, root, parent.getParent());
             SourceModel parentModel = new SourceModel(config, context, parent);
-            parentModel.writeIntoZip(zipStream, root, false);
+            parentModel.writeIntoZip(zipStream, root, DepthMode.PROPERTIESONLY);
         }
     }
 
     // ZIP output
 
-    /** Writes a "naked" Zip about the node: no package metadata, no parent nodes. */
+    /**
+     * Writes a "naked" Zip about the node: no package metadata, no parent nodes.
+     */
     public void writeArchive(@Nonnull OutputStream output)
             throws IOException, RepositoryException {
 
         ZipOutputStream zipStream = new ZipOutputStream(output);
-        writeIntoZip(zipStream, resource.getPath(), true);
+        writeIntoZip(zipStream, resource.getPath(), DepthMode.DEEP);
         zipStream.flush();
         zipStream.close();
     }
@@ -408,20 +458,24 @@ public class SourceModel extends ConsoleSlingBean {
      * subnodes if {writeDeep}=true, and might include entries about binary properties.
      *
      * @param zipStream the stream to write to, not closed.
-     * @param writeDeep if true, we also write subnodes recursively. If not, only the properties of the node itself
-     *                  are written (not even jcr:content) - used for writing parents in a package
+     * @param depthMode determines to what extent we write subnodes
      */
-    protected void writeIntoZip(@Nonnull ZipOutputStream zipStream, @Nonnull String root, boolean writeDeep)
+    protected void writeIntoZip(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nonnull DepthMode depthMode)
             throws IOException, RepositoryException {
-        if (resource == null || ResourceUtil.isNonExistingResource(resource)) { return; }
+        if (resource == null || ResourceUtil.isNonExistingResource(resource)) {
+            return;
+        }
         if (ResourceUtil.isResourceType(resource, ResourceUtil.TYPE_RESOURCE) && ResourceUtil.isResourceType(resource.getParent(), NT_FILE)) {
             // there is no proper way to write a nt:resource of a nt:file into a package.
             // We write the parent - nt:file - instead.
-            new SourceModel(config, context, resource.getParent()).writeIntoZip(zipStream, root, writeDeep);
+            new SourceModel(config, context, resource.getParent()).writeIntoZip(zipStream, root, depthMode);
             return;
         }
-        if (getRenderingType(resource, false) == RenderingType.BINARYFILE) {
-            if (writeDeep) { writeFile(zipStream, root, resource); }
+        RenderingType renderingType = getRenderingType(resource, false);
+        if (renderingType == RenderingType.BINARYFILE) {
+            if (DepthMode.DEEP == depthMode) {
+                writeFile(zipStream, root, resource);
+            }
             // not writeDeep: a .content.xml is not present for a file, so we can't do anything.
             return;
         }
@@ -429,6 +483,7 @@ public class SourceModel extends ConsoleSlingBean {
         ZipEntry entry;
         FileTime lastModified = getLastModified(resource);
         entry = new ZipEntry(getZipName(root));
+        LOG.debug("Writing entry {}", entry.getName());
         if (lastModified != null) {
             entry.setLastModifiedTime(lastModified);
         }
@@ -437,15 +492,13 @@ public class SourceModel extends ConsoleSlingBean {
         Queue<String> binaryProperties = new ArrayDeque<>(); // these need to have an additional file
         Queue<SourceModel> additionalFiles = new ArrayDeque<>();
         Writer writer = new OutputStreamWriter(zipStream, UTF_8);
-        writeXmlFile(writer, writeDeep, binaryProperties, additionalFiles);
+        writeXmlFile(writer, depthMode, binaryProperties, additionalFiles);
         writer.flush(); // deliberately not close since that'd close the zip 8-/
         zipStream.closeEntry();
 
-        if (writeDeep) {
-            writeBinaryProperties(zipStream, root, binaryProperties);
-            for (SourceModel binaryFile : additionalFiles) {
-                binaryFile.writeIntoZip(zipStream, root, writeDeep);
-            }
+        writeBinaryProperties(zipStream, root, binaryProperties);
+        for (SourceModel binaryFile : additionalFiles) {
+            binaryFile.writeIntoZip(zipStream, root, depthMode);
         }
     }
 
@@ -466,6 +519,7 @@ public class SourceModel extends ConsoleSlingBean {
         Binary binaryData = ResourceUtil.getBinaryData(file);
         if (binaryData != null) {
             entry = new ZipEntry(getZipName(root, path));
+            LOG.debug("Writing entry {}", entry.getName());
             if (lastModified != null) {
                 entry.setLastModifiedTime(lastModified);
             }
@@ -488,23 +542,30 @@ public class SourceModel extends ConsoleSlingBean {
             Queue<String> binaryProperties = new ArrayDeque<>(); // these need to have an additional file
             Queue<SourceModel> binaryFiles = new ArrayDeque<>();
             entry = new ZipEntry(getZipName(root, file.getPath() + ".dir/.content.xml"));
+            LOG.debug("Writing entry {}", entry.getName());
             if (lastModified != null) {
                 entry.setLastModifiedTime(lastModified);
             }
             zipStream.putNextEntry(entry);
             Writer writer = new OutputStreamWriter(zipStream, UTF_8);
             SourceModel fileModel = new SourceModel(config, context, file);
-            fileModel.writeXmlFile(writer, true, binaryProperties, binaryFiles);
+            fileModel.writeXmlFile(writer, DepthMode.DEEP, binaryProperties, binaryFiles);
             writer.flush();
             zipStream.closeEntry();
             writeBinaryProperties(zipStream, root, binaryProperties);
-            for (SourceModel binaryFile : binaryFiles) { binaryFile.writeIntoZip(zipStream, root, true); }
+            for (SourceModel binaryFile : binaryFiles) {
+                binaryFile.writeIntoZip(zipStream, root, DepthMode.DEEP);
+            }
         }
     }
 
-    /** Writes the binary properties collected in {binaryProperties} into entries in the zip file. */
+    /**
+     * Writes the binary properties collected in {binaryProperties} into entries in the zip file.
+     */
     protected void writeBinaryProperties(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Queue<String> binaryProperties) throws IOException {
-        if (binaryProperties == null || binaryProperties.isEmpty()) { return; }
+        if (binaryProperties == null || binaryProperties.isEmpty()) {
+            return;
+        }
         for (String binPropPath : binaryProperties) {
             Resource propertyResource = resolver.getResource(binPropPath);
             try (InputStream inputStream = propertyResource != null ? propertyResource.adaptTo(InputStream.class) : null) {
@@ -512,6 +573,7 @@ public class SourceModel extends ConsoleSlingBean {
                     FileTime lastModified = getLastModified(ResourceHandle.use(propertyResource));
                     ZipEntry entry;
                     entry = new ZipEntry(getZipName(root, binPropPath) + ".binary");
+                    LOG.debug("Writing entry {}", entry.getName());
                     if (lastModified != null) {
                         entry.setLastModifiedTime(lastModified);
                     }
@@ -525,7 +587,9 @@ public class SourceModel extends ConsoleSlingBean {
         }
     }
 
-    /** Turns a resource path into a proper name for a zip file with the appropriate encoding of troublesome chars. */
+    /**
+     * Turns a resource path into a proper name for a zip file with the appropriate encoding of troublesome chars.
+     */
     protected String getZipName(@Nonnull String root, @Nonnull String resourcePath) {
         String name = resourcePath;
         if (name.startsWith(root)) {
@@ -536,23 +600,36 @@ public class SourceModel extends ConsoleSlingBean {
         return filesystemName(name);
     }
 
-    /** Returns the name for the zip entry for this resource. */
+    /**
+     * Returns the name for the zip entry for this resource.
+     */
     protected String getZipName(@Nonnull String root) {
         RenderingType renderingType = getRenderingType(resource, false);
+        String zipName;
         switch (renderingType) {
             case FOLDER:
-                return getZipName(root, getPath() + "/.content.xml");
+                zipName = getZipName(root, getPath() + "/.content.xml");
+                break;
             case BINARYFILE:
-                return getZipName(root, getPath());
+                zipName = getZipName(root, getPath());
+                break;
             case EMBEDDED: // this shouldn't happen - no sensible way to handle it, but can happen on unfortunate calls.
             case XMLFILE:
-                return getZipName(root, getPath() + ".xml");
+                if (ResourceUtil.CONTENT_NODE.equals(getName())) {
+                    zipName = getZipName(root, resource.getParentPath() + "/.content.xml");
+                } else {
+                    zipName = getZipName(root, getPath() + ".xml");
+                }
+                break;
             default:
                 throw new IllegalArgumentException("Impossible rendering type " + renderingType);
         }
+        return zipName;
     }
 
-    /** Transforms the name into something usable for the filesystem. */
+    /**
+     * Transforms the name into something usable for the filesystem.
+     */
     protected String filesystemName(String aName) {
         return PlatformNameFormat.getPlatformPath(aName);
     }
@@ -566,19 +643,19 @@ public class SourceModel extends ConsoleSlingBean {
      *                  children (and no jcr:content).
      */
     public void writeXmlFile(@Nonnull Writer writer, boolean writeDeep) throws IOException, RepositoryException {
-        writeXmlFile(writer, writeDeep, null, null);
+        DepthMode depthMode = writeDeep ? DepthMode.DEEP : DepthMode.PROPERTIESONLY;
+        writeXmlFile(writer, depthMode, null, null);
     }
 
     /**
      * Writes an XML file for the node, normally .content.xml, including an jcr:content node if present.
      *
-     * @param writeDeep        also write subnodes; if false only properties of the node itself are written but no
-     *                         children (and no jcr:content).
+     * @param depthMode        determines to what extent we write subnodes
      * @param binaryProperties if given, collects the full paths to binary properties (except jcr:data which is
      *                         written as a binary file
      * @param additionalFiles  if given, collects the {@link SourceModel}s that have to be written into another file
      */
-    protected void writeXmlFile(@Nonnull Writer writer, boolean writeDeep,
+    protected void writeXmlFile(@Nonnull Writer writer, @Nonnull DepthMode depthMode,
                                 @Nullable Queue<String> binaryProperties, @Nullable Queue<SourceModel> additionalFiles)
             throws IOException, RepositoryException {
         List<String> namespaces = new ArrayList<>();
@@ -590,8 +667,21 @@ public class SourceModel extends ConsoleSlingBean {
         writeNamespaceAttributes(writer, namespaces);
         writeProperties(writer, "        ", binaryProperties);
         writer.append(">\n");
-        if (writeDeep) {
-            writeSubnodesAsXml(writer, BASIC_INDENT, isFullCoverageNode(), binaryProperties, additionalFiles);
+        switch (depthMode) {
+            case DEEP:
+                writeSubnodesAsXml(writer, BASIC_INDENT, isFullCoverageNode(), binaryProperties, additionalFiles);
+                break;
+            case CONTENTNODE:
+                Resource contentNode = resource.getChild(ResourceUtil.CONTENT_NODE);
+                if (contentNode != null) {
+                    SourceModel contentNodeModel = new SourceModel(config, context, contentNode);
+                    contentNodeModel.writeXmlSubnode(writer, BASIC_INDENT, isFullCoverageNode(),
+                            binaryProperties, additionalFiles);
+                }
+                writeSubnodeOrder(writer, BASIC_INDENT, true);
+                break;
+            default:
+                writeSubnodeOrder(writer, BASIC_INDENT, false);
         }
         writer.append("</jcr:root>\n");
     }
@@ -641,6 +731,19 @@ public class SourceModel extends ConsoleSlingBean {
                 break;
             default:
                 throw new IllegalArgumentException("Impossible rendering type " + renderingType);
+        }
+    }
+
+    /**
+     * If the node has orderable children, we write a stub node to specify the node order.
+     */
+    protected void writeSubnodeOrder(Writer writer, String indent, boolean skipContentNode) throws IOException {
+        if (hasOrderableChildren() && getSubnodeList().size() > 1) {
+            for (Resource subnode : getSubnodeList()) {
+                if (!skipContentNode || !ResourceUtil.CONTENT_NODE.equals(subnode.getName())) {
+                    writer.append(indent).append("<").append(escapeXmlName(subnode.getName())).append("/>\n");
+                }
+            }
         }
     }
 
@@ -719,9 +822,13 @@ public class SourceModel extends ConsoleSlingBean {
                 RenderingType.XMLFILE == getRenderingType(resource, false);
     }
 
-    /** How the node is rendered in a zip. */
+    /**
+     * How the node is rendered in a zip.
+     */
     protected enum RenderingType {
-        /** A single XML file named like the node - e.g. en.xml for mix:language. */
+        /**
+         * A single XML file named like the node - e.g. en.xml for mix:language.
+         */
         XMLFILE,
         /**
          * A folder with a .content.xml (the .content.xml might be missing if the node is of type nt:folder without
@@ -741,11 +848,28 @@ public class SourceModel extends ConsoleSlingBean {
         EMBEDDED
     }
 
+    public enum DepthMode {
+        /**
+         * Only the properties of the node, no subnodes
+         */
+        PROPERTIESONLY,
+        /**
+         * The properties of the node itself and its jcr:content node, if it exists.
+         */
+        CONTENTNODE,
+        /**
+         * All subnodes
+         */
+        DEEP
+    }
+
     public static class Property implements Comparable<Property> {
 
         protected final String name;
         protected final Object value;
-        /** JCR {@link PropertyType} since that cannot be guessed from the value in various cases. */
+        /**
+         * JCR {@link PropertyType} since that cannot be guessed from the value in various cases.
+         */
         protected final Integer jcrType;
 
         public Property(String name, Object value, Integer jcrType) {
@@ -775,13 +899,18 @@ public class SourceModel extends ConsoleSlingBean {
             return name;
         }
 
-        /** Properly escaped String that can be written as attribute value into an XML file. */
+        /**
+         * Properly escaped String that can be written as attribute value into an XML file.
+         */
         public String getEscapedString(String indent) {
 
             if (isMultiValue()) {
                 StringBuilder buffer = new StringBuilder();
                 buffer.append(getTypePrefix(value));
-                Object[] array = (Object[]) value;
+                Object[] array = cleanupArray((Object[]) value);
+                if (array == null || array.length == 0) {
+                    return null;
+                }
                 String lineBreak = "";
                 if (array.length > 0 && getEscapedString(array[0]).startsWith(" ")) {
                     // if string values of an array are beginning with spaces we assume that the values
@@ -820,6 +949,19 @@ public class SourceModel extends ConsoleSlingBean {
             }
         }
 
+        /**
+         * Cleanup of array values - if this is {@value JcrConstants#JCR_MIXINTYPES} we filter out {@link #EXCLUDED_MIXINS}.
+         */
+        protected Object[] cleanupArray(Object[] value) {
+            Object[] result = value;
+            if (JCR_MIXINTYPES.equals(name) && value != null) {
+                result = Arrays.asList(value).stream()
+                        .filter(o -> !EXCLUDED_MIXINS.accept(String.valueOf(o)))
+                        .toArray();
+            }
+            return result;
+        }
+
         protected String getEscapedString(Object aValue) {
             if (aValue instanceof Calendar) {
                 DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
@@ -831,23 +973,29 @@ public class SourceModel extends ConsoleSlingBean {
             return aValue != null ? escapeXmlAttribute(aValue.toString()) : "";
         }
 
-        public String escapeXmlAttribute(String value) {
+        public String escapeXmlAttribute(String attrValue) {
             // TODO(hps,2019-07-11) use utilities? Should be consistent with package manager, though.
             // This is probably not quite complete - what about other control characters?
             // There is org.apache.jackrabbit.util.Text.encodeIllegalXMLCharacters , but that doesn't seem right.
-            return value.replace("&", "&amp;")
+            return attrValue.replace("&", "&amp;")
                     .replace("<", "&lt;")
                     .replace("\"", "&quot;")
                     .replace("\t", "&#x9;")
                     .replace("\n", "&#xa;")
-                    .replace("\r", "&#xc;")
+                    .replace("\r", "&#xd;")
                     .replace("\\", "\\\\");
         }
 
         protected int getOrderingLevel() {
-            if (name.equals(JCR_PRIMARYTYPE)) { return 1; }
-            if (name.equals(JCR_MIXINTYPES)) { return 2; }
-            if (name.startsWith("sling:")) { return 3; }
+            if (name.equals(JCR_PRIMARYTYPE)) {
+                return 1;
+            }
+            if (name.equals(JCR_MIXINTYPES)) {
+                return 2;
+            }
+            if (name.startsWith("sling:")) {
+                return 3;
+            }
             return 4;
         }
 
@@ -874,22 +1022,34 @@ public class SourceModel extends ConsoleSlingBean {
         }
 
         @Override
-        public int compareTo(Property other) {
-            if (other == null) { return 1;}
+        public int compareTo(@Nonnull Property other) {
+            if (other == null) {
+                return 1;
+            }
             int level = getOrderingLevel();
             int olevel = other.getOrderingLevel();
-            if (level != olevel) { return Integer.compare(level, olevel); }
+            if (level != olevel) {
+                return Integer.compare(level, olevel);
+            }
             String ns = getNs();
             String ons = other.getNs();
-            if (ns.isEmpty() && !ons.isEmpty()) { return 1;}
-            if (!ns.isEmpty() && ons.isEmpty()) { return -1;}
-            if (!ns.equals(ons)) { return ns.compareTo(ons);}
+            if (ns.isEmpty() && !ons.isEmpty()) {
+                return 1;
+            }
+            if (!ns.isEmpty() && ons.isEmpty()) {
+                return -1;
+            }
+            if (!ns.equals(ons)) {
+                return ns.compareTo(ons);
+            }
             return getName().compareTo(other.getName());
         }
 
         @Override
         public boolean equals(Object o) {
-            if (!(o instanceof Property)) { return false; }
+            if (!(o instanceof Property)) {
+                return false;
+            }
             return compareTo((Property) o) == 0;
         }
 
@@ -902,6 +1062,17 @@ public class SourceModel extends ConsoleSlingBean {
         @Override
         public String toString() {
             return name + "=" + getEscapedString("");
+        }
+    }
+
+    /**
+     * Is thrown when an exception appears during {@link ZipOutputStream#close()}. This might happen
+     * when a consumer of the stream does read all contents, but does not read the central directory that is written
+     * during close.
+     */
+    public static class IOErrorOnCloseException extends IOException {
+        public IOErrorOnCloseException(IOException e) {
+            super(e);
         }
     }
 

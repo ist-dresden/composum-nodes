@@ -566,7 +566,7 @@
                         id = id.join('/');
                     }
                     // use 'base64url' encoded path as id (adoption necessary for jQuery)
-                    id = $.base64.encode(id).replace(/=/g, '-').replace(/[/]/g, '_');
+                    id = Base64.encode(id).replace(/=/g, '-').replace(/[/]/g, '_');
                     // add prefix for the current tree instance
                     id = this.nodeIdPrefix + id;
                 }

@@ -257,6 +257,8 @@
             <type>java.lang.Boolean</type>
         </attribute>
         <attribute>
+            <description>The format to set to build a url from the 'url' value: e.g. {} or {0} is replaced by the url.
+            </description>
             <name>format</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>

@@ -14,10 +14,10 @@
         <ol class="breadcrumbs-list">
             <c:forEach var="parent" items="${browser.parents}">
                 <li data-path="${parent.path}"><cpn:link
-                        href="/bin/browser.html${parent.pathEncoded}">${parent.nameEscaped}</cpn:link></li>
+                        href="/bin/browser.html${parent.path}">${parent.nameEscaped}</cpn:link></li>
             </c:forEach>
             <li class="active" data-path="${browser.current.path}"><cpn:link
-                    href="/bin/browser.html${browser.current.pathEncoded}">${browser.current.nameEscaped}</cpn:link></li>
+                    href="/bin/browser.html${browser.current.path}">${browser.current.nameEscaped}</cpn:link></li>
         </ol>
     </div>
 </cpn:component>

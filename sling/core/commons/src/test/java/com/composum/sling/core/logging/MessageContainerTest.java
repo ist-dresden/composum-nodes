@@ -34,7 +34,7 @@ public class MessageContainerTest {
     @Test
     public void jsonizeAndBack() {
         MessageContainer container = new MessageContainer(LOG);
-        container.add(new Message(Message.Level.warn, "Some problem with {} number {}", "foo", 17))
+        container.add(new Message(Message.Level.warn, "Some problem with {} number {}", "foo", 17).setPath("/the/path"))
                 .add(new Message(null, "Minimal message"))
                 .add(new Message(Message.Level.info, "Message {} with details", 3)
                         .addDetail(new Message(Message.Level.debug, "Detail {}", 1).setLogLevel(Message.Level.warn))
@@ -52,6 +52,7 @@ public class MessageContainerTest {
                 "    \"level\": \"warn\",\n" +
                 "    \"text\": \"Some problem with foo number 17\",\n" +
                 "    \"rawText\": \"Some problem with {} number {}\",\n" +
+                "    \"path\": \"/the/path\",\n" +
                 "    \"arguments\": [\n" +
                 "      \"foo\",\n" +
                 "      17\n" +

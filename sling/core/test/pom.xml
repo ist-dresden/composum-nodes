@@ -8,7 +8,7 @@
 
     <groupId>com.composum.sling.core.test</groupId>
     <artifactId>composum-sling-core-test</artifactId>
-    <version>1.12.1</version>
+    <version>1.12.2</version>
 
     <name>Composum Core Sling Testing</name>
     <description>
@@ -55,7 +55,7 @@
         </repository>
         <snapshotRepository>
             <id>archiva</id>
-            <url>https://build.ist-software.com/archiva/repository/snapshots/</url>
+            <url>https://build.ist-software.com/nexus/repository/maven-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -163,6 +163,12 @@
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-spi-commons</artifactId>
             <version>2.18.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.xss</artifactId>
+            <version>2.0.12</version>
             <scope>test</scope>
         </dependency>
 

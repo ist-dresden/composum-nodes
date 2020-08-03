@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.sling.core</groupId>
         <artifactId>composum-sling-core-parent</artifactId>
-        <version>1.12.1</version>
+        <version>1.12.2</version>
         <relativePath>../.parent</relativePath>
     </parent>
 
@@ -14,7 +14,7 @@
     <packaging>bundle</packaging>
 
     <name>Composum Core Console</name>
-    <description>a set of basig tools: jcr browser, package manager, user manager</description>
+    <description>a set of basic tools: jcr browser, package manager, user manager</description>
 
     <properties>
         <bundle.name>com.composum.core.console</bundle.name>
@@ -22,6 +22,11 @@
 
     <build>
         <plugins>
+
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.felix</groupId>

@@ -1,7 +1,6 @@
 package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -36,6 +35,7 @@ public class SlingResourceUtilTest extends SlingResourceUtil {
         ec.checkThat(callRelativePath("/blu/la/lu", "/"), equalTo("../../../"));
         ec.checkThat(callRelativePath("/blu/la/lu", "/x"), equalTo("../../../x"));
         ec.checkThat(callRelativePath("/", "/"), equalTo(""));
+        ec.checkThat(SlingResourceUtil.relativePath("/", "//bla/blu"), equalTo("bla/blu"));
     }
 
     private String callRelativePath(String parent, String child) {
@@ -106,11 +106,22 @@ public class SlingResourceUtilTest extends SlingResourceUtil {
         ec.checkThat(commonParent(Arrays.asList("b", "a", "a/d")), nullValue());
 
         ec.checkThat(commonParent(Arrays.asList("a/b", "/a/b")), nullValue()); // wrong call
-
-
     }
 
-    /** Does not quite belong here, but needed for {@link #commonParent(Collection)}. */
+    @Test
+    public void testIsSameOrDescendant() {
+        ec.checkThat(isSameOrDescendant(null, "/"), is(false));
+        ec.checkThat(isSameOrDescendant("/", "/"), is(true));
+        ec.checkThat(isSameOrDescendant("/", "/a"), is(true));
+        ec.checkThat(isSameOrDescendant("/a", "/b"), is(false));
+        ec.checkThat(isSameOrDescendant("/a", "/a/../b"), is(false));
+        ec.checkThat(isSameOrDescendant("/a", "/a/../a"), is(true));
+        ec.checkThat(isSameOrDescendant("/a/b", "/a/b/c"), is(true));
+    }
+
+    /**
+     * Does not quite belong here, but needed for {@link #commonParent(Collection)}.
+     */
     @Test
     public void testGetParent() {
         ec.checkThat(ResourceUtil.getParent("/a/b"), is("/a"));

@@ -1,4 +1,4 @@
-package com.composum.sling.core.servlet;
+package com.composum.sling.nodes.consoleplugin;
 
 import com.composum.sling.core.util.XSS;
 import org.apache.commons.io.IOUtils;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Displays the stacktraces of active or all threads. Use as console plugin:
  * http://localhost:9090/system/console/threaddump
  */
-@Component(label = "Composum Threaddump Webconsole Plugin",
+@Component(label = "Composum Webconsole Threaddump Plugin",
         description = "Prints stacktraces for all threads")
 @Service(value = Servlet.class)
 @Properties({
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 public class ThreaddumpConsolePlugin extends HttpServlet {
 
     /** Location for the CSS. */
-    protected static final String LOC_CSS = "slingconsole/threaddumpplugin.css";
+    protected static final String LOC_CSS = "slingconsole/composum/nodes/console/threaddumpplugin.css";
 
     public static final String PARAM_STATE = "state";
     public static final String PARAM_NAMEREGEX = "nameregex";
@@ -58,8 +58,8 @@ public class ThreaddumpConsolePlugin extends HttpServlet {
             return;
         }
 
+        response.setContentType("text/html; charset=UTF-8");
         PrintWriter writer = response.getWriter();
-        response.setContentType("text/html");
 
         writer.print("<html><body><h2>Thread dump</h2>");
         new ThreaddumpRunner(writer, request).print();

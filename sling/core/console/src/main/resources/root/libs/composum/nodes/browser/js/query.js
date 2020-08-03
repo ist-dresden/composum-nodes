@@ -100,7 +100,7 @@
                         $menu.html(content);
                         $menu.find('input[name="query"]').each(function () {
                             var $this = $(this);
-                            var value = atob($this.attr('value'));
+                            var value = Base64.decode($this.attr('value'));
                             $this.attr('value', value);
                         });
                         $menu.find('.query-export-link').click(_.bind(function (event) {
@@ -286,7 +286,7 @@
                     var string = $template.data('encoded');
                     var query;
                     if (string) {
-                        var data = JSON.parse(atob(string));
+                        var data = JSON.parse(Base64.decode(string));
                         query = data[$link.data('type')];
                     } else {
                         query = $link.text();
