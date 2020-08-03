@@ -1,4 +1,4 @@
-package com.composum.sling.clientlibs.servlet;
+package com.composum.sling.nodes.consoleplugin;
 
 import com.composum.sling.core.util.XSS;
 import org.apache.commons.collections.ComparatorUtils;
@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
  *
  * @see "https://github.com/magjac/d3-graphviz"
  */
-@Component(label = "Composum Service Graph Webconsole Plugin",
+@Component(label = "Composum Webconsole Service Graph Plugin",
         description = "Prints a dotty file describing the service relations")
 @Service(value = Servlet.class)
 @Properties({
@@ -66,7 +66,7 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
     public static final String PARAM_BUNDLE = "bundle";
 
     /** Location for the CSS. */
-    protected static final String LOC_CSS = "slingconsole/composumplugin.css";
+    protected static final String LOC_CSS = "slingconsole/composum/nodes/console/nodetypesplugin.css";
 
     protected BundleContext bundleContext;
 

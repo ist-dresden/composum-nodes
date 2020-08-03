@@ -1,9 +1,8 @@
-package com.composum.sling.clientlibs.servlet;
+package com.composum.sling.nodes.consoleplugin;
 
-import com.composum.sling.clientlibs.service.ClientlibService;
+import com.composum.sling.nodes.consoleplugin.ShowServiceGraphConsolePlugin;
 import org.junit.Assert;
 import org.junit.Test;
-import org.osgi.framework.ServiceReference;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
