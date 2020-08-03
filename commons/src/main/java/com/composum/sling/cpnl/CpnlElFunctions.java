@@ -226,13 +226,13 @@ public class CpnlElFunctions {
     }
 
     /**
-     * A 'placeholder' to signal 'avoid escaping' during text rendering.
+     * An input field 'value' attribute which should be used as is if possible.
      *
      * @param value the value to render
-     * @return the unescaped value
+     * @return the value escaped using encodeForHTMLAttr() if the value is a String
      */
     public static Object value(Object value) {
-        return value;
+        return value instanceof String ? XSS.encodeForHTMLAttr((String) value) : value;
     }
 
     /**
@@ -243,7 +243,7 @@ public class CpnlElFunctions {
      */
     public static String text(String value) {
         return value != null
-                ? /* StringEscapeUtils.escapeHtml4(value) */ XSS.api().encodeForHTML(value)
+                ? /* StringEscapeUtils.escapeHtml4(value) */ XSS.encodeForHTML(value)
                 : null;
     }
 
@@ -351,7 +351,7 @@ public class CpnlElFunctions {
      */
     public static String script(String value) {
         return value != null
-                ? /* StringEscapeUtils.escapeEcmaScript(value) */ XSS.api().encodeForJSString(value)
+                ? /* StringEscapeUtils.escapeEcmaScript(value) */ XSS.encodeForJSString(value)
                 : null;
     }
 
@@ -362,7 +362,7 @@ public class CpnlElFunctions {
      * @return the CSS escaped code of the value
      */
     public static String style(String value) {
-        return value != null ? XSS.api().encodeForCSSString(value) : null;
+        return value != null ? XSS.encodeForCSSString(value) : null;
     }
 
     /**
