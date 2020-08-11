@@ -1,10 +1,6 @@
-package com.composum.sling.clientlibs.handle.com.composum.sling.core.concurrent;
+package com.composum.sling.core.concurrent;
 
 import com.composum.sling.core.ResourceHandle;
-import com.composum.sling.core.concurrent.LazyCreationService;
-import com.composum.sling.core.concurrent.LazyCreationServiceImpl;
-import com.composum.sling.core.concurrent.SemaphoreSequencer;
-import com.composum.sling.core.concurrent.SequencerService;
 import org.apache.commons.collections.Factory;
 import org.apache.commons.collections.map.LazyMap;
 import org.apache.sling.api.resource.PersistenceException;

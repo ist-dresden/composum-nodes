@@ -1,4 +1,4 @@
-package com.composum.sling.clientlibs.handle.com.composum.sling.core.concurrent;
+package com.composum.sling.core.concurrent;
 
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
