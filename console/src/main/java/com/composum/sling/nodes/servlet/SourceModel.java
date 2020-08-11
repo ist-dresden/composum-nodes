@@ -483,6 +483,7 @@ public class SourceModel extends ConsoleSlingBean {
         ZipEntry entry;
         FileTime lastModified = getLastModified(resource);
         entry = new ZipEntry(getZipName(root));
+        LOG.debug("Writing entry {}", entry.getName());
         if (lastModified != null) {
             entry.setLastModifiedTime(lastModified);
         }
@@ -518,6 +519,7 @@ public class SourceModel extends ConsoleSlingBean {
         Binary binaryData = ResourceUtil.getBinaryData(file);
         if (binaryData != null) {
             entry = new ZipEntry(getZipName(root, path));
+            LOG.debug("Writing entry {}", entry.getName());
             if (lastModified != null) {
                 entry.setLastModifiedTime(lastModified);
             }
@@ -540,6 +542,7 @@ public class SourceModel extends ConsoleSlingBean {
             Queue<String> binaryProperties = new ArrayDeque<>(); // these need to have an additional file
             Queue<SourceModel> binaryFiles = new ArrayDeque<>();
             entry = new ZipEntry(getZipName(root, file.getPath() + ".dir/.content.xml"));
+            LOG.debug("Writing entry {}", entry.getName());
             if (lastModified != null) {
                 entry.setLastModifiedTime(lastModified);
             }
@@ -570,6 +573,7 @@ public class SourceModel extends ConsoleSlingBean {
                     FileTime lastModified = getLastModified(ResourceHandle.use(propertyResource));
                     ZipEntry entry;
                     entry = new ZipEntry(getZipName(root, binPropPath) + ".binary");
+                    LOG.debug("Writing entry {}", entry.getName());
                     if (lastModified != null) {
                         entry.setLastModifiedTime(lastModified);
                     }
