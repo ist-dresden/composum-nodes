@@ -91,7 +91,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
     protected static final String REQUEST_PARAM_CLEAR_CACHE = "clearCache";
 
     /** Location for the CSS. */
-    protected static final String LOC_CSS = "slingconsole/composumplugin.css";
+    protected static final String LOC_CSS = "slingconsole/composum/nodes/commons/clientlibplugin.css";
 
     @Reference
     protected ClientlibService clientlibService;
