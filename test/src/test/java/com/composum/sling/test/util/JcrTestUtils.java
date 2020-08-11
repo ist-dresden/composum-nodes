@@ -118,30 +118,37 @@ public class JcrTestUtils {
         Thread writer = new Thread() {
             @Override
             public void run() {
-                ZipOutputStream zip = new ZipOutputStream(out);
-                File jcrRootDir = new File(getClass().getResource(location).getFile());
-                for (File file : FileUtils.listFilesAndDirs(jcrRootDir, FileFilterUtils.trueFileFilter(),
-                        FileFilterUtils.trueFileFilter())) {
-                    try {
-                        if (file.isFile()) {
-                            int jcrRootLoc = file.getPath().indexOf("/jcr_root/");
-                            String path = file.getPath().substring(jcrRootLoc + 1);
-                            ZipEntry entry = new ZipEntry(path);
-                            zip.putNextEntry(entry);
-                            try (FileInputStream fileContent = new FileInputStream(file)) {
-                                IOUtils.copy(fileContent, zip);
-                            }
-                            zip.closeEntry();
-                            zip.flush();
-                        }
-                    } catch (Exception e) {
-                        exceptions.add(new AssertionError("Could not import " + file, e));
-                    }
-                }
                 try {
-                    zip.close();
-                } catch (IOException e) {
-                    // ignore: importer does not read the directory that's written now.
+                    ZipOutputStream zip = new ZipOutputStream(out);
+                    File jcrRootDir = new File(getClass().getResource(location).getFile());
+                    for (File file : FileUtils.listFilesAndDirs(jcrRootDir, FileFilterUtils.trueFileFilter(),
+                            FileFilterUtils.trueFileFilter())) {
+                        try {
+                            if (file.isFile()) {
+                                int jcrRootLoc = file.getPath().indexOf("/jcr_root/");
+                                String path = file.getPath().substring(jcrRootLoc + 1);
+                                ZipEntry entry = new ZipEntry(path);
+                                zip.putNextEntry(entry);
+                                try (FileInputStream fileContent = new FileInputStream(file)) {
+                                    IOUtils.copy(fileContent, zip);
+                                }
+                                zip.closeEntry();
+                                zip.flush();
+                            }
+                        } catch (Exception e) {
+                            exceptions.add(new AssertionError("Could not import " + file, e));
+                        }
+                    }
+                    try {
+                        zip.close();
+                    } catch (IOException e) {
+                        // ignore: importer does not read the directory that's written now.
+                    }
+                } catch (RuntimeException e) {
+                    exceptions.add(new AssertionError("Could not read " + location, e));
+                    e.printStackTrace();
+                    IOUtils.closeQuietly(out);
+                    IOUtils.closeQuietly(in);
                 }
             }
         };
@@ -155,6 +162,12 @@ public class JcrTestUtils {
             importer.run(archive, resolver.getResource("/").adaptTo(Node.class));
             archive.close();
             if (importer.hasErrors()) { throw new IllegalArgumentException("Import failed!"); }
+            if (!exceptions.isEmpty()) {
+                for (Throwable exception : exceptions) {
+                    exception.printStackTrace();
+                }
+                throw new AssertionError("Import failed!", exceptions.get(1));
+            }
             resolver.commit();
         } finally {
             writer.interrupt();
