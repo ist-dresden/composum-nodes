@@ -118,8 +118,9 @@ public class Consoles extends ConsolePage {
 
         public String getUrl() {
             String suffix = XSS.filter(getRequest().getRequestPathInfo().getSuffix());
+            // placeholder ${path} is already URL-encoded at that place since {} aren't valid in URL.
             return StringUtils.replace(LinkUtil.getUnmappedUrl(getRequest(), getPath()),
-                    "${path}", StringUtils.isNotBlank(suffix) ? suffix : "");
+                    "$%7Bpath%7D", StringUtils.isNotBlank(suffix) ? suffix : "");
         }
 
         public String getLinkAttributes() {

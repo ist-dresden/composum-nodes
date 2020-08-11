@@ -13,7 +13,7 @@
     <packaging>bundle</packaging>
 
     <name>Composum Nodes (Core) Console</name>
-    <description>a set of basig tools: jcr browser, package manager, user manager</description>
+    <description>a set of basic tools: jcr browser, package manager, user manager</description>
 
     <properties>
         <bundle.name>com.composum.nodes.console</bundle.name>
@@ -21,6 +21,11 @@
 
     <build>
         <plugins>
+
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+            </plugin>
 
             <plugin>
                 <!-- Minify the JS-Resources - needs the build-helper-maven-plugin -->
@@ -298,4 +303,3 @@
 
     </profiles>
 </project>
-

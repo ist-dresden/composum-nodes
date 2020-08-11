@@ -1,4 +1,4 @@
-package com.composum.sling.clientlibs.servlet;
+package com.composum.sling.nodes.consoleplugin;
 
 import com.composum.sling.core.util.XSS;
 import org.apache.commons.collections.ComparatorUtils;
@@ -62,7 +62,7 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
     public static final String PARAM_BUNDLE = "bundle";
 
     /** Location for the CSS. */
-    protected static final String LOC_CSS = "slingconsole/composumplugin.css";
+    protected static final String LOC_CSS = "slingconsole/composum/nodes/console/nodetypesplugin.css";
 
     protected BundleContext bundleContext;
 
