@@ -4,11 +4,13 @@ import com.composum.sling.core.util.XSS;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.*;
 import org.apache.jackrabbit.commons.cnd.CompactNodeTypeDefWriter;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,15 +34,14 @@ import java.util.regex.PatternSyntaxException;
  * Displays the stacktraces of active or all threads. Use as console plugin:
  * http://localhost:9090/system/console/nodetype
  */
-@Component(label = "Composum Webconsole Nodetype Plugin",
-        description = "permits nodetype export")
-@Service(value = Servlet.class)
-@Properties({
-        @Property(name = "felix.webconsole.label", value = "nodetypes"),
-        @Property(name = "felix.webconsole.title", value = "Nodetypes"),
-        @Property(name = "felix.webconsole.category", value = "Composum"),
-        @Property(name = "felix.webconsole.css", value = "nodetypes/" + NodetypesPlugin.LOC_CSS),
-})
+@Component(service = Servlet.class,
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Nodetype Plugin",
+                "felix.webconsole.category=Composum",
+                "felix.webconsole.label=nodetypes",
+                "felix.webconsole.title=Nodetypes",
+                "felix.webconsole.css=nodetypes/" + NodetypesPlugin.LOC_CSS
+        })
 public class NodetypesPlugin extends HttpServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodetypesPlugin.class);

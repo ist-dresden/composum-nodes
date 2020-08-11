@@ -2,15 +2,18 @@ package com.composum.sling.nodes.servlet;
 
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.commons.cnd.CompactNodeTypeDefWriter;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeDefinition;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,17 +26,12 @@ import java.util.regex.Pattern;
  * A servlet that exports the nodetypes in the format used in nodetypes.cnd.
  * E.g. <code>http://localhost:9090/bin/cpm/nodes/debug/nodetypes?nameregex=cpp%3A.%2A</code>
  */
-@SlingServlet(
-        paths = "/bin/cpm/nodes/debug/nodetypes",
-        methods = {"GET"},
-        description = "Composum Show Nodetype Servlet"
-)
-//@Component(service = Servlet.class,
-//        property = {
-//                Constants.SERVICE_DESCRIPTION + "=",
-//                "sling.servlet.paths=/bin/cpm/nodes/debug/nodetypes",
-//                "sling.servlet.methods=" + HttpConstants.METHOD_GET
-//        })
+@Component(service = Servlet.class,
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Show Nodetype Servlet",
+                "sling.servlet.paths=/bin/cpm/nodes/debug/nodetypes",
+                "sling.servlet.methods=" + HttpConstants.METHOD_GET
+        })
 public class NodeTypesServlet extends SlingSafeMethodsServlet {
 
     /**

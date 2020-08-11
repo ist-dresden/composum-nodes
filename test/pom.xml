@@ -110,6 +110,12 @@
             <artifactId>junit</artifactId>
         </dependency>
 
+        <!-- Java Annotations -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+        </dependency>
+
         <!-- Various needed libraries. -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
