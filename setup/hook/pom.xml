@@ -18,6 +18,11 @@
     <build>
         <plugins>
 
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+            </plugin>
+
             <!-- set main class -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

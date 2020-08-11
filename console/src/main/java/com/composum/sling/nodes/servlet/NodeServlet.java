@@ -175,6 +175,7 @@ public class NodeServlet extends NodeTreeServlet {
     /**
      * Determines the filter to use for node retrieval; scans the request for filter parameter or selector.
      */
+    @Override
     protected ResourceFilter getNodeFilter(SlingHttpServletRequest request) {
         ResourceFilter filter = null;
         String filterParam = RequestUtil.getParameter(request, PARAM_FILTER, (String) null);
@@ -309,9 +310,9 @@ public class NodeServlet extends NodeTreeServlet {
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
+            response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("text/html;charset=" + CHARSET); // XSS? - checked (2019-05-04)
             Writer writer = response.getWriter();
-            response.setStatus(HttpServletResponse.SC_OK);
 
             for (String key : nodeFilters.keySet()) {
                 writer.append("<li data-filter=\"").append(key)
@@ -495,9 +496,9 @@ public class NodeServlet extends NodeTreeServlet {
                                         ResourceFilter filter, ResourceResolver resolver)
                 throws RepositoryException, IOException {
 
-            PrintWriter writer = response.getWriter();
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("text/html;charset=" + CHARSET); // XSS? - checked (2019-05-04)
+            PrintWriter writer = response.getWriter();
 
             TreeNodeStrategy nodeStrategy = new DefaultTreeNodeStrategy(getNodeFilter(request));
             NodeIterator iterator = result.getNodes();
@@ -542,7 +543,7 @@ public class NodeServlet extends NodeTreeServlet {
                             .append(CpnlElFunctions.text(getNodeLabel(resource, LabelType.title)))
                             .append("</td>");
                     writer.append("<td class=\"path\"><a href=\"")
-                            .append(CpnlElFunctions.text(path)).append("\">")
+                            .append(CpnlElFunctions.path(path)).append("\">")
                             .append(CpnlElFunctions.text(path)).append("</a></td>");
                     writer.append("<td class=\"type\">").append(resource.getPrimaryType()).append("</td>");
                     writer.append("</tr>");
@@ -972,6 +973,7 @@ public class NodeServlet extends NodeTreeServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
+            resource = AbstractServiceServlet.tryToUseRawSuffix(request, resource);
             Node node = resource.adaptTo(Node.class);
 
             if (node != null) {

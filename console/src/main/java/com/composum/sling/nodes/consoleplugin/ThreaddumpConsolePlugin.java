@@ -58,8 +58,8 @@ public class ThreaddumpConsolePlugin extends HttpServlet {
             return;
         }
 
+        response.setContentType("text/html; charset=UTF-8");
         PrintWriter writer = response.getWriter();
-        response.setContentType("text/html");
 
         writer.print("<html><body><h2>Thread dump</h2>");
         new ThreaddumpRunner(writer, request).print();

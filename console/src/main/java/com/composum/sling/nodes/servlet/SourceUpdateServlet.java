@@ -87,8 +87,9 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
                     break;
             }
 
-        } catch (RepositoryException | TransformerException | RuntimeException ex) {
-            throw new ServletException(ex);
+        } catch (RepositoryException | TransformerException | RuntimeException | IOException ex) {
+            LOG.error("Trouble during update: {}", ex, ex);
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
 
     }
