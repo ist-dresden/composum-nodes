@@ -87,12 +87,21 @@
                                 <include>.*/composum-nodes-pckgmgr.*\.jar</include>
                                 <include>.*/composum-nodes-usermgr.*\.jar</include>
                                 <include>.*/composum-nodes-config.*\.jar</include>
+
+                                <!-- removes all v1 composum core content -->
+                                <include>.*/composum-sling-core-jslibs.*\.jar</include>
+                                <include>.*/composum-sling-core-commons.*\.jar</include>
+                                <include>.*/composum-sling-core-console.*\.jar</include>
+                                <include>.*/composum-sling-package-manager.*\.jar</include>
+                                <include>.*/composum-sling-user-management.*\.jar</include>
+                                <include>.*/composum-sling-core-config.*\.jar</include>
                             </includes>
                         </filter>
                         <filter>
                             <!-- removes all 'old' composum core content -->
                             <root>/libs/composum/sling</root>
                         </filter>
+
                     </filters>
 
                     <embeddeds>
