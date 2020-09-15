@@ -1,9 +1,7 @@
 package com.composum.sling.core.concurrent;
 
 import com.composum.sling.core.ResourceHandle;
-import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.test.util.JcrTestUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -12,23 +10,21 @@ import org.apache.sling.resourcebuilder.api.ResourceBuilder;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.junit.*;
-import org.junit.experimental.theories.Theories;
 
 import javax.jcr.*;
 import javax.jcr.lock.Lock;
 import javax.jcr.lock.LockException;
 import javax.jcr.lock.LockManager;
-
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.composum.sling.core.util.ResourceUtil.*;
 import static org.junit.Assert.*;
-import static org.apache.jackrabbit.JcrConstants.*;
 
 /**
  * Verifies that JCR locking works as expected - preparation for
@@ -80,7 +76,9 @@ public class JcrLockingTest {
         assertEquals(0, lockManager.getLockTokens().length);
     }
 
-    /** Object needs to be comitted when locking. */
+    /**
+     * Object needs to be comitted when locking.
+     */
     @Test(expected = InvalidItemStateException.class)
     public void testLockDuringCreation() throws Exception {
         String freshPath = path + "/fresh";
@@ -96,7 +94,9 @@ public class JcrLockingTest {
         Lock lock = lockManager.lock(freshPath, true, false, 2, null);
     }
 
-    /** Verifies that jcr:lastModified behaves like we need it for LazyCreationService. */
+    /**
+     * Verifies that jcr:lastModified behaves like we need it for LazyCreationService.
+     */
     @Test
     public void testLastModificationDate() throws Exception {
         ResourceHandle fresh = ResourceHandle.use(resolver.create(res, "fresh", new HashMap<String, Object>() {
@@ -130,7 +130,9 @@ public class JcrLockingTest {
     }
 
 
-    /** Try to create a locked object without having an intermediate unlocked state. */
+    /**
+     * Try to create a locked object without having an intermediate unlocked state.
+     */
     @Test
     public void testLockAndMove() throws Exception {
         assertFalse(lockManager.holdsLock(path));
@@ -207,7 +209,9 @@ public class JcrLockingTest {
         }
     }
 
-    /** Locking doesn't prevent others writing to the node. */
+    /**
+     * Locking doesn't prevent others writing to the node.
+     */
     @Test
     public void testWriteNodeLockedByOther() throws Exception {
         {
@@ -223,25 +227,40 @@ public class JcrLockingTest {
         }
     }
 
+    /**
+     * Several threads try to lock the same resource. If several succeed at the same time, something is wrong.
+     */
     @Test
-    @Ignore("It seems the locking implementation is buggy, here.")
+    @Ignore("It seems the locking implementation is buggy, here: several threads can lock the same thing. :-(")
     public void testParallelLockingProblem() throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(10);
+        AtomicBoolean someoneHasLock = new AtomicBoolean();
         try {
             final AtomicInteger lockCount = new AtomicInteger();
             List<Callable<Void>> callables = new ArrayList<>();
             final Random rnd = new Random();
             for (int i = 0; i < 10; ++i) {
                 final ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null);
-                final LockManager lockManager = resolver.adaptTo(Session.class).getWorkspace().getLockManager();
+                Session session = resolver.adaptTo(Session.class);
+                final LockManager lockManager = session.getWorkspace().getLockManager();
                 callables.add(new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
                         try {
-                            Lock lock = lockManager.lock(path, true, false, Long.MAX_VALUE, null);
-                            resolver.commit();
-                            Thread.sleep(500);
-                            lockCount.incrementAndGet();
+                            if (!someoneHasLock.get()) {
+                                Lock lock = lockManager.lock(path, true, false, 10000, null);
+                                resolver.commit();
+                                Thread.sleep(500);
+                                someoneHasLock.set(true); // make sure we only count threads who did get a lock so far, not after we close.
+                                lockCount.incrementAndGet();
+                                assertTrue(lock.isLockOwningSession());
+                                assertTrue(lock.isLive());
+                                assertTrue(lock.isDeep());
+                                assertTrue(lockManager.holdsLock(path));
+                                String[] tokens = lockManager.getLockTokens();
+                                assertNotNull(tokens);
+                                assertTrue(tokens.length > 0);
+                            }
                         } catch (LockException e) {
                             // OK, some don't get it.
                         } finally {

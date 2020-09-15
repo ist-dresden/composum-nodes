@@ -67,7 +67,7 @@ then
 else
   zip -vr $TMPFIL $path
   echo
-  echo "WARNING: arc not found -> using zip which might not support unicode."
+  echo "WARNING: 7z not found -> using zip which might not support unicode."
 fi
 
 # the parameter :operation=updatetree currently serves no purpose but to sneakily prevent the Sling POST servlet to

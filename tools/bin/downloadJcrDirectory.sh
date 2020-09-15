@@ -4,6 +4,10 @@
 # Arguments in "External Tool" entry: $FilePathRelativeToSourcepath$ , working dir: $FileDir$
 # Optional arguments: host:port user:password protocol
 
+# Optional: if you have installed 7z, the environment variable CPM_7Z_EXTRACT_EXCLUDE could be set to some wildcards of files you
+# generally would not want to download, for example stuff that is generated for packages but is not a source:
+# CPM_7Z_EXTRACT_EXCLUDE="-xr0!*.css -xr0!*.jar -xr0!*.min.js"
+
 set -e
 
 if [ -n "$2" ]; then
@@ -62,7 +66,7 @@ echo
 
 if command -v 7z &> /dev/null
 then
-  7z l $TMPFIL
+  7z l $CPM_7Z_EXTRACT_EXCLUDE $TMPFIL
 else
   unzip -l $TMPFIL
 fi
@@ -72,12 +76,16 @@ echo EXTRACTION:
 echo
 if command -v 7z &> /dev/null
 then
-  7z -y x $TMPFIL
+  7z x $CPM_CPM_7Z_EXTRACT_EXCLUDE -y $TMPFIL
+  if [ -n $CPM_CPM_7Z_EXTRACT_EXCLUDE ]; then
+    echo Using 7z additional switches $CPM_7Z_EXTRACT_EXCLUDE
+  fi
 else
   unzip -o -u $TMPFIL
   echo
-  echo "WARNING: arc not found -> using unzip which might not support unicode."
+  echo "WARNING: 7z not found -> using unzip which might not support unicode."
 fi
+
 echo
 echo DONE
 echo
