@@ -1,6 +1,7 @@
 package com.composum.sling.core.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -36,6 +37,19 @@ public class SlingResourceUtilTest extends SlingResourceUtil {
         ec.checkThat(callRelativePath("/blu/la/lu", "/x"), equalTo("../../../x"));
         ec.checkThat(callRelativePath("/", "/"), equalTo(""));
         ec.checkThat(SlingResourceUtil.relativePath("/", "//bla/blu"), equalTo("bla/blu"));
+
+        try {
+            SlingResourceUtil.relativePath("/bla", "blu");
+            Assert.fail("Exception expected");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+        try {
+            SlingResourceUtil.relativePath("bla", "/blu");
+            Assert.fail("Exception expected");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
     }
 
     private String callRelativePath(String parent, String child) {
