@@ -23,6 +23,9 @@ public class SlingResourceUtil {
      * Returns the shortest relative path that leads from a node to another node.
      * Postcondition: {@code ResourceUtil.normalize(node + "/" + result), is(ResourceUtil.normalize(other))}.
      * In most cases  {@link #appendPaths(String, String)}(node, result) will return {other}. )}
+     * <p>
+     * Examples: relativePath("/foo", "/foo/bar") = "bar" ; relativePath("/foo/bar", "/foo") = ".." ;
+     * relativePath("foo", "foo") = "../bar" .
      *
      * @param node  the parent
      * @param other a path of a child of parent / parent itself

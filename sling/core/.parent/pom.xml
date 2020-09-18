@@ -495,7 +495,7 @@
             <!-- https://mvnrepository.com/artifact/org.apache.sling/org.apache.sling.xss -->
             <dependency>
                 <!-- This is an evil JAR with several old versions of libraries as embedded dependencies that aren't exported
-                and can conflict with your code. Scope optional at least means that that doesn't conflict with artefacts
+                and can conflict with your code. "Optional" at least means that that doesn't conflict with artefacts
                 using a bundle that uses the sling.xss bundle.
                  -->
                 <groupId>org.apache.sling</groupId>
