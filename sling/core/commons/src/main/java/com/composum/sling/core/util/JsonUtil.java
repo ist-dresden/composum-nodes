@@ -870,7 +870,7 @@ public class JsonUtil {
                     if (mapping.propertyFormat.binary == MappingRules.PropertyFormat.Binary.link) {
                         String uri = "/bin/cpm/nodes/property.bin"
                                 + LinkUtil.encodePath(node.getPath())
-                                + "?name=" + LinkUtil.encodePath(name);
+                                + "?name=" + UrlCodec.QUERYPART.encode(name);
                         boolean htmlSafe = writer.isHtmlSafe();
                         writer.setHtmlSafe(false);
                         writer.value(uri);
