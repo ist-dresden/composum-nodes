@@ -16,13 +16,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -42,7 +38,9 @@ import java.util.stream.Collectors;
 })
 public class ThreaddumpConsolePlugin extends HttpServlet {
 
-    /** Location for the CSS. */
+    /**
+     * Location for the CSS.
+     */
     protected static final String LOC_CSS = "slingconsole/composum/nodes/console/threaddumpplugin.css";
 
     public static final String PARAM_STATE = "state";
@@ -72,6 +70,7 @@ public class ThreaddumpConsolePlugin extends HttpServlet {
         protected Set<Thread.State> stati = Collections.singleton(Thread.State.RUNNABLE);
         protected String nameRegexStr = "";
         protected Pattern nameRegex = Pattern.compile(nameRegexStr);
+        protected ThreadMXBean threadMXBean;
 
         public ThreaddumpRunner(PrintWriter writer, HttpServletRequest request) {
             this.writer = writer;
@@ -93,6 +92,16 @@ public class ThreaddumpConsolePlugin extends HttpServlet {
                 } catch (PatternSyntaxException e) {
                     writer.println("<p><strong>Regex syntax error: " + e + "</strong></p>");
                 }
+            }
+
+            try {
+                ThreadMXBean theThreadMXBean = ManagementFactory.getThreadMXBean();
+                threadMXBean = theThreadMXBean != null
+                        && theThreadMXBean.isThreadCpuTimeSupported()
+                        && theThreadMXBean.isThreadCpuTimeEnabled()
+                        ? theThreadMXBean : null;
+            } catch (RuntimeException e) {
+                // ignore
             }
         }
 
@@ -117,28 +126,70 @@ public class ThreaddumpConsolePlugin extends HttpServlet {
             // Since many many traces have the same stacktrace, we group them by stacktrace.
             Map<String, List<Pair<Thread, String>>> tracesGrouped = new TreeMap<>(traces.stream()
                     .collect(Collectors.groupingBy((e) -> e.getRight())));
-            List<Pair<String, List<Thread>>> tracesGroupedByStacktrace = tracesGrouped.entrySet().stream()
-                    .map(e -> Pair.of(e.getKey(), extractThreads(e.getValue())))
+            List<StacktraceWithThreads> tracesGroupedByStacktrace = tracesGrouped.entrySet().stream()
+                    .map(e -> new StacktraceWithThreads(e.getKey(), extractThreads(e.getValue())))
                     .collect(Collectors.toList());
-            Collections.sort(tracesGroupedByStacktrace, Comparator.comparing((e) -> e.getRight().get(0).getName()));
+            Collections.sort(tracesGroupedByStacktrace,
+                    Comparator.comparing((e) -> e.threads.get(0).getName()));
+            Collections.sort(tracesGroupedByStacktrace,
+                    Comparator.comparing((StacktraceWithThreads e) -> e.cumulativeCpuTime).reversed());
 
-            for (Pair<String, List<Thread>> traceAndThreads : tracesGroupedByStacktrace) {
+            for (StacktraceWithThreads traceAndThreads : tracesGroupedByStacktrace) {
                 writer.println("<li>");
-                for (Thread t : traceAndThreads.getRight()) {
+                for (Thread t : traceAndThreads.threads) {
                     writer.print(t.getId());
-                    writer.print(" (" + t.getState() + ")");
+                    writer.print(" (" + t.getState());
+                    if (threadMXBean != null) {
+                        writer.print(", cpu " + ((float) threadMXBean.getThreadCpuTime(t.getId()) / 1e9f) + " s");
+                    }
+                    writer.print(")");
                     writer.print(" : ");
                     writer.print(t.getName());
                     writer.println("<br/>");
                 }
+                if (traceAndThreads.cumulativeCpuTime > 0 && traceAndThreads.threads.size() > 1) {
+                    writer.println("(" + traceAndThreads.cumulativeCpuTime + " s cumulative cpu time)</br>");
+                }
                 writer.println("<pre>");
-                writer.println(traceAndThreads.getLeft());
+                writer.println(traceAndThreads.trace);
                 writer.println("</pre>");
                 writer.println("</li>");
             }
 
             writer.println("</ul>");
         }
+
+        protected class StacktraceWithThreads {
+            String trace;
+            final List<Thread> threads;
+            float cumulativeCpuTime;
+
+            public StacktraceWithThreads(String trace, List<Thread> threads) {
+                this.trace = trace;
+                List<Thread> theThreads = threads;
+                Collections.sort(theThreads, Comparator.comparing(Thread::getName));
+                if (threadMXBean != null) {
+                    theThreads = theThreads.stream()
+                            .map(t -> Pair.of(t, -threadMXBean.getThreadCpuTime(t.getId())))
+                            .sorted(Comparator.comparing(Pair::getRight))
+                            .map(Pair::getKey)
+                            .collect(Collectors.toList());
+                }
+                this.threads = theThreads;
+                cumulativeCpuTime = (float) cumulativeCpuTime(threads);
+            }
+        }
+
+        protected double cumulativeCpuTime(List<Thread> threads) {
+            double result = 0;
+            if (threadMXBean != null) {
+                for (Thread thread : threads) {
+                    result += threadMXBean.getThreadCpuTime(thread.getId());
+                }
+            }
+            return result / 1e9;
+        }
+
 
         private List<Thread> extractThreads(List<Pair<Thread, String>> threadTraces) {
             return threadTraces.stream()
