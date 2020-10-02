@@ -4,6 +4,9 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.servlet.AbstractConsoleServlet;
 import com.composum.sling.nodes.NodesConfiguration;
 import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.felix.scr.annotations.Property;
+
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 
 import java.util.regex.Pattern;
@@ -17,6 +20,9 @@ import static com.composum.sling.core.usermanagement.UserManagerServlet.SERVLET_
         paths = SERVLET_PATH,
         methods = {"GET"}
 )
+@Properties(value={
+    @Property(name="sling.auth.requirements", value={ "+" + SERVLET_PATH })
+})
 public class UserManagerServlet extends AbstractConsoleServlet {
 
     public static final String SERVLET_PATH = "/bin/users";
