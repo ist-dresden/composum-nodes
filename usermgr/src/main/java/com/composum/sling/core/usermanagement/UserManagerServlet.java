@@ -12,16 +12,15 @@ import org.osgi.service.component.annotations.Reference;
 import javax.servlet.Servlet;
 import java.util.regex.Pattern;
 
-import static com.composum.sling.core.usermanagement.UserManagerServlet.SERVLET_PATH;
-
 /**
  * The general hook (servlet) for the User Manager feature provides the path '/bin/users.html/...'.
  */
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Browser Servlet",
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SERVLET_PATH,
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + UserManagerServlet.SERVLET_PATH,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+                "sling.auth.requirements=" + UserManagerServlet.SERVLET_PATH
         },
         immediate = true
 )
