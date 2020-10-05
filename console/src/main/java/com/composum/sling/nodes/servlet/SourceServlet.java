@@ -28,14 +28,17 @@ import java.io.IOException;
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Source Servlet",
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/nodes/source",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SourceServlet.SERVLET_PATH,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
                 ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=xml",
                 ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=zip",
-                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=pkg"
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=pkg",
+                "sling.auth.requirements=" + SourceServlet.SERVLET_PATH
         }
 )
 public class SourceServlet extends SlingSafeMethodsServlet {
+
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/source";
 
     @Reference
     protected NodesConfiguration nodesConfig;

@@ -27,13 +27,16 @@ import static javax.servlet.http.HttpServletResponse.*;
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Translation Servlet",
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/core/translate",
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + TranslationServlet.SERVLET_PATH,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT,
+                "sling.auth.requirements=" + TranslationServlet.SERVLET_PATH
         }
 )
 public class TranslationServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(TranslationServlet.class);
+
+    public static final String SERVLET_PATH = "/bin/cpm/core/translate";
 
     public static final String STATUS = "status";
     public static final String SUCCESS = "success";

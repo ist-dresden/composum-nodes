@@ -13,7 +13,6 @@ import javax.servlet.Servlet;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.nodes.browser.BrowserServlet.CONSOLE_PATH;
-import static com.composum.sling.nodes.components.codeeditor.CodeEditorServlet.SERVLET_PATH;
 
 /**
  * The general hook (servlet) for the Editor feature to edit code in a separate view.
@@ -21,8 +20,9 @@ import static com.composum.sling.nodes.components.codeeditor.CodeEditorServlet.S
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Code Editor Servlet",
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SERVLET_PATH,
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + CodeEditorServlet.SERVLET_PATH,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+                "sling.auth.requirements=" + CodeEditorServlet.SERVLET_PATH
         },
         immediate = true
 )

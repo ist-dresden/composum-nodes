@@ -42,16 +42,19 @@ import java.util.regex.Pattern;
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Job Control Servlet",
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/core/jobcontrol",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + JobControlServlet.SERVLET_PATH,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST,
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_DELETE
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_DELETE,
+                "sling.auth.requirements=" + JobControlServlet.SERVLET_PATH
         }
 )
 public class JobControlServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(JobControlServlet.class);
+
+    public static final String SERVLET_PATH = "/bin/cpm/core/jobcontrol";
 
     public enum Extension {txt, json}
 

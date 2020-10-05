@@ -7,12 +7,7 @@ import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.servlet.Status;
-import com.composum.sling.core.util.JsonUtil;
-import com.composum.sling.core.util.MimeTypeUtil;
-import com.composum.sling.core.util.PropertyUtil;
-import com.composum.sling.core.util.RequestUtil;
-import com.composum.sling.core.util.ResponseUtil;
-import com.composum.sling.core.util.XSS;
+import com.composum.sling.core.util.*;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
@@ -35,14 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.jcr.Binary;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
-import javax.jcr.PropertyType;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
+import javax.jcr.*;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
@@ -62,10 +50,11 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Property Servlet",
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/nodes/property",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + PropertyServlet.SERVLET_PATH,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST,
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT,
+                "sling.auth.requirements=" + PropertyServlet.SERVLET_PATH
         },
         immediate = true
 )
@@ -73,6 +62,7 @@ public class PropertyServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(PropertyServlet.class);
 
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/property";
     public static final StringFilter DEFAULT_PROPS_FILTER = new StringFilter.BlackList();
     public static final StringFilter BINARY_PROPS_FILTER = new StringFilter.BlackList();
 

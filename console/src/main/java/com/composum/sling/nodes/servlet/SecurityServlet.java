@@ -34,26 +34,14 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
-import javax.jcr.security.AccessControlEntry;
-import javax.jcr.security.AccessControlList;
-import javax.jcr.security.AccessControlManager;
-import javax.jcr.security.AccessControlPolicy;
-import javax.jcr.security.AccessControlPolicyIterator;
-import javax.jcr.security.NamedAccessControlPolicy;
-import javax.jcr.security.Privilege;
+import javax.jcr.security.*;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.composum.sling.core.mapping.MappingRules.CHARSET;
 
@@ -63,17 +51,19 @@ import static com.composum.sling.core.mapping.MappingRules.CHARSET;
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Security Servlet",
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/nodes/security",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SecurityServlet.SERVLET_PATH,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT,
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_DELETE
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_DELETE,
+                "sling.auth.requirements=" + SecurityServlet.SERVLET_PATH
         }
 )
 public class SecurityServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityServlet.class);
 
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/security";
     public static final String PARAM_SCOPE = "scope";
 
     public enum PolicyScope {local, effective}

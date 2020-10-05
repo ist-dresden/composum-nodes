@@ -11,13 +11,7 @@ import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.NodeTreeServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
-import com.composum.sling.core.util.I18N;
-import com.composum.sling.core.util.JsonUtil;
-import com.composum.sling.core.util.MimeTypeUtil;
-import com.composum.sling.core.util.RequestUtil;
-import com.composum.sling.core.util.ResourceUtil;
-import com.composum.sling.core.util.ResponseUtil;
-import com.composum.sling.core.util.XSS;
+import com.composum.sling.core.util.*;
 import com.composum.sling.cpnl.CpnlElFunctions;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonReader;
@@ -46,16 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import javax.jcr.Binary;
-import javax.jcr.ItemExistsException;
-import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.Workspace;
+import javax.jcr.*;
 import javax.jcr.lock.Lock;
 import javax.jcr.lock.LockManager;
 import javax.jcr.nodetype.NodeType;
@@ -66,24 +51,9 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -95,16 +65,19 @@ import static com.composum.sling.core.mapping.MappingRules.CHARSET;
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Node Servlet",
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/nodes/node",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + NodeServlet.SERVLET_PATH,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT,
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_DELETE
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_DELETE,
+                "sling.auth.requirements=" + NodeServlet.SERVLET_PATH
         }
-        )
+)
 public class NodeServlet extends NodeTreeServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodeServlet.class);
+
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/node";
 
     public static final String SCRIPT_STATUS_HEADER = "Script-Status";
 

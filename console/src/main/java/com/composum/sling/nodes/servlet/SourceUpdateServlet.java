@@ -27,9 +27,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
 
-import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
-
-
 /**
  * Modifies JCR content according to a given XML or ZIP of XMLs while preserving / updating metadata like versioning
  * information and metadata. This is a kind of opposite operation as the {@link SourceServlet}: the nodes like
@@ -41,12 +38,15 @@ import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Source Update Servlet",
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/nodes/sourceupload",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SourceUpdateServlet.SERVLET_PATH,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST,
-                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=zip"
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=zip",
+                "sling.auth.requirements=" + SourceUpdateServlet.SERVLET_PATH
         }
 )
 public class SourceUpdateServlet extends SlingAllMethodsServlet {
+
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/sourceupload";
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceUpdateServlet.class);
 
@@ -101,3 +101,4 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
 
     }
 }
+

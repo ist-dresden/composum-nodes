@@ -29,10 +29,13 @@ import java.util.regex.Pattern;
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Show Nodetype Servlet",
-                "sling.servlet.paths=/bin/cpm/nodes/debug/nodetypes",
-                "sling.servlet.methods=" + HttpConstants.METHOD_GET
+                "sling.servlet.paths=" + NodeTypesServlet.SERVLET_PATH,
+                "sling.servlet.methods=" + HttpConstants.METHOD_GET,
+                "sling.auth.requirements=" + NodeTypesServlet.SERVLET_PATH
         })
 public class NodeTypesServlet extends SlingSafeMethodsServlet {
+
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/debug/nodetypes";
 
     /**
      * Request parameter with a regular expression to select the nodetypes to write.

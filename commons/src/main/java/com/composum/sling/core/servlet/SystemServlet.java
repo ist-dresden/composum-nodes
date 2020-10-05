@@ -45,14 +45,17 @@ import java.util.List;
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes System Servlet",
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/core/system",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SystemServlet.SERVLET_PATH,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT,
+                "sling.auth.requirements=" + SystemServlet.SERVLET_PATH
         }
 )
 public class SystemServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemServlet.class);
+
+    public static final String SERVLET_PATH = "/bin/cpm/core/system";
 
     public static final String NODE_TYPES_PATH = "/jcr:system/jcr:nodeTypes";
 
