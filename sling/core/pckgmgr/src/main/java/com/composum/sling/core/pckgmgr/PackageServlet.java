@@ -20,21 +20,14 @@ import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
-import org.apache.jackrabbit.vault.fs.api.FilterSet;
-import org.apache.jackrabbit.vault.fs.api.ImportMode;
-import org.apache.jackrabbit.vault.fs.api.PathFilter;
-import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
-import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
+import org.apache.jackrabbit.vault.fs.api.*;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
-import org.apache.jackrabbit.vault.packaging.JcrPackage;
-import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
-import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
-import org.apache.jackrabbit.vault.packaging.PackageException;
-import org.apache.jackrabbit.vault.packaging.Packaging;
+import org.apache.jackrabbit.vault.packaging.*;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
@@ -56,34 +49,30 @@ import javax.jcr.Session;
 import javax.jcr.query.Query;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.composum.sling.core.pckgmgr.PackageServlet.SERVLET_PATH;
 
 /**
  * The servlet to provide download and upload of content packages and package definitions.
  */
 @SlingServlet(
-        paths = "/bin/cpm/package",
+        paths = SERVLET_PATH,
         methods = {"GET", "POST", "PUT", "DELETE"},
         metatype = true,
         label = "Composum PackageServlet")
+@Properties(value = {
+        @org.apache.felix.scr.annotations.Property(name = "sling.auth.requirements", value = {"+" + SERVLET_PATH})
+})
 public class PackageServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageServlet.class);
 
+    public static final String SERVLET_PATH = "/bin/cpm/package";
     public static final String PARAM_GROUP = "group";
     public static final String PARAM_FORCE = "force";
     private static final String PACKAGE_JOB_TIMEOUT = "package.job.timeout";

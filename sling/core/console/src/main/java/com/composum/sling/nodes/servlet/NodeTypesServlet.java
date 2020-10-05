@@ -2,6 +2,8 @@ package com.composum.sling.nodes.servlet;
 
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.commons.cnd.CompactNodeTypeDefWriter;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -19,15 +21,20 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.composum.sling.nodes.servlet.NodeTypesServlet.SERVLET_PATH;
+
 /**
  * A servlet that exports the nodetypes in the format used in nodetypes.cnd.
  * E.g. <code>http://localhost:9090/bin/cpm/nodes/debug/nodetypes?nameregex=cpp%3A.%2A</code>
  */
 @SlingServlet(
-        paths = "/bin/cpm/nodes/debug/nodetypes",
+        paths = SERVLET_PATH,
         methods = {"GET"},
         description = "Composum Show Nodetype Servlet"
 )
+@Properties(value = {
+        @Property(name = "sling.auth.requirements", value = {"+" + SERVLET_PATH})
+})
 //@Component(service = Servlet.class,
 //        property = {
 //                Constants.SERVICE_DESCRIPTION + "=",
@@ -35,6 +42,8 @@ import java.util.regex.Pattern;
 //                "sling.servlet.methods=" + HttpConstants.METHOD_GET
 //        })
 public class NodeTypesServlet extends SlingSafeMethodsServlet {
+
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/debug/nodetypes";
 
     /**
      * Request parameter with a regular expression to select the nodetypes to write.

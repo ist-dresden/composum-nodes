@@ -19,8 +19,8 @@ import static com.composum.sling.core.pckgmgr.view.PackagesServlet.SERVLET_PATH;
         paths = SERVLET_PATH,
         methods = {"GET"}
 )
-@Properties(value={
-    @Property(name="sling.auth.requirements", value={ "+" + SERVLET_PATH })
+@Properties(value = {
+        @Property(name = "sling.auth.requirements", value = {"+" + SERVLET_PATH})
 })
 public class PackagesServlet extends AbstractConsoleServlet {
 
