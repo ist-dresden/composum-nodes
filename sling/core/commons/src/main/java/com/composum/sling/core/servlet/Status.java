@@ -26,19 +26,11 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static javax.servlet.http.HttpServletResponse.*;
 import static org.apache.sling.api.resource.ResourceUtil.isSyntheticResource;
 
 /**
@@ -52,7 +44,9 @@ public class Status {
 
     private static final Logger LOG = LoggerFactory.getLogger(Status.class);
 
-    /** Constant for often used argument for {@link #data(String)}. */
+    /**
+     * Constant for often used argument for {@link #data(String)}.
+     */
     public static final String DATA = "data";
 
     protected transient final Gson gson;
@@ -63,7 +57,9 @@ public class Status {
     protected boolean success = true;
     protected boolean warning = false;
 
-    /** If set, added messages will be logged here. */
+    /**
+     * If set, added messages will be logged here.
+     */
     @Nullable
     protected transient Logger messageLogger;
     @Nullable
@@ -88,7 +84,9 @@ public class Status {
         this(new GsonBuilder(), request, response, null);
     }
 
-    /** Construction */
+    /**
+     * Construction
+     */
     public Status(@Nonnull final GsonBuilder gsonBuilder,
                   @Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response,
                   @Nullable Logger messageLogger) {
@@ -113,7 +111,9 @@ public class Status {
         this.response = response;
     }
 
-    /** @deprecated Constructor for deserialization with gson only */
+    /**
+     * @deprecated Constructor for deserialization with gson only
+     */
     @Deprecated
     public Status() {
         this(new GsonBuilder().create(), null, null);
@@ -203,7 +203,9 @@ public class Status {
 
     @Nonnull
     public MessageContainer getMessages() {
-        if (messages == null) { messages = new MessageContainer(messageLogger); }
+        if (messages == null) {
+            messages = new MessageContainer(messageLogger);
+        }
         return messages;
     }
 
@@ -227,29 +229,39 @@ public class Status {
         return !isSuccess();
     }
 
-    /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
+    /**
+     * For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} .
+     */
     public void info(@Nonnull final String text, Object... args) {
         shortMessage(Level.info, text, args);
     }
 
-    /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
+    /**
+     * For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} .
+     */
     public void validationInfo(@Nonnull final String context, @Nonnull final String label,
                                @Nonnull final String text, Object... args) {
         addValidationMessage(Level.info, context, label, text, args);
     }
 
-    /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
+    /**
+     * For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} .
+     */
     public void warn(@Nonnull final String text, Object... args) {
         shortMessage(Level.warn, text, args);
     }
 
-    /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
+    /**
+     * For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} .
+     */
     public void validationWarn(@Nonnull final String context, @Nonnull final String label,
                                @Nonnull final String text, Object... args) {
         addValidationMessage(Level.warn, context, label, text, args);
     }
 
-    /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
+    /**
+     * For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} .
+     */
     public void error(@Nonnull final String text, Object... args) {
         shortMessage(Level.error, text, args);
     }
@@ -264,7 +276,9 @@ public class Status {
         adjustToMessageLevel(Level.error);
     }
 
-    /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
+    /**
+     * For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} .
+     */
     public void validationError(@Nonnull final String context, @Nonnull final String label,
                                 @Nonnull final String text, Object... args) {
         addValidationMessage(Level.error, context, label, text, args);
@@ -278,7 +292,9 @@ public class Status {
      */
     @Nonnull
     public Map<String, Object> data(@Nonnull final String name) {
-        if (data == null) { data = new LinkedHashMap<>();}
+        if (data == null) {
+            data = new LinkedHashMap<>();
+        }
         Map<String, Object> object = data.computeIfAbsent(name, k -> new LinkedHashMap<>());
         return object;
     }
@@ -314,7 +330,9 @@ public class Status {
      */
     @Nonnull
     public List<Map<String, Object>> list(@Nonnull final String name) {
-        if (list == null) { list = new LinkedHashMap<>(); }
+        if (list == null) {
+            list = new LinkedHashMap<>();
+        }
         List<Map<String, Object>> object = list.computeIfAbsent(name, k -> new ArrayList<>());
         return object;
     }
@@ -364,19 +382,32 @@ public class Status {
     }
 
     /**
-     * Adds the message and returns it.
+     * Adds a message to the container, and logs it into the logger if one was specified for this container.
      *
      * @return the created and added message, if you need to add more attributes
      */
     @Nonnull
     public Message addMessage(@Nonnull final Message message) {
+        return addMessage(message, null);
+    }
+
+    /**
+     * Adds a message to the container, and logs it into the logger if one was specified for this container.
+     * The intended usecase is with a logger, so we log a warning if it's called with a throwable but
+     * we have no logger, so that Stacktraces don't disappear accidentially.
+     *
+     * @return the created and added message, if you need to add more attributes
+     */
+    @Nonnull
+    public Message addMessage(@Nonnull final Message message, @Nullable Throwable throwable) {
         if (messages == null) {
             messages = new MessageContainer(messageLogger);
         }
         adjustToMessageLevel(message.getLevel());
-        messages.add(message);
+        messages.add(message, throwable);
         return message;
     }
+
 
     /**
      * Adjusts title, status and success / warning according to message level.
@@ -429,12 +460,16 @@ public class Status {
         }
     }
 
-    /** Serializes the status message and writes it in the response, using {@link #getStatus()} as HTTP status. */
+    /**
+     * Serializes the status message and writes it in the response, using {@link #getStatus()} as HTTP status.
+     */
     public void sendJson() throws IOException {
         sendJson(getStatus());
     }
 
-    /** Serializes the status message and writes it in the response, using the given HTTP status. */
+    /**
+     * Serializes the status message and writes it in the response, using the given HTTP status.
+     */
     public void sendJson(int status) throws IOException {
         JsonWriter writer = ResponseUtil.getJsonWriter(response);
         response.setStatus(status);
@@ -490,9 +525,15 @@ public class Status {
     public String toString() {
         final StringBuilder sb = new StringBuilder("Status{");
         sb.append("status=").append(status);
-        if (success) { sb.append(", success=").append(success); }
-        if (warning) { sb.append(", warning=").append(warning); }
-        if (StringUtils.isNotBlank(title)) { sb.append(", title='").append(title).append('\''); }
+        if (success) {
+            sb.append(", success=").append(success);
+        }
+        if (warning) {
+            sb.append(", warning=").append(warning);
+        }
+        if (StringUtils.isNotBlank(title)) {
+            sb.append(", title='").append(title).append('\'');
+        }
         sb.append('}');
         return sb.toString();
     }
