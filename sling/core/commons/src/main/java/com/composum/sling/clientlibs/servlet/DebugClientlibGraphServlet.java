@@ -1,6 +1,8 @@
 package com.composum.sling.clientlibs.servlet;
 
 import com.composum.sling.clientlibs.handle.*;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -23,6 +25,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.composum.sling.clientlibs.servlet.DebugClientlibGraphServlet.SERVLET_PATH;
+
 /**
  * Tries to print a graph of all client libraries. Unfortunately it is somewhat too complex to be useful.
  * <p>
@@ -37,12 +41,17 @@ import java.util.List;
  */
 @SlingServlet(
         methods = HttpConstants.METHOD_GET,
-        paths = "/bin/cpm/nodes/debug/clientlibgraph"
+        paths = SERVLET_PATH
 )
+@Properties(value = {
+        @Property(name = "sling.auth.requirements", value = {"+" + SERVLET_PATH})
+})
 @Deprecated
 public class DebugClientlibGraphServlet extends SlingSafeMethodsServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(DebugClientlibGraphServlet.class);
+
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/debug/clientlibgraph";
 
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)

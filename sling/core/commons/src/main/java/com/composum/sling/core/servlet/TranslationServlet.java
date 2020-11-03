@@ -4,6 +4,8 @@ import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.logging.Message;
 import com.composum.sling.core.service.TranslationService;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -18,17 +20,21 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static com.composum.sling.core.servlet.TranslationServlet.SERVLET_PATH;
+import static javax.servlet.http.HttpServletResponse.*;
 
 @SlingServlet(
-        paths = "/bin/cpm/core/translate",
+        paths = SERVLET_PATH,
         methods = {"PUT"}
 )
+@Properties(value = {
+        @Property(name = "sling.auth.requirements", value = {"+" + SERVLET_PATH})
+})
 public class TranslationServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(TranslationServlet.class);
+
+    public static final String SERVLET_PATH = "/bin/cpm/core/translate";
 
     public static final String STATUS = "status";
     public static final String SUCCESS = "success";
@@ -106,7 +112,9 @@ public class TranslationServlet extends AbstractServiceServlet {
             status.sendJson(SC_OK); // the normal i18n of Status and its Messages takes care of the translation.
         }
 
-        /** Parses the request format. */
+        /**
+         * Parses the request format.
+         */
         protected void readFrom(BufferedReader reader, Status status) {
             Map<String, Object> data = status.getGson().fromJson(reader, Map.class);
             Object value;
@@ -148,7 +156,9 @@ public class TranslationServlet extends AbstractServiceServlet {
 
         }
 
-        /** Reads a message from the input format. */
+        /**
+         * Reads a message from the input format.
+         */
         protected Message parseMessage(Map<String, Object> data) {
             Object value;
             Object hint = data.get(HINT);
