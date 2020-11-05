@@ -147,7 +147,7 @@ public class LinkUtil {
                 extension = getExtension(resource, extension);
             }
 
-            SlingUrl slingUrl = new SlingUrl(request, mapper).fromPath(url);
+            SlingUrl slingUrl = new SlingUrl(request, mapper).fromUrl(url);
             if (StringUtils.isNotBlank(selectors)) {
                 slingUrl.selectors(selectors);
             }
