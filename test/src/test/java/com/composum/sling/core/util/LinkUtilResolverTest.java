@@ -61,7 +61,7 @@ public class LinkUtilResolverTest {
 
     @Test
     public void getUrl() {
-        ec.checkThat(LinkUtil.getUrl(request, "?bla=blu"), is("%3Fbla=blu")); // FIXME(hps,16.07.20) doubtful
+        ec.checkThat(LinkUtil.getUrl(request, "?bla=blu"), is("?bla=blu")); // unclear.
         
         ec.checkThat(LinkUtil.getUrl(request, "/content/noresource"), is("/noresource"));
         ec.checkThat(LinkUtil.getUrl(request, "/content/noresource?bla=blu"), is("/noresource?bla=blu"));
