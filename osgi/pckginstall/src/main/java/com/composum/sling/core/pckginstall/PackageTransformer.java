@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class PackageTransformer implements ResourceTransformer, InstallTaskFactory {
@@ -57,21 +59,56 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
                         final Map<String, Object> attr = new HashMap<>();
                         tr.setAttributes(attr);
                         tr.setId(title);
-                        Version v = new Version(version.replace('-', '.'));
+                        Version v = new Version(cleanupVersion(version));
                         tr.setVersion(v);
                         return new TransformationResult[]{tr};
                     }
                 }
             } catch (Exception e) {
-                logger.warn("Exception transforming RegisteredResource: " + e.toString());
+                logger.warn("Exception transforming RegisteredResource: " + e, e);
             }
         }
         return new TransformationResult[0];
     }
 
+    private final static Pattern VERSION_PATTERN = Pattern.compile("(\\d+)?(\\.\\d+)?(\\.\\d+(?=-|\\.|$))?[-.]?(.*)");
+
+    // Transform into valid OSGI version.
+    protected static String cleanupVersion(String version) {
+        Matcher m = VERSION_PATTERN.matcher(version);
+        if (m.matches()) {
+            StringBuilder buf = new StringBuilder();
+            String grp = m.group(1);
+            if (grp != null && !grp.isEmpty()) {
+                buf.append(grp);
+            } else {
+                buf.append("0");
+            }
+            grp = m.group(2);
+            if (grp != null && !grp.isEmpty()) {
+                buf.append(grp);
+            } else {
+                buf.append(".0");
+            }
+            grp = m.group(3);
+            if (grp != null && !grp.isEmpty()) {
+                buf.append(grp);
+            } else {
+                buf.append(".0");
+            }
+            grp = m.group(4);
+            if (grp != null && !grp.isEmpty()) {
+                buf.append(".").append(m.group(4).replaceAll("[^a-zA-Z0-9-]", "_"));
+            }
+            return buf.toString();
+        } else { // bug - should be impossible.
+            throw new IllegalArgumentException("Unparseable version number " + version);
+        }
+    }
+
     @Override
     public InstallTask createTask(TaskResourceGroup toActivate) {
-        if ( !toActivate.getActiveResource().getType().equals("package") ) {
+        if (!toActivate.getActiveResource().getType().equals("package")) {
             return null;
         }
         logger.info("create PackageInstallTask for task resource with entityId '{}'", toActivate.getActiveResource().getEntityId());
@@ -107,19 +144,22 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
 
         @Override
         public void execute(InstallationContext ctx) {
+            ServiceReference<Repository> repositoryReference = null;
+            ServiceReference<JobManager> jmRef = null;
+            Session session = null;
             try {
-                final ServiceReference<Repository> repositoryReference = getServiceReference(Repository.class);
+                repositoryReference = getServiceReference(Repository.class);
                 final Repository repository = bundleContext.getService(repositoryReference);
                 final Method loginAdministrative = repository.getClass().getMethod("loginAdministrative", String.class);
                 final Object invoke = loginAdministrative.invoke(repository, (Object) null);
-                final Session session = (Session) invoke;
+                session = (Session) invoke;
                 final JcrPackageManager packageManager = packaging.getPackageManager(session);
                 final TaskResource resource = getResource();
                 final InputStream inputStream = resource.getInputStream();
                 logger.info("package upload - {}", resource.getEntityId());
                 final JcrPackage jcrPackage = packageManager.upload(inputStream, true, true);
 
-                final ServiceReference<JobManager> jmRef = getServiceReference(JobManager.class);
+                jmRef = getServiceReference(JobManager.class);
                 final JobManager jm = bundleContext.getService(jmRef);
                 String path = jcrPackage.getNode().getPath();
                 final String root = packageManager.getPackageRoot().getPath();
@@ -135,12 +175,19 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
                 logger.info("add package install job with path '{}' and sort key ‘{}‘", path, getSortKey());
                 final Job job = jm.addJob("com/composum/sling/core/pckgmgr/PackageJobExecutor", jobProperties);
                 session.save();
-                session.logout();
-                bundleContext.ungetService(jmRef);
-                bundleContext.ungetService(repositoryReference);
                 this.setFinishedState(ResourceState.INSTALLED);
             } catch (Exception e) {
-                logger.warn("Exception executing PackageInstallTask: " + e.toString());
+                logger.warn("Exception executing PackageInstallTask: " + e, e);
+            } finally {
+                if (jmRef != null) {
+                    bundleContext.ungetService(jmRef);
+                }
+                if (repositoryReference != null) {
+                    bundleContext.ungetService(repositoryReference);
+                }
+                if (session != null) {
+                    session.logout();
+                }
             }
         }
 
@@ -155,7 +202,7 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
         private String getSortableStartLevel() {
             final Object hint = getResource().getDictionary().get(InstallableResource.INSTALLATION_HINT);
             int startLevel;
-            if (hint ==  null) {
+            if (hint == null) {
                 startLevel = 0;
             } else {
                 try {
@@ -165,11 +212,11 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
                 }
             }
 
-            if ( startLevel == 0 ) {
+            if (startLevel == 0) {
                 return "999";
-            } else if ( startLevel < 10 ) {
+            } else if (startLevel < 10) {
                 return "00" + String.valueOf(startLevel);
-            } else if ( startLevel < 100 ) {
+            } else if (startLevel < 100) {
                 return "0" + String.valueOf(startLevel);
             }
             return String.valueOf(startLevel);
