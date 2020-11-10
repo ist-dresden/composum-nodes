@@ -11,8 +11,8 @@
     <artifactId>composum-nodes-package</artifactId>
     <packaging>content-package</packaging>
 
-    <name>Composum Nodes (Core) Package</name>
-    <description>Composum Nodes (Core) Console Bundles Package - the Composum Nodes tools collection</description>
+    <name>Composum Nodes Package</name>
+    <description>Composum Nodes Console Bundles Package - the Composum Nodes tools collection</description>
 
     <properties>
         <package.group>com/composum/nodes</package.group>
@@ -87,12 +87,21 @@
                                 <include>.*/composum-nodes-pckgmgr.*\.jar</include>
                                 <include>.*/composum-nodes-usermgr.*\.jar</include>
                                 <include>.*/composum-nodes-config.*\.jar</include>
+
+                                <!-- removes all v1 composum core content -->
+                                <include>.*/composum-sling-core-jslibs.*\.jar</include>
+                                <include>.*/composum-sling-core-commons.*\.jar</include>
+                                <include>.*/composum-sling-core-console.*\.jar</include>
+                                <include>.*/composum-sling-package-manager.*\.jar</include>
+                                <include>.*/composum-sling-user-management.*\.jar</include>
+                                <include>.*/composum-sling-core-config.*\.jar</include>
                             </includes>
                         </filter>
                         <filter>
                             <!-- removes all 'old' composum core content -->
                             <root>/libs/composum/sling</root>
                         </filter>
+
                     </filters>
 
                     <embeddeds>

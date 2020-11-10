@@ -7,18 +7,11 @@ import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.servlet.Status;
-import com.composum.sling.core.util.JsonUtil;
-import com.composum.sling.core.util.MimeTypeUtil;
-import com.composum.sling.core.util.PropertyUtil;
-import com.composum.sling.core.util.RequestUtil;
-import com.composum.sling.core.util.ResponseUtil;
-import com.composum.sling.core.util.XSS;
+import com.composum.sling.core.util.*;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -27,20 +20,18 @@ import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.resource.ResourceUtil;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.tika.mime.MimeType;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.jcr.Binary;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
-import javax.jcr.PropertyType;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
+import javax.jcr.*;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
@@ -56,14 +47,22 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
 /**
  * The service servlet handling one single JCR property for one resource.
  */
-@SlingServlet(
-        paths = "/bin/cpm/nodes/property",
-        methods = {"GET", "POST", "PUT"}
+@Component(service = Servlet.class,
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Property Servlet",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + PropertyServlet.SERVLET_PATH,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT,
+                "sling.auth.requirements=" + PropertyServlet.SERVLET_PATH
+        },
+        immediate = true
 )
 public class PropertyServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(PropertyServlet.class);
 
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/property";
     public static final StringFilter DEFAULT_PROPS_FILTER = new StringFilter.BlackList();
     public static final StringFilter BINARY_PROPS_FILTER = new StringFilter.BlackList();
 
@@ -176,10 +175,10 @@ public class PropertyServlet extends AbstractServiceServlet {
 
                 Node node = resource.adaptTo(Node.class);
                 if (node != null) {
-                    JsonUtil.writeJsonProperties(jsonWriter, filter, node, mapping);
+                    JsonUtil.writeJsonProperties(request.getResourceResolver(), jsonWriter, filter, node, mapping);
                 } else {
                     ValueMap values = ResourceUtil.getValueMap(resource);
-                    JsonUtil.writeJsonValueMap(jsonWriter, filter, values, mapping);
+                    JsonUtil.writeJsonValueMap(request.getResourceResolver(), jsonWriter, filter, values, mapping);
                 }
 
             } catch (RepositoryException ex) {
@@ -209,7 +208,7 @@ public class PropertyServlet extends AbstractServiceServlet {
 
                     response.setStatus(SC_OK);
 
-                    ResponseUtil.writeJsonProperty(response, node, name);
+                    ResponseUtil.writeJsonProperty(request.getResourceResolver(), response, node, name);
 
                 } else {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "no property name parameter found");
@@ -254,7 +253,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                     if (available) {
                         // answer with property reloaded and transformed to JSON
                         response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
-                        ResponseUtil.writeJsonProperty(response, node, property.name);
+                        ResponseUtil.writeJsonProperty(request.getResourceResolver(), response, node, property.name);
                     } else {
                         // empty answer for a successful request (possible a deletion)
                         response.setContentLength(0);

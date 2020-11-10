@@ -13,7 +13,7 @@
     <artifactId>composum-nodes-setup</artifactId>
     <packaging>pom</packaging>
 
-    <name>Composum Nodes (Core) setup parent</name>
+    <name>Composum Nodes setup parent</name>
     <description>setup implementation core modules</description>
 
     <modules>

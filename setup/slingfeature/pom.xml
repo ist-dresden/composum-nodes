@@ -12,7 +12,7 @@
     <artifactId>composum-nodes-slingfeature</artifactId>
     <packaging>slingfeature</packaging>
 
-    <name>Composum Nodes (Core) Feature</name>
+    <name>Composum Nodes Feature</name>
     <description>Sling feature for easy integration of Composum Console in slingstart projects.</description>
 
     <build>

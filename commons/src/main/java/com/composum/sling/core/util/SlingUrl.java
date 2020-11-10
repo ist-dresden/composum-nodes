@@ -766,7 +766,7 @@ public class SlingUrl implements Cloneable {
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object other) {
-        return toString().equals(other.toString());
+        return other != null && toString().equals(other.toString());
     }
 
     /**

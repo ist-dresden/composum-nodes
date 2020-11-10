@@ -4,7 +4,9 @@ import com.composum.sling.core.mapping.MappingRules;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.ResourceResolver;
 
+import javax.annotation.Nullable;
 import javax.jcr.AccessDeniedException;
 import javax.jcr.LoginException;
 import javax.jcr.Node;
@@ -87,14 +89,15 @@ public class ResponseUtil {
      * @throws RepositoryException error on accessing JCR
      * @throws IOException         error on write JSON
      */
-    public static void writeJsonProperty(SlingHttpServletResponse response, Node node, String name)
+    public static void writeJsonProperty(@Nullable final ResourceResolver resolver,
+                                         SlingHttpServletResponse response, Node node, String name)
             throws RepositoryException, IOException {
 
         JsonWriter jsonWriter = getJsonWriter(response);
 
         javax.jcr.Property property = node.getProperty(name);
         if (property != null) {
-            JsonUtil.writeJsonProperty(jsonWriter, node, property, getDefaultJsonMapping());
+            JsonUtil.writeJsonProperty(resolver, jsonWriter, node, property, getDefaultJsonMapping());
         }
     }
 }

@@ -12,7 +12,7 @@
     <artifactId>composum-nodes-pckgmgr</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Composum Nodes (Core) Package Manager</name>
+    <name>Composum Nodes Package Manager</name>
     <description>a console module to manage VLT packages</description>
 
     <properties>
@@ -25,11 +25,6 @@
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-scr-plugin</artifactId>
             </plugin>
 
             <plugin>
@@ -77,6 +72,20 @@
     </build>
 
     <dependencies>
+
+        <!-- OSGi, Felix -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation</artifactId>
+        </dependency>
 
         <!-- Composum -->
         <dependency>
@@ -143,25 +152,6 @@
             <artifactId>gson</artifactId>
         </dependency>
 
-        <!-- OSGi, Felix -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>osgi.cmpn</artifactId>
-        </dependency>
-        <!-- deprecated! -->
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.scr</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.scr.annotations</artifactId>
-        </dependency>
-
         <!-- Apache Commons -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -178,11 +168,6 @@
             <artifactId>slf4j-simple</artifactId>
         </dependency>
 
-
-        <dependency>
-            <groupId>taglibs</groupId>
-            <artifactId>standard</artifactId>
-        </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>

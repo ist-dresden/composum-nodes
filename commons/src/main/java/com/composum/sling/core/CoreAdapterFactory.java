@@ -10,24 +10,23 @@
 
 package com.composum.sling.core;
 
-import org.apache.felix.scr.annotations.*;
 import org.apache.sling.api.adapter.AdapterFactory;
 import org.apache.sling.api.resource.Resource;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @author Mirko Zeibig
- *
  */
-@Component(label = "Composum Nodes (Core) Library Adapters",
-           description = " Adapts Resources to ResourceHandles")
-@Properties({
-    @Property(name = "service.description", value = "Composum Nodes (Core) Library Adapters"),
-    @Property(name = "adaptables", value="org.apache.sling.api.resource.Resource", propertyPrivate = true),
-    @Property(name = "adapters", value="com.composum.sling.core.ResourceHandle", propertyPrivate = true)
-})
-@Service
+@Component(
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes (Core) Library Adapters :  Adapts Resources to ResourceHandles",
+                "adaptables=org.apache.sling.api.resource.Resource",
+                "adapters=com.composum.sling.core.ResourceHandle"
+        }
+)
 public class CoreAdapterFactory implements AdapterFactory {
 
     private static final Logger log = LoggerFactory.getLogger(CoreAdapterFactory.class);
@@ -50,7 +49,7 @@ public class CoreAdapterFactory implements AdapterFactory {
      * Handles <code>resourceHandle.adaptTo(ResourceHandle.class)</code>.
      *
      * @param resourceHandle Object to adapt
-     * @param type target type
+     * @param type           target type
      * @return original Object
      */
     protected static <AdapterType> AdapterType getAdapter(ResourceHandle resourceHandle, Class<AdapterType> type) {
@@ -65,7 +64,7 @@ public class CoreAdapterFactory implements AdapterFactory {
      * Handles <code>resource.adaptTo(ResourceHandle.class)</code>, to wrap a resource with an ResourceHandle.
      *
      * @param resource resource to adapt/wrap
-     * @param type target type
+     * @param type     target type
      * @return wrapped resource
      */
     protected static <AdapterType> AdapterType getAdapter(Resource resource, Class<AdapterType> type) {

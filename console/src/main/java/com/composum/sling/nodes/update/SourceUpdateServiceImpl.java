@@ -6,13 +6,13 @@ import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.Importer;
 import org.apache.jackrabbit.vault.fs.io.MemoryArchive;
 import org.apache.sling.api.resource.*;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,10 +29,10 @@ import static com.composum.sling.core.util.ResourceUtil.*;
 
 
 @Component(
-        label = "Composum Source Update Service",
-        description = "service to update content trees from XML"
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Source Update Service : service to update content trees from XML"
+        }
 )
-@Service(SourceUpdateService.class)
 public class SourceUpdateServiceImpl implements SourceUpdateService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceUpdateServiceImpl.class);

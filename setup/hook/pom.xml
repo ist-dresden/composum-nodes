@@ -12,7 +12,7 @@
     <artifactId>composum-nodes-setup-hook</artifactId>
     <packaging>jar</packaging>
 
-    <name>Composum Nodes (Core) setup hook</name>
+    <name>Composum Nodes setup hook</name>
     <description>the setup implementation code for the Core modules</description>
 
     <build>

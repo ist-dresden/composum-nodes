@@ -6,8 +6,6 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
@@ -17,6 +15,8 @@ import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.jackrabbit.commons.jackrabbit.authorization.AccessControlUtils;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,9 +46,10 @@ import java.util.Map;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Component(
-        label = "Composum Nodes Security Service"
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Security Service"
+        }
 )
-@Service
 public class CoreRepositorySetupService implements RepositorySetupService {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoreRepositorySetupService.class);

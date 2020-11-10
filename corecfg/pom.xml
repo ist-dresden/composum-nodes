@@ -11,7 +11,7 @@
     <artifactId>composum-nodes-config</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Composum Nodes (Core) Configuration</name>
+    <name>Composum Nodes Configuration</name>
     <description>the set of necessary OSGi configuration fragments</description>
 
     <properties>

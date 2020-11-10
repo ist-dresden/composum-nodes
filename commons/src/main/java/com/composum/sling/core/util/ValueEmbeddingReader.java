@@ -3,6 +3,8 @@ package com.composum.sling.core.util;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -10,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Formatter;
 import java.util.Locale;
@@ -24,26 +27,34 @@ import java.util.Map;
  */
 public class ValueEmbeddingReader extends Reader {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ValueEmbeddingReader.class);
+
     public static final String TYPE_RESOURCE = "resource";
 
+    public static final char PATH_SEPARATOR = '/';
+    public static final char MEMBER_SEPARATOR = '.';
     public static final char TYPE_SEPARATOR = ':';
     public static final char FORMAT_SEPARATOR = ';';
 
-    public static final int BUFSIZE = 512;
+    public static final int BUFSIZE = 1024;
 
     public static class Key {
 
-        public final String type;
+        public String type = null;
         public final String name;
         public final String format;
 
         public Key(String key) {
             int typeSep = key.indexOf(TYPE_SEPARATOR);
             if (typeSep > 0) {
-                type = key.substring(0, typeSep);
-                key = key.substring(typeSep + 1);
-            } else {
-                type = null;
+                int pathSep = key.indexOf(PATH_SEPARATOR);
+                if (pathSep < 0 || pathSep > typeSep) {
+                    int memberSep = key.indexOf(MEMBER_SEPARATOR);
+                    if (memberSep < 0 || memberSep > typeSep) {
+                        type = key.substring(0, typeSep);
+                        key = key.substring(typeSep + 1);
+                    }
+                }
             }
             int formatSep = key.indexOf(FORMAT_SEPARATOR);
             if (formatSep > 0) {
@@ -59,10 +70,10 @@ public class ValueEmbeddingReader extends Reader {
     protected final Reader reader;
     protected final ValueMap values;
     protected final Locale locale;
-    protected final Class resourceContext;
+    protected final Class<?> resourceContext;
 
     protected boolean eof = false;
-    protected char[] buf = new char[BUFSIZE * 2]; // let place for values (max length:  BUFSIZE)
+    protected char[] buf = new char[BUFSIZE * 2]; // reserve place for values (max length:  BUFSIZE)
     protected int off = 0;
     protected int len = 0;
 
@@ -83,7 +94,7 @@ public class ValueEmbeddingReader extends Reader {
      * @param resourceContext the context class for resource loading
      */
     public ValueEmbeddingReader(@Nonnull Reader reader, @Nonnull Map<String, Object> values,
-                                @Nullable Locale locale, @Nullable Class resourceContext) {
+                                @Nullable Locale locale, @Nullable Class<?> resourceContext) {
         this(reader, new ValueMapDecorator(values), locale, resourceContext);
     }
 
@@ -102,7 +113,7 @@ public class ValueEmbeddingReader extends Reader {
      * @param resourceContext the context class for resource loading
      */
     public ValueEmbeddingReader(@Nonnull Reader reader, @Nonnull ValueMap values,
-                                @Nullable Locale locale, @Nullable Class resourceContext) {
+                                @Nullable Locale locale, @Nullable Class<?> resourceContext) {
         this.reader = reader;
         this.values = values;
         this.locale = locale != null ? locale : Locale.getDefault();
@@ -161,12 +172,10 @@ public class ValueEmbeddingReader extends Reader {
                     buf[len++] = '\\';
                     eof = true;
                 } else {
-                    if (next == '\\' || next == '$') {
-                        buf[len++] = (char) next;
-                    } else {
+                    if (next != '\\' && next != '$') {
                         buf[len++] = '\\';
-                        buf[len++] = (char) next;
                     }
+                    buf[len++] = (char) next;
                 }
             } else if (token == '$') { // '${...} ?
                 int next = reader.read();
@@ -186,11 +195,16 @@ public class ValueEmbeddingReader extends Reader {
                         if (!eof) {
                             Key key = new Key(keyBuffer.toString().trim());
                             if (TYPE_RESOURCE.equals(key.type)) {
-                                InputStream stream = resourceContext.getResourceAsStream(key.name);
-                                if (stream != null) {
-                                    // recursive embedding of a resource file with the given value set
-                                    embed = new ValueEmbeddingReader(
-                                            new InputStreamReader(stream, StandardCharsets.UTF_8), values);
+                                if (resourceContext != null) {
+                                    InputStream stream = resourceContext.getResourceAsStream(key.name);
+                                    if (stream != null) {
+                                        // recursive embedding of a resource file with the given value set
+                                        embed = new ValueEmbeddingReader(
+                                                new InputStreamReader(stream, StandardCharsets.UTF_8), values);
+                                    } else {
+                                        LOG.warn("resource '{}' not available; probably invalid context ({})", key.name, resourceContext.getName());
+                                        embed = new StringReader("");
+                                    }
                                     return; // stop buffering up to the end of the embedded reader
                                 }
                             } else {

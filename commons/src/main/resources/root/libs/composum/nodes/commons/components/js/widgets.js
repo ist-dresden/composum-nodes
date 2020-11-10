@@ -394,7 +394,7 @@
              */
             patternHint: function (pattern) {
                 return ('' + pattern)
-                    .replace(/^\//, '').replace(/\/$/, '')
+                    .replace(/^\/(.*)\/[a-z]*$/, '$1')
                     .replace(/^[^]/, '').replace(/[$]$/, '');
             }
         })

@@ -1,20 +1,21 @@
 package com.composum.sling.clientlibs.service;
 
-import org.apache.felix.scr.annotations.*;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceNotFoundException;
-import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.servlets.post.Modification;
 import org.apache.sling.servlets.post.SlingPostProcessor;
-import org.osgi.service.component.ComponentContext;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.*;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Dictionary;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -26,23 +27,24 @@ import java.util.regex.PatternSyntaxException;
  * This prevents accidentially creating JCR nodes when trying to access a servlet that is not active for some reason.
  */
 @Component(
-        label = "Composum PostServlet Blocker",
-        description = "A service that blocks the default SlingPostServlet for configurable paths, since that sometimes creates unwanted resources when deploying and the corresponding servlet is not present.",
-        metatype = true
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes PostServlet Blocker"
+        }
 )
-@Service(SlingPostProcessor.class)
+@Designate(ocd = DenyPostServiceImpl.Configuration.class)
 public class DenyPostServiceImpl implements SlingPostProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(DenyPostServiceImpl.class);
 
-    public static final String DENIED_PATHS = "deniedpaths";
-    @Property(
-            name = DENIED_PATHS,
-            label = "Denied Paths",
-            description = "Regular expressions the request path is compared to. If one of these matches the whole path, the operations called on the SlingPostServlet are rolled back.",
-            value = {"/bin/.*"}
-    )
-    protected String[] deniedpaths;
+    @ObjectClassDefinition(name = "Composum PostServlet Blocker",
+            description = "A service that blocks the default SlingPostServlet for configurable paths, since that sometimes creates unwanted resources when deploying and the corresponding servlet is not present.")
+    public @interface Configuration {
+
+        @AttributeDefinition(name = "Denied Paths",
+                description = "Regular expressions the request path is compared to. If one of these matches the whole path, the operations called on the SlingPostServlet are rolled back.")
+                String[] deniedpaths() default {"/bin/.*"};
+
+    }
 
     @Nonnull
     protected volatile List<Pattern> deniedPathList = Collections.emptyList();
@@ -65,11 +67,10 @@ public class DenyPostServiceImpl implements SlingPostProcessor {
         }
     }
 
-    @Modified
     @Activate
-    protected void activate(ComponentContext context) {
-        Dictionary<String, Object> properties = context.getProperties();
-        deniedpaths = PropertiesUtil.toStringArray(properties.get(DENIED_PATHS));
+    @Modified
+    protected void activate(Configuration configuration) {
+        String[] deniedpaths = configuration.deniedpaths();
         List<Pattern> newpaths = new ArrayList<>();
         if (deniedpaths != null) {
             for (String patternString : deniedpaths) {
@@ -82,5 +83,10 @@ public class DenyPostServiceImpl implements SlingPostProcessor {
             }
         }
         deniedPathList = newpaths;
+    }
+
+    @Deactivate
+    protected void deactivate() {
+        deniedPathList = Collections.emptyList();
     }
 }

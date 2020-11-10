@@ -12,7 +12,7 @@
     <artifactId>composum-nodes-console</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Composum Nodes (Core) Console</name>
+    <name>Composum Nodes Console</name>
     <description>a set of basic tools: jcr browser, package manager, user manager</description>
 
     <properties>
@@ -25,11 +25,6 @@
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-scr-plugin</artifactId>
             </plugin>
 
             <plugin>
@@ -79,6 +74,19 @@
     </build>
 
     <dependencies>
+        <!-- OSGi, Felix -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation</artifactId>
+        </dependency>
 
         <!-- Composum -->
         <dependency>
@@ -106,6 +114,11 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.xss</artifactId>
+            <!-- This is an evil JAR with several old versions of libraries as embedded dependencies that aren't exported
+            and can conflict with your code. "Optional" at least means that that doesn't conflict with artefacts
+            using a bundle that uses the sling.xss bundle.
+             -->
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
@@ -181,40 +194,21 @@
 
         <dependency>
             <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
+            <artifactId>javax.servlet-api</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.servlet.jsp</groupId>
             <artifactId>jsp-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-atinject_1.0_spec</artifactId>
         </dependency>
 
         <!-- JSON -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-        </dependency>
-
-        <!-- OSGi, Felix -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>osgi.cmpn</artifactId>
-        </dependency>
-        <!-- deprecated! -->
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.scr</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.scr.annotations</artifactId>
         </dependency>
 
         <!-- Apache Commons -->
@@ -247,10 +241,6 @@
             <artifactId>slf4j-simple</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>taglibs</groupId>
-            <artifactId>standard</artifactId>
-        </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>

@@ -12,7 +12,7 @@
     <artifactId>composum-nodes-osgi-package-installer</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Composum Nodes (Core) OSGi Package Installer</name>
+    <name>Composum Nodes OSGi Package Installer</name>
     <description>OSGi installer for JCR packages</description>
 
     <properties>
@@ -30,11 +30,6 @@
 
             <plugin>
                 <groupId>org.apache.felix</groupId>
-                <artifactId>maven-scr-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
@@ -44,7 +39,7 @@
                         <Include-Resource>{maven-resources}</Include-Resource>
                         <Import-Package>*</Import-Package>
                         <Export-Package>
-                            com.composum.core.pckginstall.*
+                            com.composum.sling.core.pckginstall.*
                         </Export-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>
                     </instructions>
@@ -84,19 +79,16 @@
             <groupId>org.osgi</groupId>
             <artifactId>osgi.cmpn</artifactId>
         </dependency>
-        <!-- deprecated! -->
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.scr</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.scr.annotations</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
         </dependency>
 
     </dependencies>

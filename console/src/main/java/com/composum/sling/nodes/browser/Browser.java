@@ -12,17 +12,25 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
 import org.slf4j.Logger;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.composum.sling.core.util.CoreConstants.DEFAULT_OVERLAY_ROOT;
+import static com.composum.sling.core.util.CoreConstants.DEFAULT_OVERRIDE_ROOT;
+import static com.composum.sling.core.util.CoreConstants.PROP_RESOURCE_SUPER_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class Browser extends ConsoleServletBean {
@@ -40,6 +48,7 @@ public class Browser extends ConsoleServletBean {
     public static final String PROP_DATA = "jcr:data";
     public static final String PROP_MIME_TYPE = "jcr:mimeType";
     public static final String DEFAULT_MIME_TYPE = "text/html";
+
 
     public static final Map<String, String> EDITOR_MODES;
 
@@ -68,6 +77,15 @@ public class Browser extends ConsoleServletBean {
 
     private transient String primaryType;
     private transient String resourceType;
+
+    private transient Boolean isDeclaringType;
+    private transient List<String> supertypeChain;
+    private transient LinkedHashMap<String, String> resourceTypes;
+
+    private transient Boolean overlayAvailable;
+    private transient Boolean overrideAvailable;
+    private transient Map<String, String> typeRootLabels;
+
     private transient String mimeType;
     private transient String nameExtension;
 
@@ -110,23 +128,59 @@ public class Browser extends ConsoleServletBean {
                         primaryType = "{untyped}";
                     }
                 } else {
-                    primaryType = "{no node}";
+                    primaryType = getResource().getValueMap()
+                            .get(JcrConstants.JCR_PRIMARYTYPE, "{no node}");
                 }
             } catch (RepositoryException ex) {
-                primaryType = String.format("{%s}", ex.getMessage());
-                LOG.error(ex.getMessage(), ex);
+                primaryType = getResource().getValueMap()
+                        .get(JcrConstants.JCR_PRIMARYTYPE, String.format("{%s}", ex.getMessage()));
             }
         }
         return primaryType;
     }
 
-    /*
-     * Node/Resource - Content Type
+    //
+    // Node/Resource - Content Type
+    //
+
+    /**
+     * returns 'true' if the current resource has a well known resource type
      */
+    public boolean isTyped() {
+        return StringUtils.isNotBlank(getResourceType());
+    }
+
+    /**
+     * @return 'true' if the current resource itself declares a resource type
+     */
+    public boolean isDeclaringType() {
+        if (isDeclaringType == null) {
+            isDeclaringType = false;
+            String path = getPath();
+            if (path.startsWith(getOverrideyRoot() + "/")) {
+                path = path.substring(getOverrideyRoot().length());
+            }
+            for (String root : getTypeSearchPath(true)) {
+                if (path.startsWith(root)) {
+                    isDeclaringType = true;
+                    break;
+                }
+            }
+        }
+        return isDeclaringType;
+    }
+
+    /**
+     * @return 'true' if the current resource itself 'implements' a resource type
+     */
+    public boolean isSourcePath() {
+        return isDeclaringType() && !isOverlayResource() && !isOverrideResource();
+    }
 
     /**
      * the content resource type (sling:resourceType) declared for the current resource
      */
+    @Nonnull
     public String getResourceType() {
         if (resourceType == null) {
             resourceType = "";
@@ -145,7 +199,8 @@ public class Browser extends ConsoleServletBean {
             }
             if (StringUtils.isNotBlank(type)) {
                 // check for a real existing resource type
-                if (!Resource.RESOURCE_TYPE_NON_EXISTING.equals(type)) {
+                if (!Resource.RESOURCE_TYPE_NON_EXISTING.equals(type)
+                        && !getPath().equals(getOverlayRoot() + "/" + type)) {
                     resourceType = type;
                 }
             }
@@ -153,12 +208,182 @@ public class Browser extends ConsoleServletBean {
         return resourceType;
     }
 
-    /**
-     * returns 'true' if the current resource has a well known resource type
-     */
-    public boolean isTyped() {
-        return StringUtils.isNotBlank(getResourceType());
+    @Nullable
+    protected String getResourceType(@Nullable String resourceType) {
+        if (StringUtils.isNotBlank(resourceType)) {
+            for (String root : getTypeSearchPath(true)) {
+                if (resourceType.startsWith(root)) {
+                    resourceType = resourceType.substring(root.length());
+                    break;
+                }
+            }
+        }
+        return resourceType;
     }
+
+    @Nullable
+    protected Resource getTypeResource(@Nullable final String resourceType, boolean includeOverlay) {
+        ResourceResolver resolver = getResolver();
+        if (StringUtils.isNotBlank(resourceType)) {
+            if (!resourceType.startsWith("/")) {
+                for (String root : getTypeSearchPath(includeOverlay)) {
+                    Resource typeResource = resolver.getResource(root + resourceType);
+                    if (typeResource != null) {
+                        return typeResource;
+                    }
+                }
+            }
+            return resolver.getResource(resourceType);
+        }
+        return null;
+    }
+
+    @Nonnull
+    protected List<String> getTypeSearchPath(boolean includeOverlay) {
+        List<String> typeSearchPath = new ArrayList<>(Arrays.asList(getResolver().getSearchPath()));
+        if (includeOverlay) {
+            typeSearchPath.add(0, getOverlayRoot() + "/");
+        }
+        return typeSearchPath;
+    }
+
+    @Nonnull
+    public List<String> getSupertypeChain() {
+        if (supertypeChain == null) {
+            supertypeChain = new ArrayList<>();
+            if (isDeclaringType()) {
+                Resource typeResource = getTypeResource(getPath(), isOverlayResource());
+                while (typeResource != null) {
+                    ValueMap values = typeResource.getValueMap();
+                    typeResource = getTypeResource(values.get(PROP_RESOURCE_SUPER_TYPE, ""), isOverlayResource());
+                    if (typeResource != null) {
+                        supertypeChain.add(typeResource.getPath());
+                    }
+                }
+            }
+        }
+        return supertypeChain;
+    }
+
+    @Nonnull
+    public Map<String, String> getResourceTypeSet() {
+        if (resourceTypes == null) {
+            resourceTypes = new LinkedHashMap<>();
+            String resourceType = getResourceType(isDeclaringType() ? getPath() : getResourceType());
+            if (StringUtils.isNotBlank(resourceType)) {
+                ResourceResolver resolver = getResolver();
+                Map<String, String> labels = getTypeRootLabels();
+                String overrideRoot = getOverrideyRoot() + "/";
+                if (isOverrideAvailable()) {
+                    resourceTypes.put(labels.get(overrideRoot), getOverridePath());
+                }
+                if (resourceType.startsWith(overrideRoot)) {
+                    resourceType = getResourceType(resourceType.substring(overrideRoot.length() - 1));
+                }
+                for (String root : getTypeSearchPath(isOverlayAvailable())) {
+                    String resourceTypePath = root + resourceType;
+                    if (resolver.getResource(resourceTypePath) != null) {
+                        resourceTypes.put(labels.get(root), resourceTypePath);
+                    }
+                }
+            }
+        }
+        return resourceTypes;
+    }
+
+    @Nonnull
+    public Map<String, String> getRelatedPathSet() {
+        if (isDeclaringType()) {
+            return getResourceTypeSet();
+        }
+        String path = getPath();
+        Map<String, String> related = new LinkedHashMap<>();
+        Map<String, String> labels = getTypeRootLabels();
+        String overrideRoot = getOverrideyRoot() + "/";
+        if (isOverrideAvailable()) {
+            related.put(labels.get(overrideRoot), getOverridePath());
+            related.put("B", getBasePath());
+        }
+        String resourceType = getResourceType();
+        if (StringUtils.isNotBlank(resourceType)) {
+            Resource type = getTypeResource(resourceType, false);
+            if (type != null) {
+                related.put("T", type.getPath());
+            }
+        }
+        return related;
+    }
+
+    //
+    // resource merger overlay / override
+    //
+
+    public String getBasePath() {
+        if (isOverrideResource()) {
+            return getPath().substring(getOverrideyRoot().length());
+        } else if (isOverlayResource()) {
+            Resource type = getTypeResource(getResourceType(isDeclaringType() ? getPath() : getResourceType()), false);
+            return type != null ? type.getPath() : getPath();
+        }
+        return getPath();
+    }
+
+    public String getOverlayRoot() {
+        // TODO: ask the merger service
+        return DEFAULT_OVERLAY_ROOT;
+    }
+
+    public boolean isOverlayResource() {
+        return getPath().startsWith(getOverlayRoot() + "/");
+    }
+
+    public boolean isOverlayAvailable() {
+        if (overlayAvailable == null) {
+            overlayAvailable = getResolver().getResource(getOverlayPath()) != null;
+        }
+        return overlayAvailable;
+    }
+
+    @Nonnull
+    public String getOverlayPath() {
+        return isOverlayResource() ? getPath() : getOverlayRoot() + "/" + getResourceType(getResourceType());
+    }
+
+    public String getOverrideyRoot() {
+        // TODO: ask the merger service
+        return DEFAULT_OVERRIDE_ROOT;
+    }
+
+    public boolean isOverrideResource() {
+        return getPath().startsWith(getOverrideyRoot() + "/");
+    }
+
+    public boolean isOverrideAvailable() {
+        if (overrideAvailable == null) {
+            overrideAvailable = getResolver().getResource(getOverridePath()) != null;
+        }
+        return overrideAvailable;
+    }
+
+    @Nonnull
+    public String getOverridePath() {
+        return isOverrideResource() ? getPath() : getOverrideyRoot() + getBasePath();
+    }
+
+    protected Map<String, String> getTypeRootLabels() {
+        if (typeRootLabels == null) {
+            typeRootLabels = new HashMap<>();
+            typeRootLabels.put(getOverrideyRoot() + "/", "o/r");
+            typeRootLabels.put(getOverlayRoot() + "/", "o/l");
+            typeRootLabels.put("/apps/", "A");
+            typeRootLabels.put("/libs/", "L");
+        }
+        return typeRootLabels;
+    }
+
+    //
+    // File type
+    //
 
     public boolean isFile() {
         if (isFile == null) {

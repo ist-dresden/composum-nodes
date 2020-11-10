@@ -10,7 +10,6 @@ import com.composum.sling.core.util.ResponseUtil;
 import com.composum.sling.core.util.XSS;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.Component;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -36,7 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component(componentAbstract = true)
 public abstract class NodeTreeServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodeTreeServlet.class);

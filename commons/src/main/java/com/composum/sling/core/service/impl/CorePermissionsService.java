@@ -1,14 +1,14 @@
 package com.composum.sling.core.service.impl;
 
 import com.composum.sling.core.service.PermissionsService;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.jackrabbit.commons.jackrabbit.authorization.AccessControlUtils;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +18,10 @@ import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
 
 @Component(
-        label = "Composum Nodes Permissions Service"
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Permissions Service"
+        }
 )
-@Service
 public class CorePermissionsService implements PermissionsService {
 
     private static final Logger LOG = LoggerFactory.getLogger(CorePermissionsService.class);

@@ -4,27 +4,28 @@ import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.nodes.update.SourceUpdateService;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.request.RequestPathInfo;
+import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
-
-import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
-
 
 /**
  * Modifies JCR content according to a given XML or ZIP of XMLs while preserving / updating metadata like versioning
@@ -34,12 +35,18 @@ import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
  * <p>
  * TODO: perhaps keep special nodes like cpp:MetaData (used for statistics) unchanged
  */
-@SlingServlet(
-        paths = "/bin/cpm/nodes/sourceupload",
-        methods = METHOD_POST,
-        extensions = {"zip"}
+@Component(service = Servlet.class,
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Source Update Servlet",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SourceUpdateServlet.SERVLET_PATH,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST,
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=zip",
+                "sling.auth.requirements=" + SourceUpdateServlet.SERVLET_PATH
+        }
 )
 public class SourceUpdateServlet extends SlingAllMethodsServlet {
+
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/sourceupload";
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceUpdateServlet.class);
 
@@ -94,3 +101,4 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
 
     }
 }
+

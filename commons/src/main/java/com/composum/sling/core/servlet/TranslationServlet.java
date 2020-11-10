@@ -4,31 +4,39 @@ import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.logging.Message;
 import com.composum.sling.core.service.TranslationService;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static javax.servlet.http.HttpServletResponse.*;
 
-@SlingServlet(
-        paths = "/bin/cpm/core/translate",
-        methods = {"PUT"}
+@Component(service = Servlet.class,
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Translation Servlet",
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + TranslationServlet.SERVLET_PATH,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT,
+                "sling.auth.requirements=" + TranslationServlet.SERVLET_PATH
+        }
 )
 public class TranslationServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(TranslationServlet.class);
+
+    public static final String SERVLET_PATH = "/bin/cpm/core/translate";
 
     public static final String STATUS = "status";
     public static final String SUCCESS = "success";

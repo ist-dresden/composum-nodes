@@ -1,10 +1,6 @@
 package com.composum.sling.clientlibs.servlet;
 
-import com.composum.sling.clientlibs.handle.Clientlib;
-import com.composum.sling.clientlibs.handle.ClientlibElement;
-import com.composum.sling.clientlibs.handle.ClientlibFile;
-import com.composum.sling.clientlibs.handle.ClientlibRef;
-import com.composum.sling.clientlibs.handle.ClientlibResourceFolder;
+import com.composum.sling.clientlibs.handle.*;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
@@ -45,13 +41,16 @@ import java.util.Objects;
  */
 @Component(service = Servlet.class,
         property = {
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/nodes/debug/clientlibgraph",
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=" + DebugClientlibGraphServlet.SERVLET_PATH,
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+                "sling.auth.requirements=" + DebugClientlibGraphServlet.SERVLET_PATH
         })
 @Deprecated
 public class DebugClientlibGraphServlet extends SlingSafeMethodsServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(DebugClientlibGraphServlet.class);
+
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/debug/clientlibgraph";
 
     @Override
     protected void doGet(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response)

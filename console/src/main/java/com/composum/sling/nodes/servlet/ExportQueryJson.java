@@ -5,17 +5,21 @@ import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.XSS;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
+import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
@@ -27,10 +31,13 @@ import static com.composum.sling.nodes.servlet.NodeServlet.getJsonSelectorRules;
  * found resource - the resource type of this servlet is used in the 'export set' configuration; see:
  * /libs/composum/nodes/browser/query/export/json
  */
-@SlingServlet(
-        resourceTypes = "composum/nodes/browser/query/export/json/objects",
-        methods = {"POST"}
-)
+@Component(service = Servlet.class,
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Export Query Json Servlet",
+                ServletResolverConstants.SLING_SERVLET_RESOURCE_TYPES + "=composum/nodes/browser/query/export/json/objects",
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST
+        })
+
 public class ExportQueryJson extends SlingAllMethodsServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExportQueryJson.class);

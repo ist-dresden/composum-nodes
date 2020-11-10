@@ -17,32 +17,13 @@ import org.slf4j.Logger;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.lock.LockManager;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.lang.annotation.Annotation;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
-import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_SLING_FOLDER;
-import static com.composum.sling.core.util.ResourceUtil.TYPE_UNSTRUCTURED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.composum.sling.core.util.ResourceUtil.*;
+import static org.junit.Assert.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -104,7 +85,17 @@ public class LazyCreationServiceImplTest {
         lazyCreationService = new LazyCreationServiceImpl() {{
             sequencer = sequencerService;
             resolverFactory = resourceResolverFactory;
-            maximumLockWaitTimeSec = 2;
+            config = new Configuration() {
+                @Override
+                public Class<? extends Annotation> annotationType() {
+                    return Configuration.class;
+                }
+
+                @Override
+                public int lazycreation_maximumlockwait() {
+                    return 2;
+                }
+            };
         }};
         executor = Executors.newFixedThreadPool(20);
     }
@@ -133,7 +124,9 @@ public class LazyCreationServiceImplTest {
         runCreationInParallel(0);
     }
 
-    /** Simulate collisions in cluster as far as possible - SequencerService doesn't work there. */
+    /**
+     * Simulate collisions in cluster as far as possible - SequencerService doesn't work there.
+     */
     @Test
     public void testCreationWithoutSequencer() throws Exception {
         setup(NOSEQUENCER);
@@ -209,7 +202,9 @@ public class LazyCreationServiceImplTest {
         runCreationAndInitInParallel(0);
     }
 
-    /** Stresstest: simulate collisions in cluster as far as possible - SequencerService doesn't work there. */
+    /**
+     * Stresstest: simulate collisions in cluster as far as possible - SequencerService doesn't work there.
+     */
     @Test
     public void testCreationAndInitWithoutSequencer() throws Exception {
         setup(NOSEQUENCER);
@@ -275,7 +270,9 @@ public class LazyCreationServiceImplTest {
         initCount.clear(); // avoid the check in teardown since it doesn't fit here - this deliberately initializes something twice
     }
 
-    /** Delay by a random time between 3/4 and 5/4 * delay milliseconds. */
+    /**
+     * Delay by a random time between 3/4 and 5/4 * delay milliseconds.
+     */
     protected void randomlyDelay(int delay) {
         try {
             if (0 < delay) {
@@ -352,7 +349,9 @@ public class LazyCreationServiceImplTest {
         if (result.getResourceResolver() != context.resourceResolver()) result.getResourceResolver().close();
     }
 
-    /** Parallel writing to a resource fails only when the written properties differ in value. */
+    /**
+     * Parallel writing to a resource fails only when the written properties differ in value.
+     */
     @Test
     public void testParallelWrite() throws Exception {
         setup(NOSEQUENCER);
@@ -387,7 +386,9 @@ public class LazyCreationServiceImplTest {
         resolver2.close();
     }
 
-    /** Parallel creation of children of a parent does not require locking. */
+    /**
+     * Parallel creation of children of a parent does not require locking.
+     */
     @Test
     public void testParallelChildCreation() throws Exception {
         setup(NOSEQUENCER);
