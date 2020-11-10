@@ -120,7 +120,7 @@
             });
             this.$recentlyList.prepend(this.createItem(path));
             var $listContent = this.$recentlyList.children();
-            for (var i = $listContent.length; --i > 20;) {
+            for (var i = $listContent.length; --i > 100;) {
                 $($listContent[i]).remove();
             }
             this.saveProfile();

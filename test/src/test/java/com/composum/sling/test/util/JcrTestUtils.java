@@ -46,7 +46,7 @@ public class JcrTestUtils {
     /**
      * Prints a resource and its subresources as JSON, depth effectively unlimited.
      */
-    public static void printResourceRecursivelyAsJson(@Nullable Resource resource) {
+    public static void printResourceRecursivelyAsJson(@Nullable final Resource resource) {
         if (resource != null) {
             try {
                 StringWriter writer = new StringWriter();

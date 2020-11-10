@@ -3,28 +3,49 @@ package com.composum.sling.core.util;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingConstants;
 
-/** Some Composum core-wide constants - mostly node types, property names etc. */
+/**
+ * Some Composum core-wide constants - mostly node types, property names etc.
+ */
 public interface CoreConstants extends JcrConstants {
 
-    /** sling:resourceType */
+    String DEFAULT_OVERRIDE_ROOT = "/mnt/override";
+    String DEFAULT_OVERLAY_ROOT = "/mnt/overlay";
+
+    /**
+     * sling:resourceType
+     */
     String PROP_RESOURCE_TYPE =
             SlingConstants.NAMESPACE_PREFIX + ":" + SlingConstants.PROPERTY_RESOURCE_TYPE;
-    /** sling:resourceSuperType */
+    /**
+     * sling:resourceSuperType
+     */
     String PROP_RESOURCE_SUPER_TYPE =
             SlingConstants.NAMESPACE_PREFIX + ":" + SlingConstants.PROPERTY_RESOURCE_SUPER_TYPE;
-    /** jcr:content */
+    /**
+     * jcr:content
+     */
     String CONTENT_NODE = JCR_CONTENT;
 
-    /** mix:created */
+    /**
+     * mix:created
+     */
     String MIX_CREATED = "mix:created";
-    /** mix:lastModified */
+    /**
+     * mix:lastModified
+     */
     String MIX_LAST_MODIFIED = "mix:lastModified";
-    /** mix:title */
+    /**
+     * mix:title
+     */
     String MIX_TITLE = "mix:title";
 
-    /** jcr:title */
+    /**
+     * jcr:title
+     */
     String JCR_TITLE = "jcr:title";
-    /** jcr:description */
+    /**
+     * jcr:description
+     */
     String JCR_DESCRIPTION = "jcr:description";
 
     String TYPE_OAKINDEX = "oak:QueryIndexDefinition";
@@ -46,6 +67,7 @@ public interface CoreConstants extends JcrConstants {
     String TYPE_VERSIONABLE = MIX_VERSIONABLE;
 
     String PROP_UUID = JCR_UUID;
+    String PROPO_FROZEN_UUID = JCR_FROZENUUID;
     String PROP_TITLE = JCR_TITLE;
     String PROP_DESCRIPTION = JCR_DESCRIPTION;
 
@@ -61,4 +83,10 @@ public interface CoreConstants extends JcrConstants {
 
     String JCR_LASTMODIFIED_BY = "jcr:lastModifiedBy";
     String JCR_CREATED_BY = "jcr:createdBy";
+
+    String PROP_ROOT_VERSION = JCR_ROOTVERSION;
+    String PROP_BASE_VERSION = JCR_BASEVERSION;
+    String PROP_VERSION_HISTORY = JCR_VERSIONHISTORY;
+    String PROP_PREDECESSORS = JCR_PREDECESSORS;
+    String PROP_SUCCESSORS = JCR_SUCCESSORS;
 }

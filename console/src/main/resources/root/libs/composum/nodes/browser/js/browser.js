@@ -152,6 +152,8 @@
                 this.$input = this.$('.path-input-field');
                 this.$open = this.$('.open-path');
                 this.$list = this.$('.breadcrumbs-list');
+                this.$relatedPaths = this.$('.related-path-set .related-path');
+                this.$supertypes = this.$('.related-path-set .supertypes-menu li a');
                 if ('path-input' === core.console.getProfile().get('browser', 'breadcrumbs')) {
                     this.toggle();
                 }
@@ -162,6 +164,8 @@
                         this.open();
                     }
                 }, this));
+                this.$relatedPaths.click(_.bind(this.openRelated, this));
+                this.$supertypes.click(_.bind(this.openRelated, this));
                 this.$toggle.click(_.bind(this.toggle, this));
             },
 
@@ -186,6 +190,18 @@
                     event.preventDefault();
                 }
                 var path = this.$input.val();
+                if (path) {
+                    browser.setCurrentPath(path);
+                }
+                return false;
+            },
+
+            openRelated: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                var $element = $(event.currentTarget);
+                var path = $element.data('path');
                 if (path) {
                     browser.setCurrentPath(path);
                 }

@@ -175,10 +175,10 @@ public class PropertyServlet extends AbstractServiceServlet {
 
                 Node node = resource.adaptTo(Node.class);
                 if (node != null) {
-                    JsonUtil.writeJsonProperties(jsonWriter, filter, node, mapping);
+                    JsonUtil.writeJsonProperties(request.getResourceResolver(), jsonWriter, filter, node, mapping);
                 } else {
                     ValueMap values = ResourceUtil.getValueMap(resource);
-                    JsonUtil.writeJsonValueMap(jsonWriter, filter, values, mapping);
+                    JsonUtil.writeJsonValueMap(request.getResourceResolver(), jsonWriter, filter, values, mapping);
                 }
 
             } catch (RepositoryException ex) {
@@ -208,7 +208,7 @@ public class PropertyServlet extends AbstractServiceServlet {
 
                     response.setStatus(SC_OK);
 
-                    ResponseUtil.writeJsonProperty(response, node, name);
+                    ResponseUtil.writeJsonProperty(request.getResourceResolver(), response, node, name);
 
                 } else {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "no property name parameter found");
@@ -253,7 +253,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                     if (available) {
                         // answer with property reloaded and transformed to JSON
                         response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
-                        ResponseUtil.writeJsonProperty(response, node, property.name);
+                        ResponseUtil.writeJsonProperty(request.getResourceResolver(), response, node, property.name);
                     } else {
                         // empty answer for a successful request (possible a deletion)
                         response.setContentLength(0);

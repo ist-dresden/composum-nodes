@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class Consoles extends ConsolePage {
 
@@ -187,22 +188,18 @@ public class Consoles extends ConsolePage {
 
     protected void findConsoles(List<Console> consoles, String query) {
         ResourceResolver resolver = getResolver();
+        NodesConfiguration configuration = Objects.requireNonNull(getSling().getService(NodesConfiguration.class));
+        String[] categories = configuration.getConsoleCategories();
+        ResourceFilter consoleFilter = new ConsoleFilter(categories);
 
         @SuppressWarnings("deprecation")
         Iterator<Resource> consoleContentResources = resolver.findResources(query, Query.XPATH);
-        if (consoleContentResources != null) {
+        while (consoleContentResources.hasNext()) {
 
-            NodesConfiguration configuration = getSling().getService(NodesConfiguration.class);
-            String[] categories = configuration.getConsoleCategories();
-            ResourceFilter consoleFilter = new ConsoleFilter(categories);
-
-            while (consoleContentResources.hasNext()) {
-
-                Resource consoleContent = consoleContentResources.next();
-                for (Resource console : consoleContent.getChildren()) {
-                    if (consoleFilter.accept(console)) {
-                        consoles.add(new Console(ResourceHandle.use(console)));
-                    }
+            Resource consoleContent = consoleContentResources.next();
+            for (Resource console : consoleContent.getChildren()) {
+                if (consoleFilter.accept(console)) {
+                    consoles.add(new Console(ResourceHandle.use(console)));
                 }
             }
         }

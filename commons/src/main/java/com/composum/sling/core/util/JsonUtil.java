@@ -17,6 +17,8 @@ import org.apache.sling.api.resource.ValueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -45,6 +47,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
+
+import static com.composum.sling.core.util.CoreConstants.PROPO_FROZEN_UUID;
+import static com.composum.sling.core.util.CoreConstants.PROP_BASE_VERSION;
+import static com.composum.sling.core.util.CoreConstants.PROP_PREDECESSORS;
+import static com.composum.sling.core.util.CoreConstants.PROP_RESOURCE_SUPER_TYPE;
+import static com.composum.sling.core.util.CoreConstants.PROP_RESOURCE_TYPE;
+import static com.composum.sling.core.util.CoreConstants.PROP_ROOT_VERSION;
+import static com.composum.sling.core.util.CoreConstants.PROP_SUCCESSORS;
+import static com.composum.sling.core.util.CoreConstants.PROP_UUID;
+import static com.composum.sling.core.util.CoreConstants.PROP_VERSION_HISTORY;
 
 /**
  * The utility class to transform JCR object and Sling resources into JSON and update such objects using JSON data.
@@ -125,7 +137,8 @@ public class JsonUtil {
     /**
      * Transforms a Map object into a JSON object (stream).
      */
-    public static void jsonMap(JsonWriter writer, Map<String, Object> map) throws IOException {
+    public static void jsonMap(@Nonnull final JsonWriter writer, @Nullable final Map<String, Object> map)
+            throws IOException {
         if (map != null) {
             writer.beginObject();
             jsonMapEntries(writer, map);
@@ -133,7 +146,8 @@ public class JsonUtil {
         }
     }
 
-    public static void jsonMapEntries(JsonWriter writer, Map<String, Object> map) throws IOException {
+    public static void jsonMapEntries(@Nonnull final JsonWriter writer, @Nullable final Map<String, Object> map)
+            throws IOException {
         if (map != null) {
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 writer.name(entry.getKey());
@@ -145,7 +159,9 @@ public class JsonUtil {
     /**
      * Transforms an object into a JSON object (stream).
      */
-    public static void jsonValue(JsonWriter writer, Object value) throws IOException {
+    @SuppressWarnings("unchecked")
+    public static void jsonValue(@Nonnull final JsonWriter writer, @Nullable final Object value)
+            throws IOException {
         if (value == null) {
             writer.nullValue();
         } else {
@@ -153,7 +169,7 @@ public class JsonUtil {
                 jsonMap(writer, (Map<String, Object>) value);
             } else if (value instanceof Collection) {
                 writer.beginArray();
-                for (Object val : ((Collection) value)) {
+                for (Object val : ((Collection<Object>) value)) {
                     jsonValue(writer, val);
                 }
                 writer.endArray();
@@ -192,33 +208,28 @@ public class JsonUtil {
      *
      * @param writer   the writer for the JSON transformation
      * @param resource the resource to transform
-     * @throws RepositoryException
-     * @throws IOException
      */
-    public static void exportJson(JsonWriter writer, Resource resource)
+    public static void exportJson(@Nonnull final JsonWriter writer, @Nonnull final Resource resource)
             throws RepositoryException, IOException {
         exportJson(writer, resource, MappingRules.getDefaultMappingRules());
     }
 
     /**
-     * @param writer
-     * @param resource
-     * @param mapping
-     * @throws RepositoryException
-     * @throws IOException
+     * @param writer   the writer for the JSON transformation
+     * @param resource the resource to transform
+     * @param mapping  the mapping policy rule set
      */
-    public static void exportJson(JsonWriter writer, Resource resource, MappingRules mapping)
+    public static void exportJson(@Nonnull final JsonWriter writer, @Nonnull final Resource resource,
+                                  MappingRules mapping)
             throws RepositoryException, IOException {
         exportJson(writer, resource, mapping, 1);
     }
 
     /**
-     * @param writer
-     * @param resource
-     * @param mapping
-     * @param depth
-     * @throws RepositoryException
-     * @throws IOException
+     * @param writer   the writer for the JSON transformation
+     * @param resource the resource to transform
+     * @param mapping  the mapping policy rule set
+     * @param depth    the max depth for the rendering
      */
     public static void exportJson(JsonWriter writer, Resource resource, MappingRules mapping, int depth)
             throws RepositoryException, IOException {
@@ -245,13 +256,12 @@ public class JsonUtil {
     }
 
     /**
-     * @param writer
-     * @param resource
-     * @param mapping
-     * @throws RepositoryException
-     * @throws IOException
+     * @param writer   the writer for the JSON transformation
+     * @param resource the resource to transform
+     * @param mapping  the mapping policy rule set
      */
-    public static void exportProperties(JsonWriter writer, Resource resource, MappingRules mapping)
+    public static void exportProperties(@Nonnull final JsonWriter writer,
+                                        @Nonnull final Resource resource, MappingRules mapping)
             throws RepositoryException, IOException {
 
         Node node = resource.adaptTo(Node.class);
@@ -284,10 +294,10 @@ public class JsonUtil {
                 Object value = entry.getValue();
                 if (value instanceof Property) {
                     Property property = (Property) value;
-                    writeJsonProperty(writer, node, property, mapping);
+                    writeJsonProperty(resource.getResourceResolver(), writer, node, property, mapping);
                 } else {
                     // if no node exists (synthetic resource) the properties are simple values
-                    writeJsonProperty(writer, name, value, mapping);
+                    writeJsonProperty(resource.getResourceResolver(), writer, name, value, mapping);
                 }
             }
         }
@@ -669,7 +679,8 @@ public class JsonUtil {
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonProperties(JsonWriter writer, StringFilter filter,
+    public static void writeJsonProperties(@Nullable final ResourceResolver resolver,
+                                           JsonWriter writer, StringFilter filter,
                                            Node node, MappingRules mapping)
             throws RepositoryException, IOException {
         if (node != null) {
@@ -688,7 +699,7 @@ public class JsonUtil {
                 writer.beginArray();
             }
             for (Map.Entry<String, Property> entry : sortedProperties.entrySet()) {
-                writeJsonProperty(writer, node, entry.getValue(), mapping);
+                writeJsonProperty(resolver, writer, node, entry.getValue(), mapping);
             }
             if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value) {
                 writer.endObject();
@@ -707,7 +718,8 @@ public class JsonUtil {
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonValueMap(JsonWriter writer, StringFilter filter,
+    public static void writeJsonValueMap(@Nullable final ResourceResolver resolver,
+                                         JsonWriter writer, StringFilter filter,
                                          ValueMap values, MappingRules mapping)
             throws RepositoryException, IOException {
         if (values != null) {
@@ -726,7 +738,7 @@ public class JsonUtil {
                 writer.beginArray();
             }
             for (Map.Entry<String, Object> entry : sortedProperties.entrySet()) {
-                writeJsonProperty(writer, entry.getKey(), entry.getValue(), mapping);
+                writeJsonProperty(resolver, writer, entry.getKey(), entry.getValue(), mapping);
             }
             if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value) {
                 writer.endObject();
@@ -745,7 +757,8 @@ public class JsonUtil {
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonProperty(JsonWriter writer, Node node,
+    public static void writeJsonProperty(@Nullable final ResourceResolver resolver,
+                                         JsonWriter writer, Node node,
                                          Property property, MappingRules mapping)
             throws RepositoryException, IOException {
         if (property != null &&
@@ -764,7 +777,7 @@ public class JsonUtil {
             if (property.isMultiple()) {
                 writer.beginArray();
                 for (Value value : property.getValues()) {
-                    JsonUtil.writeJsonValue(writer, node, name, value, type, mapping);
+                    JsonUtil.writeJsonValue(resolver, writer, node, name, value, type, mapping);
                     if (valueString != null) {
                         if (valueString.length() > 0) {
                             valueString.append(',');
@@ -775,7 +788,7 @@ public class JsonUtil {
                 writer.endArray();
             } else {
                 Value value = property.getValue();
-                JsonUtil.writeJsonValue(writer, node, name, value, type, mapping);
+                JsonUtil.writeJsonValue(resolver, writer, node, name, value, type, mapping);
                 if (valueString != null) {
                     valueString.append(value.getString());
                 }
@@ -789,6 +802,20 @@ public class JsonUtil {
                     writer.name("protected").value(definition.isProtected());
                     if (valueString != null) {
                         writer.name("subtype").value(PropertyUtil.getStringSubtype(valueString.toString()).name());
+                    }
+                }
+                if (!property.isMultiple()) {
+                    String target = null;
+                    switch (type) {
+                        case PropertyType.STRING:
+                        case PropertyType.PATH:
+                        case PropertyType.REFERENCE:
+                        case PropertyType.WEAKREFERENCE:
+                            target = getValueTarget(resolver, name, property.getString());
+                            break;
+                    }
+                    if (StringUtils.isNotBlank(target)) {
+                        writer.name("target").value(target);
                     }
                 }
                 writer.endObject();
@@ -806,7 +833,8 @@ public class JsonUtil {
      * @throws RepositoryException
      * @throws IOException
      */
-    public static void writeJsonProperty(JsonWriter writer, String name,
+    public static void writeJsonProperty(@Nullable final ResourceResolver resolver,
+                                         JsonWriter writer, String name,
                                          Object value, MappingRules mapping)
             throws RepositoryException, IOException {
         if (name != null && value != null) {
@@ -831,21 +859,73 @@ public class JsonUtil {
                 writer.name("name").value(name);
                 writer.name("value");
             }
-            if (value instanceof Object[]) {
+            boolean isMultiple = value instanceof Object[];
+            if (isMultiple) {
                 writer.beginArray();
                 for (Object val : (Object[]) value) {
-                    JsonUtil.writeJsonValue(writer, null, name, val, type, mapping);
+                    JsonUtil.writeJsonValue(resolver, writer, null, name, val, type, mapping);
                 }
                 writer.endArray();
             } else {
-                JsonUtil.writeJsonValue(writer, null, name, value, type, mapping);
+                JsonUtil.writeJsonValue(resolver, writer, null, name, value, type, mapping);
             }
             if (mapping.propertyFormat.scope != MappingRules.PropertyFormat.Scope.value) {
                 writer.name("type").value(PropertyType.nameFromValue(type));
-                writer.name("multi").value(value instanceof Object[]);
+                writer.name("multi").value(isMultiple);
+                if (!isMultiple && type == PropertyType.STRING) {
+                    String target = getValueTarget(resolver, name, value.toString());
+                    if (StringUtils.isNotBlank(target)) {
+                        writer.name("target").value(target);
+                    }
+                }
                 writer.endObject();
             }
         }
+    }
+
+    public static String getValueTarget(@Nullable final ResourceResolver resourceResolver,
+                                        @Nullable final String name,
+                                        @Nullable final String value) {
+        if (resourceResolver != null && StringUtils.isNotBlank(value)) {
+            Resource target = resourceResolver.getResource(value);
+            if (target != null) {
+                return target.getPath();
+            }
+            if (StringUtils.isNotBlank(name)) {
+                switch (name) {
+                    case PROP_RESOURCE_TYPE:
+                    case PROP_RESOURCE_SUPER_TYPE:
+                        if (!value.startsWith("/")) {
+                            for (String root : resourceResolver.getSearchPath()) {
+                                target = resourceResolver.getResource(root + value);
+                                if (target != null) {
+                                    return target.getPath();
+                                }
+                            }
+                        }
+                        break;
+                    case PROP_UUID:
+                        break;
+                    case PROPO_FROZEN_UUID:
+                    case PROP_ROOT_VERSION:
+                    case PROP_BASE_VERSION:
+                    case PROP_VERSION_HISTORY:
+                    case PROP_PREDECESSORS:
+                    case PROP_SUCCESSORS:
+                    default:
+                        Session session = resourceResolver.adaptTo(Session.class);
+                        if (session != null) {
+                            try {
+                                Node node = session.getNodeByIdentifier(value);
+                                return node.getPath();
+                            } catch (Exception ignore) {
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+        return null;
     }
 
     // Java type transformations
@@ -854,13 +934,14 @@ public class JsonUtil {
      * Write a JCR value to the JSON writer.
      *
      * @param writer the JSON writer object (with the JSON state)
-     * @param type   the JCR type of the value (see PropertyType)
+     * @param name   the name of the value
      * @param value  the value itself, should be a JCR property otherwise a java scalar object or array of scalars
      * @param type   the type of the value
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonValue(JsonWriter writer, Node node, String name, Object value,
+    public static void writeJsonValue(@Nullable final ResourceResolver resolver,
+                                      JsonWriter writer, Node node, String name, Object value,
                                       Integer type, MappingRules mapping)
             throws RepositoryException, IOException {
         Value jcrValue = value instanceof Value ? (Value) value : null;

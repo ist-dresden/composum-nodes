@@ -115,8 +115,7 @@
                         sortable: true,
                         width: '22%',
                         formatter: function (value, row, index) {
-                            var escaped = _.escape(value); // prevent from XSS
-                            return escaped;
+                            return _.escape(value); // prevent from XSS
                         }
                     }, {
                         class: 'value',
@@ -149,7 +148,8 @@
                         width: '50px'
                     }],
 
-                    onClickRow: _.bind(this.onClickRow, this)
+                    onClickRow: _.bind(this.onClickRow, this),
+                    onPostBody: _.bind(this.onLoad, this)
                 });
             },
 
@@ -168,13 +168,30 @@
                             return '<a href="' + escaped + '">download...</a>';
                         }
                     default:
-                        return '<a class="editable">' + escaped + '</a>';
+                        var text = '<a class="editable">' + escaped;
+                        if (row.target) {
+                            text += '<span class="target-link btn btn-sm btn-default fa fa-share"'
+                                + ' data-path="' + row.target + '"' + ' title="' + row.target + '"></span>'
+                        }
+                        text += '</a>'
+                        return text;
                 }
             },
 
+            onLoad: function () {
+                this.$table.find('td .target-link').click(function (event) {
+                    event.preventDefault();
+                    var $link = $(event.currentTarget);
+                    var path = $link.data('path');
+                    if (path) {
+                        browser.setCurrentPath(path);
+                    }
+                    return false;
+                });
+            },
+
             getSelections: function () {
-                var rows = this.$table.bootstrapTable('getSelections');
-                return rows;
+                return this.$table.bootstrapTable('getSelections');
             },
 
             onClickRow: function (row, $element) {
@@ -182,7 +199,7 @@
                     var type = row.type;
                     var $column = $($element.context);
                     var columnKey = $column.attr('class');
-                    if (columnKey == 'value') {
+                    if (columnKey === 'value') {
                         var $editable = $element.find('a.editable');
                         if ($editable && $editable.length > 0
                             // if not initialized already - is the case if the editing was canceled
@@ -242,13 +259,13 @@
                         name: $row.find('td.name').text(),
                         oldname: $row.find('td.name').text(),
                         type: $row.find('td.type').text(),
-                        multi: ('true' == ($row.find('td.multi').text())),
+                        multi: ('true' === ($row.find('td.multi').text())),
                         value: params.value
                     });
                     property.save(_.bind(function (result) {
                         $(document).trigger('path:changed', [browser.getCurrentPath()]);
                     }, view), _.bind(function (result) {
-                        if (result.status != 200) {
+                        if (result.status !== 200) {
                             core.alert('danger', 'Error', 'Error on updating properties', result);
                         }
                         view.loadContent();

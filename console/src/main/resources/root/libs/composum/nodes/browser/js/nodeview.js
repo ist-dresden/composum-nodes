@@ -813,7 +813,7 @@
 
             initialize: function (options) {
                 core.console.DetailView.prototype.initialize.apply(this, [options]);
-                $(document).off('path:selected.DetailView')
+                $(document).off('path:selected.NodeView')
                     .on('path:selected.NodeView', _.bind(this.onPathSelected, this));
                 $(document).on('path:changed.NodeView', _.bind(this.onPathChanged, this));
                 this.$el.resize(_.bind(this.resize, this));
@@ -884,7 +884,6 @@
                     this.$detailView.find('.node-tabs .source.' + shownTab).removeClass('hidden');
                 }
             }
-
         });
 
         browser.nodeView = core.getView('#browser-view', browser.NodeView);

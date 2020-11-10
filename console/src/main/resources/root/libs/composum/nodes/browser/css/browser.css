@@ -44,7 +44,6 @@
     flex-wrap: nowrap;
     background-color: #e4e4e4;
     list-style: none;
-    overflow: hidden;
     margin: 0;
     padding: 0 7px;
 }
@@ -57,9 +56,9 @@
 
 #browser-view .breadcrumbs .breadcrumbs-toggle {
     flex-grow: 0;
-    width: 23px;
-    height: 23px;
-    margin-top: 6px;
+    width: 25px;
+    height: 25px;
+    margin-top: 5px;
     margin-right: 5px;
     padding: 0;
 }
@@ -94,12 +93,12 @@
     list-style: none;
 }
 
-#browser-view .breadcrumbs li {
+#browser-view .breadcrumbs .breadcrumbs-list li {
     float: left;
     line-height: 25px;
 }
 
-#browser-view .breadcrumbs li a {
+#browser-view .breadcrumbs .breadcrumbs-list li a {
     text-decoration: none;
     padding: 4px 0 3px;
     position: relative;
@@ -107,14 +106,14 @@
     float: left;
 }
 
-#browser-view .breadcrumbs li:after {
+#browser-view .breadcrumbs .breadcrumbs-list li:after {
     content: '/';
     display: inline-block;
     padding: 5px 0 2px;
     margin: 0 3px;
 }
 
-#browser-view .breadcrumbs li:last-child:after {
+#browser-view .breadcrumbs .breadcrumbs-list li:last-child:after {
     content: none;
 }
 
@@ -124,6 +123,24 @@
 
 #browser-view .breadcrumbs.input-path .breadcrumbs-list {
     display: none;
+}
+
+#browser-view .breadcrumbs .related-path-set {
+    white-space: nowrap;
+    display: flex;
+    margin: 5px 0 4px 5px;
+}
+
+#browser-view .breadcrumbs .related-path-set .btn {
+    height: 25px;
+    width: 25px;
+    padding: 0;
+    line-height: 24px;
+    text-align: center;
+}
+
+#browser-view .breadcrumbs .related-path-set .supertypes-menu li a {
+    padding: 2px 10px;
 }
 
 #browser #browser-view .breadcrumbs {
@@ -731,6 +748,10 @@
     margin: 0 0 0 5px;
 }
 
+#browser-view .bootstrap-table table td {
+    position: relative;
+}
+
 #browser-view .bootstrap-table table td .editable {
     border-bottom: none;
 }
@@ -743,7 +764,7 @@
 }
 
 #browser-view .bootstrap-table table td .editable-inline {
-    padding-right: 90px;
+    padding-right: 86px;
 }
 
 #browser-view .bootstrap-table table td.checkbox .editable-inline,
@@ -779,6 +800,15 @@
 
 #browser-view .bootstrap-table table tr.protected td .editable {
     color: #888;
+}
+
+#browser-view .bootstrap-table table td .target-link {
+    position: absolute;
+    top: 4px;
+    right: 10px;
+    padding: 3px 4px 1px 5px;
+    font-size: 10px;
+    color: #666;
 }
 
 #browser-view .full-table-view .bootstrap-table .fixed-table-container {
