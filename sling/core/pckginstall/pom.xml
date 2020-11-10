@@ -94,6 +94,12 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+
     </dependencies>
     <profiles>
 
