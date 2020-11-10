@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.nodes</groupId>
+        <artifactId>composum-nodes</artifactId>
+        <version>2.0.0</version>
+    </parent>
+
+    <artifactId>composum-nodes-usermgr</artifactId>
+    <packaging>bundle</packaging>
+
+    <name>Composum Nodes User Managmenent</name>
+    <description>a console module to manage users via JCR API</description>
+
+    <properties>
+        <bundle.name>com.composum.nodes.usermgr</bundle.name>
+    </properties>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <!-- Minify the JS-Resources - needs the build-helper-maven-plugin -->
+                <groupId>com.samaxes.maven</groupId>
+                <artifactId>minify-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <!-- Needed for the minify-maven-plugin. -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-Category>${bundle.category}</Bundle-Category>
+                        <Bundle-SymbolicName>${bundle.name}</Bundle-SymbolicName>
+                        <Include-Resource>
+                            {maven-resources}
+                        </Include-Resource>
+                        <Export-Package>
+                            !com.composum.sling.core.usermanagement.*.impl.*,
+                            com.composum.sling.core.usermanagement.*
+                        </Export-Package>
+                        <Sling-Initial-Content>
+                            root/libs/composum/nodes/usermgnt;path:=/libs/composum/nodes/usermgnt;overwrite:=true
+                        </Sling-Initial-Content>
+                    </instructions>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <dependencies>
+
+        <!-- OSGi, Felix -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation</artifactId>
+        </dependency>
+
+        <!-- Composum -->
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-console</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-jslibs</artifactId>
+        </dependency>
+
+        <!-- Apache Sling -->
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.scripting.jsp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.scripting.jsp.taglib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.jcr.api</artifactId>
+        </dependency>
+
+        <!-- JCR API, Jackrabbit -->
+        <dependency>
+            <groupId>javax.jcr</groupId>
+            <artifactId>jcr</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-jcr-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-core</artifactId>
+        </dependency>
+
+        <!-- JSON -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+
+        <!-- Apache Commons -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+        </dependency>
+
+    </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installBundle</id>
+            <activation>
+                <property>
+                    <name>deploy.bundle</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>sling-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-bundle</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>com.citytechinc.maven.plugins</groupId>
+                        <artifactId>osgi-bundle-status-maven-plugin</artifactId>
+                        <configuration>
+                            <skip>${bundle.status.skip}</skip>
+                            <bundleNames>
+                                <bundleName>${bundle.name}</bundleName>
+                            </bundleNames>
+                        </configuration>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>installPackage</id>
+        </profile>
+        <profile>
+            <id>installTestContent</id>
+        </profile>
+
+    </profiles>
+</project>
+

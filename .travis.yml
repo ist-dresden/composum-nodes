@@ -4,8 +4,8 @@ jdk: oraclejdk8
 dist: trusty
 branches:
   only:
-  - develop
+    - develop
+install:
+  - cp .travis.settings.xml $HOME/.m2/settings.xml
 script:
-  - cd sling/core
-  - mvn -s ../../settings.xml -f pom-api.xml -P${TRAVIS_BRANCH} clean install deploy
-  - mvn -s ../../settings.xml -f pom-ui.xml -P${TRAVIS_BRANCH} clean install deploy
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -P${TRAVIS_BRANCH} clean install deploy
