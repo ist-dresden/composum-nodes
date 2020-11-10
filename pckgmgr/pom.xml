@@ -12,7 +12,7 @@
     <artifactId>composum-nodes-pckgmgr</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Composum Nodes (Core) Package Manager</name>
+    <name>Composum Nodes Package Manager</name>
     <description>a console module to manage VLT packages</description>
 
     <properties>

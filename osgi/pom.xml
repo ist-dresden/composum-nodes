@@ -13,7 +13,7 @@
     <artifactId>composum-nodes-osgi</artifactId>
     <packaging>pom</packaging>
 
-    <name>Composum Nodes (Core) OSGi addons parent</name>
+    <name>Composum Nodes OSGi addons parent</name>
     <description>osgi addon modules</description>
 
     <modules>

@@ -8,11 +8,11 @@
         <version>2.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>composum-nodes-package</artifactId>
+    <artifactId>composum-nodes-aem-package</artifactId>
     <packaging>content-package</packaging>
 
-    <name>Composum Nodes Package</name>
-    <description>Composum Nodes Console Bundles Package - the Composum Nodes tools collection</description>
+    <name>Composum Nodes AEM Package</name>
+    <description>Composum Nodes AEM Console Bundles Package - the Composum Nodes tools collection for AEM</description>
 
     <properties>
         <package.group>com/composum/nodes</package.group>
@@ -84,22 +84,13 @@
                                 <include>.*/composum-nodes-jslibs.*\.jar</include>
                                 <include>.*/composum-nodes-commons.*\.jar</include>
                                 <include>.*/composum-nodes-console.*\.jar</include>
-                                <include>.*/composum-nodes-pckgmgr.*\.jar</include>
                                 <include>.*/composum-nodes-usermgr.*\.jar</include>
                                 <include>.*/composum-nodes-config.*\.jar</include>
-
-                                <!-- removes all v1 composum core content -->
-                                <include>.*/composum-sling-core-jslibs.*\.jar</include>
-                                <include>.*/composum-sling-core-commons.*\.jar</include>
-                                <include>.*/composum-sling-core-console.*\.jar</include>
-                                <include>.*/composum-sling-package-manager.*\.jar</include>
-                                <include>.*/composum-sling-user-management.*\.jar</include>
-                                <include>.*/composum-sling-core-config.*\.jar</include>
+                                <include>.*/geronimo-atinject.*\.jar</include>
                             </includes>
                         </filter>
                         <filter>
-                            <!-- removes all 'old' composum core content -->
-                            <root>/libs/composum/sling</root>
+                            <root>/libs/composum/nodes/aem/console</root>
                         </filter>
 
                     </filters>
@@ -122,17 +113,17 @@
                         </embedded>
                         <embedded>
                             <groupId>${project.groupId}</groupId>
-                            <artifactId>composum-nodes-pckgmgr</artifactId>
-                            <target>/libs/composum/nodes/install</target>
-                        </embedded>
-                        <embedded>
-                            <groupId>${project.groupId}</groupId>
                             <artifactId>composum-nodes-usermgr</artifactId>
                             <target>/libs/composum/nodes/install</target>
                         </embedded>
                         <embedded>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>composum-nodes-config</artifactId>
+                            <target>/libs/composum/nodes/install</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>org.apache.geronimo.specs</groupId>
+                            <artifactId>geronimo-atinject_1.0_spec</artifactId>
                             <target>/libs/composum/nodes/install</target>
                         </embedded>
                     </embeddeds>
@@ -147,11 +138,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>composum-nodes-usermgr</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>composum-nodes-pckgmgr</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -180,6 +166,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-atinject_1.0_spec</artifactId>
+            <version>1.1</version>
+        </dependency>
+
     </dependencies>
     <profiles>
 
@@ -188,31 +180,6 @@
         </profile>
         <profile>
             <id>installPackage</id>
-            <activation>
-                <property>
-                    <name>deploy.package</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-
-                    <plugin>
-                        <groupId>com.day.jcr.vault</groupId>
-                        <artifactId>content-package-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>install-content-package</id>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>install</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                </plugins>
-            </build>
         </profile>
         <profile>
             <id>installTestContent</id>

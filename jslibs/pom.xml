@@ -11,7 +11,7 @@
     <artifactId>composum-nodes-jslibs</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Composum Nodes (Core) JS Libraries</name>
+    <name>Composum Nodes JS Libraries</name>
     <description>the set of necessary javascript components and scripts</description>
 
     <properties>

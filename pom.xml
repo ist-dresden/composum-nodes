@@ -14,7 +14,7 @@
     <packaging>pom</packaging>
     <version>2.0.0-SNAPSHOT</version>
 
-    <name>Composum Nodes (Core) Parent / Reactor</name>
+    <name>Composum Nodes Parent / Reactor</name>
     <description>Maven parent for Composum Sling Core bundles</description>
     <url>https://github.com/ist-dresden/composum</url>
 
@@ -22,6 +22,10 @@
         <bundle.category>composum,nodes</bundle.category>
         <package.failOnError>true</package.failOnError>
         <bundle.failOnError>true</bundle.failOnError>
+        <java.source>8</java.source>
+        <java.target>8</java.target>
+        <maven.compiler.source>${java.source}</maven.compiler.source>
+        <maven.compiler.target>${java.target}</maven.compiler.target>
     </properties>
 
     <scm>
@@ -40,6 +44,7 @@
         <module>osgi</module>
         <module>setup</module>
         <module>corepckg</module>
+        <module>nodes4aem</module>
 
         <!-- Test modules - no deployed code contained -->
         <module>test</module>

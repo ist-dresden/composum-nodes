@@ -12,7 +12,7 @@
     <artifactId>composum-nodes-osgi-package-installer</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Composum Nodes (Core) OSGi Package Installer</name>
+    <name>Composum Nodes OSGi Package Installer</name>
     <description>OSGi installer for JCR packages</description>
 
     <properties>

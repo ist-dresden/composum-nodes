@@ -12,7 +12,7 @@
     <artifactId>composum-nodes-console</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Composum Nodes (Core) Console</name>
+    <name>Composum Nodes Console</name>
     <description>a set of basic tools: jcr browser, package manager, user manager</description>
 
     <properties>
