@@ -5,7 +5,7 @@
     <groupId>com.composum.sling.core</groupId>
     <artifactId>composum-sling-core-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.12.2</version>
+    <version>1.12.3</version>
 
     <name>Composum Core Parent</name>
     <description>Maven parent for Composum Sling Core bundles</description>
@@ -495,7 +495,7 @@
             <!-- https://mvnrepository.com/artifact/org.apache.sling/org.apache.sling.xss -->
             <dependency>
                 <!-- This is an evil JAR with several old versions of libraries as embedded dependencies that aren't exported
-                and can conflict with your code. Scope optional at least means that that doesn't conflict with artefacts
+                and can conflict with your code. "Optional" at least means that that doesn't conflict with artefacts
                 using a bundle that uses the sling.xss bundle.
                  -->
                 <groupId>org.apache.sling</groupId>
@@ -754,7 +754,7 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.11</version>
+                <version>4.13.1</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

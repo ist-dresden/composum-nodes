@@ -11,6 +11,8 @@ import com.composum.sling.core.util.XSS;
 import com.composum.sling.cpnl.CpnlElFunctions;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonWriter;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.api.JackrabbitSession;
@@ -31,39 +33,32 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
-import javax.jcr.security.AccessControlEntry;
-import javax.jcr.security.AccessControlList;
-import javax.jcr.security.AccessControlManager;
-import javax.jcr.security.AccessControlPolicy;
-import javax.jcr.security.AccessControlPolicyIterator;
-import javax.jcr.security.NamedAccessControlPolicy;
-import javax.jcr.security.Privilege;
+import javax.jcr.security.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.composum.sling.core.mapping.MappingRules.CHARSET;
+import static com.composum.sling.nodes.servlet.SecurityServlet.SERVLET_PATH;
 
 /**
  * The service servlet to retrieve all general system settings.
  */
 @SlingServlet(
-        paths = "/bin/cpm/nodes/security",
+        paths = SERVLET_PATH,
         methods = {"GET", "POST", "PUT", "DELETE"}
 )
+@Properties(value = {
+        @Property(name = "sling.auth.requirements", value = {"+" + SERVLET_PATH})
+})
 public class SecurityServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityServlet.class);
 
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/security";
     public static final String PARAM_SCOPE = "scope";
 
     public enum PolicyScope {local, effective}

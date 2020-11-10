@@ -20,7 +20,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="control-label">${cpn:i18n(slingRequest,'Selected Path')}</label>
+                        <label class="path-input-label control-label">${cpn:i18n(slingRequest,'Selected Path')}</label>
                         <input type="text" class="path-input form-control widget path-widget" name="path"/>
                     </div>
                     <div class="form-group">

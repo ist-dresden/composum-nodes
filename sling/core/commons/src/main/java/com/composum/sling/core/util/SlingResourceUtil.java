@@ -23,6 +23,9 @@ public class SlingResourceUtil {
      * Returns the shortest relative path that leads from a node to another node.
      * Postcondition: {@code ResourceUtil.normalize(node + "/" + result), is(ResourceUtil.normalize(other))}.
      * In most cases  {@link #appendPaths(String, String)}(node, result) will return {other}. )}
+     * <p>
+     * Examples: relativePath("/foo", "/foo/bar") = "bar" ; relativePath("/foo/bar", "/foo") = ".." ;
+     * relativePath("foo", "foo") = "../bar" .
      *
      * @param node  the parent
      * @param other a path of a child of parent / parent itself
@@ -44,7 +47,9 @@ public class SlingResourceUtil {
         } else if (other.startsWith(node + '/')) {
             return other.substring(node.length() + 1);
         } else {
-            if (!node.endsWith("/")) { node = node + "/"; }
+            if (!node.endsWith("/")) {
+                node = node + "/";
+            }
             if (other.startsWith(node)) {
                 return other.substring(node.length());
             } else {
@@ -91,17 +96,23 @@ public class SlingResourceUtil {
      * @return true if descendant is a descendant of parent , false if any is null.
      */
     public static boolean isSameOrDescendant(@Nullable Resource parent, @Nullable Resource descendant) {
-        if (parent == null || descendant == null) { return false; }
+        if (parent == null || descendant == null) {
+            return false;
+        }
         return isSameOrDescendant(parent.getPath(), descendant.getPath());
     }
 
-    /** Returns the path of a resource, or null if it is null. For use e.g. in logging statements. */
+    /**
+     * Returns the path of a resource, or null if it is null. For use e.g. in logging statements.
+     */
     @Nullable
     public static String getPath(@Nullable Resource resource) {
         return resource != null ? resource.getPath() : null;
     }
 
-    /** Returns the list of paths of a number of resources. For use e.g. in logging statements. */
+    /**
+     * Returns the list of paths of a number of resources. For use e.g. in logging statements.
+     */
     @Nonnull
     public static List<String> getPaths(@Nullable List<Resource> resources) {
         List<String> paths = new ArrayList<>();
@@ -179,7 +190,9 @@ public class SlingResourceUtil {
      */
     @Nonnull
     public static Stream<Resource> selfAndAncestors(@Nullable Resource r) {
-        if (r == null) { return Stream.empty(); }
+        if (r == null) {
+            return Stream.empty();
+        }
         // yes, that should be done with takeWhile, but we are restricted to Java 8 here for now.
         return Stream.iterate(r, Resource::getParent)
                 .limit(StringUtils.countMatches(r.getPath(), "/"))
@@ -197,12 +210,20 @@ public class SlingResourceUtil {
      */
     @Nullable
     public static String appendPaths(@Nullable String path, @Nullable String childpath) {
-        if (StringUtils.isBlank(path)) { return null; }
-        if (StringUtils.isBlank(childpath)) { return path; }
+        if (StringUtils.isBlank(path)) {
+            return null;
+        }
+        if (StringUtils.isBlank(childpath)) {
+            return path;
+        }
         childpath = StringUtils.removeStart(childpath, "/");
         childpath = StringUtils.removeEnd(childpath, "/");
-        if (StringUtils.isBlank(childpath)) { return path; }
-        if ("/".equals(ResourceUtil.normalize(path))) { return "/" + childpath; }
+        if (StringUtils.isBlank(childpath)) {
+            return path;
+        }
+        if ("/".equals(ResourceUtil.normalize(path))) {
+            return "/" + childpath;
+        }
         path = StringUtils.removeEnd(path, "/");
         return path + "/" + childpath;
     }
@@ -217,17 +238,23 @@ public class SlingResourceUtil {
      */
     @Nullable
     public static String commonParent(@Nullable Collection<String> paths) {
-        if (paths == null || paths.isEmpty()) { return null; }
+        if (paths == null || paths.isEmpty()) {
+            return null;
+        }
         String result = null;
         for (String path : paths) {
-            if (StringUtils.isBlank(path)) { continue; }
+            if (StringUtils.isBlank(path)) {
+                continue;
+            }
             if (result == null) {
                 result = path;
             } else {
                 while (!isSameOrDescendant(result, path) && result != null) {
                     result = ResourceUtil.getParent(result);
                 }
-                if (result == null) { break; } // no common parents
+                if (result == null) {
+                    break;
+                } // no common parents
             }
         }
         return result;
@@ -242,7 +269,9 @@ public class SlingResourceUtil {
      */
     @Nullable
     public static Resource getFirstExistingParent(@Nullable ResourceResolver resolver, @Nullable String path) {
-        if (resolver == null) { return null; }
+        if (resolver == null) {
+            return null;
+        }
         String searchedPath = path;
         Resource result = StringUtils.isNotBlank(searchedPath) ? resolver.getResource(searchedPath) : null;
         while (result == null && StringUtils.isNotBlank(searchedPath)) {
@@ -250,6 +279,40 @@ public class SlingResourceUtil {
             result = resolver.getResource(searchedPath);
         }
         return result;
+    }
+
+    /**
+     * Adds one or more mixins to the resource, keeping the current ones.
+     */
+    public static void addMixin(@Nullable Resource resource, @Nullable String... mixins) {
+        if (resource != null && mixins != null && mixins.length > 0) {
+            ModifiableValueMap mvm = resource.adaptTo(ModifiableValueMap.class);
+            String[] currentMixins = mvm.get(ResourceUtil.PROP_MIXINTYPES, String[].class);
+            if (currentMixins == null) {
+                mvm.put(ResourceUtil.PROP_MIXINTYPES, mixins);
+            } else {
+                List<String> allMixins = new ArrayList<>();
+                allMixins.addAll(Arrays.asList(currentMixins));
+                for (String mixin : mixins) {
+                    if (!allMixins.contains(mixin)) {
+                        allMixins.add(mixin);
+                    }
+                }
+                mvm.put(ResourceUtil.PROP_MIXINTYPES, allMixins.toArray(new String[allMixins.size()]));
+            }
+        }
+    }
+
+    /**
+     * Sets a property on a {@link ModifiableValueMap}. This abbreviates the procedure if it's not known whether
+     * the value is null - {@link ModifiableValueMap#put(Object, Object)} throws up if it is.
+     */
+    public static void setProperty(@Nonnull ModifiableValueMap valueMap, @Nonnull String key, @Nullable Object value) {
+        if (value == null) {
+            valueMap.remove(key);
+        } else {
+            valueMap.put(key, value);
+        }
     }
 
 }

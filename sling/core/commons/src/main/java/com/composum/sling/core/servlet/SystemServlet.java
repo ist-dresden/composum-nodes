@@ -17,6 +17,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -39,16 +41,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.composum.sling.core.servlet.SystemServlet.SERVLET_PATH;
+
 /**
  * The service servlet to retrieve all general system settings.
  */
 @SlingServlet(
-        paths = "/bin/cpm/core/system",
+        paths = SERVLET_PATH,
         methods = {"GET", "PUT"}
 )
+@Properties(value={
+        @Property(name="sling.auth.requirements", value={ "+" + SERVLET_PATH })
+})
 public class SystemServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemServlet.class);
+
+    public static final String SERVLET_PATH = "/bin/cpm/core/system";
 
     public static final String NODE_TYPES_PATH = "/jcr:system/jcr:nodeTypes";
 

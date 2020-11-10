@@ -10,6 +10,8 @@ import com.composum.sling.core.util.ResponseUtil;
 import com.composum.sling.core.util.XSS;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.api.JackrabbitSession;
@@ -29,33 +31,26 @@ import javax.jcr.Session;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.composum.sling.core.servlet.JobControlServlet.SERVLET_PATH;
+
 @SlingServlet(
-        paths = "/bin/cpm/core/jobcontrol",
+        paths = SERVLET_PATH,
         methods = {"GET", "PUT", "POST", "DELETE"}
 )
+@Properties(value = {
+        @Property(name = "sling.auth.requirements", value = {"+" + SERVLET_PATH})
+})
 public class JobControlServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(JobControlServlet.class);
+
+    public static final String SERVLET_PATH = "/bin/cpm/core/jobcontrol";
 
     public enum Extension {txt, json}
 
@@ -392,7 +387,7 @@ public class JobControlServlet extends AbstractServiceServlet {
 
     /**
      * Creates a new job.
-     *
+     * <p>
      * used parameters:
      * <ul>
      * <li>outfileprefix</li>

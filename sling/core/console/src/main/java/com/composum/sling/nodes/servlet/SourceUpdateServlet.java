@@ -5,6 +5,8 @@ import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.nodes.update.SourceUpdateService;
 import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -25,7 +27,6 @@ import java.io.IOException;
 
 import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
 
-
 /**
  * Modifies JCR content according to a given XML or ZIP of XMLs while preserving / updating metadata like versioning
  * information and metadata. This is a kind of opposite operation as the {@link SourceServlet}: the nodes like
@@ -35,11 +36,16 @@ import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
  * TODO: perhaps keep special nodes like cpp:MetaData (used for statistics) unchanged
  */
 @SlingServlet(
-        paths = "/bin/cpm/nodes/sourceupload",
+        paths = SourceUpdateServlet.SERVLET_PATH,
         methods = METHOD_POST,
         extensions = {"zip"}
 )
+@Properties(value = {
+        @Property(name = "sling.auth.requirements", value = {"+" + SourceUpdateServlet.SERVLET_PATH})
+})
 public class SourceUpdateServlet extends SlingAllMethodsServlet {
+
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/sourceupload";
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceUpdateServlet.class);
 
@@ -94,3 +100,4 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet {
 
     }
 }
+

@@ -6,6 +6,8 @@ import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -21,12 +23,19 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+import static com.composum.sling.nodes.servlet.SourceServlet.SERVLET_PATH;
+
 @SlingServlet(
         methods = {"GET"},
-        paths = "/bin/cpm/nodes/source",
+        paths = SERVLET_PATH,
         extensions = {"xml", "zip", "pkg"}
 )
+@Properties(value = {
+        @Property(name = "sling.auth.requirements", value = {"+" + SERVLET_PATH})
+})
 public class SourceServlet extends SlingSafeMethodsServlet {
+
+    public static final String SERVLET_PATH = "/bin/cpm/nodes/source";
 
     @Reference
     protected NodesConfiguration nodesConfig;
