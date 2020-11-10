@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.nodes.setup</groupId>
+        <artifactId>composum-nodes-setup</artifactId>
+        <version>2.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>composum-nodes-slingfeature</artifactId>
+    <packaging>slingfeature</packaging>
+
+    <name>Composum Nodes Feature</name>
+    <description>Sling feature for easy integration of Composum Console in slingstart projects.</description>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>slingstart-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <usePomDependencies>true</usePomDependencies>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <dependencies>
+
+        <!-- Composum -->
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-jslibs</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-console</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-pckgmgr</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-usermgr</artifactId>
+        </dependency>
+
+        <!-- Commons Lang -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <!-- Overwrite version from parent pom because version 3.0 creates problems in sling 8 because it 
+                 has same symbolic name as commons-lang2 and overwrites this version, though not backward compatible. -->
+            <version>3.3.2</version>
+        </dependency>
+
+    </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installPackage</id>
+        </profile>
+        <profile>
+            <id>installBundle</id>
+        </profile>
+        <profile>
+            <id>installTestContent</id>
+        </profile>
+
+    </profiles>
+</project>

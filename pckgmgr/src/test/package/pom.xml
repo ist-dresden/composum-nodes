@@ -1,0 +1,117 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.nodes.test</groupId>
+        <artifactId>maven-package-test</artifactId>
+        <version>2.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>maven-package-test-package</artifactId>
+    <packaging>content-package</packaging>
+
+    <name>VLT Package Manager Test - Package</name>
+    <description>the illustration and test for packages built by Maven</description>
+    <url>https://docs.adobe.com/content/docs/en/cq/5-6-1/core/how_to/how_to_use_the_vlttool/vlt-mavenplugin.html</url>
+
+    <properties>
+        <package.group>test/composum/nodes</package.group>
+        <package.company>IST GmbH Dresden</package.company>
+    </properties>
+
+    <build>
+        <resources>
+
+            <resource>
+                <directory>src/main/content/jcr_root</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/.vlt*</exclude>
+                    <exclude>**/.DS_Store</exclude>
+                    <exclude>**/.gitignore</exclude>
+                </excludes>
+            </resource>
+
+            <resource>
+                <directory>${basedir}/src/main/content/META-INF</directory>
+                <targetPath>../vault-work/META-INF</targetPath>
+            </resource>
+
+        </resources>
+        <plugins>
+
+            <plugin>
+                <groupId>com.day.jcr.vault</groupId>
+                <artifactId>content-package-maven-plugin</artifactId>
+                <configuration>
+
+                    <group>${package.group}</group>
+                    <properties>
+                        <createdBy>${package.company}</createdBy>
+                    </properties>
+
+                    <filters>
+                        <filter>
+                            <root>/apps/composum/test/pckgmgr</root>
+                        </filter>
+                        <filter>
+                            <root>/apps/composum/test/install</root>
+                            <includes>
+                                <include>.*/maven-package-test-bundle.*\.jar</include>
+                            </includes>
+                        </filter>
+                        <filter>
+                            <root>/content/test/composum/pckgmgr</root>
+                        </filter>
+                    </filters>
+
+                    <embeddeds>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>maven-package-test-bundle</artifactId>
+                            <target>/apps/composum/test/install</target>
+                        </embedded>
+                    </embeddeds>
+
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+    <dependencies>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>maven-package-test-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+    </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installPackage</id>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>com.day.jcr.vault</groupId>
+                        <artifactId>content-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-content-package</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+</project>
