@@ -38,7 +38,7 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
     private BundleContext bundleContext;
 
     @Reference
-    private Packaging packaging;
+    private Packaging packagingX;
 
     @Activate
     private void activate(final BundleContext bundleContext) {
@@ -148,10 +148,16 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
         public void execute(InstallationContext ctx) {
             ServiceReference<Repository> repositoryReference = null;
             ServiceReference<JobManager> jmRef = null;
+            ServiceReference<Packaging> packagingRef = null;
+            Packaging packaging = null;
+            Repository repository = null;
+            JobManager jm = null;
             Session session = null;
             try {
                 repositoryReference = getServiceReference(Repository.class);
-                final Repository repository = bundleContext.getService(repositoryReference);
+                packagingRef = getServiceReference(Packaging.class);
+                packaging = bundleContext.getService(packagingRef);
+                repository = bundleContext.getService(repositoryReference);
                 final Method loginAdministrative = repository.getClass().getMethod("loginAdministrative", String.class);
                 final Object invoke = loginAdministrative.invoke(repository, (Object) null);
                 session = (Session) invoke;
@@ -162,7 +168,7 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
                 final JcrPackage jcrPackage = packageManager.upload(inputStream, true, true);
 
                 jmRef = getServiceReference(JobManager.class);
-                final JobManager jm = bundleContext.getService(jmRef);
+                jm = bundleContext.getService(jmRef);
                 String path = jcrPackage.getNode().getPath();
                 final String root = packageManager.getPackageRoot().getPath();
                 if (path.startsWith(root)) {
@@ -174,18 +180,21 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
                 jobProperties.put("operation", "install");
                 jobProperties.put("userid", session.getUserID());
                 buildOutfileName(jobProperties);
-                logger.info("add package install job with path '{}' and sort key ‘{}‘", path, getSortKey());
                 final Job job = jm.addJob("com/composum/sling/core/pckgmgr/PackageJobExecutor", jobProperties);
+                logger.info("added package install job with path '{}' and sort key ‘{}‘ id '{}'", new Object[]{path, getSortKey(), job.getId()});
                 session.save();
                 this.setFinishedState(ResourceState.INSTALLED);
             } catch (Exception e) {
                 logger.warn("Exception executing PackageInstallTask: " + e, e);
             } finally {
-                if (jmRef != null) {
+                if (jm != null) {
                     bundleContext.ungetService(jmRef);
                 }
-                if (repositoryReference != null) {
+                if (repository != null) {
                     bundleContext.ungetService(repositoryReference);
+                }
+                if (packaging != null) {
+                    bundleContext.ungetService(packagingRef);
                 }
                 if (session != null) {
                     session.logout();
