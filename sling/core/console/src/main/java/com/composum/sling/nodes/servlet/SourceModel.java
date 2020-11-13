@@ -534,7 +534,7 @@ public class SourceModel extends ConsoleSlingBean {
 
         // if it's more than a nt:file/nt:resource construct that contains additional attributes we have to write
         // an additional {file}.dir/.content.xml .
-        boolean fileIsNonstandard = file.getProperty(JCR_MIXINTYPES, new String[0].length) > 0
+        boolean fileIsNonstandard = file.getProperty(JCR_MIXINTYPES, new String[0]).length > 0
                 || !NT_FILE.equals(file.getProperty(JCR_PRIMARYTYPE, String.class));
         boolean contentNodeIsNonstandard = file.getContentResource().getProperty(JCR_MIXINTYPES, new String[0]).length > 0
                 || !NT_RESOURCE.equals(file.getContentResource().getProperty(JCR_PRIMARYTYPE, String.class));
