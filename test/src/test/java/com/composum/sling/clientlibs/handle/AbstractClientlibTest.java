@@ -16,9 +16,12 @@ import com.composum.sling.core.concurrent.LazyCreationServiceImpl;
 import com.composum.sling.core.concurrent.SemaphoreSequencer;
 import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.filter.ResourceFilter;
+import com.composum.sling.core.util.ServiceHandle;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
+import org.apache.sling.xss.impl.XSSAPIImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -75,7 +78,7 @@ public class AbstractClientlibTest {
 
     @SuppressWarnings("deprecation")
     @Before
-    public final void setupFramework() {
+    public final void setupFramework() throws IllegalAccessException {
         setupTime = GregorianCalendar.getInstance();
         context.request().setContextPath(CONTEXTPATH);
 
@@ -197,6 +200,10 @@ public class AbstractClientlibTest {
         rendererContext = RendererContext.instance(beanContext, context.request());
 
         executorService = Executors.newFixedThreadPool(2);
+
+        // necessary since SlingUrl.buildUrl uses XSS now. :-(
+        ServiceHandle xssapihandle = (ServiceHandle) FieldUtils.readStaticField(com.composum.sling.core.util.XSS.class, "XSSAPI_HANDLE", true);
+        FieldUtils.writeField(xssapihandle, "service", context.registerInjectActivateService(new XSSAPIImpl()), true);
     }
 
     @After
