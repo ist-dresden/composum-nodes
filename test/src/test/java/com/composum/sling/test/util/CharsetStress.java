@@ -149,7 +149,7 @@ public class CharsetStress {
     }
 
     /**
-     * Returns a textual representation of the bytes of a string to compare to,
+     * Returns a textual representation of the bytes of the UTF-8 representation of a string to compare to,
      * in case there is unexplainable trouble with source file charsets.
      */
     @Nonnull
@@ -157,14 +157,27 @@ public class CharsetStress {
         if (string == null) {
             return "<null>";
         }
+        byte[] stringBytes = string.getBytes(StandardCharsets.UTF_8);
+        return bytes(stringBytes);
+    }
+
+    /**
+     * Returns a textual representation of the bytes array for easier comparisons.
+     */
+    @Nonnull
+    public static String bytes(byte[] bytes) {
+        if (bytes == null) {
+            return "<null>";
+        }
         StringBuilder buf = new StringBuilder("[");
-        for (byte b : string.getBytes(StandardCharsets.UTF_8)) {
+        for (byte b : bytes) {
             if (buf.length() > 1) {
                 buf.append(", ");
             }
             buf.append((int) b);
         }
-        return buf.append("]").toString();
+        buf.append("]");
+        return buf.toString();
     }
 
     /**

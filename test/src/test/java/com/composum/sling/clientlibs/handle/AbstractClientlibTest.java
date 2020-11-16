@@ -21,6 +21,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
+import org.apache.sling.xss.XSSFilter;
 import org.apache.sling.xss.impl.XSSAPIImpl;
 import org.junit.After;
 import org.junit.Before;
@@ -46,6 +47,9 @@ import java.util.concurrent.Executors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Common code for clientlib tests.
@@ -202,6 +206,9 @@ public class AbstractClientlibTest {
         executorService = Executors.newFixedThreadPool(2);
 
         // necessary since SlingUrl.buildUrl uses XSS now. :-(
+        XSSFilter xssFilter = mock(XSSFilter.class);
+        context.registerService(XSSFilter.class, xssFilter);
+        when(xssFilter.isValidHref(anyString())).thenReturn(true);
         ServiceHandle xssapihandle = (ServiceHandle) FieldUtils.readStaticField(com.composum.sling.core.util.XSS.class, "XSSAPI_HANDLE", true);
         FieldUtils.writeField(xssapihandle, "service", context.registerInjectActivateService(new XSSAPIImpl()), true);
     }

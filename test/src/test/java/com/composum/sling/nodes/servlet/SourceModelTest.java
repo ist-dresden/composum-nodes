@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.*;
+import java.util.Arrays;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -203,7 +205,8 @@ public class SourceModelTest {
                 if (details) {
                     buf.append(" : ").append(bytes.length).append(" | ").append(entry.getCrc());
                     if ("subfolder/.content.xml".equals(entry.getName())) { // FIXME(hps,16.11.20) temporary test diagnostic
-                        LOG.info("Content of {}: {}", entry.getName(), new String(bytes, "UTF-8"));
+                        LOG.info("Content of {}: {}", entry.getName(), new String(bytes));
+                        LOG.info("Bytes of {}: {}", entry.getName(), CharsetStress.bytes(bytes));
                     }
                 }
                 buf.append("\n");
