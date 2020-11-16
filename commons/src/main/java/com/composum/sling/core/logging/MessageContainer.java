@@ -101,12 +101,21 @@ public class MessageContainer implements Iterable<Message> {
 
     /**
      * Adds a message to the container, and logs it into the logger if one was specified for this container.
+     * Like in SLF4J, if the last argument is a Throwable we use it for logging with {@link #add(Message, Throwable)}.
      *
      * @return this MessageContainer, for builder-style operation chaining.
      */
     @Nonnull
     public MessageContainer add(@Nullable Message message) {
-        return add(message, null);
+        Throwable throwable = null;
+        List<Object> args = message.getArguments();
+        if (args != null && !args.isEmpty()) {
+            Object lastarg = args.get(args.size() - 1);
+            if (lastarg instanceof Throwable) {
+                throwable = (Throwable) lastarg;
+            }
+        }
+        return add(message, throwable);
     }
 
     /**

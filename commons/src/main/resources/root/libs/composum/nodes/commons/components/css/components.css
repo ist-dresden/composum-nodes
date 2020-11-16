@@ -414,6 +414,40 @@ fieldset {
  * Dialogs
  */
 
+.modal.dialog .lock-curtain {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    content: '';
+}
+
+.modal.dialog .lock-curtain i {
+    display: none;
+}
+
+.modal.dialog.dialog-locked .lock-curtain {
+    content: ' ';
+    right: 0;
+    bottom: 0;
+    z-index: 1060;
+    pointer-events: all;
+}
+
+.modal.dialog.dialog-locked.dialog-busy .lock-curtain {
+    content: ' ';
+    background: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    z-index: 1060;
+}
+
+.modal.dialog.dialog-locked.dialog-busy .lock-curtain i {
+    display: inline-block;
+    margin: 30%;
+    font-size: 100px;
+}
+
 .form-panel label span {
     font-weight: normal;
     margin-left: 5px;
@@ -446,10 +480,8 @@ fieldset {
 
 .modal-dialog .form-group .checkbox-widget {
     box-shadow: none;
-}
-
-.modal-dialog .form-group > .form-control.checkbox-widget {
-    margin-top: 0;
+    max-height: 20px;
+    max-width: 20px;
 }
 
 .modal-dialog .modal-body .messages .panel-body {

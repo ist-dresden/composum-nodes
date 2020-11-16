@@ -43,6 +43,15 @@
                 if (this.isLoaded) { // remove a loaded dialog on close
                     this.$el.on('hidden.bs.modal', _.bind(this.destroy, this));
                 }
+                this.$lock = this.$('.lock-curtain');
+                if (this.$lock.length < 1) {
+                    this.$el.prepend('<div class="lock-curtain"><i class="fa fa-spinner fa-pulse"></i></div>');
+                    this.$lock = this.$('.lock-curtain');
+                }
+                this.$lock.click(function (event) {
+                    event.preventDefault();
+                    return false;
+                });
             },
 
             setUpWidgets: function (root) {
@@ -60,6 +69,7 @@
                 this.initView = initView;
                 this.callback = callback;
                 this.$el.modal('show');
+                this.unlock();
             },
 
             onShown: function () {
@@ -83,10 +93,29 @@
                 this.reset();
             },
 
+            lock: function () {
+                this.$el.addClass('dialog-locked');
+                if (!this.busyTimeout) {
+                    this.busyTimeout = window.setTimeout(_.bind(function () {
+                        this.busyTimeout = undefined;
+                        this.$el.addClass('dialog-busy');
+                    }, this), 500);
+                }
+            },
+
+            unlock: function () {
+                if (this.busyTimeout) {
+                    window.clearTimeout(this.busyTimeout);
+                    this.busyTimeout = undefined;
+                }
+                this.$el.removeClass('dialog-busy').removeClass('dialog-locked');
+            },
+
             /**
              * Resets all form values to an initial or undefined value.
              */
             reset: function () {
+                this.unlock();
                 this.alert();
                 // reset all known View instances using their 'reset' method
                 this.$('.widget').each(function () {
@@ -181,12 +210,14 @@
              * @param onSuccess optional; 'true' or a callback function called after a successful request
              */
             submitForm: function (onSuccess, onError, onComplete) {
+                this.lock();
                 core.submitForm(this.el,
                     _.bind(function (result) {
                         if (_.isFunction(onSuccess)) {
                             onSuccess(result);
                         } else {
                             if (onSuccess) { // use 'true' to show the success messages
+                                this.unlock();
                                 if (_.isObject(result) && _.isObject(result.response)) {
                                     var response = result.response;
                                     var messages = result.messages;
@@ -197,6 +228,7 @@
                         this.hide();
                     }, this),
                     _.bind(function (xhr) {
+                        this.unlock();
                         if (_.isFunction(onError)) {
                             onError(xhr);
                         } else {
@@ -210,6 +242,7 @@
             },
 
             submitFormPut: function (onSuccess, onError, onComplete) {
+                this.lock();
                 var form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 core.submitFormPut(this.el,
                     form ? form.getValues.apply(form) : undefined,
@@ -218,6 +251,7 @@
                             onSuccess(result);
                         } else {
                             if (onSuccess) { // use 'true' to show the success messages
+                                this.unlock();
                                 if (_.isObject(result) && _.isObject(result.response)) {
                                     var response = result.response;
                                     var messages = result.messages;
@@ -228,6 +262,7 @@
                         this.hide();
                     }, this),
                     _.bind(function (xhr) {
+                        this.unlock();
                         if (_.isFunction(onError)) {
                             onError(xhr);
                         } else {
@@ -241,6 +276,7 @@
             },
 
             submitPUT: function (label, url, data, onSuccess) {
+                this.lock();
                 core.ajaxPut(url, JSON.stringify(data), {
                         dataType: 'json'
                     },
@@ -252,12 +288,14 @@
                             } else {
                                 var detail = xhr.responseJSON;
                                 if (xhr.status !== 200 && _.isObject(detail) && detail.messages) {
+                                    this.unlock();
                                     this.onError(xhr, label);
                                 } else {
                                     this.hide();
                                 }
                             }
                         } else {
+                            this.unlock();
                             this.onError(xhr, label);
                         }
                     }, this));
