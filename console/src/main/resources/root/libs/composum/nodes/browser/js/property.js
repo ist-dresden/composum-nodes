@@ -214,11 +214,13 @@
 
             saveProperty: function () {
                 if (this.form.isValid()) {
+                    this.lock();
                     this.getProperty().save(_.bind(function () {
                             $(document).trigger('path:changed', [browser.getCurrentPath()]);
                             this.hide();
                         }, this),
                         _.bind(function (result) {
+                            this.unlock();
                             this.alert('danger', 'error on save property', result);
                         }, this)
                     );
@@ -228,11 +230,13 @@
             },
 
             deleteProperty: function () {
+                this.lock();
                 this.getProperty().destroy(_.bind(function () {
                         $(document).trigger('path:changed', [browser.getCurrentPath()]);
                         this.hide();
                     }, this),
                     _.bind(function (result) {
+                        this.unlock();
                         this.alert('danger', 'error on delete property', result);
                     }, this)
                 );

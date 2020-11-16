@@ -1,4 +1,0 @@
-{
-  "jcr:primaryType": "sling:OrderedFolder",
-  "sling:resourceType": "composum/nodes/console/page"
-}

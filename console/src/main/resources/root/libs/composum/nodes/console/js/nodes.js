@@ -180,6 +180,7 @@
                 var mixinStrings = mixinValues(this.$('input[name="value"]'));
                 var path = this.$path.val();
 
+                this.lock();
                 core.ajaxPut("/bin/cpm/nodes/property.put.json" + core.encodePath(path), JSON.stringify({
                     name: 'jcr:mixinTypes',
                     multi: true,
@@ -191,6 +192,7 @@
                     $(document).trigger('path:changed', [path]);
                     this.hide();
                 }, this), _.bind(function (result) {
+                    this.unlock();
                     core.alert('danger', 'Error', 'Error on updating mixin entries', result);
                 }, this));
 
@@ -229,6 +231,7 @@
 
             copyNode: function (event) {
                 event.preventDefault();
+                this.lock();
                 var parentPath = this.path.getValue();
                 var newNodeName = this.newname.getValue();
                 core.ajaxPut("/bin/cpm/nodes/node.copy.json" + parentPath, JSON.stringify({
@@ -240,6 +243,7 @@
                     $(document).trigger('path:inserted', [parentPath, newNodeName]);
                     this.hide();
                 }, this), _.bind(function (result) {
+                    this.unlock();
                     this.errorMessage("Copy Node", result);
                 }, this));
                 return false;
@@ -328,6 +332,7 @@
 
             renameNode: function (event) {
                 event.preventDefault();
+                this.lock();
                 var path = this.$path.val();
                 var oldName = this.$name.val();
                 var newName = this.$newname.getValue();
@@ -345,6 +350,7 @@
                         this.hide();
                     }, this),
                     _.bind(function (result) {
+                        this.unlock();
                         this.alert('danger', 'Error on renaming node', result);
                     }, this));
                 return false;
@@ -390,14 +396,19 @@
                     event.preventDefault();
                 }
                 if (this.form.isValid()) {
+                    this.lock();
                     var path = this.path.getValue();
                     core.ajaxDelete("/bin/cpm/nodes/node.json" + core.encodePath(path),
                         {},
                         _.bind(function (result) {
-                            $(document).trigger('path:deleted', [path]);
+                            try {
+                                $(document).trigger('path:deleted', [path]);
+                            } catch (ignore) {
+                            }
                             this.hide();
                         }, this),
                         _.bind(function (result) {
+                            this.unlock();
                             // if event is present than this is triggered by the dialog
                             if (!event && this.doItSmart()) {
                                 this.show(_.bind(function () {
