@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -49,7 +50,8 @@ public class ThreaddumpConsolePlugin extends HttpServlet {
             IOException {
         if (request.getRequestURI().endsWith(LOC_CSS)) {
             response.setContentType("text/css");
-            IOUtils.copy(getClass().getClassLoader().getResourceAsStream("/" + LOC_CSS),
+            InputStream cssResource = getClass().getClassLoader().getResourceAsStream("/" + LOC_CSS);
+            IOUtils.copy(Objects.requireNonNull(cssResource, "CSS resource missing: /" + LOC_CSS),
                     response.getOutputStream());
             return;
         }

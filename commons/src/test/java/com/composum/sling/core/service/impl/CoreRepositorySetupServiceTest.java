@@ -2,6 +2,7 @@ package com.composum.sling.core.service.impl;
 
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import javax.annotation.Nonnull;
 import javax.jcr.Node;
@@ -55,7 +56,7 @@ public class CoreRepositorySetupServiceTest {
                 InputStream stream = getClass().getResourceAsStream(JAVA_RESOURCE_BASE + "acl.json");
                 Reader streamReader = new InputStreamReader(stream, UTF_8)
         ) {
-            service.addJsonAcl(null, streamReader, null);
+            service.addJsonAcl(Mockito.mock(Session.class), streamReader, null);
         }
     }
 
@@ -67,7 +68,7 @@ public class CoreRepositorySetupServiceTest {
                 InputStream stream = getClass().getResourceAsStream(JAVA_RESOURCE_BASE + "acl.json");
                 Reader streamReader = new InputStreamReader(stream, UTF_8)
         ) {
-            service.addJsonAcl(null, streamReader, new HashMap<String, Object>() {{
+            service.addJsonAcl(Mockito.mock(Session.class), streamReader, new HashMap<String, Object>() {{
                 put("base", "my/groups");
             }});
             assertEquals("my/groups", service.groupPath);
