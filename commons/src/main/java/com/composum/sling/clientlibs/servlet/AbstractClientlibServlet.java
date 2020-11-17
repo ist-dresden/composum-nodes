@@ -158,8 +158,7 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
         String uri = request.getRequestURI();
         if (uri.endsWith(".map")) { // empty response for maps to avoid error log entries on client
             LOG.info("map file request dropped (empty response): '{}'", uri);
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.setContentLength(0);
+            DropMapServlet.drop(request, response);
             return false;
         }
         return true;

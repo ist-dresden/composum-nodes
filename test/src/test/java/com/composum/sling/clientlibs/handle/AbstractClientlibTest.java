@@ -16,9 +16,13 @@ import com.composum.sling.core.concurrent.LazyCreationServiceImpl;
 import com.composum.sling.core.concurrent.SemaphoreSequencer;
 import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.filter.ResourceFilter;
+import com.composum.sling.core.util.ServiceHandle;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
+import org.apache.sling.xss.XSSFilter;
+import org.apache.sling.xss.impl.XSSAPIImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -43,13 +47,16 @@ import java.util.concurrent.Executors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Common code for clientlib tests.
  */
 public class AbstractClientlibTest {
 
-    public static final String DEFAULT_CACHE_ROOT = "/var/cache/clientlibs";
+    public static final String DEFAULT_CACHE_ROOT = "/var/composum/clientlibs";
 
     @Rule
     public final SlingContext context = new SlingContext(ResourceResolverType.JCR_OAK);
@@ -75,7 +82,7 @@ public class AbstractClientlibTest {
 
     @SuppressWarnings("deprecation")
     @Before
-    public final void setupFramework() {
+    public final void setupFramework() throws IllegalAccessException {
         setupTime = GregorianCalendar.getInstance();
         context.request().setContextPath(CONTEXTPATH);
 
@@ -197,6 +204,13 @@ public class AbstractClientlibTest {
         rendererContext = RendererContext.instance(beanContext, context.request());
 
         executorService = Executors.newFixedThreadPool(2);
+
+        // necessary since SlingUrl.buildUrl uses XSS now. :-(
+        XSSFilter xssFilter = mock(XSSFilter.class);
+        context.registerService(XSSFilter.class, xssFilter);
+        when(xssFilter.isValidHref(anyString())).thenReturn(true);
+        ServiceHandle xssapihandle = (ServiceHandle) FieldUtils.readStaticField(com.composum.sling.core.util.XSS.class, "XSSAPI_HANDLE", true);
+        FieldUtils.writeField(xssapihandle, "service", context.registerInjectActivateService(new XSSAPIImpl()), true);
     }
 
     @After

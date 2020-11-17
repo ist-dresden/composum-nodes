@@ -384,19 +384,19 @@ public class SourceModel extends ConsoleSlingBean {
                 .append("<comment>FileVault Package Properties</comment>\n")
                 .append("<entry key=\"packageType\">content</entry> ")
                 .append("<entry key=\"name\">")
-                .append(aName)
+                .append(Property.escapeXmlAttribute(aName))
                 .append("</entry>\n")
                 .append("<entry key=\"buildCount\">1</entry>\n")
                 .append("<entry key=\"version\">")
-                .append(version)
+                .append(Property.escapeXmlAttribute(version))
                 .append("</entry>\n")
                 .append("<entry key=\"packageFormatVersion\">2</entry>\n")
                 .append("<entry key=\"group\">")
-                .append(group)
+                .append(Property.escapeXmlAttribute(group))
                 .append("</entry>\n")
                 .append("<entry key=\"description\">created from source download</entry>\n")
                 .append("<entry key=\"createdBy\">")
-                .append(getResolver().getUserID())
+                .append(Property.escapeXmlAttribute(getResolver().getUserID()))
                 .append("</entry>\n")
                 .append("<entry key=\"created\">")
                 .append(ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT))
@@ -419,7 +419,7 @@ public class SourceModel extends ConsoleSlingBean {
         writer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
                 .append("<workspaceFilter version=\"1.0\">\n")
                 .append("    <filter root=\"")
-                .append(path)
+                .append(Property.escapeXmlAttribute(path))
                 .append("\"/>\n")
                 .append("</workspaceFilter>\n");
 
@@ -973,7 +973,7 @@ public class SourceModel extends ConsoleSlingBean {
             return aValue != null ? escapeXmlAttribute(aValue.toString()) : "";
         }
 
-        public String escapeXmlAttribute(String attrValue) {
+        public static String escapeXmlAttribute(String attrValue) {
             // TODO(hps,2019-07-11) use utilities? Should be consistent with package manager, though.
             // This is probably not quite complete - what about other control characters?
             // There is org.apache.jackrabbit.util.Text.encodeIllegalXMLCharacters , but that doesn't seem right.

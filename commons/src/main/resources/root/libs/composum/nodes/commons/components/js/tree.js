@@ -172,7 +172,7 @@
                         this.log.debug(this.nodeIdPrefix + 'tree.refresh(' + currentPath + ').ends.');
                     }
                     if (_.isFunction(callback)) {
-                        callback(current);
+                        callback(currentPath);
                     } else {
                         if (currentPath) {
                             this.selectNode(currentPath, undefined, true);
