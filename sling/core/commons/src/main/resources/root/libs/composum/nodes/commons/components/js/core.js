@@ -62,7 +62,9 @@
         },
 
         ajaxPost: function (url, data, config, onSuccess, onError, onComplete) {
-            if (!data._charset_) {
+            if (!data) {
+                data = {_charset_: "UTF-8"};
+            } else if (_.isObject(data) && !data._charset_) {
                 data._charset_ = "UTF-8";
             }
             var ajaxConf = _.extend({
