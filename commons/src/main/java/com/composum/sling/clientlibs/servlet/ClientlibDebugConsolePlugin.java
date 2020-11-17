@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,7 +57,7 @@ import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
  * @author Hans-Peter Stoerr
  * @since 10/2017
  */
-@Component (service = Servlet.class,
+@Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Clientlib Webconsole Plugin",
                 "felix.webconsole.category=Composum",
@@ -91,7 +92,9 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
      */
     protected static final String REQUEST_PARAM_CLEAR_CACHE = "clearCache";
 
-    /** Location for the CSS. */
+    /**
+     * Location for the CSS.
+     */
     protected static final String LOC_CSS = "slingconsole/composum/nodes/commons/clientlibplugin.css";
 
     @Reference
@@ -109,8 +112,9 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         if (request.getRequestURI().endsWith(LOC_CSS)) {
             response.setContentType("text/css");
-            IOUtils.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("/" + LOC_CSS)),
-                    response.getOutputStream());
+            try (InputStream cssSource = getClass().getClassLoader().getResourceAsStream("/" + LOC_CSS)) {
+                IOUtils.copy(Objects.requireNonNull(cssSource), response.getOutputStream());
+            }
             return;
         }
 
@@ -212,7 +216,9 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
         return type;
     }
 
-    /** Encapsulates stuff always needed during one request, to avoid passing it on through all methods as parameters. */
+    /**
+     * Encapsulates stuff always needed during one request, to avoid passing it on through all methods as parameters.
+     */
     protected class Processor {
         Type requestedType;
         Type type;
@@ -284,7 +290,9 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             }
         }
 
-        /** Prints all client libraries readable for the impersonation user. */
+        /**
+         * Prints all client libraries readable for the impersonation user.
+         */
         protected void printAllLibs() throws ServletException, IOException {
             try {
                 QueryManager querymanager = Objects.requireNonNull(adminResolver.adaptTo(Session.class)).getWorkspace()
@@ -302,7 +310,9 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             }
         }
 
-        /** Displays the structure of one clientlib as seen from the adminResolver - it's rendered like that, anyway. */
+        /**
+         * Displays the structure of one clientlib as seen from the adminResolver - it's rendered like that, anyway.
+         */
         protected void displayClientlibStructure(ClientlibRef ref) throws IOException, ServletException {
             ClientlibElement clientlib = clientlibService.resolve(ref, adminResolver);
             String normalizedPath = normalizePath(ref, clientlib);
@@ -339,7 +349,9 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             writer.println("</pre>");
         }
 
-        /** Returns the path as it would be in a clientlib reference: relative to search path or a category link */
+        /**
+         * Returns the path as it would be in a clientlib reference: relative to search path or a category link
+         */
         protected String normalizePath(ClientlibRef ref, ClientlibElement clientlib) {
             if (ref.isCategory())
                 return "category:" + ref.category;
