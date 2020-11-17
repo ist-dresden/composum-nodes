@@ -82,7 +82,7 @@ public interface ClientlibConfiguration {
                 name = "Cache root",
                 description = "the root folder for the Javascript clientlib cache"
         )
-        String clientlibs_cache_root() default "/var/cache/clientlibs";
+        String clientlibs_cache_root() default "/var/composum/clientlibs";
 
         @AttributeDefinition(
                 name = "Use minified variation",

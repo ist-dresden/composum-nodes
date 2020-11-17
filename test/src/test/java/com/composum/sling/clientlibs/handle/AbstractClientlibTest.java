@@ -56,7 +56,7 @@ import static org.mockito.Mockito.when;
  */
 public class AbstractClientlibTest {
 
-    public static final String DEFAULT_CACHE_ROOT = "/var/cache/clientlibs";
+    public static final String DEFAULT_CACHE_ROOT = "/var/composum/clientlibs";
 
     @Rule
     public final SlingContext context = new SlingContext(ResourceResolverType.JCR_OAK);
