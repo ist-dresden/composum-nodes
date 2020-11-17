@@ -583,8 +583,7 @@ public class DefaultClientlibService implements ClientlibService {
                     adminResolver.commit();
                     result.get(); // transport any exceptions here
 
-                    LOG.info("clientlib cache content ''{}'' created", cacheFile.getResource()
-                            .getPath());
+                    LOG.info("clientlib cache content ''{}'' created", cacheFile.getResource().getPath());
                 } else {
                     LOG.error("can't create cache content in '{}'!", cacheFile.getResource().getPath());
                 }
