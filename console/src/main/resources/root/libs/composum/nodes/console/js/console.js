@@ -183,7 +183,7 @@
         console.DetailTab = Backbone.View.extend({
 
             reload: function () {
-                this.$el.closest('.detail-content');
+                //this.$el.closest('.detail-content');
             }
         });
 

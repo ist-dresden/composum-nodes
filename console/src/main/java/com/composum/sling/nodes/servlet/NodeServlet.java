@@ -11,7 +11,13 @@ import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.NodeTreeServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
-import com.composum.sling.core.util.*;
+import com.composum.sling.core.util.I18N;
+import com.composum.sling.core.util.JsonUtil;
+import com.composum.sling.core.util.MimeTypeUtil;
+import com.composum.sling.core.util.RequestUtil;
+import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.composum.sling.cpnl.CpnlElFunctions;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonReader;
@@ -40,7 +46,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import javax.jcr.*;
+import javax.jcr.Binary;
+import javax.jcr.ItemExistsException;
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
+import javax.jcr.Workspace;
 import javax.jcr.lock.Lock;
 import javax.jcr.lock.LockManager;
 import javax.jcr.nodetype.NodeType;
@@ -51,9 +66,24 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -486,60 +516,65 @@ public class NodeServlet extends NodeTreeServlet {
             NodeIterator iterator = result.getNodes();
 
             writer.append("<tbody>");
-            long limit = nodesConfig.getQueryResultLimit();
-            int count = 0;
-            while (count < limit && iterator.hasNext()) {
-                Node node = iterator.nextNode();
-                ResourceHandle resource = ResourceHandle.use(resolver.getResource(node.getPath()));
-                if (resource.isValid() && accept(filter, resource)) {
-                    StringBuilder classes = new StringBuilder();
-                    String nodePath = node.getPath();
-                    Session session = node.getSession();
-                    Workspace workspace = session.getWorkspace();
-                    LockManager lockManager = workspace.getLockManager();
-                    if (node.isCheckedOut()) {
-                        classes.append(" checked-out");
-                    }
-                    boolean isLocked = node.isLocked();
-                    if (isLocked) {
-                        classes.append(" locked");
-                        Lock lock = lockManager.getLock(nodePath);
-                        String holderPath = lock.getNode().getPath();
-                        if (lock.isDeep()) {
-                            classes.append(" deep-lock");
+            try {
+                long limit = nodesConfig.getQueryResultLimit();
+                int count = 0;
+                while (count < limit && iterator.hasNext()) {
+                    Node node = iterator.nextNode();
+                    ResourceHandle resource = ResourceHandle.use(resolver.getResource(node.getPath()));
+                    if (resource.isValid() && accept(filter, resource)) {
+                        StringBuilder classes = new StringBuilder();
+                        String nodePath = node.getPath();
+                        Session session = node.getSession();
+                        Workspace workspace = session.getWorkspace();
+                        LockManager lockManager = workspace.getLockManager();
+                        if (node.isCheckedOut()) {
+                            classes.append(" checked-out");
                         }
-                        if (holderPath.equals(nodePath)) {
-                            classes.append(" lock-holder");
+                        boolean isLocked = node.isLocked();
+                        if (isLocked) {
+                            classes.append(" locked");
+                            Lock lock = lockManager.getLock(nodePath);
+                            String holderPath = lock.getNode().getPath();
+                            if (lock.isDeep()) {
+                                classes.append(" deep-lock");
+                            }
+                            if (holderPath.equals(nodePath)) {
+                                classes.append(" lock-holder");
+                            }
                         }
+                        String path = resource.getPath();
+                        writer.append("<tr class=\"").append(classes.toString().trim())
+                                .append("\" data-path=\"").append(path)
+                                .append("\">");
+                        writer.append("<td class=\"icon\" data-type=\"").append(nodeStrategy.getTypeKey(resource))
+                                .append("\"><span></span></td>");
+                        writer.append("<td class=\"id\">").append(resource.getId()).append("</td>");
+                        writer.append("<td class=\"name\">")
+                                .append(CpnlElFunctions.text(resource.getName())).append("</td>");
+                        writer.append("<td class=\"text\">")
+                                .append(CpnlElFunctions.text(getNodeLabel(resource, LabelType.title)))
+                                .append("</td>");
+                        writer.append("<td class=\"path\"><a href=\"")
+                                .append(CpnlElFunctions.path(path)).append("\">")
+                                .append(CpnlElFunctions.text(path)).append("</a></td>");
+                        writer.append("<td class=\"type\">").append(resource.getPrimaryType()).append("</td>");
+                        writer.append("</tr>");
+                        count++;
                     }
-                    String path = resource.getPath();
-                    writer.append("<tr class=\"").append(classes.toString().trim())
-                            .append("\" data-path=\"").append(path)
-                            .append("\">");
-                    writer.append("<td class=\"icon\" data-type=\"").append(nodeStrategy.getTypeKey(resource))
-                            .append("\"><span></span></td>");
-                    writer.append("<td class=\"id\">").append(resource.getId()).append("</td>");
-                    writer.append("<td class=\"name\">")
-                            .append(CpnlElFunctions.text(resource.getName())).append("</td>");
-                    writer.append("<td class=\"text\">")
-                            .append(CpnlElFunctions.text(getNodeLabel(resource, LabelType.title)))
-                            .append("</td>");
-                    writer.append("<td class=\"path\"><a href=\"")
-                            .append(CpnlElFunctions.path(path)).append("\">")
-                            .append(CpnlElFunctions.text(path)).append("</a></td>");
-                    writer.append("<td class=\"type\">").append(resource.getPrimaryType()).append("</td>");
-                    writer.append("</tr>");
-                    count++;
                 }
+                StringBuilder message = new StringBuilder();
+                message.append(count).append(" items found");
+                if (count >= limit) {
+                    message.append(" (current limit: ").append(limit).append(", ")
+                            .append(iterator.hasNext() ? "more items present" : "no more items").append(")");
+                }
+                message.append(".");
+                writeSummary(queryString, message.toString(), writer, "summary info");
+            } catch (RuntimeException ex) {
+                LOG.error(ex.getMessage(), ex);
+                writeSummary(queryString, ex.getMessage(), writer, "error danger");
             }
-            StringBuilder message = new StringBuilder();
-            message.append(count).append(" items found");
-            if (count >= limit) {
-                message.append(" (current limit: ").append(limit).append(", ")
-                        .append(iterator.hasNext() ? "more items present" : "no more items").append(")");
-            }
-            message.append(".");
-            writeSummary(queryString, message.toString(), writer, "summary info");
             writer.append("</tbody>");
         }
 

@@ -2,7 +2,13 @@ package com.composum.sling.nodes;
 
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
-import com.composum.sling.nodes.servlet.*;
+import com.composum.sling.nodes.servlet.NodeServlet;
+import com.composum.sling.nodes.servlet.PropertyServlet;
+import com.composum.sling.nodes.servlet.SceneServlet;
+import com.composum.sling.nodes.servlet.SecurityServlet;
+import com.composum.sling.nodes.servlet.SourceServlet;
+import com.composum.sling.nodes.servlet.SourceUpdateServlet;
+import com.composum.sling.nodes.servlet.VersionServlet;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -101,6 +107,12 @@ public class NodesConfigImpl implements NodesConfiguration {
         String node_source_filter() default "PrimaryType(-'^cpp:(Statistics)$,^rep:(.+)$')";
 
         @AttributeDefinition(
+                name = "Scenes Content Root",
+                description = "the root path of the scenes content nodes"
+        )
+        String scene_content_root() default "/var/composum/nodes/scenes";
+
+        @AttributeDefinition(
                 name = "Package Servlet",
                 description = "the general on/off switch for the services of the Package Servlet"
         )
@@ -129,6 +141,12 @@ public class NodesConfigImpl implements NodesConfiguration {
                 description = "the general on/off switch for the services of the Version Servlet"
         )
         boolean version_servlet_enabled() default true;
+
+        @AttributeDefinition(
+                name = "Scene Servlet",
+                description = "the general on/off switch for the services of the Scene Servlet"
+        )
+        boolean scene_servlet_enabled() default true;
 
         @AttributeDefinition(
                 name = "Source Servlet",
@@ -222,6 +240,12 @@ public class NodesConfigImpl implements NodesConfiguration {
     }
 
     @Override
+    @Nonnull
+    public String getScenesContentRoot() {
+        return getConfig().scene_content_root();
+    }
+
+    @Override
     public Dictionary<String, Object> getProperties() {
         return properties;
     }
@@ -245,6 +269,7 @@ public class NodesConfigImpl implements NodesConfiguration {
         theEnabledServlets.put(NodeServlet.class.getSimpleName(), configuration.node_servlet_enabled());
         theEnabledServlets.put(PropertyServlet.class.getSimpleName(), configuration.property_servlet_enabled());
         theEnabledServlets.put(VersionServlet.class.getSimpleName(), configuration.version_servlet_enabled());
+        theEnabledServlets.put(SceneServlet.class.getSimpleName(), configuration.scene_servlet_enabled());
         theEnabledServlets.put(SourceServlet.class.getSimpleName(), configuration.source_servlet_enabled());
         theEnabledServlets.put(SourceUpdateServlet.class.getSimpleName(), configuration.sourceupdate_servlet_enabled());
         theEnabledServlets.put("UserManagementServlet", configuration.usermanagement_servlet_enabled());
@@ -263,5 +288,4 @@ public class NodesConfigImpl implements NodesConfiguration {
         orderableNodesFilter = null;
         sourceNodesFilter = null;
     }
-
 }
