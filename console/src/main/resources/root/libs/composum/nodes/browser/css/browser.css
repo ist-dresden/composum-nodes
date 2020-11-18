@@ -625,10 +625,10 @@
 #browser-view .node-view-panel .node-view-content .detail-content,
 #browser-view .node-view-panel .node-view-content .full-table-view .fixed-table-container {
     position: absolute;
-    top: 38px;
+    top: 34px;
     left: 0;
     right: 0;
-    bottom: 45px;
+    bottom: 41px;
     overflow: auto;
 }
 
@@ -654,6 +654,7 @@
 #browser-view .node-view-content .detail-toolbar .input-group-addon,
 #browser-view .node-view-content .detail-toolbar .input-group .form-control,
 #browser-view .node-view-content .detail-toolbar .select-buttons-widget .btn,
+#browser-view .node-view-content .detail-toolbar select,
 #browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .search input {
     height: 25px;
 }
@@ -679,7 +680,8 @@
     max-width: 170px;
 }
 
-#browser-view .node-view-content .detail-toolbar .input-group-addon {
+#browser-view .node-view-content .detail-toolbar .input-group-addon,
+#browser-view .node-view-content .detail-toolbar select {
     font-size: 14px;
     padding: 1px 6px;
 }

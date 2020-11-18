@@ -175,10 +175,10 @@
             initialize: function (options) {
                 options = _.extend(options, {
                     displayKey: 'htmlView',
-                    loadContent: function (url) {
+                    loadContent: _.bind(function (url) {
                         this.busy = true; // prevent from 'onFrameLoad' after initialization
                         this.$iframe.attr('src', url);
-                    }
+                    }, this)
                 });
                 browser.AbstractDisplayTab.prototype.initialize.apply(this, [options]);
                 this.$iframe = this.$('.embedded iframe');
@@ -201,6 +201,70 @@
                     );
                 } else {
                     this.busy = false;
+                }
+            }
+        });
+
+        browser.SceneTab = core.console.DetailTab.extend({
+
+            initialize: function (options) {
+                this.sceneKey = core.getWidget(this.$el, '.detail-toolbar .scene-key', core.components.SelectWidget);
+                this.$prepare = this.$('.detail-toolbar .prepare');
+                this.$remove = this.$('.detail-toolbar .remove');
+                this.$iframe = this.$('.embedded iframe');
+                this.$prepare.click(_.bind(this.prepare, this));
+                this.$remove.click(_.bind(this.remove, this));
+                this.$('.detail-toolbar .reload').click(_.bind(this.reload, this));
+                this.sceneKey.setValue(core.console.getProfile().get('scene', 'key'));
+                this.sceneKey.changed('scene', _.bind(this.sceneChanged, this));
+            },
+
+            sceneChanged: function () {
+                core.console.getProfile().set('scene', 'key', this.sceneKey.getValue());
+                this.reload();
+            },
+
+            reload: function () {
+                var path = this.$el.data('path');
+                var key = this.sceneKey.getValue();
+                if (path && key) {
+                    var url = '/bin/cpm/nodes/scene.data.json' + path + '?scene=' + encodeURIComponent(key);
+                    core.getJson(url, _.bind(function (result) {
+                        if (result.data && result.data.scene && result.data.tool.frameUrl) {
+                            this.$iframe.attr('src', result.data.tool.frameUrl);
+                        } else {
+                            this.$iframe.attr('src', "");
+                        }
+                    }, this));
+                } else {
+                    this.$iframe.attr('src', "");
+                }
+            },
+
+            prepare: function () {
+                var path = this.$el.data('path');
+                var key = this.sceneKey.getValue();
+                if (path && key) {
+                    var url = '/bin/cpm/nodes/scene.prepare.json' + path;
+                    core.ajaxPost(url, {
+                        scene: key,
+                        reset: true
+                    }, {}, _.bind(function () {
+                        this.reload();
+                    }, this));
+                }
+            },
+
+            remove: function () {
+                var path = this.$el.data('path');
+                var key = this.sceneKey.getValue();
+                if (path && key) {
+                    var url = '/bin/cpm/nodes/scene.remove.json' + path;
+                    core.ajaxPost(url, {
+                        scene: key
+                    }, {}, _.bind(function () {
+                        this.reload();
+                    }, this));
                 }
             }
         });
@@ -756,6 +820,9 @@
         }, {
             selector: '> .display',
             tabType: browser.HtmlTab
+        }, {
+            selector: '> .scene',
+            tabType: browser.SceneTab
         }, {
             selector: '> .image',
             tabType: browser.ImageTab
