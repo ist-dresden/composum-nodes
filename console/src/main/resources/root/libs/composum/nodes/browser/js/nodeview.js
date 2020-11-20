@@ -968,12 +968,13 @@
              * Shows only the selected tab from the source view tabs.
              */
             sourceViewTabVisibility: function (tab) {
-                var shownTab = tab || core.console.getProfile().get('browser', 'sourceview');
-                if (shownTab) {
-                    core.console.getProfile().set('browser', 'sourceview', shownTab);
-                    this.$detailView.find('.node-tabs .source').addClass('hidden');
-                    this.$detailView.find('.node-tabs .source.' + shownTab).removeClass('hidden');
+                if (tab) {
+                    core.console.getProfile().set('browser', 'sourceview', tab);
+                } else {
+                    tab = core.console.getProfile().get('browser', 'sourceview', 'json');
                 }
+                this.$detailView.find('.node-tabs .source').addClass('hidden');
+                this.$detailView.find('.node-tabs .source.' + tab).removeClass('hidden');
             }
         });
 
