@@ -209,12 +209,12 @@
 
             initialize: function (options) {
                 this.sceneKey = core.getWidget(this.$el, '.detail-toolbar .scene-key', core.components.SelectWidget);
-                this.$prepare = this.$('.detail-toolbar .prepare');
-                this.$remove = this.$('.detail-toolbar .remove');
                 this.$iframe = this.$('.embedded iframe');
-                this.$prepare.click(_.bind(this.prepare, this));
-                this.$remove.click(_.bind(this.remove, this));
+                this.$('.detail-toolbar .prepare').click(_.bind(this.prepare, this));
+                this.$('.detail-toolbar .content').click(_.bind(this.content, this));
+                this.$('.detail-toolbar .remove').click(_.bind(this.remove, this));
                 this.$('.detail-toolbar .reload').click(_.bind(this.reload, this));
+                this.$('.detail-toolbar .open').click(_.bind(this.open, this));
                 this.sceneKey.setValue(core.console.getProfile().get('scene', 'key'));
                 this.sceneKey.changed('scene', _.bind(this.sceneChanged, this));
             },
@@ -224,47 +224,71 @@
                 this.reload();
             },
 
-            reload: function () {
-                var path = this.$el.data('path');
-                var key = this.sceneKey.getValue();
-                if (path && key) {
-                    var url = '/bin/cpm/nodes/scene.data.json' + path + '?scene=' + encodeURIComponent(key);
-                    core.getJson(url, _.bind(function (result) {
-                        if (result.data && result.data.scene && result.data.tool.frameUrl) {
-                            this.$iframe.attr('src', result.data.tool.frameUrl);
-                        } else {
-                            this.$iframe.attr('src', "");
-                        }
-                    }, this));
-                } else {
-                    this.$iframe.attr('src', "");
-                }
-            },
-
             prepare: function () {
-                var path = this.$el.data('path');
-                var key = this.sceneKey.getValue();
-                if (path && key) {
-                    var url = '/bin/cpm/nodes/scene.prepare.json' + path;
-                    core.ajaxPost(url, {
-                        scene: key,
+                this.apply('prepare', _.bind(function (uri, scene) {
+                    core.ajaxPost(uri, {
+                        scene: scene,
                         reset: true
                     }, {}, _.bind(function () {
                         this.reload();
                     }, this));
-                }
+                }, this));
             },
 
             remove: function () {
-                var path = this.$el.data('path');
-                var key = this.sceneKey.getValue();
-                if (path && key) {
-                    var url = '/bin/cpm/nodes/scene.remove.json' + path;
-                    core.ajaxPost(url, {
-                        scene: key
+                this.apply('remove', _.bind(function (uri, scene) {
+                    core.ajaxPost(uri, {
+                        scene: scene
                     }, {}, _.bind(function () {
                         this.reload();
                     }, this));
+                }, this));
+            },
+
+            content: function () {
+                this.scene(_.bind(function (result) {
+                    if (result.data && result.data.scene && result.data.scene.contentPath) {
+                        browser.setCurrentPath(result.data.scene.elementPath
+                            ? result.data.scene.elementPath : result.data.scene.contentPath);
+                    }
+                }, this));
+            },
+
+            reload: function () {
+                this.scene(_.bind(function (result) {
+                    if (result.data && result.data.tool && result.data.tool.frameUrl) {
+                        this.$iframe.attr('src', result.data.tool.frameUrl);
+                    } else {
+                        this.$iframe.attr('src', "");
+                    }
+                }, this), _.bind(function () {
+                    this.$iframe.attr('src', "");
+                }, this));
+            },
+
+            open: function () {
+                this.scene(_.bind(function (result) {
+                    if (result.data && result.data.tool && result.data.tool.frameUrl
+                        && result.data.scene && result.data.scene.prepared) {
+                        window.open(result.data.tool.frameUrl);
+                    }
+                }, this));
+            },
+
+            scene: function (callback, fallback) {
+                this.apply('data', _.bind(function (uri, scene) {
+                    core.getJson(uri + '?scene=' + encodeURIComponent(scene), callback);
+                }), fallback);
+            },
+
+            apply: function (operation, forward, fallback) {
+                var path = this.$el.data('path');
+                var key = this.sceneKey.getValue();
+                if (path && key) {
+                    forward('/bin/cpm/nodes/scene.' + operation + '.json' + path, key);
+                }
+                if (_.isFunction(fallback)) {
+                    fallback();
                 }
             }
         });
