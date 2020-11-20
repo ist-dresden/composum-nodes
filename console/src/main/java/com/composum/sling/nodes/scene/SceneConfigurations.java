@@ -2,7 +2,6 @@ package com.composum.sling.nodes.scene;
 
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.CoreConstants;
-import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -12,6 +11,7 @@ import javax.annotation.Nullable;
 import javax.jcr.query.Query;
 import javax.servlet.http.HttpSession;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -24,18 +24,19 @@ public class SceneConfigurations implements Serializable {
 
     public static final String RT_SCENE_CONFIG_SET = "composum/nodes/console/scene";
     public static final String ORDER = "order";
-    public static final int ORDER_DEFAULT = 50;
 
     public static final String PROP_ID = "id";
     public static final String PROP_KEY = "key";
     public static final String PROP_URI = "uri";
     public static final String PROP_DISABLED = "disabled";
     public static final String PROP_TEMPLATE = "template";
+    public static final String PROP_SCENES_ROOT = "scenesRoot";
+    public static final String PROP_PLACEHOLDER = "placeholder";
 
     public static final String QUERY_BASE = "/jcr:root";
     public static final String QUERY_RULE = "/*[@sling:resourceType='" + RT_SCENE_CONFIG_SET + "']";
 
-    public class Config implements Comparable<Config>, Serializable {
+    public class Config implements Serializable {
 
         public class Tool {
 
@@ -68,17 +69,21 @@ public class SceneConfigurations implements Serializable {
             }
         }
 
-        private final int order;
         private final String path;
         private final String key;
         private final boolean disabled;
+
+        private final String scenesRoot;
+        private final String placeholder;
+
         private final Map<String, Tool> tools;
 
         public Config(ResourceHandle handle) {
-            order = handle.getProperty(ORDER, ORDER_DEFAULT);
             key = handle.getProperty(PROP_KEY, handle.getName());
             path = handle.getPath();
             disabled = handle.getProperty(PROP_DISABLED, Boolean.FALSE);
+            scenesRoot = handle.getProperty(PROP_SCENES_ROOT, String.class);
+            placeholder = handle.getProperty(PROP_PLACEHOLDER, String.class);
             tools = new LinkedHashMap<>();
             for (Resource child : handle.getChildren()) {
                 Tool tool = new Tool(ResourceHandle.use(child));
@@ -98,20 +103,20 @@ public class SceneConfigurations implements Serializable {
             return disabled;
         }
 
+        public String getScenesRoot() {
+            return scenesRoot;
+        }
+
+        public String getPlaceholder() {
+            return placeholder;
+        }
+
         public Tool getTool(String id) {
             return tools.get(id);
         }
 
         public Collection<Tool> getTools() {
             return tools.values();
-        }
-
-        @Override
-        public int compareTo(Config other) {
-            CompareToBuilder builder = new CompareToBuilder();
-            builder.append(order, other.order);
-            builder.append(getPath(), other.getPath());
-            return builder.toComparison();
         }
     }
 
@@ -147,6 +152,11 @@ public class SceneConfigurations implements Serializable {
         for (String path : resolver.getSearchPath()) {
             findSceneConfigs(sceneConfigs, resolver, QUERY_BASE + path + QUERY_RULE);
         }
+        for (String key : new ArrayList<>(sceneConfigs.keySet())) {
+            if (sceneConfigs.get(key).isDisabled()) {
+                sceneConfigs.remove(key);
+            }
+        }
     }
 
     protected void findSceneConfigs(@Nonnull final TreeMap<String, Config> pageConfigs,
@@ -155,7 +165,7 @@ public class SceneConfigurations implements Serializable {
         Iterator<Resource> pageConfigResources = resolver.findResources(query, Query.XPATH);
         while (pageConfigResources.hasNext()) {
             Config pageConfig = new Config(ResourceHandle.use(pageConfigResources.next()));
-            if (!pageConfig.isDisabled() && !pageConfigs.containsKey(pageConfig.getKey())) {
+            if (!pageConfigs.containsKey(pageConfig.getKey())) {
                 pageConfigs.put(pageConfig.getKey(), pageConfig);
             }
         }

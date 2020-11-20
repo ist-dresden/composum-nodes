@@ -21,10 +21,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.jcr.query.Query;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,8 +34,6 @@ import java.util.Objects;
 public class Scene {
 
     private static final Logger LOG = LoggerFactory.getLogger(Scene.class);
-
-    public static final String NAME_PREFIX = "@";
 
     @Nonnull
     protected final BeanContext context;
@@ -51,19 +51,23 @@ public class Scene {
     private transient Map<String, Object> sceneProperties;
     private transient Resource contentResource;
     private transient String frameUrl;
+    private transient String elementPath;
 
     public Scene(@Nonnull final BeanContext context,
                  @Nonnull final Config sceneConfig,
                  @Nonnull final String contentType) {
-        NodesConfiguration nodesConfig = context.getService(NodesConfiguration.class);
         this.context = context;
         this.sceneConfig = sceneConfig;
         this.contentType = contentType;
-        ResourceResolver resolver = this.context.getResolver();
+        final ResourceResolver resolver = this.context.getResolver();
         this.configResource = Objects.requireNonNull(resolver.getResource(this.sceneConfig.getPath()));
-        this.scenePath = nodesConfig.getScenesContentRoot()
-                + (contentType.startsWith("/") ? contentType : "/mnt/overlay/" + contentType);
-        this.contentPath = this.scenePath + "/" + NAME_PREFIX + this.sceneConfig.getKey();
+        String scenesRoot = sceneConfig.getScenesRoot();
+        if (StringUtils.isBlank(scenesRoot)) {
+            final NodesConfiguration nodesConfig = context.getService(NodesConfiguration.class);
+            scenesRoot = nodesConfig.getScenesContentRoot();
+        }
+        this.scenePath = scenesRoot + (contentType.startsWith("/") ? contentType : "/mnt/overlay/" + contentType);
+        this.contentPath = this.scenePath + "/_/" + this.sceneConfig.getKey();
     }
 
     @Nonnull
@@ -86,6 +90,18 @@ public class Scene {
                 if (StringUtils.isBlank(frameUrl)) {
                     frameUrl = contentPath + ".html";
                 }
+            } else {
+                String placeholder = getConfig().getPlaceholder();
+                if (StringUtils.isNotBlank(placeholder)) {
+                    try {
+                        frameUrl = IOUtils.toString(
+                                new ValueEmbeddingReader(new StringReader(placeholder), getSceneProperties()));
+                    } catch (IOException ex) {
+                        LOG.error(ex.getMessage(), ex);
+                    }
+                }
+            }
+            if (StringUtils.isNotBlank(frameUrl)) {
                 frameUrl = context.getRequest().getContextPath() + frameUrl;
             }
         }
@@ -95,6 +111,25 @@ public class Scene {
     @Nonnull
     public Config getConfig() {
         return sceneConfig;
+    }
+
+    @Nonnull
+    public String getElementPath() {
+        if (elementPath == null) {
+            String contentPath = getContentPath();
+            if (StringUtils.isNotBlank(contentPath)) {
+                @SuppressWarnings("deprecation")
+                Iterator<Resource> found = context.getResolver().findResources(
+                        "/jcr:root" + contentPath + "//sample", Query.XPATH);
+                if (found.hasNext()) {
+                    elementPath = found.next().getPath();
+                }
+            }
+            if (elementPath == null) {
+                elementPath = "";
+            }
+        }
+        return elementPath;
     }
 
     @Nonnull
@@ -140,11 +175,11 @@ public class Scene {
     public Resource prepareContent(final boolean resetContent)
             throws IOException {
         final ResourceResolver resolver = context.getResolver();
-        final Resource sceneResource = giveSceneContent(resolver, scenePath);
+        final Resource sceneResource = giveSceneContent(resolver, scenePath + "/_");
         final Resource contentTemplate = getContentTemplate();
         return contentTemplate != null
                 ? applyTemplate(resolver, getSceneProperties(),
-                sceneResource, NAME_PREFIX + this.sceneConfig.getKey(),
+                sceneResource, this.sceneConfig.getKey(),
                 contentTemplate, resetContent)
                 : null;
     }

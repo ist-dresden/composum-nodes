@@ -134,8 +134,11 @@ public class SceneServlet extends AbstractServiceServlet {
                               @Nonnull final Scene scene, @Nonnull final String toolId) {
             Config config = scene.getConfig();
             Config.Tool tool = config.getTool(toolId);
+            status.data("tool").put("name", toolId);
             if (scene.isContentPrepared()) {
+                status.data("scene").put("prepared", true);
                 status.data("scene").put("contentPath", scene.getContentPath());
+                status.data("scene").put("elementPath", scene.getElementPath());
             }
             if (tool != null) {
                 status.data("tool").put("frameUrl", scene.getFrameUrl(toolId));

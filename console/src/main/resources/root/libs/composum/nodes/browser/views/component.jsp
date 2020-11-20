@@ -12,7 +12,7 @@
                 <a class="properties fa fa-list btn btn-default" href="#properties" data-group="properties"
                    title="Node Properties"><span class="label">Properties</span></a>
                 <c:if test="${browser.sceneAvailable}">
-                    <a class="view fa fa-eye btn btn-default" href="#scene" data-group="view"
+                    <a class="view fa fa-window-maximize btn btn-default" href="#scene" data-group="scene"
                        title="Component Scene"><span class="label">Scene</span></a>
                 </c:if>
                 <a class="source json fa fa-code btn btn-default" href="#json" data-group="json"

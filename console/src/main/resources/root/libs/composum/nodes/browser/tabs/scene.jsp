@@ -17,14 +17,26 @@
                 </select>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="prepare fa fa-window-maximize btn btn-default" title="Prepare"><span class="label">Reload</span>
+                <button type="button" class="content fa fa-share btn btn-default"
+                        title="Jump to the scenes content resource"><span
+                        class="label">Content</span>
                 </button>
-                <button type="button" class="remove fa fa-trash btn btn-default" title="Remove"><span class="label">Reload</span>
+                <button type="button" class="prepare fa fa-asterisk btn btn-default"
+                        title="Prepare or reset the scenes content"><span
+                        class="label">Prepare</span>
+                </button>
+           </div>
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="remove fa fa-trash btn btn-default" title="Remove the scenes content"><span
+                        class="label">Remove</span>
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
+                <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload the current scene">
+                    <span class="label">Reload</span>
                 </button>
+                <button type="button" class="open fa fa-globe btn btn-default" title="Open in a separate view"><span
+                        class="label">Open</span></button>
             </div>
         </div>
         <div class="embedded frame-container detail-content">
