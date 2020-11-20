@@ -79,6 +79,9 @@
 
                     <filters>
                         <filter>
+                            <root>/apps/cq/core/content/nav/tools/composum</root>
+                        </filter>
+                        <filter>
                             <root>/libs/composum/nodes/install</root>
                             <includes>
                                 <include>.*/composum-nodes-jslibs.*\.jar</include>
