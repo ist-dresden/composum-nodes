@@ -206,6 +206,23 @@
                 <scope>provided</scope>
             </dependency>
 
+            <!-- downgrades - for compatibility -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.6</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>1.10</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-atinject_1.0_spec</artifactId>
+                <version>1.0</version>
+            </dependency>
+
             <!-- Other dependencies -->
             <!-- https://mvnrepository.com/artifact/biz.aQute/bndlib -->
             <dependency>

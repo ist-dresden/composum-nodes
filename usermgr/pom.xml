@@ -50,6 +50,10 @@
                         <Include-Resource>
                             {maven-resources}
                         </Include-Resource>
+                        <Import-Package>
+                            org.apache.sling.api.resource.*;version="[2.10,3)",
+                            *
+                        </Import-Package>
                         <Export-Package>
                             !com.composum.sling.core.usermanagement.*.impl.*,
                             com.composum.sling.core.usermanagement.*
