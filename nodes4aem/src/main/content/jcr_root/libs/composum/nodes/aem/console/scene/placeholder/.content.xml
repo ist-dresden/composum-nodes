@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:cq="http://www.day.com/jcr/cq/1.0"
+        xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+        xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+        jcr:primaryType="cq:Page">
+    <jcr:content
+            jcr:primaryType="cq:PageContent"
+            sling:resourceType="composum/nodes/aem/console/scene/page"
+            jcr:title="AEM Foundation Scene Placeholder">
+        <par
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="wcm/foundation/components/parsys">
+            <title
+                    jcr:primaryType="nt:unstructured"
+                    sling:resourceType="foundation/components/title"
+                    jcr:title="AEM Foundation Scene plugin"/>
+            <text
+                    jcr:primaryType="nt:unstructured"
+                    sling:resourceType="wcm/foundation/components/text"
+                    text="&lt;p>This plugin enables the use (and on the fly creation) of an AEM Foundation based scene with an embedded component content instance.&lt;/p>&#xa;"
+                    textIsRich="true"/>
+            <responsivegrid
+                    jcr:primaryType="nt:unstructured"
+                    sling:resourceType="wcm/foundation/components/responsivegrid">
+                <par1
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="foundation/components/parsys">
+                    <title
+                            jcr:primaryType="nt:unstructured"
+                            sling:resourceType="foundation/components/title"
+                            jcr:title="Tools / Views"/>
+                    <text
+                            jcr:primaryType="nt:unstructured"
+                            sling:resourceType="wcm/foundation/components/text"
+                            text="&lt;ul>&#xa;&lt;li>AEM Touch&lt;br>&#xa;opens the scene in the Touch UIs editor with all editing features of the embedded component enabled&lt;/li>&#xa;&lt;li>AEM Classic&lt;br>&#xa;opens the scene in the Classic UIs editor (Content Finder) with all editing features of the embedded component enabled&lt;/li>&#xa;&lt;li>AEM Preview&lt;br>&#xa;opens a preview of the scene with 'wcmmode=disabled'&lt;/li>&#xa;&lt;/ul>&#xa;"
+                            textIsRich="true"/>
+                </par1>
+                <par2
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="foundation/components/parsys">
+                    <title
+                            jcr:primaryType="nt:unstructured"
+                            sling:resourceType="foundation/components/title"
+                            jcr:title="Preparation - Reset - Removal"/>
+                    <text
+                            jcr:primaryType="nt:unstructured"
+                            sling:resourceType="wcm/foundation/components/text"
+                            text="&lt;p>On the scenes preparation a component resource of the 'current' - the selected - resource type is created and embedded in a new copy of a page preconfigured by this plugin. The scene is an editable page with the created component instance as an element of this page.&lt;/p>&#xa;&lt;ul>&#xa;&lt;li>Prepare / Reset&lt;br>&#xa;If there is no scenes content available a new scene page with an instance of the current component will be created and displayed using the selected tool or view. If the is a scene prepared a click to 'prepare' will reset the scenes page.&lt;/li>&#xa;&lt;li>Remove&lt;br>&#xa;Clicking this button the scene (the content) is removed immediately without each kind of confirmation. This information 'placeholder' is shown after the removal. If you prepare the scene again a new and fresh content resource will be embedded in the scenes page.&lt;/li>&#xa;&lt;/ul>&#xa;"
+                            textIsRich="true"/>
+                </par2>
+            </responsivegrid>
+        </par>
+    </jcr:content>
+</jcr:root>

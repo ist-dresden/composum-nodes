@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>2.0.2</version>
+        <version>2.1.0</version>
     </parent>
 
     <artifactId>composum-nodes-aem-package</artifactId>
@@ -78,6 +78,9 @@
                     </properties>
 
                     <filters>
+                        <filter>
+                            <root>/apps/cq/core/content/nav/tools/composum</root>
+                        </filter>
                         <filter>
                             <root>/libs/composum/nodes/install</root>
                             <includes>

@@ -38,6 +38,9 @@ public interface NodesConfiguration {
     @Nonnull
     ResourceFilter getSourceNodesFilter();
 
+    @Nonnull
+    String getScenesContentRoot();
+
     /**
      * The (readonly) properties useable for extensions. E.g. introduce a new property in a newer nodes version, and use
      * it if accessible already when depending on an older nodes version.

@@ -8,6 +8,7 @@ import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.components.codeeditor.CodeEditorServlet;
 import com.composum.sling.nodes.console.ConsoleServletBean;
+import com.composum.sling.nodes.scene.SceneConfigurations;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
@@ -23,6 +24,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -92,12 +94,13 @@ public class Browser extends ConsoleServletBean {
     private transient String viewType;
     private transient String textType;
 
+    private transient Boolean isRenderable;
+
     private transient Boolean isFile;
     private transient Boolean isAsset;
     private transient Boolean isImage;
     private transient Boolean isVideo;
     private transient Boolean isText;
-    private transient Boolean isRenderable;
 
     private transient NodeHandle current;
     private transient NodeHandle parent;
@@ -382,8 +385,31 @@ public class Browser extends ConsoleServletBean {
     }
 
     //
+    // Component Scenes
+    //
+
+    public boolean isSceneAvailable() {
+        Collection<SceneConfigurations.Config> availableScenes = getAvailableScenes();
+        return availableScenes.size() > 0;
+    }
+
+    @Nonnull
+    public Collection<SceneConfigurations.Config> getAvailableScenes() {
+        return SceneConfigurations.instance(getRequest()).getSceneConfigs();
+    }
+
+    //
     // File type
     //
+
+    public boolean isRenderable() {
+        if (isRenderable == null) {
+            String extension = getNameExtension();
+            isRenderable = isTyped() || (isText() &&
+                    (HTML.equals(extension) /*|| JSP.equals(extension)*/));
+        }
+        return isRenderable;
+    }
 
     public boolean isFile() {
         if (isFile == null) {
@@ -444,15 +470,6 @@ public class Browser extends ConsoleServletBean {
             isText = isFile() && StringUtils.isNotBlank(getTextType());
         }
         return isText;
-    }
-
-    public boolean isRenderable() {
-        if (isRenderable == null) {
-            String extension = getNameExtension();
-            isRenderable = isTyped() || (isText() &&
-                    (HTML.equals(extension) /*|| JSP.equals(extension)*/));
-        }
-        return isRenderable;
     }
 
     public String getNameExtension() {
@@ -533,6 +550,10 @@ public class Browser extends ConsoleServletBean {
                     String resourceType = getResourceType();
                     if (StringUtils.isNotBlank(resourceType)) {
                         viewType = "typed";
+                    } else {
+                        if (isDeclaringType()) {
+                            viewType = "component";
+                        }
                     }
                 }
             }

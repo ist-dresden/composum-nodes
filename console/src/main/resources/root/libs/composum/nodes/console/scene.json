@@ -1,0 +1,4 @@
+{
+  "jcr:primaryType": "sling:Folder",
+  "jcr:description": "the resource type of component scene declarations"
+}

@@ -175,10 +175,10 @@
             initialize: function (options) {
                 options = _.extend(options, {
                     displayKey: 'htmlView',
-                    loadContent: function (url) {
+                    loadContent: _.bind(function (url) {
                         this.busy = true; // prevent from 'onFrameLoad' after initialization
                         this.$iframe.attr('src', url);
-                    }
+                    }, this)
                 });
                 browser.AbstractDisplayTab.prototype.initialize.apply(this, [options]);
                 this.$iframe = this.$('.embedded iframe');
@@ -201,6 +201,94 @@
                     );
                 } else {
                     this.busy = false;
+                }
+            }
+        });
+
+        browser.SceneTab = core.console.DetailTab.extend({
+
+            initialize: function (options) {
+                this.sceneKey = core.getWidget(this.$el, '.detail-toolbar .scene-key', core.components.SelectWidget);
+                this.$iframe = this.$('.embedded iframe');
+                this.$('.detail-toolbar .prepare').click(_.bind(this.prepare, this));
+                this.$('.detail-toolbar .content').click(_.bind(this.content, this));
+                this.$('.detail-toolbar .remove').click(_.bind(this.remove, this));
+                this.$('.detail-toolbar .reload').click(_.bind(this.reload, this));
+                this.$('.detail-toolbar .open').click(_.bind(this.open, this));
+                this.sceneKey.setValue(core.console.getProfile().get('scene', 'key'));
+                this.sceneKey.changed('scene', _.bind(this.sceneChanged, this));
+            },
+
+            sceneChanged: function () {
+                core.console.getProfile().set('scene', 'key', this.sceneKey.getValue());
+                this.reload();
+            },
+
+            prepare: function () {
+                this.apply('prepare', _.bind(function (uri, scene) {
+                    core.ajaxPost(uri, {
+                        scene: scene,
+                        reset: true
+                    }, {}, _.bind(function () {
+                        this.reload();
+                    }, this));
+                }, this));
+            },
+
+            remove: function () {
+                this.apply('remove', _.bind(function (uri, scene) {
+                    core.ajaxPost(uri, {
+                        scene: scene
+                    }, {}, _.bind(function () {
+                        this.reload();
+                    }, this));
+                }, this));
+            },
+
+            content: function () {
+                this.scene(_.bind(function (result) {
+                    if (result.data && result.data.scene && result.data.scene.contentPath) {
+                        browser.setCurrentPath(result.data.scene.elementPath
+                            ? result.data.scene.elementPath : result.data.scene.contentPath);
+                    }
+                }, this));
+            },
+
+            reload: function () {
+                this.scene(_.bind(function (result) {
+                    if (result.data && result.data.tool && result.data.tool.frameUrl) {
+                        this.$iframe.attr('src', result.data.tool.frameUrl);
+                    } else {
+                        this.$iframe.attr('src', "");
+                    }
+                }, this), _.bind(function () {
+                    this.$iframe.attr('src', "");
+                }, this));
+            },
+
+            open: function () {
+                this.scene(_.bind(function (result) {
+                    if (result.data && result.data.tool && result.data.tool.frameUrl
+                        && result.data.scene && result.data.scene.prepared) {
+                        window.open(result.data.tool.frameUrl);
+                    }
+                }, this));
+            },
+
+            scene: function (callback, fallback) {
+                this.apply('data', _.bind(function (uri, scene) {
+                    core.getJson(uri + '?scene=' + encodeURIComponent(scene), callback);
+                }), fallback);
+            },
+
+            apply: function (operation, forward, fallback) {
+                var path = this.$el.data('path');
+                var key = this.sceneKey.getValue();
+                if (path && key) {
+                    forward('/bin/cpm/nodes/scene.' + operation + '.json' + path, key);
+                }
+                if (_.isFunction(fallback)) {
+                    fallback();
                 }
             }
         });
@@ -757,6 +845,9 @@
             selector: '> .display',
             tabType: browser.HtmlTab
         }, {
+            selector: '> .scene',
+            tabType: browser.SceneTab
+        }, {
             selector: '> .image',
             tabType: browser.ImageTab
         }, {
@@ -877,12 +968,13 @@
              * Shows only the selected tab from the source view tabs.
              */
             sourceViewTabVisibility: function (tab) {
-                var shownTab = tab || core.console.getProfile().get('browser', 'sourceview');
-                if (shownTab) {
-                    core.console.getProfile().set('browser', 'sourceview', shownTab);
-                    this.$detailView.find('.node-tabs .source').addClass('hidden');
-                    this.$detailView.find('.node-tabs .source.' + shownTab).removeClass('hidden');
+                if (tab) {
+                    core.console.getProfile().set('browser', 'sourceview', tab);
+                } else {
+                    tab = core.console.getProfile().get('browser', 'sourceview', 'json');
                 }
+                this.$detailView.find('.node-tabs .source').addClass('hidden');
+                this.$detailView.find('.node-tabs .source.' + tab).removeClass('hidden');
             }
         });
 

@@ -12,7 +12,7 @@
     <groupId>com.composum.nodes</groupId>
     <artifactId>composum-nodes</artifactId>
     <packaging>pom</packaging>
-    <version>2.0.2</version>
+    <version>2.1.0</version>
 
     <name>Composum Nodes Parent / Reactor</name>
     <description>Maven parent for Composum Sling Core bundles</description>
@@ -204,6 +204,23 @@
                 <artifactId>composum-nodes-jslibs</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <!-- downgrades - for compatibility -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.6</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>1.10</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-atinject_1.0_spec</artifactId>
+                <version>1.0</version>
             </dependency>
 
             <!-- Other dependencies -->
