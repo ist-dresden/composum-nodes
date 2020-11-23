@@ -124,15 +124,19 @@ public class SceneConfigurations implements Serializable {
 
     @Nonnull
     public static SceneConfigurations instance(@Nonnull final SlingHttpServletRequest request) {
-        HttpSession session = request.getSession(true);
         SceneConfigurations instance = null;
-        try {  // try to use cached configuration
-            instance = (SceneConfigurations) session.getAttribute(SA_INSTANCE);
-        } catch (ClassCastException ignore) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            try {  // try to use cached configuration
+                instance = (SceneConfigurations) session.getAttribute(SA_INSTANCE);
+            } catch (ClassCastException ignore) {
+            }
         }
         if (instance == null) {
             instance = new SceneConfigurations(request.getResourceResolver());
-            session.setAttribute(SA_INSTANCE, instance);
+            if (session != null) {
+                session.setAttribute(SA_INSTANCE, instance);
+            }
         }
         return instance;
     }
