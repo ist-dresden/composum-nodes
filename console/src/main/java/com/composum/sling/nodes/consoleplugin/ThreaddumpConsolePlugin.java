@@ -40,7 +40,7 @@ public class ThreaddumpConsolePlugin extends HttpServlet {
     /**
      * Location for the CSS.
      */
-    protected static final String LOC_CSS = "slingconsole/threaddumpplugin.css";
+    protected static final String LOC_CSS = "slingconsole/composum/nodes/console/threaddumpplugin.css";
 
     public static final String PARAM_STATE = "state";
     public static final String PARAM_NAMEREGEX = "nameregex";
