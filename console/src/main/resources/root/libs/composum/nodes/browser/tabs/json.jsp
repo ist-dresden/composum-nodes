@@ -66,7 +66,7 @@
             </div>
         </div>
         <div class="embedded frame-container detail-content">
-            <iframe src="" width="100%" height="100%"></iframe>
+            <iframe src="" width="100%" height="100%" sandbox=""></iframe>
         </div>
     </div>
 </cpn:component>

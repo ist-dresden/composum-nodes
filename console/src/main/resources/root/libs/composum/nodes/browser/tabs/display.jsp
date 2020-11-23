@@ -44,7 +44,8 @@
       </div>
     </div>
     <div class="embedded frame-container detail-content">
-      <iframe src="" width="100%" height="100%"></iframe>
+      <iframe src="" width="100%" height="100%"
+              sandbox="allow-same-origin allow-scripts allow-modals allow-popups allow-forms allow-downloads"></iframe>
     </div>
   </div>
 </cpn:component>

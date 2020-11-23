@@ -5,7 +5,7 @@
 <cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
   <div class="binary detail-panel">
     <div class="frame-container detail-content">
-      <iframe src="${browser.current.pathEncoded}" width="100%" height="100%"></iframe>
+      <iframe src="${browser.current.pathEncoded}" width="100%" height="100%" sandbox=""></iframe>
     </div>
   </div>
 </cpn:component>
