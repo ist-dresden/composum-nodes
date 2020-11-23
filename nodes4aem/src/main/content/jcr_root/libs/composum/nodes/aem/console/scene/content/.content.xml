@@ -7,7 +7,7 @@
         jcr:title="AEM Foundation Scene"
         disabled="{Boolean}false"
         key="aemfndn"
-        placeholder="/libs/composum/nodes/aem/console/scene/placeholder.html"
+        placeholder="/libs/composum/nodes/aem/console/scene/placeholder.html?wcmmode=disabled"
         template="/libs/composum/nodes/aem/console/scene/template">
     <touch
             jcr:primaryType="nt:unstructured"
