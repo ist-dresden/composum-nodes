@@ -9,7 +9,7 @@
         <div class="path-input-group input-group">
             <input class="path-input-field form-control" type="text" value="${browser.current.path}"
                    placeholder="${cpn:i18n(slingRequest,'repository path')}"/>
-            <span class="input-group-addon open-path">...</span>
+            <span class="input-group-addon open-path" title="${cpn:i18n(slingRequest, 'Go to the path...')}">...</span>
         </div>
         <ol class="breadcrumbs-list">
             <c:forEach var="parent" items="${browser.parents}">
@@ -21,12 +21,13 @@
         </ol>
         <cpn:div test="${not empty browser.relatedPathSet}" class="related-path-set btn-group btn-group-sm dropdown">
             <c:forEach var="type" items="${browser.relatedPathSet}">
-                <button class="related-path btn btn-default btn-sm${browser.path==type.value?' active':''}"
-                        data-path="${type.value}" title="${type.value}">${type.key}</button>
+                <button class="related-path btn btn-default btn-sm${browser.path==type.value.path?' active':''}"
+                        data-path="${type.value.path}" title="${type.value.tooltip}">${type.value.label}</button>
             </c:forEach>
             <c:if test="${not empty browser.supertypeChain}">
                 <button type="button" class="supertypes btn btn-default dropdown-toggle"
-                        data-toggle="dropdown" aria-expanded="false" title="Supertypes...">S
+                        data-toggle="dropdown" aria-expanded="false"
+                        title="${cpn:i18n(slingRequest, 'Supertypes Chain (Menu)')}">S
                 </button>
                 <ul class="supertypes-menu dropdown-menu dropdown-menu-right" role="menu">
                     <c:forEach var="supertype" items="${browser.supertypeChain}">

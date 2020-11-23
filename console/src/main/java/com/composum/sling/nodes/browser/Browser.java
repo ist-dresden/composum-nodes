@@ -3,6 +3,7 @@ package com.composum.sling.nodes.browser;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.StringFilter;
+import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.ResourceUtil;
@@ -51,7 +52,6 @@ public class Browser extends ConsoleServletBean {
     public static final String PROP_MIME_TYPE = "jcr:mimeType";
     public static final String DEFAULT_MIME_TYPE = "text/html";
 
-
     public static final Map<String, String> EDITOR_MODES;
 
     static {
@@ -77,16 +77,48 @@ public class Browser extends ConsoleServletBean {
         EDITOR_MODES.put("txt", "text");
     }
 
+    public static class Reference {
+
+        @Nonnull
+        protected final String label;
+        @Nullable
+        protected final String tooltip;
+        @Nonnull
+        protected final String path;
+
+        public Reference(@Nonnull final String label, @Nullable final String tooltip, @Nonnull final String path) {
+            this.label = label;
+            this.tooltip = tooltip;
+            this.path = path;
+        }
+
+        @Nonnull
+        public String getLabel() {
+            return label;
+        }
+
+        @Nullable
+        public String getTooltip() {
+            return tooltip;
+        }
+
+        @Nonnull
+        public String getPath() {
+            return path;
+        }
+    }
+
     private transient String primaryType;
     private transient String resourceType;
 
     private transient Boolean isDeclaringType;
     private transient List<String> supertypeChain;
-    private transient LinkedHashMap<String, String> resourceTypes;
+    private transient Map<String, Reference> resourceTypes;
+    private transient Map<String, Reference> relatedPathSet;
 
     private transient Boolean overlayAvailable;
     private transient Boolean overrideAvailable;
-    private transient Map<String, String> typeRootLabels;
+    private transient Map<String, Reference> typeRootLabels;
 
     private transient String mimeType;
     private transient String nameExtension;
@@ -269,16 +301,19 @@ public class Browser extends ConsoleServletBean {
     }
 
     @Nonnull
-    public Map<String, String> getResourceTypeSet() {
+    public Map<String, Reference> getResourceTypeSet() {
         if (resourceTypes == null) {
             resourceTypes = new LinkedHashMap<>();
             String resourceType = getResourceType(isDeclaringType() ? getPath() : getResourceType());
             if (StringUtils.isNotBlank(resourceType)) {
                 ResourceResolver resolver = getResolver();
-                Map<String, String> labels = getTypeRootLabels();
+                Map<String, Reference> labels = getTypeRootLabels();
                 String overrideRoot = getOverrideyRoot() + "/";
                 if (isOverrideAvailable()) {
-                    resourceTypes.put(labels.get(overrideRoot), getOverridePath());
+                    Reference label = labels.get(overrideRoot);
+                    String path = getOverridePath();
+                    resourceTypes.put(label.getLabel(), new Reference(label.getLabel(),
+                            label.getTooltip() + "\n" + path, path));
                 }
                 if (resourceType.startsWith(overrideRoot)) {
                     resourceType = getResourceType(resourceType.substring(overrideRoot.length() - 1));
@@ -286,7 +321,9 @@ public class Browser extends ConsoleServletBean {
                 for (String root : getTypeSearchPath(isOverlayAvailable())) {
                     String resourceTypePath = root + resourceType;
                     if (resolver.getResource(resourceTypePath) != null) {
-                        resourceTypes.put(labels.get(root), resourceTypePath);
+                        Reference label = labels.get(root);
+                        resourceTypes.put(label.getLabel(), new Reference(label.getLabel(),
+                                label.getTooltip() + "\n" + resourceTypePath, resourceTypePath));
                     }
                 }
             }
@@ -295,26 +332,36 @@ public class Browser extends ConsoleServletBean {
     }
 
     @Nonnull
-    public Map<String, String> getRelatedPathSet() {
-        if (isDeclaringType()) {
-            return getResourceTypeSet();
-        }
-        String path = getPath();
-        Map<String, String> related = new LinkedHashMap<>();
-        Map<String, String> labels = getTypeRootLabels();
-        String overrideRoot = getOverrideyRoot() + "/";
-        if (isOverrideAvailable()) {
-            related.put(labels.get(overrideRoot), getOverridePath());
-            related.put("B", getBasePath());
-        }
-        String resourceType = getResourceType();
-        if (StringUtils.isNotBlank(resourceType)) {
-            Resource type = getTypeResource(resourceType, false);
-            if (type != null) {
-                related.put("T", type.getPath());
+    public Map<String, Reference> getRelatedPathSet() {
+        if (relatedPathSet == null) {
+            if (isDeclaringType()) {
+                relatedPathSet = getResourceTypeSet();
+            } else {
+                relatedPathSet = new LinkedHashMap<>();
+                String path = getPath();
+                Map<String, Reference> labels = getTypeRootLabels();
+                String overrideRoot = getOverrideyRoot() + "/";
+                if (isOverrideAvailable()) {
+                    Reference label = labels.get(overrideRoot);
+                    String overridePath = getOverridePath();
+                    String basePath = getBasePath();
+                    relatedPathSet.put(label.getLabel(), new Reference(label.getLabel(),
+                            label.getTooltip() + "\n" + overridePath, overridePath));
+                    relatedPathSet.put("B", new Reference("B",
+                            I18N.get(getRequest(), "Original (Base Path)") + "\n" + basePath, basePath));
+                }
+                String resourceType = getResourceType();
+                if (StringUtils.isNotBlank(resourceType)) {
+                    Resource type = getTypeResource(resourceType, false);
+                    if (type != null) {
+                        String typePath = type.getPath();
+                        relatedPathSet.put("T", new Reference("T",
+                                I18N.get(getRequest(), "Resource Type") + "\n" + typePath, typePath));
+                    }
+                }
             }
         }
-        return related;
+        return relatedPathSet;
     }
 
     //
@@ -373,13 +420,18 @@ public class Browser extends ConsoleServletBean {
         return isOverrideResource() ? getPath() : getOverrideyRoot() + getBasePath();
     }
 
-    protected Map<String, String> getTypeRootLabels() {
+    protected Map<String, Reference> getTypeRootLabels() {
         if (typeRootLabels == null) {
             typeRootLabels = new HashMap<>();
-            typeRootLabels.put(getOverrideyRoot() + "/", "o/r");
-            typeRootLabels.put(getOverlayRoot() + "/", "o/l");
-            typeRootLabels.put("/apps/", "A");
-            typeRootLabels.put("/libs/", "L");
+            typeRootLabels.put(getOverrideyRoot() + "/",
+                    new Reference("o/r", "Resource Merger - Override", getOverrideyRoot()));
+            typeRootLabels.put(getOverlayRoot() + "/",
+                    new Reference("o/l", "Resource Merger - Overlay", getOverlayRoot()));
+            for (String root : getResolver().getSearchPath()) {
+                String label = ("" + root.charAt(1)).toUpperCase();
+                String path = root.endsWith("/") ? root.substring(0, root.length() - 1) : root;
+                typeRootLabels.put(root, new Reference(label, "Resource Resolver - " + path, path));
+            }
         }
         return typeRootLabels;
     }

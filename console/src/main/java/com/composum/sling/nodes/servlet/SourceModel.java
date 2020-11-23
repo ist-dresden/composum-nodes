@@ -22,14 +22,27 @@ import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.math.BigDecimal;
 import java.nio.file.attribute.FileTime;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -37,7 +50,11 @@ import java.util.zip.ZipOutputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
-import static org.apache.jackrabbit.JcrConstants.*;
+import static org.apache.jackrabbit.JcrConstants.JCR_CONTENT;
+import static org.apache.jackrabbit.JcrConstants.JCR_MIXINTYPES;
+import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE;
+import static org.apache.jackrabbit.JcrConstants.NT_FILE;
+import static org.apache.jackrabbit.JcrConstants.NT_RESOURCE;
 
 /**
  * <p>
@@ -112,8 +129,10 @@ public class SourceModel extends ConsoleSlingBean {
             // , "^cq:lastRolledout"
     );
 
-    /** Matches mixins that do not belong into a source. E.g. rep:AccessControllable doesn't make sense
-     * since we do not export ACLs, anyway, and adding ACLs automatically adds this mixin. */
+    /**
+     * Matches mixins that do not belong into a source. E.g. rep:AccessControllable doesn't make sense
+     * since we do not export ACLs, anyway, and adding ACLs automatically adds this mixin.
+     */
     public static final StringFilter EXCLUDED_MIXINS = new StringFilter.WhiteList("^rep:AccessControllable$");
 
     /**
@@ -323,19 +342,23 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     /**
-     * Returns true if the nodes siblings are ordered. Works only for JCR resources - if we cannot determine this,
-     * we return null.
+     * Returns true if the nodes siblings are ordered.
+     * Works only for JCR resources - if we cannot determine this, we return 'false'.
      */
-    public Boolean hasOrderableSiblings() {
-        ResourceHandle parent = getResource().getParent();
-        Boolean result;
-        if (hasOrderableSiblings == null) {
-            result = hasOrderableChildren(parent);
-            hasOrderableSiblings = new Boolean[]{result};
-        } else {
-            result = hasOrderableSiblings[0];
+    public boolean hasOrderableSiblings() {
+        Boolean result = null;
+        try {
+            ResourceHandle parent = getResource().getParent();
+            if (hasOrderableSiblings == null) {
+                result = hasOrderableChildren(parent);
+                hasOrderableSiblings = new Boolean[]{result};
+            } else {
+                result = hasOrderableSiblings[0];
+            }
+        } catch (RuntimeException ex) {
+            LOG.warn(ex.toString()); // probably no JCR resource
         }
-        return result;
+        return result != null ? result : false;
     }
 
     /**
