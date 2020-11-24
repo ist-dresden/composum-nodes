@@ -4,7 +4,7 @@ yet another Apache Sling based Application Platform (asap)
 
 ## [Composum Nodes](https://www.composum.com/home/nodes.html)
 
-![Build Status](https://api.travis-ci.org/ist-dresden/composum.svg?branch=develop) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Build Status](https://api.travis-ci.org/ist-dresden/composum.svg?branch=develop) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [releases](https://github.com/ist-dresden/composum/releases)
 
 A simple Apache Sling based Resource/JCR development tool
 
