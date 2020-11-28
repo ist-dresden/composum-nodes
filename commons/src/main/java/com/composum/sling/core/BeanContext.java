@@ -400,11 +400,13 @@ public interface BeanContext extends Adaptable {
         public <T> T getAttribute(String name, Class<T> T) {
             Object attribute = null;
             if (StringUtils.isNotBlank(name)) {
-                attribute = pageScopeMap.get(name);
+                attribute = this.pageScopeMap.get(name);
                 if (attribute == null) {
-                    SlingHttpServletRequest request = getRequest();
-                    if (request != null) {
-                        attribute = request.getAttribute(name);
+                    if (!ATTR_REQUEST.equals(name)) {
+                        SlingHttpServletRequest request = getRequest();
+                        if (request != null) {
+                            attribute = request.getAttribute(name);
+                        }
                     }
                     if (attribute == null) {
                         attribute = this.requestScopeMap.get(name);
@@ -430,6 +432,9 @@ public interface BeanContext extends Adaptable {
             if (scope == Scope.page) {
                 this.pageScopeMap.put(name, value);
             } else {
+                if (ATTR_REQUEST.equals(name)) {
+                    this.requestScopeMap.put(name, value);
+                }
                 SlingHttpServletRequest request = getRequest();
                 if (request != null) {
                     if (scope == Scope.request) {
