@@ -15,9 +15,11 @@ import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.api.wrappers.SlingHttpServletRequestWrapper;
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletContext;
@@ -400,23 +402,22 @@ public interface BeanContext extends Adaptable {
             if (StringUtils.isNotBlank(name)) {
                 attribute = pageScopeMap.get(name);
                 if (attribute == null) {
-                    if (requestScopeMap != null) {
+                    SlingHttpServletRequest request = getRequest();
+                    if (request != null) {
+                        attribute = request.getAttribute(name);
+                    }
+                    if (attribute == null) {
                         attribute = this.requestScopeMap.get(name);
+                    }
+                    if (attribute == null) {
+                        if (request != null) {
+                            HttpSession session = request.getSession();
+                            if (session != null) {
+                                attribute = session.getAttribute(name);
+                            }
+                        }
                         if (attribute == null) {
                             attribute = this.sessionScopeMap.get(name);
-                        }
-                    } else {
-                        SlingHttpServletRequest request = getRequest();
-                        if (request != null) {
-                            attribute = request.getAttribute(name);
-                            if (attribute == null) {
-                                HttpSession session = request.getSession();
-                                if (session != null) {
-                                    attribute = session.getAttribute(name);
-                                } else {
-                                    attribute = this.sessionScopeMap.get(name);
-                                }
-                            }
                         }
                     }
                 }
@@ -468,6 +469,10 @@ public interface BeanContext extends Adaptable {
      */
     class Service extends Map {
 
+        private static final Logger LOG = LoggerFactory.getLogger(Service.class);
+
+        private transient BundleContext bundleContext;
+
         public Service() {
         }
 
@@ -499,6 +504,37 @@ public interface BeanContext extends Adaptable {
             if (null == getResolver() && null != resource) resolver = resource.getResourceResolver();
             return copy;
         }
+
+        @Override
+        public <T> T retrieveService(Class<T> type) {
+            BundleContext bundleContext = getBundleContext();
+            ServiceReference<?> serviceReference = bundleContext.getServiceReference(type);
+            return serviceReference != null ? type.cast(bundleContext.getService(serviceReference)) : null;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public <T> T[] getServices(Class<T> serviceType, String filter) {
+            List<T> result = new ArrayList<>();
+            try {
+                BundleContext bundleContext = getBundleContext();
+                ServiceReference<?>[] serviceReferences = bundleContext.getServiceReferences(serviceType.getName(), filter);
+                for (ServiceReference<?> serviceReference : serviceReferences) {
+                    result.add((T) bundleContext.getService(serviceReference));
+                }
+            } catch (InvalidSyntaxException ex) {
+                LOG.error(ex.getMessage(), ex);
+            }
+            return (T[]) result.toArray();
+        }
+
+        protected BundleContext getBundleContext() {
+            if (bundleContext == null) {
+                bundleContext = FrameworkUtil.getBundle(BeanContext.class).getBundleContext();
+            }
+            return bundleContext;
+        }
+
     }
 
     /**
