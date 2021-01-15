@@ -178,6 +178,13 @@ public class ComponentTag extends CpnlBodyTagSupport {
             String type = getType();
             if (StringUtils.isNotBlank(type)) {
                 componentType = (Class<? extends SlingBean>) context.getType(type);
+            } else {
+                if (getVar() != null) {
+                    Object value = pageContext.getAttribute(getVar(), getVarScope());
+                    if (value instanceof SlingBean) {
+                        componentType = (Class<? extends SlingBean>) value.getClass();
+                    }
+                }
             }
         }
         return componentType;
@@ -192,7 +199,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
             Object value = pageContext.getAttribute(getVar(), getVarScope());
             if (value instanceof SlingBean) {
                 Class<?> type = getComponentType();
-                if (type != null && type.isAssignableFrom(value.getClass())) {
+                if (type == null || type.isAssignableFrom(value.getClass())) {
                     result = value;
                 }
             }
@@ -308,7 +315,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
             replacedAttributes = new ArrayList<>();
         }
         while (replacedAttributes.size() <= scope) {
-            replacedAttributes.add(new HashMap<String, Object>());
+            replacedAttributes.add(new HashMap<>());
         }
         return replacedAttributes.get(scope);
     }

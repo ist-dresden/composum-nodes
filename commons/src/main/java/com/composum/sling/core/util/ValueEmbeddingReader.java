@@ -166,7 +166,7 @@ public class ValueEmbeddingReader extends Reader {
             int token = reader.read();
             if (token < 0) {
                 eof = true;
-            } else if (token == '\\') { // escaped '$' od '\'?
+            } else if (token == '\\') { // escaped '$' or '\'?
                 int next = reader.read();
                 if (next < 0) {
                     buf[len++] = '\\';

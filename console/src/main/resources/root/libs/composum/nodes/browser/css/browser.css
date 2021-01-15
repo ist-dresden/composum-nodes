@@ -1184,6 +1184,31 @@
     float: right;
 }
 
+.acl.detail-panel .setup-wrapper,
+.acl.detail-panel .setup-frame {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+
+
+.acl.detail-panel .setup-frame {
+    top: 1px;
+}
+
+.acl.detail-panel .setup-wrapper {
+    display: none;
+    top: 0;
+    z-index: 2;
+    background: #fff;
+}
+
+.acl.detail-panel .setup-wrapper.open {
+    display: block;
+}
+
 /**
  * versions view
  */
