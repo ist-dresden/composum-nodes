@@ -49,7 +49,7 @@
         </attribute>
         <attribute>
             <name>type</name>
-            <required>true</required>
+            <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
