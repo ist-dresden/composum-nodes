@@ -2,6 +2,7 @@ package com.composum.sling.core.service.impl;
 
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import javax.annotation.Nonnull;
 import javax.jcr.Node;
@@ -25,10 +26,10 @@ public class CoreRepositorySetupServiceTest {
         public String groupPath;
 
         @Override
-        public void addAcl(@Nonnull final Session session, @Nonnull final String path,
-                           @Nonnull final String principal, boolean allow,
-                           @Nonnull final String[] privileges,
-                           @Nonnull final Map restrictions) {
+        public void addAcRule(@Nonnull final Session session, @Nonnull final String path,
+                              @Nonnull final String principal, boolean allow,
+                              @Nonnull final String[] privileges,
+                              @Nonnull final Map<String, Object> restrictions) {
             System.out.println("addAcl(" + path + "," + principal + ","
                     + allow + "," + Arrays.toString(privileges) + "," + restrictions + ")");
         }
@@ -47,7 +48,6 @@ public class CoreRepositorySetupServiceTest {
         }
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Test
     public void testAclFromJsonWithoutValues() throws Exception {
         TestService service = new TestService();
@@ -55,11 +55,10 @@ public class CoreRepositorySetupServiceTest {
                 InputStream stream = getClass().getResourceAsStream(JAVA_RESOURCE_BASE + "acl.json");
                 Reader streamReader = new InputStreamReader(stream, UTF_8)
         ) {
-            service.addJsonAcl(null, streamReader, null);
+            service.addJsonAcl(Mockito.mock(Session.class), streamReader, null);
         }
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Test
     public void testAclFromJsonWithValues() throws Exception {
         TestService service = new TestService();
@@ -67,7 +66,7 @@ public class CoreRepositorySetupServiceTest {
                 InputStream stream = getClass().getResourceAsStream(JAVA_RESOURCE_BASE + "acl.json");
                 Reader streamReader = new InputStreamReader(stream, UTF_8)
         ) {
-            service.addJsonAcl(null, streamReader, new HashMap<String, Object>() {{
+            service.addJsonAcl(Mockito.mock(Session.class), streamReader, new HashMap<String, Object>() {{
                 put("base", "my/groups");
             }});
             assertEquals("my/groups", service.groupPath);
