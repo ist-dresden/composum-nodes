@@ -11,6 +11,11 @@
         browser.PoliciesTab = core.console.DetailTab.extend({
 
             initialize: function (options) {
+                this.setupPath = '/libs/composum/nodes/commons/components/security/page';
+                this.$setupWrapper = this.$('.setup-wrapper');
+                this.$setupFrame = this.$('.setup-frame');
+                this.$runButton = this.$('.acl-toolbar .run');
+                this.$setupButton = this.$('.acl-toolbar .setup');
                 this.verticalSplit = core.getWidget(this.$el, '.split-pane.vertical-split', console.components.VerticalSplitPane);
                 this.localTable = core.getWidget(this.$el, '.local-policies > table', browser.PoliciesTable, {
                     selectable: true
@@ -20,11 +25,57 @@
                 this.$('.acl-toolbar .remove').click(_.bind(this.removeSelection, this));
                 this.$('.acl-toolbar .up').click(_.bind(this.up, this));
                 this.$('.acl-toolbar .down').click(_.bind(this.down, this));
+                this.$runButton.click(_.bind(this.toggleRun, this));
+                this.$setupButton.click(_.bind(this.toggleSetup, this));
+                this.$('.acl-toolbar .reload').click(_.bind(this.reload, this));
+            },
+
+            toggleRun: function () {
+                if (this.setupOpen === 'current') {
+                    this.closeSetup();
+                } else {
+                    this.setupOpen = 'current';
+                    this.$setupFrame.attr('src',
+                        core.getContextUrl(this.setupPath + '.current.html' +
+                            core.encodePath(this.$runButton.data('path'))));
+                    this.$setupWrapper.addClass('open');
+                    this.$runButton.addClass('active');
+                    this.$setupButton.removeClass('active');
+                }
+            },
+
+            toggleSetup: function () {
+                if (this.setupOpen === 'control') {
+                    this.closeSetup();
+                } else {
+                    this.setupOpen = 'control';
+                    this.$setupFrame.attr('src',
+                        core.getContextUrl(this.setupPath + '.html'));
+                    this.$setupWrapper.addClass('open');
+                    this.$setupButton.addClass('active');
+                    this.$runButton.removeClass('active');
+                }
+            },
+
+            closeSetup: function () {
+                delete this.setupOpen;
+                this.$setupWrapper.removeClass('open');
+                this.$setupButton.removeClass('active');
+                this.$runButton.removeClass('active');
+                this.$setupFrame.attr('src', '');
+                this.reload();
             },
 
             reload: function (callback) {
-                this.loadTableData(this.localTable, 'local', callback);
-                this.loadTableData(this.effectiveTable, 'effective');
+                if (this.$setupWrapper.hasClass('open')) {
+                    this.$setupFrame.attr('src',
+                        core.getContextUrl(this.setupPath +
+                            (this.setupOpen === 'control' ? '.refresh.html'
+                                : ('.current.html'+ core.encodePath(this.$runButton.data('path'))))));
+                } else {
+                    this.loadTableData(this.localTable, 'local', callback);
+                    this.loadTableData(this.effectiveTable, 'effective');
+                }
             },
 
             loadTableData: function (table, scope, callback) {

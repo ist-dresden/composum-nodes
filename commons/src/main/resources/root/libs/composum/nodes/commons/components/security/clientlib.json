@@ -1,0 +1,32 @@
+{
+  "sling:resourceType": "composum/nodes/commons/clientlib",
+  "description": "the clientlib for the 'security' control components",
+  "category": [
+    "composum.nodes.components.security"
+  ],
+  "css": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "depends": [
+      "jslibs/bootstrap/(3.*:3.4.1)/css/bootstrap.css",
+      "jslibs/bootstrap/(3.*:3.4.1)/css/bootstrap-theme.css"
+    ],
+    "embed": [
+      "composum/nodes/commons/components/security/css/security.css"
+    ]
+  },
+  "js": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "depends": [
+      "jslibs/jquery/([2-3].*:3.4.1)/jquery.js",
+      "jslibs/loglevel/(1.*:1.6.1)/loglevel.js",
+      "jslibs/underscore/(1.*:1.9.1)/underscore.js",
+      "jslibs/backbone/(1.*:1.4.0)/backbone.js",
+      "jslibs/bootstrap/(3.*:3.4.1)/js/bootstrap.js"
+    ],
+    "embed": [
+      "composum/nodes/commons/components/js/core.js",
+      "composum/nodes/commons/components/js/i18n.js",
+      "composum/nodes/commons/components/security/js/security.js"
+    ]
+  }
+}

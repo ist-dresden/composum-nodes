@@ -18,6 +18,7 @@
             }
             base = base[segment];
         });
+        return base;
     };
 
     window.core = CPM.core = { // window.core for compatibility ... @deprecated
