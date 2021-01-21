@@ -7,7 +7,6 @@ import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
-import com.composum.sling.core.util.XSS;
 import com.composum.sling.cpnl.CpnlElFunctions;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonWriter;
@@ -33,13 +32,26 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
-import javax.jcr.security.*;
+import javax.jcr.security.AccessControlEntry;
+import javax.jcr.security.AccessControlList;
+import javax.jcr.security.AccessControlManager;
+import javax.jcr.security.AccessControlPolicy;
+import javax.jcr.security.AccessControlPolicyIterator;
+import javax.jcr.security.NamedAccessControlPolicy;
+import javax.jcr.security.Privilege;
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import static com.composum.sling.core.mapping.MappingRules.CHARSET;
 import static com.composum.sling.nodes.servlet.SecurityServlet.SERVLET_PATH;
@@ -246,8 +258,8 @@ public class SecurityServlet extends AbstractServiceServlet {
 
                 final String path = AbstractServiceServlet.getPath(request);
 
-                final String object = XSS.filter(request.getParameter("object"));
-                final String before = XSS.filter(request.getParameter("before"));
+                final String object = request.getParameter("object");
+                final String before = request.getParameter("before");
                 final AccessPolicyEntry entryObject = getJsonObject(object, AccessPolicyEntry.class);
                 final AccessPolicyEntry entryBefore = getJsonObject(before, AccessPolicyEntry.class);
                 final JackrabbitAccessControlList policy = AccessControlUtils.getAccessControlList(acManager, path);
@@ -538,7 +550,7 @@ public class SecurityServlet extends AbstractServiceServlet {
                 AccessControlManager acManager = session.getAccessControlManager();
 
                 String path = AbstractServiceServlet.getPath(request);
-                response.setContentType("text/html;charset=" + CHARSET); // XSS? - checked (2019-05-04)
+                response.setContentType("text/html;charset=" + CHARSET);
 
                 AccessControlPolicy[] policies;
 
