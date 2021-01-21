@@ -46,9 +46,6 @@
             request.addEventListener("progress", _.bind(function (event) {
                 this.$out.append(event.target.responseText);
             }, this));
-            request.addEventListener("loadend", _.bind(function () {
-                this.$out.append('finished');
-            }, this));
             this.$out.text('start...\n');
             request.open('POST', this.$form.attr('action'));
             request.send(new FormData(this.$form[0]));
