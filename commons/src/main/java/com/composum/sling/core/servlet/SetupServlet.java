@@ -15,11 +15,14 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Session;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The service servlet to execute setup operations.
@@ -37,6 +40,9 @@ public class SetupServlet extends AbstractServiceServlet {
     private static final Logger LOG = LoggerFactory.getLogger(SetupServlet.class);
 
     public static final String SERVLET_PATH = "/bin/cpm/nodes/setup";
+
+    public static final String PN_WARNINGS = "warnings";
+    public static final String PN_ERRORS = "errors";
 
     @Reference
     private CoreConfiguration coreConfig;
@@ -78,48 +84,65 @@ public class SetupServlet extends AbstractServiceServlet {
     public class RunSetupScripts implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         final SlingHttpServletResponse response,
+                         final ResourceHandle resource)
                 throws ServletException, IOException {
             response.setContentType("text/plain;charset=utf-8");
             final PrintWriter writer = response.getWriter();
+            int sumErrors = 0;
+            int sumWarnings = 0;
             try {
                 String[] scripts = request.getParameterValues("script");
                 if (scripts != null) {
                     ResourceResolver resolver = request.getResourceResolver();
                     Session session = resolver.adaptTo(Session.class);
                     if (session != null) {
-                        CoreRepositorySetupService.TRACKER.set(new CoreRepositorySetupService.Tracker() {
+                        for (String script : scripts) {
+                            writer.println("running script '" + script + "'...");
+                            final Map<String, Object> status = new HashMap<String, Object>() {{
+                                put(PN_WARNINGS, 0);
+                                put(PN_ERRORS, 0);
+                            }};
+                            try {
+                                CoreRepositorySetupService.TRACKER.set(new CoreRepositorySetupService.Tracker() {
 
-                            @Override
-                            public void info(String message) {
-                                writer.println("I " + message);
-                            }
+                                    @Override
+                                    public void info(String message) {
+                                        writer.println("I " + message);
+                                    }
 
-                            @Override
-                            public void warn(String message) {
-                                writer.println("W " + message);
-                            }
+                                    @Override
+                                    public void warn(String message) {
+                                        status.put(PN_WARNINGS, ((int) status.get(PN_WARNINGS)) + 1);
+                                        writer.println("W " + message);
+                                    }
 
-                            @Override
-                            public void error(String message) {
-                                writer.println("E " + message);
-                            }
-                        });
-                        try {
-                            for (String script : scripts) {
-                                writer.println("running script '" + script + "'...");
+                                    @Override
+                                    public void error(String message) {
+                                        status.put(PN_ERRORS, ((int) status.get(PN_ERRORS)) + 1);
+                                        writer.println("E " + message);
+                                    }
+                                });
                                 setupService.addJsonAcl(session, script, null);
-                                writer.println("done script '" + script + "'.");
+                            } finally {
+                                CoreRepositorySetupService.TRACKER.set(null);
                             }
-                        } finally {
-                            CoreRepositorySetupService.TRACKER.set(null);
+                            int warnings = (int) status.get(PN_WARNINGS);
+                            int errors = (int) status.get(PN_ERRORS);
+                            sumWarnings += warnings;
+                            sumErrors += errors;
+                            writer.println("done script '" + script +
+                                    "' (warnings: " + warnings + ", errors: " + errors + ").");
                         }
                     }
                 }
             } catch (Exception ex) {
+                sumErrors++;
                 LOG.error(ex.getMessage(), ex);
                 writer.println("ERROR: " + ex.toString());
             }
+            writer.println("finished (warnings: " + sumWarnings + ", errors: " + sumErrors + ").");
             writer.flush();
         }
     }
