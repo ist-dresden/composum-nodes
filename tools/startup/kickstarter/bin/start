@@ -1,0 +1,93 @@
+#!/bin/bash
+#
+# This script starts the server application.
+#
+BINPATH=$( dirname ${0} )
+CPM_HOME=$( cd $BINPATH/..; pwd )
+cd ${CPM_HOME}
+
+if [ -r ./cpm_config.properties ]; then
+   . ./cpm_config.properties
+fi
+
+#
+# applying defaults...
+#
+
+if [ -n "$JAVA_VERSION" ]; then
+	 unset JAVA_HOME
+   export JAVA_HOME=`/usr/libexec/java_home -v $JAVA_VERSION`
+   JAVA="${JAVA_HOME}/bin/java"
+fi
+
+# TCP port to listen to defaults to 9090
+if [ -z "$CPM_PORT" ]; then
+   CPM_PORT=9090
+fi
+
+# sling runmodes
+if [ -z "$CPM_RUNMODE" ]; then
+   CPM_RUNMODE='local'
+fi
+
+# heap settings
+if [ -z "$CPM_HEAP_MIN" ]; then
+   CPM_HEAP_MIN='768'
+fi
+if [ -z "$CPM_HEAP_MAX" ]; then
+   CPM_HEAP_MAX='2048'
+fi
+
+# debug option
+if [ "${CPM_DEBUG}" == "true" ]
+then
+   if [ -z "$CPM_DEBUG_PORT" ]; then
+      CPM_DEBUG_PORT="2$CPM_PORT"
+   fi
+fi
+
+# JAR file
+if [ -z $CPM_JARFILE ]; then
+   CPM_JARFILE=`ls ./*.jar | head -1`
+fi
+
+# TCP port used for stop and status scripts
+if [ -z "$CPM_CTRL_PORT" ]; then
+   CPM_CTRL_PORT="1$CPM_PORT"
+fi
+
+#
+# compilation of the execution options...
+#
+
+if [ $CPM_PORT ]; then
+   START_OPTS="${START_OPTS} -p ${CPM_PORT}"
+fi
+if [ $CPM_CONTEXT ]; then
+   START_OPTS="${START_OPTS} -r ${CPM_CONTEXT}"
+fi
+if [ $CPM_CTRL_PORT ]; then
+   START_OPTS="${START_OPTS} -j ${CPM_CTRL_PORT}"
+fi
+
+if [ -z "$CPM_JVM_OPTS" ]; then
+   CPM_JVM_OPTS="-server -Xms${CPM_HEAP_MIN}m -Xmx${CPM_HEAP_MAX}m -Djava.awt.headless=true"
+   CPM_JVM_OPTS="${CPM_JVM_OPTS} -Djava.security.egd=file:/dev/./urandom"
+   #CPM_JVM_OPTS="${CPM_JVM_OPTS} -Dorg.osgi.framework.system.packages.extra=sun.misc"
+fi
+if [ $CPM_RUNMODE ]; then
+   CPM_JVM_OPTS="${CPM_JVM_OPTS} -Dsling.run.modes=${CPM_RUNMODE}"
+fi
+if [ $CPM_HOST ]; then
+   CPM_JVM_OPTS="${CPM_JVM_OPTS} -Dorg.apache.felix.http.host=${CPM_HOST}"
+fi
+if [ "${CPM_DEBUG_PORT}" ]; then
+   CPM_JVM_OPTS="${CPM_JVM_OPTS} -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=${CPM_DEBUG_PORT}"
+fi
+
+#
+# starting the Sling instance...
+#
+
+echo "$JAVA $CPM_JVM_OPTS -jar $CPM_JARFILE$START_OPTS start &"
+$JAVA $CPM_JVM_OPTS -jar $CPM_JARFILE$START_OPTS start &
