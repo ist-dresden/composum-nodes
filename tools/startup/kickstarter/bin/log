@@ -1,0 +1,6 @@
+#!/bin/bash
+BINPATH=$( dirname ${0} )
+CPM_HOME=$( cd $BINPATH/..; pwd )
+cd ${CPM_HOME}
+
+tail -n 1000 -F launcher/logs/error.log

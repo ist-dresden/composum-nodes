@@ -12,7 +12,7 @@
     <groupId>com.composum.nodes</groupId>
     <artifactId>composum-nodes</artifactId>
     <packaging>pom</packaging>
-    <version>2.2.1</version>
+    <version>2.2.2</version>
 
     <name>Composum Nodes Parent / Reactor</name>
     <description>Maven parent for Composum Sling Core bundles</description>
@@ -221,14 +221,6 @@
                 <groupId>org.apache.geronimo.specs</groupId>
                 <artifactId>geronimo-atinject_1.0_spec</artifactId>
                 <version>1.0</version>
-            </dependency>
-
-            <!-- Other dependencies -->
-            <!-- https://mvnrepository.com/artifact/biz.aQute/bndlib -->
-            <dependency>
-                <groupId>biz.aQute</groupId>
-                <artifactId>bndlib</artifactId>
-                <version>1.50.0</version>
             </dependency>
 
             <!-- YUICompressor -->
