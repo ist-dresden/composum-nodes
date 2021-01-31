@@ -223,14 +223,6 @@
                 <version>1.0</version>
             </dependency>
 
-            <!-- Other dependencies -->
-            <!-- https://mvnrepository.com/artifact/biz.aQute/bndlib -->
-            <dependency>
-                <groupId>biz.aQute</groupId>
-                <artifactId>bndlib</artifactId>
-                <version>1.50.0</version>
-            </dependency>
-
             <!-- YUICompressor -->
             <!-- https://mvnrepository.com/artifact/com.yahoo.platform.yui/yuicompressor -->
             <dependency>
