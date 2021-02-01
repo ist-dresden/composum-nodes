@@ -1,5 +1,8 @@
 package com.composum.sling.core.pckgmgr.view;
 
+import com.composum.sling.core.pckgmgr.tree.JcrPackageItem;
+import com.composum.sling.core.pckgmgr.tree.TreeItem;
+import com.composum.sling.core.pckgmgr.tree.TreeNode;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
@@ -47,15 +50,15 @@ public class PackageManagerBean extends ConsoleSlingBean {
         return StringUtils.isNotBlank(selector) ? selector.substring(1) : "general";
     }
 
-    public List<PackageUtil.PackageItem> getCurrentGroupPackages() {
-        List<PackageUtil.PackageItem> items = new ArrayList<>();
+    public List<JcrPackageItem> getCurrentGroupPackages() {
+        List<JcrPackageItem> items = new ArrayList<>();
         try {
             JcrPackageManager manager = PackageUtil.getPackageManager(context.getService(Packaging.class), getRequest());
-            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(manager, getRequest());
-            for (PackageUtil.TreeItem item : treeNode) {
-                if (item instanceof PackageUtil.PackageItem) {
-                    if (((PackageUtil.PackageItem) item).getDefinition() != null) {
-                        items.add((PackageUtil.PackageItem) item);
+            TreeNode treeNode = PackageUtil.getTreeNode(manager, getRequest());
+            for (TreeItem item : treeNode) {
+                if (item instanceof JcrPackageItem) {
+                    if (((JcrPackageItem) item).getDefinition() != null) {
+                        items.add((JcrPackageItem) item);
                     }
                 }
             }

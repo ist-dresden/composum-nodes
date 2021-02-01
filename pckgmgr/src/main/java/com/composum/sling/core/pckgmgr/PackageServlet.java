@@ -4,9 +4,10 @@ import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.concurrent.JobFacade;
 import com.composum.sling.core.concurrent.JobMonitor;
 import com.composum.sling.core.concurrent.JobUtil;
+import com.composum.sling.core.pckgmgr.tree.JcrPackageItem;
+import com.composum.sling.core.pckgmgr.tree.TreeNode;
 import com.composum.sling.core.pckgmgr.util.PackageProgressTracker;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
-import com.composum.sling.core.pckgmgr.util.PackageUtil.PackageItem;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
@@ -19,11 +20,19 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jackrabbit.vault.fs.api.*;
+import org.apache.jackrabbit.vault.fs.api.FilterSet;
+import org.apache.jackrabbit.vault.fs.api.ImportMode;
+import org.apache.jackrabbit.vault.fs.api.PathFilter;
+import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
+import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
-import org.apache.jackrabbit.vault.packaging.*;
+import org.apache.jackrabbit.vault.packaging.JcrPackage;
+import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
+import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.PackageException;
+import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
@@ -53,11 +62,20 @@ import javax.jcr.query.Query;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The servlet to provide download and upload of content packages and package definitions.
@@ -99,6 +117,10 @@ public class PackageServlet extends AbstractServiceServlet {
     @Reference
     private Packaging packaging;
 
+    // FIXME registering of package registries
+    //@Reference
+    //private PackageRegistries packageRegistries;
+
     //
     // Servlet operations
     //
@@ -110,7 +132,8 @@ public class PackageServlet extends AbstractServiceServlet {
     public enum Operation {
         create, update, delete, download, upload, install, uninstall, deploy, service, list, tree, view, query,
         coverage, filterList, filterChange, filterAdd, filterRemove, filterMoveUp, filterMoveDown,
-        cleanup
+        cleanup,
+        registries
     }
 
     protected PackageOperationSet operations = new PackageOperationSet();
@@ -125,7 +148,8 @@ public class PackageServlet extends AbstractServiceServlet {
         return nodesConfig.isEnabled(this);
     }
 
-    @Activate @Modified
+    @Activate
+    @Modified
     protected void activate(Configuration configuration) {
         jobIdleTimeout = configuration.package_job_timeout();
     }
@@ -155,6 +179,9 @@ public class PackageServlet extends AbstractServiceServlet {
 
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.cleanup, new CleanupOperation());
+
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.registries, new RegistriesOperation());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
@@ -228,9 +255,37 @@ public class PackageServlet extends AbstractServiceServlet {
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             writer.beginArray();
             for (JcrPackage jcrPackage : jcrPackages) {
-                new PackageItem(jcrPackage).toJson(writer);
+                new JcrPackageItem(jcrPackage).toJson(writer);
             }
             writer.endArray();
+        }
+    }
+
+    protected class RegistriesOperation implements ServletOperation {
+
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+            /* FIXME
+            List<PackageRegistry> registries = packageRegistries.getRegistries();
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            writer.beginArray();
+            for (PackageRegistry registry : registries) {
+                writer.name(registry.getClass().getSimpleName()).beginObject();
+                writer.name("packages").beginArray();
+                for (PackageId pckgId : registry.packages()) {
+                    RegisteredPackage pckg = registry.open(pckgId);
+                    writer.beginObject();
+                    writer.name("id").value(pckgId.toString());
+                    writer.name("filename").value(RegistryUtil.getFilename(pckgId));
+                    writer.endObject();
+                }
+                writer.endArray();
+                writer.endObject();
+            }
+            writer.endArray();
+            */
         }
     }
 
@@ -242,7 +297,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 throws RepositoryException, IOException {
 
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
-            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(manager, request);
+            TreeNode treeNode = PackageUtil.getTreeNode(manager, request);
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             treeNode.sort();
@@ -465,7 +520,7 @@ public class PackageServlet extends AbstractServiceServlet {
                         (binary = data.getBinary()) != null &&
                         (stream = binary.getStream()) != null) {
 
-                    PackageUtil.PackageItem item = new PackageUtil.PackageItem(jcrPackage);
+                    JcrPackageItem item = new JcrPackageItem(jcrPackage);
 
                     response.setHeader("Content-Disposition", "inline; filename=" + item.getFilename());
                     Calendar lastModified = item.getLastModified();

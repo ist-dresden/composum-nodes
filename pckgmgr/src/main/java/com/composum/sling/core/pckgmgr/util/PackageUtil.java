@@ -1,6 +1,7 @@
 package com.composum.sling.core.pckgmgr.util;
 
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.pckgmgr.tree.TreeNode;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.XSS;
@@ -39,10 +40,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -434,7 +432,7 @@ public class PackageUtil {
         String path = PackageUtil.getPath(request);
         List<JcrPackage> jcrPackages = manager.listPackages();
 
-        PackageUtil.TreeNode treeNode = new PackageUtil.TreeNode(path);
+        TreeNode treeNode = new TreeNode(path);
         for (JcrPackage jcrPackage : jcrPackages) {
             if (treeNode.addPackage(jcrPackage)) {
                 break;
@@ -442,221 +440,6 @@ public class PackageUtil {
         }
 
         return treeNode;
-    }
-
-    public interface TreeItem {
-
-        String getName();
-
-        String getPath();
-
-        void toJson(JsonWriter writer) throws RepositoryException, IOException;
-    }
-
-    public static class FolderItem extends LinkedHashMap<String, Object> implements TreeItem {
-
-        public FolderItem(String path, String name) {
-            put("id", path);
-            put("path", path);
-            put("name", name);
-            put("text", name);
-            put("type", "/".equals(path) ? "root" : "folder");
-            Map<String, Object> treeState = new LinkedHashMap<>();
-            treeState.put("loaded", Boolean.FALSE);
-            put("state", treeState);
-        }
-
-        @Override
-        public String getName() {
-            return (String) get("text");
-        }
-
-        @Override
-        public String getPath() {
-            return (String) get("path");
-        }
-
-        @Override
-        public void toJson(JsonWriter writer) throws IOException {
-            JsonUtil.jsonMap(writer, this);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other instanceof TreeItem && getName().equals(((TreeItem) other).getName());
-        }
-
-        @Override
-        public int hashCode() {
-            return getName().hashCode();
-        }
-    }
-
-    public static class PackageItem implements TreeItem {
-
-        private final JcrPackage jcrPackage;
-        private final JcrPackageDefinition definition;
-
-        public PackageItem(JcrPackage jcrPackage) throws RepositoryException {
-            this.jcrPackage = jcrPackage;
-            definition = jcrPackage.getDefinition();
-        }
-
-        @Override
-        public String getName() {
-            return definition.get(JcrPackageDefinition.PN_NAME);
-        }
-
-        @Override
-        public String getPath() {
-            try {
-                String name = getFilename();
-                String groupPath = PackageUtil.getGroupPath(jcrPackage);
-                String path = groupPath + name;
-                return path;
-            } catch (RepositoryException rex) {
-                LOG.error(rex.getMessage(), rex);
-            }
-            return "";
-        }
-
-        public JcrPackageDefinition getDefinition() {
-            return definition;
-        }
-
-        @Override
-        public void toJson(JsonWriter writer) throws RepositoryException, IOException {
-            String name = getFilename();
-            String path = getPath();
-            Map<String, Object> treeState = new LinkedHashMap<>();
-            treeState.put("loaded", Boolean.TRUE);
-            Map<String, Object> additionalAttributes = new LinkedHashMap<>();
-            additionalAttributes.put("id", path);
-            additionalAttributes.put("path", path);
-            additionalAttributes.put("name", name);
-            additionalAttributes.put("text", name);
-            additionalAttributes.put("type", "package");
-            additionalAttributes.put("state", treeState);
-            additionalAttributes.put("file", getFilename());
-            PackageUtil.toJson(writer, jcrPackage, additionalAttributes);
-        }
-
-        public String getFilename() {
-            return PackageUtil.getFilename(jcrPackage);
-        }
-
-        public Calendar getLastModified() {
-            Calendar lastModified = PackageUtil.getLastModified(jcrPackage);
-            if (lastModified != null) {
-                return lastModified;
-            }
-            return PackageUtil.getCreated(jcrPackage);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other instanceof PackageItem &&
-                    getName().equals(((PackageItem) other).getName()) &&
-                    definition.get(JcrPackageDefinition.PN_VERSION).equals(((PackageItem) other).definition.get(JcrPackageDefinition.PN_VERSION));
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * getName().hashCode() + definition.get(JcrPackageDefinition.PN_VERSION).hashCode();
-        }
-
-    }
-
-    /** the tree node implementation for the requested path (folder or package) */
-    public static class TreeNode extends ArrayList<TreeItem> {
-
-        private final String path;
-        private boolean isLeaf;
-
-        public TreeNode(String path) {
-            this.path = path;
-        }
-
-        /**
-         * adds a package or the appropriate folder to the nodes children if it is a child of this node
-         *
-         * @param jcrPackage the current package in the iteration
-         * @return true, if this package is the nodes target and a leaf - iteration can be stopped
-         * @throws RepositoryException
-         */
-        public boolean addPackage(JcrPackage jcrPackage) throws RepositoryException {
-            String groupUri = path.endsWith("/") ? path : path + "/";
-            String groupPath = PackageUtil.getGroupPath(jcrPackage);
-            if (groupPath.startsWith(groupUri)) {
-                TreeItem item;
-                if (groupPath.equals(groupUri)) {
-                    // this node is the packages parent - use the package as node child
-                    item = new PackageItem(jcrPackage);
-                } else {
-                    // this node is a group parent - insert a folder for the subgroup
-                    String name = groupPath.substring(path.length());
-                    if (name.startsWith("/")) {
-                        name = name.substring(1);
-                    }
-                    int nextDelimiter = name.indexOf("/");
-                    if (nextDelimiter > 0) {
-                        name = name.substring(0, nextDelimiter);
-                    }
-                    item = new FolderItem(groupUri + name, name);
-                }
-                if (!contains(item)) {
-                    add(item);
-                }
-                return false;
-            } else {
-                PackageItem item = new PackageItem(jcrPackage);
-                if (path.equals(groupPath + item.getFilename())) {
-                    // this node (teh path) represents the package itself and is a leaf
-                    isLeaf = true;
-                    add(item);
-                    // we can stop the iteration
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        public boolean isLeaf() {
-            return isLeaf;
-        }
-
-        public void sort() {
-            Collections.sort(this, new Comparator<TreeItem>() {
-
-                @Override
-                public int compare(TreeItem o1, TreeItem o2) {
-                    return o1.getName().compareToIgnoreCase(o2.getName());
-                }
-            });
-        }
-
-        public void toJson(JsonWriter writer) throws IOException, RepositoryException {
-            if (isLeaf()) {
-                get(0).toJson(writer);
-            } else {
-                int lastPathSegment = path.lastIndexOf("/");
-                String name = path.substring(lastPathSegment + 1);
-                if (StringUtils.isBlank(name)) {
-                    name = "packages ";
-                }
-                FolderItem myself = new FolderItem(path, name);
-
-                writer.beginObject();
-                JsonUtil.jsonMapEntries(writer, myself);
-                writer.name("children");
-                writer.beginArray();
-                for (TreeItem item : this) {
-                    item.toJson(writer);
-                }
-                writer.endArray();
-                writer.endObject();
-            }
-        }
     }
 
     //
