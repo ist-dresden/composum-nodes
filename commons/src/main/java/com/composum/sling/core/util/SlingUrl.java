@@ -294,7 +294,6 @@ public class SlingUrl implements Cloneable {
      */
     @Nonnull
     public SlingUrl fromUrl(@Nonnull final String url, boolean decode) {
-        reset();
         parseUrl(url, decode);
         return this;
     }
