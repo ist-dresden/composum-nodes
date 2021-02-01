@@ -13,7 +13,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -402,6 +408,22 @@ public class SlingUrl implements Cloneable {
         return this;
     }
 
+    /**
+     * Initialzes the SlingUrl from a requests URL
+     *
+     * @param request the HTTP request to use
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl fromRequest(HttpServletRequest request) {
+        StringBuffer url = request.getRequestURL();
+        String query = request.getQueryString();
+        if (StringUtils.isNotBlank(query)) {
+            url.append('?').append(query);
+        }
+        return fromUrl(url.toString(), true);
+    }
+
     @Nonnull
     public SlingHttpServletRequest getRequest() {
         return request;
@@ -658,12 +680,32 @@ public class SlingUrl implements Cloneable {
     }
 
     /**
+     * @return the first value of the parameter values if values are present;
+     * an empty string if the value list is empty (parameter present but without a value);
+     * <code>null</code> if the parameter is not present
+     */
+    @Nullable
+    public String getParameter(@Nonnull final String name) {
+        List<String> values = parameters.get(name);
+        return values != null ? (values.size() > 0 ? values.get(0) : "") : null;
+    }
+
+    /**
+     * @return an unmodifiable List of the parameter values if present
+     */
+    @Nullable
+    public List<String> getParameterValues(@Nonnull final String name) {
+        List<String> values = parameters.get(name);
+        return values != null ? Collections.unmodifiableList(values) : null;
+    }
+
+    /**
      * Unmodifiable map of the contained parameters.
      * <p>
      * This is unmodifiable since otherwise we would have to trust the user to call {@link #clearTransients()} on every change.
      */
     @Nonnull
-    Map<String, List<String>> getParameters() {
+    public Map<String, List<String>> getParameters() {
         return Collections.unmodifiableMap(parameters);
     }
 
@@ -1242,12 +1284,11 @@ public class SlingUrl implements Cloneable {
             parameterString = parameterString.substring(1);
         }
         for (String param : StringUtils.split(parameterString, '&')) {
-            String[] nameVal = StringUtils.split(param, "=", 2);
-            addParameter(
-                    decode ? UrlCodec.QUERYPART.decode(nameVal[0]) : nameVal[0],
-                    nameVal.length > 1 ?
-                            (decode ? UrlCodec.QUERYPART.decode(nameVal[1]) : nameVal[1])
-                            : null);
+            int delimiterPos = param.indexOf('=');
+            String name = delimiterPos < 0 ? param : param.substring(0, delimiterPos);
+            String value = delimiterPos < 0 ? null : param.substring(delimiterPos + 1);
+            addParameter(decode ? UrlCodec.QUERYPART.decode(name) : name,
+                    value != null ? (decode ? UrlCodec.QUERYPART.decode(value) : value) : null);
         }
     }
 

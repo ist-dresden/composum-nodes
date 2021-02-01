@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+# This script checks the server application status.
+#
+BINPATH=$( dirname ${0} )
+CPM_HOME=$( cd $BINPATH/..; pwd )
+cd ${CPM_HOME}
+
+if [ -r ./cpm_config.properties ]; then
+   . ./cpm_config.properties
+fi
+
+#
+# applying defaults...
+#
+
+if [ -n "$JAVA_VERSION" ]; then
+	 unset JAVA_HOME
+   export JAVA_HOME=`/usr/libexec/java_home -v $JAVA_VERSION`
+   JAVA="${JAVA_HOME}/bin/java"
+fi
+
+# JAR file
+if [ -z $CPM_JARFILE ]; then
+   CPM_JARFILE=`ls ./*.jar | head -1`
+fi
+
+# TCP port used for stop and status scripts
+if [ -z "$CPM_CTRL_PORT" ]; then
+   CPM_CTRL_PORT="1$CPM_PORT"
+fi
+
+#
+# compilation of the execution options...
+#
+
+if [ $CPM_CTRL_PORT ]; then
+   START_OPTS="${START_OPTS} -j ${CPM_CTRL_PORT}"
+fi
+
+#
+# starting the Sling instance...
+#
+
+echo "$JAVA $CPM_JVM_OPTS -jar $CPM_JARFILE$START_OPTS status &"
+$JAVA $CPM_JVM_OPTS -jar $CPM_JARFILE$START_OPTS status &

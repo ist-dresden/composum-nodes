@@ -10,6 +10,7 @@ import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.components.codeeditor.CodeEditorServlet;
 import com.composum.sling.nodes.console.ConsoleServletBean;
 import com.composum.sling.nodes.scene.SceneConfigurations;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
@@ -23,6 +24,9 @@ import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,6 +34,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.composum.sling.core.util.CoreConstants.DEFAULT_OVERLAY_ROOT;
 import static com.composum.sling.core.util.CoreConstants.DEFAULT_OVERRIDE_ROOT;
@@ -491,6 +496,34 @@ public class Browser extends ConsoleServletBean {
         return isFile;
     }
 
+    @Nonnull
+    public String getFilePath() {
+        if (isFile()) {
+            ResourceHandle fileRes = resource;
+            if (JcrConstants.JCR_CONTENT.equals(resource.getName())) {
+                fileRes = resource.getParent();
+            }
+            if (fileRes != null && fileRes.isOfType(TYPE_FILE)) {
+                return fileRes.getPath();
+            }
+        }
+        return "";
+    }
+
+    public InputStream openFile() {
+        if (isFile()) {
+            ResourceHandle contentResource = getContentResource();
+            if (contentResource == null) {
+                contentResource = resource; // use node itself if no content present
+            }
+            if (contentResource != null) {
+                ValueMap values = contentResource.getValueMap();
+                return values.get(JcrConstants.JCR_DATA, InputStream.class);
+            }
+        }
+        return null;
+    }
+
     public boolean isAsset() {
         if (isAsset == null) {
             isAsset = ResourceUtil.isResourceType(resource, "cpa:Asset");
@@ -522,6 +555,42 @@ public class Browser extends ConsoleServletBean {
             isText = isFile() && StringUtils.isNotBlank(getTextType());
         }
         return isText;
+    }
+
+    public static final Pattern SETUP_SCRIPT_PATTERN =
+            Pattern.compile(".*[\"']?acl[\"']?\\s*:\\s*[\\[{].*", Pattern.MULTILINE | Pattern.DOTALL);
+
+    private transient Boolean setupScript;
+
+    public boolean isSetupScript() {
+        if (setupScript == null) {
+            setupScript = false;
+            if (isText() && "json".equals(getTextType())) {
+                setupScript = SETUP_SCRIPT_PATTERN.matcher(getTextSnippet()).matches();
+            }
+        }
+        return setupScript;
+    }
+
+    private transient String textSnippet;
+
+    @Nonnull
+    public String getTextSnippet() {
+        if (textSnippet == null) {
+            textSnippet = "";
+            if (isText()) {
+                try (InputStream data = openFile()) {
+                    if (data != null) {
+                        char[] buffer = new char[512];
+                        int len = IOUtils.read(new InputStreamReader(data), buffer);
+                        textSnippet = new String(buffer, 0, len);
+                    }
+                } catch (IOException ex) {
+                    LOG.error(ex.toString());
+                }
+            }
+        }
+        return textSnippet;
     }
 
     public String getNameExtension() {
@@ -587,7 +656,7 @@ public class Browser extends ConsoleServletBean {
                 } else if (isImage()) {
                     viewType = "image";
                 } else if (isText()) {
-                    if ("groovy".equalsIgnoreCase(getTextType())) {
+                    if ("groovy".equalsIgnoreCase(getTextType())/* || isSetupScript() TODO?*/) {
                         viewType = "script";
                     } else {
                         viewType = "text";

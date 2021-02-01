@@ -26,10 +26,10 @@ public class CoreRepositorySetupServiceTest {
         public String groupPath;
 
         @Override
-        public void addAcl(@Nonnull final Session session, @Nonnull final String path,
-                           @Nonnull final String principal, boolean allow,
-                           @Nonnull final String[] privileges,
-                           @Nonnull final Map restrictions) {
+        public void addAcRule(@Nonnull final Session session, @Nonnull final String path,
+                              @Nonnull final String principal, boolean allow,
+                              @Nonnull final String[] privileges,
+                              @Nonnull final Map<String, Object> restrictions) {
             System.out.println("addAcl(" + path + "," + principal + ","
                     + allow + "," + Arrays.toString(privileges) + "," + restrictions + ")");
         }
@@ -48,7 +48,6 @@ public class CoreRepositorySetupServiceTest {
         }
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Test
     public void testAclFromJsonWithoutValues() throws Exception {
         TestService service = new TestService();
@@ -60,7 +59,6 @@ public class CoreRepositorySetupServiceTest {
         }
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Test
     public void testAclFromJsonWithValues() throws Exception {
         TestService service = new TestService();

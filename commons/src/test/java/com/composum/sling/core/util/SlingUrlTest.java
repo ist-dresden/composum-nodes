@@ -4,15 +4,14 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.xss.XSSAPI;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ErrorCollector;
-import org.mockito.Mockito;
-import org.mockito.internal.stubbing.answers.ThrowsException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -22,7 +21,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -74,7 +75,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getSuffix(), nullValue());
         ec.checkThat(url.getUrl(), is("/ctx/a/bb/ccc.html"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/a/bb/,name=ccc,extension=html,resourcePath=/a/bb/ccc]"));
-        ec.checkThat(url.getResource().getPath(), is("/a/bb/ccc"));
+        ec.checkThat(Objects.requireNonNull(url.getResource()).getPath(), is("/a/bb/ccc"));
 
         url = new SlingUrl(request, newResource(resolver, "/a/bb/ddd"))
                 .selectors("m.n").extension("json").suffix("/ddd/eee/xxx.json").parameters("d&c=x%20y");
@@ -88,7 +89,7 @@ public class SlingUrlTest {
         ec.checkThat(url.getSuffix(), is("/ddd/eee/xxx.json"));
         ec.checkThat(url.getUrl(), is("/ctx/a/bb/ddd.m.n.json/ddd/eee/xxx.json?d&c=x+y"));
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,path=/a/bb/,name=ddd,selectors=[m, n],extension=json,suffix=/ddd/eee/xxx.json,parameters={d=[], c=[x y]},resourcePath=/a/bb/ddd]"));
-        ec.checkThat(url.getResource().getPath(), is("/a/bb/ddd"));
+        ec.checkThat(Objects.requireNonNull(url.getResource()).getPath(), is("/a/bb/ddd"));
 
         url = new SlingUrl(request).fromUrl("/ctx/x/bb/ccc/öä ü.s.x.html/x/x/z.html?a=b&c#fragged", false);
         printChecks(url);
@@ -285,7 +286,7 @@ public class SlingUrlTest {
 
         newResource(resolver, "/bla/blu");
         url = new SlingUrl(request).fromPathOrUrl("/bla/blu");
-        ec.checkThat(url.getResource().getPath(), is("/bla/blu"));
+        ec.checkThat(Objects.requireNonNull(url.getResource()).getPath(), is("/bla/blu"));
 
         url = new SlingUrl(request).fromUrl("http://ends.with:987/slash/");
         printChecks(url);
@@ -350,6 +351,26 @@ public class SlingUrlTest {
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=host,path=/,name=a,extension=b,suffix=/c.d/suffix,external=true]"));
         ec.checkThat(url.getUrl(), is("http://host/a.b/c.d/suffix"));
+        url = new SlingUrl(request).fromUrl("http://host/a/b/c.d/suffix?");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=host,path=/a/b/,name=c,extension=d,suffix=/suffix,external=true]"));
+        ec.checkThat(url.getUrl(), is("http://host/a/b/c.d/suffix"));
+        url = new SlingUrl(request).fromUrl("http://host/a/b/c.d/suffix?&");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=host,path=/a/b/,name=c,extension=d,suffix=/suffix,external=true]"));
+        ec.checkThat(url.getUrl(), is("http://host/a/b/c.d/suffix"));
+        url = new SlingUrl(request).fromUrl("http://host/a/b/c.d/suffix?param=&name&=");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=host,path=/a/b/,name=c,extension=d,suffix=/suffix,parameters={param=[], name=[], =[]},external=true]"));
+        ec.checkThat(url.getUrl(), is("http://host/a/b/c.d/suffix?param=&name&="));
+        url = new SlingUrl(request).fromUrl("http://host/a/b/c.d/suffix?=&=");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=host,path=/a/b/,name=c,extension=d,suffix=/suffix,parameters={=[, ]},external=true]"));
+        ec.checkThat(url.getUrl(), is("http://host/a/b/c.d/suffix?=&="));
+        url = new SlingUrl(request).fromUrl("http://host/a/b/c.d/suffix?=&");
+        printChecks(url);
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=http,host=host,path=/a/b/,name=c,extension=d,suffix=/suffix,parameters={=[]},external=true]"));
+        ec.checkThat(url.getUrl(), is("http://host/a/b/c.d/suffix?="));
     }
 
     @Test

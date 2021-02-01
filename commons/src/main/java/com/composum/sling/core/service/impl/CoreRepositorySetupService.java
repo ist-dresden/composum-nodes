@@ -19,6 +19,7 @@ import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.MessageFormatter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -54,15 +55,26 @@ public class CoreRepositorySetupService implements RepositorySetupService {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoreRepositorySetupService.class);
 
+    public interface Tracker {
+
+        void info(String message);
+
+        void warn(String message);
+
+        void error(String message);
+    }
+
+    public static final ThreadLocal<Tracker> TRACKER = new ThreadLocal<>();
+
     @Override
     public void addJsonAcl(@Nonnull final Session session, @Nonnull final String jsonFilePath,
                            @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
-        Node jsonFileNode = session.getNode(jsonFilePath);
+        final Node jsonFileNode = session.getNode(jsonFilePath);
         if (jsonFileNode != null) {
-            Property property = jsonFileNode.getNode(JcrConstants.JCR_CONTENT).getProperty(JcrConstants.JCR_DATA);
-            try (InputStream stream = property.getBinary().getStream();
-                 Reader streamReader = new InputStreamReader(stream, UTF_8)) {
+            final Property property = jsonFileNode.getNode(JcrConstants.JCR_CONTENT).getProperty(JcrConstants.JCR_DATA);
+            try (final InputStream stream = property.getBinary().getStream();
+                 final Reader streamReader = new InputStreamReader(stream, UTF_8)) {
                 addJsonAcl(session, streamReader, values);
             }
         } else {
@@ -74,7 +86,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     public void addJsonAcl(@Nonnull final Session session, @Nonnull final Reader reader,
                            @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
-        try (JsonReader jsonReader = new JsonReader(
+        try (final JsonReader jsonReader = new JsonReader(
                 values != null ? new ValueEmbeddingReader(reader, values) : reader)) {
             if (jsonReader.peek() == JsonToken.BEGIN_ARRAY) {
                 jsonReader.beginArray();
@@ -92,11 +104,11 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     public void removeJsonAcl(@Nonnull final Session session, @Nonnull final String jsonFilePath,
                               @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
-        Node jsonFileNode = session.getNode(jsonFilePath);
+        final Node jsonFileNode = session.getNode(jsonFilePath);
         if (jsonFileNode != null) {
-            Property property = jsonFileNode.getNode(JcrConstants.JCR_CONTENT).getProperty(JcrConstants.JCR_DATA);
-            try (InputStream stream = property.getBinary().getStream();
-                 Reader streamReader = new InputStreamReader(stream, UTF_8)) {
+            final Property property = jsonFileNode.getNode(JcrConstants.JCR_CONTENT).getProperty(JcrConstants.JCR_DATA);
+            try (final InputStream stream = property.getBinary().getStream();
+                 final Reader streamReader = new InputStreamReader(stream, UTF_8)) {
                 removeJsonAcl(session, streamReader, values);
             }
         } else {
@@ -108,7 +120,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     public void removeJsonAcl(@Nonnull final Session session, @Nonnull final Reader reader,
                               @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
-        try (JsonReader jsonReader = new JsonReader(
+        try (final JsonReader jsonReader = new JsonReader(
                 values != null ? new ValueEmbeddingReader(reader, values) : reader)) {
             if (jsonReader.peek() == JsonToken.BEGIN_ARRAY) {
                 jsonReader.beginArray();
@@ -126,18 +138,34 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     protected void addAclObject(@Nonnull final Session session, @Nonnull final JsonReader reader)
             throws RepositoryException {
         final Gson gson = new Gson();
-        final Map map = gson.fromJson(reader, Map.class);
-        final String path = (String) map.get("path");
-        if (StringUtils.isNotBlank(path)) {
-            String primaryType = (String) map.get(JcrConstants.JCR_PRIMARYTYPE);
-            if (StringUtils.isNotBlank(primaryType)) {
-                makeNodeAvailable(session, path, primaryType);
-            }
-            final List<Map> acl = (List<Map>) map.get("acl");
-            if (acl != null) {
-                addAclList(session, path, acl);
-            } else {
-                removeAcl(session, path, null);
+        final Map<String, Object> map = gson.fromJson(reader, Map.class);
+        final Object location = map.get("path");
+        if (location != null) {
+            final String primaryType = (String) map.get(JcrConstants.JCR_PRIMARYTYPE);
+            final Object acl = map.get("acl");
+            final Boolean reset = (Boolean) map.get("reset");
+            final List<String> paths = location instanceof List ? (List<String>) location
+                    : Collections.singletonList(location.toString());
+            for (final String path : paths) {
+                if (StringUtils.isNotBlank(path)) {
+                    LOG.debug("addAclObject({})...", path);
+                    if (StringUtils.isNotBlank(primaryType)) {
+                        makeNodeAvailable(session, path, primaryType);
+                    }
+                    if (acl != null) {
+                        if (reset != null && reset) {
+                            info("reset ACL({})...", path);
+                            removeAcRule(session, path, null);
+                        }
+                        addAcList(session, path, acl instanceof List
+                                ? (List<Map<String, Object>>) acl
+                                : Collections.singletonList((Map<String, Object>) acl));
+                    } else {
+                        // for compatibility to the first version of acl scripts
+                        info("reset ACL({})...", path);
+                        removeAcRule(session, path, null);
+                    }
+                }
             }
         }
     }
@@ -146,74 +174,123 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     protected void removeAclObject(@Nonnull final Session session, @Nonnull final JsonReader reader)
             throws RepositoryException {
         final Gson gson = new Gson();
-        final Map map = gson.fromJson(reader, Map.class);
-        final String path = (String) map.get("path");
-        if (StringUtils.isNotBlank(path)) {
-            final List<Map> acl = (List<Map>) map.get("acl");
-            if (acl != null) {
-                removeAclList(session, path, acl);
-            } else {
-                removeAcl(session, path, null);
-            }
-            String primaryType = (String) map.get(JcrConstants.JCR_PRIMARYTYPE);
-            if (StringUtils.isNotBlank(primaryType)) {
-                removeNode(session, path);
-            }
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    protected void addAclList(@Nonnull final Session session, @Nonnull final String path,
-                              @Nonnull final List<Map> list)
-            throws RepositoryException {
-        for (Map map : list) {
-            String principal = (String) map.get("principal");
-            if (StringUtils.isNotBlank(principal)) {
-                String groupPath = (String) map.get(GROUP_PATH);
-                if (StringUtils.isNotBlank(groupPath)) {
-                    makeGroupAvailable(session, principal, groupPath);
-                }
-                List<String> memberOf = (List<String>) map.get(MEMBER_OF);
-                if (memberOf != null) {
-                    makeMemberAvailable(session, principal, memberOf);
-                }
-                final List<Map> acl = (List<Map>) map.get("acl");
-                if (acl != null) {
-                    for (Map rule : acl) {
-                        boolean allow = (Boolean) rule.get("allow");
-                        Object object = rule.get("privileges");
-                        String[] privileges;
-                        if (object instanceof List) {
-                            List<String> privList = (List<String>) object;
-                            privileges = privList.toArray(new String[0]);
-                        } else {
-                            privileges = new String[]{(String) object};
-                        }
-                        Map<String, Object> restrictions = (Map<String, Object>) rule.get("restrictions");
-                        addAcl(session, path, principal, allow, privileges,
-                                restrictions != null ? restrictions : Collections.EMPTY_MAP);
+        final Map<String, Object> map = gson.fromJson(reader, Map.class);
+        final Object location = map.get("path");
+        if (location != null) {
+            final String primaryType = (String) map.get(JcrConstants.JCR_PRIMARYTYPE);
+            final List<Map<String, Object>> acl = (List<Map<String, Object>>) map.get("acl");
+            List<String> paths = location instanceof List ? (List<String>) location
+                    : Collections.singletonList(location.toString());
+            for (final String path : paths) {
+                if (StringUtils.isNotBlank(path)) {
+                    LOG.debug("removeAclObject({})...", path);
+                    if (acl != null) {
+                        removeAcList(session, path, acl);
+                    } else {
+                        removeAcRule(session, path, null);
                     }
-                } else {
-                    removeAcl(session, path, principal);
+                    if (StringUtils.isNotBlank(primaryType)) {
+                        removeNode(session, path);
+                    }
                 }
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    protected void removeAclList(@Nonnull final Session session, @Nonnull final String path,
-                                 @Nonnull final List<Map> list)
+    protected void addAcList(@Nonnull final Session session, @Nonnull final String path,
+                             @Nonnull final List<Map<String, Object>> list)
             throws RepositoryException {
-        for (Map map : list) {
-            String principal = (String) map.get("principal");
+        info("addAcList({})...", path);
+        for (final Map<String, Object> map : list) {
+            final Object principalRule = map.get("principal");
+            if (principalRule != null) {
+                for (final String principal : principalRule instanceof List ? (List<String>) principalRule
+                        : Collections.singletonList(principalRule.toString())) {
+                    if (StringUtils.isNotBlank(principal)) {
+                        Boolean reset = (Boolean) map.get("reset");
+                        Object ruleSet = map.get("rule");
+                        if (ruleSet == null) {
+                            ruleSet = map.get("rules");
+                            if (ruleSet == null) {
+                                // for compatibility to the first version of rule sets
+                                ruleSet = map.get("acl");
+                                if (ruleSet == null) {
+                                    reset = true;
+                                }
+                            }
+                        }
+                        if (reset != null && reset) {
+                            info("reset ACL({},{})...", path, principal);
+                            removeAcRule(session, path, principal);
+                        }
+                        final String groupPath = (String) map.get(GROUP_PATH);
+                        if (StringUtils.isNotBlank(groupPath)) {
+                            makeGroupAvailable(session, principal, groupPath);
+                        }
+                        final List<String> memberOf = (List<String>) map.get(MEMBER_OF);
+                        if (memberOf != null) {
+                            makeMemberAvailable(session, principal, memberOf);
+                        }
+                        final List<Map<String, Object>> rules = ruleSet instanceof List ? (List<Map<String, Object>>) ruleSet
+                                : Collections.singletonList(ruleSet != null ? (Map<String, Object>) ruleSet : map);
+                        for (final Map<String, Object> rule : rules) {
+                            boolean grant = true;
+                            Object object = rule.get("grant");
+                            if (object == null) {
+                                object = rule.get("deny");
+                                if (object != null) {
+                                    grant = false;
+                                } else {
+                                    // for compatibility to the first version of rules
+                                    object = rule.get("privileges");
+                                    Object allow = rule.get("allow");
+                                    grant = (allow == null || (allow instanceof Boolean && (Boolean) allow));
+                                }
+                            }
+                            String[] privileges = null;
+                            if (object instanceof List) {
+                                final List<String> privList = (List<String>) object;
+                                privileges = privList.toArray(new String[0]);
+                            } else if (object instanceof String) {
+                                privileges = new String[]{(String) object};
+                            }
+                            if (privileges != null) {
+                                object = rule.get("restrictions");
+                                if (object != null) {
+                                    if (object instanceof List) {
+                                        for (final Map<String, Object> restrictions : (List<Map<String, Object>>) object) {
+                                            addAcRule(session, path, principal, grant, privileges, restrictions);
+                                        }
+                                    } else {
+                                        addAcRule(session, path, principal, grant, privileges, (Map<String, Object>) object);
+                                    }
+                                } else {
+                                    addAcRule(session, path, principal, grant, privileges, Collections.EMPTY_MAP);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void removeAcList(@Nonnull final Session session, @Nonnull final String path,
+                                @Nonnull final List<Map<String, Object>> list)
+            throws RepositoryException {
+        info("delAcList({})...", path);
+        for (final Map<String, Object> map : list) {
+            final String principal = (String) map.get("principal");
             if (StringUtils.isNotBlank(principal)) {
-                final List<Map> acl = (List<Map>) map.get("acl");
-                removeAcl(session, path, principal);
-                List<String> memberOf = (List<String>) map.get(MEMBER_OF);
+                final List<Map<String, Object>> acl = (List<Map<String, Object>>) map.get("acl");
+                removeAcRule(session, path, principal);
+                final List<String> memberOf = (List<String>) map.get(MEMBER_OF);
                 if (memberOf != null) {
                     removeMember(session, principal, memberOf);
                 }
-                String groupPath = (String) map.get(GROUP_PATH);
+                final String groupPath = (String) map.get(GROUP_PATH);
                 if (StringUtils.isNotBlank(groupPath)) {
                     removeGroup(session, principal);
                 }
@@ -223,10 +300,10 @@ public class CoreRepositorySetupService implements RepositorySetupService {
 
     // ACL
 
-    protected void addAcl(@Nonnull final Session session, @Nonnull final String path,
-                          @Nonnull final String principalName, boolean allow,
-                          @Nonnull final String[] privilegeKeys,
-                          @Nonnull final Map<String, Object> restrictionKeys)
+    protected void addAcRule(@Nonnull final Session session, @Nonnull final String path,
+                             @Nonnull final String principalName, boolean allow,
+                             @Nonnull final String[] privilegeKeys,
+                             @Nonnull final Map<String, Object> restrictionKeys)
             throws RepositoryException {
         try {
             final AccessControlManager acManager = session.getAccessControlManager();
@@ -240,15 +317,18 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                 restrictions.put(key, valueFactory.createValue((String) restrictionKeys.get(key), policies.getRestrictionType(key)));
             }
             policies.addEntry(principal, privileges, allow, restrictions);
-            LOG.info("addAcl({},{})", principalName, Arrays.toString(privilegeKeys));
+            info("addAcRule({},{},{},{})",
+                    principalName, allow ? "grant" : "deny", Arrays.toString(privilegeKeys), restrictionKeys);
             acManager.setPolicy(path, policies);
         } catch (Exception e) {
-            LOG.error("Error in addAcl({},{},{},{}, {}) : {}", new Object[]{path, principalName, allow, Arrays.asList(privilegeKeys), restrictionKeys, e.toString()});
+            error("Error in addAcRule({},{},{},{}, {}) : {}",
+                    path, principalName, allow, Arrays.asList(privilegeKeys), restrictionKeys, e.toString());
             throw e;
         }
     }
 
-    protected void removeAcl(@Nonnull final Session session, @Nonnull final String path, @Nullable final String principal)
+    protected void removeAcRule(@Nonnull final Session session, @Nonnull final String path,
+                                @Nullable final String principal)
             throws RepositoryException {
         try {
             final AccessControlManager acManager = session.getAccessControlManager();
@@ -261,7 +341,8 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                 for (final AccessControlEntry entry : policy.getAccessControlEntries()) {
                     final JackrabbitAccessControlEntry jrEntry = (JackrabbitAccessControlEntry) entry;
                     if (principal == null || principal.equals(jrEntry.getPrincipal().getName())) {
-                        LOG.info("removeAcl({},{})", entry.getPrincipal().getName(), Arrays.toString(entry.getPrivileges()));
+                        info("delAcRule({},{},{})", entry.getPrincipal().getName(), jrEntry.isAllow() ? "grant" : "deny",
+                                Arrays.toString(entry.getPrivileges()));
                         policy.removeAccessControlEntry(entry);
                     }
                 }
@@ -271,7 +352,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                 }
             }
         } catch (RepositoryException e) {
-            LOG.error("Error in removeAcl({},{}) : {}", new Object[]{path, principal, e.toString()});
+            error("Error in removeAcl({},{}) : {}", path, principal, e.toString());
             throw e;
         }
     }
@@ -285,11 +366,11 @@ public class CoreRepositorySetupService implements RepositorySetupService {
         try {
             node = session.getNode(StringUtils.isNotBlank(path) ? path : "/");
         } catch (PathNotFoundException nf) {
-            LOG.info("createNode({},{})", path, primaryType);
-            Node parent = makeNodeAvailable(session, StringUtils.substringBeforeLast(path, "/"), primaryType);
+            info("createNode({},{})", path, primaryType);
+            final Node parent = makeNodeAvailable(session, StringUtils.substringBeforeLast(path, "/"), primaryType);
             node = parent.addNode(StringUtils.substringAfterLast(path, "/"), primaryType);
         } catch (RepositoryException e) {
-            LOG.error("Error in makeNodeAvailable({},{}) : {}", new Object[]{path, primaryType, e.toString()});
+            error("Error in makeNodeAvailable({},{}) : {}", path, primaryType, e.toString());
             throw e;
         }
         return node;
@@ -300,11 +381,11 @@ public class CoreRepositorySetupService implements RepositorySetupService {
         Node node;
         try {
             node = session.getNode(path);
-            LOG.info("removeNode({})", path);
+            info("removeNode({})", path);
             node.remove();
         } catch (PathNotFoundException ignore) {
         } catch (RepositoryException e) {
-            LOG.error("Error in removeNode({}) : {}", path, e.toString());
+            error("Error in removeNode({}) : {}", path, e.toString());
             throw e;
         }
     }
@@ -314,7 +395,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     protected Authorizable makeGroupAvailable(@Nonnull final Session session,
                                               @Nonnull final String id, @Nonnull final String intermediatePath)
             throws RepositoryException {
-        UserManager userManager = ((JackrabbitSession) session).getUserManager();
+        final UserManager userManager = ((JackrabbitSession) session).getUserManager();
         Authorizable authorizable = userManager.getAuthorizable(id);
         if (authorizable != null) {
             if (authorizable.isGroup()) {
@@ -322,17 +403,12 @@ public class CoreRepositorySetupService implements RepositorySetupService {
             }
             throw new RepositoryException("'" + id + "' exists but is not a group");
         }
-        LOG.info("addGroup({},{})", id, intermediatePath);
+        info("addGroup({},{})", id, intermediatePath);
         try {
-            authorizable = userManager.createGroup(new Principal() {
-                @Override
-                public String getName() {
-                    return id;
-                }
-            }, intermediatePath);
+            authorizable = userManager.createGroup(() -> id, intermediatePath);
             session.save();
         } catch (RepositoryException e) {
-            LOG.error("Error in makeGroupAvailable({},{}) : {}", new Object[]{id, intermediatePath, e.toString()});
+            error("Error in makeGroupAvailable({},{}) : {}", id, intermediatePath, e.toString());
             throw e;
         }
         return authorizable;
@@ -341,16 +417,16 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     protected void removeGroup(@Nonnull final Session session, @Nonnull final String id)
             throws RepositoryException {
         try {
-            UserManager userManager = ((JackrabbitSession) session).getUserManager();
-            Authorizable authorizable = userManager.getAuthorizable(id);
+            final UserManager userManager = ((JackrabbitSession) session).getUserManager();
+            final Authorizable authorizable = userManager.getAuthorizable(id);
             if (authorizable != null) {
                 if (authorizable.isGroup()) {
-                    LOG.info("removeGroup({})", id);
+                    info("removeGroup({})", id);
                     authorizable.remove();
                 }
             }
         } catch (RepositoryException e) {
-            LOG.error("Error in removeGroup({}): {}", id, e.toString());
+            error("Error in removeGroup({}): {}", id, e.toString());
             throw e;
         }
     }
@@ -359,15 +435,15 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                                        @Nonnull final String memberId, @Nonnull final List<String> groupIds)
             throws RepositoryException {
         try {
-            UserManager userManager = ((JackrabbitSession) session).getUserManager();
-            Authorizable member = userManager.getAuthorizable(memberId);
+            final UserManager userManager = ((JackrabbitSession) session).getUserManager();
+            final Authorizable member = userManager.getAuthorizable(memberId);
             if (member != null) {
                 for (String groupId : groupIds) {
-                    Authorizable authorizable = userManager.getAuthorizable(groupId);
+                    final Authorizable authorizable = userManager.getAuthorizable(groupId);
                     if (authorizable != null && authorizable.isGroup()) {
-                        Group group = (Group) authorizable;
+                        final Group group = (Group) authorizable;
                         if (!group.isMember(member)) {
-                            LOG.info("addMember({},{})", memberId, groupId);
+                            info("addMember({},{})", memberId, groupId);
                             group.addMember(member);
                             session.save();
                         }
@@ -375,7 +451,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                 }
             }
         } catch (RepositoryException e) {
-            LOG.error("Error in makeMemberAvailable({},{}) : {}", new Object[]{memberId, groupIds, e.toString()});
+            error("Error in makeMemberAvailable({},{}) : {}", memberId, groupIds, e.toString());
             throw e;
         }
     }
@@ -384,15 +460,15 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                                 @Nonnull final String memberId, @Nonnull final List<String> groupIds)
             throws RepositoryException {
         try {
-            UserManager userManager = ((JackrabbitSession) session).getUserManager();
-            Authorizable member = userManager.getAuthorizable(memberId);
+            final UserManager userManager = ((JackrabbitSession) session).getUserManager();
+            final Authorizable member = userManager.getAuthorizable(memberId);
             if (member != null) {
                 for (String groupId : groupIds) {
-                    Authorizable authorizable = userManager.getAuthorizable(groupId);
+                    final Authorizable authorizable = userManager.getAuthorizable(groupId);
                     if (authorizable != null && authorizable.isGroup()) {
-                        Group group = (Group) authorizable;
+                        final Group group = (Group) authorizable;
                         if (group.isMember(member)) {
-                            LOG.info("removeMember({},{})", memberId, groupId);
+                            info("removeMember({},{})", memberId, groupId);
                             group.removeMember(member);
                             session.save();
                         }
@@ -400,8 +476,32 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                 }
             }
         } catch (RepositoryException e) {
-            LOG.error("Error in removeMember({},{}) : {}", new Object[]{memberId, groupIds, e.toString()});
+            error("Error in removeMember({},{}) : {}", memberId, groupIds, e.toString());
             throw e;
+        }
+    }
+
+    protected void info(String pattern, Object... args) {
+        LOG.info(pattern, args);
+        final Tracker tracker = TRACKER.get();
+        if (tracker != null) {
+            tracker.info(MessageFormatter.arrayFormat(pattern, args).getMessage());
+        }
+    }
+
+    protected void warn(String pattern, Object... args) {
+        LOG.warn(pattern, args);
+        final Tracker tracker = TRACKER.get();
+        if (tracker != null) {
+            tracker.warn(MessageFormatter.arrayFormat(pattern, args).getMessage());
+        }
+    }
+
+    protected void error(String pattern, Object... args) {
+        LOG.error(pattern, args);
+        final Tracker tracker = TRACKER.get();
+        if (tracker != null) {
+            tracker.error(MessageFormatter.arrayFormat(pattern, args).getMessage());
         }
     }
 }

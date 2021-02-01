@@ -2,6 +2,7 @@ package com.composum.sling.core;
 
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.JobControlServlet;
+import com.composum.sling.core.servlet.SetupServlet;
 import com.composum.sling.core.servlet.SystemServlet;
 import com.composum.sling.core.servlet.TranslationServlet;
 import org.apache.commons.lang3.StringUtils;
@@ -68,6 +69,12 @@ public class CoreConfigImpl implements CoreConfiguration {
                 description = "the path to the systems default error pages"
         )
         String errorpages_default();
+
+        @AttributeDefinition(
+                name = "Setup Servlet",
+                description = "the general on/off switch for the services of the Setup Servlet"
+        )
+        boolean setup_servlet_enabled() default true;
 
         @AttributeDefinition(
                 name = "Jobcontrol Servlet",
@@ -138,7 +145,7 @@ public class CoreConfigImpl implements CoreConfiguration {
             ResourceResolver resolver = request.getResourceResolver();
 
             RequestPathInfo pathInfo;
-            String errorpagesPath = StringUtils.removeEnd( getConfig().errorpages_path(), "/");
+            String errorpagesPath = StringUtils.removeEnd(getConfig().errorpages_path(), "/");
             if (StringUtils.isNotBlank(errorpagesPath) &&
                     "html".equalsIgnoreCase((pathInfo = request.getRequestPathInfo()).getExtension())) {
 
@@ -206,7 +213,7 @@ public class CoreConfigImpl implements CoreConfiguration {
 
     @Override
     public String getLoginUrl() {
-        return StringUtils.defaultIfBlank( getConfig().loginurl(), DEFAULT_LOGINURL);
+        return StringUtils.defaultIfBlank(getConfig().loginurl(), DEFAULT_LOGINURL);
     }
 
     @Override
@@ -216,7 +223,7 @@ public class CoreConfigImpl implements CoreConfiguration {
 
     @Override
     public String getLoggedoutUrl() {
-        return StringUtils.defaultIfBlank( getConfig().loggedouturl(), DEFAULT_LOGGEDOUTURL);
+        return StringUtils.defaultIfBlank(getConfig().loggedouturl(), DEFAULT_LOGGEDOUTURL);
     }
 
     @Activate
@@ -225,6 +232,7 @@ public class CoreConfigImpl implements CoreConfiguration {
         this.properties = context.getProperties();
         this.config = configuration;
         Map<String, Boolean> theEnabledServlets = new HashMap<>();
+        theEnabledServlets.put(SetupServlet.class.getSimpleName(), configuration.setup_servlet_enabled());
         theEnabledServlets.put(SystemServlet.class.getSimpleName(), configuration.system_servlet_enabled());
         theEnabledServlets.put(TranslationServlet.class.getSimpleName(), configuration.translation_servlet_enabled());
         theEnabledServlets.put(JobControlServlet.class.getSimpleName(), configuration.jobcontrol_servlet_enabled());
