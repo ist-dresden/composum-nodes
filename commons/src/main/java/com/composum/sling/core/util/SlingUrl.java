@@ -1284,12 +1284,11 @@ public class SlingUrl implements Cloneable {
             parameterString = parameterString.substring(1);
         }
         for (String param : StringUtils.split(parameterString, '&')) {
-            String[] nameVal = StringUtils.split(param, "=", 2);
-            addParameter(
-                    decode ? UrlCodec.QUERYPART.decode(nameVal[0]) : nameVal[0],
-                    nameVal.length > 1 ?
-                            (decode ? UrlCodec.QUERYPART.decode(nameVal[1]) : nameVal[1])
-                            : null);
+            int delimiterPos = param.indexOf('=');
+            String name = delimiterPos < 0 ? param : param.substring(0, delimiterPos);
+            String value = delimiterPos < 0 ? null : param.substring(delimiterPos + 1);
+            addParameter(decode ? UrlCodec.QUERYPART.decode(name) : name,
+                    value != null ? (decode ? UrlCodec.QUERYPART.decode(value) : value) : null);
         }
     }
 
