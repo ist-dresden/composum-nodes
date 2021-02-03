@@ -162,7 +162,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
                                 : Collections.singletonList((Map<String, Object>) acl));
                     } else {
                         // for compatibility to the first version of acl scripts
-                        info("reset ACL({})...", path);
+                        info("remove ACL({})...", path);
                         removeAcRule(session, path, null);
                     }
                 }
@@ -205,30 +205,30 @@ public class CoreRepositorySetupService implements RepositorySetupService {
         for (final Map<String, Object> map : list) {
             final Object principalRule = map.get("principal");
             if (principalRule != null) {
+                final String groupPath = (String) map.get(GROUP_PATH);
+                final List<String> memberOf = (List<String>) map.get(MEMBER_OF);
+                Boolean reset = (Boolean) map.get("reset");
+                Object ruleSet = map.get("rule");
+                if (ruleSet == null) {
+                    ruleSet = map.get("rules");
+                    if (ruleSet == null) {
+                        // for compatibility to the first version of rule sets
+                        ruleSet = map.get("acl");
+                        if (ruleSet == null) {
+                            reset = true;
+                        }
+                    }
+                }
                 for (final String principal : principalRule instanceof List ? (List<String>) principalRule
                         : Collections.singletonList(principalRule.toString())) {
                     if (StringUtils.isNotBlank(principal)) {
-                        Boolean reset = (Boolean) map.get("reset");
-                        Object ruleSet = map.get("rule");
-                        if (ruleSet == null) {
-                            ruleSet = map.get("rules");
-                            if (ruleSet == null) {
-                                // for compatibility to the first version of rule sets
-                                ruleSet = map.get("acl");
-                                if (ruleSet == null) {
-                                    reset = true;
-                                }
-                            }
-                        }
                         if (reset != null && reset) {
                             info("reset ACL({},{})...", path, principal);
                             removeAcRule(session, path, principal);
                         }
-                        final String groupPath = (String) map.get(GROUP_PATH);
                         if (StringUtils.isNotBlank(groupPath)) {
                             makeGroupAvailable(session, principal, groupPath);
                         }
-                        final List<String> memberOf = (List<String>) map.get(MEMBER_OF);
                         if (memberOf != null) {
                             makeMemberAvailable(session, principal, memberOf);
                         }
