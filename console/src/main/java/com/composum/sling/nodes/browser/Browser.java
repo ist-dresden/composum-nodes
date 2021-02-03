@@ -90,11 +90,19 @@ public class Browser extends ConsoleServletBean {
         protected final String tooltip;
         @Nonnull
         protected final String path;
+        @Nullable
+        protected final String actions;
 
         public Reference(@Nonnull final String label, @Nullable final String tooltip, @Nonnull final String path) {
+            this(label, tooltip, path, null);
+        }
+
+        public Reference(@Nonnull final String label, @Nullable final String tooltip, @Nonnull final String path,
+                         @Nullable final String actions) {
             this.label = label;
             this.tooltip = tooltip;
             this.path = path;
+            this.actions = actions;
         }
 
         @Nonnull
@@ -110,6 +118,11 @@ public class Browser extends ConsoleServletBean {
         @Nonnull
         public String getPath() {
             return path;
+        }
+
+        @Nonnull
+        public String getActions() {
+            return actions != null ? actions : "";
         }
     }
 
@@ -323,12 +336,18 @@ public class Browser extends ConsoleServletBean {
                 if (resourceType.startsWith(overrideRoot)) {
                     resourceType = getResourceType(resourceType.substring(overrideRoot.length() - 1));
                 }
-                for (String root : getTypeSearchPath(isOverlayAvailable())) {
+                List<String> typeSearchPath = getTypeSearchPath(isOverlayAvailable());
+                for (int i = 0; i < typeSearchPath.size(); i++) {
+                    String root = typeSearchPath.get(i);
                     String resourceTypePath = root + resourceType;
-                    if (resolver.getResource(resourceTypePath) != null) {
+                    String basePath = i + 1 < typeSearchPath.size() ? typeSearchPath.get(i + 1) + resourceType : null;
+                    Resource type = resolver.getResource(resourceTypePath);
+                    if (type != null || i + 1 < typeSearchPath.size()) {
                         Reference label = labels.get(root);
                         resourceTypes.put(label.getLabel(), new Reference(label.getLabel(),
-                                label.getTooltip() + "\n" + resourceTypePath, resourceTypePath));
+                                label.getTooltip() + "\n" + resourceTypePath, resourceTypePath, type != null ?
+                                (basePath != null && resolver.getResource(basePath) != null ? "is-overlay" : null)
+                                : "overlay-option"));
                     }
                 }
             }

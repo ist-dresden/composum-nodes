@@ -21,7 +21,7 @@
         </ol>
         <cpn:div test="${not empty browser.relatedPathSet}" class="related-path-set btn-group btn-group-sm dropdown">
             <c:forEach var="type" items="${browser.relatedPathSet}">
-                <button class="related-path btn btn-default btn-sm${browser.path==type.value.path?' active':''}"
+                <button class="related-path btn btn-default btn-sm ${browser.path==type.value.path?'active':''} ${type.value.actions}"
                         data-path="${type.value.path}" title="${type.value.tooltip}">${type.value.label}</button>
             </c:forEach>
             <c:if test="${not empty browser.supertypeChain}">
