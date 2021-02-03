@@ -34,7 +34,7 @@ import java.io.IOException;
 
 @Component(service = Servlet.class,
         property = {
-                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Source Servlet",
+                Constants.SERVICE_DESCRIPTION + "=Composum Nodes Scene Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SceneServlet.SERVLET_PATH,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST,

@@ -2,6 +2,7 @@ package com.composum.sling.nodes;
 
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
+import com.composum.sling.nodes.servlet.ComponentsServlet;
 import com.composum.sling.nodes.servlet.NodeServlet;
 import com.composum.sling.nodes.servlet.PropertyServlet;
 import com.composum.sling.nodes.servlet.SceneServlet;
@@ -149,6 +150,12 @@ public class NodesConfigImpl implements NodesConfiguration {
         boolean scene_servlet_enabled() default true;
 
         @AttributeDefinition(
+                name = "Components Servlet",
+                description = "the general on/off switch for the services of the Components Servlet"
+        )
+        boolean components_servlet_enabled() default true;
+
+        @AttributeDefinition(
                 name = "Source Servlet",
                 description = "the general on/off switch for the services of the Source Servlet"
         )
@@ -270,6 +277,7 @@ public class NodesConfigImpl implements NodesConfiguration {
         theEnabledServlets.put(PropertyServlet.class.getSimpleName(), configuration.property_servlet_enabled());
         theEnabledServlets.put(VersionServlet.class.getSimpleName(), configuration.version_servlet_enabled());
         theEnabledServlets.put(SceneServlet.class.getSimpleName(), configuration.scene_servlet_enabled());
+        theEnabledServlets.put(ComponentsServlet.class.getSimpleName(), configuration.components_servlet_enabled());
         theEnabledServlets.put(SourceServlet.class.getSimpleName(), configuration.source_servlet_enabled());
         theEnabledServlets.put(SourceUpdateServlet.class.getSimpleName(), configuration.sourceupdate_servlet_enabled());
         theEnabledServlets.put("UserManagementServlet", configuration.usermanagement_servlet_enabled());
