@@ -9,6 +9,16 @@
 
     (function (browser, console, core) {
 
+        browser.const = _.extend(browser.const || {}, {
+            overlay: {
+                uri: {
+                    base: '/libs/composum/nodes/browser/components/overlay',
+                    _create: '/create.html',
+                    _remove: '/remove.html'
+                }
+            }
+        });
+
         browser.current = {};
 
         browser.getCurrentPath = function () {
@@ -203,9 +213,36 @@
                 var $element = $(event.currentTarget);
                 var path = $element.data('path');
                 if (path) {
-                    browser.setCurrentPath(path);
+                    if ($element.hasClass('overlay-option')) {
+                        this.createOverlay(path);
+                    } else if ($element.hasClass('is-overlay') && $element.hasClass('active')) {
+                        this.removeOverlay(path);
+                    } else {
+                        $(document).trigger("path:select", [path]);
+                    }
                 }
                 return false;
+            },
+
+            createOverlay: function (path) {
+                var u = browser.const.overlay.uri;
+                core.openFormDialog(u.base + u._create + path,
+                    core.components.FormDialog, {}, undefined,
+                    _.bind(function () {
+                        var newNodeName = core.getNameFromPath(path);
+                        var parentPath = core.getParentPath(path);
+                        $(document).trigger("path:inserted", [parentPath, newNodeName]);
+                        $(document).trigger("path:select", [path]);
+                    }, this));
+            },
+
+            removeOverlay: function (path) {
+                var u = browser.const.overlay.uri;
+                core.openFormDialog(u.base + u._remove + path,
+                    core.components.FormDialog, {}, undefined,
+                    _.bind(function () {
+                        $(document).trigger('path:deleted', [path]);
+                    }, this));
             },
 
             pathSelected: function (event) {
@@ -213,7 +250,7 @@
                 var $target = $(event.currentTarget);
                 var $row = $target.closest('li');
                 var path = $row.attr('data-path');
-                browser.setCurrentPath(path);
+                $(document).trigger("path:select", [path]);
                 return false;
             }
         });
