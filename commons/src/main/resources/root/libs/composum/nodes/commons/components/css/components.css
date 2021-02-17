@@ -396,11 +396,11 @@ fieldset {
 }
 
 .jstree-node .jstree-anchor {
-    margin: 2px 4px 0 0;
+    margin: 2px 4px 2px 0;
 }
 
 .jstree-node .jstree-themeicon {
-    margin: 1px 4px 0 0;
+    margin: 0 4px 0 0;
 }
 
 .jstree-dnd-parent {
