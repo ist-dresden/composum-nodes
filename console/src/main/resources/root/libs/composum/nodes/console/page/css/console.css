@@ -598,6 +598,13 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 
 .query-panel .query-result table {
     margin: 0;
+    font-size: 14px;
+}
+
+.query-panel .query-result thead td {
+    padding: 0 5px !important;
+    line-height: 21px;
+    color: #777;
 }
 
 .query-panel .query-result tbody td {
