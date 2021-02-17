@@ -23,6 +23,7 @@
             'folder': {'icon': 'fa fa-folder-o'},
             'resource-folder': {'icon': 'fa fa-folder-o'},
             'orderedfolder': {'icon': 'fa fa-folder text-muted'},
+            'registry': {'icon': 'fa fa-database text-muted'},
             'package': {'icon': 'fa fa-file-archive-o'},
             'resource-package': {'icon': 'fa fa-file-archive-o'},
             'tenant': {'icon': 'fa fa-university text-info'},
