@@ -27,5 +27,12 @@ public interface Packages {
         return result;
     }
 
-    Pattern REGISTRY_PATH = Pattern.compile("^/@([^/]+)$");
+    String REGISTRY_PATH_PREFIX = "@";
+
+    Pattern REGISTRY_PATH = Pattern.compile("^/" + REGISTRY_PATH_PREFIX + "(?<ns>[^/]+)$");
+
+    Pattern REGISTRY_BASED_PATH = Pattern.compile("^/" + REGISTRY_PATH_PREFIX + "(?<ns>[^/]+)(?<path>/.+)?$");
+
+    Pattern PACKAGE_PATH = Pattern.compile("^(/" + REGISTRY_PATH_PREFIX + "(?<ns>[^/]+))?" +
+            "(/(?<group>.+))?/(?<name>[^/]+)/(?<version>[^/]+)$");
 }

@@ -2,7 +2,7 @@
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <sling:defineObjects/>
-<cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.manager.view.PackageManagerBean" scope="request">
+<cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean" scope="request">
     <div class="nodes-pckgmgr-regpckg-tree">
         <div class="tree-panel">
             <div id="regpckg-tree" data-selected="${pckgmgr.path}">
