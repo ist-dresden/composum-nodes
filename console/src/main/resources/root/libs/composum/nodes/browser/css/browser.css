@@ -810,6 +810,12 @@
     line-height: 1;
 }
 
+#browser-view .bootstrap-table table td .editable-inline .editable-input .editable-checkbox input {
+    width: 19px;
+    height: 19px;
+    margin: 3px !important;
+}
+
 #browser-view .bootstrap-table table tr.editable td.value.checkbox {
     margin-top: 0;
     margin-bottom: 0;

@@ -4,9 +4,9 @@ import com.composum.sling.core.mapping.MappingRules;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.Resource;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.jcr.AccessDeniedException;
 import javax.jcr.LoginException;
 import javax.jcr.Node;
@@ -46,7 +46,7 @@ public class ResponseUtil {
      * the default rule set for general import an export features
      */
     public static MappingRules getDefaultJsonMapping() {
-        return new MappingRules(MappingRules.getDefaultMappingRules().MAPPING_NODE_FILTER,
+        return new MappingRules(MappingRules.MAPPING_NODE_FILTER,
                 MappingRules.MAPPING_EXPORT_FILTER, MappingRules.MAPPING_IMPORT_FILTER,
                 new MappingRules.PropertyFormat(MappingRules.PropertyFormat.Scope.definition,
                         MappingRules.PropertyFormat.Binary.link),
@@ -89,15 +89,14 @@ public class ResponseUtil {
      * @throws RepositoryException error on accessing JCR
      * @throws IOException         error on write JSON
      */
-    public static void writeJsonProperty(@Nullable final ResourceResolver resolver,
-                                         SlingHttpServletResponse response, Node node, String name)
+    public static void writeJsonProperty(@Nonnull final Resource resource,
+                                         @Nonnull final SlingHttpServletResponse response,
+                                         @Nonnull final Node node, @Nonnull final String name)
             throws RepositoryException, IOException {
-
         JsonWriter jsonWriter = getJsonWriter(response);
-
         javax.jcr.Property property = node.getProperty(name);
         if (property != null) {
-            JsonUtil.writeJsonProperty(resolver, jsonWriter, node, property, getDefaultJsonMapping());
+            JsonUtil.writeJsonProperty(resource, jsonWriter, property, getDefaultJsonMapping());
         }
     }
 }
