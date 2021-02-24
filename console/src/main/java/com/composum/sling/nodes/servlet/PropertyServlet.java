@@ -7,8 +7,15 @@ import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
 import com.composum.sling.core.servlet.Status;
-import com.composum.sling.core.util.*;
+import com.composum.sling.core.util.JsonUtil;
+import com.composum.sling.core.util.MimeTypeUtil;
+import com.composum.sling.core.util.PropertyUtil;
+import com.composum.sling.core.util.RequestUtil;
+import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
+import com.composum.sling.nodes.mount.ExtendedResolver;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -17,7 +24,9 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
-import org.apache.sling.api.resource.ResourceUtil;
+import org.apache.sling.api.resource.ModifiableValueMap;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
@@ -30,15 +39,22 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.jcr.*;
+import javax.jcr.Binary;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.PropertyType;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
@@ -79,7 +95,7 @@ public class PropertyServlet extends AbstractServiceServlet {
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
-    protected ServletOperationSet getOperations() {
+    protected ServletOperationSet<Extension, Operation> getOperations() {
         return operations;
     }
 
@@ -149,7 +165,8 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class MapGetOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -175,10 +192,10 @@ public class PropertyServlet extends AbstractServiceServlet {
 
                 Node node = resource.adaptTo(Node.class);
                 if (node != null) {
-                    JsonUtil.writeJsonProperties(request.getResourceResolver(), jsonWriter, filter, node, mapping);
+                    JsonUtil.writeJsonProperties(resource, jsonWriter, filter, node, mapping);
                 } else {
                     ValueMap values = ResourceUtil.getValueMap(resource);
-                    JsonUtil.writeJsonValueMap(request.getResourceResolver(), jsonWriter, filter, values, mapping);
+                    JsonUtil.writeJsonValueMap(resource, jsonWriter, filter, values, mapping);
                 }
 
             } catch (RepositoryException ex) {
@@ -191,24 +208,24 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class GetOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (!resource.isValid()) {
+            if (resource == null || !resource.isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
 
             try {
                 Node node = resource.adaptTo(Node.class);
-
                 String name = XSS.filter(request.getParameter(PARAM_NAME));
-                if (StringUtils.isNotBlank(name)) {
+
+                if (node != null && StringUtils.isNotBlank(name)) {
 
                     response.setStatus(SC_OK);
-
-                    ResponseUtil.writeJsonProperty(request.getResourceResolver(), response, node, name);
+                    ResponseUtil.writeJsonProperty(resource, response, node, name);
 
                 } else {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "no property name parameter found");
@@ -224,23 +241,23 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class PutOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (!resource.isValid()) {
+            if (resource == null || !resource.isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
 
             try {
-                Node node = resource.adaptTo(Node.class);
+                // parse property from JSON into a POJO of type JsonProperty
+                JsonUtil.JsonProperty property = getJsonObject(request, JsonUtil.JsonProperty.class);
 
+                Node node = resource.adaptTo(Node.class);
                 if (node != null) {
                     Session session = node.getSession();
-
-                    // parse property from JSON into a POJO of type JsonProperty
-                    JsonUtil.JsonProperty property = getJsonObject(request, JsonUtil.JsonProperty.class);
 
                     // update the property
                     boolean available = JsonUtil.setJsonProperty(node, property,
@@ -253,15 +270,31 @@ public class PropertyServlet extends AbstractServiceServlet {
                     if (available) {
                         // answer with property reloaded and transformed to JSON
                         response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
-                        ResponseUtil.writeJsonProperty(request.getResourceResolver(), response, node, property.name);
+                        ResponseUtil.writeJsonProperty(resource, response, node, property.name);
                     } else {
                         // empty answer for a successful request (possible a deletion)
                         response.setContentLength(0);
                     }
 
                 } else {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            "can't determine node '" + resource.getPath() + "'");
+
+                    ModifiableValueMap values = resource.adaptTo(ModifiableValueMap.class);
+                    if (values != null) {
+
+                        int type = StringUtils.isNotBlank(property.type)
+                                ? PropertyType.valueFromName(property.type) : PropertyType.STRING;
+                        Object value = JsonUtil.makeValueObject(type, property.value);
+
+                        if (property.oldname != null && !property.oldname.equals(property.name)) {
+                            values.remove(property.oldname);
+                        }
+                        values.put(property.name, value);
+                        resource.getResourceResolver().commit();
+
+                    } else {
+                        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                                "can't modify resource (" + resource.getPath() + ")");
+                    }
                 }
 
             } catch (RepositoryException ex) {
@@ -284,46 +317,41 @@ public class PropertyServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (!resource.isValid()) {
+            if (resource == null || !resource.isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
 
-            Node node = resource.adaptTo(Node.class);
-
-            if (node != null) {
-
+            // parse parameters from JSON into a POJO of type BulkParameters
+            BulkParameters parameters = getJsonObject(request, BulkParameters.class);
+            if (parameters != null) {
                 try {
-                    // parse parameters from JSON into a POJO of type BulkParameters
-                    BulkParameters parameters = getJsonObject(request, BulkParameters.class);
-
                     response.setStatus(SC_OK);
                     JsonWriter writer = ResponseUtil.getJsonWriter(response);
-                    if (parameters != null) {
-                        doIt(request, response, resource, node, parameters, writer);
-                    }
+
+                    Node node = resource.adaptTo(Node.class);
+                    doIt(request, response, resource, node, parameters, writer);
 
                 } catch (RepositoryException ex) {
                     LOG.error(ex.getMessage(), ex);
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
                 }
-
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "can't determine node '" + resource.getPath() + "'");
             }
         }
 
-        protected abstract void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                     ResourceHandle resource, Node node, BulkParameters parameters,
-                                     JsonWriter writer)
+        protected abstract void doIt(@Nonnull final SlingHttpServletRequest request,
+                                     @Nonnull final SlingHttpServletResponse response,
+                                     @Nonnull final ResourceHandle resource, @Nullable final Node node,
+                                     @Nonnull final BulkParameters parameters, @Nonnull final JsonWriter writer)
                 throws RepositoryException, ServletException, IOException;
 
-        protected void clearProperty(Node node, String name) throws RepositoryException {
+        protected void clearProperty(@Nonnull final Node node, @Nonnull final String name)
+                throws RepositoryException {
             try {
                 Property property = node.getProperty(name);
                 if (property != null) {
@@ -345,65 +373,95 @@ public class PropertyServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource, Node node, BulkParameters parameters,
-                         JsonWriter writer)
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
+                         @Nonnull final ResourceHandle resource, @Nullable final Node node,
+                         @Nonnull final BulkParameters parameters, @Nonnull final JsonWriter writer)
                 throws RepositoryException, ServletException, IOException {
 
-            Session session = node.getSession();
-            writer.beginObject();
+            Session session = node != null ? node.getSession() : null;
+            ModifiableValueMap values = node == null ? resource.adaptTo(ModifiableValueMap.class) : null;
 
+            writer.beginObject();
             if (parameters.names != null) {
                 writer.name("removed").beginArray();
+
                 for (String name : parameters.names) {
-                    clearProperty(node, name);
+                    if (node != null) {
+                        clearProperty(node, name);
+                    } else if (values != null) {
+                        values.remove(name);
+                    }
                     writer.value(name);
                 }
+
                 writer.endArray();
             }
-
             writer.endObject();
-            session.save();
+
+            if (session != null) {
+                session.save();
+            } else if (values != null) {
+                resource.getResourceResolver().commit();
+            }
         }
     }
 
     protected class CopyOperation extends BulkOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource, Node node, BulkParameters parameters,
-                         JsonWriter writer)
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
+                         @Nonnull final ResourceHandle resource, @Nullable final Node node,
+                         @Nonnull final BulkParameters parameters, @Nonnull final JsonWriter writer)
                 throws RepositoryException, ServletException, IOException {
 
-            if (parameters.path != null) {
-                Session session = node.getSession();
+            if (parameters.path != null && parameters.names != null) {
                 writer.beginObject();
+                writer.name("copied").beginArray();
 
-                Node template = session.getNode(parameters.path);
-
-                if (template != null && parameters.names != null) {
-                    writer.name("copied").beginArray();
-
-                    for (String name : parameters.names) {
-                        try {
-                            Property property = template.getProperty(name);
-                            if (property != null) {
-                                clearProperty(node, name);
-                                if (property.isMultiple()) {
-                                    node.setProperty(name, property.getValues());
-                                } else {
-                                    node.setProperty(name, property.getValue());
+                if (node != null) {
+                    Session session = node.getSession();
+                    Node template = session.getNode(parameters.path);
+                    if (template != null) {
+                        for (String name : parameters.names) {
+                            try {
+                                Property property = template.getProperty(name);
+                                if (property != null) {
+                                    clearProperty(node, name);
+                                    if (property.isMultiple()) {
+                                        node.setProperty(name, property.getValues());
+                                    } else {
+                                        node.setProperty(name, property.getValue());
+                                    }
+                                    writer.value(name);
                                 }
-                                writer.value(name);
+                            } catch (PathNotFoundException ignore) {
                             }
-                        } catch (PathNotFoundException ignore) {
                         }
                     }
-                    writer.endArray();
+                    session.save();
+
+                } else {
+
+                    ResourceResolver resolver = resource.getResourceResolver();
+                    ModifiableValueMap values = resource.adaptTo(ModifiableValueMap.class);
+                    Resource template = resolver.getResource(parameters.path);
+                    if (values != null && template != null) {
+                        ValueMap templateValues = template.getValueMap();
+                        for (String name : parameters.names) {
+                            Object value = templateValues.get(name);
+                            if (value != null) {
+                                values.put(name, value);
+                                writer.value(name);
+                            }
+                        }
+                    }
+                    resolver.commit();
                 }
 
+                writer.endArray();
                 writer.endObject();
-                session.save();
             }
         }
     }
@@ -415,51 +473,29 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class GetBinaryOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (!resource.isValid()) {
+            if (resource == null || !resource.isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
 
             try {
+                String name = RequestUtil.getParameter(request, PARAM_NAME, ResourceUtil.PROP_DATA);
+
                 Node node = resource.adaptTo(Node.class);
                 if (node != null) {
-
-                    String name = RequestUtil.getParameter(request, PARAM_NAME, com.composum.sling.core.util.ResourceUtil.PROP_DATA);
 
                     javax.jcr.Property property = node.getProperty(name);
                     Binary binary = property != null ? property.getBinary() : null;
                     if (binary != null) {
 
                         try {
-                            MimeType mimeType = MimeTypeUtil.getMimeType(resource);
-                            if (mimeType != null) {
-                                response.setContentType(mimeType.toString());
-                            }
-                            String filename = MimeTypeUtil.getFilename(resource, null);
-                            if (StringUtils.isNotBlank(filename)) {
-                                response.setHeader("Content-Disposition", "inline; filename=" + filename);
-                            }
-
-                            Calendar lastModified = resource.getProperty(com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED, Calendar.class);
-                            if (lastModified != null) {
-                                response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, lastModified.getTimeInMillis());
-                            }
-
-                            response.setContentLength((int) binary.getSize());
-                            response.setStatus(SC_OK);
-
-                            InputStream input = binary.getStream();
-                            BufferedInputStream buffered = new BufferedInputStream(input);
-                            try {
-                                IOUtils.copy(buffered, response.getOutputStream());
-                            } finally {
-                                buffered.close();
-                                input.close();
-                            }
+                            prepareResponse(response, resource, binary.getSize());
+                            sendContent(response, binary.getStream());
                         } finally {
                             binary.dispose();
                         }
@@ -467,15 +503,60 @@ public class PropertyServlet extends AbstractServiceServlet {
                     } else {
                         response.sendError(HttpServletResponse.SC_NOT_FOUND, "no binary '" + name + "' property found");
                     }
+
                 } else {
-                    LOG.error(resource.getPath() + ": invalid binary GET - resource has no content node");
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            "can't determine file node '" + resource.getPath() + "'");
+
+                    ValueMap values = resource.getValueMap();
+                    InputStream content = values.get(name, InputStream.class);
+
+                    if (content != null) {
+
+                        prepareResponse(response, resource, null);
+                        sendContent(response, content);
+
+                    } else {
+                        LOG.error(resource.getPath() + ": invalid binary GET - resource has no content node");
+                        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                                "can't determine file node '" + resource.getPath() + "'");
+                    }
                 }
 
             } catch (RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            }
+        }
+
+        protected void prepareResponse(@Nonnull final SlingHttpServletResponse response,
+                                       ResourceHandle resource, @Nullable final Long size) {
+            MimeType mimeType = MimeTypeUtil.getMimeType(resource);
+            if (mimeType != null) {
+                response.setContentType(mimeType.toString());
+            }
+            String filename = MimeTypeUtil.getFilename(resource, null);
+            if (StringUtils.isNotBlank(filename)) {
+                response.setHeader("Content-Disposition", "inline; filename=" + filename);
+            }
+
+            Calendar lastModified = resource.getProperty(ResourceUtil.PROP_LAST_MODIFIED, Calendar.class);
+            if (lastModified != null) {
+                response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, lastModified.getTimeInMillis());
+            }
+
+            if (size != null) {
+                response.setContentLength(size.intValue());
+            }
+            response.setStatus(SC_OK);
+        }
+
+        protected void sendContent(@Nonnull final SlingHttpServletResponse response, @Nullable final InputStream input)
+                throws IOException {
+            if (input != null) {
+                try (input; BufferedInputStream buffered = new BufferedInputStream(input)) {
+                    IOUtils.copy(buffered, response.getOutputStream());
+                }
+            } else {
+                throw new IOException("no content found");
             }
         }
     }
@@ -492,11 +573,12 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class PostBinaryOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (!resource.isValid()) {
+            if (resource == null || !resource.isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
@@ -511,7 +593,7 @@ public class PropertyServlet extends AbstractServiceServlet {
                     if (file != null) {
 
                         RequestParameter nameParam = parameters.getValue(PARAM_NAME);
-                        String name = nameParam != null ? nameParam.getString() : com.composum.sling.core.util.ResourceUtil.PROP_DATA;
+                        String name = nameParam != null ? nameParam.getString() : ResourceUtil.PROP_DATA;
 
                         LOG.info(resource.getPath() + ": update POST for binary property '" + name + "'");
 
@@ -543,32 +625,62 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class PutBinaryOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (!resource.isValid()) {
+            if (resource == null || !resource.isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
 
             try {
+                InputStream input = request.getInputStream();
+
                 Node node = resource.adaptTo(Node.class);
                 if (node != null) {
 
                     Session session = node.getSession();
-                    InputStream input = request.getInputStream();
-                    PropertyUtil.setProperty(node, com.composum.sling.core.util.ResourceUtil.PROP_DATA, input);
+                    PropertyUtil.setProperty(node, ResourceUtil.PROP_DATA, input);
                     postChange(node);
                     session.save();
 
-                    response.setContentLength(0);
-                    response.setStatus(SC_OK);
-
                 } else {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            "can't determine file node '" + resource.getPath() + "'");
+                    ResourceResolver resolver = resource.getResourceResolver();
+
+                    Resource parent = null;
+                    boolean isFileUpdate = resource.getName().equals(JcrConstants.JCR_CONTENT)
+                            && resource.getValueMap().get(JcrConstants.JCR_PRIMARYTYPE).equals(JcrConstants.NT_RESOURCE)
+                            && (parent = resource.getParent()) != null
+                            && parent.getValueMap().get(JcrConstants.JCR_PRIMARYTYPE).equals(JcrConstants.NT_FILE);
+
+                    if (isFileUpdate && resolver instanceof ExtendedResolver) {
+                        ValueMap values = resource.getValueMap();
+
+                        ((ExtendedResolver) resolver).upload(parent.getPath(), input, null,
+                                values.get(JcrConstants.JCR_MIMETYPE, String.class), StandardCharsets.UTF_8.name());
+                        resolver.commit();
+
+                    } else {
+
+                        ModifiableValueMap values = resource.adaptTo(ModifiableValueMap.class);
+                        if (values != null) {
+
+                            values.put(ResourceUtil.PROP_DATA, input);
+                            postChange(resource);
+                            resolver.commit();
+
+                        } else {
+                            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                                    "can't modify '" + resource.getPath() + "'");
+                            return;
+                        }
+                    }
                 }
+
+                response.setContentLength(0);
+                response.setStatus(SC_OK);
 
             } catch (RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
@@ -577,6 +689,9 @@ public class PropertyServlet extends AbstractServiceServlet {
         }
 
         protected void postChange(Node node) throws RepositoryException {
+        }
+
+        protected void postChange(Resource resource) {
         }
     }
 
@@ -588,11 +703,20 @@ public class PropertyServlet extends AbstractServiceServlet {
             if (lastModified != null) {
                 Session session = node.getSession();
                 String userId = session.getUserID();
-                Calendar now = new GregorianCalendar();
-                now.setTime(new Date());
-                PropertyUtil.setProperty(node, JcrConstants.JCR_LASTMODIFIED, now, PropertyType.DATE);
+                PropertyUtil.setProperty(node, JcrConstants.JCR_LASTMODIFIED, GregorianCalendar.getInstance(), PropertyType.DATE);
                 if (StringUtils.isNotBlank(userId)) {
                     PropertyUtil.setProperty(node, JcrConstants.JCR_LASTMODIFIED + "By", userId, PropertyType.STRING);
+                }
+            }
+        }
+
+        @Override
+        protected void postChange(Resource resource) {
+            ModifiableValueMap values = resource.adaptTo(ModifiableValueMap.class);
+            if (values != null) {
+                Calendar lastModified = values.get(JcrConstants.JCR_LASTMODIFIED, Calendar.class);
+                if (lastModified != null) {
+                    values.put(JcrConstants.JCR_LASTMODIFIED, GregorianCalendar.getInstance());
                 }
             }
         }
