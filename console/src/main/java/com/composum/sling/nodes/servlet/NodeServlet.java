@@ -1,5 +1,6 @@
 package com.composum.sling.nodes.servlet;
 
+import com.composum.sling.clientlibs.handle.FileHandle;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.config.FilterConfiguration;
 import com.composum.sling.core.exception.ParameterValidationException;
@@ -20,6 +21,7 @@ import com.composum.sling.core.util.ResponseUtil;
 import com.composum.sling.core.util.XSS;
 import com.composum.sling.cpnl.CpnlElFunctions;
 import com.composum.sling.nodes.NodesConfiguration;
+import com.composum.sling.nodes.mount.ExtendedResolver;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
@@ -34,17 +36,22 @@ import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.apache.sling.servlets.post.SlingPostConstants;
 import org.apache.tika.mime.MimeType;
 import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.ItemExistsException;
@@ -75,15 +82,16 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -136,24 +144,26 @@ public class NodeServlet extends NodeTreeServlet {
      */
     protected volatile List<FilterConfiguration> filterConfigurations;
 
-    @Reference(service = FilterConfiguration.class,
-            cardinality = ReferenceCardinality.MULTIPLE,
-            policy = ReferencePolicy.DYNAMIC)
     /**
      * for each configured filter in the OSGi configuration
      * a tree filter is added to the filter set
      *
      * @param config the OSGi filter configuration object
      */
+    @Reference(service = FilterConfiguration.class,
+            cardinality = ReferenceCardinality.MULTIPLE,
+            policy = ReferencePolicy.DYNAMIC)
     protected synchronized void bindFilterConfiguration(final FilterConfiguration config) {
         if (filterConfigurations == null) {
             filterConfigurations = new ArrayList<>();
         }
         filterConfigurations.add(config);
-        String key = config.getName();
-        ResourceFilter filter = config.getFilter();
-        if (StringUtils.isNotBlank(key) && filter != null) {
-            nodeFilters.put(key, buildTreeFilter(filter));
+        if (nodesConfig != null) { // initialize on bind if activated already
+            String key = config.getName();
+            ResourceFilter filter = config.getFilter();
+            if (StringUtils.isNotBlank(key) && filter != null) {
+                nodeFilters.put(key, buildTreeFilter(filter));
+            }
         }
     }
 
@@ -166,6 +176,23 @@ public class NodeServlet extends NodeTreeServlet {
     protected synchronized void unbindFilterConfiguration(final FilterConfiguration config) {
         nodeFilters.remove(config.getName());
         filterConfigurations.remove(config);
+    }
+
+    @Activate
+    protected void activate() {
+        // initialize configurartions bound before activation
+        for (FilterConfiguration config : filterConfigurations) {
+            String key = config.getName();
+            ResourceFilter filter = config.getFilter();
+            if (StringUtils.isNotBlank(key) && filter != null) {
+                nodeFilters.put(key, buildTreeFilter(filter));
+            }
+        }
+    }
+
+    @Deactivate
+    protected void deactivate() {
+        nodeFilters.clear();
     }
 
     /**
@@ -232,7 +259,7 @@ public class NodeServlet extends NodeTreeServlet {
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
     @Override
-    protected ServletOperationSet getOperations() {
+    protected ServletOperationSet<Extension, Operation> getOperations() {
         return operations;
     }
 
@@ -318,7 +345,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ListFiltersAsHtml implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -336,7 +364,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ListFiltersAsJson implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -370,7 +399,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected abstract class AbstractQueryOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -406,7 +436,7 @@ public class NodeServlet extends NodeTreeServlet {
             if (StringUtils.isNotBlank(queryString)) {
                 try {
                     ResourceResolver resolver = request.getResourceResolver();
-                    Session session = resolver.adaptTo(Session.class);
+                    Session session = Objects.requireNonNull(resolver.adaptTo(Session.class));
                     Workspace workspace = session.getWorkspace();
                     QueryManager queryManager = workspace.getQueryManager();
 
@@ -600,9 +630,10 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ExportQueryOperation extends AbstractQueryOperation {
 
         @Override
-        protected void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                                        String queryString, QueryResult result,
-                                        ResourceFilter filter, ResourceResolver resolver)
+        protected void writeQueryResult(@Nonnull final SlingHttpServletRequest request,
+                                        @Nonnull final SlingHttpServletResponse response,
+                                        @Nonnull final String queryString, @Nonnull final QueryResult result,
+                                        @Nonnull final ResourceFilter filter, @Nonnull final ResourceResolver resolver)
                 throws ServletException, IOException {
 
             String rendererType = XSS.filter(request.getParameter("export"));
@@ -615,7 +646,9 @@ public class NodeServlet extends NodeTreeServlet {
             options.setForceResourceType(rendererType);
 
             RequestDispatcher dispatcher = request.getRequestDispatcher(resultResource, options);
-            dispatcher.forward(request, response);
+            if (dispatcher != null) {
+                dispatcher.forward(request, response);
+            }
         }
     }
 
@@ -629,12 +662,7 @@ public class NodeServlet extends NodeTreeServlet {
     @Override
     protected List<Resource> prepareTreeItems(ResourceHandle resource, List<Resource> items) {
         if (!nodesConfig.getOrderableNodesFilter().accept(resource)) {
-            Collections.sort(items, new Comparator<Resource>() {
-                @Override
-                public int compare(Resource r1, Resource r2) {
-                    return getSortName(r1).compareTo(getSortName(r2));
-                }
-            });
+            items.sort(Comparator.comparing(this::getSortName));
         }
         return items;
     }
@@ -656,7 +684,8 @@ public class NodeServlet extends NodeTreeServlet {
 
         @Override
         @SuppressWarnings("Duplicates")
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -669,7 +698,7 @@ public class NodeServlet extends NodeTreeServlet {
 
                 try {
                     ResourceResolver resolver = request.getResourceResolver();
-                    Session session = resolver.adaptTo(Session.class);
+                    Session session = Objects.requireNonNull(resolver.adaptTo(Session.class));
                     Node node = session.getNodeByIdentifier(reference);
 
                     Resource nodeResource;
@@ -705,7 +734,8 @@ public class NodeServlet extends NodeTreeServlet {
 
         @Override
         @SuppressWarnings("Duplicates")
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -750,7 +780,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class TypeaheadOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -797,12 +828,12 @@ public class NodeServlet extends NodeTreeServlet {
     protected class GetMixinsOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            Node node;
-            if (!resource.isValid() || (node = resource.adaptTo(Node.class)) == null) {
+            if (resource == null || !resource.isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
@@ -810,12 +841,20 @@ public class NodeServlet extends NodeTreeServlet {
             try {
                 response.setStatus(HttpServletResponse.SC_OK);
                 JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-
                 jsonWriter.beginArray();
-                NodeType[] mixins = node.getMixinNodeTypes();
-                if (mixins != null) {
-                    for (NodeType type : mixins) {
-                        jsonWriter.value(type.getName());
+
+                Node node = resource.adaptTo(Node.class);
+                if (node != null) {
+                    NodeType[] mixins = node.getMixinNodeTypes();
+                    if (mixins != null) {
+                        for (NodeType type : mixins) {
+                            jsonWriter.value(type.getName());
+                        }
+                    }
+                } else {
+                    ValueMap values = resource.getValueMap();
+                    for (String mixin : values.get(JcrConstants.JCR_MIXINTYPES, new String[0])) {
+                        jsonWriter.value(mixin);
                     }
                 }
                 jsonWriter.endArray();
@@ -830,32 +869,45 @@ public class NodeServlet extends NodeTreeServlet {
     protected class LoadBinaryOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
             Binary binary = ResourceUtil.getBinaryData(resource);
-            if (binary == null) {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
+            if (binary != null) {
 
-            try {
-                prepareResponse(response, resource);
+                try {
+                    prepareResponse(response, resource);
 
-                response.setContentLength((int) binary.getSize());
-                response.setStatus(HttpServletResponse.SC_OK);
+                    response.setContentLength((int) binary.getSize());
+                    response.setStatus(HttpServletResponse.SC_OK);
 
-                try (InputStream input = binary.getStream();
-                     BufferedInputStream buffered = new BufferedInputStream(input)) {
-                    IOUtils.copy(buffered, response.getOutputStream());
+                    try (InputStream input = binary.getStream();
+                         BufferedInputStream buffered = new BufferedInputStream(input)) {
+                        IOUtils.copy(buffered, response.getOutputStream());
+                    }
+
+                } catch (RepositoryException ex) {
+                    LOG.error(ex.getMessage(), ex);
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+                } finally {
+                    binary.dispose();
                 }
 
-            } catch (RepositoryException ex) {
-                LOG.error(ex.getMessage(), ex);
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
-            } finally {
-                binary.dispose();
+            } else {
+
+                FileHandle fileHandle = new FileHandle(resource);
+                if (fileHandle.isValid()) {
+
+                    try (InputStream input = fileHandle.getStream();
+                         BufferedInputStream buffered = new BufferedInputStream(input)) {
+                        IOUtils.copy(buffered, response.getOutputStream());
+                    }
+
+                } else {
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                }
             }
         }
 
@@ -871,7 +923,8 @@ public class NodeServlet extends NodeTreeServlet {
 
         @Override
         @SuppressWarnings("Duplicates")
-        protected void prepareResponse(SlingHttpServletResponse response, ResourceHandle resource) {
+        protected void prepareResponse(@Nonnull final SlingHttpServletResponse response,
+                                       @Nonnull final ResourceHandle resource) {
             super.prepareResponse(response, resource);
 
             String filename = MimeTypeUtil.getFilename(resource, null);
@@ -879,7 +932,7 @@ public class NodeServlet extends NodeTreeServlet {
                 response.setHeader("Content-Disposition", "inline; filename=" + filename);
             }
 
-            Calendar lastModified = resource.getProperty(com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED, Calendar.class);
+            Calendar lastModified = resource.getProperty(ResourceUtil.PROP_LAST_MODIFIED, Calendar.class);
             if (lastModified != null) {
                 response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, lastModified.getTimeInMillis());
             }
@@ -900,43 +953,50 @@ public class NodeServlet extends NodeTreeServlet {
     protected class UpdateFileOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
             Resource content = resource;
 
             // use resource as content if name is always 'jcr:content' else use child 'jcr:content'
-            if (resource.isValid() && (JcrConstants.JCR_CONTENT.equals(content.getName()) ||
+            if (resource != null && resource.isValid() && (JcrConstants.JCR_CONTENT.equals(content.getName()) ||
                     (content = resource.getChild(JcrConstants.JCR_CONTENT)) != null)) {
 
                 NodeParameters params = getNodeParameters(request);
                 ModifiableValueMap values = content.adaptTo(ModifiableValueMap.class);
 
-                ResourceResolver resolver = request.getResourceResolver();
-                RequestParameterMap parameters = request.getRequestParameterMap();
+                if (values != null) {
+                    ResourceResolver resolver = request.getResourceResolver();
+                    RequestParameterMap parameters = request.getRequestParameterMap();
 
-                Property property = null;
-                RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
-                if (file != null) {
-                    InputStream input = file.getInputStream();
-                    values.put(JcrConstants.JCR_DATA, input);
+                    Property property = null;
+                    RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
+                    if (file != null) {
+                        InputStream input = file.getInputStream();
+                        values.put(JcrConstants.JCR_DATA, input);
+                    }
+
+                    if (RequestUtil.getParameter(request, "adjustLastModified", Boolean.FALSE)) {
+                        GregorianCalendar now = new GregorianCalendar();
+                        now.setTime(new Date());
+                        values.put(JcrConstants.JCR_LASTMODIFIED, now);
+                        values.put(JcrConstants.JCR_LASTMODIFIED + "By", resolver.getUserID());
+                    }
+
+                    resolver.commit();
+
+                    JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                    writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY, resource, LabelType.name, false);
+
+                } else {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "can't modify '" + resource.getPath() + "'");
                 }
-
-                if (RequestUtil.getParameter(request, "adjustLastModified", Boolean.FALSE)) {
-                    GregorianCalendar now = new GregorianCalendar();
-                    now.setTime(new Date());
-                    values.put(JcrConstants.JCR_LASTMODIFIED, now);
-                    values.put(JcrConstants.JCR_LASTMODIFIED + "By", resolver.getUserID());
-                }
-
-                resolver.commit();
-
-                JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY, resource, LabelType.name, false);
 
             } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "no valid file resource '" + resource.getPath() + "'");
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                        "no valid file resource '" + (resource != null ? resource.getPath() : "NULL") + "'");
             }
         }
 
@@ -948,9 +1008,15 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ToggleLockOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
+
+            if (resource == null || !resource.isValid()) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
 
             Node node = resource.adaptTo(Node.class);
 
@@ -986,28 +1052,35 @@ public class NodeServlet extends NodeTreeServlet {
     protected class MoveOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
             resource = AbstractServiceServlet.tryToUseRawSuffix(request, resource);
-            Node node = resource.adaptTo(Node.class);
 
-            if (node != null) {
+            if (!resource.isValid()) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
 
-                NodeParameters params = getNodeParameters(request);
-                String name = params.name;
-                if (StringUtils.isBlank(name)) {
-                    name = node.getName();
-                }
+            ResourceResolver resolver = resource.getResourceResolver();
+            NodeParameters params = getNodeParameters(request);
+            String name = params.name;
+            if (StringUtils.isBlank(name)) {
+                name = resource.getName();
+            }
+            String newPath = params.path;
+            if (!newPath.endsWith("/")) {
+                newPath += "/";
+            }
 
-                String newPath = params.path;
-                if (!newPath.endsWith("/")) {
-                    newPath += "/";
-                }
-                newPath += name;
+            newPath += name;
+            if (checkNodePath(newPath)) {
 
-                if (checkNodePath(newPath)) {
+                Node node = resource.adaptTo(Node.class);
+                if (node != null) {
+
                     Session session = node.getSession();
 
                     String oldPath = node.getPath();
@@ -1060,7 +1133,6 @@ public class NodeServlet extends NodeTreeServlet {
                         changesMade = true;
                     }
 
-                    ResourceResolver resolver = resource.getResourceResolver();
                     ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newPath));
 
                     if (newResource.isValid()) {
@@ -1102,12 +1174,30 @@ public class NodeServlet extends NodeTreeServlet {
                                 "invalid node after move '" + newPath + "'");
                     }
                 } else {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            "invalid node path '" + newPath + "'");
+
+                    String parentPath = StringUtils.substringBeforeLast(newPath, "/");
+
+                    if (resolver instanceof ExtendedResolver) {
+
+                        String order = null;
+                        if (StringUtils.isNotBlank(params.before)) {
+                            order = SlingPostConstants.ORDER_BEFORE
+                                    + StringUtils.substringAfterLast(params.before, "/");
+                        } else if (params.index() != null && params.index() >= 0) {
+                            order = "" + params.index;
+                        }
+
+                        ((ExtendedResolver) resolver).move(resource.getPath(), parentPath, name, order);
+
+                    } else {
+                        resolver.move(resource.getPath(), parentPath);
+                    }
+
+                    resolver.commit();
                 }
             } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "can't determine target node '" + resource.getPath() + "'");
+                        "invalid node path '" + newPath + "'");
             }
         }
 
@@ -1137,9 +1227,15 @@ public class NodeServlet extends NodeTreeServlet {
     protected class CreateOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
+
+            if (resource == null || !resource.isValid()) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
 
             ResourceResolver resolver = resource.getResourceResolver();
 
@@ -1154,7 +1250,7 @@ public class NodeServlet extends NodeTreeServlet {
                     throw new ParameterValidationException("invalid node name '" + name + "'");
                 }
 
-                ResourceHandle newResource;
+                ResourceHandle newResource = null;
 
                 Node node = resource.adaptTo(Node.class);
                 if (node != null) {
@@ -1174,7 +1270,30 @@ public class NodeServlet extends NodeTreeServlet {
 
                 } else {
 
-                    newResource = ResourceHandle.use(resolver.create(resource, name, params.asMap()));
+                    if (resolver instanceof ExtendedResolver) {
+                        if (JcrConstants.NT_FILE.equals(params.type)) {
+
+                            RequestParameterMap parameters = request.getRequestParameterMap();
+                            RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
+
+                            InputStream input;
+                            if (file != null && (input = file.getInputStream()) != null) {
+
+                                MimeType mimeType = MimeTypeUtil.getMimeType(
+                                        StringUtils.isNotBlank(params.mimeType) ? params.mimeType : name);
+                                String contentType = mimeType != null ? mimeType.getName() : null;
+
+                                newResource = ResourceHandle.use(((ExtendedResolver) resolver).upload(
+                                        resource.getPath() + "/" + name, input, null, contentType,
+                                        contentType != null ? StandardCharsets.UTF_8.name() : null));
+                            }
+                        }
+                    }
+
+                    if (newResource == null) {
+                        newResource = ResourceHandle.use(resolver.create(resource, name, params.asMap()));
+                    }
+
                     resolver.commit();
                 }
 
@@ -1213,49 +1332,65 @@ public class NodeServlet extends NodeTreeServlet {
     protected class CopyOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
+            if (resource == null || !resource.isValid()) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
             try {
-                Node node = resource.adaptTo(Node.class);
-
-                if (node != null) {
-                    Session session = node.getSession();
+                NodeParameters params = getNodeParameters(request);
+                String path = params.path;
+                if (StringUtils.isNotBlank(path)) {
                     ResourceResolver resolver = resource.getResourceResolver();
-                    NodeParameters params = getNodeParameters(request);
-                    String path = params.path;
-                    Node templateNode;
 
-                    if (StringUtils.isNotBlank(path) && (templateNode = session.getNode(path)) != null) {
+                    Node node = resource.adaptTo(Node.class);
+                    if (node != null) {
+                        Session session = node.getSession();
+                        Node templateNode = session.getNode(path);
 
-                        try {
-                            String name = StringUtils.isNotBlank(params.name) ? params.name : templateNode.getName();
+                        if (templateNode != null) {
+                            try {
+                                String name = StringUtils.isNotBlank(params.name) ? params.name : templateNode.getName();
+                                if (!checkNodeName(name)) {
+                                    throw new ParameterValidationException("invalid node name '" + name + "'");
+                                }
+                                String newNodePath = node.getPath() + "/" + name;
 
-                            if (!checkNodeName(name)) {
-                                throw new ParameterValidationException("invalid node name '" + name + "'");
+                                Workspace workspace = session.getWorkspace();
+                                workspace.copy(path, newNodePath);
+                                session.save();
+
+                                ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newNodePath));
+                                JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                                writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY,
+                                        newResource, LabelType.name, false);
+
+                            } catch (ItemExistsException itex) {
+                                jsonAnswerItemExists(request, response);
                             }
-                            String newNodePath = node.getPath() + "/" + name;
-
-                            Workspace workspace = session.getWorkspace();
-                            workspace.copy(path, newNodePath);
-                            session.save();
-
-                            ResourceHandle newResource = ResourceHandle.use(resolver.getResource(newNodePath));
-                            JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                            writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY,
-                                    newResource, LabelType.name, false);
-
-                        } catch (ItemExistsException itex) {
-                            jsonAnswerItemExists(request, response);
+                        } else {
+                            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                                    "can't determine template node '" + path + "'");
                         }
+
                     } else {
-                        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                                "can't determine template node '" + path + "'");
+
+                        Resource template = resolver.getResource(path);
+                        if (template != null) {
+
+                            resolver.copy(template.getPath(), resource.getPath());
+                            resolver.commit();
+
+                        } else {
+                            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                                    "can't determine template node '" + path + "'");
+                        }
                     }
-                } else {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            "can't determine parent node '" + resource.getPath() + "'");
                 }
             } catch (ParameterValidationException pvex) {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, pvex.getMessage());
@@ -1280,23 +1415,27 @@ public class NodeServlet extends NodeTreeServlet {
     protected class DeleteOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (!resource.isValid()) {
+            if (resource == null || !resource.isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
 
             try {
                 Node node = resource.adaptTo(Node.class);
-
-                Session session = node.getSession();
-
-                node.remove();
-
-                session.save();
+                if (node != null) {
+                    Session session = node.getSession();
+                    node.remove();
+                    session.save();
+                } else {
+                    ResourceResolver resolver = resource.getResourceResolver();
+                    resolver.delete(resource.getResource());
+                    resolver.commit();
+                }
 
                 // answer 'OK' (200)
                 response.setStatus(HttpServletResponse.SC_OK);
@@ -1348,11 +1487,12 @@ public class NodeServlet extends NodeTreeServlet {
     protected class MapGetOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (!resource.isValid()) {
+            if (resource == null || !resource.isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
@@ -1411,8 +1551,8 @@ public class NodeServlet extends NodeTreeServlet {
             RequestParameter file = parameters.getValue(PARAM_FILE);
 
             Reader reader = null;
-            if (file != null) {
-                InputStream input = file.getInputStream();
+            InputStream input;
+            if (file != null && (input = file.getInputStream()) != null) {
                 reader = new BufferedReader(
                         new InputStreamReader(input, CHARSET.name()));
             }
@@ -1423,7 +1563,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class MapPutOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -1439,7 +1580,7 @@ public class NodeServlet extends NodeTreeServlet {
                     JsonReader jsonReader = new JsonReader(reader);
                     Resource newResource = JsonUtil.importJson(jsonReader, resolver, path);
 
-                    Session session = resolver.adaptTo(Session.class);
+                    Session session = Objects.requireNonNull(resolver.adaptTo(Session.class));
                     session.save();
 
                     response.setStatus(HttpServletResponse.SC_OK);
