@@ -552,8 +552,12 @@ public class PropertyServlet extends AbstractServiceServlet {
         protected void sendContent(@Nonnull final SlingHttpServletResponse response, @Nullable final InputStream input)
                 throws IOException {
             if (input != null) {
-                try (input; BufferedInputStream buffered = new BufferedInputStream(input)) {
+                BufferedInputStream buffered = new BufferedInputStream(input);
+                try {
                     IOUtils.copy(buffered, response.getOutputStream());
+                } finally {
+                    buffered.close();
+                    input.close();
                 }
             } else {
                 throw new IOException("no content found");
