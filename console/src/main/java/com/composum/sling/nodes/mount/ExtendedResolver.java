@@ -29,7 +29,7 @@ public interface ExtendedResolver extends ResourceResolver {
      * @param content     the new file content
      * @param filename    the name of the uploaded file
      * @param contentType the mime type of the content if known
-     * @param charset     the charset of th content
+     * @param charset     the charset of the content
      */
     Resource upload(@Nonnull final String absPath, @Nonnull final InputStream content,
                     @Nullable final String filename, @Nullable final String contentType,

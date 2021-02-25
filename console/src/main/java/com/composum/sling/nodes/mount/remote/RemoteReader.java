@@ -9,7 +9,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.jackrabbit.JcrConstants;
-import org.apache.jackrabbit.webdav.DavConstants;
 import org.apache.jackrabbit.webdav.DavException;
 import org.apache.jackrabbit.webdav.MultiStatus;
 import org.apache.jackrabbit.webdav.MultiStatusResponse;
@@ -44,6 +43,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_ACCEPTABLE;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static javax.servlet.http.HttpServletResponse.SC_NO_CONTENT;
@@ -59,6 +59,9 @@ public class RemoteReader extends RemoteClient {
 
     public static final String NS_PREFIX_JCR = "jcr";
 
+    public static final Pattern DAV_HREF = Pattern.compile(
+            "^((https?:)?//[^/]*)?(?<path>(?<parent>(/.*)?)?/(?<name>[^/]+))(?<folder>/)?$");
+
     public RemoteReader(@Nonnull final RemoteProvider provider, @Nonnull final String httpUrl,
                         @Nonnull final String username, @Nonnull final String password) {
         super(provider, httpUrl, username, password);
@@ -72,23 +75,35 @@ public class RemoteReader extends RemoteClient {
         return provider.remotePath(resource.getPath());
     }
 
+    /**
+     * Loads the properties and children into the given resource
+     *
+     * @param resource     the resource to load / update
+     * @param isKnownChild 'true' if the resource is cached already (as a child of another resource) and cannot be ignored
+     * @return the loaded resource; 'null' if the resource couldn't be loaded
+     */
     @Nullable
-    public RemoteResource loadResource(@Nonnull final RemoteResolver resolver,
-                                       @Nonnull final RemoteResource resource) {
+    public RemoteResource loadResource(@Nonnull final RemoteResource resource,
+                                       boolean isKnownChild) {
         RemoteResource result = resource;
         resource.children = null;
         resource.values = new ValueMapDecorator(new TreeMap<>());
+        String path = resource.getPath();
         String logHint = null;
         HttpClient httpClient = buildClient();
-        if (checkRemoteResource(httpClient, resource)) {
-            int statusCode = loadJsonResource(resolver, resource, httpClient);
-            if (statusCode == SC_OK) {
-                logHint = ".JSON";
-            } else {
-                statusCode = loadDavResource(resolver, resource, httpClient);
+        if (!provider.ignoreIt(path)) {
+            int statusCode = remoteHttpPing(httpClient, resource);
+            if (statusCode != SC_NOT_FOUND) {
+                statusCode = loadJsonResource(resource, httpClient);
+                if (statusCode == SC_OK) {
+                    logHint = ".JSON";
+                }
+            }
+            if (statusCode != SC_OK) {
+                statusCode = loadDavResource(resource, httpClient);
                 if (statusCode == SC_OK || statusCode == SC_MULTI_STATUS) {
                     logHint = "--DAV";
-                } else if (statusCode == SC_NOT_FOUND) {
+                } else if (statusCode == SC_NOT_FOUND && !isKnownChild) {
                     result = null;
                 } else {
                     resource.children = new LinkedHashMap<>();
@@ -108,12 +123,12 @@ public class RemoteReader extends RemoteClient {
         return result;
     }
 
-    protected boolean checkRemoteResource(HttpClient httpClient, RemoteResource resource) {
+    protected int remoteHttpPing(HttpClient httpClient, RemoteResource resource) {
         try {
             HttpHead httpHead = buildHttpHead(getHttpUrl(resource.getPath()));
-            return httpClient.execute(httpHead).getStatusLine().getStatusCode() != SC_NOT_FOUND;
+            return httpClient.execute(httpHead).getStatusLine().getStatusCode();
         } catch (IOException ignore) {
-            return false;
+            return SC_BAD_REQUEST;
         }
     }
 
@@ -121,24 +136,31 @@ public class RemoteReader extends RemoteClient {
     // WebDAV based fallback...
     //
 
-    @Nullable
+    @Nonnull
     public String getDavUrl(@Nonnull final RemoteResource resource) {
         return getDavUrl(resource.getPath());
     }
 
-    @Nullable
+    @Nonnull
     public String getDavUrl(@Nonnull final String resourcePath) {
         return getHttpUrl(resourcePath);
     }
 
-    protected int loadDavResource(@Nonnull final RemoteResolver resolver,
-                                  @Nonnull final RemoteResource resource,
+    /**
+     * In the case that a servlet at the remote system blocks the JSON access a WebDAV request is used
+     * as fallback to retrieve the resources properties and children.
+     *
+     * @param resource   the resource to load / update
+     * @param httpClient the client instance to execute the request
+     * @return the status code of the request response
+     */
+    protected int loadDavResource(@Nonnull final RemoteResource resource,
                                   @Nonnull final HttpClient httpClient) {
         int statusCode = SC_NO_CONTENT;
         String url = getDavUrl(resource);
         LOG.debug("loadDAV({}) - '{}'", resource.getPath(), url);
         try {
-            HttpPropfind davGet = new HttpPropfind(url, DavConstants.PROPFIND_ALL_PROP, DavConstants.DEPTH_1);
+            HttpPropfind davGet = buildPropfind(url);
             try {
                 HttpResponse response = httpClient.execute(davGet);
                 statusCode = response.getStatusLine().getStatusCode();
@@ -149,23 +171,28 @@ public class RemoteReader extends RemoteClient {
                     MultiStatus multiStatus = davGet.getResponseBodyAsMultiStatus(response);
                     MultiStatusResponse[] responses = multiStatus.getResponses();
                     for (MultiStatusResponse item : responses) {
-                        String itemHref = item.getHref();
-                        if (itemHref.equals(url) || itemHref.equals(url + "/")) {
-                            loadDavResource(resource, item);
-                        } else {
-                            String name = StringUtils.substringAfterLast(itemHref, "/");
-                            RemoteResource child = new RemoteResource(resolver, path + "/" + name);
-                            loadDavResource(child, item);
-                            resource.children.put(name, child);
+                        Matcher itemHref = DAV_HREF.matcher(item.getHref());
+                        if (itemHref.matches()) {
+                            String itemPath = provider.localPath(itemHref.group("path"));
+                            boolean isFolder = "/".equals(itemHref.group("folder"));
+                            if (itemPath.equals(path)) {
+                                loadDavResource(resource, item);
+                                adjustDavType(resource, isFolder);
+                            } else {
+                                String name = itemHref.group("name");
+                                RemoteResource child = new RemoteResource(resource.resolver, path + "/" + name);
+                                loadDavResource(child, item);
+                                if (!provider.ignoreIt(path + "/" + name)) {
+                                    adjustDavType(child, isFolder);
+                                    resource.children.put(name, child);
+                                }
+                            }
                         }
                     }
-                    adjustDavType(resource);
                 }
             } catch (DavException ex) {
                 LOG.error("DAV exception loading '{}': {}", url, ex.toString());
                 statusCode = SC_NOT_ACCEPTABLE;
-            } finally {
-                davGet.releaseConnection();
             }
         } catch (IOException ex) {
             LOG.error("IO exception loading '{}': {}", url, ex.toString());
@@ -173,11 +200,12 @@ public class RemoteReader extends RemoteClient {
         return statusCode;
     }
 
-    protected void adjustDavType(@Nonnull final RemoteResource resource) {
+    protected void adjustDavType(@Nonnull final RemoteResource resource, boolean isFolder) {
         String primaryType = resource.values.get(JcrConstants.JCR_PRIMARYTYPE, String.class);
         if (StringUtils.isBlank(primaryType)) {
             resource.values.put(JcrConstants.JCR_PRIMARYTYPE,
-                    resource.children != null && resource.children.size() > 0 ? "dav:folder" : "dav:unknown");
+                    isFolder || (resource.children != null && resource.children.size() > 0)
+                            ? "dav:folder" : "dav:unknown");
         }
     }
 
@@ -224,8 +252,15 @@ public class RemoteReader extends RemoteClient {
         return httpUrl.replaceAll("\\.", "%2E") + (path.endsWith("/") ? "" : "/") + ".1.json";
     }
 
-    protected int loadJsonResource(@Nonnull final RemoteResolver resolver,
-                                   @Nonnull final RemoteResource resource,
+    /**
+     * The preferred resource loading using the default Sling GET servlet to read
+     * the properties and children of the resource to load.
+     *
+     * @param resource   the resource to load / update
+     * @param httpClient the client instance to execute the request
+     * @return the status code of the request response
+     */
+    protected int loadJsonResource(@Nonnull final RemoteResource resource,
                                    @Nonnull final HttpClient httpClient) {
         int statusCode;
         String url = getJsonUrl(resource);
@@ -238,7 +273,7 @@ public class RemoteReader extends RemoteClient {
                 try (InputStream stream = response.getEntity().getContent();
                      InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
                      JsonReader jsonReader = new JsonReader(reader)) {
-                    loadJsonResource(resolver, resource, jsonReader);
+                    loadJsonResource(resource, jsonReader);
                     if (resource.children == null) { // no children found but searched for - store empty set
                         resource.children = new LinkedHashMap<>();
                     }
@@ -249,14 +284,11 @@ public class RemoteReader extends RemoteClient {
         } catch (IOException ex) {
             LOG.error("exception loading '{}': {}", url, ex.toString());
             statusCode = SC_NOT_ACCEPTABLE;
-        } finally {
-            httpGet.releaseConnection();
         }
         return statusCode;
     }
 
-    protected void loadJsonResource(@Nonnull final RemoteResolver resolver,
-                                    @Nonnull final RemoteResource resource,
+    protected void loadJsonResource(@Nonnull final RemoteResource resource,
                                     @Nonnull final JsonReader jsonReader)
             throws IOException {
         resource.children = null; // children == null -> not loaded completely
@@ -354,12 +386,14 @@ public class RemoteReader extends RemoteClient {
                     if (name != null) {
                         String path = resource.getPath() + "/" + name;
                         // load child and store it... (the children af a child should not be loaded)
-                        RemoteResource child = new RemoteResource(resolver, path);
-                        loadJsonResource(resolver, child, jsonReader);
+                        RemoteResource child = new RemoteResource(resource.resolver, path);
+                        loadJsonResource(child, jsonReader);
                         if (resource.children == null) {
                             resource.children = new LinkedHashMap<>();
                         }
-                        resource.children.put(name, child);
+                        if (!provider.ignoreIt(child.getPath())) {
+                            resource.children.put(name, child);
+                        }
                         name = null;
                     }
                     break;
@@ -424,12 +458,15 @@ public class RemoteReader extends RemoteClient {
     public static final String[] DATE_FORMATS = new String[]{
             "EEE MMM dd yyyy HH:mm:ss 'GMT'z", // "Fri Nov 20 2020 10:43:27 GMT+0100", the default
             "EEE, dd MMM yyyy HH:mm:ss Z",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
             "yyyy-MM-dd'T'HH:mm:ss.SSSz",
             "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ssZ",
             "yyyy-MM-dd'T'HH:mm:ssz",
             "yyyy-MM-dd'T'HH:mm:ss",
             "yyyy-MM-dd HH:mm:ss z",
-            "yyyy-MM-dd HH:mm:ss"
+            "yyyy-MM-dd HH:mm:ss",
+            "dd.MM.yyyy HH:mm:ss"
     };
 
     @Nullable

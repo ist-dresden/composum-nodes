@@ -146,6 +146,9 @@ public class RemoteWriter extends RemoteClient {
             Parameters parameters = new Parameters();
             parameters.add(SlingPostConstants.RP_OPERATION, SlingPostConstants.OPERATION_COPY);
             parameters.add(SlingPostConstants.RP_DEST, writer.provider.remotePath(resource.getPath()));
+            if (LOG.isInfoEnabled()) {
+                LOG.info("copy({},{})", source.getPath(), resource.getPath());
+            }
             return writer.postForm(this, source.getPath(), parameters);
         }
     }
@@ -184,6 +187,9 @@ public class RemoteWriter extends RemoteClient {
             if (StringUtils.isNotBlank(order)) {
                 parameters.add(SlingPostConstants.RP_ORDER, order);
             }
+            if (LOG.isInfoEnabled()) {
+                LOG.info("move({},{})", source.getPath(), resource.getPath());
+            }
             return writer.postForm(this, source.getPath(), parameters);
         }
     }
@@ -205,6 +211,9 @@ public class RemoteWriter extends RemoteClient {
         protected boolean commit(RemoteWriter writer) {
             Parameters parameters = new Parameters();
             parameters.add(SlingPostConstants.RP_OPERATION, SlingPostConstants.OPERATION_DELETE);
+            if (LOG.isInfoEnabled()) {
+                LOG.info("delete({})", resource.getPath());
+            }
             return writer.postForm(this, null, parameters);
         }
     }
@@ -249,6 +258,9 @@ public class RemoteWriter extends RemoteClient {
                     new ByteArrayPartSource(filename != null ? filename : resource.getName(),
                             IOUtils.toByteArray(content)), contentType,
                     StringUtils.isNotBlank(charset) ? charset : StandardCharsets.UTF_8.name()));
+            if (LOG.isInfoEnabled()) {
+                LOG.info("upload({})", resource.getPath());
+            }
             return writer.postMultipart(this, parentPath, parts, parameters);
         }
     }
@@ -291,23 +303,18 @@ public class RemoteWriter extends RemoteClient {
 
         protected boolean commit(RemoteWriter writer, Parameters parameters)
                 throws IOException {
-            boolean changesMade = false;
             List<Part> parts = new ArrayList<>();
             writer.buildForm(resource, parts, parameters);
-            EntityBuilder entityBuilder = EntityBuilder.create();
             if (LOG.isDebugEnabled()) {
-                LOG.debug("modify({}): parts:{}, parameters:{}", resource.getPath(), parts.size(), parameters);
+                LOG.debug(getChangeType() + "({}): parts:{}, parameters:{}", resource.getPath(), parts.size(), parameters);
             } else if (LOG.isInfoEnabled()) {
-                LOG.info("modify({}): parts:{}, parameters:{}", resource.getPath(), parts.size(), parameters.size());
+                LOG.info(getChangeType() + "({}): parts:{}, parameters:{}", resource.getPath(), parts.size(), parameters.size());
             }
+            boolean changesMade;
             if (parts.size() > 0) {
-                writer.postMultipart(this, null, parts, parameters);
-            } else if (parameters.size() > 0) {
-                entityBuilder.setContentEncoding("UTF-8");
-                entityBuilder.setParameters(parameters);
-                HttpEntity httpEntity = entityBuilder.build();
-                writer.postEntity(this, null, httpEntity);
-                changesMade = true;
+                changesMade = writer.postMultipart(this, null, parts, parameters);
+            } else {
+                changesMade = writer.postForm(this, null, parameters);
             }
             return changesMade;
         }

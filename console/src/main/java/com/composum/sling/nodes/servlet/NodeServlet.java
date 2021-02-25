@@ -1,5 +1,6 @@
 package com.composum.sling.nodes.servlet;
 
+import com.composum.sling.clientlibs.handle.FileHandle;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.config.FilterConfiguration;
 import com.composum.sling.core.exception.ParameterValidationException;
@@ -874,27 +875,39 @@ public class NodeServlet extends NodeTreeServlet {
                 throws ServletException, IOException {
 
             Binary binary = ResourceUtil.getBinaryData(resource);
-            if (binary == null) {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
+            if (binary != null) {
 
-            try {
-                prepareResponse(response, resource);
+                try {
+                    prepareResponse(response, resource);
 
-                response.setContentLength((int) binary.getSize());
-                response.setStatus(HttpServletResponse.SC_OK);
+                    response.setContentLength((int) binary.getSize());
+                    response.setStatus(HttpServletResponse.SC_OK);
 
-                try (InputStream input = binary.getStream();
-                     BufferedInputStream buffered = new BufferedInputStream(input)) {
-                    IOUtils.copy(buffered, response.getOutputStream());
+                    try (InputStream input = binary.getStream();
+                         BufferedInputStream buffered = new BufferedInputStream(input)) {
+                        IOUtils.copy(buffered, response.getOutputStream());
+                    }
+
+                } catch (RepositoryException ex) {
+                    LOG.error(ex.getMessage(), ex);
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+                } finally {
+                    binary.dispose();
                 }
 
-            } catch (RepositoryException ex) {
-                LOG.error(ex.getMessage(), ex);
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
-            } finally {
-                binary.dispose();
+            } else {
+
+                FileHandle fileHandle = new FileHandle(resource);
+                if (fileHandle.isValid()) {
+
+                    try (InputStream input = fileHandle.getStream();
+                         BufferedInputStream buffered = new BufferedInputStream(input)) {
+                        IOUtils.copy(buffered, response.getOutputStream());
+                    }
+
+                } else {
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                }
             }
         }
 

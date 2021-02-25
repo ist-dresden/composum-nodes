@@ -76,10 +76,18 @@ public class RemoteResource implements Resource {
         }
     }
 
+    /**
+     * the set of children is lazy loaded;
+     * initially this set is 'null' which marks the resource as 'not loaded completely';
+     *
+     * @return the set of children, loaded if not done already
+     */
     @Nonnull
     protected Map<String, Resource> children() {
         if (children == null) {
-            resolver.provider.reader.loadResource(resolver, this);
+            if (resolver.provider.remoteReader.loadResource(this, true) == null) {
+                children = new LinkedHashMap<>(); // not readable but a well known child - make it valid
+            }
         }
         return children;
     }
@@ -122,7 +130,10 @@ public class RemoteResource implements Resource {
     @Nullable
     @Override
     public Resource getChild(@Nonnull String relPath) {
-        return resolver.getResource(this, relPath);
+        if (relPath.contains("/")) {
+            return resolver.getResource(this, relPath);
+        }
+        return children().get(relPath);
     }
 
     @Nonnull

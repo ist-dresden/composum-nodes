@@ -24,6 +24,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * the resolver of the remote Sling instance resources mounted by the resource provider;
+ * supports extended CRUD operations for resource ordering and file uploads (updates)
+ */
 public class RemoteResolver implements ExtendedResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteResolver.class);
@@ -41,15 +45,27 @@ public class RemoteResolver implements ExtendedResolver {
         this.parentDelegate = parentDelegate;
     }
 
+    /**
+     * @return the 'parent' resource resolver (from the ResolveContext)
+     */
     @Nullable
     protected ResourceResolver getParentDelegate() {
-        return isLive() ? parentDelegate : null;
+        return parentDelegate;
     }
 
+    /**
+     * @return the current set of CRUD changes
+     */
     protected RemoteWriter.ChangeSet getChangeSet() {
         return changeSet;
     }
 
+    /**
+     * Resolves the resource specified by the path and caches the result.
+     *
+     * @param path the path (the local path) of the mounted remote resource
+     * @return the resource, maybe a 'non existing' instance if the resource can't be read
+     */
     @Nullable
     protected Resource _resolve(@Nonnull final String path) {
         if (provider.ignoreIt(path)) {
@@ -71,7 +87,18 @@ public class RemoteResolver implements ExtendedResolver {
             } else {
                 LOG.debug("reading '{}'...", localPath);
             }
-            resource = provider.reader.loadResource(this, new RemoteResource(this, localPath));
+            RemoteResource parent = null;
+            String parentPath = _parentPath(path);
+            // try to use a loaded parent to optimize caching
+            if (parentPath != null && provider.isLocal(parentPath)) {
+                parent = (RemoteResource) getResource(parentPath);
+            }
+            if (parent != null) {
+                resource = (RemoteResource) parent.getChild(_pathName(path));
+            } else {
+                resource = provider.remoteReader.loadResource(
+                        new RemoteResource(this, localPath), false);
+            }
             if (resource == null) {
                 resource = new RemoteResource.NonExisting(this, localPath);
             }
@@ -83,6 +110,9 @@ public class RemoteResolver implements ExtendedResolver {
         return null;
     }
 
+    /**
+     * @return the 'non existing' replacement of the discarded resource
+     */
     protected RemoteResource _discard(RemoteResource resource) {
         Resource parent = resource.getParent();
         if (parent instanceof RemoteResource) {
@@ -94,6 +124,36 @@ public class RemoteResolver implements ExtendedResolver {
         RemoteResource placeholder = new RemoteResource.NonExisting(this, resource.path);
         resourceCache.put(resource.path, placeholder);
         return placeholder;
+    }
+
+    @Nullable
+    RemoteResource _parent(String path) {
+        String parentPath = _parentPath(path);
+        return parentPath != null && provider.isLocal(parentPath)
+                ? (RemoteResource) resourceCache.get(parentPath) : null;
+    }
+
+    @Nullable
+    protected String _parentPath(@Nonnull final String path) {
+        if (StringUtils.isNotBlank(path)) {
+            int lastSlash = path.lastIndexOf('/');
+            if (lastSlash > 0) {
+                return path.substring(0, lastSlash);
+            }
+            if (!"/".equals(path)) {
+                return "/";
+            }
+        }
+        return null;
+    }
+
+    @Nonnull
+    protected String _pathName(@Nonnull final String path) {
+        int lastSlash = path.lastIndexOf('/');
+        if (lastSlash >= 0) {
+            return path.substring(lastSlash + 1);
+        }
+        return path;
     }
 
     @Nonnull
@@ -119,7 +179,7 @@ public class RemoteResolver implements ExtendedResolver {
     @Nonnull
     @Override
     public String map(@Nonnull String resourcePath) {
-        return provider.reader.getHttpUrl(provider.remotePath(resourcePath));
+        return provider.remoteReader.getHttpUrl(provider.remotePath(resourcePath));
     }
 
     @Nullable
@@ -131,7 +191,15 @@ public class RemoteResolver implements ExtendedResolver {
     @Nullable
     @Override
     public Resource getResource(@Nonnull final String path) {
-        Resource resource = _resolve(path);
+        Resource resource;
+        RemoteResource parent = _parent(path);
+        // try to use a loaded parent to optimize caching
+        if (parent != null) {
+            resource = parent.getChild(_pathName(path));
+        } else {
+            resource = _resolve(path);
+        }
+        // if the resource can't be resolved 'non existing' is cached...
         return resource instanceof RemoteResource.NonExisting ? null : resource;
     }
 
@@ -150,8 +218,8 @@ public class RemoteResolver implements ExtendedResolver {
     @Nullable
     @Override
     public Resource getParent(@Nonnull Resource child) {
-        String parentPath = StringUtils.substringBeforeLast(child.getPath(), "/");
-        return StringUtils.isNotBlank(parentPath) ? getResource(parentPath) : null;
+        String parentPath = _parentPath(child.getPath());
+        return parentPath != null ? getResource(parentPath) : null;
     }
 
     @Nonnull
@@ -242,10 +310,13 @@ public class RemoteResolver implements ExtendedResolver {
     @Override
     public void commit() throws PersistenceException {
         try {
-            provider.writer.commitChanges(changeSet);
+            provider.remoteWriter.commitChanges(changeSet);
         } catch (IOException ex) {
             LOG.error(ex.getMessage(), ex);
             throw new PersistenceException(ex.getMessage());
+        } finally {
+            changeSet.clear();
+            resourceCache.clear();
         }
     }
 
@@ -311,7 +382,8 @@ public class RemoteResolver implements ExtendedResolver {
             String name = StringUtils.isNotBlank(destChildName) ? destChildName : source.getName();
             if (destParent.getChild(name) == null || StringUtils.isNotBlank(order)) {
                 designated = new RemoteResource((RemoteResource) source, destParent.getPath() + "/" + name);
-                changeSet.addMove((RemoteResource) designated, _discard((RemoteResource) source), order);
+                changeSet.addMove((RemoteResource) designated, destParent.getChild(name) == null
+                        ? _discard((RemoteResource) source) : source, order);
             } else {
                 throw new PersistenceException("a resource with the designated name exsits already at destination");
             }

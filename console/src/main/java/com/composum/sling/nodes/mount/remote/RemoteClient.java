@@ -15,13 +15,19 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.jackrabbit.webdav.DavConstants;
+import org.apache.jackrabbit.webdav.client.methods.HttpPropfind;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public abstract class RemoteClient {
 
+    /**
+     * for simplified request parameter setup
+     */
     public static class Parameters extends ArrayList<NameValuePair> {
 
         public void add(String name, String value) {
@@ -82,16 +88,26 @@ public abstract class RemoteClient {
         return httpClient;
     }
 
-    protected String getAuthHeader() {
+    /**
+     * @return the explicit header value for preemptive authentication
+     */
+    private String getAuthHeader() {
         String auth = username + ":" + password;
         byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.ISO_8859_1));
         return "Basic " + new String(encodedAuth);
     }
 
+    /**
+     * general request header initialization
+     */
     protected void setupMethod(HttpRequestBase request) {
         request.setHeader(HttpHeaders.AUTHORIZATION, getAuthHeader());
         request.addHeader("X-SLING-REMOTE", provider.localRoot);
     }
+
+    //
+    // general method object builder methods...
+    //
 
     protected HttpHead buildHttpHead(@Nonnull final String url) {
         HttpHead method = new HttpHead(url);
@@ -103,6 +119,13 @@ public abstract class RemoteClient {
         HttpGet method = new HttpGet(url);
         setupMethod(method);
         return method;
+    }
+
+    protected HttpPropfind buildPropfind(@Nonnull final String url)
+            throws IOException {
+        HttpPropfind davFind = new HttpPropfind(url, DavConstants.PROPFIND_ALL_PROP, DavConstants.DEPTH_1);
+        setupMethod(davFind);
+        return davFind;
     }
 
     protected HttpPost buildHttpPost(@Nonnull final String url) {

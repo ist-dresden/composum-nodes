@@ -24,8 +24,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * A remote resource provider enables the mounting of a remote Sling system via HTTP based on
+ * the JSON data rendered by default Sling GET servlet. The CRUD operations to manipulate the
+ * remote resources are using the default Sling POST servlet.
+ */
 @Component(
-        name = "com.composum.sling.nodes.remote.resolver.RemoteProvider",
+        name = "com.composum.sling.nodes.mount.remote.RemoteProvider",
         service = ResourceProvider.class,
         configurationPolicy = ConfigurationPolicy.REQUIRE,
         property = {
@@ -40,27 +45,48 @@ public class RemoteProvider extends ResourceProvider<Object> {
     @ObjectClassDefinition(name = "Composum Nodes Remote Resource Provider")
     public @interface Config {
 
-        @AttributeDefinition(name = "Provider Root")
+        @AttributeDefinition(
+                name = "Provider Root",
+                description = "the mount point of the remote tree in the local resource hierarchy"
+        )
         String provider_root();
 
-        @AttributeDefinition(name = "Resolver Search Path")
+        @AttributeDefinition(
+                name = "Resolver Search Path",
+                description = "the resolver search path used by the remote system mapped to the local tree; use ${root} as placeholder for the provider root path"
+        )
         String[] resolver_search_path() default {
                 "${root}/apps/",
                 "${root}/libs/"
         };
 
-        @AttributeDefinition(name = "Ignored Path Patterns")
+        @AttributeDefinition(
+                name = "Ignored Path Patterns",
+                description = "the set of path patterns in the local tree which should be ignored by this provider"
+        )
         String[] ignored_patterns() default {
-                "^/mnt/.*$"
+                "^/mnt(/.*)?$",
+                "^${root}/mnt(/.*)?$",
+                "^${root}/(api|bin|index|is|resource-status)$",
+                "^${root}(/system/sling)?/login[^/]*$",
+                "^${root}(/.*)?/[^/]+\\.servlet$"
         };
 
-        @AttributeDefinition(name = "Remote HTTP URL")
+        @AttributeDefinition(
+                name = "Remote HTTP URL",
+                description = "the URL to access the remote system (the HTTP URL of the remote repository root)"
+        )
         String remote_url_http();
 
-        @AttributeDefinition(name = "Username")
+        @AttributeDefinition(
+                name = "Username"
+        )
         String login_username();
 
-        @AttributeDefinition(name = "Password", type = AttributeType.PASSWORD)
+        @AttributeDefinition(
+                name = "Password",
+                type = AttributeType.PASSWORD
+        )
         String login_password();
 
         @AttributeDefinition()
@@ -75,8 +101,8 @@ public class RemoteProvider extends ResourceProvider<Object> {
     protected String[] searchPath;
     protected List<Pattern> ignoredPathPatterns;
 
-    protected RemoteReader reader;
-    protected RemoteWriter writer;
+    protected RemoteReader remoteReader;
+    protected RemoteWriter remoteWriter;
 
     @Activate
     protected void activate(final BundleContext bundleContext, final Config config) {
@@ -91,16 +117,16 @@ public class RemoteProvider extends ResourceProvider<Object> {
         for (String rule : config.ignored_patterns()) {
             ignoredPathPatterns.add(Pattern.compile(rule.replaceAll("\\$\\{root}", localRoot)));
         }
-        reader = new RemoteReader(this, config.remote_url_http(),
+        remoteReader = new RemoteReader(this, config.remote_url_http(),
                 config.login_username(), config.login_password());
-        writer = new RemoteWriter(this, config.remote_url_http(),
+        remoteWriter = new RemoteWriter(this, config.remote_url_http(),
                 config.login_username(), config.login_password());
     }
 
     @Deactivate
     protected void deactivate() {
-        writer = null;
-        reader = null;
+        remoteWriter = null;
+        remoteReader = null;
         ignoredPathPatterns = null;
         searchPath = null;
         localRoot = null;
