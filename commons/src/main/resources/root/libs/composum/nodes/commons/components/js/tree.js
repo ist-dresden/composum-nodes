@@ -84,7 +84,8 @@
             'assetcontent': {'icon': 'fa fa-picture-o text-muted'},
             'file-binary': {'icon': 'fa fa-file-o text-info'},
             'resource-binary': {'icon': 'fa fa-file-o text-muted'},
-            'resource-syntheticresourceproviderresource': {'icon': 'fa fa-code text-muted'}
+            'resource-syntheticresourceproviderresource': {'icon': 'fa fa-code text-muted'},
+            'clientlibraryfolder': {'icon': 'fa fa-share-square-o'}
         };
 
         /**
