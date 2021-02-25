@@ -23,6 +23,7 @@
             'folder': {'icon': 'fa fa-folder-o'},
             'resource-folder': {'icon': 'fa fa-folder-o'},
             'orderedfolder': {'icon': 'fa fa-folder text-muted'},
+            'registry': {'icon': 'fa fa-database text-muted'},
             'package': {'icon': 'fa fa-file-archive-o'},
             'resource-package': {'icon': 'fa fa-file-archive-o'},
             'tenant': {'icon': 'fa fa-university text-info'},
@@ -83,7 +84,8 @@
             'assetcontent': {'icon': 'fa fa-picture-o text-muted'},
             'file-binary': {'icon': 'fa fa-file-o text-info'},
             'resource-binary': {'icon': 'fa fa-file-o text-muted'},
-            'resource-syntheticresourceproviderresource': {'icon': 'fa fa-code text-muted'}
+            'resource-syntheticresourceproviderresource': {'icon': 'fa fa-code text-muted'},
+            'clientlibraryfolder': {'icon': 'fa fa-share-square-o'}
         };
 
         /**

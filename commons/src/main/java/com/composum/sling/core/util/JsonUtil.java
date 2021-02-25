@@ -45,6 +45,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 
@@ -264,6 +265,7 @@ public class JsonUtil {
                                         @Nonnull final Resource resource, MappingRules mapping)
             throws RepositoryException, IOException {
 
+        String path = resource.getPath();
         Node node = resource.adaptTo(Node.class);
 
         // property collection for a sorted output
@@ -294,10 +296,10 @@ public class JsonUtil {
                 Object value = entry.getValue();
                 if (value instanceof Property) {
                     Property property = (Property) value;
-                    writeJsonProperty(resource.getResourceResolver(), writer, node, property, mapping);
+                    writeJsonProperty(resource, writer, property, mapping);
                 } else {
                     // if no node exists (synthetic resource) the properties are simple values
-                    writeJsonProperty(resource.getResourceResolver(), writer, name, value, mapping);
+                    writeJsonProperty(resource, writer, name, value, mapping);
                 }
             }
         }
@@ -309,10 +311,6 @@ public class JsonUtil {
     /**
      * Writes the names of all children (except the 'jcr:content' child) into one array value
      * named '_child_order_' as a hint to recalculate the original order of the children.
-     *
-     * @param writer
-     * @param resource
-     * @throws IOException
      */
     public static void exportChildOrderProperty(JsonWriter writer, Resource resource)
             throws IOException {
@@ -343,11 +341,7 @@ public class JsonUtil {
     protected static final Gson GSON = JsonUtil.GSON_BUILDER.create();
 
     /**
-     * @param reader
-     * @param resolver
-     * @param path
-     * @throws RepositoryException
-     * @throws IOException
+     *
      */
     public static Resource importJson(JsonReader reader, ResourceResolver resolver, String path)
             throws RepositoryException, IOException {
@@ -355,18 +349,13 @@ public class JsonUtil {
     }
 
     /**
-     * @param reader
-     * @param resolver
-     * @param path
-     * @param mapping
-     * @throws RepositoryException
-     * @throws IOException
+     *
      */
     public static Resource importJson(JsonReader reader, ResourceResolver resolver,
                                       String path, MappingRules mapping)
             throws RepositoryException, IOException {
 
-        Session session = resolver.adaptTo(Session.class);
+        Session session = Objects.requireNonNull(resolver.adaptTo(Session.class));
         ValueFactory factory = session.getValueFactory();
 
         Resource resource = resolver.getResource(path);
@@ -451,7 +440,7 @@ public class JsonUtil {
                                 property.value = values.toArray();
                                 property.multi = true;
                             } else {
-                                while ((token = reader.peek()) != JsonToken.END_ARRAY) {
+                                while (reader.peek() != JsonToken.END_ARRAY) {
                                     reader.nextString();
                                 }
                             }
@@ -487,18 +476,16 @@ public class JsonUtil {
             Node node = resource.adaptTo(Node.class);
             if (node != null && !node.isNew()) {
                 // remove all properties not included in JSON object if 'update' rule is specified
-                if (node != null) {
-                    PropertyIterator iterator = node.getProperties();
-                    while (iterator.hasNext()) {
-                        Property property = iterator.nextProperty();
-                        String propertyName = property.getName();
-                        if (propertiesSet.get(propertyName) == null
-                                && mapping.importPropertyFilter.accept(propertyName)) {
-                            try {
-                                node.setProperty(propertyName, (Value) null);
-                            } catch (ValueFormatException vfex) {
-                                node.setProperty(propertyName, (Value[]) null);
-                            }
+                PropertyIterator iterator = node.getProperties();
+                while (iterator.hasNext()) {
+                    Property property = iterator.nextProperty();
+                    String propertyName = property.getName();
+                    if (propertiesSet.get(propertyName) == null
+                            && mapping.importPropertyFilter.accept(propertyName)) {
+                        try {
+                            node.setProperty(propertyName, (Value) null);
+                        } catch (ValueFormatException vfex) {
+                            node.setProperty(propertyName, (Value[]) null);
                         }
                     }
                 }
@@ -524,14 +511,6 @@ public class JsonUtil {
      * Uses the 'jcr:mixinTypes' property to set up the mixin types of the node
      * before the other properties are set (it's important that all main type settings
      * are done before the properties are set to avoid constraint violations).
-     *
-     * @param resolver
-     * @param path
-     * @param propertiesSet
-     * @param factory
-     * @param mapping
-     * @return
-     * @throws RepositoryException
      */
     public static Resource createResource(ResourceResolver resolver, String path,
                                           Map<String, JsonProperty> propertiesSet,
@@ -569,11 +548,9 @@ public class JsonUtil {
      * @param reader the reader with the JSON stream
      * @param name   the already parsed name of the property
      * @return a new JsonProperty object with the name, type, and value set
-     * @throws RepositoryException
-     * @throws IOException
      */
     public static JsonProperty parseJsonProperty(JsonReader reader, String name)
-            throws RepositoryException, IOException {
+            throws IOException {
         JsonToken token = reader.peek();
         JsonProperty property = new JsonProperty();
         property.name = name;
@@ -603,11 +580,6 @@ public class JsonUtil {
      * The parser for a JSON string value with an optional type hint ('{type}...') as the values prefix.
      * Sets the value and type of the property POJO and returns the string value without the type.
      * This is used for single property values and also for multiple values (in the array loop).
-     *
-     * @param reader
-     * @param property
-     * @return
-     * @throws IOException
      */
     public static String parseJsonString(JsonReader reader, JsonProperty property) throws IOException {
         if (property.type == null) {
@@ -642,7 +614,6 @@ public class JsonUtil {
      * @param resource the resource which stores the property
      * @param property the JSON POJO for the property
      * @param mapping  the change rules for merging with existing values
-     * @throws RepositoryException
      */
     public static boolean importJsonProperty(ValueFactory factory, Resource resource,
                                              JsonProperty property, MappingRules mapping)
@@ -679,9 +650,9 @@ public class JsonUtil {
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonProperties(@Nullable final ResourceResolver resolver,
-                                           JsonWriter writer, StringFilter filter,
-                                           Node node, MappingRules mapping)
+    public static void writeJsonProperties(@Nonnull final Resource resource, @Nonnull final JsonWriter writer,
+                                           @Nonnull final StringFilter filter, @Nullable final Node node,
+                                           @Nonnull final MappingRules mapping)
             throws RepositoryException, IOException {
         if (node != null) {
             TreeMap<String, Property> sortedProperties = new TreeMap<>();
@@ -699,7 +670,7 @@ public class JsonUtil {
                 writer.beginArray();
             }
             for (Map.Entry<String, Property> entry : sortedProperties.entrySet()) {
-                writeJsonProperty(resolver, writer, node, entry.getValue(), mapping);
+                writeJsonProperty(resource, writer, entry.getValue(), mapping);
             }
             if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value) {
                 writer.endObject();
@@ -718,15 +689,13 @@ public class JsonUtil {
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonValueMap(@Nullable final ResourceResolver resolver,
-                                         JsonWriter writer, StringFilter filter,
-                                         ValueMap values, MappingRules mapping)
+    public static void writeJsonValueMap(@Nonnull final Resource resource, @Nonnull final JsonWriter writer,
+                                         @Nonnull final StringFilter filter, @Nullable final ValueMap values,
+                                         @Nonnull final MappingRules mapping)
             throws RepositoryException, IOException {
         if (values != null) {
             TreeMap<String, Object> sortedProperties = new TreeMap<>();
-            Iterator<Map.Entry<String, Object>> iterator = values.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<String, Object> entry = iterator.next();
+            for (Map.Entry<String, Object> entry : values.entrySet()) {
                 String key = entry.getKey();
                 if (filter.accept(key)) {
                     sortedProperties.put(key, entry.getValue());
@@ -738,7 +707,7 @@ public class JsonUtil {
                 writer.beginArray();
             }
             for (Map.Entry<String, Object> entry : sortedProperties.entrySet()) {
-                writeJsonProperty(resolver, writer, entry.getKey(), entry.getValue(), mapping);
+                writeJsonProperty(resource, writer, entry.getKey(), entry.getValue(), mapping);
             }
             if (mapping.propertyFormat.scope == MappingRules.PropertyFormat.Scope.value) {
                 writer.endObject();
@@ -757,9 +726,8 @@ public class JsonUtil {
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonProperty(@Nullable final ResourceResolver resolver,
-                                         JsonWriter writer, Node node,
-                                         Property property, MappingRules mapping)
+    public static void writeJsonProperty(@Nonnull final Resource resource, @Nonnull final JsonWriter writer,
+                                         @Nullable final Property property, @Nonnull final MappingRules mapping)
             throws RepositoryException, IOException {
         if (property != null &&
                 (PropertyType.BINARY != property.getType() ||
@@ -777,7 +745,7 @@ public class JsonUtil {
             if (property.isMultiple()) {
                 writer.beginArray();
                 for (Value value : property.getValues()) {
-                    JsonUtil.writeJsonValue(resolver, writer, node, name, value, type, mapping);
+                    JsonUtil.writeJsonValue(resource, writer, name, value, type, mapping);
                     if (valueString != null) {
                         if (valueString.length() > 0) {
                             valueString.append(',');
@@ -788,7 +756,7 @@ public class JsonUtil {
                 writer.endArray();
             } else {
                 Value value = property.getValue();
-                JsonUtil.writeJsonValue(resolver, writer, node, name, value, type, mapping);
+                JsonUtil.writeJsonValue(resource, writer, name, value, type, mapping);
                 if (valueString != null) {
                     valueString.append(value.getString());
                 }
@@ -811,7 +779,7 @@ public class JsonUtil {
                         case PropertyType.PATH:
                         case PropertyType.REFERENCE:
                         case PropertyType.WEAKREFERENCE:
-                            target = getValueTarget(resolver, name, property.getString());
+                            target = getValueTarget(resource, name, property.getString());
                             break;
                     }
                     if (StringUtils.isNotBlank(target)) {
@@ -825,17 +793,10 @@ public class JsonUtil {
 
     /**
      * Writes a resource property (without node - probably synthetic resource)
-     *
-     * @param writer
-     * @param name
-     * @param value
-     * @param mapping
-     * @throws RepositoryException
-     * @throws IOException
      */
-    public static void writeJsonProperty(@Nullable final ResourceResolver resolver,
-                                         JsonWriter writer, String name,
-                                         Object value, MappingRules mapping)
+    public static void writeJsonProperty(@Nonnull final Resource resource, @Nonnull final JsonWriter writer,
+                                         @Nullable final String name, @Nullable final Object value,
+                                         @Nonnull final MappingRules mapping)
             throws RepositoryException, IOException {
         if (name != null && value != null) {
             int type = PropertyType.STRING;
@@ -849,6 +810,8 @@ public class JsonUtil {
                 type = PropertyType.DECIMAL;
             } else if (value instanceof Calendar) {
                 type = PropertyType.DATE;
+            } else if (value instanceof InputStream) {
+                type = PropertyType.BINARY;
             }
             if (mapping.propertyFormat.scope != MappingRules.PropertyFormat.Scope.value) {
                 writer.beginObject();
@@ -863,17 +826,17 @@ public class JsonUtil {
             if (isMultiple) {
                 writer.beginArray();
                 for (Object val : (Object[]) value) {
-                    JsonUtil.writeJsonValue(resolver, writer, null, name, val, type, mapping);
+                    JsonUtil.writeJsonValue(resource, writer, name, val, type, mapping);
                 }
                 writer.endArray();
             } else {
-                JsonUtil.writeJsonValue(resolver, writer, null, name, value, type, mapping);
+                JsonUtil.writeJsonValue(resource, writer, name, value, type, mapping);
             }
             if (mapping.propertyFormat.scope != MappingRules.PropertyFormat.Scope.value) {
                 writer.name("type").value(PropertyType.nameFromValue(type));
                 writer.name("multi").value(isMultiple);
                 if (!isMultiple && type == PropertyType.STRING) {
-                    String target = getValueTarget(resolver, name, value.toString());
+                    String target = getValueTarget(resource, name, value.toString());
                     if (StringUtils.isNotBlank(target)) {
                         writer.name("target").value(target);
                     }
@@ -883,21 +846,25 @@ public class JsonUtil {
         }
     }
 
-    public static String getValueTarget(@Nullable final ResourceResolver resourceResolver,
+    public static String getValueTarget(@Nullable final Resource resource,
                                         @Nullable final String name,
                                         @Nullable final String value) {
-        if (resourceResolver != null && StringUtils.isNotBlank(value)) {
-            Resource target = resourceResolver.getResource(value);
-            if (target != null) {
-                return target.getPath();
+        if (resource != null && StringUtils.isNotBlank(value)) {
+            ResourceResolver resolver = resource.getResourceResolver();
+            Resource target;
+            if (value.startsWith("/")) {
+                target = resolver.getResource(value);
+                if (target != null) {
+                    return target.getPath();
+                }
             }
             if (StringUtils.isNotBlank(name)) {
                 switch (name) {
                     case PROP_RESOURCE_TYPE:
                     case PROP_RESOURCE_SUPER_TYPE:
                         if (!value.startsWith("/")) {
-                            for (String root : resourceResolver.getSearchPath()) {
-                                target = resourceResolver.getResource(root + value);
+                            for (String root : resolver.getSearchPath()) {
+                                target = resolver.getResource(root + value);
                                 if (target != null) {
                                     return target.getPath();
                                 }
@@ -913,7 +880,7 @@ public class JsonUtil {
                     case PROP_PREDECESSORS:
                     case PROP_SUCCESSORS:
                     default:
-                        Session session = resourceResolver.adaptTo(Session.class);
+                        Session session = resolver.adaptTo(Session.class);
                         if (session != null) {
                             try {
                                 Node node = session.getNodeByIdentifier(value);
@@ -940,37 +907,39 @@ public class JsonUtil {
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonValue(@Nullable final ResourceResolver resolver,
-                                      JsonWriter writer, Node node, String name, Object value,
-                                      Integer type, MappingRules mapping)
+    public static void writeJsonValue(@Nonnull final Resource resource, @Nonnull final JsonWriter writer,
+                                      @Nonnull final String name, @Nonnull final Object value,
+                                      @Nonnull final Integer type, @Nonnull final MappingRules mapping)
             throws RepositoryException, IOException {
         Value jcrValue = value instanceof Value ? (Value) value : null;
         switch (type) {
             case PropertyType.BINARY:
-                if (node != null && jcrValue != null) {
-                    if (mapping.propertyFormat.binary == MappingRules.PropertyFormat.Binary.link) {
-                        String uri = "/bin/cpm/nodes/property.bin"
-                                + LinkUtil.encodePath(node.getPath())
-                                + "?name=" + UrlCodec.QUERYPART.encode(name);
-                        boolean htmlSafe = writer.isHtmlSafe();
-                        writer.setHtmlSafe(false);
-                        writer.value(uri);
-                        writer.setHtmlSafe(htmlSafe);
-                    } else if (mapping.propertyFormat.binary == MappingRules.PropertyFormat.Binary.base64) {
+                if (mapping.propertyFormat.binary == MappingRules.PropertyFormat.Binary.link) {
+                    String uri = "/bin/cpm/nodes/property.bin"
+                            + LinkUtil.encodePath(resource.getPath())
+                            + "?name=" + UrlCodec.QUERYPART.encode(name);
+                    boolean htmlSafe = writer.isHtmlSafe();
+                    writer.setHtmlSafe(false);
+                    writer.value(uri);
+                    writer.setHtmlSafe(htmlSafe);
+                } else if (
+                        mapping.propertyFormat.binary == MappingRules.PropertyFormat.Binary.base64) {
+                    byte[] buffer = null;
+                    if (jcrValue != null) {
                         Binary binary = jcrValue.getBinary();
-                        byte[] buffer = IOUtils.toByteArray(binary.getStream());
-                        String encoded = Base64.encodeBase64String(buffer);
-                        writer.value(getValueString(encoded, type, mapping));
-                    } else {
-                        writer.nullValue();
+                        buffer = IOUtils.toByteArray(binary.getStream());
+                    } else if (value instanceof InputStream) {
+                        buffer = IOUtils.toByteArray((InputStream) value);
                     }
+                    String encoded = Base64.encodeBase64String(buffer != null ? buffer : new byte[0]);
+                    writer.value(getValueString(encoded, type, mapping));
                 } else {
                     writer.nullValue();
                 }
                 break;
             case PropertyType.BOOLEAN:
                 writer.value(jcrValue != null ? jcrValue.getBoolean()
-                        : (value instanceof Boolean ? (Boolean) value : Boolean.valueOf(value.toString())));
+                        : (value instanceof Boolean ? (Boolean) value : Boolean.parseBoolean(value.toString())));
                 break;
             case PropertyType.DATE:
                 Calendar cal = jcrValue != null ? jcrValue.getDate()
@@ -1034,11 +1003,6 @@ public class JsonUtil {
 
     /**
      * Embeds the property type in the string value if the formats scope is 'value'.
-     *
-     * @param value
-     * @param type
-     * @param mapping
-     * @return
      */
     public static String getValueString(Object value, int type, MappingRules mapping) {
         String string = value.toString();
@@ -1053,9 +1017,7 @@ public class JsonUtil {
     // helper methos for general use
 
     /**
-     * @param writer
-     * @param values
-     * @throws IOException
+     *
      */
     public static void writeJsonArray(JsonWriter writer, String[] values) throws IOException {
         if (values != null) {
@@ -1068,9 +1030,7 @@ public class JsonUtil {
     }
 
     /**
-     * @param writer
-     * @param values
-     * @throws IOException
+     *
      */
     public static void writeJsonArray(JsonWriter writer, Iterator<String> values) throws IOException {
         if (values != null) {
@@ -1138,8 +1098,8 @@ public class JsonUtil {
                 if (jsonValues == null) {
                     if (property.value instanceof List) {
                         // if the value is already a multi value use this directly
-                        List<Object> list = (List<Object>) property.value;
-                        jsonValues = list.toArray(new Object[list.size()]);
+                        List<?> list = (List<?>) property.value;
+                        jsonValues = list.toArray(new Object[0]);
                     } else {
                         // make a multi value by splitting the string using a comma as delimiter
                         jsonValues = property.value != null
@@ -1178,12 +1138,13 @@ public class JsonUtil {
                 String stringValue;
                 if (property.value instanceof List) {
                     // if the value was a multi value before join this to one string
+                    //noinspection unchecked
                     stringValue = StringUtils.join((List<String>) property.value, ',');
                 } else {
                     stringValue = property.value != null ? property.value.toString() : null;
                 }
 
-                Value value = null;
+                Value value;
                 try {
                     value = makeJcrValue(node, type, stringValue, mapping);
                 } catch (PropertyValueFormatException pfex) {
@@ -1218,7 +1179,6 @@ public class JsonUtil {
      * @param object the value in the right type or a string representation of the value,
      *               for binary values a input stream can be used as parameter or a string
      *               with the base64 encoded data for the binary property
-     * @return
      */
     public static Value makeJcrValue(Node node, int type, Object object,
                                      MappingRules mapping)
@@ -1293,5 +1253,84 @@ public class JsonUtil {
             }
         }
         return value;
+    }
+
+    /**
+     * Create a JCR value from string value for the designated JCR type.
+     *
+     * @param type  the JCR type according to the types declared in PropertyType
+     * @param value the value in the right type or a string representation of the value,
+     *              for binary values a input stream can be used as parameter or a string
+     *              with the base64 encoded data for the binary property
+     */
+    public static Object makeValueObject(int type, Object value) {
+        MappingRules mapping = MappingRules.getDefaultMappingRules();
+        Object object = null;
+        if (value != null) {
+            if (value instanceof Collection) {
+                @SuppressWarnings("rawtypes")
+                Collection<?> collection = (Collection) value;
+                Object[] multi = new Object[collection.size()];
+                Iterator<?> it = collection.iterator();
+                for (int i = 0; i < collection.size(); i++) {
+                    multi[i] = makeValueObject(type, it.next());
+                }
+                object = multi;
+            } else if (value instanceof Object[]) {
+                Object[] array = (Object[]) value;
+                Object[] multi = new Object[array.length];
+                for (int i = 0; i < array.length; i++) {
+                    multi[i] = makeValueObject(type, array[i]);
+                }
+                object = multi;
+            } else {
+                switch (type) {
+                    case PropertyType.BINARY:
+                        if (value instanceof InputStream) {
+                            object = value;
+                        } else if (value instanceof String) {
+                            byte[] decoded = Base64.decodeBase64(value.toString());
+                            object = new ByteArrayInputStream(decoded);
+                        }
+                        break;
+                    case PropertyType.BOOLEAN:
+                        object = value instanceof Boolean ? (Boolean) value : Boolean.parseBoolean(value.toString());
+                        break;
+                    case PropertyType.DATE:
+                        Date date = value instanceof Date ? (Date) value : null;
+                        if (date == null) {
+                            date = mapping.dateParser.parse(value.toString());
+                        }
+                        if (date != null) {
+                            GregorianCalendar cal = new GregorianCalendar();
+                            cal.setTime(date);
+                            object = cal;
+                        } else {
+                            throw new IllegalArgumentException("invalid date/time value: " + value);
+                        }
+                        break;
+                    case PropertyType.DECIMAL:
+                        object = value instanceof BigDecimal ? (BigDecimal) value : new BigDecimal(value.toString());
+                        break;
+                    case PropertyType.DOUBLE:
+                        object = value instanceof Double ? (Double) value : Double.parseDouble(value.toString());
+                        break;
+                    case PropertyType.LONG:
+                        object = value instanceof Long ? (Long) value : Long.parseLong(value.toString());
+                        break;
+                    case PropertyType.REFERENCE:
+                    case PropertyType.WEAKREFERENCE:
+                    case PropertyType.NAME:
+                    case PropertyType.PATH:
+                    case PropertyType.STRING:
+                    case PropertyType.URI:
+                        object = value.toString();
+                        break;
+                    case PropertyType.UNDEFINED:
+                        break;
+                }
+            }
+        }
+        return object;
     }
 }

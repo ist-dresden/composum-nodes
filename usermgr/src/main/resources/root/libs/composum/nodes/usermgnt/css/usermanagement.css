@@ -2,10 +2,14 @@
  * Query Panel
  */
 
+#usermanagement-query .query-panel .query-result td.icon {
+    padding: 7px 5px 7px 10px !important;
+    text-align: center;
+}
+
 #usermanagement-query .query-result .systemuser {
     color: #a94442;
 }
-
 
 /******/
 
