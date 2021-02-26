@@ -142,7 +142,7 @@ public class NodeServlet extends NodeTreeServlet {
     /**
      * injection of the filter configurations provided by the OSGi configuration
      */
-    protected volatile List<FilterConfiguration> filterConfigurations;
+    protected List<FilterConfiguration> filterConfigurations = new ArrayList<>();
 
     /**
      * for each configured filter in the OSGi configuration
@@ -154,9 +154,6 @@ public class NodeServlet extends NodeTreeServlet {
             cardinality = ReferenceCardinality.MULTIPLE,
             policy = ReferencePolicy.DYNAMIC)
     protected synchronized void bindFilterConfiguration(final FilterConfiguration config) {
-        if (filterConfigurations == null) {
-            filterConfigurations = new ArrayList<>();
-        }
         filterConfigurations.add(config);
         if (nodesConfig != null) { // initialize on bind if activated already
             String key = config.getName();
@@ -179,7 +176,7 @@ public class NodeServlet extends NodeTreeServlet {
     }
 
     @Activate
-    protected void activate() {
+    protected synchronized void activate() {
         // initialize configurartions bound before activation
         for (FilterConfiguration config : filterConfigurations) {
             String key = config.getName();
@@ -191,8 +188,9 @@ public class NodeServlet extends NodeTreeServlet {
     }
 
     @Deactivate
-    protected void deactivate() {
+    protected synchronized void deactivate() {
         nodeFilters.clear();
+        filterConfigurations.clear();
     }
 
     /**
