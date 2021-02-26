@@ -89,6 +89,17 @@ public class RemoteProvider extends ResourceProvider<Object> {
         )
         String login_password();
 
+        @AttributeDefinition(
+                name = "Preemptive Basic Auth"
+        )
+        boolean login_basic_preemptive();
+
+        @AttributeDefinition(
+                name = "HTTP Request Headers",
+                description = "request headers to use: <name>=<value>"
+        )
+        String[] request_headers();
+
         @AttributeDefinition()
         String webconsole_configurationFactory_nameHint()
                 default "local: {provider.root}, remote: {remote.url.http}";

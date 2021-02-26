@@ -2,6 +2,7 @@ package com.composum.sling.nodes.mount.remote;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthScope;
@@ -101,8 +102,13 @@ public abstract class RemoteClient {
      * general request header initialization
      */
     protected void setupMethod(HttpRequestBase request) {
-        request.setHeader(HttpHeaders.AUTHORIZATION, getAuthHeader());
-        request.addHeader("X-SLING-REMOTE", provider.localRoot);
+        if (provider.config.login_basic_preemptive()) {
+            request.setHeader(HttpHeaders.AUTHORIZATION, getAuthHeader());
+        }
+        for (String header : provider.config.request_headers()) {
+            String[] parts = StringUtils.split(header, "=", 2);
+            request.addHeader(parts[0], parts.length > 1 ? parts[1] : "");
+        }
     }
 
     //
