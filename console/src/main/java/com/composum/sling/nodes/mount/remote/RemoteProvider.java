@@ -92,7 +92,7 @@ public class RemoteProvider extends ResourceProvider<Object> {
         @AttributeDefinition(
                 name = "Preemptive Basic Auth"
         )
-        boolean login_basic_preemptive();
+        boolean login_basic_preemptive() default true;
 
         @AttributeDefinition(
                 name = "HTTP Request Headers",

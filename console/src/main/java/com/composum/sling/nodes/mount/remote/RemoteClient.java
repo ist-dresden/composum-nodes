@@ -1,40 +1,22 @@
 package com.composum.sling.nodes.mount.remote;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
-import org.apache.http.NameValuePair;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.jackrabbit.webdav.DavConstants;
 import org.apache.jackrabbit.webdav.client.methods.HttpPropfind;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 
 public abstract class RemoteClient {
-
-    /**
-     * for simplified request parameter setup
-     */
-    public static class Parameters extends ArrayList<NameValuePair> {
-
-        public void add(String name, String value) {
-            add(new BasicNameValuePair(name, value));
-        }
-    }
 
     @Nonnull
     protected final RemoteProvider provider;
@@ -75,18 +57,11 @@ public abstract class RemoteClient {
      */
     @Nonnull
     protected HttpClient buildClient() {
-        CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
+        //CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        //credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
         return HttpClientBuilder.create()
-                .setDefaultCredentialsProvider(credentialsProvider)
+                //.setDefaultCredentialsProvider(credentialsProvider)
                 .build();
-    }
-
-    protected org.apache.commons.httpclient.HttpClient buildCommonsClient() {
-        org.apache.commons.httpclient.HttpClient httpClient = new org.apache.commons.httpclient.HttpClient();
-        httpClient.getState().setCredentials(org.apache.commons.httpclient.auth.AuthScope.ANY,
-                new org.apache.commons.httpclient.UsernamePasswordCredentials(username, password));
-        return httpClient;
     }
 
     /**
@@ -106,8 +81,10 @@ public abstract class RemoteClient {
             request.setHeader(HttpHeaders.AUTHORIZATION, getAuthHeader());
         }
         for (String header : provider.config.request_headers()) {
-            String[] parts = StringUtils.split(header, "=", 2);
-            request.addHeader(parts[0], parts.length > 1 ? parts[1] : "");
+            if (StringUtils.isNotBlank(header)) {
+                String[] parts = StringUtils.split(header, "=", 2);
+                request.addHeader(parts[0], parts.length > 1 ? parts[1] : "");
+            }
         }
     }
 
@@ -138,12 +115,5 @@ public abstract class RemoteClient {
         HttpPost method = new HttpPost(url);
         setupMethod(method);
         return method;
-    }
-
-    protected PostMethod buildPostMethod(@Nonnull final String url) {
-        PostMethod postMethod = new PostMethod(url);
-        postMethod.addRequestHeader(HttpHeaders.AUTHORIZATION, getAuthHeader());
-        postMethod.addRequestHeader("X-SLING-REMOTE", provider.localRoot);
-        return postMethod;
     }
 }
