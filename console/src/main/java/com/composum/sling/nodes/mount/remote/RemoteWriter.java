@@ -1,20 +1,17 @@
 package com.composum.sling.nodes.mount.remote;
 
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.multipart.ByteArrayPartSource;
-import org.apache.commons.httpclient.methods.multipart.FilePart;
-import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
-import org.apache.commons.httpclient.methods.multipart.Part;
-import org.apache.commons.httpclient.methods.multipart.StringPart;
-import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.ContentBody;
+import org.apache.http.entity.mime.content.InputStreamBody;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
@@ -29,7 +26,6 @@ import javax.jcr.PropertyType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,11 +33,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class RemoteWriter extends RemoteClient {
+public class RemoteWriter {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteWriter.class);
 
@@ -78,9 +73,9 @@ public class RemoteWriter extends RemoteClient {
         }
 
         public void addUpload(@Nonnull final RemoteResource resource, @Nonnull final InputStream content,
-                              @Nullable final String filename, @Nullable final String contentType,
+                              @Nullable final String filename, @Nullable final String mimeType,
                               @Nullable final String charset) {
-            put(resource.getPath(), new ResourceUpload(resource, content, filename, contentType, charset));
+            put(resource.getPath(), new ResourceUpload(resource, content, filename, mimeType, charset));
         }
 
         public void addDelete(@Nonnull final RemoteResource resource) {
@@ -112,9 +107,20 @@ public class RemoteWriter extends RemoteClient {
         }
     }
 
-    public RemoteWriter(@Nonnull final RemoteProvider provider, @Nonnull final String httpUrl,
-                        @Nonnull final String username, @Nonnull final String password) {
-        super(provider, httpUrl, username, password);
+    /**
+     * for simplified request parameter setup
+     */
+    public static class Parameters extends ArrayList<NameValuePair> {
+
+        public void add(String name, String value) {
+            add(new BasicNameValuePair(name, value));
+        }
+    }
+
+    protected final RemoteProvider provider;
+
+    public RemoteWriter(@Nonnull final RemoteProvider provider) {
+        this.provider = provider;
     }
 
     public boolean commitChanges(@Nonnull final ChangeSet changeSet) throws IOException {
@@ -227,16 +233,16 @@ public class RemoteWriter extends RemoteClient {
 
         protected final InputStream content;
         protected final String filename;
-        protected final String contentType;
+        protected final String mimeType;
         protected final String charset;
 
         public ResourceUpload(@Nonnull final RemoteResource resource, @Nonnull final InputStream content,
-                              @Nullable final String filename, @Nullable final String contentType,
+                              @Nullable final String filename, @Nullable final String mimeType,
                               @Nullable final String charset) {
             super(resource);
             this.content = content;
             this.filename = filename;
-            this.contentType = contentType;
+            this.mimeType = mimeType;
             this.charset = charset;
             if (LOG.isDebugEnabled()) {
                 LOG.debug("upload({},{})...", resource.getPath(), filename);
@@ -252,12 +258,11 @@ public class RemoteWriter extends RemoteClient {
         @Override
         protected boolean commit(@Nonnull final RemoteWriter writer) throws IOException {
             String parentPath = StringUtils.substringBeforeLast(resource.getPath(), "/");
-            List<Part> parts = new ArrayList<>();
+            Map<String, ContentBody> parts = new LinkedHashMap<>();
             Parameters parameters = new Parameters();
-            parts.add(new FilePart(resource.getName(),
-                    new ByteArrayPartSource(filename != null ? filename : resource.getName(),
-                            IOUtils.toByteArray(content)), contentType,
-                    StringUtils.isNotBlank(charset) ? charset : StandardCharsets.UTF_8.name()));
+            ContentType contentType = ContentType.create(mimeType, StringUtils.isNotBlank(charset) ? charset : null);
+            parts.put(resource.getName(), new InputStreamBody(content, contentType,
+                    StringUtils.isNotBlank(filename) ? filename : resource.getName()));
             if (LOG.isInfoEnabled()) {
                 LOG.info("upload({})", resource.getPath());
             }
@@ -303,7 +308,7 @@ public class RemoteWriter extends RemoteClient {
 
         protected boolean commit(RemoteWriter writer, Parameters parameters)
                 throws IOException {
-            List<Part> parts = new ArrayList<>();
+            Map<String, ContentBody> parts = new LinkedHashMap<>();
             writer.buildForm(resource, parts, parameters);
             if (LOG.isDebugEnabled()) {
                 LOG.debug(getChangeType() + "({}): parts:{}, parameters:{}", resource.getPath(), parts.size(), parameters);
@@ -338,24 +343,19 @@ public class RemoteWriter extends RemoteClient {
     }
 
     public boolean postMultipart(@Nonnull final ResourceChange change, @Nullable final String path,
-                                 @Nonnull final List<Part> parts, @Nonnull final Parameters parameters) {
+                                 @Nonnull final Map<String, ContentBody> parts, @Nonnull final Parameters parameters) {
         boolean changesMade = false;
         if (parts.size() > 0 || parameters.size() > 0) {
+            MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
+            entityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+            for (Map.Entry<String, ContentBody> part : parts.entrySet()) {
+                entityBuilder.addPart(part.getKey(), part.getValue());
+            }
             for (NameValuePair param : parameters) {
-                parts.add(new StringPart(param.getName(), param.getValue(), "UTF-8"));
+                entityBuilder.addTextBody(param.getName(), param.getValue());
             }
-            HttpMethodParams params = new HttpMethodParams();
-            MultipartRequestEntity multipart = new MultipartRequestEntity(parts.toArray(new Part[0]), params);
-            org.apache.commons.httpclient.HttpClient httpClient = buildCommonsClient();
-            PostMethod postMethod = buildPostMethod(getHttpUrl(path != null ? path : change.resource.getPath()));
-            try {
-                postMethod.setRequestEntity(multipart);
-                int statusCode = httpClient.executeMethod(postMethod);
-                LOG.info("multipart({}): {}", postMethod.getURI(), statusCode);
-                changesMade = true;
-            } catch (IOException ex) {
-                LOG.error(ex.getMessage(), ex);
-            }
+            postEntity(change, path, entityBuilder.build());
+            changesMade = true;
         }
         return changesMade;
     }
@@ -363,11 +363,10 @@ public class RemoteWriter extends RemoteClient {
     public void postEntity(@Nonnull final ResourceChange change, @Nullable final String path,
                            @Nonnull final HttpEntity httpEntity) {
         try {
-            String url = getHttpUrl(path != null ? path : change.resource.path);
-            HttpClient httpClient = buildClient();
-            HttpPost httpPost = buildHttpPost(url);
+            String url = provider.remoteClient.getHttpUrl(path != null ? path : change.resource.path);
+            HttpPost httpPost = provider.remoteClient.buildHttpPost(url);
             httpPost.setEntity(httpEntity);
-            HttpResponse response = httpClient.execute(httpPost);
+            HttpResponse response = provider.remoteClient.execute(httpPost);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode == 200) {
                 LOG.debug(change.getChangeType() + ".POST({}): {}", httpPost.getURI(), statusCode);
@@ -393,8 +392,7 @@ public class RemoteWriter extends RemoteClient {
     ));
 
     protected void buildForm(@Nonnull final RemoteResource resource,
-                             @Nonnull final List<Part> parts, @Nonnull final Parameters parameters)
-            throws IOException {
+                             @Nonnull final Map<String, ContentBody> parts, @Nonnull final Parameters parameters) {
         ModifiableValueMap modified = resource.modifiedValues;
         if (modified != null) {
             Set<String> scanned = new HashSet<>();
@@ -423,12 +421,11 @@ public class RemoteWriter extends RemoteClient {
         }
     }
 
-    protected void addFormValue(@Nonnull final List<Part> parts, @Nonnull final Parameters parameters,
-                                @Nonnull final String name, @Nonnull Object value)
-            throws IOException {
+    protected void addFormValue(@Nonnull final Map<String, ContentBody> parts, @Nonnull final Parameters parameters,
+                                @Nonnull final String name, @Nonnull Object value) {
         if (value instanceof InputStream) {
             if (!(value instanceof RemoteReader.RemoteBinary)) {
-                parts.add(new FilePart(name, new ByteArrayPartSource(name, IOUtils.toByteArray((InputStream) value))));
+                parts.put(name, new InputStreamBody((InputStream) value, name));
             }
         } else if (value instanceof Object[]) {
             String propertyType = null;

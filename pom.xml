@@ -12,7 +12,7 @@
     <groupId>com.composum.nodes</groupId>
     <artifactId>composum-nodes</artifactId>
     <packaging>pom</packaging>
-    <version>2.4.1-SNAPSHOT</version>
+    <version>2.4.3-SNAPSHOT</version>
 
     <name>Composum Nodes Parent / Reactor</name>
     <description>Maven parent for Composum Sling Core bundles</description>
