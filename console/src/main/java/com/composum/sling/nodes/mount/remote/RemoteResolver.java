@@ -179,7 +179,7 @@ public class RemoteResolver implements ExtendedResolver {
     @Nonnull
     @Override
     public String map(@Nonnull String resourcePath) {
-        return provider.remoteReader.getHttpUrl(provider.remotePath(resourcePath));
+        return provider.remoteClient.getHttpUrl(provider.remotePath(resourcePath));
     }
 
     @Nullable

@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -37,7 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class RemoteWriter extends RemoteClient {
+public class RemoteWriter {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteWriter.class);
 
@@ -118,9 +117,10 @@ public class RemoteWriter extends RemoteClient {
         }
     }
 
-    public RemoteWriter(@Nonnull final RemoteProvider provider, @Nonnull final String httpUrl,
-                        @Nonnull final String username, @Nonnull final String password) {
-        super(provider, httpUrl, username, password);
+    protected final RemoteProvider provider;
+
+    public RemoteWriter(@Nonnull final RemoteProvider provider) {
+        this.provider = provider;
     }
 
     public boolean commitChanges(@Nonnull final ChangeSet changeSet) throws IOException {
@@ -363,11 +363,10 @@ public class RemoteWriter extends RemoteClient {
     public void postEntity(@Nonnull final ResourceChange change, @Nullable final String path,
                            @Nonnull final HttpEntity httpEntity) {
         try {
-            String url = getHttpUrl(path != null ? path : change.resource.path);
-            HttpClient httpClient = buildClient();
-            HttpPost httpPost = buildHttpPost(url);
+            String url = provider.remoteClient.getHttpUrl(path != null ? path : change.resource.path);
+            HttpPost httpPost = provider.remoteClient.buildHttpPost(url);
             httpPost.setEntity(httpEntity);
-            HttpResponse response = httpClient.execute(httpPost);
+            HttpResponse response = provider.remoteClient.execute(httpPost);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode == 200) {
                 LOG.debug(change.getChangeType() + ".POST({}): {}", httpPost.getURI(), statusCode);
