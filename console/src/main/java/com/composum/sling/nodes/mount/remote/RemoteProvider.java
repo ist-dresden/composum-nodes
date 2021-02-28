@@ -95,7 +95,7 @@ public class RemoteProvider extends ResourceProvider<Object> {
         )
         boolean proxy_system_default() default false;
 
-        /* request blocked if User-Agent has been set...
+        /* POST requests are blocked if User-Agent has been set to this default...
         @AttributeDefinition(
                 name = "User Agent"
         )
