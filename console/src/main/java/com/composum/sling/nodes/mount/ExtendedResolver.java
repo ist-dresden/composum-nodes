@@ -25,14 +25,14 @@ public interface ExtendedResolver extends ResourceResolver {
     /**
      * uploads the content of a file to update or create a file resource
      *
-     * @param absPath     the absolute path oof the file resource to update
-     * @param content     the new file content
-     * @param filename    the name of the uploaded file
-     * @param contentType the mime type of the content if known
-     * @param charset     the charset of the content
+     * @param absPath  the absolute path oof the file resource to update
+     * @param content  the new file content
+     * @param filename the name of the uploaded file
+     * @param mimeType the mime type of the content if known
+     * @param charset  the charset of the content
      */
     Resource upload(@Nonnull final String absPath, @Nonnull final InputStream content,
-                    @Nullable final String filename, @Nullable final String contentType,
+                    @Nullable final String filename, @Nullable final String mimeType,
                     @Nullable final String charset)
             throws PersistenceException;
 }

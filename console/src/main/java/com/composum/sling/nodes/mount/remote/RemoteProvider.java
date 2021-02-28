@@ -76,7 +76,7 @@ public class RemoteProvider extends ResourceProvider<Object> {
                 name = "Remote HTTP URL",
                 description = "the URL to access the remote system (the HTTP URL of the remote repository root)"
         )
-        String remote_url_http();
+        String remote_url();
 
         @AttributeDefinition(
                 name = "Username"
@@ -89,18 +89,38 @@ public class RemoteProvider extends ResourceProvider<Object> {
         )
         String login_password();
 
+        @AttributeDefinition(
+                name = "Use System Proxy",
+                description = "use the predefined proxy configuration of the host system"
+        )
+        boolean proxy_system_default() default false;
+
+        /* POST requests are blocked if User-Agent has been set to this default...
+        @AttributeDefinition(
+                name = "User Agent"
+        )
+        String header_user_agent() default "Mozilla/5.0 (Composum Nodes Remote)";
+        */
+
+        @AttributeDefinition(
+                name = "HTTP Request Headers",
+                description = "request headers to use: <name>=<value>"
+        )
+        String[] request_headers();
+
         @AttributeDefinition()
         String webconsole_configurationFactory_nameHint()
-                default "local: {provider.root}, remote: {remote.url.http}";
+                default "local: {provider.root}, remote: {remote.url}";
     }
 
     protected BundleContext bundleContext;
-    protected Config config;
+    private Config config;
 
     protected String localRoot;
     protected String[] searchPath;
     protected List<Pattern> ignoredPathPatterns;
 
+    protected RemoteClient remoteClient;
     protected RemoteReader remoteReader;
     protected RemoteWriter remoteWriter;
 
@@ -117,16 +137,16 @@ public class RemoteProvider extends ResourceProvider<Object> {
         for (String rule : config.ignored_patterns()) {
             ignoredPathPatterns.add(Pattern.compile(rule.replaceAll("\\$\\{root}", localRoot)));
         }
-        remoteReader = new RemoteReader(this, config.remote_url_http(),
-                config.login_username(), config.login_password());
-        remoteWriter = new RemoteWriter(this, config.remote_url_http(),
-                config.login_username(), config.login_password());
+        remoteClient = new RemoteClient(this, config);
+        remoteReader = new RemoteReader(this);
+        remoteWriter = new RemoteWriter(this);
     }
 
     @Deactivate
     protected void deactivate() {
         remoteWriter = null;
         remoteReader = null;
+        remoteClient = null;
         ignoredPathPatterns = null;
         searchPath = null;
         localRoot = null;
@@ -178,7 +198,7 @@ public class RemoteProvider extends ResourceProvider<Object> {
     @Override
     public Resource getResource(@Nonnull final ResolveContext<Object> ctx, @Nonnull final String path,
                                 @Nonnull final ResourceContext resourceContext, @Nullable final Resource parent) {
-        if (ignoreIt(path)) {
+        if (ignoreIt(path) || !remoteClient.isValid()) {
             return null;
         }
         RemoteResolver remoteResolver = new RemoteResolver(this, ctx.getResourceResolver());

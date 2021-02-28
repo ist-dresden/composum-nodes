@@ -179,7 +179,7 @@ public class RemoteResolver implements ExtendedResolver {
     @Nonnull
     @Override
     public String map(@Nonnull String resourcePath) {
-        return provider.remoteReader.getHttpUrl(provider.remotePath(resourcePath));
+        return provider.remoteClient.getHttpUrl(provider.remotePath(resourcePath));
     }
 
     @Nullable
@@ -397,7 +397,7 @@ public class RemoteResolver implements ExtendedResolver {
 
     @Override
     public Resource upload(@Nonnull final String absPath, @Nonnull final InputStream content,
-                           @Nullable final String filename, @Nullable final String contentType,
+                           @Nullable final String filename, @Nullable final String mimeType,
                            @Nullable final String charset)
             throws PersistenceException {
         Resource resource = getResource(absPath);
@@ -413,9 +413,9 @@ public class RemoteResolver implements ExtendedResolver {
             if (resource == null) {
                 resource = new RemoteResource(this, absPath);
             }
-            changeSet.addUpload((RemoteResource) resource, content, filename, contentType, charset);
+            changeSet.addUpload((RemoteResource) resource, content, filename, mimeType, charset);
         } else if (parentDelegate instanceof ExtendedResolver) {
-            resource = ((ExtendedResolver) parentDelegate).upload(absPath, content, filename, contentType, charset);
+            resource = ((ExtendedResolver) parentDelegate).upload(absPath, content, filename, mimeType, charset);
         } else {
             throw new PersistenceException("can't handle upload for resources out of the resolvers scope");
         }
