@@ -53,7 +53,7 @@ import static org.apache.jackrabbit.webdav.DavServletResponse.SC_MULTI_STATUS;
 /**
  * reads the resource data using default Sling GET servlet JSON requests
  */
-public class RemoteReader extends RemoteClient {
+public class RemoteReader  {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteReader.class);
 
@@ -62,9 +62,10 @@ public class RemoteReader extends RemoteClient {
     public static final Pattern DAV_HREF = Pattern.compile(
             "^((https?:)?//[^/]*)?(?<path>(?<parent>(/.*)?)?/(?<name>[^/]+))(?<folder>/)?$");
 
-    public RemoteReader(@Nonnull final RemoteProvider provider, @Nonnull final String httpUrl,
-                        @Nonnull final String username, @Nonnull final String password) {
-        super(provider, httpUrl, username, password);
+    protected final RemoteProvider provider;
+
+    public RemoteReader(@Nonnull final RemoteProvider provider) {
+        this.provider = provider;
     }
 
     /**
@@ -90,7 +91,7 @@ public class RemoteReader extends RemoteClient {
         resource.values = new ValueMapDecorator(new TreeMap<>());
         String path = resource.getPath();
         String logHint = null;
-        HttpClient httpClient = buildClient();
+        HttpClient httpClient = provider.remoteClient.buildClient();
         if (!provider.ignoreIt(path)) {
             int statusCode = remoteHttpPing(httpClient, resource);
             if (statusCode != SC_NOT_FOUND) {
@@ -125,8 +126,9 @@ public class RemoteReader extends RemoteClient {
 
     protected int remoteHttpPing(HttpClient httpClient, RemoteResource resource) {
         try {
-            HttpHead httpHead = buildHttpHead(getHttpUrl(resource.getPath()));
-            return httpClient.execute(httpHead).getStatusLine().getStatusCode();
+            String url = provider.remoteClient.getHttpUrl(resource.getPath());
+            HttpHead httpHead = provider.remoteClient.buildHttpHead(url);
+            return provider.remoteClient.execute(httpClient, httpHead).getStatusLine().getStatusCode();
         } catch (IOException ignore) {
             return SC_BAD_REQUEST;
         }
@@ -143,7 +145,7 @@ public class RemoteReader extends RemoteClient {
 
     @Nonnull
     public String getDavUrl(@Nonnull final String resourcePath) {
-        return getHttpUrl(resourcePath);
+        return provider.remoteClient.getHttpUrl(resourcePath);
     }
 
     /**
@@ -160,9 +162,9 @@ public class RemoteReader extends RemoteClient {
         String url = getDavUrl(resource);
         LOG.debug("loadDAV({}) - '{}'", resource.getPath(), url);
         try {
-            HttpPropfind davGet = buildPropfind(url);
+            HttpPropfind davGet = provider.remoteClient.buildPropfind(url);
             try {
-                HttpResponse response = httpClient.execute(davGet);
+                HttpResponse response = provider.remoteClient.execute(httpClient, davGet);
                 statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode == SC_MULTI_STATUS) {
                     String path = resource.getPath();
@@ -248,7 +250,7 @@ public class RemoteReader extends RemoteClient {
 
     @Nonnull
     public String getJsonUrl(@Nonnull final String path) {
-        String httpUrl = getHttpUrl(path);
+        String httpUrl = provider.remoteClient.getHttpUrl(path);
         return httpUrl.replaceAll("\\.", "%2E") + (path.endsWith("/") ? "" : "/") + ".1.json";
     }
 
@@ -265,9 +267,9 @@ public class RemoteReader extends RemoteClient {
         int statusCode;
         String url = getJsonUrl(resource);
         LOG.debug("loadJSON({}) - '{}'", resource.getPath(), url);
-        HttpGet httpGet = buildHttpGet(url);
+        HttpGet httpGet = provider.remoteClient.buildHttpGet(url);
         try {
-            HttpResponse response = httpClient.execute(httpGet);
+            HttpResponse response = provider.remoteClient.execute(httpClient, httpGet);
             statusCode = response.getStatusLine().getStatusCode();
             if (statusCode == SC_OK) {
                 try (InputStream stream = response.getEntity().getContent();
@@ -500,11 +502,10 @@ public class RemoteReader extends RemoteClient {
             } catch (IOException ex) {
                 LOG.error(ex.getMessage(), ex);
             }
-            String url = getHttpUrl(propertyPath);
-            HttpClient httpClient = buildClient();
-            HttpGet httpGet = buildHttpGet(url);
+            String url = provider.remoteClient.getHttpUrl(propertyPath);
+            HttpGet httpGet = provider.remoteClient.buildHttpGet(url);
             try {
-                HttpResponse response = httpClient.execute(httpGet);
+                HttpResponse response = provider.remoteClient.execute(httpGet);
                 StatusLine statusLine = response.getStatusLine();
                 switch (statusLine.getStatusCode()) {
                     case SC_OK:

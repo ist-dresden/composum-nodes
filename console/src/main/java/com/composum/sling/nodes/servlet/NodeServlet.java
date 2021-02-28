@@ -58,7 +58,6 @@ import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
@@ -86,7 +85,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -898,6 +896,9 @@ public class NodeServlet extends NodeTreeServlet {
                 FileHandle fileHandle = new FileHandle(resource);
                 if (fileHandle.isValid()) {
 
+                    prepareResponse(response, resource);
+                    response.setStatus(HttpServletResponse.SC_OK);
+
                     try (InputStream input = fileHandle.getStream();
                          BufferedInputStream buffered = new BufferedInputStream(input)) {
                         IOUtils.copy(buffered, response.getOutputStream());
@@ -962,34 +963,43 @@ public class NodeServlet extends NodeTreeServlet {
             if (resource != null && resource.isValid() && (JcrConstants.JCR_CONTENT.equals(content.getName()) ||
                     (content = resource.getChild(JcrConstants.JCR_CONTENT)) != null)) {
 
-                NodeParameters params = getNodeParameters(request);
-                ModifiableValueMap values = content.adaptTo(ModifiableValueMap.class);
+                RequestParameterMap parameters = request.getRequestParameterMap();
+                RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
 
-                if (values != null) {
-                    ResourceResolver resolver = request.getResourceResolver();
-                    RequestParameterMap parameters = request.getRequestParameterMap();
+                InputStream input;
+                if (file != null && (input = file.getInputStream()) != null) {
 
-                    Property property = null;
-                    RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
-                    if (file != null) {
-                        InputStream input = file.getInputStream();
-                        values.put(JcrConstants.JCR_DATA, input);
+                    ModifiableValueMap values = content.adaptTo(ModifiableValueMap.class);
+
+                    if (values != null) {
+                        ResourceResolver resolver = resource.getResourceResolver();
+
+                        if (resolver instanceof ExtendedResolver) {
+
+                            ((ExtendedResolver) resolver).upload(resource.getPath(), input,
+                                    file.getFileName(), file.getContentType(), null);
+
+                        } else {
+
+                            values.put(JcrConstants.JCR_DATA, input);
+
+                            if (RequestUtil.getParameter(request, "adjustLastModified", Boolean.FALSE)) {
+                                values.put(JcrConstants.JCR_LASTMODIFIED, GregorianCalendar.getInstance());
+                                values.put(JcrConstants.JCR_LASTMODIFIED + "By", resolver.getUserID());
+                            }
+                        }
+
+                        resolver.commit();
+
+                        JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
+                        writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY, resource, LabelType.name, false);
+
+                    } else {
+                        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "can't modify '" + resource.getPath() + "'");
                     }
-
-                    if (RequestUtil.getParameter(request, "adjustLastModified", Boolean.FALSE)) {
-                        GregorianCalendar now = new GregorianCalendar();
-                        now.setTime(new Date());
-                        values.put(JcrConstants.JCR_LASTMODIFIED, now);
-                        values.put(JcrConstants.JCR_LASTMODIFIED + "By", resolver.getUserID());
-                    }
-
-                    resolver.commit();
-
-                    JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
-                    writeJsonNode(jsonWriter, MappingRules.DEFAULT_TREE_NODE_STRATEGY, resource, LabelType.name, false);
 
                 } else {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "can't modify '" + resource.getPath() + "'");
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "no file content found");
                 }
 
             } else {
