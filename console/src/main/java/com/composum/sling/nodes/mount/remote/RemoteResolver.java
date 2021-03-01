@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
@@ -425,6 +426,9 @@ public class RemoteResolver implements ExtendedResolver {
     @Nullable
     @Override
     public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
+        if (type == Session.class) {
+            return parentDelegate.adaptTo(type);
+        }
         return null;
     }
 }

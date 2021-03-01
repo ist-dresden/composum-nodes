@@ -12,6 +12,7 @@ import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -122,6 +123,7 @@ public abstract class AbstractSlingBean implements SlingBean {
     /**
      * Returns the resolver using the resource of this bean (resource.getResolver()).
      */
+    @Nonnull
     public ResourceResolver getResolver() {
         if (resolver == null) {
             resolver = getResource().getResourceResolver();
@@ -132,6 +134,7 @@ public abstract class AbstractSlingBean implements SlingBean {
     /**
      * the getter for the resource which defines this bean instance.
      */
+    @Nonnull
     public ResourceHandle getResource() {
         return resource;
     }
