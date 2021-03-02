@@ -7,7 +7,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.webdav.DavException;
 import org.apache.jackrabbit.webdav.MultiStatus;
@@ -44,7 +43,6 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_ACCEPTABLE;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static javax.servlet.http.HttpServletResponse.SC_NO_CONTENT;
@@ -98,14 +96,10 @@ public class RemoteReader {
         String logHint = null;
         HttpClient httpClient = provider.remoteClient.buildClient();
         if (!provider.ignoreIt(path)) {
-            int statusCode = remoteHttpPing(httpClient, resource);
-            if (statusCode != SC_NOT_FOUND) {
-                statusCode = loadJsonResource(resource, httpClient);
-                if (statusCode == SC_OK) {
-                    logHint = ".JSON";
-                }
-            }
-            if (statusCode != SC_OK) {
+            int statusCode = loadJsonResource(resource, httpClient);
+            if (statusCode == SC_OK) {
+                logHint = ".JSON";
+            } else {
                 statusCode = loadDavResource(resource, httpClient);
                 if (statusCode == SC_OK || statusCode == SC_MULTI_STATUS) {
                     logHint = "--DAV";
@@ -127,16 +121,6 @@ public class RemoteReader {
             LOG.debug("load{} ({}): {}", logHint, resource.getPath(), result.children.size());
         }
         return result;
-    }
-
-    protected int remoteHttpPing(HttpClient httpClient, RemoteResource resource) {
-        try {
-            String url = provider.remoteClient.getHttpUrl(resource.getPath());
-            HttpHead httpHead = provider.remoteClient.buildHttpHead(url);
-            return provider.remoteClient.execute(httpClient, httpHead).getStatusLine().getStatusCode();
-        } catch (IOException ignore) {
-            return SC_BAD_REQUEST;
-        }
     }
 
     //

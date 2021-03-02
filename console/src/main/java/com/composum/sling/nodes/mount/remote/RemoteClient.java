@@ -11,8 +11,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 import org.apache.http.message.BasicHeader;
 import org.apache.jackrabbit.webdav.DavConstants;
 import org.apache.jackrabbit.webdav.client.methods.HttpPropfind;
@@ -21,9 +21,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.net.ProxySelector;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,16 +37,22 @@ final class RemoteClient {
 
     @Nonnull
     protected final RemoteProvider provider;
+    @Nonnull
+    protected final Collection<String> builderKeys;
+    private transient Collection<RemoteClientBuilder> builders;
 
     protected final HttpHost remoteHost;
     protected final String remoteUrl;
-    protected final boolean useSystemProxy;
+
+    private transient HttpClientContext clientContext;
 
     @Nonnull
     private final List<Header> defaultHeaders;
 
-    protected RemoteClient(@Nonnull final RemoteProvider provider, @Nonnull final RemoteProvider.Config config) {
+    protected RemoteClient(@Nonnull final RemoteProvider provider, @Nonnull final RemoteProvider.Config config,
+                           @Nonnull final Collection<String> builderKeys) {
         this.provider = provider;
+        this.builderKeys = builderKeys;
 
         Matcher matcher = REMOTE_URL_PATTERN.matcher(config.remote_url());
         if (matcher.matches()) {
@@ -74,8 +80,6 @@ final class RemoteClient {
             LOG.error("invalid remote URL '{}'", config.remote_url());
         }
 
-        this.useSystemProxy = config.proxy_system_default();
-
         defaultHeaders = new ArrayList<>();
         defaultHeaders.add(new BasicHeader(HttpHeaders.AUTHORIZATION,
                 getAuthHeader(config.login_username(), config.login_password())));
@@ -96,15 +100,6 @@ final class RemoteClient {
     }
 
     /**
-     * @return the explicit header value for preemptive authentication
-     */
-    protected String getAuthHeader(String username, String password) {
-        String auth = username + ":" + password;
-        byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.ISO_8859_1));
-        return "Basic " + new String(encodedAuth);
-    }
-
-    /**
      * @return the URL to send a POST request to change the resource at the given path
      */
     @Nonnull
@@ -119,34 +114,6 @@ final class RemoteClient {
     @Nonnull
     public String getHttpUrl(@Nonnull final RemoteResource resource) {
         return getHttpUrl(resource.getPath());
-    }
-
-    /**
-     * @return the client to load remote resources
-     */
-    @Nonnull
-    protected HttpClient buildClient() {
-        HttpClientBuilder builder = HttpClientBuilder.create()
-                .setDefaultHeaders(defaultHeaders);
-        if (useSystemProxy) {
-            builder.setRoutePlanner(new SystemDefaultRoutePlanner(ProxySelector.getDefault()));
-        }
-        return builder.build();
-    }
-
-    /**
-     * request execution in the remote clients HTTP context
-     */
-    public HttpResponse execute(@Nonnull final HttpUriRequest request) throws IOException {
-        return execute(buildClient(), request);
-    }
-
-    /**
-     * request execution in the remote clients HTTP context
-     */
-    public HttpResponse execute(@Nonnull final HttpClient client, @Nonnull final HttpUriRequest request)
-            throws IOException {
-        return client.execute(request);
     }
 
     //
@@ -168,5 +135,69 @@ final class RemoteClient {
 
     protected HttpPost buildHttpPost(@Nonnull final String url) {
         return new HttpPost(url);
+    }
+
+    //
+    // request execution
+    //
+
+    /**
+     * request execution in the remote clients HTTP context
+     */
+    public HttpResponse execute(@Nonnull final HttpUriRequest request) throws IOException {
+        return execute(buildClient(), request);
+    }
+
+    /**
+     * request execution in the remote clients HTTP context
+     */
+    public HttpResponse execute(@Nonnull final HttpClient client, @Nonnull final HttpUriRequest request)
+            throws IOException {
+        return client.execute(request, getClientContext());
+    }
+
+    /**
+     * @return the context for the request execution
+     */
+    protected HttpClientContext getClientContext() {
+        if (clientContext == null) {
+            clientContext = new HttpClientContext();
+            for (RemoteClientBuilder clientBuilder : getBuilders()) {
+                clientBuilder.configure(clientContext);
+            }
+        }
+        return clientContext;
+    }
+
+    /**
+     * @return the client to load remote resources
+     */
+    @Nonnull
+    protected HttpClient buildClient() {
+        HttpClientBuilder builder = HttpClientBuilder.create()
+                .setDefaultHeaders(defaultHeaders);
+        for (RemoteClientBuilder clientBuilder : getBuilders()) {
+            clientBuilder.configure(builder);
+        }
+        return builder.build();
+    }
+
+    /**
+     * @return the client builder set (lazy loaded to ensure that they are registered already)
+     */
+    protected Collection<RemoteClientBuilder> getBuilders() {
+        if (builders == null) {
+            builders = provider.clientSetup.getBuilders(builderKeys);
+        }
+        return builders;
+    }
+
+    /**
+     * @return the explicit header value for preemptive authentication
+     */
+    protected String getAuthHeader(String username, String password) {
+        String auth = username + ":" + password;
+        byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.ISO_8859_1));
+        return "Basic " + new String(encodedAuth);
     }
 }

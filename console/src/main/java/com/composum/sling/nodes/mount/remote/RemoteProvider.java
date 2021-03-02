@@ -11,6 +11,8 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.AttributeType;
 import org.osgi.service.metatype.annotations.Designate;
@@ -20,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -90,17 +93,10 @@ public class RemoteProvider extends ResourceProvider<Object> {
         String login_password();
 
         @AttributeDefinition(
-                name = "Use System Proxy",
-                description = "use the predefined proxy configuration of the host system"
+                name = "Client Config",
+                description = "client builder service keys to extend the remote client builder"
         )
-        boolean proxy_system_default() default false;
-
-        /* POST requests are blocked if User-Agent has been set to this default...
-        @AttributeDefinition(
-                name = "User Agent"
-        )
-        String header_user_agent() default "Mozilla/5.0 (Composum Nodes Remote)";
-        */
+        String[] client_configuration();
 
         @AttributeDefinition(
                 name = "HTTP Request Headers",
@@ -110,8 +106,11 @@ public class RemoteProvider extends ResourceProvider<Object> {
 
         @AttributeDefinition()
         String webconsole_configurationFactory_nameHint()
-                default "local: {provider.root}, remote: {remote.url}";
+                default "local: {provider.root}, remote: {remote.url}, extensions: {client.configuration}";
     }
+
+    @Reference
+    protected RemoteClientSetup clientSetup;
 
     protected BundleContext bundleContext;
     private Config config;
@@ -125,6 +124,7 @@ public class RemoteProvider extends ResourceProvider<Object> {
     protected RemoteWriter remoteWriter;
 
     @Activate
+    @Modified
     protected void activate(final BundleContext bundleContext, final Config config) {
         this.bundleContext = bundleContext;
         this.config = config;
@@ -137,7 +137,7 @@ public class RemoteProvider extends ResourceProvider<Object> {
         for (String rule : config.ignored_patterns()) {
             ignoredPathPatterns.add(Pattern.compile(rule.replaceAll("\\$\\{root}", localRoot)));
         }
-        remoteClient = new RemoteClient(this, config);
+        remoteClient = new RemoteClient(this, config, Arrays.asList(config.client_configuration()));
         remoteReader = new RemoteReader(this);
         remoteWriter = new RemoteWriter(this);
     }
@@ -154,6 +154,9 @@ public class RemoteProvider extends ResourceProvider<Object> {
         bundleContext = null;
     }
 
+    /**
+     * @return 'true' if the path is part of the local repository tree (starts with the provider root)
+     */
     public boolean isLocal(@Nonnull final String path) {
         return path.equals(localRoot) || path.startsWith(localRoot + "/");
     }
@@ -180,6 +183,9 @@ public class RemoteProvider extends ResourceProvider<Object> {
         return path;
     }
 
+    /**
+     * @return 'true' if the given repository path should be ignored in the remote tree
+     */
     protected boolean ignoreIt(@Nonnull final String path) {
         for (Pattern pattern : ignoredPathPatterns) {
             if (pattern.matcher(path).matches()) {
@@ -189,11 +195,17 @@ public class RemoteProvider extends ResourceProvider<Object> {
         return false;
     }
 
+    /**
+     * @return the mount point of this provider in the repository tree
+     */
     @Nonnull
     public String getProviderRoot() {
         return localRoot;
     }
 
+    /**
+     * @return the remote resource if the path in in the scope of this provider, otherwise 'null'
+     */
     @Nullable
     @Override
     public Resource getResource(@Nonnull final ResolveContext<Object> ctx, @Nonnull final String path,
@@ -205,6 +217,9 @@ public class RemoteProvider extends ResourceProvider<Object> {
         return remoteResolver.getResource(path);
     }
 
+    /**
+     * @return the children retrieved using the the parent resource itself
+     */
     @Nullable
     @Override
     public Iterator<Resource> listChildren(@Nonnull final ResolveContext<Object> ctx, @Nonnull final Resource parent) {
