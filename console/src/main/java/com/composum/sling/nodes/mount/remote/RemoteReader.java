@@ -317,22 +317,34 @@ public class RemoteReader {
         resource.values.clear();
         List<Object> array = null;
         String name = null;
+        int skip = 0;
         boolean more = true;
         while (more) {
             switch (jsonReader.peek()) {
                 case NAME:
-                    name = jsonReader.nextName();
+                    if (skip > 0) {
+                        String skipped = jsonReader.nextName();
+                        LOG.trace("json.[name]({})", skipped);
+                    } else {
+                        name = jsonReader.nextName();
+                        LOG.trace("json.name({})", name);
+                    }
                     break;
                 case STRING:
                     String string = jsonReader.nextString();
-                    if (array != null) {
-                        array.add(string);
-                    } else {
-                        if (name == null) {
-                            throw new IOException("invaid JSON - string without name");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.string({}{}:{})", name, array != null ? "[]" : "", string);
+                    }
+                    if (skip == 0) {
+                        if (array != null) {
+                            array.add(string);
+                        } else {
+                            if (name == null) {
+                                throw new IOException("invaid JSON - string without name");
+                            }
+                            resource.values.put(name, transform(string));
+                            name = null;
                         }
-                        resource.values.put(name, transform(string));
-                        name = null;
                     }
                     break;
                 case NUMBER:
@@ -349,78 +361,116 @@ public class RemoteReader {
                     if (number instanceof Integer) {
                         number = Long.valueOf((Integer) number);
                     }
-                    if (array != null) {
-                        array.add(number);
-                    } else {
-                        if (name == null) {
-                            throw new IOException("invaid JSON - number without name");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.number({}{}:{})", name, array != null ? "[]" : "", number);
+                    }
+                    if (skip == 0) {
+                        if (array != null) {
+                            array.add(number);
+                        } else {
+                            if (name == null) {
+                                throw new IOException("invaid JSON - number without name");
+                            }
+                            if (name.startsWith(":jcr:")) {
+                                String binaryName = name.substring(1);
+                                resource.values.put(binaryName, new RemoteBinary(
+                                        resource.getPath() + "/" + binaryName));
+                            }
+                            resource.values.put(name, number);
+                            name = null;
                         }
-                        if (name.startsWith(":jcr:")) {
-                            String binaryName = name.substring(1);
-                            resource.values.put(binaryName, new RemoteBinary(
-                                    resource.getPath() + "/" + binaryName));
-                        }
-                        resource.values.put(name, number);
-                        name = null;
                     }
                     break;
                 case BOOLEAN:
                     Boolean boolVal = jsonReader.nextBoolean();
-                    if (array != null) {
-                        array.add(boolVal);
-                    } else {
-                        if (name == null) {
-                            throw new IOException("invaid JSON - boolean without name");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.number({}{}:{})", name, array != null ? "[]" : "", boolVal);
+                    }
+                    if (skip == 0) {
+                        if (array != null) {
+                            array.add(boolVal);
+                        } else {
+                            if (name == null) {
+                                throw new IOException("invaid JSON - boolean without name");
+                            }
+                            resource.values.put(name, boolVal);
+                            name = null;
                         }
-                        resource.values.put(name, boolVal);
-                        name = null;
                     }
                     break;
                 case NULL:
                     jsonReader.nextNull();
-                    if (array != null) {
-                        array.add(null);
-                    } else {
-                        if (name != null) {
-                            resource.values.put(name, null);
-                            name = null;
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.NULL({}{})", name, array != null ? "[]" : "");
+                    }
+                    if (skip == 0) {
+                        if (array != null) {
+                            array.add(null);
+                        } else {
+                            if (name != null) {
+                                resource.values.put(name, null);
+                                name = null;
+                            }
                         }
                     }
                     break;
                 case BEGIN_ARRAY:
                     jsonReader.beginArray();
-                    if (name == null) {
-                        throw new IOException("invaid JSON - array without name");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.array({}[])...", name);
                     }
-                    array = new ArrayList<>();
+                    if (skip == 0) {
+                        if (name == null) {
+                            throw new IOException("invaid JSON - array without name");
+                        }
+                        array = new ArrayList<>();
+                    }
                     break;
                 case END_ARRAY:
                     jsonReader.endArray();
-                    if (array == null) {
-                        throw new IOException("invaid JSON - end of array without begin");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.array({}[]:{})<", name, array != null ? array.size() : "null");
                     }
-                    resource.values.put(name, array.toArray());
-                    array = null;
-                    name = null;
-                    break;
-                case BEGIN_OBJECT:
-                    jsonReader.beginObject();
-                    if (name != null) {
-                        String path = resource.getPath() + "/" + name;
-                        // load child and store it... (the children af a child should not be loaded)
-                        RemoteResource child = new RemoteResource(resource.resolver, path);
-                        LOG.debug("JSON.load.child({})...", path);
-                        loadJsonResource(child, jsonReader);
-                        if (resource.children == null) {
-                            resource.children = new LinkedHashMap<>();
+                    if (skip == 0) {
+                        if (array == null) {
+                            throw new IOException("invaid JSON - end of array without begin");
                         }
-                        if (!provider.ignoreIt(child.getPath())) {
-                            resource.children.put(name, child);
-                        }
+                        resource.values.put(name, array.toArray());
+                        array = null;
                         name = null;
                     }
                     break;
+                case BEGIN_OBJECT:
+                    jsonReader.beginObject();
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.object({}{})...", name, array != null ? "[]" : "");
+                    }
+                    if (name != null) {
+                        if (skip > 0 || array != null) {
+                            skip++;
+                        } else {
+                            String path = resource.getPath() + "/" + name;
+                            // load child and store it... (the children af a child should not be loaded)
+                            RemoteResource child = new RemoteResource(resource.resolver, path);
+                            LOG.debug("JSON.load.child({})...", path);
+                            loadJsonResource(child, jsonReader);
+                            if (resource.children == null) {
+                                resource.children = new LinkedHashMap<>();
+                            }
+                            if (!provider.ignoreIt(child.getPath())) {
+                                resource.children.put(name, child);
+                            }
+                            name = null;
+                        }
+                    }
+                    break;
                 case END_OBJECT:
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.object({}{})<", name, array != null ? "[]" : "");
+                    }
+                    if (skip > 0) {
+                        skip--;
+                    }
                     jsonReader.endObject();
                 case END_DOCUMENT:
                     more = false;

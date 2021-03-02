@@ -160,6 +160,12 @@ public class RemoteResolver implements ExtendedResolver {
         return path;
     }
 
+    @Nullable
+    @Override
+    public String getResolverRootPath() {
+        return provider.localRoot;
+    }
+
     @Nonnull
     @Override
     public Resource resolve(@Nonnull HttpServletRequest request, @Nonnull String absPath) {

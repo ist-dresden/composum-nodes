@@ -7,12 +7,14 @@ import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
+import com.composum.sling.nodes.mount.ExtendedResolver;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.util.ISO9075;
 import org.apache.jackrabbit.vault.util.PlatformNameFormat;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,6 +184,52 @@ public class SourceModel extends ConsoleSlingBean {
         this.config = config;
         initialize(context, resource);
     }
+
+    // ExtendedResolver export adjustment
+
+    /**
+     * @return the root path to use for exporting artifacts, honors a root path (mount poiunt) of an extended resolver
+     */
+    @Nonnull
+    public String getExportRootPath() {
+        String exportRootPath = "/";
+        ResourceResolver resolver = getResolver();
+        if (resolver instanceof ExtendedResolver) {
+            String resolverRootPath = ((ExtendedResolver) resolver).getResolverRootPath();
+            if (resolverRootPath != null) {
+                exportRootPath = resolverRootPath;
+            }
+        }
+        return exportRootPath;
+    }
+
+    /**
+     * @param path the path to map for exporting
+     * @return the path relative to the export root path
+     */
+    @Nonnull
+    public String getExportPath(@Nonnull final String path) {
+        String exportPath = path;
+        String exportRootPath = getExportRootPath();
+        if (!"/".equals(exportRootPath)) {
+            if (path.equals(exportRootPath)) {
+                exportPath = "/";
+            } else if (path.startsWith(exportRootPath + "/")) {
+                exportPath = path.substring(exportRootPath.length());
+            }
+        }
+        return exportPath;
+    }
+
+    /**
+     * @param path a resource path in the resource repository tree; maybe a mounted resource path
+     * @return 'true' if the path is equal to the export root path
+     */
+    public boolean isRootPath(@Nonnull final String path) {
+        return getExportRootPath().equals(path);
+    }
+
+    //
 
     @Override
     public String getName() {
@@ -460,7 +508,7 @@ public class SourceModel extends ConsoleSlingBean {
 
     protected void writeFilterXml(ZipOutputStream zipStream) throws IOException {
 
-        String path = resource.getPath();
+        String path = getExportPath(resource.getPath());
 
         ZipEntry entry;
         entry = new ZipEntry("META-INF/vault/filter.xml");
@@ -484,7 +532,7 @@ public class SourceModel extends ConsoleSlingBean {
      */
     protected void writeParents(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Resource parent)
             throws IOException, RepositoryException {
-        if (parent != null && !"/".equals(parent.getPath())) {
+        if (parent != null && !isRootPath(parent.getPath())) {
             writeParents(zipStream, root, parent.getParent());
             SourceModel parentModel = new SourceModel(config, context, parent);
             parentModel.writeIntoZip(zipStream, root, DepthMode.PROPERTIESONLY);
@@ -532,10 +580,10 @@ public class SourceModel extends ConsoleSlingBean {
             return;
         }
 
-        ZipEntry entry;
+        String zipName = getZipName(root);
+        ZipEntry entry = new ZipEntry(zipName);
         FileTime lastModified = getLastModified(resource);
-        entry = new ZipEntry(getZipName(root));
-        LOG.debug("Writing entry {}", entry.getName());
+        LOG.debug("Writing entry {} ({})", entry.getName(), root);
         if (lastModified != null) {
             entry.setLastModifiedTime(lastModified);
         }
@@ -656,11 +704,12 @@ public class SourceModel extends ConsoleSlingBean {
      * Turns a resource path into a proper name for a zip file with the appropriate encoding of troublesome chars.
      */
     protected String getZipName(@Nonnull String root, @Nonnull String resourcePath) {
-        String name = resourcePath;
-        if (name.startsWith(root)) {
-            name = name.substring(root.length() + 1);
+        String name = getExportPath(resourcePath);
+        String exportRoot = getExportPath(root);
+        if (name.startsWith(exportRoot)) {
+            name = name.substring(exportRoot.length() + 1);
         } else {
-            name = root + name;
+            name = exportRoot + name;
         }
         return filesystemName(name);
     }
@@ -847,7 +896,7 @@ public class SourceModel extends ConsoleSlingBean {
                         }
                     }
                 } catch (NamespaceException nsex) {
-                    LOG.warn(nsex.toString());
+                    LOG.debug(nsex.toString());
                 }
             }
         }
