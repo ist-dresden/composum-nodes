@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
@@ -95,6 +96,9 @@ public class RemoteResolver implements ExtendedResolver {
             }
             if (parent != null) {
                 resource = (RemoteResource) parent.getChild(_pathName(path));
+                if (resource != null) {
+                    resource.children(); // ensure that the rsource is regular loaded
+                }
             } else {
                 resource = provider.remoteReader.loadResource(
                         new RemoteResource(this, localPath), false);
@@ -156,6 +160,12 @@ public class RemoteResolver implements ExtendedResolver {
         return path;
     }
 
+    @Nullable
+    @Override
+    public String getResolverRootPath() {
+        return provider.localRoot;
+    }
+
     @Nonnull
     @Override
     public Resource resolve(@Nonnull HttpServletRequest request, @Nonnull String absPath) {
@@ -196,6 +206,9 @@ public class RemoteResolver implements ExtendedResolver {
         // try to use a loaded parent to optimize caching
         if (parent != null) {
             resource = parent.getChild(_pathName(path));
+            if (resource instanceof RemoteResource) {
+                ((RemoteResource) resource).children(); // ensure that the rsource is regular loaded
+            }
         } else {
             resource = _resolve(path);
         }
@@ -425,6 +438,9 @@ public class RemoteResolver implements ExtendedResolver {
     @Nullable
     @Override
     public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
+        if (type == Session.class) {
+            return parentDelegate.adaptTo(type);
+        }
         return null;
     }
 }

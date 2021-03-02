@@ -7,7 +7,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.webdav.DavException;
 import org.apache.jackrabbit.webdav.MultiStatus;
@@ -16,6 +15,7 @@ import org.apache.jackrabbit.webdav.client.methods.HttpPropfind;
 import org.apache.jackrabbit.webdav.property.DavProperty;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertySet;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,6 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_ACCEPTABLE;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static javax.servlet.http.HttpServletResponse.SC_NO_CONTENT;
@@ -53,7 +52,7 @@ import static org.apache.jackrabbit.webdav.DavServletResponse.SC_MULTI_STATUS;
 /**
  * reads the resource data using default Sling GET servlet JSON requests
  */
-public class RemoteReader  {
+public class RemoteReader {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteReader.class);
 
@@ -63,6 +62,10 @@ public class RemoteReader  {
             "^((https?:)?//[^/]*)?(?<path>(?<parent>(/.*)?)?/(?<name>[^/]+))(?<folder>/)?$");
 
     protected final RemoteProvider provider;
+
+    public static final String DAV_NS = "dav:";
+    public static final String DAV_TYPE_FOLDER = DAV_NS + "folder";
+    public static final String DAV_TYPE_UNKNOWN = DAV_NS + "unknown";
 
     public RemoteReader(@Nonnull final RemoteProvider provider) {
         this.provider = provider;
@@ -93,14 +96,10 @@ public class RemoteReader  {
         String logHint = null;
         HttpClient httpClient = provider.remoteClient.buildClient();
         if (!provider.ignoreIt(path)) {
-            int statusCode = remoteHttpPing(httpClient, resource);
-            if (statusCode != SC_NOT_FOUND) {
-                statusCode = loadJsonResource(resource, httpClient);
-                if (statusCode == SC_OK) {
-                    logHint = ".JSON";
-                }
-            }
-            if (statusCode != SC_OK) {
+            int statusCode = loadJsonResource(resource, httpClient);
+            if (statusCode == SC_OK) {
+                logHint = ".JSON";
+            } else {
                 statusCode = loadDavResource(resource, httpClient);
                 if (statusCode == SC_OK || statusCode == SC_MULTI_STATUS) {
                     logHint = "--DAV";
@@ -122,16 +121,6 @@ public class RemoteReader  {
             LOG.debug("load{} ({}): {}", logHint, resource.getPath(), result.children.size());
         }
         return result;
-    }
-
-    protected int remoteHttpPing(HttpClient httpClient, RemoteResource resource) {
-        try {
-            String url = provider.remoteClient.getHttpUrl(resource.getPath());
-            HttpHead httpHead = provider.remoteClient.buildHttpHead(url);
-            return provider.remoteClient.execute(httpClient, httpHead).getStatusLine().getStatusCode();
-        } catch (IOException ignore) {
-            return SC_BAD_REQUEST;
-        }
     }
 
     //
@@ -160,7 +149,7 @@ public class RemoteReader  {
                                   @Nonnull final HttpClient httpClient) {
         int statusCode = SC_NO_CONTENT;
         String url = getDavUrl(resource);
-        LOG.debug("loadDAV({}) - '{}'", resource.getPath(), url);
+        LOG.debug("DAV.load({}) - '{}'", resource.getPath(), url);
         try {
             HttpPropfind davGet = provider.remoteClient.buildPropfind(url);
             try {
@@ -170,6 +159,7 @@ public class RemoteReader  {
                     String path = resource.getPath();
                     resource.children = new LinkedHashMap<>();
                     resource.values.clear();
+                    boolean resourceIsFolder = false;
                     MultiStatus multiStatus = davGet.getResponseBodyAsMultiStatus(response);
                     MultiStatusResponse[] responses = multiStatus.getResponses();
                     for (MultiStatusResponse item : responses) {
@@ -179,7 +169,7 @@ public class RemoteReader  {
                             boolean isFolder = "/".equals(itemHref.group("folder"));
                             if (itemPath.equals(path)) {
                                 loadDavResource(resource, item);
-                                adjustDavType(resource, isFolder);
+                                resourceIsFolder = isFolder;
                             } else {
                                 String name = itemHref.group("name");
                                 RemoteResource child = new RemoteResource(resource.resolver, path + "/" + name);
@@ -191,6 +181,7 @@ public class RemoteReader  {
                             }
                         }
                     }
+                    adjustDavType(resource, resourceIsFolder);
                 }
             } catch (DavException ex) {
                 LOG.error("DAV exception loading '{}': {}", url, ex.toString());
@@ -204,10 +195,23 @@ public class RemoteReader  {
 
     protected void adjustDavType(@Nonnull final RemoteResource resource, boolean isFolder) {
         String primaryType = resource.values.get(JcrConstants.JCR_PRIMARYTYPE, String.class);
-        if (StringUtils.isBlank(primaryType)) {
-            resource.values.put(JcrConstants.JCR_PRIMARYTYPE,
-                    isFolder || (resource.children != null && resource.children.size() > 0)
-                            ? "dav:folder" : "dav:unknown");
+        if (StringUtils.isBlank(primaryType) || primaryType.startsWith(DAV_NS)) {
+            if (isFolder) {
+                primaryType = DAV_TYPE_FOLDER;
+            } else if (resource.children != null && resource.children.size() > 0) {
+                Resource content = resource.getChild(JcrConstants.JCR_CONTENT);
+                String contentType;
+                if (content instanceof RemoteResource && JcrConstants.NT_RESOURCE.equals(
+                        ((RemoteResource) content).values.get(JcrConstants.JCR_PRIMARYTYPE, String.class))) {
+                    primaryType = JcrConstants.NT_FILE;
+                } else {
+                    primaryType = DAV_TYPE_UNKNOWN;
+                }
+            } else {
+                primaryType = DAV_TYPE_UNKNOWN;
+            }
+            LOG.debug("DAV.adjust({}) - '{}'", resource.getPath(), primaryType);
+            resource.values.put(JcrConstants.JCR_PRIMARYTYPE, primaryType);
         }
     }
 
@@ -266,7 +270,7 @@ public class RemoteReader  {
                                    @Nonnull final HttpClient httpClient) {
         int statusCode;
         String url = getJsonUrl(resource);
-        LOG.debug("loadJSON({}) - '{}'", resource.getPath(), url);
+        LOG.debug("JSON.load({}) - '{}'", resource.getPath(), url);
         HttpGet httpGet = provider.remoteClient.buildHttpGet(url);
         try {
             HttpResponse response = provider.remoteClient.execute(httpClient, httpGet);
@@ -297,22 +301,34 @@ public class RemoteReader  {
         resource.values.clear();
         List<Object> array = null;
         String name = null;
+        int skip = 0;
         boolean more = true;
         while (more) {
             switch (jsonReader.peek()) {
                 case NAME:
-                    name = jsonReader.nextName();
+                    if (skip > 0) {
+                        String skipped = jsonReader.nextName();
+                        LOG.trace("json.[name]({})", skipped);
+                    } else {
+                        name = jsonReader.nextName();
+                        LOG.trace("json.name({})", name);
+                    }
                     break;
                 case STRING:
                     String string = jsonReader.nextString();
-                    if (array != null) {
-                        array.add(string);
-                    } else {
-                        if (name == null) {
-                            throw new IOException("invaid JSON - string without name");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.string({}{}:{})", name, array != null ? "[]" : "", string);
+                    }
+                    if (skip == 0) {
+                        if (array != null) {
+                            array.add(string);
+                        } else {
+                            if (name == null) {
+                                throw new IOException("invaid JSON - string without name");
+                            }
+                            resource.values.put(name, transform(string));
+                            name = null;
                         }
-                        resource.values.put(name, transform(string));
-                        name = null;
                     }
                     break;
                 case NUMBER:
@@ -329,77 +345,116 @@ public class RemoteReader  {
                     if (number instanceof Integer) {
                         number = Long.valueOf((Integer) number);
                     }
-                    if (array != null) {
-                        array.add(number);
-                    } else {
-                        if (name == null) {
-                            throw new IOException("invaid JSON - number without name");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.number({}{}:{})", name, array != null ? "[]" : "", number);
+                    }
+                    if (skip == 0) {
+                        if (array != null) {
+                            array.add(number);
+                        } else {
+                            if (name == null) {
+                                throw new IOException("invaid JSON - number without name");
+                            }
+                            if (name.startsWith(":jcr:")) {
+                                String binaryName = name.substring(1);
+                                resource.values.put(binaryName, new RemoteBinary(
+                                        resource.getPath() + "/" + binaryName));
+                            }
+                            resource.values.put(name, number);
+                            name = null;
                         }
-                        if (name.startsWith(":jcr:")) {
-                            String binaryName = name.substring(1);
-                            resource.values.put(binaryName, new RemoteBinary(
-                                    resource.getPath() + "/" + binaryName));
-                        }
-                        resource.values.put(name, number);
-                        name = null;
                     }
                     break;
                 case BOOLEAN:
                     Boolean boolVal = jsonReader.nextBoolean();
-                    if (array != null) {
-                        array.add(boolVal);
-                    } else {
-                        if (name == null) {
-                            throw new IOException("invaid JSON - boolean without name");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.number({}{}:{})", name, array != null ? "[]" : "", boolVal);
+                    }
+                    if (skip == 0) {
+                        if (array != null) {
+                            array.add(boolVal);
+                        } else {
+                            if (name == null) {
+                                throw new IOException("invaid JSON - boolean without name");
+                            }
+                            resource.values.put(name, boolVal);
+                            name = null;
                         }
-                        resource.values.put(name, boolVal);
-                        name = null;
                     }
                     break;
                 case NULL:
                     jsonReader.nextNull();
-                    if (array != null) {
-                        array.add(null);
-                    } else {
-                        if (name != null) {
-                            resource.values.put(name, null);
-                            name = null;
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.NULL({}{})", name, array != null ? "[]" : "");
+                    }
+                    if (skip == 0) {
+                        if (array != null) {
+                            array.add(null);
+                        } else {
+                            if (name != null) {
+                                resource.values.put(name, null);
+                                name = null;
+                            }
                         }
                     }
                     break;
                 case BEGIN_ARRAY:
                     jsonReader.beginArray();
-                    if (name == null) {
-                        throw new IOException("invaid JSON - array without name");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.array({}[])...", name);
                     }
-                    array = new ArrayList<>();
+                    if (skip == 0) {
+                        if (name == null) {
+                            throw new IOException("invaid JSON - array without name");
+                        }
+                        array = new ArrayList<>();
+                    }
                     break;
                 case END_ARRAY:
                     jsonReader.endArray();
-                    if (array == null) {
-                        throw new IOException("invaid JSON - end of array without begin");
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.array({}[]:{})<", name, array != null ? array.size() : "null");
                     }
-                    resource.values.put(name, array.toArray());
-                    array = null;
-                    name = null;
-                    break;
-                case BEGIN_OBJECT:
-                    jsonReader.beginObject();
-                    if (name != null) {
-                        String path = resource.getPath() + "/" + name;
-                        // load child and store it... (the children af a child should not be loaded)
-                        RemoteResource child = new RemoteResource(resource.resolver, path);
-                        loadJsonResource(child, jsonReader);
-                        if (resource.children == null) {
-                            resource.children = new LinkedHashMap<>();
+                    if (skip == 0) {
+                        if (array == null) {
+                            throw new IOException("invaid JSON - end of array without begin");
                         }
-                        if (!provider.ignoreIt(child.getPath())) {
-                            resource.children.put(name, child);
-                        }
+                        resource.values.put(name, array.toArray());
+                        array = null;
                         name = null;
                     }
                     break;
+                case BEGIN_OBJECT:
+                    jsonReader.beginObject();
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.object({}{})...", name, array != null ? "[]" : "");
+                    }
+                    if (name != null) {
+                        if (skip > 0 || array != null) {
+                            skip++;
+                        } else {
+                            String path = resource.getPath() + "/" + name;
+                            // load child and store it... (the children af a child should not be loaded)
+                            RemoteResource child = new RemoteResource(resource.resolver, path);
+                            LOG.debug("JSON.load.child({})...", path);
+                            loadJsonResource(child, jsonReader);
+                            if (resource.children == null) {
+                                resource.children = new LinkedHashMap<>();
+                            }
+                            if (!provider.ignoreIt(child.getPath())) {
+                                resource.children.put(name, child);
+                            }
+                            name = null;
+                        }
+                    }
+                    break;
                 case END_OBJECT:
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("json.object({}{})<", name, array != null ? "[]" : "");
+                    }
+                    if (skip > 0) {
+                        skip--;
+                    }
                     jsonReader.endObject();
                 case END_DOCUMENT:
                     more = false;
