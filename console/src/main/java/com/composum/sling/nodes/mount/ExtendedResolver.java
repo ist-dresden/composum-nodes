@@ -11,6 +11,12 @@ import java.io.InputStream;
 public interface ExtendedResolver extends ResourceResolver {
 
     /**
+     * @return the local root path of the resolver (mount point) if useful
+     */
+    @Nullable
+    String getResolverRootPath();
+
+    /**
      * move with optional rename and ordering
      *
      * @param srcAbsPath        the absolute path of th resource to move

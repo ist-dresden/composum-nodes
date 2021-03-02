@@ -7,21 +7,25 @@ import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
+import com.composum.sling.nodes.mount.ExtendedResolver;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.util.ISO9075;
 import org.apache.jackrabbit.vault.util.PlatformNameFormat;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.jcr.Binary;
+import javax.jcr.NamespaceException;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -181,6 +185,52 @@ public class SourceModel extends ConsoleSlingBean {
         initialize(context, resource);
     }
 
+    // ExtendedResolver export adjustment
+
+    /**
+     * @return the root path to use for exporting artifacts, honors a root path (mount poiunt) of an extended resolver
+     */
+    @Nonnull
+    public String getExportRootPath() {
+        String exportRootPath = "/";
+        ResourceResolver resolver = getResolver();
+        if (resolver instanceof ExtendedResolver) {
+            String resolverRootPath = ((ExtendedResolver) resolver).getResolverRootPath();
+            if (resolverRootPath != null) {
+                exportRootPath = resolverRootPath;
+            }
+        }
+        return exportRootPath;
+    }
+
+    /**
+     * @param path the path to map for exporting
+     * @return the path relative to the export root path
+     */
+    @Nonnull
+    public String getExportPath(@Nonnull final String path) {
+        String exportPath = path;
+        String exportRootPath = getExportRootPath();
+        if (!"/".equals(exportRootPath)) {
+            if (path.equals(exportRootPath)) {
+                exportPath = "/";
+            } else if (path.startsWith(exportRootPath + "/")) {
+                exportPath = path.substring(exportRootPath.length());
+            }
+        }
+        return exportPath;
+    }
+
+    /**
+     * @param path a resource path in the resource repository tree; maybe a mounted resource path
+     * @return 'true' if the path is equal to the export root path
+     */
+    public boolean isRootPath(@Nonnull final String path) {
+        return getExportRootPath().equals(path);
+    }
+
+    //
+
     @Override
     public String getName() {
         return resource.getName();
@@ -232,7 +282,24 @@ public class SourceModel extends ConsoleSlingBean {
                         // shouldn't happen, but happens for staging resources in the platform since we
                         // don't implement getDefinition there -- would be hard to change.
                         LOG.debug("Error reading property {}/{} : {}",
-                                new Object[]{resource.getPath(), entry.getValue(), e.toString()});
+                                resource.getPath(), entry.getValue(), e.toString());
+                    }
+                } else {
+                    Object value = entry.getValue();
+                    if (value != null) {
+                        if (value instanceof String || value instanceof String[]) {
+                            type = PropertyType.STRING;
+                        } else if (value instanceof Long || value instanceof Long[]) {
+                            type = PropertyType.LONG;
+                        } else if (value instanceof Boolean || value instanceof Boolean[]) {
+                            type = PropertyType.BOOLEAN;
+                        } else if (value instanceof Double || value instanceof Double[]) {
+                            type = PropertyType.DOUBLE;
+                        } else if (value instanceof Calendar || value instanceof Calendar[]) {
+                            type = PropertyType.DATE;
+                        } else if (value instanceof InputStream) {
+                            type = PropertyType.BINARY;
+                        }
                     }
                 }
                 Property property = new Property(entry.getKey(), entry.getValue(), type);
@@ -326,9 +393,12 @@ public class SourceModel extends ConsoleSlingBean {
         writePackageProperties(zipStream, group, packageName, version);
         writeFilterXml(zipStream);
         if (ResourceUtil.CONTENT_NODE.equals(getName())) {
-            SourceModel parentModel = new SourceModel(config, context, resource.getParent());
-            writeParents(zipStream, root, parentModel.getResource().getParent());
-            parentModel.writeIntoZip(zipStream, root, DepthMode.DEEP);
+            Resource parent = resource.getParent();
+            if (parent != null) {
+                SourceModel parentModel = new SourceModel(config, context, parent);
+                writeParents(zipStream, root, parentModel.getResource().getParent());
+                parentModel.writeIntoZip(zipStream, root, DepthMode.DEEP);
+            }
         } else {
             writeParents(zipStream, root, resource.getParent());
             writeIntoZip(zipStream, root, DepthMode.DEEP);
@@ -365,15 +435,12 @@ public class SourceModel extends ConsoleSlingBean {
      * Returns true if the nodes children are ordered. Works only for JCR resources - if we cannot determine this,
      * we return null.
      */
-    public Boolean hasOrderableChildren() {
-        Boolean result;
+    public boolean hasOrderableChildren() {
         if (hasOrderableChildren == null) {
-            result = hasOrderableChildren(resource);
-            hasOrderableChildren = new Boolean[]{result};
-        } else {
-            result = hasOrderableChildren[0];
+            Boolean determined = hasOrderableChildren(resource);
+            hasOrderableChildren = new Boolean[]{determined != null ? determined : Boolean.FALSE};
         }
-        return result;
+        return hasOrderableChildren[0];
     }
 
     /**
@@ -385,6 +452,13 @@ public class SourceModel extends ConsoleSlingBean {
             Node node = requireNonNull(aResource).adaptTo(Node.class);
             if (node != null) {
                 return node.getPrimaryNodeType().hasOrderableChildNodes();
+            } else {
+                String primaryType = resource.getPrimaryType();
+                if (primaryType != null) {
+                    if (primaryType.equals(ResourceUtil.TYPE_SLING_ORDERED_FOLDER)) {
+                        return true;
+                    }
+                }
             }
         } catch (RepositoryException | RuntimeException e) {
             LOG.warn("Can't determine orderability of {}", getPath(), e);
@@ -418,9 +492,12 @@ public class SourceModel extends ConsoleSlingBean {
                 .append(Property.escapeXmlAttribute(group))
                 .append("</entry>\n")
                 .append("<entry key=\"description\">created from source download</entry>\n")
-                .append("<entry key=\"createdBy\">")
-                .append(Property.escapeXmlAttribute(getResolver().getUserID()))
-                .append("</entry>\n")
+                .append("<entry key=\"createdBy\">");
+        String userId = getResolver().getUserID();
+        if (userId != null) {
+            writer.append(Property.escapeXmlAttribute(userId));
+        }
+        writer.append("</entry>\n")
                 .append("<entry key=\"created\">")
                 .append(ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT))
                 .append("</entry>\n")
@@ -431,7 +508,7 @@ public class SourceModel extends ConsoleSlingBean {
 
     protected void writeFilterXml(ZipOutputStream zipStream) throws IOException {
 
-        String path = resource.getPath();
+        String path = getExportPath(resource.getPath());
 
         ZipEntry entry;
         entry = new ZipEntry("META-INF/vault/filter.xml");
@@ -455,7 +532,7 @@ public class SourceModel extends ConsoleSlingBean {
      */
     protected void writeParents(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Resource parent)
             throws IOException, RepositoryException {
-        if (parent != null && !"/".equals(parent.getPath())) {
+        if (parent != null && !isRootPath(parent.getPath())) {
             writeParents(zipStream, root, parent.getParent());
             SourceModel parentModel = new SourceModel(config, context, parent);
             parentModel.writeIntoZip(zipStream, root, DepthMode.PROPERTIESONLY);
@@ -503,10 +580,10 @@ public class SourceModel extends ConsoleSlingBean {
             return;
         }
 
-        ZipEntry entry;
+        String zipName = getZipName(root);
+        ZipEntry entry = new ZipEntry(zipName);
         FileTime lastModified = getLastModified(resource);
-        entry = new ZipEntry(getZipName(root));
-        LOG.debug("Writing entry {}", entry.getName());
+        LOG.debug("Writing entry {} ({})", entry.getName(), root);
         if (lastModified != null) {
             entry.setLastModifiedTime(lastModified);
         }
@@ -539,18 +616,31 @@ public class SourceModel extends ConsoleSlingBean {
         FileTime lastModified = getLastModified(file);
         ZipEntry entry;
         String path = requireNonNull(file).getPath();
+        InputStream fileContent;
         Binary binaryData = ResourceUtil.getBinaryData(file);
         if (binaryData != null) {
+            fileContent = binaryData.getStream();
+        } else {
+            if ((fileContent = file.getProperty(ResourceUtil.PROP_DATA, InputStream.class)) == null) {
+                Resource content = file.getChild(JCR_CONTENT);
+                if (content != null) {
+                    fileContent = content.getValueMap().get(ResourceUtil.PROP_DATA, InputStream.class);
+                }
+            }
+        }
+        if (fileContent != null) {
             entry = new ZipEntry(getZipName(root, path));
             LOG.debug("Writing entry {}", entry.getName());
             if (lastModified != null) {
                 entry.setLastModifiedTime(lastModified);
             }
             zipStream.putNextEntry(entry);
-            try (InputStream fileContent = binaryData.getStream()) {
+            try {
                 IOUtils.copy(fileContent, zipStream);
+            } finally {
+                zipStream.closeEntry();
+                fileContent.close();
             }
-            zipStream.closeEntry();
         } else {
             LOG.warn("Can't get binary data for {}", path);
         }
@@ -614,11 +704,12 @@ public class SourceModel extends ConsoleSlingBean {
      * Turns a resource path into a proper name for a zip file with the appropriate encoding of troublesome chars.
      */
     protected String getZipName(@Nonnull String root, @Nonnull String resourcePath) {
-        String name = resourcePath;
-        if (name.startsWith(root)) {
-            name = name.substring(root.length() + 1);
+        String name = getExportPath(resourcePath);
+        String exportRoot = getExportPath(root);
+        if (name.startsWith(exportRoot)) {
+            name = name.substring(exportRoot.length() + 1);
         } else {
-            name = root + name;
+            name = exportRoot + name;
         }
         return filesystemName(name);
     }
@@ -792,13 +883,20 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     protected void writeNamespaceAttributes(Writer writer, List<String> namespaces) throws RepositoryException, IOException {
-        for (int i = 0; i < namespaces.size(); ++i) {
-            String ns = namespaces.get(i);
-            String url = getSession().getNamespaceURI(ns);
-            if (StringUtils.isNotBlank(url)) {
-                writer.append(" xmlns:").append(ns).append("=\"").append(url).append("\"");
-                if (i + 1 < namespaces.size()) {
-                    writer.append("\n       ");
+        Session session = getSession();
+        if (session != null) {
+            for (int i = 0; i < namespaces.size(); ++i) {
+                String ns = namespaces.get(i);
+                try {
+                    String url = session.getNamespaceURI(ns);
+                    if (StringUtils.isNotBlank(url)) {
+                        writer.append(" xmlns:").append(ns).append("=\"").append(url).append("\"");
+                        if (i + 1 < namespaces.size()) {
+                            writer.append("\n       ");
+                        }
+                    }
+                } catch (NamespaceException nsex) {
+                    LOG.debug(nsex.toString());
                 }
             }
         }
@@ -935,7 +1033,7 @@ public class SourceModel extends ConsoleSlingBean {
                     return null;
                 }
                 String lineBreak = "";
-                if (array.length > 0 && getEscapedString(array[0]).startsWith(" ")) {
+                if (getEscapedString(array[0]).startsWith(" ")) {
                     // if string values of an array are beginning with spaces we assume that the values
                     // should be arranged as lines of string values with the current indent for each value
                     lineBreak = "\r"; // '\r' is replaced by '\n' after escaping of embedded '\n' characters
@@ -978,7 +1076,7 @@ public class SourceModel extends ConsoleSlingBean {
         protected Object[] cleanupArray(Object[] value) {
             Object[] result = value;
             if (JCR_MIXINTYPES.equals(name) && value != null) {
-                result = Arrays.asList(value).stream()
+                result = Arrays.stream(value)
                         .filter(o -> !EXCLUDED_MIXINS.accept(String.valueOf(o)))
                         .toArray();
             }
@@ -1046,9 +1144,6 @@ public class SourceModel extends ConsoleSlingBean {
 
         @Override
         public int compareTo(@Nonnull Property other) {
-            if (other == null) {
-                return 1;
-            }
             int level = getOrderingLevel();
             int olevel = other.getOrderingLevel();
             if (level != olevel) {
