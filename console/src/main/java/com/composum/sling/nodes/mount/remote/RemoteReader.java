@@ -16,6 +16,7 @@ import org.apache.jackrabbit.webdav.client.methods.HttpPropfind;
 import org.apache.jackrabbit.webdav.property.DavProperty;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertySet;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ import static org.apache.jackrabbit.webdav.DavServletResponse.SC_MULTI_STATUS;
 /**
  * reads the resource data using default Sling GET servlet JSON requests
  */
-public class RemoteReader  {
+public class RemoteReader {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteReader.class);
 
@@ -63,6 +64,10 @@ public class RemoteReader  {
             "^((https?:)?//[^/]*)?(?<path>(?<parent>(/.*)?)?/(?<name>[^/]+))(?<folder>/)?$");
 
     protected final RemoteProvider provider;
+
+    public static final String DAV_NS = "dav:";
+    public static final String DAV_TYPE_FOLDER = DAV_NS + "folder";
+    public static final String DAV_TYPE_UNKNOWN = DAV_NS + "unknown";
 
     public RemoteReader(@Nonnull final RemoteProvider provider) {
         this.provider = provider;
@@ -160,7 +165,7 @@ public class RemoteReader  {
                                   @Nonnull final HttpClient httpClient) {
         int statusCode = SC_NO_CONTENT;
         String url = getDavUrl(resource);
-        LOG.debug("loadDAV({}) - '{}'", resource.getPath(), url);
+        LOG.debug("DAV.load({}) - '{}'", resource.getPath(), url);
         try {
             HttpPropfind davGet = provider.remoteClient.buildPropfind(url);
             try {
@@ -170,6 +175,7 @@ public class RemoteReader  {
                     String path = resource.getPath();
                     resource.children = new LinkedHashMap<>();
                     resource.values.clear();
+                    boolean resourceIsFolder = false;
                     MultiStatus multiStatus = davGet.getResponseBodyAsMultiStatus(response);
                     MultiStatusResponse[] responses = multiStatus.getResponses();
                     for (MultiStatusResponse item : responses) {
@@ -179,7 +185,7 @@ public class RemoteReader  {
                             boolean isFolder = "/".equals(itemHref.group("folder"));
                             if (itemPath.equals(path)) {
                                 loadDavResource(resource, item);
-                                adjustDavType(resource, isFolder);
+                                resourceIsFolder = isFolder;
                             } else {
                                 String name = itemHref.group("name");
                                 RemoteResource child = new RemoteResource(resource.resolver, path + "/" + name);
@@ -191,6 +197,7 @@ public class RemoteReader  {
                             }
                         }
                     }
+                    adjustDavType(resource, resourceIsFolder);
                 }
             } catch (DavException ex) {
                 LOG.error("DAV exception loading '{}': {}", url, ex.toString());
@@ -204,10 +211,23 @@ public class RemoteReader  {
 
     protected void adjustDavType(@Nonnull final RemoteResource resource, boolean isFolder) {
         String primaryType = resource.values.get(JcrConstants.JCR_PRIMARYTYPE, String.class);
-        if (StringUtils.isBlank(primaryType)) {
-            resource.values.put(JcrConstants.JCR_PRIMARYTYPE,
-                    isFolder || (resource.children != null && resource.children.size() > 0)
-                            ? "dav:folder" : "dav:unknown");
+        if (StringUtils.isBlank(primaryType) || primaryType.startsWith(DAV_NS)) {
+            if (isFolder) {
+                primaryType = DAV_TYPE_FOLDER;
+            } else if (resource.children != null && resource.children.size() > 0) {
+                Resource content = resource.getChild(JcrConstants.JCR_CONTENT);
+                String contentType;
+                if (content instanceof RemoteResource && JcrConstants.NT_RESOURCE.equals(
+                        ((RemoteResource) content).values.get(JcrConstants.JCR_PRIMARYTYPE, String.class))) {
+                    primaryType = JcrConstants.NT_FILE;
+                } else {
+                    primaryType = DAV_TYPE_UNKNOWN;
+                }
+            } else {
+                primaryType = DAV_TYPE_UNKNOWN;
+            }
+            LOG.debug("DAV.adjust({}) - '{}'", resource.getPath(), primaryType);
+            resource.values.put(JcrConstants.JCR_PRIMARYTYPE, primaryType);
         }
     }
 
@@ -266,7 +286,7 @@ public class RemoteReader  {
                                    @Nonnull final HttpClient httpClient) {
         int statusCode;
         String url = getJsonUrl(resource);
-        LOG.debug("loadJSON({}) - '{}'", resource.getPath(), url);
+        LOG.debug("JSON.load({}) - '{}'", resource.getPath(), url);
         HttpGet httpGet = provider.remoteClient.buildHttpGet(url);
         try {
             HttpResponse response = provider.remoteClient.execute(httpClient, httpGet);
@@ -389,6 +409,7 @@ public class RemoteReader  {
                         String path = resource.getPath() + "/" + name;
                         // load child and store it... (the children af a child should not be loaded)
                         RemoteResource child = new RemoteResource(resource.resolver, path);
+                        LOG.debug("JSON.load.child({})...", path);
                         loadJsonResource(child, jsonReader);
                         if (resource.children == null) {
                             resource.children = new LinkedHashMap<>();

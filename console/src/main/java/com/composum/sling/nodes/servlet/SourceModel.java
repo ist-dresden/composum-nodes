@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.jcr.Binary;
+import javax.jcr.NamespaceException;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
@@ -386,15 +387,12 @@ public class SourceModel extends ConsoleSlingBean {
      * Returns true if the nodes children are ordered. Works only for JCR resources - if we cannot determine this,
      * we return null.
      */
-    public Boolean hasOrderableChildren() {
-        Boolean result;
+    public boolean hasOrderableChildren() {
         if (hasOrderableChildren == null) {
-            result = hasOrderableChildren(resource);
-            hasOrderableChildren = new Boolean[]{result};
-        } else {
-            result = hasOrderableChildren[0];
+            Boolean determined = hasOrderableChildren(resource);
+            hasOrderableChildren = new Boolean[]{determined != null ? determined : Boolean.FALSE};
         }
-        return result;
+        return hasOrderableChildren[0];
     }
 
     /**
@@ -840,12 +838,16 @@ public class SourceModel extends ConsoleSlingBean {
         if (session != null) {
             for (int i = 0; i < namespaces.size(); ++i) {
                 String ns = namespaces.get(i);
-                String url = session.getNamespaceURI(ns);
-                if (StringUtils.isNotBlank(url)) {
-                    writer.append(" xmlns:").append(ns).append("=\"").append(url).append("\"");
-                    if (i + 1 < namespaces.size()) {
-                        writer.append("\n       ");
+                try {
+                    String url = session.getNamespaceURI(ns);
+                    if (StringUtils.isNotBlank(url)) {
+                        writer.append(" xmlns:").append(ns).append("=\"").append(url).append("\"");
+                        if (i + 1 < namespaces.size()) {
+                            writer.append("\n       ");
+                        }
                     }
+                } catch (NamespaceException nsex) {
+                    LOG.warn(nsex.toString());
                 }
             }
         }

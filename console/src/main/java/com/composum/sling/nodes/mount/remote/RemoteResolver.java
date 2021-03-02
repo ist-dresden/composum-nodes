@@ -96,6 +96,9 @@ public class RemoteResolver implements ExtendedResolver {
             }
             if (parent != null) {
                 resource = (RemoteResource) parent.getChild(_pathName(path));
+                if (resource != null) {
+                    resource.children(); // ensure that the rsource is regular loaded
+                }
             } else {
                 resource = provider.remoteReader.loadResource(
                         new RemoteResource(this, localPath), false);
@@ -197,6 +200,9 @@ public class RemoteResolver implements ExtendedResolver {
         // try to use a loaded parent to optimize caching
         if (parent != null) {
             resource = parent.getChild(_pathName(path));
+            if (resource instanceof RemoteResource) {
+                ((RemoteResource) resource).children(); // ensure that the rsource is regular loaded
+            }
         } else {
             resource = _resolve(path);
         }
