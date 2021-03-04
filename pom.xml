@@ -19,6 +19,7 @@
     <url>https://github.com/ist-dresden/composum</url>
 
     <properties>
+        <sling.install.path>/libs/composum/nodes/install</sling.install.path>
         <bundle.category>composum,nodes</bundle.category>
         <package.failOnError>true</package.failOnError>
         <bundle.failOnError>true</bundle.failOnError>
@@ -118,6 +119,18 @@
                             </configuration>
                         </execution>
                     </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>sling-maven-plugin</artifactId>
+                    <configuration>
+                        <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}</slingUrl>
+                        <slingUrlSuffix>${sling.install.path}</slingUrlSuffix>
+                        <deploymentMethod>WebDAV</deploymentMethod>
+                        <user>${sling.user}</user>
+                        <password>${sling.password}</password>
+                    </configuration>
                 </plugin>
 
             </plugins>
