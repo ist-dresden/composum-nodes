@@ -49,16 +49,16 @@
     <profiles>
 
         <profile>
+            <!-- install bundles via Sling installer (REST API: /system/console/install) -->
             <id>installBundle</id>
             <activation>
                 <property>
-                    <name>deploy.bundle</name>
+                    <name>install.bundle</name>
                     <value>true</value>
                 </property>
             </activation>
             <build>
                 <plugins>
-
                     <plugin>
                         <groupId>org.apache.sling</groupId>
                         <artifactId>sling-maven-plugin</artifactId>
@@ -72,18 +72,37 @@
                             </execution>
                         </executions>
                     </plugin>
-
                 </plugins>
             </build>
         </profile>
+
         <profile>
-            <id>installPackage</id>
-        </profile>
-        <profile>
-            <id>installTestContent</id>
+            <!-- install bundles via upload (WebDAV) to 'install' path (/libs/composum/nodes/install) -->
+            <id>uploadBundle</id>
+            <activation>
+                <property>
+                    <name>upload.bundle</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>sling-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>upload-bundle</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
     </profiles>
-
 </project>
-
