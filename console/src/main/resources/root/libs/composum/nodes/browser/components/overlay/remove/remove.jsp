@@ -22,7 +22,7 @@
                     </div>
                     <div class="form-group">
                         <cpn:text class="text" i18n="true"
-                                  type="rich">Do you really want to delete the current overlay; this cannot be undone?</cpn:text>
+                                  type="rich">Do you really want to delete the current overlay? This cannot be undone.</cpn:text>
                     </div>
                     <div class="form-group">
                         <label class="control-label">${cpn:i18n(slingRequest,'Overlay Path')}</label>
