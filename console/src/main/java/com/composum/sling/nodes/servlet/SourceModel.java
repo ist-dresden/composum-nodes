@@ -327,7 +327,7 @@ public class SourceModel extends ConsoleSlingBean {
             Iterator<Resource> iterator = resource.listChildren();
             while (iterator.hasNext()) {
                 Resource subnode = iterator.next();
-                if (config.getSourceNodesFilter().accept(subnode)) {
+                if (config.getSourceNodesFilter().accept(subnode) && !ResourceUtil.isSyntheticResource(subnode)) {
                     if (subnode.getName().equals(JCR_CONTENT)) {
                         jcrcontent = subnode;
                     } else {

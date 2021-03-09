@@ -179,7 +179,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             for (Resource child : resource.getChildren()) {
                 Resource templateChild = templateresource.getChild(child.getName());
                 if (templateChild == null) {
-                    if (!noRemoveNodeNames.contains(child.getName())) {
+                    if (!noRemoveNodeNames.contains(child.getName()) && !ResourceUtil.isSyntheticResource(child)) {
                         thisNodeChanged = true;
                         try {
                             resource.getResourceResolver().delete(child);
