@@ -1,13 +1,13 @@
 package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.BeanContext;
-import com.composum.sling.core.filter.ResourceFilter;
+import com.composum.sling.nodes.NodesConfigImpl;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.test.util.CharsetStress;
 import com.composum.sling.test.util.JcrTestUtils;
+import com.google.common.base.Defaults;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
@@ -17,18 +17,19 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
-import org.mockito.stubbing.Answer;
+import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.*;
-import java.util.Arrays;
-import java.util.stream.Stream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -52,10 +53,7 @@ public class SourceModelTest {
     @Rule
     public final ErrorCollector ec = new ErrorCollector();
 
-    protected final Answer exceptionThrowingAnswer = (invocation) -> {
-        throw new AssertionError("Invocation not mocked: " + invocation);
-    };
-    protected NodesConfiguration config = mock(NodesConfiguration.class, exceptionThrowingAnswer);
+    protected NodesConfiguration config;
     protected BeanContext.Service beanContext;
     protected ResourceResolver resolver;
     protected Resource resource;
@@ -70,8 +68,11 @@ public class SourceModelTest {
         resource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel");
         beanContext = new BeanContext.Service(context.request(), context.response(), resource,
                 context.resourceResolver());
+        NodesConfigImpl theNodesConfig = new NodesConfigImpl();
+        NodesConfigImpl.Configuration configuration = DefaultsForAnnotations.of(NodesConfigImpl.Configuration.class);
+        theNodesConfig.activate(mock(ComponentContext.class), configuration);
+        config = theNodesConfig;
         model = new SourceModel(config, beanContext, resource);
-        Mockito.doReturn(ResourceFilter.ALL).when(config).getSourceNodesFilter();
     }
 
     @Ignore
@@ -85,12 +86,12 @@ public class SourceModelTest {
     /**
      * Check that failing tests are not because of the source encoding.
      */
-    @Ignore
+    // @Ignore
     @Test
     public void testSourceEncoding() {
         ec.checkThat(CharsetStress.fromBytes(CharsetStress.bytes(CharsetStress.getUTF8CharsetStress())), is(CharsetStress.getUTF8CharsetStress()));
         ec.checkThat(CharsetStress.getUTF8CharsetStress(),
-                is("äöüÄ\\\"'ÖÜñóáéíóú¬áßàèìùòâêîôû &<&>xml; &euro; @%‰ ¼½¾ «™©®» „$”“€”‘£’‚¥’ <b>!</b>"));
+                is("äöüÄ\\\"'ÖÜñóáéíóú¬áßàèìùòâêîôû &<&>xml; &euro; @%‰ ¼½¾ «™©®» „$”“€”‘£’‚¥’ <b>!</b>·"));
         ec.checkThat(CharsetStress.bytes("ä"), is("[-61, -92]"));
         ec.checkThat(CharsetStress.bytes("€"), is("[-30, -126, -84]"));
     }
@@ -157,7 +158,7 @@ public class SourceModelTest {
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/401.jsp\n"));
     }
 
-    @Ignore("This somehow fails on travis subfolder/.content.xml, so we comment that out.")
+    // @Ignore("This somehow fails on travis subfolder/.content.xml, so we comment that out.")
     // FIXME(hps,17.11.20) debug this. The problem might be either a charset problem, or an issue with the timezone of the date property.
     @Test
     public void listArchive() throws Exception {
@@ -176,10 +177,10 @@ public class SourceModelTest {
                 "assetsfolder/withadditionaldata.jpg.dir/.content.xml : 1098 | 3497581146\n" +
                 "assetsfolder/_nt_resourcewithoutfile : 83358 | 2844564088\n" +
                 "assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 221 | 1068843391\n" +
-                "ntunstructuredwithjcrcontent/.content.xml : 450 | 1525816692\n" +
+                "ntunstructuredwithjcrcontent/.content.xml : 450 | 3351525387\n" +
                 "ntunstructuredwithjcrcontent/folderbinprop.binary : 20 | 2592797726\n" +
                 "ntunstructuredwithjcrcontent/_jcr_content/binprop.binary : 20 | 2592797726\n" +
-                "subfolder/.content.xml : 3917 | 3270208475\n" +
+                "subfolder/.content.xml : 3917 | 3943574023\n" +
                 "subfolder/_jcr_content/propertytest/binary.binary : 86 | 1434328335\n" +
                 "subfolder/_jcr_content/propertytest/binary with-weird na_me.binary : 86 | 1434328335\n" +
                 "subfolder/_jcr_content/assets/withadditionaldata.jpg : 76910 | 2714537933\n" +
@@ -191,7 +192,7 @@ public class SourceModelTest {
     @Nonnull
     protected String getZipContentOverview(ByteArrayOutputStream out, boolean details, boolean unpack) throws IOException {
         File basedir = new File("target").getAbsoluteFile();
-        if (!basedir.exists() || !basedir.getAbsolutePath().endsWith("core/test/target")) {
+        if (!basedir.exists() || !basedir.getAbsolutePath().endsWith("nodes/test/target")) {
             unpack = false;
         }
         basedir = basedir.toPath().resolve("sourcemodel-test-unpacked").toFile();
@@ -245,6 +246,32 @@ public class SourceModelTest {
                 System.out.println(entry.getName());
                 zip.closeEntry();
             }
+        }
+
+    }
+
+    /** Instantiates an annotation interface so that it returns it's defaults. */
+    protected static class DefaultsForAnnotations implements InvocationHandler {
+
+        /**
+         * Creates an instance of an annotation that returns the declared defaults as values. Usage e.g.
+         * <code>@interface Something{...};
+         * Something something = DefaultsForAnnotations.of(Something.class);
+         * </code>
+         *
+         * @param annotation the class for the annotation
+         * @return an instance of the annotation
+         */
+        @Nonnull
+        public static <A extends Annotation> A of(@Nonnull Class<A> annotation) {
+            return annotation.cast(
+                    Proxy.newProxyInstance(annotation.getClassLoader(), new Class[]{annotation}, new DefaultsForAnnotations()));
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) {
+            return method.getDefaultValue() != null ? method.getDefaultValue() :
+                    Defaults.defaultValue(method.getReturnType());
         }
 
     }
