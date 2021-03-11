@@ -23,7 +23,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.version.VersionManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -574,6 +576,30 @@ public class Browser extends ConsoleServletBean {
             isText = isFile() && StringUtils.isNotBlank(getTextType());
         }
         return isText;
+    }
+
+    public boolean isJcrResource() {
+        return !ResourceUtil.isSyntheticResource(resource) && resource.adaptTo(Node.class) != null;
+    }
+
+    public boolean isCanHaveAcl() {
+        return isJcrResource();
+    }
+
+    public boolean isVersionable() {
+        if (!isJcrResource()) {
+            return false;
+        }
+        try {
+            final VersionManager versionManager = getSession().getWorkspace().getVersionManager();
+            versionManager.getBaseVersion(getPath());
+            return true;
+        } catch (UnsupportedRepositoryOperationException e) {
+            return false; // OK - node is simply not versionable.
+        } catch (RepositoryException e) {
+            LOG.error("Bug: unknown error on " + getPath(), e); // shouldn't happen - please check why.
+            return false;
+        }
     }
 
     public static final Pattern SETUP_SCRIPT_PATTERN =
