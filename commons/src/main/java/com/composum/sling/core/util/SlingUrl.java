@@ -97,6 +97,8 @@ public class SlingUrl implements Cloneable {
     public static final String SCHEME_PROTOCOL_RELATIVE_URL = "";
 
     protected static final Pattern SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>[a-zA-Z0-9+.-]+):)");
+    protected static final Pattern HTTP_SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>https?):)");
+    protected static final Pattern FILE_SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>(file|ftp)):)");
     protected static final Pattern USERNAMEPASSWORD = Pattern.compile("((?<username>[^:@/?#]+)(:(?<password>[^:@/?#]+))?@)");
 
     /**
@@ -104,47 +106,51 @@ public class SlingUrl implements Cloneable {
      * <p>
      * Debug regex e.g. with http://www.softlion.com/webtools/regexptest/ .
      */
-    protected static final Pattern HTTP_URL_PATTERN = Pattern.compile("" +
-            SCHEME_PATTERN.pattern() + "?" +
+    protected static final Pattern HTTP_URL_PATTERN = Pattern.compile("^" +
+            HTTP_SCHEME_PATTERN.pattern() + "?" +
             "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:?#]+)(:(?<port>[0-9]+))?)?)?" +
-            "(?<pathnoext>(/([^/.?#;]+|\\.\\.))*/)" +
+            "(?<pathnoext>(/([^/.;?#]+|\\.\\.))*/)" +
             "(" +
             "(?<filenoext>[^/.?#;]+)" +
-            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" + // A suffix can only exist if there is an extension.
+            "((?<extensions>(\\.[^./;?#]+)+)(?<suffix>/[^;?#]*)?)?" + // A suffix can only exist if there is an extension.
             ")?" +
-            "(?<query>\\?[^?#]*)?" +
-            "(?<fragment>#.*)?"
+            "(?<query>\\?[^#]*)?" +
+            "(?<fragment>#.*)?" +
+            "$"
     );
 
-    protected static final Pattern FILE_URL_PATTERN = Pattern.compile("" +
-            SCHEME_PATTERN.pattern() + "?" +
+    protected static final Pattern FILE_URL_PATTERN = Pattern.compile("^" +
+            FILE_SCHEME_PATTERN.pattern() + "?" +
             "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:?#]+)(:(?<port>[0-9]+))?)?)?" +
-            "(?<pathnoext>(/([^/.?#;]+|\\.\\.))*/)" +
+            "(?<pathnoext>(/([^/.;?#]+|\\.\\.))*/)" +
             "(" +
-            "(?<filenoext>[^/.?#;]+)" +
-            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" +
+            "(?<filenoext>[^/.;?#]+)" +
+            "((?<extensions>(\\.[^./;?#]+)+)(?<suffix>/[^;?#]*)?)?" +
             ")?" +
-            "(?<query>)(?<fragment>)" // empty groups to allow easier reading out of the matcher
+            "(?<query>)(?<fragment>)" + // empty groups to allow easier reading out of the matcher
+            "$"
     );
 
-    protected static final Pattern ABSOLUTE_PATH_PATTERN = Pattern.compile("" +
+    protected static final Pattern ABSOLUTE_PATH_PATTERN = Pattern.compile("^" +
             "(?<pathnoext>(/([^/.?]+|\\.\\.))*/)" +
             "(" +
-            "(?<filenoext>[^/.?;]+)" +
-            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" +
+            "(?<filenoext>[^/.;?#]+)" +
+            "((?<extensions>(\\.[^./;?#]+)+)(?<suffix>/[^;?#]*)?)?" +
             ")?" +
-            "(?<query>\\?[^?#]*)?" +
-            "(?<fragment>#.*)?"
+            "(?<query>\\?[^#]*)?" +
+            "(?<fragment>#.*)?" +
+            "$"
     );
 
-    protected static final Pattern RELATIVE_PATH_PATTERN = Pattern.compile("" +
-            "(?!/)(?<pathnoext>([^/.?;]+|\\.\\.)*/)?" +
+    protected static final Pattern RELATIVE_PATH_PATTERN = Pattern.compile("^" +
+            "(?<pathnoext>([^/.;?#]+|\\.\\.)*/)?" +
             "(" +
-            "(?<filenoext>[^/.?;]+)" +
-            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" +
+            "(?<filenoext>[^/.;?#]+)" +
+            "((?<extensions>(\\.[^./;?#]+)+)(?<suffix>/[^;?#]*)?)?" +
             ")?" +
-            "(?<query>\\?[^?#]*)?" +
-            "(?<fragment>#.*)?"
+            "(?<query>\\?[^#]*)?" +
+            "(?<fragment>#.*)?" +
+            "$"
     );
 
     protected static final Pattern HTTP_SCHEME = Pattern.compile("^https?$", Pattern.CASE_INSENSITIVE);
