@@ -12,10 +12,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ErrorCollector;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -30,6 +27,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.TimeZone;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -58,6 +56,7 @@ public class SourceModelTest {
     protected ResourceResolver resolver;
     protected Resource resource;
     protected SourceModel model;
+    private TimeZone defaultTimeZone;
 
     @Before
     public void setup() throws Exception {
@@ -73,6 +72,15 @@ public class SourceModelTest {
         theNodesConfig.activate(mock(ComponentContext.class), configuration);
         config = theNodesConfig;
         model = new SourceModel(config, beanContext, resource);
+
+        // Date formatting depends on the default timezone, so we set it deterministically since it's different on travis
+        defaultTimeZone = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"));
+    }
+
+    @After
+    public void reset() {
+        TimeZone.setDefault(defaultTimeZone);
     }
 
     @Ignore
@@ -158,8 +166,6 @@ public class SourceModelTest {
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/401.jsp\n"));
     }
 
-    // @Ignore("This somehow fails on travis subfolder/.content.xml, so we comment that out.")
-    // FIXME(hps,17.11.20) debug this. The problem might be either a charset problem, or an issue with the timezone of the date property.
     @Test
     public void listArchive() throws Exception {
         System.out.println("listArchive");
@@ -208,12 +214,6 @@ public class SourceModelTest {
                 if (details) {
                     System.out.println("ÄöÜ");
                     buf.append(" : ").append(bytes.length).append(" | ").append(entry.getCrc());
-                    if ("subfolder/.content.xml".equals(entry.getName())) { // FIXME(hps,16.11.20) temporary test diagnostic
-                        LOG.info("Content of {}: {}", entry.getName(), new String(bytes));
-                        LOG.info("UTF-8 Content of {}: {}", entry.getName(), new String(bytes, "UTF-8"));
-                        System.out.println(new String(bytes, "UTF-8"));
-                        LOG.info("Bytes of {}: {}", entry.getName(), CharsetStress.bytes(bytes));
-                    }
                 }
                 buf.append("\n");
                 if (unpack) {
