@@ -13,7 +13,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,6 +97,8 @@ public class SlingUrl implements Cloneable {
     public static final String SCHEME_PROTOCOL_RELATIVE_URL = "";
 
     protected static final Pattern SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>[a-zA-Z0-9+.-]+):)");
+    protected static final Pattern HTTP_SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>https?):)");
+    protected static final Pattern FILE_SCHEME_PATTERN = Pattern.compile("(?i:(?<scheme>(file|ftp)):)");
     protected static final Pattern USERNAMEPASSWORD = Pattern.compile("((?<username>[^:@/?#]+)(:(?<password>[^:@/?#]+))?@)");
 
     /**
@@ -98,47 +106,51 @@ public class SlingUrl implements Cloneable {
      * <p>
      * Debug regex e.g. with http://www.softlion.com/webtools/regexptest/ .
      */
-    protected static final Pattern HTTP_URL_PATTERN = Pattern.compile("" +
-            SCHEME_PATTERN.pattern() + "?" +
+    protected static final Pattern HTTP_URL_PATTERN = Pattern.compile("^" +
+            HTTP_SCHEME_PATTERN.pattern() + "?" +
             "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:?#]+)(:(?<port>[0-9]+))?)?)?" +
-            "(?<pathnoext>(/([^/.?#;]+|\\.\\.))*/)" +
+            "(?<pathnoext>(/([^/.;?#]+|\\.\\.))*/)" +
             "(" +
             "(?<filenoext>[^/.?#;]+)" +
-            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" + // A suffix can only exist if there is an extension.
+            "((?<extensions>(\\.[^./;?#]+)+)(?<suffix>/[^;?#]*)?)?" + // A suffix can only exist if there is an extension.
             ")?" +
-            "(?<query>\\?[^?#]*)?" +
-            "(?<fragment>#.*)?"
+            "(?<query>\\?[^#]*)?" +
+            "(?<fragment>#.*)?" +
+            "$"
     );
 
-    protected static final Pattern FILE_URL_PATTERN = Pattern.compile("" +
-            SCHEME_PATTERN.pattern() + "?" +
+    protected static final Pattern FILE_URL_PATTERN = Pattern.compile("^" +
+            FILE_SCHEME_PATTERN.pattern() + "?" +
             "(?<hostandport>//" + USERNAMEPASSWORD + "?((?<host>[^/:?#]+)(:(?<port>[0-9]+))?)?)?" +
-            "(?<pathnoext>(/([^/.?#;]+|\\.\\.))*/)" +
+            "(?<pathnoext>(/([^/.;?#]+|\\.\\.))*/)" +
             "(" +
-            "(?<filenoext>[^/.?#;]+)" +
-            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" +
+            "(?<filenoext>[^/.;?#]+)" +
+            "((?<extensions>(\\.[^./;?#]+)+)(?<suffix>/[^;?#]*)?)?" +
             ")?" +
-            "(?<query>)(?<fragment>)" // empty groups to allow easier reading out of the matcher
+            "(?<query>)(?<fragment>)" + // empty groups to allow easier reading out of the matcher
+            "$"
     );
 
-    protected static final Pattern ABSOLUTE_PATH_PATTERN = Pattern.compile("" +
+    protected static final Pattern ABSOLUTE_PATH_PATTERN = Pattern.compile("^" +
             "(?<pathnoext>(/([^/.?]+|\\.\\.))*/)" +
             "(" +
-            "(?<filenoext>[^/.?;]+)" +
-            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" +
+            "(?<filenoext>[^/.;?#]+)" +
+            "((?<extensions>(\\.[^./;?#]+)+)(?<suffix>/[^;?#]*)?)?" +
             ")?" +
-            "(?<query>\\?[^?#]*)?" +
-            "(?<fragment>#.*)?"
+            "(?<query>\\?[^#]*)?" +
+            "(?<fragment>#.*)?" +
+            "$"
     );
 
-    protected static final Pattern RELATIVE_PATH_PATTERN = Pattern.compile("" +
-            "(?!/)(?<pathnoext>([^/.?;]+|\\.\\.)*/)?" +
+    protected static final Pattern RELATIVE_PATH_PATTERN = Pattern.compile("^" +
+            "(?<pathnoext>([^/.;?#]+|\\.\\.)*/)?" +
             "(" +
-            "(?<filenoext>[^/.?;]+)" +
-            "((?<extensions>(\\.[^./?#;]+)+)(?<suffix>/[^?#;]*)?)?" +
+            "(?<filenoext>[^/.;?#]+)" +
+            "((?<extensions>(\\.[^./;?#]+)+)(?<suffix>/[^;?#]*)?)?" +
             ")?" +
-            "(?<query>\\?[^?#]*)?" +
-            "(?<fragment>#.*)?"
+            "(?<query>\\?[^#]*)?" +
+            "(?<fragment>#.*)?" +
+            "$"
     );
 
     protected static final Pattern HTTP_SCHEME = Pattern.compile("^https?$", Pattern.CASE_INSENSITIVE);
@@ -288,7 +300,6 @@ public class SlingUrl implements Cloneable {
      */
     @Nonnull
     public SlingUrl fromUrl(@Nonnull final String url, boolean decode) {
-        reset();
         parseUrl(url, decode);
         return this;
     }
@@ -400,6 +411,22 @@ public class SlingUrl implements Cloneable {
         type = resourcePath.startsWith("/") ? UrlType.HTTP : UrlType.RELATIVE;
         setResourcePath(resourcePath);
         return this;
+    }
+
+    /**
+     * Initialzes the SlingUrl from a requests URL
+     *
+     * @param request the HTTP request to use
+     * @return this for builder style chaining
+     */
+    @Nonnull
+    public SlingUrl fromRequest(HttpServletRequest request) {
+        StringBuffer url = request.getRequestURL();
+        String query = request.getQueryString();
+        if (StringUtils.isNotBlank(query)) {
+            url.append('?').append(query);
+        }
+        return fromUrl(url.toString(), true);
     }
 
     @Nonnull
@@ -658,12 +685,32 @@ public class SlingUrl implements Cloneable {
     }
 
     /**
+     * @return the first value of the parameter values if values are present;
+     * an empty string if the value list is empty (parameter present but without a value);
+     * <code>null</code> if the parameter is not present
+     */
+    @Nullable
+    public String getParameter(@Nonnull final String name) {
+        List<String> values = parameters.get(name);
+        return values != null ? (values.size() > 0 ? values.get(0) : "") : null;
+    }
+
+    /**
+     * @return an unmodifiable List of the parameter values if present
+     */
+    @Nullable
+    public List<String> getParameterValues(@Nonnull final String name) {
+        List<String> values = parameters.get(name);
+        return values != null ? Collections.unmodifiableList(values) : null;
+    }
+
+    /**
      * Unmodifiable map of the contained parameters.
      * <p>
      * This is unmodifiable since otherwise we would have to trust the user to call {@link #clearTransients()} on every change.
      */
     @Nonnull
-    Map<String, List<String>> getParameters() {
+    public Map<String, List<String>> getParameters() {
         return Collections.unmodifiableMap(parameters);
     }
 
@@ -766,7 +813,7 @@ public class SlingUrl implements Cloneable {
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object other) {
-        return toString().equals(other.toString());
+        return other != null && toString().equals(other.toString());
     }
 
     /**
@@ -1242,12 +1289,11 @@ public class SlingUrl implements Cloneable {
             parameterString = parameterString.substring(1);
         }
         for (String param : StringUtils.split(parameterString, '&')) {
-            String[] nameVal = StringUtils.split(param, "=", 2);
-            addParameter(
-                    decode ? UrlCodec.QUERYPART.decode(nameVal[0]) : nameVal[0],
-                    nameVal.length > 1 ?
-                            (decode ? UrlCodec.QUERYPART.decode(nameVal[1]) : nameVal[1])
-                            : null);
+            int delimiterPos = param.indexOf('=');
+            String name = delimiterPos < 0 ? param : param.substring(0, delimiterPos);
+            String value = delimiterPos < 0 ? null : param.substring(delimiterPos + 1);
+            addParameter(decode ? UrlCodec.QUERYPART.decode(name) : name,
+                    value != null ? (decode ? UrlCodec.QUERYPART.decode(value) : value) : null);
         }
     }
 
