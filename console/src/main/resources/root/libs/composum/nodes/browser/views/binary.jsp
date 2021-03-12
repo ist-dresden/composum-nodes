@@ -9,9 +9,7 @@
     <div class="node-tabs detail-tabs action-bar btn-toolbar" role="toolbar">
       <div class="btn-group btn-group-sm" role="group">
         <a class="properties fa fa-list btn btn-default" href="#properties" data-group="properties" title="Node Properties"><span class="label">Properties</span></a>
-        <%--
-        <a class="download fa fa-download btn btn-default" href="#binary" data-group="binary" title="Download Binary Asset"><span class="label">Download</span></a>
-        --%>
+        <a class="download fa fa-${browser.fileIcon} btn btn-default" href="#binary" data-group="view" title="Download Binary Asset"><span class="label">Download</span></a>
         <a class="source json fa fa-code btn btn-default" href="#json" data-group="json" title="Source view as JSON (switchable to XML)"><span class="label">JSON</span></a>
         <a class="source xml fa fa-code btn btn-default hidden" href="#xml" data-group="xml" title="Source view as XML (switchable to JSON)"><span class="label">XML</span></a>
         <c:if test="${browser.canHaveAcl}">

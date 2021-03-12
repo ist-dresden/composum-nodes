@@ -3,6 +3,7 @@ package com.composum.sling.clientlibs.handle;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -44,16 +45,26 @@ public class FileHandle {
     protected transient Calendar lastModified;
 
     public FileHandle(Resource resource) {
+        if (JcrConstants.JCR_CONTENT.equals(resource.getName())) {
+            Resource parent = resource.getParent();
+            if (parent != null && ResourceUtil.isFile(parent)) {
+                resource = parent;
+            }
+        }
         this.resource = ResourceHandle.use(resource);
         this.content = retrieveContent();
     }
 
-    /** Handle to the content node of the file; not null. */
+    /**
+     * Handle to the content node of the file; not null.
+     */
     public ResourceHandle getContent() {
         return content;
     }
 
-    /** Handle to the main node of the file; not null. */
+    /**
+     * Handle to the main node of the file; not null.
+     */
     public ResourceHandle getResource() {
         return resource;
     }
@@ -139,7 +150,9 @@ public class FileHandle {
         }
     }
 
-    /** Updates the last modified value, if the mix:lastModified is present. */
+    /**
+     * Updates the last modified value, if the mix:lastModified is present.
+     */
     public void updateLastModified() {
         if (content.isValid()) {
             ModifiableValueMap values = Objects.requireNonNull(content.adaptTo(ModifiableValueMap.class));

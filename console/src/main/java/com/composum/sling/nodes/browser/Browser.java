@@ -54,6 +54,7 @@ public class Browser extends ConsoleServletBean {
 
     public static final String HTML = "html";
     public static final String JSP = "jsp";
+    public static final String PDF = "pdf";
 
     public static final String PROP_DATA = "jcr:data";
     public static final String PROP_MIME_TYPE = "jcr:mimeType";
@@ -82,6 +83,40 @@ public class Browser extends ConsoleServletBean {
         EDITOR_MODES.put("markdown", "markdown");
         EDITOR_MODES.put("text", "text");
         EDITOR_MODES.put("txt", "text");
+    }
+
+    public static final Map<String, String> FILE_ICONS;
+
+    static {
+        FILE_ICONS = new HashMap<>();
+        FILE_ICONS.put(PDF, PDF);
+        FILE_ICONS.put("jar", "archive");
+        FILE_ICONS.put("far", "archive");
+        FILE_ICONS.put("war", "archive");
+        FILE_ICONS.put("zip", "archive");
+        FILE_ICONS.put("tar", "archive");
+        FILE_ICONS.put("gtar", "archive");
+        FILE_ICONS.put("gzip", "archive");
+        FILE_ICONS.put("gz", "archive");
+        FILE_ICONS.put("audio", "audio");
+        FILE_ICONS.put("au", "audio");
+        FILE_ICONS.put("snd", "audio");
+        FILE_ICONS.put("wav", "audio");
+        FILE_ICONS.put("aif", "audio");
+        FILE_ICONS.put("aiff", "audio");
+        FILE_ICONS.put("aifc", "audio");
+        FILE_ICONS.put("ram", "audio");
+        FILE_ICONS.put("ra", "audio");
+        FILE_ICONS.put("mp2", "audio");
+        FILE_ICONS.put("msword", "word");
+        FILE_ICONS.put("doc", "word");
+        FILE_ICONS.put("docx", "word");
+        FILE_ICONS.put("msexcel", "excel");
+        FILE_ICONS.put("xls", "excel");
+        FILE_ICONS.put("xlsx", "excel");
+        FILE_ICONS.put("mspowerpoint", "powerpoint");
+        FILE_ICONS.put("ppt", "powerpoint");
+        FILE_ICONS.put("pptx", "powerpoint");
     }
 
     public static class Reference {
@@ -145,6 +180,7 @@ public class Browser extends ConsoleServletBean {
 
     private transient String viewType;
     private transient String textType;
+    private transient String fileIcon;
 
     private transient Boolean isRenderable;
 
@@ -483,8 +519,9 @@ public class Browser extends ConsoleServletBean {
     public boolean isRenderable() {
         if (isRenderable == null) {
             String extension = getNameExtension();
-            isRenderable = isTyped() || (isText() &&
-                    (HTML.equals(extension) /*|| JSP.equals(extension)*/));
+            isRenderable = isTyped()
+                    || (isText() && (HTML.equals(extension) /*|| JSP.equals(extension)*/))
+                    || (isFile() && (PDF.equals(extension)));
         }
         return isRenderable;
     }
@@ -529,6 +566,17 @@ public class Browser extends ConsoleServletBean {
             }
         }
         return "";
+    }
+
+    @Nonnull
+    public String getFileIcon() {
+        if (fileIcon == null) {
+            String mimeType = getMimeType();
+            String extension = getNameExtension();
+            String icon = getFileType(FILE_ICONS, mimeType, extension);
+            fileIcon = StringUtils.isNotBlank(icon) ? "file-" + icon + "-o" : "file-o";
+        }
+        return fileIcon;
     }
 
     public InputStream openFile() {
@@ -652,7 +700,7 @@ public class Browser extends ConsoleServletBean {
         if (textType == null) {
             String mimeType = getMimeType();
             String extension = getNameExtension();
-            textType = getTextType(mimeType, extension);
+            textType = getFileType(EDITOR_MODES, mimeType, extension);
         }
         return textType;
     }
@@ -662,28 +710,28 @@ public class Browser extends ConsoleServletBean {
      *
      * @return the type of the text file (script language) or ""
      */
-    public static String getTextType(String mimeType, String extension) {
+    public static String getFileType(Map<String, String> typeMap, String mimeType, String extension) {
         String textType = null;
         if (StringUtils.isNotBlank(mimeType)) {
-            textType = EDITOR_MODES.get(mimeType);
+            textType = typeMap.get(mimeType);
             if (StringUtils.isBlank(textType)) {
                 String[] parts = StringUtils.split(mimeType, '/');
                 if (parts.length > 1) {
-                    textType = EDITOR_MODES.get(parts[1]);
+                    textType = typeMap.get(parts[1]);
                 }
                 if (StringUtils.isBlank(textType)) {
                     if (StringUtils.isNotBlank(extension)) {
-                        textType = EDITOR_MODES.get(extension);
+                        textType = typeMap.get(extension);
                     }
                     if (StringUtils.isBlank(textType)) {
-                        textType = EDITOR_MODES.get(parts[0]);
+                        textType = typeMap.get(parts[0]);
                     }
                 }
             }
         }
         if (StringUtils.isBlank(textType)) {
             if (StringUtils.isNotBlank(extension)) {
-                textType = EDITOR_MODES.get(extension);
+                textType = typeMap.get(extension);
             }
         }
         if (textType == null) {
