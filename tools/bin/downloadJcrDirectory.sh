@@ -76,8 +76,8 @@ echo EXTRACTION:
 echo
 if command -v 7z &> /dev/null
 then
-  7z x $CPM_CPM_7Z_EXTRACT_EXCLUDE -y $TMPFIL
-  if [ -n $CPM_CPM_7Z_EXTRACT_EXCLUDE ]; then
+  7z x "$CPM_CPM_7Z_EXTRACT_EXCLUDE" -y $TMPFIL
+  if [ -n "$CPM_CPM_7Z_EXTRACT_EXCLUDE" ]; then
     echo Using 7z additional switches $CPM_7Z_EXTRACT_EXCLUDE
   fi
 else

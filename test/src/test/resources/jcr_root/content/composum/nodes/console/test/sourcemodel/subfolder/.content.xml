@@ -9,9 +9,9 @@
             jcr:title="various cases">
         <folder
                 jcr:primaryType="sling:Folder"
-                jcr:description="Should not have a folder"
                 _x0026__x003c__x003e__x0027__x005c_="attribute name crap &amp;&lt;>'"
-                äöüÄ_x005c__x0022__x0027_ÖÜñóáéíóú_x00ac_áßàèìùòâêîôû_x0020__x0026__x003c__x0026__x003e_xml_x003b__x0020__x0026_euro_x003b__x0020__x0040__x0025__x2030__x0020__x00bc__x00bd__x00be__x0020__x00ab__x2122__x00a9__x00ae__x00bb__x0020__x201e__x0024__x201d__x201c__x20ac__x201d__x2018__x00a3__x2019__x201a__x00a5__x2019__x0020__x003c_b_x003e__x0021__x003c_b_x003e_="unspeakable horrors"/>
+                äöüÄ_x005c__x0022__x0027_ÖÜñóáéíóú_x00ac_áßàèìùòâêîôû_x0020__x0026__x003c__x0026__x003e_xml_x003b__x0020__x0026_euro_x003b__x0020__x0040__x0025__x2030__x0020__x00bc__x00bd__x00be__x0020__x00ab__x2122__x00a9__x00ae__x00bb__x0020__x201e__x0024__x201d__x201c__x20ac__x201d__x2018__x00a3__x2019__x201a__x00a5__x2019__x0020__x003c_b_x003e__x0021__x003c_b_x003e_="unspeakable horrors"
+                jcr:description="Should not have a folder"/>
         <assets
                 jcr:primaryType="nt:unstructured">
             <withadditionaldata.jpg/>
