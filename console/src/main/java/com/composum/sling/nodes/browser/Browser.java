@@ -351,18 +351,23 @@ public class Browser extends ConsoleServletBean {
         return typeSearchPath;
     }
 
+    /**
+     * The chain of resource super types. This is also included for content resources since this is used quite often in AEM.
+     * @see "https://experienceleague.adobe.com/docs/experience-manager-65/developing/introduction/the-basics.html?lang=en#sling-request-processing"
+     */
     @Nonnull
     public List<String> getSupertypeChain() {
         if (supertypeChain == null) {
             supertypeChain = new ArrayList<>();
-            if (isDeclaringType()) {
-                Resource typeResource = getTypeResource(getPath(), isOverlayResource());
-                while (typeResource != null) {
-                    ValueMap values = typeResource.getValueMap();
-                    typeResource = getTypeResource(values.get(PROP_RESOURCE_SUPER_TYPE, ""), isOverlayResource());
-                    if (typeResource != null) {
-                        supertypeChain.add(typeResource.getPath());
-                    }
+            Resource typeResource = resource;
+            if (isDeclaringType()) { // start from "highest" resource wrt. search path
+                typeResource = getTypeResource(getResourceType(getPath()), false);
+            }
+            while (typeResource != null) {
+                ValueMap values = typeResource.getValueMap();
+                typeResource = getTypeResource(values.get(PROP_RESOURCE_SUPER_TYPE, ""), false);
+                if (typeResource != null) {
+                    supertypeChain.add(typeResource.getPath());
                 }
             }
         }
