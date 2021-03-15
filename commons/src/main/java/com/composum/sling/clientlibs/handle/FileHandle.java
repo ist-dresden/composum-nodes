@@ -8,6 +8,7 @@ import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +45,8 @@ public class FileHandle {
     protected transient String encoding;
     protected transient Calendar lastModified;
 
-    public FileHandle(Resource resource) {
-        if (JcrConstants.JCR_CONTENT.equals(resource.getName())) {
+    public FileHandle(@Nullable Resource resource) {
+        if (resource != null && JcrConstants.JCR_CONTENT.equals(resource.getName())) {
             Resource parent = resource.getParent();
             if (parent != null && ResourceUtil.isFile(parent)) {
                 resource = parent;

@@ -161,6 +161,14 @@ public class Browser extends ConsoleServletBean {
         public String getActions() {
             return actions != null ? actions : "";
         }
+
+        @Override
+        public String toString() {
+            return "Reference{" + "label='" + label + '\'' +
+                    ", actions='" + actions + '\'' +
+                    ", path='" + path + '\'' +
+                    '}';
+        }
     }
 
     private transient String primaryType;
@@ -248,8 +256,8 @@ public class Browser extends ConsoleServletBean {
         if (isDeclaringType == null) {
             isDeclaringType = false;
             String path = getPath();
-            if (path.startsWith(getOverrideyRoot() + "/")) {
-                path = path.substring(getOverrideyRoot().length());
+            if (path.startsWith(getOverrideRoot() + "/")) {
+                path = path.substring(getOverrideRoot().length());
             }
             for (String root : getTypeSearchPath(true)) {
                 if (path.startsWith(root)) {
@@ -299,9 +307,13 @@ public class Browser extends ConsoleServletBean {
         return resourceType;
     }
 
+    /** Remove any search path / /mnt/overlay from given path to a resource type = "normalize" path to resource type. */
     @Nullable
     protected String getResourceType(@Nullable String resourceType) {
         if (StringUtils.isNotBlank(resourceType)) {
+            if (resourceType.startsWith(getOverrideRoot())) {
+                resourceType = resourceType.substring(getOverrideRoot().length());
+            }
             for (String root : getTypeSearchPath(true)) {
                 if (resourceType.startsWith(root)) {
                     resourceType = resourceType.substring(root.length());
@@ -312,6 +324,7 @@ public class Browser extends ConsoleServletBean {
         return resourceType;
     }
 
+    /** Returns the resource for a resourceType (the "highest" in the search path), or the resource if the path is absolute. */
     @Nullable
     protected Resource getTypeResource(@Nullable final String resourceType, boolean includeOverlay) {
         ResourceResolver resolver = getResolver();
@@ -356,43 +369,43 @@ public class Browser extends ConsoleServletBean {
         return supertypeChain;
     }
 
+    /** Paths for the locations relevant to the resource typein search paths, /mnt/override / /mnt/overlay, mapped to the label information. */
     @Nonnull
-    public Map<String, Reference> getResourceTypeSet() {
+    protected Map<String, Reference> getResourceTypeSet() {
         if (resourceTypes == null) {
             resourceTypes = new LinkedHashMap<>();
             String resourceType = getResourceType(isDeclaringType() ? getPath() : getResourceType());
             if (StringUtils.isNotBlank(resourceType)) {
                 ResourceResolver resolver = getResolver();
                 Map<String, Reference> labels = getTypeRootLabels();
-                String overrideRoot = getOverrideyRoot() + "/";
                 if (isOverrideAvailable()) {
-                    Reference label = labels.get(overrideRoot);
+                    Reference label = labels.get(getOverrideRoot() + "/");
                     String path = getOverridePath();
                     resourceTypes.put(label.getLabel(), new Reference(label.getLabel(),
                             label.getTooltip() + "\n" + path, path));
                 }
-                if (resourceType.startsWith(overrideRoot)) {
-                    resourceType = getResourceType(resourceType.substring(overrideRoot.length() - 1));
+                if (isOverlayAvailable()) {
+                    Reference label = labels.get(getOverlayRoot() + "/");
+                    String path = getOverlayPath();
+                    resourceTypes.put(label.getLabel(), new Reference(label.getLabel(),
+                            label.getTooltip() + "\n" + path, path));
                 }
-                List<String> typeSearchPath = getTypeSearchPath(isOverlayAvailable());
-                for (int i = 0; i < typeSearchPath.size(); i++) {
-                    String root = typeSearchPath.get(i);
+                String basePath = getBasePath();
+                for (String root : getTypeSearchPath(false)) {
                     String resourceTypePath = root + resourceType;
-                    String basePath = i + 1 < typeSearchPath.size() ? typeSearchPath.get(i + 1) + resourceType : null;
                     Resource type = resolver.getResource(resourceTypePath);
-                    if (type != null || i + 1 < typeSearchPath.size()) {
-                        Reference label = labels.get(root);
-                        resourceTypes.put(label.getLabel(), new Reference(label.getLabel(),
-                                label.getTooltip() + "\n" + resourceTypePath, resourceTypePath, type != null ?
-                                (basePath != null && resolver.getResource(basePath) != null ? "is-overlay" : null)
-                                : "overlay-option"));
-                    }
+                    Reference label = labels.get(root); // XXX
+                    resourceTypes.put(label.getLabel(), new Reference(label.getLabel(),
+                            label.getTooltip() + "\n" + resourceTypePath, resourceTypePath, type != null ?
+                            (basePath != null && resolver.getResource(basePath) != null ? "is-overlay" : null)
+                            : "overlay-option"));
                 }
             }
         }
         return resourceTypes;
     }
 
+    /** Set of related paths: for resource types the resource type found in the search path and /mnt/(override|overlay), base paths, resource types. */
     @Nonnull
     public Map<String, Reference> getRelatedPathSet() {
         if (relatedPathSet == null) {
@@ -400,9 +413,8 @@ public class Browser extends ConsoleServletBean {
                 relatedPathSet = getResourceTypeSet();
             } else {
                 relatedPathSet = new LinkedHashMap<>();
-                String path = getPath();
                 Map<String, Reference> labels = getTypeRootLabels();
-                String overrideRoot = getOverrideyRoot() + "/";
+                String overrideRoot = getOverrideRoot() + "/";
                 if (isOverrideAvailable()) {
                     Reference label = labels.get(overrideRoot);
                     String overridePath = getOverridePath();
@@ -432,8 +444,8 @@ public class Browser extends ConsoleServletBean {
 
     public String getBasePath() {
         if (isOverrideResource()) {
-            return getPath().substring(getOverrideyRoot().length());
-        } else if (isOverlayResource()) {
+            return getPath().substring(getOverrideRoot().length());
+        } else if (isOverlayResource()) { // use "highest" found entry according to search path
             Resource type = getTypeResource(getResourceType(isDeclaringType() ? getPath() : getResourceType()), false);
             return type != null ? type.getPath() : getPath();
         }
@@ -451,23 +463,27 @@ public class Browser extends ConsoleServletBean {
 
     public boolean isOverlayAvailable() {
         if (overlayAvailable == null) {
-            overlayAvailable = getResolver().getResource(getOverlayPath()) != null;
+            String overlayPath = getOverlayPath();
+            overlayAvailable = overlayPath != null && getResolver().getResource(overlayPath) != null;
         }
         return overlayAvailable;
     }
 
-    @Nonnull
+    /** Path of resource type within /mnt/overlay . If not a declaring resource, this doesn't make sense -> null. */
+    @Nullable
     public String getOverlayPath() {
-        return isOverlayResource() ? getPath() : getOverlayRoot() + "/" + getResourceType(getResourceType());
+        return isOverlayResource() ? getPath() :
+        isDeclaringType() ? getOverlayRoot() + "/" + getResourceType(getPath())
+                : null;
     }
 
-    public String getOverrideyRoot() {
+    public String getOverrideRoot() {
         // TODO: ask the merger service
         return DEFAULT_OVERRIDE_ROOT;
     }
 
     public boolean isOverrideResource() {
-        return getPath().startsWith(getOverrideyRoot() + "/");
+        return getPath().startsWith(getOverrideRoot() + "/");
     }
 
     public boolean isOverrideAvailable() {
@@ -477,21 +493,22 @@ public class Browser extends ConsoleServletBean {
         return overrideAvailable;
     }
 
+    /** Path within /mnt/override. */
     @Nonnull
     public String getOverridePath() {
-        return isOverrideResource() ? getPath() : getOverrideyRoot() + getBasePath();
+        return isOverrideResource() ? getPath() : getOverrideRoot() + getBasePath();
     }
 
     protected Map<String, Reference> getTypeRootLabels() {
         if (typeRootLabels == null) {
             typeRootLabels = new HashMap<>();
-            typeRootLabels.put(getOverrideyRoot() + "/",
-                    new Reference("o/r", "Resource Merger - Override", getOverrideyRoot()));
+            typeRootLabels.put(getOverrideRoot() + "/",
+                    new Reference("o/r", "Resource Merger - Override", getOverrideRoot()));
             typeRootLabels.put(getOverlayRoot() + "/",
                     new Reference("o/l", "Resource Merger - Overlay", getOverlayRoot()));
             for (String root : getResolver().getSearchPath()) {
                 String label = ("" + root.charAt(1)).toUpperCase();
-                String path = root.endsWith("/") ? root.substring(0, root.length() - 1) : root;
+                String path = StringUtils.removeEnd(root, "/");
                 typeRootLabels.put(root, new Reference(label, "Resource Resolver - " + path, path));
             }
         }
@@ -504,7 +521,7 @@ public class Browser extends ConsoleServletBean {
 
     public boolean isSceneAvailable() {
         Collection<SceneConfigurations.Config> availableScenes = getAvailableScenes();
-        return availableScenes.size() > 0;
+        return !availableScenes.isEmpty();
     }
 
     @Nonnull
