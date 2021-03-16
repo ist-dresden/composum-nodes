@@ -25,13 +25,13 @@
             return browser.current ? browser.current.path : undefined;
         };
 
-        browser.setCurrentPath = function (path, supressEvent) {
+        browser.setCurrentPath = function (path, supressEvent, suppressPush) {
             if (!browser.current || browser.current.path !== path) {
                 if (path) {
                     browser.refreshCurrentPath(path, _.bind(function (result) {
                         core.console.getProfile().set('browser', 'current', path);
-                        if (history.replaceState) {
-                            history.replaceState(browser.current.path, name, browser.current.nodeUrl);
+                        if (history.pushState && !suppressPush) {
+                            history.pushState(browser.current.path, name, browser.current.nodeUrl);
                         }
                         if (!supressEvent) {
                             $(document).trigger("path:selected", [path]);
@@ -45,6 +45,14 @@
                 }
             }
         };
+
+        browser.onPopState = function(event) {
+            if (event.state) {
+                browser.setCurrentPath(event.state, false, true);
+            }
+        }
+
+        window.onpopstate = browser.onPopState;
 
         browser.refreshCurrentPath = function (path, callback) {
             if (!path && browser.current) {
