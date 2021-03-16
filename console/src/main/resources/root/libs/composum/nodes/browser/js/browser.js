@@ -240,7 +240,7 @@
                         var newNodeName = core.getNameFromPath(path);
                         var parentPath = core.getParentPath(path);
                         $(document).trigger("path:inserted", [parentPath, newNodeName]);
-                        $(document).trigger("path:select", [path]);
+                        browser.setCurrentPath(path);
                     }, this));
             },
 
@@ -249,7 +249,15 @@
                 core.openFormDialog(u.base + u._remove + path,
                     core.components.FormDialog, {}, undefined,
                     _.bind(function () {
-                        $(document).trigger('path:deleted', [path]);
+                        var overlayPaths = this.$relatedPaths.filter('.is-overlay').map( (e,i) => i.dataset.path);
+                        var candidatePaths = overlayPaths.filter( (e,i) => e !== path);
+                        if (candidatePaths.length > 0) { // select another overlay of the component
+                            var newPath = candidatePaths[0];
+                            $(document).trigger('path:deleted', [path, newPath]);
+                            browser.setCurrentPath(path);
+                        } else {
+                            $(document).trigger('path:deleted', [path]);
+                        }
                     }, this));
             },
 

@@ -505,26 +505,27 @@
                 }
             },
 
-            onPathDeleted: function (event, path) {
+            /** Event handler for path:deleted: newPath optionally determines which path should be displayed afterwards. */
+            onPathDeleted: function (event, path, newPath) {
                 var deleted = this.getTreeNodeByPath(path);
                 if (this.log.getLevel() <= log.levels.DEBUG) {
                     this.log.debug(this.nodeIdPrefix + 'tree.onPathDeleted(' + path + '):' + deleted);
                 }
                 if (deleted) {
                     var selected = this.getSelectedTreeNode();
-                    var nearestFocus = this.findNearestOfDeletion(path);
-                    var nearestSelection = undefined;
+                    var nextFocus = this.getTreeNode(newPath) || this.findNearestOfDeletion(path);
+                    var nextSelection = undefined;
                     if (selected && selected.original.path === path) {
-                        nearestSelection = this.findNearestOfDeletion(path);
+                        nextSelection = this.getTreeNode(newPath) || this.findNearestOfDeletion(path);
                     }
                     this.refreshNodeById(this.getParentNodeId(deleted.id), _.bind(function () {
                         var path;
-                        if (nearestSelection) {
-                            path = nearestSelection.original.path;
+                        if (nextSelection) {
+                            path = nextSelection.original.path;
                             this.selectNode(path);
                         }
-                        if (nearestFocus) {
-                            path = nearestFocus.original.path;
+                        if (nextFocus) {
+                            path = nextFocus.original.path;
                             var $anchor = this.get$TreeNodeAnchor(path);
                             $anchor.focus();
                         }
