@@ -38,8 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static com.composum.sling.core.util.CoreConstants.DEFAULT_OVERLAY_ROOT;
-import static com.composum.sling.core.util.CoreConstants.DEFAULT_OVERRIDE_ROOT;
 import static com.composum.sling.core.util.CoreConstants.PROP_RESOURCE_SUPER_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -118,6 +116,8 @@ public class Browser extends ConsoleServletBean {
         FILE_ICONS.put("ppt", "powerpoint");
         FILE_ICONS.put("pptx", "powerpoint");
     }
+
+    private transient MergeMountpointService mergeMountpointService;
 
     public static class Reference {
 
@@ -458,8 +458,14 @@ public class Browser extends ConsoleServletBean {
     }
 
     public String getOverlayRoot() {
-        // TODO: ask the merger service
-        return DEFAULT_OVERLAY_ROOT;
+        return getMergeMountpointService().overlayMergeMountPoint(getResolver());
+    }
+
+    private MergeMountpointService getMergeMountpointService() {
+        if (mergeMountpointService == null) {
+            mergeMountpointService = this.getSling().getService(MergeMountpointService.class);
+        }
+        return mergeMountpointService;
     }
 
     public boolean isOverlayResource() {
@@ -483,8 +489,7 @@ public class Browser extends ConsoleServletBean {
     }
 
     public String getOverrideRoot() {
-        // TODO: ask the merger service
-        return DEFAULT_OVERRIDE_ROOT;
+        return getMergeMountpointService().overrideMergeMountPoint(getResolver());
     }
 
     public boolean isOverrideResource() {
