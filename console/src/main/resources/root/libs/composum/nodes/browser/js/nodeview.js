@@ -960,6 +960,7 @@
                 this.favoriteToggle = this.$detailView.find('.favorite-toggle');
                 this.checkFavorite();
                 this.favoriteToggle.click(_.bind(this.toggleFavorite, this));
+                this.sourceViewTabVisibility();
             },
 
             checkFavorite: function () {
