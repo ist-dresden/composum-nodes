@@ -250,7 +250,7 @@
                     core.components.FormDialog, {}, undefined,
                     _.bind(function () {
                         var overlayPaths = this.$relatedPaths.filter('.is-overlay').map( (e,i) => i.dataset.path);
-                        var candidatePaths = overlayPaths.filter( (e,i) => e !== path);
+                        var candidatePaths = overlayPaths.filter( (i,e) => e !== path);
                         if (candidatePaths.length > 0) { // select another overlay of the component
                             var newPath = candidatePaths[0];
                             $(document).trigger('path:deleted', [path, newPath]);
