@@ -103,9 +103,29 @@ public class NodesConfigImpl implements NodesConfiguration {
 
         @AttributeDefinition(
                 name = "XML Source Nodes Filter",
-                description = "the filter configuration for the source export of the repository content (Source Servlet)"
+                description = "the filter configuration for the source export of the repository content (Source Servlet) that limits which nodes are exported"
         )
         String node_source_filter() default "PrimaryType(-'^cpp:(Statistics)$,^rep:(.+)$')";
+
+        @AttributeDefinition(
+                name = "XML Source Folder Filter",
+                description = "the filter configuration for the source export of the repository content (Source Servlet) that determines which nodes are exported as folder"
+        )
+        String node_source_folder_filter() default "or{NodeType(+'^nt:hierarchyNode$,^vlt:HierarchyNode$'),Name(+'^cq:dialog$,^cq:htmlTag$,^cq:template$,^cq:design_dialog$,^cq:childEditConfig$')}";
+
+        @AttributeDefinition(
+                name = "XML Source Folder Filter",
+                description = "the filter configuration for the source export of the repository content (Source Servlet) that determines which nodes are exported as separate XML file (aka vlt:FullCoverage)"
+        )
+        // The default is done mostly like
+        // https://github.com/apache/jackrabbit-filevault/blob/trunk/vault-core/src/main/resources/org/apache/jackrabbit/vault/fs/config/defaultConfig-1.1.xml
+        String node_source_xml_filter() default "NodeType(+'^vlt:FullCoverage$,^mix:language$,^rep:AccessControl$,^rep:Policy$,^cq:EditConfig$,^cq:WorkflowModel$,^sling:OsgiConfig$')";
+
+        @AttributeDefinition(
+                name = "XML Source Advanced Attribute Sort",
+                description = "the filter configuration for the source export of the repository content (Source Servlet) that determines whether the attributes are sorted by importance (jcr:primaryType, jcr:mixins, sling:* and then the rest"
+        )
+        boolean node_source_advanced_attributesort() default true;
 
         @AttributeDefinition(
                 name = "Scenes Content Root",
@@ -189,6 +209,12 @@ public class NodesConfigImpl implements NodesConfiguration {
 
     private volatile ResourceFilter sourceNodesFilter;
 
+    private volatile ResourceFilter sourceFolderFilter;
+
+    private volatile ResourceFilter sourceXmlFilter;
+
+    private volatile boolean sourceAdvancedSortAttributes;
+
     private volatile Map<String, Boolean> enabledServlets;
 
     @Nonnull
@@ -247,6 +273,21 @@ public class NodesConfigImpl implements NodesConfiguration {
     }
 
     @Override
+    public ResourceFilter getSourceFolderNodesFilter(){
+        return sourceFolderFilter;
+    }
+
+    @Override
+    public ResourceFilter getSourceXmlNodesFilter() {
+        return sourceXmlFilter;
+    }
+
+    @Override
+    public boolean isSourceAdvancedSortAttributes() {
+        return sourceAdvancedSortAttributes;
+    }
+
+    @Override
     @Nonnull
     public String getScenesContentRoot() {
         return getConfig().scene_content_root();
@@ -261,7 +302,7 @@ public class NodesConfigImpl implements NodesConfiguration {
 
     @Activate
     @Modified
-    protected void activate(ComponentContext context, Configuration configuration) {
+    public void activate(ComponentContext context, Configuration configuration) {
         this.config = configuration;
         this.properties = context.getProperties();
         pageNodeFilter = ResourceFilterMapping.fromString(configuration.node_page_filter());
@@ -270,6 +311,9 @@ public class NodesConfigImpl implements NodesConfiguration {
         referenceableNodesFilter = ResourceFilterMapping.fromString(configuration.node_referenceable_filter());
         orderableNodesFilter = ResourceFilterMapping.fromString(configuration.node_orderable_filter());
         sourceNodesFilter = ResourceFilterMapping.fromString(configuration.node_source_filter());
+        sourceFolderFilter = ResourceFilterMapping.fromString(configuration.node_source_folder_filter());
+        sourceXmlFilter = ResourceFilterMapping.fromString(configuration.node_source_xml_filter());
+        sourceAdvancedSortAttributes = configuration.node_source_advanced_attributesort();
         Map<String, Boolean> theEnabledServlets = new HashMap<>();
         theEnabledServlets.put("PackageServlet", configuration.package_servlet_enabled());
         theEnabledServlets.put(SecurityServlet.class.getSimpleName(), configuration.security_servlet_enabled());

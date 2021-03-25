@@ -27,8 +27,8 @@
     },
     "create-overlay-text": {
       "jcr:primaryType": "sling:MessageEntry",
-      "sling:key": "Do you want to create an overlay to the current component or copy from this template again?",
-      "sling:message": "Wollen sie ein Overlay zur aktuellen Komponente anlegen bzw. erneut von dieser Vorlage kopieren?"
+      "sling:key": "Do you want to create an overlay to the current component?",
+      "sling:message": "Wollen sie ein Overlay zur aktuellen Komponente anlegen?"
     },
     "remove-overlay-title": {
       "jcr:primaryType": "sling:MessageEntry",
@@ -37,7 +37,7 @@
     },
     "remove-overlay-text": {
       "jcr:primaryType": "sling:MessageEntry",
-      "sling:key": "Do you really want to delete the current overlay; this cannot be undone?",
+      "sling:key": "Do you really want to delete the current overlay? This cannot be undone.",
       "sling:message": "Wollen Sie das aktuelle Overlay wirklich löschen; dies kann nicht rückgängig gemacht werden?"
     }
   }

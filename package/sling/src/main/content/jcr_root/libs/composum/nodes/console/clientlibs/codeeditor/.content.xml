@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        jcr:primaryType="sling:Folder"
+        sling:resourceType="composum/nodes/commons/clientlib"
+        category="[composum.edit.codeeditor]"
+        order="{Long}100">
+    <css jcr:primaryType="sling:OrderedFolder"
+            depends="[
+                      fonts/awesome/4.7.0/css/font-awesome.css
+                ]"
+            embed="[
+                    jslibs/bootstrap/3.4.1/css/bootstrap.css,
+                    jslibs/bootstrap/3.4.1/css/bootstrap-theme.css,
+                    composum/nodes/console/page/css/console.css,
+                    composum/nodes/console/components/codeeditor/clientlib
+                ]"/>
+    <js jcr:primaryType="sling:OrderedFolder"
+            depends="[
+                    jslibs/jquery/3.4.1/jquery.js,
+                    jslibs/loglevel/1.6.1/loglevel.js,
+                    jslibs/underscore/1.9.1/underscore.js,
+                    jslibs/backbone/1.4.0/backbone.js,
+                    jslibs/bootstrap/3.4.1/js/bootstrap.js,
+                    jslibs/ace/1.4.4/ace.js
+                ]"
+            embed="[
+                    composum/nodes/commons/components/js/core.js,
+                    jslibs/ace/setup/setup.js,
+                    composum/nodes/commons/components/js/i18n.js,
+                    composum/nodes/commons/components/js/widgets.js,
+                    composum/nodes/commons/components/js/dialogs.js,
+                    composum/nodes/commons/components/js/components.js,
+                    composum/nodes/commons/components/js/codeEditor.js,
+                    composum/nodes/commons/components/js/multiform.js,
+                    composum/nodes/console/js/console.js,
+                    composum/nodes/console/components/codeeditor/clientlib
+                ]"/>
+</jcr:root>

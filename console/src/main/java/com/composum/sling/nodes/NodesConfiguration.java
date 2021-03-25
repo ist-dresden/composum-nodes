@@ -38,6 +38,15 @@ public interface NodesConfiguration {
     @Nonnull
     ResourceFilter getSourceNodesFilter();
 
+    /** Determines for the SourceServlet whether the attributes are sorted by importance. */
+    boolean isSourceAdvancedSortAttributes();
+
+    /** Determines when a resource should be rendered as folder in the SourceServlet. */
+    ResourceFilter getSourceFolderNodesFilter();
+
+    /** Determines when a resource should be rendered as separate XML file ("vlt:FullCoverage") */
+    ResourceFilter getSourceXmlNodesFilter();
+
     @Nonnull
     String getScenesContentRoot();
 

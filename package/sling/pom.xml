@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.nodes</groupId>
+        <artifactId>composum-nodes-package</artifactId>
+        <version>2.5.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>composum-nodes-sling-package</artifactId>
+    <packaging>content-package</packaging>
+
+    <name>Composum Nodes Sling Package</name>
+    <description>Composum Nodes Package - the Composum Nodes tools collection with initial content separated</description>
+
+    <build>
+        <resources>
+
+            <resource>
+                <directory>src/main/content/jcr_root</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/.vlt*</exclude>
+                    <exclude>**/.DS_Store</exclude>
+                    <exclude>**/.gitignore</exclude>
+                </excludes>
+            </resource>
+
+            <!--resource>
+                <directory>${basedir}/src/main/content/META-INF</directory>
+                <targetPath>${project.build.directory}/vault-work/META-INF</targetPath>
+            </resource-->
+
+            <resource>
+                <directory>${project.build.directory}/content/jcr_root</directory>
+                <excludes>
+                    <exclude>**/mixins.css</exclude>
+                    <exclude>**/variables.css</exclude>
+                </excludes>
+            </resource>
+
+        </resources>
+        <plugins>
+
+            <!-- embed the setup hook -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+
+                    <execution>
+                        <id>prepare-content</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/content</outputDirectory>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <excludeTransitive>true</excludeTransitive>
+                            <includes>
+                                root/**
+                            </includes>
+                            <excludes>
+                                **/*.json,
+                                **/mixins.css,
+                                **/variables.css
+                            </excludes>
+                            <fileMappers>
+                                <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                    <pattern>root/</pattern>
+                                    <replacement>jcr_root/</replacement>
+                                </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                    <pattern>jcr_root/libs/composum/nodes/pckgmgr</pattern>
+                                    <replacement>jcr_root/libs/composum/nodes/pckgmgr.install</replacement>
+                                </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                            </fileMappers>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>copy-bundles</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${project.groupId}.setup</groupId>
+                                    <artifactId>composum-nodes-package-setup-hook</artifactId>
+                                    <outputDirectory>${project.build.directory}/vault-work/META-INF/vault/hooks</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+
+                </executions>
+                <inherited>false</inherited>
+            </plugin>
+
+            <plugin>
+                <!--groupId>org.apache.jackrabbit</groupId>
+                <artifactId>filevault-package-maven-plugin</artifactId>
+                <version>1.1.2</version-->
+                <groupId>com.day.jcr.vault</groupId>
+                <artifactId>content-package-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <!--packageType>merged</packageType-->
+
+                    <group>${package.group}</group>
+                    <properties>
+                        <createdBy>${package.company}</createdBy>
+                    </properties>
+
+                    <builtContentDirectory>${project.build.outputDirectory}</builtContentDirectory>
+
+                    <embeddeds>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-nodes-commons-bundle</artifactId>
+                            <target>/libs/composum/nodes/install</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-nodes-console-bundle</artifactId>
+                            <target>/libs/composum/nodes/install</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-nodes-usermgr-bundle</artifactId>
+                            <target>/libs/composum/nodes/install</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-nodes-pckgmgr-bundle</artifactId>
+                            <target>/libs/composum/nodes/pckgmgr.install</target>
+                        </embedded>
+                    </embeddeds>
+
+                    <filters>
+                        <filter>
+                            <root>/libs/composum/nodes/install</root>
+                            <includes>
+                                <include>.*/composum-nodes-commons.*\.jar</include>
+                                <include>.*/composum-nodes-console.*\.jar</include>
+                                <include>.*/composum-nodes-usermgr.*\.jar</include>
+                                <include>.*/composum-nodes-jslibs.*\.jar</include><!-- for removal -->
+                                <include>.*/composum-nodes-config.*\.jar</include><!-- for removal -->
+                                <include>.*/.*\.LoginAdminWhitelist.fragment-composum_core.*</include>
+                            </includes>
+                        </filter>
+
+                        <filter>
+                            <root>/libs/composum/nodes/browser</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/composum/nodes/commons</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/composum/nodes/console</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/composum/nodes/system</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/composum/nodes/usermgnt</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/composum/nodes/pckgmgr.install</root>
+                        </filter>
+
+                        <filter>
+                            <root>/libs/fonts/composum</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/fonts/awesome/4.7.0</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/fonts/roboto/2014</root>
+                        </filter>
+
+                        <filter>
+                            <root>/libs/jslibs/ace/1.4.4</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/ace/setup</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/backbone/1.3.3</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/backbone/1.4.0</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/bootstrap/3.3.7</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/bootstrap/3.4.1</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/bootstrap-colorpicker/3.1.2</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/bootstrap-datetimepicker/4.17.47</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/bootstrap-fileinput/4.3.6</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/bootstrap-fileinput/5.0.3</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/bootstrap-slider/10.6.1</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/bootstrap-table/1.7.0</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/bootstrap-table/1.14.2</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/bootstrap-vertical-tabs/1.2.2</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/highlight/9.8.0</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/highlight/9.15.6</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/iframeResizer/4.0.4</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/jquery/2.2.4</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/jquery/3.4.1</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/js-base64/2.5.2</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/jstree/3.3.8</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/loglevel/1.6.1</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/moment/2.24.0</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/split-pane/1.0.0</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/trumbowyg/2.3.0</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/trumbowyg/2.17.0</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/typeahead/3.1.0</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/underscore/1.8.3</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/underscore/1.9.1</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs/x-editable/1.5.3</root>
+                        </filter>
+
+                    </filters>
+
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+    <dependencies>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-commons-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-console-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-console</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-usermgr-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-usermgr</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-pckgmgr-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-pckgmgr</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-jslibs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-config</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}.setup</groupId>
+            <artifactId>composum-nodes-package-setup-hook</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+    </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installBundle</id>
+        </profile>
+        <profile>
+            <id>installPackage</id>
+            <activation>
+                <property>
+                    <name>deploy.package</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>com.day.jcr.vault</groupId>
+                        <artifactId>content-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-content-package</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>installContent</id>
+        </profile>
+
+    </profiles>
+</project>

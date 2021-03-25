@@ -25,13 +25,13 @@
             return browser.current ? browser.current.path : undefined;
         };
 
-        browser.setCurrentPath = function (path, supressEvent) {
+        browser.setCurrentPath = function (path, supressEvent, suppressPush) {
             if (!browser.current || browser.current.path !== path) {
                 if (path) {
                     browser.refreshCurrentPath(path, _.bind(function (result) {
                         core.console.getProfile().set('browser', 'current', path);
-                        if (history.replaceState) {
-                            history.replaceState(browser.current.path, name, browser.current.nodeUrl);
+                        if (history.pushState && !suppressPush) {
+                            history.pushState(browser.current.path, name, browser.current.nodeUrl);
                         }
                         if (!supressEvent) {
                             $(document).trigger("path:selected", [path]);
@@ -45,6 +45,14 @@
                 }
             }
         };
+
+        browser.onPopState = function(event) {
+            if (event.state) {
+                browser.setCurrentPath(event.state, false, true);
+            }
+        }
+
+        window.onpopstate = browser.onPopState;
 
         browser.refreshCurrentPath = function (path, callback) {
             if (!path && browser.current) {
@@ -232,7 +240,7 @@
                         var newNodeName = core.getNameFromPath(path);
                         var parentPath = core.getParentPath(path);
                         $(document).trigger("path:inserted", [parentPath, newNodeName]);
-                        $(document).trigger("path:select", [path]);
+                        browser.setCurrentPath(path);
                     }, this));
             },
 
@@ -241,7 +249,15 @@
                 core.openFormDialog(u.base + u._remove + path,
                     core.components.FormDialog, {}, undefined,
                     _.bind(function () {
-                        $(document).trigger('path:deleted', [path]);
+                        var overlayPaths = this.$relatedPaths.filter('.is-overlay').map( (e,i) => i.dataset.path);
+                        var candidatePaths = overlayPaths.filter( (i,e) => e !== path);
+                        if (candidatePaths.length > 0) { // select another overlay of the component
+                            var newPath = candidatePaths[0];
+                            $(document).trigger('path:deleted', [path, newPath]);
+                            browser.setCurrentPath(path);
+                        } else {
+                            $(document).trigger('path:deleted', [path]);
+                        }
                     }, this));
             },
 

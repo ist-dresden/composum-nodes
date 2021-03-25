@@ -4,6 +4,7 @@
 <sling:defineObjects/>
 <cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
     <div class="image detail-panel${browser.asset?' asset':''}" data-asset="${browser.asset}"
+         data-file="${cpn:path(browser.filePath)}"
          data-path="${browser.currentPathUrl}" data-mapped="${browser.currentUrl}">
         <div class="image-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">

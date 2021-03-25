@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        jcr:primaryType="sling:Folder"
+        sling:resourceType="composum/nodes/commons/clientlib"
+        jcr:description="embeds the complete set of widget components and declares all necessary dependencies"
+        category="[composum.components.widgets]"
+        order="{Long}100">
+    <css jcr:primaryType="sling:OrderedFolder"
+            depends="[
+                      jslibs/bootstrap/(3.*:3.4.1)/css/bootstrap.css,
+                      jslibs/bootstrap/(3.*:3.4.1)/css/bootstrap-theme.css,
+                      slibs/bootstrap-datetimepicker/(4.*:4.17.47)/css/bootstrap-datetimepicker.css,
+                      jslibs/bootstrap-slider/(9.*|10.*:10.6.1)/css/bootstrap-slider.css,
+                      jslibs/bootstrap-colorpicker/([2-3].*:3.1.2)/css/bootstrap-colorpicker.css,
+                      jslibs/bootstrap-fileinput/([4-5].*:4.3.6)/css/fileinput.css,
+                      jslibs/jstree/3.3.8/themes/proton/style.css,
+                      jslibs/trumbowyg/(2.*:2.3.0)/ui/trumbowyg.css
+                ]"
+            embed="[
+                    composum/nodes/commons/components/css/components.css,
+                    composum/nodes/commons/components/richtext/richtext.css
+                ]"/>
+    <js jcr:primaryType="sling:OrderedFolder"
+            depends="[
+                    jslibs/jquery/([2-3].*:3.4.1)/jquery.js,
+                    jslibs/js-base64/2.5.2/base64.js,
+                    jslibs/loglevel/(1.*:1.6.1)/loglevel.js,
+                    jslibs/underscore/(1.*:1.9.1)/underscore.js,
+                    jslibs/moment/(2.*:2.24.0)/moment-with-locales.js,
+                    jslibs/backbone/(1.*:1.4.0)/backbone.js,
+                    jslibs/bootstrap/(3.*:3.4.1)/js/bootstrap.js,
+                    jslibs/bootstrap-datetimepicker/(4.*:4.17.47)/js/bootstrap-datetimepicker.js,
+                    jslibs/typeahead/(3.*:3.1.0)/bootstrap3-typeahead.js,
+                    jslibs/bootstrap-slider/(9.*|10.*:10.6.1)/bootstrap-slider.js,
+                    jslibs/bootstrap-colorpicker/([2-3].*:3.1.2)/js/bootstrap-colorpicker.js,
+                    jslibs/bootstrap-fileinput/([4-5].*:4.3.6)/js/fileinput.js,
+                    jslibs/jstree/3.3.8/jstree.js,
+                    jslibs/ace/1.4.4/ace.js,
+                    jslibs/trumbowyg/(2.*:2.3.0)/trumbowyg.js
+                ]"
+            embed="[
+                    composum/nodes/commons/components/js/core.js,
+                    composum/nodes/commons/components/js/i18n.js,
+                    composum/nodes/commons/components/js/widgets.js,
+                    composum/nodes/commons/components/js/tree.js,
+                    composum/nodes/commons/components/js/multiform.js,
+                    composum/nodes/commons/components/js/components.js,
+                    composum/nodes/commons/components/js/dialogs.js,
+                    composum/nodes/commons/components/richtext/richtext.js,
+                    composum/nodes/commons/components/slider/slider.js,
+                    composum/nodes/commons/components/colorpicker/colorpicker.js,
+                    jslibs/ace/setup/setup.js,
+                    composum/nodes/commons/components/js/codeEditor.js
+                ]">
+    </js>
+</jcr:root>

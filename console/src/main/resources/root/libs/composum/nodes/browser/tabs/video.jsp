@@ -3,8 +3,8 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <sling:defineObjects/>
 <cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
-    <div class="video detail-panel" data-type="${browser.current.mimeType}" data-path="${browser.current.pathUrl}"
-         data-mapped="${browser.current.url}">
+    <div class="video detail-panel" data-type="${browser.current.mimeType}" data-file="${cpn:path(browser.filePath)}"
+         data-path="${cpn:path(browser.filePath)}" data-mapped="${browser.current.url}">
         <div class="video-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
                 <span class="resolver fa fa-external-link btn btn-default" title="Resolver Mapping ON/OFF"></span>

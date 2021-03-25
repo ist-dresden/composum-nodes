@@ -134,7 +134,7 @@ public class SlingUrlTest {
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=https,host=www.google.com,path=/,external=true]"));
 
 
-        url = new SlingUrl(request).fromUrl("https://www.google.com/ä-@ß$?x=yßz&a#aa");
+        url = new SlingUrl(request).fromUrl("hTTps://www.google.com/ä-@ß$?x=yßz&a#aa");
         printChecks(url);
         ec.checkThat(url.getContextPath(), is("/ctx"));
         ec.checkThat(url.getExtension(), nullValue());
@@ -143,8 +143,8 @@ public class SlingUrlTest {
         ec.checkThat(url.getPathAndName(), is("/ä-@ß$"));
         ec.checkThat(url.getResourcePath(), nullValue());
         ec.checkThat(url.getSuffix(), nullValue());
-        ec.checkThat(url.getUrl(), is("https://www.google.com/%C3%A4-@%C3%9F$?x=y%C3%9Fz&a#aa"));
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=https,host=www.google.com,path=/,name=ä-@ß$,parameters={x=[yßz], a=[]},fragment=aa,external=true]"));
+        ec.checkThat(url.getUrl(), is("hTTps://www.google.com/%C3%A4-@%C3%9F$?x=y%C3%9Fz&a#aa"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=HTTP,scheme=hTTps,host=www.google.com,path=/,name=ä-@ß$,parameters={x=[yßz], a=[]},fragment=aa,external=true]"));
 
         url = new SlingUrl(request).fromUrl("mailto:%C3%A4.user@%C3%B6.domain.x", true); // "mailto:ä.user@ö.domain.x" in UTF-8
         printChecks(url);
@@ -227,20 +227,20 @@ public class SlingUrlTest {
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=FILE,scheme=ftp,username=myname,host=host.dom,path=/etc/,name=motd,extension=txt,external=true]"));
         ec.checkThat(url.getUrl(), is("ftp://myname@host.dom/etc/motd.txt"));
 
-        url = new SlingUrl(request).fromUrl("ftp://ftp.cs.brown.edu/pub/Effective_C%2B%2B_errata.txt", true);
+        url = new SlingUrl(request).fromUrl("fTp://ftp.cs.brown.edu/pub/Effective_C%2B%2B_errata.txt", true);
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=FILE,scheme=ftp,host=ftp.cs.brown.edu,path=/pub/,name=Effective_C++_errata,extension=txt,external=true]"));
-        ec.checkThat(url.getUrl(), is("ftp://ftp.cs.brown.edu/pub/Effective_C++_errata.txt"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=FILE,scheme=fTp,host=ftp.cs.brown.edu,path=/pub/,name=Effective_C++_errata,extension=txt,external=true]"));
+        ec.checkThat(url.getUrl(), is("fTp://ftp.cs.brown.edu/pub/Effective_C++_errata.txt"));
 
         url = new SlingUrl(request).fromUrl("ftp://myname:pass@host.dom/etc/");
         printChecks(url);
         ec.checkThat(url.toDebugString(), is("SlingUrl[type=FILE,scheme=ftp,username=myname,password=pass,host=host.dom,path=/etc/,external=true]"));
         ec.checkThat(url.getUrl(), is("ftp://myname:pass@host.dom/etc/"));
 
-        url = new SlingUrl(request).fromUrl("file://localhost/etc/fstab");
+        url = new SlingUrl(request).fromUrl("fIle://localhost/etc/fstab");
         printChecks(url);
-        ec.checkThat(url.toDebugString(), is("SlingUrl[type=FILE,scheme=file,host=localhost,path=/etc/,name=fstab,external=true]"));
-        ec.checkThat(url.getUrl(), is("file://localhost/etc/fstab"));
+        ec.checkThat(url.toDebugString(), is("SlingUrl[type=FILE,scheme=fIle,host=localhost,path=/etc/,name=fstab,external=true]"));
+        ec.checkThat(url.getUrl(), is("fIle://localhost/etc/fstab"));
 
 
         url = new SlingUrl(request).fromUrl("file:///etc/fstab");

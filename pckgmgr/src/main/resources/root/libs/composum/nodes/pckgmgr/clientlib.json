@@ -1,4 +1,5 @@
 {
+  "jcr:primaryType": "sling:Folder",
   "sling:resourceType": "composum/nodes/commons/clientlib",
   "category": [
     "composum.nodes.console.pckgmgr"

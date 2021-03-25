@@ -12,6 +12,8 @@ import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.composum.sling.nodes.browser.Browser.EDITOR_MODES;
+
 public class CodeEditor extends ConsoleServletBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConsolePage.class);
@@ -39,7 +41,7 @@ public class CodeEditor extends ConsoleServletBean {
         if (textType == null) {
             MimeType mimeType = MimeTypeUtil.getMimeType(resource);
             String extension = ResourceUtil.getNameExtension(resource);
-            textType = Browser.getTextType(mimeType != null ? mimeType.toString() : "", extension);
+            textType = Browser.getFileType(EDITOR_MODES, mimeType != null ? mimeType.toString() : "", extension);
         }
         return textType;
     }

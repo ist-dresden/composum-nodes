@@ -28,7 +28,7 @@
                     <div class="form-group binary">
                         <div class="checkbox">
                             <label><input name="adjustLastModified" class="smart" type="checkbox"
-                                          value="">${cpn:value(cpn:i18n(slingRequest,"adjust 'jcr:lastModified' properties"))}</label>
+                                          value="">${cpn:i18n(slingRequest,"adjust 'jcr:lastModified' properties")}</label>
                         </div>
                     </div>
                 </div>

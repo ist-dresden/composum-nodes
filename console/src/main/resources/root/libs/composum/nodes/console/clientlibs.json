@@ -1,5 +1,7 @@
 {
+  "jcr:primaryType": "sling:Folder",
   "console": {
+    "jcr:primaryType": "sling:Folder",
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "description": "embeds the complete set of console widgets and components",
     "category": [
@@ -7,19 +9,19 @@
     ],
     "order": 100,
     "link": {
-      "jcr:primaryType": "nt:unstructured",
+      "jcr:primaryType": "sling:OrderedFolder",
       "depends": [
         "category:composum.nodes.console.base"
       ]
     },
     "css": {
-      "jcr:primaryType": "nt:unstructured",
+      "jcr:primaryType": "sling:OrderedFolder",
       "depends": [
         "category:composum.nodes.console.base"
       ]
     },
     "js": {
-      "jcr:primaryType": "nt:unstructured",
+      "jcr:primaryType": "sling:OrderedFolder",
       "depends": [
         "jslibs/jquery/3.4.1/jquery.js",
         "category:composum.nodes.console.base"
@@ -27,13 +29,14 @@
     }
   },
   "base": {
+    "jcr:primaryType": "sling:Folder",
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "category": [
       "composum.nodes.console.base"
     ],
     "order": 100,
     "link": {
-      "jcr:primaryType": "nt:unstructured",
+      "jcr:primaryType": "sling:OrderedFolder",
       "cpn-64": {
         "rel": "shortcut icon",
         "embed": "composum/nodes/commons/components/images/cpn-64.png"
@@ -44,7 +47,7 @@
       }
     },
     "css": {
-      "jcr:primaryType": "nt:unstructured",
+      "jcr:primaryType": "sling:OrderedFolder",
       "depends": [
         "fonts/awesome/4.7.0/css/font-awesome.css",
         "jslibs/bootstrap/3.4.1/css/bootstrap.css",
@@ -65,7 +68,7 @@
       ]
     },
     "js": {
-      "jcr:primaryType": "nt:unstructured",
+      "jcr:primaryType": "sling:OrderedFolder",
       "aem-6.1": {
         "optional": true,
         "embed": [
@@ -120,12 +123,13 @@
     }
   },
   "codeeditor": {
+    "jcr:primaryType": "sling:Folder",
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "category": [
       "composum.edit.codeeditor"
     ],
     "css": {
-      "jcr:primaryType": "nt:unstructured",
+      "jcr:primaryType": "sling:OrderedFolder",
       "depends": [
         "fonts/awesome/4.7.0/css/font-awesome.css"
       ],
@@ -137,7 +141,7 @@
       ]
     },
     "js": {
-      "jcr:primaryType": "nt:unstructured",
+      "jcr:primaryType": "sling:OrderedFolder",
       "depends": [
         "jslibs/jquery/3.4.1/jquery.js",
         "jslibs/loglevel/1.6.1/loglevel.js",
@@ -161,9 +165,10 @@
     }
   },
   "page": {
+    "jcr:primaryType": "sling:Folder",
     "sling:resourceType": "composum/nodes/commons/clientlib",
     "css": {
-      "jcr:primaryType": "nt:unstructured",
+      "jcr:primaryType": "sling:OrderedFolder",
       "embed": [
         "composum/nodes/console/page/css/content.css"
       ]

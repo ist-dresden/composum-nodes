@@ -28,7 +28,8 @@
                 </div>
             </div>
             <div class="editor-frame detail-content">
-                <div class="code-editor" data-path="${browser.contentResource.path}" data-type="${browser.textType}">
+                <div class="code-editor" data-path="${browser.contentResource.path}" data-file="${browser.filePath}"
+                     data-type="${browser.textType}">
                 </div>
             </div>
         </div>
