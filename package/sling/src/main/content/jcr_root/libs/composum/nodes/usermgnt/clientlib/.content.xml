@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        jcr:primaryType="sling:Folder"
+        sling:resourceType="composum/nodes/commons/clientlib"
+        category="[composum.nodes.console.usermgnt]">
+    <css jcr:primaryType="sling:OrderedFolder"
+            depends="[
+                    category:composum.nodes.console.default
+                ]"
+            embed="[
+                    composum/nodes/usermgnt/css/usermanagement.css
+                ]"/>
+    <js jcr:primaryType="sling:OrderedFolder"
+            depends="[
+                    category:composum.nodes.console.default
+                ]">
+        <dialogs jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/usermgnt/dialogs/adduser/adduserdialog.js,
+                        composum/nodes/usermgnt/dialogs/addsystemuser/addsystemuserdialog.js,
+                        composum/nodes/usermgnt/dialogs/addmember/addmemberdialog.js,
+                        composum/nodes/usermgnt/dialogs/addtogroup/addtogroupdialog.js,
+                        composum/nodes/usermgnt/dialogs/addgroup/addgroupdialog.js,
+                        composum/nodes/usermgnt/dialogs/deleteauthorizable/deleteauthorizabledialog.js,
+                        composum/nodes/usermgnt/dialogs/disableuser/disableuserdialog.js,
+                        composum/nodes/usermgnt/dialogs/changepassword/changepwdialog.js
+                    ]"/>
+        <tables jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/usermgnt/js/propertiestable.js,
+                        composum/nodes/usermgnt/js/groupstable.js,
+                        composum/nodes/usermgnt/js/usertable.js,
+                        composum/nodes/usermgnt/js/memberstable.js
+                    ]"/>
+        <tabs jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/usermgnt/js/usertab.js,
+                        composum/nodes/usermgnt/js/profiletab.js,
+                        composum/nodes/usermgnt/js/preferencestab.js,
+                        composum/nodes/usermgnt/js/groupstab.js,
+                        composum/nodes/usermgnt/js/memberstab.js,
+                        composum/nodes/usermgnt/js/grouptab.js
+                    ]"/>
+        <query jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/usermgnt/js/query.js
+                    ]"/>
+        <usermanagement jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/usermgnt/js/usermanagement.js
+                    ]"/>
+        <startup jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/usermgnt/js/startup.js
+                    ]"/>
+    </js>
+</jcr:root>

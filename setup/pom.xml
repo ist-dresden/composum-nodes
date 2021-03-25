@@ -19,7 +19,6 @@
     <modules>
         <module>slingfeature</module>
         <module>util</module>
-        <module>hook</module>
     </modules>
 
 </project>
