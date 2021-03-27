@@ -43,7 +43,7 @@ public class SetupHook implements InstallHook {
             case INSTALLED:
                 LOG.info("installed: execute...");
                 moveClientlibsRoot(ctx);
-                setupPackageManager(ctx);
+                //setupPackageManager(ctx);
                 LOG.info("installed: execute ends.");
                 break;
         }
@@ -128,16 +128,20 @@ public class SetupHook implements InstallHook {
                 } catch (PathNotFoundException ignore) {
                 }
             }
+            LOG.info("installed: install Package Manager content ({})", newPckgMgrFolder.getPath());
             try {
                 Node oldPckgMgrFolder = session.getNode(PCKGMGR_FOLDER);
+                LOG.info("installed: remove old Package Manager content ({})", oldPckgMgrFolder.getPath());
                 oldPckgMgrFolder.remove();
                 session.save();
             } catch (PathNotFoundException ignore) {
             } finally {
+                LOG.info("installed: move Package Manager content ({}): '{}'", newPckgMgrFolder.getPath(), PCKGMGR_FOLDER);
                 session.move(newPckgMgrFolder.getPath(), PCKGMGR_FOLDER);
                 session.save();
             }
         } catch (PathNotFoundException ignore) {
+            LOG.info("installed: no Package Manager install folder found ({})", PCKGMGR_INSTALL_FOLDER);
         } catch (RepositoryException ex) {
             LOG.error(ex.getMessage(), ex);
             throw new PackageException(ex);

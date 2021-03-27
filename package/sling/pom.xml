@@ -19,7 +19,7 @@
         <resources>
 
             <resource>
-                <directory>src/main/content/jcr_root</directory>
+                <directory>${project.basedir}/src/main/content/jcr_root</directory>
                 <filtering>false</filtering>
                 <excludes>
                     <exclude>**/.vlt*</exclude>
@@ -28,10 +28,10 @@
                 </excludes>
             </resource>
 
-            <!--resource>
+            <resource>
                 <directory>${basedir}/src/main/content/META-INF</directory>
                 <targetPath>${project.build.directory}/vault-work/META-INF</targetPath>
-            </resource-->
+            </resource>
 
             <resource>
                 <directory>${project.build.directory}/content/jcr_root</directory>
@@ -44,7 +44,7 @@
         </resources>
         <plugins>
 
-            <!-- embed the setup hook -->
+            <!-- extract and embed the content of the bundles -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -104,14 +104,10 @@
             </plugin>
 
             <plugin>
-                <!--groupId>org.apache.jackrabbit</groupId>
-                <artifactId>filevault-package-maven-plugin</artifactId>
-                <version>1.1.2</version-->
                 <groupId>com.day.jcr.vault</groupId>
                 <artifactId>content-package-maven-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
-                    <!--packageType>merged</packageType-->
 
                     <group>${package.group}</group>
                     <properties>

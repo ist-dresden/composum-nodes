@@ -19,6 +19,17 @@
         <resources>
 
             <resource>
+                <directory>${project.basedir}/../sling/src/main/content/jcr_root</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/.vlt*</exclude>
+                    <exclude>**/.DS_Store</exclude>
+                    <exclude>**/.gitignore</exclude>
+                    <exclude>**/pckgmgr.install/**</exclude>
+                </excludes>
+            </resource>
+
+            <resource>
                 <directory>src/main/content/jcr_root</directory>
                 <filtering>false</filtering>
                 <excludes>
@@ -44,7 +55,7 @@
         </resources>
         <plugins>
 
-            <!-- embed the setup hook -->
+            <!-- extract and embed the content of the bundles -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
