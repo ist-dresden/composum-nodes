@@ -97,9 +97,6 @@
                     <filters>
 
                         <filter>
-                            <root>/libs/fonts/composum</root>
-                        </filter>
-                        <filter>
                             <root>/libs/fonts/awesome/4.7.0</root>
                         </filter>
                         <filter>

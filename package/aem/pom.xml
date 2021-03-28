@@ -19,17 +19,6 @@
         <resources>
 
             <resource>
-                <directory>${project.basedir}/../sling/src/main/content/jcr_root</directory>
-                <filtering>false</filtering>
-                <excludes>
-                    <exclude>**/.vlt*</exclude>
-                    <exclude>**/.DS_Store</exclude>
-                    <exclude>**/.gitignore</exclude>
-                    <exclude>**/pckgmgr/**</exclude>
-                </excludes>
-            </resource>
-
-            <resource>
                 <directory>src/main/content/jcr_root</directory>
                 <filtering>false</filtering>
                 <excludes>
@@ -65,26 +54,40 @@
                         <id>prepare-content</id>
                         <phase>generate-resources</phase>
                         <goals>
-                            <goal>unpack-dependencies</goal>
+                            <goal>unpack</goal>
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/content</outputDirectory>
                             <overWriteIfNewer>true</overWriteIfNewer>
-                            <excludeTransitive>true</excludeTransitive>
-                            <includes>
-                                root/**
-                            </includes>
-                            <excludes>
-                                **/*.json,
-                                **/mixins.css,
-                                **/variables.css
-                            </excludes>
-                            <fileMappers>
-                                <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
-                                    <pattern>root/</pattern>
-                                    <replacement>jcr_root/</replacement>
-                                </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
-                            </fileMappers>
+
+                            <artifactItems>
+
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>composum-nodes-sling-package</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>content-package</type>
+                                    <includes>
+                                        jcr_root/libs/**
+                                    </includes>
+                                    <excludes>
+                                        **/nodes/install/**,
+                                        **/nodes.setup/upload/*pckgmgr*,
+                                        **/nodes.setup/pckgmgr/**
+                                    </excludes>
+                                    <fileMappers>
+                                        <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                            <pattern>jcr_root/libs/composum/nodes.setup/</pattern>
+                                            <replacement>jcr_root/libs/composum/nodes/</replacement>
+                                        </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                        <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                            <pattern>jcr_root/libs/composum/nodes/upload/</pattern>
+                                            <replacement>jcr_root/libs/composum/nodes/install/</replacement>
+                                        </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                    </fileMappers>
+                                </artifactItem>
+
+                            </artifactItems>
                         </configuration>
                     </execution>
 
@@ -113,26 +116,9 @@
                         <subPackage>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>composum-nodes-jslibs-package</artifactId>
+                            <filter>true</filter>
                         </subPackage>
                     </subPackages>
-
-                    <embeddeds>
-                        <embedded>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>composum-nodes-commons-bundle</artifactId>
-                            <target>/libs/composum/nodes/install</target>
-                        </embedded>
-                        <embedded>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>composum-nodes-console-bundle</artifactId>
-                            <target>/libs/composum/nodes/install</target>
-                        </embedded>
-                        <embedded>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>composum-nodes-usermgr-bundle</artifactId>
-                            <target>/libs/composum/nodes/install</target>
-                        </embedded>
-                    </embeddeds>
 
                     <filters>
                         <filter>
@@ -170,6 +156,10 @@
                             <root>/libs/composum/nodes/usermgnt</root>
                         </filter>
 
+                        <filter>
+                            <root>/libs/fonts/composum</root>
+                        </filter>
+
                     </filters>
 
                 </configuration>
@@ -181,45 +171,15 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>composum-nodes-jslibs-package</artifactId>
+            <artifactId>composum-nodes-sling-package</artifactId>
             <version>${project.version}</version>
             <type>content-package</type>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>composum-nodes-commons-bundle</artifactId>
+            <artifactId>composum-nodes-jslibs-package</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>composum-nodes-commons</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>composum-nodes-console-bundle</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>composum-nodes-console</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>composum-nodes-usermgr-bundle</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>composum-nodes-usermgr</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>composum-nodes-config</artifactId>
-            <version>${project.version}</version>
+            <type>content-package</type>
         </dependency>
 
     </dependencies>

@@ -35,10 +35,7 @@
 
             <resource>
                 <directory>${project.build.directory}/content/jcr_root</directory>
-                <excludes>
-                    <exclude>**/mixins.css</exclude>
-                    <exclude>**/variables.css</exclude>
-                </excludes>
+                <filtering>false</filtering>
             </resource>
 
         </resources>
@@ -64,9 +61,7 @@
                                 root/**
                             </includes>
                             <excludes>
-                                **/*.json,
-                                **/mixins.css,
-                                **/variables.css
+                                **/*.json
                             </excludes>
                             <fileMappers>
                                 <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
@@ -124,6 +119,7 @@
                         <subPackage>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>composum-nodes-jslibs-package</artifactId>
+                            <filter>true</filter>
                         </subPackage>
                     </subPackages>
 
@@ -177,6 +173,10 @@
 
                         <filter>
                             <root>/libs/composum/nodes.setup</root>
+                        </filter>
+
+                        <filter>
+                            <root>/libs/fonts/composum</root>
                         </filter>
 
                     </filters>

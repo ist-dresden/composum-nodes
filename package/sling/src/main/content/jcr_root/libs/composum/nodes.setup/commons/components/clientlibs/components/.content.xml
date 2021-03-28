@@ -9,7 +9,7 @@
             depends="[
                       jslibs/bootstrap/(3.*:3.4.1)/css/bootstrap.css,
                       jslibs/bootstrap/(3.*:3.4.1)/css/bootstrap-theme.css,
-                      slibs/bootstrap-datetimepicker/(4.*:4.17.47)/css/bootstrap-datetimepicker.css,
+                      jslibs/bootstrap-datetimepicker/(4.*:4.17.47)/css/bootstrap-datetimepicker.css,
                       jslibs/bootstrap-slider/(9.*|10.*:10.6.1)/css/bootstrap-slider.css,
                       jslibs/bootstrap-colorpicker/([2-3].*:3.1.2)/css/bootstrap-colorpicker.css,
                       jslibs/bootstrap-fileinput/([4-5].*:4.3.6)/css/fileinput.css,
