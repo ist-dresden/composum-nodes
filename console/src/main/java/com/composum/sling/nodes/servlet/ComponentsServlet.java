@@ -19,6 +19,8 @@ import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -35,6 +37,8 @@ import java.io.IOException;
         }
 )
 public class ComponentsServlet extends AbstractServiceServlet {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ComponentsServlet.class);
 
     public static final String SERVLET_PATH = "/bin/cpm/nodes/components";
 
@@ -107,7 +111,7 @@ public class ComponentsServlet extends AbstractServiceServlet {
                          @Nonnull final SlingHttpServletResponse response,
                          @Nullable final ResourceHandle resource)
                 throws IOException {
-            final Status status = new Status(request, response);
+            final Status status = new Status(request, response, LOG);
             final String type = getComponentType(request, resource);
             if (StringUtils.isNotBlank(type)) {
                 ResourceResolver resolver = request.getResourceResolver();
@@ -131,7 +135,7 @@ public class ComponentsServlet extends AbstractServiceServlet {
                          @Nonnull final SlingHttpServletResponse response,
                          @Nullable final ResourceHandle resource)
                 throws IOException {
-            final Status status = new Status(request, response);
+            final Status status = new Status(request, response, LOG);
             final String type = getComponentType(request, resource);
             if (StringUtils.isNotBlank(type)) {
                 ResourceResolver resolver = request.getResourceResolver();

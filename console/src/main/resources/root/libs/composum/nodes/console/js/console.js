@@ -514,8 +514,13 @@
                             $tab = this.$detailView.find('a[data-group="' + group + '"]');
                         }
                         if (!$tab || $tab.length < 1) {
-                            // if the group of the last view is not available use the view of the first tab
-                            $tab = this.$detailTabs.find('a');
+                            if (group === 'edit') { // special fallback from 'edit' to 'view
+                                $tab = this.$detailView.find('a[data-group="view"]');
+                            }
+                            if (!$tab || $tab.length < 1) {
+                                // if the group of the last view is not available use the view of the first tab
+                                $tab = this.$detailTabs.find('a');
+                            }
                         }
                         // get the tab key from the links anchor and select the tab
                         var tab = $tab.attr('href').substring(1);

@@ -19,10 +19,12 @@
                    title="Source view as JSON (switchable to XML)"><span class="label">JSON</span></a>
                 <a class="source xml fa fa-code btn btn-default hidden" href="#xml" data-group="xml"
                    title="Source view as XML (switchable to JSON)"><span class="label">XML</span></a>
-                <a class="acl fa fa-key btn btn-default" href="#acl" data-group="acl" title="Access Rules"><span
-                        class="label">ACL</span></a>
-                <a class="version fa fa-history btn btn-default" href="#version" data-group="version"
-                   title="Versions"><span class="label">Versions</span></a>
+                <c:if test="${browser.canHaveAcl}">
+                    <a class="acl fa fa-key btn btn-default" href="#acl" data-group="acl" title="Access Rules"><span class="label">ACL</span></a>
+                </c:if>
+                <c:if test="${browser.versionable}">
+                    <a class="version fa fa-history btn btn-default" href="#version" data-group="version" title="Versions"><span class="label">Versions</span></a>
+                </c:if>
             </div>
         </div>
         <div class="node-view-content detail-content">

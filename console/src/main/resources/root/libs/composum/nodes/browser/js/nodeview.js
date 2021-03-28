@@ -141,10 +141,10 @@
                 }
                 var extension = this.$extension.val();
                 if (extension) {
-                    if (extension == '-') {
+                    if (extension === '-') {
                         extension = '';
                     } else {
-                        if (extension.indexOf('.') != 0) {
+                        if (extension.indexOf('.') !== 0) {
                             extension = '.' + extension;
                         }
                     }
@@ -154,7 +154,7 @@
                 url += extension;
                 var suffix = this.$suffix.val();
                 if (suffix) {
-                    if (suffix.indexOf('/') != 0) {
+                    if (suffix.indexOf('/') !== 0) {
                         suffix = '/' + suffix;
                     }
                     url += suffix;
@@ -300,14 +300,13 @@
 
             initialize: function (options) {
                 browser.AbstractDisplayTab.prototype.initialize.apply(this, [options]);
-                this.$image = this.$('.image-frame img');
                 this.$('.detail-toolbar .update').click(_.bind(this.upload, this));
                 this.$download = this.$('.detail-toolbar .download');
             },
 
             reload: function () {
                 browser.AbstractDisplayTab.prototype.reload.apply(this);
-                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.bin' + this.$el.data('path')));
+                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.bin' + this.$el.data('file')));
             },
 
             upload: function () {
@@ -321,18 +320,35 @@
             }
         });
 
+        browser.BinaryTab = browser.AbstractFileTab.extend({
+
+            initialize: function (options) {
+                options = _.extend(options, {
+                    displayKey: 'binaryView',
+                    loadContent: _.bind(function (url) {
+                        core.getHtml('/bin/browser.tab.binary-view.html' + this.$el.data('file'),
+                            _.bind(function (content) {
+                                this.$container.html(content);
+                            }, this));
+                    }, this)
+                });
+                browser.AbstractFileTab.prototype.initialize.apply(this, [options]);
+                this.$container = this.$('.frame-container');
+            }
+        });
+
         browser.ImageTab = browser.AbstractFileTab.extend({
 
             initialize: function (options) {
                 this.isAsset = !!this.$el.data('asset');
                 options = _.extend(options, {
                     displayKey: 'imageView',
-                    loadContent: function (url) {
+                    loadContent: _.bind(function (url) {
                         if (!this.urlHasModifiers() && !this.isAsset) {
                             url = '/bin/cpm/nodes/node.load.bin' + url;
                         }
                         this.$image.attr('src', core.getContextUrl(url));
-                    }
+                    }, this)
                 });
                 browser.AbstractFileTab.prototype.initialize.apply(this, [options]);
                 this.$image = this.$('.image-frame img');
@@ -349,14 +365,14 @@
             initialize: function (options) {
                 options = _.extend(options, {
                     displayKey: 'videoView',
-                    loadContent: function (url) {
+                    loadContent: _.bind(function (url) {
                         if (!this.urlHasModifiers()) {
                             url = '/bin/cpm/nodes/node.load.bin' + url;
                         }
                         var mimeType = this.$el.data('type');
                         this.$source.attr('type', mimeType);
                         this.$source.attr('src', core.getContextUrl(url));
-                    }
+                    }, this)
                 });
                 browser.AbstractFileTab.prototype.initialize.apply(this, [options]);
                 this.$video = this.$('.video-frame video');
@@ -374,7 +390,7 @@
 
             reload: function () {
                 this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.bin'
-                    + this.$('.editor-frame .code-editor').data('path')));
+                    + this.$('.editor-frame .code-editor').data('file')));
             },
 
             resize: function () {
@@ -811,8 +827,8 @@
                 browser.nodeView.sourceViewTabVisibility('xml');
             },
 
-            getUrl: function (type) {
-                var type = type || "xml";
+            getUrl: function (typeOption) {
+                var type = typeOption || "xml";
                 var path = browser.getCurrentPath();
                 var url = '/bin/cpm/nodes/source.' + type + path;
                 return core.getContextUrl(url);
@@ -847,6 +863,9 @@
         }, {
             selector: '> .scene',
             tabType: browser.SceneTab
+        }, {
+            selector: '> .binary',
+            tabType: browser.BinaryTab
         }, {
             selector: '> .image',
             tabType: browser.ImageTab
@@ -911,13 +930,13 @@
             },
 
             onPathSelected: function (event, path) {
-                if (path == this.getCurrentPath()) {
+                if (path === this.getCurrentPath()) {
                     this.reload();
                 }
             },
 
             onPathChanged: function (event, path) {
-                if (path == this.getCurrentPath()) {
+                if (path === this.getCurrentPath()) {
                     this.reload();
                 }
             },
@@ -941,6 +960,7 @@
                 this.favoriteToggle = this.$detailView.find('.favorite-toggle');
                 this.checkFavorite();
                 this.favoriteToggle.click(_.bind(this.toggleFavorite, this));
+                this.sourceViewTabVisibility();
             },
 
             checkFavorite: function () {

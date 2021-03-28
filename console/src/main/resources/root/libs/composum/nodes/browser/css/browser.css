@@ -970,14 +970,14 @@
  */
 
 #browser-view .node-view-panel .node-view-content .video .detail-content {
-    top: 37px;
-    bottom: 40px;
+    top: 34px;
     background-color: #666;
 }
 
 #browser-view .video.detail-panel .detail-content .video-frame {
     display: table;
     margin: auto;
+    padding: 6px;
 }
 
 #browser-view .video.detail-panel .detail-content .video-frame .video-background {
@@ -986,6 +986,16 @@
 
 #browser-view .video.detail-panel .detail-content .video-frame video {
     width: 100%;
+}
+
+#browser-view .binary.detail-panel .detail-content .file-download {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 150px;
+    opacity: 0.4;
+    color: inherit;
 }
 
 /*

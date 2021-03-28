@@ -22,7 +22,7 @@
                     </div>
                     <div class="form-group">
                         <cpn:text class="text" i18n="true"
-                                  type="rich">Do you want to create an overlay to the current component or copy from this template again?</cpn:text>
+                                  type="rich">Do you want to create an overlay to the current component?</cpn:text>
                     </div>
                     <div class="form-group">
                         <label class="control-label">${cpn:i18n(slingRequest,'Overlay Path')}</label>

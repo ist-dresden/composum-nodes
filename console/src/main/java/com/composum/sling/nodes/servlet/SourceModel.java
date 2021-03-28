@@ -159,9 +159,6 @@ public class SourceModel extends ConsoleSlingBean {
     protected transient Comparator<Property> propertyComparator;
 
     public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
-        if ("/".equals(ResourceUtil.normalize(resource.getPath()))) {
-            throw new IllegalArgumentException("Cannot export the whole JCR - " + resource.getPath());
-        }
         this.config = config;
         initialize(context, resource);
     }
