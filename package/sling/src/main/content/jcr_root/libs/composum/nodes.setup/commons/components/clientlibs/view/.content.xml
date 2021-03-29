@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        jcr:primaryType="sling:Folder"
+        sling:resourceType="composum/nodes/commons/clientlib"
+        jcr:description="embeds the minimal set of dependencies to view pages"
+        category="[composum.components.view]"
+        order="{Long}10">
+    <css jcr:primaryType="sling:OrderedFolder"/>
+    <js jcr:primaryType="sling:OrderedFolder"
+            embed="[
+                    jslibs/jquery/([2-3].*:3.4.1)/jquery.js,
+                    jslibs/js-base64/2.5.2/base64.js,
+                    jslibs/loglevel/1.6.1/loglevel.js,
+                    jslibs/underscore/(1.*:1.9.1)/underscore.js,
+                    jslibs/backbone/(1.*:1.4.0)/backbone.js,
+                    composum/nodes/commons/components/js/core.js,
+                    composum/nodes/commons/components/js/i18n.js,
+                    composum/nodes/commons/components/js/nodes.js
+                ]"/>
+</jcr:root>

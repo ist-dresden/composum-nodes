@@ -37,16 +37,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -140,17 +131,6 @@ public class SourceModel extends ConsoleSlingBean {
     public static final StringFilter EXCLUDED_MIXINS = new StringFilter.WhiteList("^rep:AccessControllable$");
 
     /**
-     * Filter matching nodes that are rendered as an XML file named like the node - "Full coverage aggregate" in
-     * Vault.
-     *
-     * @see "https://github.com/apache/jackrabbit-filevault/blob/trunk/vault-core/src/main/resources/org/apache/jackrabbit/vault/fs/config/defaultConfig-1.1.xml"
-     */
-    public static final ResourceFilter RENDERFILTER_XMLFILE =
-            new ResourceFilter.NodeTypeFilter(new StringFilter.WhiteList("^mix:language$", "^rep:AccessControl$",
-                    "^rep:Policy$", "^cq:Widget$", "^cq:EditConfig$", "^cq:WorkflowModel$", "^vlt:FullCoverage$",
-                    "^mix:language$", "^sling:OsgiConfig$"));
-
-    /**
      * Pattern for {@link SimpleDateFormat} that creates a date suitable with XML sources.
      */
     public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
@@ -176,11 +156,9 @@ public class SourceModel extends ConsoleSlingBean {
      * yet determined".
      */
     protected transient Boolean[] hasOrderableChildren;
+    protected transient Comparator<Property> propertyComparator;
 
     public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
-        if ("/".equals(ResourceUtil.normalize(resource.getPath()))) {
-            throw new IllegalArgumentException("Cannot export the whole JCR - " + resource.getPath());
-        }
         this.config = config;
         initialize(context, resource);
     }
@@ -307,7 +285,7 @@ public class SourceModel extends ConsoleSlingBean {
                     propertyList.add(property);
                 }
             }
-            Collections.sort(propertyList);
+            Collections.sort(propertyList, getPropertyComparator());
         }
         return propertyList;
     }
@@ -327,7 +305,7 @@ public class SourceModel extends ConsoleSlingBean {
             Iterator<Resource> iterator = resource.listChildren();
             while (iterator.hasNext()) {
                 Resource subnode = iterator.next();
-                if (config.getSourceNodesFilter().accept(subnode)) {
+                if (config.getSourceNodesFilter().accept(subnode) && !ResourceUtil.isSyntheticResource(subnode)) {
                     if (subnode.getName().equals(JCR_CONTENT)) {
                         jcrcontent = subnode;
                     } else {
@@ -927,12 +905,12 @@ public class SourceModel extends ConsoleSlingBean {
             // jcr:content shall always be the top node of a .content.xml
             return RenderingType.FOLDER;
         }
-        if (RENDERFILTER_XMLFILE.accept(aResource)) {
+        if (config.getSourceXmlNodesFilter().accept(aResource)) {
             // in theory it would be nice to have a rule here that everything below this stays in this file,
             // even if it's a folder, but that'd be inefficient or a hack - let's see later whether it'd be worth it.
             return RenderingType.XMLFILE;
         }
-        if (!inFullCoverageNode && ResourceUtil.isNodeType(aResource, ResourceUtil.NT_HIERARCHYNODE)) {
+        if (!inFullCoverageNode && config.getSourceFolderNodesFilter().accept(aResource)) {
             return RenderingType.FOLDER;
         }
         return RenderingType.EMBEDDED;
@@ -941,6 +919,18 @@ public class SourceModel extends ConsoleSlingBean {
     protected boolean isFullCoverageNode() {
         return resource.getName().equalsIgnoreCase(JCR_CONTENT) ||
                 RenderingType.XMLFILE == getRenderingType(resource, false);
+    }
+
+    protected Comparator<Property> getPropertyComparator() {
+        if (propertyComparator == null) {
+            propertyComparator =
+                    Comparator.nullsLast(Comparator.comparing(Property::getNs))
+                            .thenComparing(Property::getName);
+            if (this.config.isSourceAdvancedSortAttributes()) {
+                propertyComparator = Comparator.comparing(Property::getOrderingLevel).thenComparing(propertyComparator);
+            }
+        }
+        return propertyComparator;
     }
 
     /**
@@ -984,7 +974,7 @@ public class SourceModel extends ConsoleSlingBean {
         DEEP
     }
 
-    public static class Property implements Comparable<Property> {
+    public static class Property {
 
         protected final String name;
         protected final Object value;
@@ -1143,32 +1133,11 @@ public class SourceModel extends ConsoleSlingBean {
         }
 
         @Override
-        public int compareTo(@Nonnull Property other) {
-            int level = getOrderingLevel();
-            int olevel = other.getOrderingLevel();
-            if (level != olevel) {
-                return Integer.compare(level, olevel);
-            }
-            String ns = getNs();
-            String ons = other.getNs();
-            if (ns.isEmpty() && !ons.isEmpty()) {
-                return 1;
-            }
-            if (!ns.isEmpty() && ons.isEmpty()) {
-                return -1;
-            }
-            if (!ns.equals(ons)) {
-                return ns.compareTo(ons);
-            }
-            return getName().compareTo(other.getName());
-        }
-
-        @Override
         public boolean equals(Object o) {
-            if (!(o instanceof Property)) {
-                return false;
-            }
-            return compareTo((Property) o) == 0;
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Property property = (Property) o;
+            return Objects.equals(name, property.name) && Objects.equals(value, property.value) && Objects.equals(jcrType, property.jcrType);
         }
 
         @Override

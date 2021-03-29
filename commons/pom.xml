@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>2.4.3</version>
+        <version>2.5.0</version>
     </parent>
 
     <artifactId>composum-nodes-commons</artifactId>
@@ -21,6 +21,7 @@
 
     <build>
         <plugins>
+
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
@@ -30,12 +31,27 @@
                 <!-- Minify the JS-Resources - needs the build-helper-maven-plugin -->
                 <groupId>com.samaxes.maven</groupId>
                 <artifactId>minify-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>minify-javascripts</id>
+                        <goals>
+                            <goal>minify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
-
             <plugin>
                 <!-- Needed for the minify-maven-plugin. -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-minified-resource</id>
+                        <goals>
+                            <goal>add-resource</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -136,6 +152,14 @@
 
     <dependencies>
 
+        <!-- YUICompressor embedded(!) -->
+        <!-- https://mvnrepository.com/artifact/com.yahoo.platform.yui/yuicompressor -->
+        <dependency>
+            <groupId>com.yahoo.platform.yui</groupId>
+            <artifactId>yuicompressor</artifactId>
+            <version>2.4.8</version>
+        </dependency>
+
         <!-- OSGi, Felix -->
         <dependency>
             <groupId>org.osgi</groupId>
@@ -148,12 +172,6 @@
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.annotation</artifactId>
-        </dependency>
-
-        <!-- YUICompressor -->
-        <dependency>
-            <groupId>com.yahoo.platform.yui</groupId>
-            <artifactId>yuicompressor</artifactId>
         </dependency>
 
         <!-- JCR API, Jackrabbit -->
@@ -333,16 +351,16 @@
     <profiles>
 
         <profile>
+            <!-- install bundles via Sling installer (REST API: /system/console/install) -->
             <id>installBundle</id>
             <activation>
                 <property>
-                    <name>deploy.bundle</name>
+                    <name>install.bundle</name>
                     <value>true</value>
                 </property>
             </activation>
             <build>
                 <plugins>
-
                     <plugin>
                         <groupId>org.apache.sling</groupId>
                         <artifactId>sling-maven-plugin</artifactId>
@@ -356,28 +374,37 @@
                             </execution>
                         </executions>
                     </plugin>
-
-                    <plugin>
-                        <groupId>com.citytechinc.maven.plugins</groupId>
-                        <artifactId>osgi-bundle-status-maven-plugin</artifactId>
-                        <configuration>
-                            <skip>${bundle.status.skip}</skip>
-                            <bundleNames>
-                                <bundleName>${bundle.name}</bundleName>
-                            </bundleNames>
-                        </configuration>
-                    </plugin>
-
                 </plugins>
             </build>
         </profile>
+
         <profile>
-            <id>installPackage</id>
-        </profile>
-        <profile>
-            <id>installTestContent</id>
+            <!-- install bundles via upload (WebDAV) to 'install' path (/libs/composum/nodes/install) -->
+            <id>uploadBundle</id>
+            <activation>
+                <property>
+                    <name>upload.bundle</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>sling-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>upload-bundle</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
     </profiles>
 </project>
-

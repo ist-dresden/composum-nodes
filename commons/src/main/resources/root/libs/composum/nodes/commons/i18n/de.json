@@ -15,7 +15,7 @@
     "folder": {
       "jcr:primaryType": "sling:MessageEntry",
       "sling:key": "Folder",
-      "sling:message": "Verzeichnis"
+      "sling:message": "Ordner"
     },
     "image": {
       "jcr:primaryType": "sling:MessageEntry",

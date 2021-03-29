@@ -3,10 +3,12 @@ package com.composum.sling.clientlibs.handle;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,17 +45,27 @@ public class FileHandle {
     protected transient String encoding;
     protected transient Calendar lastModified;
 
-    public FileHandle(Resource resource) {
+    public FileHandle(@Nullable Resource resource) {
+        if (resource != null && JcrConstants.JCR_CONTENT.equals(resource.getName())) {
+            Resource parent = resource.getParent();
+            if (parent != null && ResourceUtil.isFile(parent)) {
+                resource = parent;
+            }
+        }
         this.resource = ResourceHandle.use(resource);
         this.content = retrieveContent();
     }
 
-    /** Handle to the content node of the file; not null. */
+    /**
+     * Handle to the content node of the file; not null.
+     */
     public ResourceHandle getContent() {
         return content;
     }
 
-    /** Handle to the main node of the file; not null. */
+    /**
+     * Handle to the main node of the file; not null.
+     */
     public ResourceHandle getResource() {
         return resource;
     }
@@ -139,7 +151,9 @@ public class FileHandle {
         }
     }
 
-    /** Updates the last modified value, if the mix:lastModified is present. */
+    /**
+     * Updates the last modified value, if the mix:lastModified is present.
+     */
     public void updateLastModified() {
         if (content.isValid()) {
             ModifiableValueMap values = Objects.requireNonNull(content.adaptTo(ModifiableValueMap.class));

@@ -23,7 +23,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.version.VersionManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -36,8 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static com.composum.sling.core.util.CoreConstants.DEFAULT_OVERLAY_ROOT;
-import static com.composum.sling.core.util.CoreConstants.DEFAULT_OVERRIDE_ROOT;
 import static com.composum.sling.core.util.CoreConstants.PROP_RESOURCE_SUPER_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -52,6 +52,7 @@ public class Browser extends ConsoleServletBean {
 
     public static final String HTML = "html";
     public static final String JSP = "jsp";
+    public static final String PDF = "pdf";
 
     public static final String PROP_DATA = "jcr:data";
     public static final String PROP_MIME_TYPE = "jcr:mimeType";
@@ -81,6 +82,42 @@ public class Browser extends ConsoleServletBean {
         EDITOR_MODES.put("text", "text");
         EDITOR_MODES.put("txt", "text");
     }
+
+    public static final Map<String, String> FILE_ICONS;
+
+    static {
+        FILE_ICONS = new HashMap<>();
+        FILE_ICONS.put(PDF, PDF);
+        FILE_ICONS.put("jar", "archive");
+        FILE_ICONS.put("far", "archive");
+        FILE_ICONS.put("war", "archive");
+        FILE_ICONS.put("zip", "archive");
+        FILE_ICONS.put("tar", "archive");
+        FILE_ICONS.put("gtar", "archive");
+        FILE_ICONS.put("gzip", "archive");
+        FILE_ICONS.put("gz", "archive");
+        FILE_ICONS.put("audio", "audio");
+        FILE_ICONS.put("au", "audio");
+        FILE_ICONS.put("snd", "audio");
+        FILE_ICONS.put("wav", "audio");
+        FILE_ICONS.put("aif", "audio");
+        FILE_ICONS.put("aiff", "audio");
+        FILE_ICONS.put("aifc", "audio");
+        FILE_ICONS.put("ram", "audio");
+        FILE_ICONS.put("ra", "audio");
+        FILE_ICONS.put("mp2", "audio");
+        FILE_ICONS.put("msword", "word");
+        FILE_ICONS.put("doc", "word");
+        FILE_ICONS.put("docx", "word");
+        FILE_ICONS.put("msexcel", "excel");
+        FILE_ICONS.put("xls", "excel");
+        FILE_ICONS.put("xlsx", "excel");
+        FILE_ICONS.put("mspowerpoint", "powerpoint");
+        FILE_ICONS.put("ppt", "powerpoint");
+        FILE_ICONS.put("pptx", "powerpoint");
+    }
+
+    private transient MergeMountpointService mergeMountpointService;
 
     public static class Reference {
 
@@ -124,6 +161,14 @@ public class Browser extends ConsoleServletBean {
         public String getActions() {
             return actions != null ? actions : "";
         }
+
+        @Override
+        public String toString() {
+            return "Reference{" + "label='" + label + '\'' +
+                    ", actions='" + actions + '\'' +
+                    ", path='" + path + '\'' +
+                    '}';
+        }
     }
 
     private transient String primaryType;
@@ -143,6 +188,7 @@ public class Browser extends ConsoleServletBean {
 
     private transient String viewType;
     private transient String textType;
+    private transient String fileIcon;
 
     private transient Boolean isRenderable;
 
@@ -210,8 +256,8 @@ public class Browser extends ConsoleServletBean {
         if (isDeclaringType == null) {
             isDeclaringType = false;
             String path = getPath();
-            if (path.startsWith(getOverrideyRoot() + "/")) {
-                path = path.substring(getOverrideyRoot().length());
+            if (path.startsWith(getOverrideRoot() + "/")) {
+                path = path.substring(getOverrideRoot().length());
             }
             for (String root : getTypeSearchPath(true)) {
                 if (path.startsWith(root)) {
@@ -261,9 +307,13 @@ public class Browser extends ConsoleServletBean {
         return resourceType;
     }
 
+    /** Remove any search path / /mnt/overlay from given path to a resource type = "normalize" path to resource type. */
     @Nullable
     protected String getResourceType(@Nullable String resourceType) {
         if (StringUtils.isNotBlank(resourceType)) {
+            if (resourceType.startsWith(getOverrideRoot())) {
+                resourceType = resourceType.substring(getOverrideRoot().length());
+            }
             for (String root : getTypeSearchPath(true)) {
                 if (resourceType.startsWith(root)) {
                     resourceType = resourceType.substring(root.length());
@@ -274,6 +324,7 @@ public class Browser extends ConsoleServletBean {
         return resourceType;
     }
 
+    /** Returns the resource for a resourceType (the "highest" in the search path), or the resource if the path is absolute. */
     @Nullable
     protected Resource getTypeResource(@Nullable final String resourceType, boolean includeOverlay) {
         ResourceResolver resolver = getResolver();
@@ -300,61 +351,66 @@ public class Browser extends ConsoleServletBean {
         return typeSearchPath;
     }
 
+    /**
+     * The chain of resource super types. This is also included for content resources since this is used quite often in AEM.
+     * @see "https://experienceleague.adobe.com/docs/experience-manager-65/developing/introduction/the-basics.html?lang=en#sling-request-processing"
+     */
     @Nonnull
     public List<String> getSupertypeChain() {
         if (supertypeChain == null) {
             supertypeChain = new ArrayList<>();
-            if (isDeclaringType()) {
-                Resource typeResource = getTypeResource(getPath(), isOverlayResource());
-                while (typeResource != null) {
-                    ValueMap values = typeResource.getValueMap();
-                    typeResource = getTypeResource(values.get(PROP_RESOURCE_SUPER_TYPE, ""), isOverlayResource());
-                    if (typeResource != null) {
-                        supertypeChain.add(typeResource.getPath());
-                    }
+            Resource typeResource = resource;
+            if (isDeclaringType()) { // start from "highest" resource wrt. search path
+                typeResource = getTypeResource(getResourceType(getPath()), false);
+            }
+            while (typeResource != null) {
+                ValueMap values = typeResource.getValueMap();
+                typeResource = getTypeResource(values.get(PROP_RESOURCE_SUPER_TYPE, ""), false);
+                if (typeResource != null) {
+                    supertypeChain.add(typeResource.getPath());
                 }
             }
         }
         return supertypeChain;
     }
 
+    /** Paths for the locations relevant to the resource typein search paths, /mnt/override / /mnt/overlay, mapped to the label information. */
     @Nonnull
-    public Map<String, Reference> getResourceTypeSet() {
+    protected Map<String, Reference> getResourceTypeSet() {
         if (resourceTypes == null) {
             resourceTypes = new LinkedHashMap<>();
             String resourceType = getResourceType(isDeclaringType() ? getPath() : getResourceType());
             if (StringUtils.isNotBlank(resourceType)) {
                 ResourceResolver resolver = getResolver();
                 Map<String, Reference> labels = getTypeRootLabels();
-                String overrideRoot = getOverrideyRoot() + "/";
                 if (isOverrideAvailable()) {
-                    Reference label = labels.get(overrideRoot);
+                    Reference label = labels.get(getOverrideRoot() + "/");
                     String path = getOverridePath();
                     resourceTypes.put(label.getLabel(), new Reference(label.getLabel(),
                             label.getTooltip() + "\n" + path, path));
                 }
-                if (resourceType.startsWith(overrideRoot)) {
-                    resourceType = getResourceType(resourceType.substring(overrideRoot.length() - 1));
+                if (isOverlayAvailable()) {
+                    Reference label = labels.get(getOverlayRoot() + "/");
+                    String path = getOverlayPath();
+                    resourceTypes.put(label.getLabel(), new Reference(label.getLabel(),
+                            label.getTooltip() + "\n" + path, path));
                 }
-                List<String> typeSearchPath = getTypeSearchPath(isOverlayAvailable());
-                for (int i = 0; i < typeSearchPath.size(); i++) {
-                    String root = typeSearchPath.get(i);
+                String basePath = getBasePath();
+                for (String root : getTypeSearchPath(false)) {
                     String resourceTypePath = root + resourceType;
-                    String basePath = i + 1 < typeSearchPath.size() ? typeSearchPath.get(i + 1) + resourceType : null;
                     Resource type = resolver.getResource(resourceTypePath);
-                    if (type != null || i + 1 < typeSearchPath.size()) {
-                        Reference label = labels.get(root);
-                        resourceTypes.put(label.getLabel(), new Reference(label.getLabel(),
-                                label.getTooltip() + "\n" + resourceTypePath, resourceTypePath, type != null ?
-                                (basePath != null && resolver.getResource(basePath) != null ? "is-overlay" : null)
-                                : "overlay-option"));
-                    }
+                    Reference label = labels.get(root); // XXX
+                    resourceTypes.put(label.getLabel(), new Reference(label.getLabel(),
+                            label.getTooltip() + "\n" + resourceTypePath, resourceTypePath, type != null ?
+                            (basePath != null && resolver.getResource(basePath) != null ? "is-overlay" : null)
+                            : "overlay-option"));
                 }
             }
         }
         return resourceTypes;
     }
 
+    /** Set of related paths: for resource types the resource type found in the search path and /mnt/(override|overlay), base paths, resource types. */
     @Nonnull
     public Map<String, Reference> getRelatedPathSet() {
         if (relatedPathSet == null) {
@@ -362,9 +418,8 @@ public class Browser extends ConsoleServletBean {
                 relatedPathSet = getResourceTypeSet();
             } else {
                 relatedPathSet = new LinkedHashMap<>();
-                String path = getPath();
                 Map<String, Reference> labels = getTypeRootLabels();
-                String overrideRoot = getOverrideyRoot() + "/";
+                String overrideRoot = getOverrideRoot() + "/";
                 if (isOverrideAvailable()) {
                     Reference label = labels.get(overrideRoot);
                     String overridePath = getOverridePath();
@@ -394,8 +449,8 @@ public class Browser extends ConsoleServletBean {
 
     public String getBasePath() {
         if (isOverrideResource()) {
-            return getPath().substring(getOverrideyRoot().length());
-        } else if (isOverlayResource()) {
+            return getPath().substring(getOverrideRoot().length());
+        } else if (isOverlayResource()) { // use "highest" found entry according to search path
             Resource type = getTypeResource(getResourceType(isDeclaringType() ? getPath() : getResourceType()), false);
             return type != null ? type.getPath() : getPath();
         }
@@ -403,8 +458,14 @@ public class Browser extends ConsoleServletBean {
     }
 
     public String getOverlayRoot() {
-        // TODO: ask the merger service
-        return DEFAULT_OVERLAY_ROOT;
+        return getMergeMountpointService().overlayMergeMountPoint(getResolver());
+    }
+
+    private MergeMountpointService getMergeMountpointService() {
+        if (mergeMountpointService == null) {
+            mergeMountpointService = this.getSling().getService(MergeMountpointService.class);
+        }
+        return mergeMountpointService;
     }
 
     public boolean isOverlayResource() {
@@ -413,23 +474,26 @@ public class Browser extends ConsoleServletBean {
 
     public boolean isOverlayAvailable() {
         if (overlayAvailable == null) {
-            overlayAvailable = getResolver().getResource(getOverlayPath()) != null;
+            String overlayPath = getOverlayPath();
+            overlayAvailable = overlayPath != null && getResolver().getResource(overlayPath) != null;
         }
         return overlayAvailable;
     }
 
-    @Nonnull
+    /** Path of resource type within /mnt/overlay . If not a declaring resource, this doesn't make sense -> null. */
+    @Nullable
     public String getOverlayPath() {
-        return isOverlayResource() ? getPath() : getOverlayRoot() + "/" + getResourceType(getResourceType());
+        return isOverlayResource() ? getPath() :
+        isDeclaringType() ? getOverlayRoot() + "/" + getResourceType(getPath())
+                : null;
     }
 
-    public String getOverrideyRoot() {
-        // TODO: ask the merger service
-        return DEFAULT_OVERRIDE_ROOT;
+    public String getOverrideRoot() {
+        return getMergeMountpointService().overrideMergeMountPoint(getResolver());
     }
 
     public boolean isOverrideResource() {
-        return getPath().startsWith(getOverrideyRoot() + "/");
+        return getPath().startsWith(getOverrideRoot() + "/");
     }
 
     public boolean isOverrideAvailable() {
@@ -439,21 +503,22 @@ public class Browser extends ConsoleServletBean {
         return overrideAvailable;
     }
 
+    /** Path within /mnt/override. */
     @Nonnull
     public String getOverridePath() {
-        return isOverrideResource() ? getPath() : getOverrideyRoot() + getBasePath();
+        return isOverrideResource() ? getPath() : getOverrideRoot() + getBasePath();
     }
 
     protected Map<String, Reference> getTypeRootLabels() {
         if (typeRootLabels == null) {
             typeRootLabels = new HashMap<>();
-            typeRootLabels.put(getOverrideyRoot() + "/",
-                    new Reference("o/r", "Resource Merger - Override", getOverrideyRoot()));
+            typeRootLabels.put(getOverrideRoot() + "/",
+                    new Reference("o/r", "Resource Merger - Override", getOverrideRoot()));
             typeRootLabels.put(getOverlayRoot() + "/",
                     new Reference("o/l", "Resource Merger - Overlay", getOverlayRoot()));
             for (String root : getResolver().getSearchPath()) {
                 String label = ("" + root.charAt(1)).toUpperCase();
-                String path = root.endsWith("/") ? root.substring(0, root.length() - 1) : root;
+                String path = StringUtils.removeEnd(root, "/");
                 typeRootLabels.put(root, new Reference(label, "Resource Resolver - " + path, path));
             }
         }
@@ -466,7 +531,7 @@ public class Browser extends ConsoleServletBean {
 
     public boolean isSceneAvailable() {
         Collection<SceneConfigurations.Config> availableScenes = getAvailableScenes();
-        return availableScenes.size() > 0;
+        return !availableScenes.isEmpty();
     }
 
     @Nonnull
@@ -481,8 +546,9 @@ public class Browser extends ConsoleServletBean {
     public boolean isRenderable() {
         if (isRenderable == null) {
             String extension = getNameExtension();
-            isRenderable = isTyped() || (isText() &&
-                    (HTML.equals(extension) /*|| JSP.equals(extension)*/));
+            isRenderable = isTyped()
+                    || (isText() && (HTML.equals(extension) /*|| JSP.equals(extension)*/))
+                    || (isFile() && (PDF.equals(extension)));
         }
         return isRenderable;
     }
@@ -527,6 +593,17 @@ public class Browser extends ConsoleServletBean {
             }
         }
         return "";
+    }
+
+    @Nonnull
+    public String getFileIcon() {
+        if (fileIcon == null) {
+            String mimeType = getMimeType();
+            String extension = getNameExtension();
+            String icon = getFileType(FILE_ICONS, mimeType, extension);
+            fileIcon = StringUtils.isNotBlank(icon) ? "file-" + icon + "-o" : "file-o";
+        }
+        return fileIcon;
     }
 
     public InputStream openFile() {
@@ -574,6 +651,30 @@ public class Browser extends ConsoleServletBean {
             isText = isFile() && StringUtils.isNotBlank(getTextType());
         }
         return isText;
+    }
+
+    public boolean isJcrResource() {
+        return !ResourceUtil.isSyntheticResource(resource) && resource.adaptTo(Node.class) != null;
+    }
+
+    public boolean isCanHaveAcl() {
+        return isJcrResource();
+    }
+
+    public boolean isVersionable() {
+        if (!isJcrResource()) {
+            return false;
+        }
+        try {
+            final VersionManager versionManager = getSession().getWorkspace().getVersionManager();
+            versionManager.getBaseVersion(getPath());
+            return true;
+        } catch (UnsupportedRepositoryOperationException e) {
+            return false; // OK - node is simply not versionable.
+        } catch (RepositoryException e) {
+            LOG.error("Bug: unknown error on " + getPath(), e); // shouldn't happen - please check why.
+            return false;
+        }
     }
 
     public static final Pattern SETUP_SCRIPT_PATTERN =
@@ -626,7 +727,7 @@ public class Browser extends ConsoleServletBean {
         if (textType == null) {
             String mimeType = getMimeType();
             String extension = getNameExtension();
-            textType = getTextType(mimeType, extension);
+            textType = getFileType(EDITOR_MODES, mimeType, extension);
         }
         return textType;
     }
@@ -636,28 +737,28 @@ public class Browser extends ConsoleServletBean {
      *
      * @return the type of the text file (script language) or ""
      */
-    public static String getTextType(String mimeType, String extension) {
+    public static String getFileType(Map<String, String> typeMap, String mimeType, String extension) {
         String textType = null;
         if (StringUtils.isNotBlank(mimeType)) {
-            textType = EDITOR_MODES.get(mimeType);
+            textType = typeMap.get(mimeType);
             if (StringUtils.isBlank(textType)) {
                 String[] parts = StringUtils.split(mimeType, '/');
                 if (parts.length > 1) {
-                    textType = EDITOR_MODES.get(parts[1]);
+                    textType = typeMap.get(parts[1]);
                 }
                 if (StringUtils.isBlank(textType)) {
                     if (StringUtils.isNotBlank(extension)) {
-                        textType = EDITOR_MODES.get(extension);
+                        textType = typeMap.get(extension);
                     }
                     if (StringUtils.isBlank(textType)) {
-                        textType = EDITOR_MODES.get(parts[0]);
+                        textType = typeMap.get(parts[0]);
                     }
                 }
             }
         }
         if (StringUtils.isBlank(textType)) {
             if (StringUtils.isNotBlank(extension)) {
-                textType = EDITOR_MODES.get(extension);
+                textType = typeMap.get(extension);
             }
         }
         if (textType == null) {

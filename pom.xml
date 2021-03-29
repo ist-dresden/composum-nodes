@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -5,23 +6,22 @@
     <parent>
         <groupId>com.composum.meta.ist</groupId>
         <artifactId>parent-2-public</artifactId>
-        <version>1.3</version>
+        <version>1.4</version>
         <relativePath/>
     </parent>
 
     <groupId>com.composum.nodes</groupId>
     <artifactId>composum-nodes</artifactId>
+    <version>2.5.0</version>
     <packaging>pom</packaging>
-    <version>2.4.3</version>
 
-    <name>Composum Nodes Parent / Reactor</name>
-    <description>Maven parent for Composum Sling Core bundles</description>
+    <name>Composum Nodes</name>
+    <description>Maven parent for Composum Nodes bundles</description>
     <url>https://github.com/ist-dresden/composum</url>
 
     <properties>
+        <sling.upload.path>/libs/composum/nodes/install</sling.upload.path>
         <bundle.category>composum,nodes</bundle.category>
-        <package.failOnError>true</package.failOnError>
-        <bundle.failOnError>true</bundle.failOnError>
         <java.source>8</java.source>
         <java.target>8</java.target>
         <maven.compiler.source>${java.source}</maven.compiler.source>
@@ -34,6 +34,17 @@
         <url>https://github.com/ist-dresden/composum.git</url>
     </scm>
 
+    <distributionManagement>
+        <repository>
+            <id>${release.repository.id}</id>
+            <url>${release.repository.url}</url>
+        </repository>
+        <snapshotRepository>
+            <id>archiva</id>
+            <url>https://build.ist-software.com/nexus/repository/maven-snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <modules>
         <module>jslibs</module>
         <module>commons</module>
@@ -43,8 +54,7 @@
         <module>corecfg</module>
         <module>osgi</module>
         <module>setup</module>
-        <module>corepckg</module>
-        <module>nodes4aem</module>
+        <module>package</module>
 
         <!-- Test modules - no deployed code contained -->
         <module>test</module>
@@ -64,40 +74,12 @@
                         <execution>
                             <id>minify-javascripts</id>
                             <configuration>
-                                <!-- source maps wouldn't work since js are combined into one file later. -->
-                                <closureCreateSourceMap>false</closureCreateSourceMap>
-                                <verbose>false</verbose>
-                                <skipMerge>true</skipMerge>
-                                <jsEngine>CLOSURE</jsEngine>
-
                                 <webappSourceDir>${basedir}/src/main/resources</webappSourceDir>
                                 <webappTargetDir>${project.build.directory}/generated-sources/minify</webappTargetDir>
-
-                                <jsSourceDir>.</jsSourceDir>
-                                <jsTargetDir>.</jsTargetDir>
-                                <jsSourceIncludes>
-                                    <jsSourceInclude>**/*.js</jsSourceInclude>
-                                </jsSourceIncludes>
-                                <jsSourceExcludes>
-                                    <jsSourceExclude>**/*.min.js</jsSourceExclude>
-                                    <!-- Also exclude local development stuff excluded from git. -->
-                                    <jsSourceExclude>**/local-*/**/*.js</jsSourceExclude>
-                                    <jsSourceExclude>**/.local-*/**/*.js</jsSourceExclude>
-                                </jsSourceExcludes>
-
-                                <!-- No css minify - that's done in the application. -->
-                                <cssSourceDir>.</cssSourceDir>
-                                <cssSourceExcludes>
-                                    <cssSourceExclude>**</cssSourceExclude>
-                                </cssSourceExcludes>
-                            </configuration>
-                            <goals>
-                                <goal>minify</goal>
-                            </goals>
+                          </configuration>
                         </execution>
                     </executions>
                 </plugin>
-
                 <plugin>
                     <!-- necessary to include the minfied js (see minify-maven-plugin) into the JAR. -->
                     <groupId>org.codehaus.mojo</groupId>
@@ -106,9 +88,7 @@
                         <execution>
                             <id>add-minified-resource</id>
                             <phase>generate-resources</phase>
-                            <goals>
-                                <goal>add-resource</goal>
-                            </goals>
+                            <goals></goals>
                             <configuration>
                                 <resources>
                                     <resource>
@@ -120,6 +100,15 @@
                     </executions>
                 </plugin>
 
+                <plugin>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>sling-maven-plugin</artifactId>
+                    <configuration>
+                        <user>${sling.user}</user>
+                        <password>${sling.password}</password>
+                    </configuration>
+                </plugin>
+
             </plugins>
         </pluginManagement>
     </build>
@@ -127,44 +116,37 @@
     <profiles>
 
         <profile>
-            <!-- profile to release the artifacts for the public repository -->
-            <id>nexus-staging</id>
+            <!-- install bundles via Sling installer (REST API: /system/console/install) -->
+            <id>installBundle</id>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <extensions>true</extensions>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>sling-maven-plugin</artifactId>
                         <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                            <deploymentMethod>WebConsole</deploymentMethod>
+                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
+                            <slingUrlSuffix/>
                         </configuration>
                     </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                                <configuration>
-                                    <keyname>info@composum.com</keyname>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
+                </plugins>
+            </build>
+        </profile>
 
+        <profile>
+            <!-- install bundles via upload (WebDAV) to 'install' path (/libs/composum/nodes/install) -->
+            <id>uploadBundle</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>sling-maven-plugin</artifactId>
+                        <configuration>
+                            <deploymentMethod>WebDAV</deploymentMethod>
+                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}</slingUrl>
+                            <slingUrlSuffix>${sling.upload.path}</slingUrlSuffix>
+                        </configuration>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -211,24 +193,19 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>3.6</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
                 <version>1.10</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.geronimo.specs</groupId>
                 <artifactId>geronimo-atinject_1.0_spec</artifactId>
                 <version>1.0</version>
-            </dependency>
-
-            <!-- YUICompressor -->
-            <!-- https://mvnrepository.com/artifact/com.yahoo.platform.yui/yuicompressor -->
-            <dependency>
-                <groupId>com.yahoo.platform.yui</groupId>
-                <artifactId>yuicompressor</artifactId>
-                <version>2.4.8</version>
+                <scope>provided</scope>
             </dependency>
 
             <!-- Groovy -->

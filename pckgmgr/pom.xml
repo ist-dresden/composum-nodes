@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>2.4.3</version>
+        <version>2.5.0</version>
     </parent>
 
     <artifactId>composum-nodes-pckgmgr</artifactId>
@@ -31,20 +31,53 @@
                 <!-- Minify the JS-Resources - needs the build-helper-maven-plugin -->
                 <groupId>com.samaxes.maven</groupId>
                 <artifactId>minify-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>minify-javascripts</id>
+                        <goals>
+                            <goal>minify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
-
             <plugin>
                 <!-- Needed for the minify-maven-plugin. -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-minified-resource</id>
+                        <goals>
+                            <goal>add-resource</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>sling-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-adapter-metadata</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>generate-adapter-metadata</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- FIXME why do I need to exclude junit and why is org.apache.sling.api.resource neccessary? -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
+                    <exportScr>true</exportScr>
                     <instructions>
+                        <_dsannotations>*</_dsannotations>
+                        <_metatypeannotations>*</_metatypeannotations>
                         <Bundle-Category>${bundle.category}</Bundle-Category>
                         <Bundle-SymbolicName>${bundle.name}</Bundle-SymbolicName>
                         <Include-Resource>
@@ -95,10 +128,6 @@
         <dependency>
             <groupId>com.composum.nodes</groupId>
             <artifactId>composum-nodes-commons</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-jslibs</artifactId>
         </dependency>
 
         <!-- Apache Sling -->
@@ -181,16 +210,16 @@
     <profiles>
 
         <profile>
+            <!-- install bundles via Sling installer (REST API: /system/console/install) -->
             <id>installBundle</id>
             <activation>
                 <property>
-                    <name>deploy.bundle</name>
+                    <name>install.bundle</name>
                     <value>true</value>
                 </property>
             </activation>
             <build>
                 <plugins>
-
                     <plugin>
                         <groupId>org.apache.sling</groupId>
                         <artifactId>sling-maven-plugin</artifactId>
@@ -204,28 +233,37 @@
                             </execution>
                         </executions>
                     </plugin>
-
-                    <plugin>
-                        <groupId>com.citytechinc.maven.plugins</groupId>
-                        <artifactId>osgi-bundle-status-maven-plugin</artifactId>
-                        <configuration>
-                            <skip>${bundle.status.skip}</skip>
-                            <bundleNames>
-                                <bundleName>${bundle.name}</bundleName>
-                            </bundleNames>
-                        </configuration>
-                    </plugin>
-
                 </plugins>
             </build>
         </profile>
+
         <profile>
-            <id>installPackage</id>
-        </profile>
-        <profile>
-            <id>installTestContent</id>
+            <!-- install bundles via upload (WebDAV) to 'install' path (/libs/composum/nodes/install) -->
+            <id>uploadBundle</id>
+            <activation>
+                <property>
+                    <name>upload.bundle</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>sling-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>upload-bundle</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
     </profiles>
 </project>
-

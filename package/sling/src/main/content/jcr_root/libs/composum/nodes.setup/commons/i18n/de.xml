@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        jcr:language="de"
+        jcr:mixinTypes="[mix:language]"
+        jcr:primaryType="sling:Folder"
+        sling:basename="composum-nodes">
+
+    <entity jcr:primaryType="sling:Folder">
+
+        <file jcr:primaryType="sling:MessageEntry"
+                sling:key="File" sling:message="Datei"/>
+        <folder jcr:primaryType="sling:MessageEntry"
+                sling:key="Folder" sling:message="Ordner"/>
+        <image jcr:primaryType="sling:MessageEntry"
+                sling:key="Image" sling:message="Bild"/>
+
+    </entity>
+
+    <hint jcr:primaryType="sling:Folder">
+
+        <path jcr:primaryType="sling:MessageEntry"
+                sling:key="path" sling:message="Pfad"/>
+        <new-parent-path jcr:primaryType="sling:MessageEntry"
+                sling:key="new parent path" sling:message="neuer Vater-Pfad"/>
+
+    </hint>
+
+    <label jcr:primaryType="sling:Folder">
+
+        <warning jcr:primaryType="sling:MessageEntry"
+                sling:key="Warning" sling:message="Warnung"/>
+        <error jcr:primaryType="sling:MessageEntry"
+                sling:key="Error" sling:message="Fehler"/>
+        <result jcr:primaryType="sling:MessageEntry"
+                sling:key="Result" sling:message="Ergebnis"/>
+        <alert jcr:primaryType="sling:MessageEntry"
+                sling:key="Alert" sling:message="Warnung"/>
+        <browse jcr:primaryType="sling:MessageEntry"
+                sling:key="Browse" sling:message="Durchsuchen"/>
+        <cancel jcr:primaryType="sling:MessageEntry"
+                sling:key="Cancel" sling:message="Abbrechen"/>
+        <close jcr:primaryType="sling:MessageEntry"
+                sling:key="Close" sling:message="Schließen"/>
+        <copy jcr:primaryType="sling:MessageEntry"
+                sling:key="Copy" sling:message="Kopieren"/>
+        <create jcr:primaryType="sling:MessageEntry"
+                sling:key="Create" sling:message="Erzeugen"/>
+        <delete jcr:primaryType="sling:MessageEntry"
+                sling:key="Delete" sling:message="Löschen"/>
+        <edit jcr:primaryType="sling:MessageEntry"
+                sling:key="Edit" sling:message="Bearbeiten"/>
+        <link-path jcr:primaryType="sling:MessageEntry"
+                sling:key="Link (Content Path or external URL)" sling:message="Link (Inhaltspfad oder externe URL)"/>
+        <link-target jcr:primaryType="sling:MessageEntry"
+                sling:key="Link Target" sling:message="Link-Ziel (Fenster)"/>
+        <link-text jcr:primaryType="sling:MessageEntry"
+                sling:key="Link Text" sling:message="Link-Text"/>
+        <link-title jcr:primaryType="sling:MessageEntry"
+                sling:key="Link Title" sling:message="Link-Titel"/>
+        <move jcr:primaryType="sling:MessageEntry"
+                sling:key="Move" sling:message="Verschieben"/>
+        <remove jcr:primaryType="sling:MessageEntry"
+                sling:key="Remove" sling:message="Entfernen"/>
+        <save jcr:primaryType="sling:MessageEntry"
+                sling:key="Save" sling:message="Speichern"/>
+        <select jcr:primaryType="sling:MessageEntry"
+                sling:key="Create" sling:message="Auswählen"/>
+        <selected-in-tree jcr:primaryType="sling:MessageEntry"
+                sling:key="Select in Tree" sling:message="Im Baum Auswählen"/>
+        <selected-path jcr:primaryType="sling:MessageEntry"
+                sling:key="Selected Path" sling:message="Gewählter Pfad"/>
+        <upload jcr:primaryType="sling:MessageEntry"
+                sling:key="Upload" sling:message="Hochladen"/>
+
+    </label>
+
+    <title jcr:primaryType="sling:Folder">
+
+        <browse-files jcr:primaryType="sling:MessageEntry"
+                sling:key="browse file system to find a file" sling:message="Auswahl einer Datei aus dem Dateisystem"/>
+        <enter-node-name jcr:primaryType="sling:MessageEntry"
+                sling:key="enter node name" sling:message="Knotennamen eingeben"/>
+        <move-node jcr:primaryType="sling:MessageEntry"
+                sling:key="Move Node" sling:message="Knoten Verschieben"/>
+        <new-node-name jcr:primaryType="sling:MessageEntry"
+                sling:key="New Node Name" sling:message="Neuer Knotenname"/>
+        <node-name jcr:primaryType="sling:MessageEntry"
+                sling:key="node name" sling:message="Knotenname"/>
+        <node-to-move jcr:primaryType="sling:MessageEntry"
+                sling:key="Node to move" sling:message="Zn verschiebender Knoten"/>
+        <or-at jcr:primaryType="sling:MessageEntry"
+                sling:key="or at" sling:message="oder an"/>
+        <order-before jcr:primaryType="sling:MessageEntry"
+                sling:key="Order Before" sling:message="Anordnen vor"/>
+        <remove-file jcr:primaryType="sling:MessageEntry"
+                sling:key="remove the chosen file" sling:message="gewählte Date entfernen"/>
+        <select-path jcr:primaryType="sling:MessageEntry"
+                sling:key="Select Repository Path" sling:message="Repository-Pfad auswählen"/>
+        <target-path jcr:primaryType="sling:MessageEntry"
+                sling:key="Target Path" sling:message="Ziel-Pfad"/>
+        <upload-file jcr:primaryType="sling:MessageEntry"
+                sling:key="upload the chosen file" sling:message="die gewählte Datei hochladen"/>
+
+    </title>
+
+    <message jcr:primaryType="sling:Folder">
+
+        <required jcr:primaryType="sling:MessageEntry"
+                sling:key="value is required"
+                sling:message="der Wert wird benötigt"/>
+        <pattern-match jcr:primaryType="sling:MessageEntry"
+                sling:key="value doesn't match pattern"
+                sling:message="der Wert entspricht nicht dem Muster"/>
+        <validation-error jcr:primaryType="sling:MessageEntry"
+                sling:key="Validation error"
+                sling:message="Validierungsfehler"/>
+        <load-text-error jcr:primaryType="sling:MessageEntry"
+                sling:key="Error on loading text"
+                sling:message="Fehler beim Laden von Text"/>
+        <update-text-error jcr:primaryType="sling:MessageEntry"
+                sling:key="Error on updating text"
+                sling:message="Fehler beim Ändern von Text"/>
+        <item-exists jcr:primaryType="sling:MessageEntry"
+                sling:key="An element with the same name exists already - use a different name!"
+                sling:message="Ein Element mit demselben Namen existiert bereits - verwenden Sie einen anderen Namen!"/>
+
+    </message>
+
+</jcr:root>

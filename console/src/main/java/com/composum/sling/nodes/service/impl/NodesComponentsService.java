@@ -12,7 +12,9 @@ import org.osgi.service.component.annotations.Component;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 @Component
@@ -25,26 +27,33 @@ public class NodesComponentsService implements ComponentsService {
         Resource overlay = null;
         String overlayPath = null;
         Resource template = null;
-        String[] searchPath = resolver.getSearchPath();
-        for (int i = searchPath.length - 1; overlayPath == null && --i >= 0; ) {
-            if (overlayType.startsWith("/")) {
-                if (overlayType.startsWith(searchPath[i])) {
-                    template = resolver.getResource(searchPath[i + 1] + overlayType.substring(searchPath[i].length()));
-                    if (template != null) {
-                        overlayPath = overlayType;
-                    }
-                }
-            } else {
-                template = resolver.getResource(searchPath[i + 1] + overlayType);
-                if (template != null && (resolver.getResource(searchPath[i] + overlayType) == null || i == 0)) {
-                    overlayPath = searchPath[i] + overlayType;
+        Iterator<String> searchPathIterator = Arrays.asList(resolver.getSearchPath()).iterator();
+        if (overlayType.startsWith("/")) {
+            String overlayEntry = null;
+            while (searchPathIterator.hasNext() && overlayPath == null) {
+                String thisEntry = searchPathIterator.next();
+                if (overlayType.startsWith(thisEntry)) {
+                    overlayEntry = thisEntry;
+                    overlayPath = overlayType;
                 }
             }
+            while(searchPathIterator.hasNext() && overlayEntry != null && template == null) {
+                template = resolver.getResource(searchPathIterator.next() + overlayType.substring(overlayEntry.length()));
+            }
+        } else { // resource type - search search path for last entry that doesn't exist yet
+            String lastEntry = null;
+            String currentEntry = null;
+            while (searchPathIterator.hasNext() && template == null) {
+                lastEntry = currentEntry;
+                currentEntry = searchPathIterator.next();
+                template = resolver.getResource(currentEntry + overlayType);
+            }
+            overlayPath = lastEntry != null ? lastEntry + overlayType : null;
         }
         if (template != null && StringUtils.isNotBlank(overlayPath)) {
             overlay = resolver.getResource(overlayPath);
-            if (overlay != null) {
-                resolver.delete(overlay);
+            if (overlay != null) { // safety check - do not create something without explicitly deleting it first.
+                throw new IllegalArgumentException("Overlay already exists");
             }
             Resource parent = prepareParent(resolver, template.getParent(),
                     StringUtils.substringBeforeLast(overlayPath, "/"));
@@ -59,14 +68,13 @@ public class NodesComponentsService implements ComponentsService {
     public boolean removeOverlay(@Nonnull final ResourceResolver resolver, @Nonnull final String overlayType)
             throws PersistenceException {
         Resource overlay = null;
-        String[] searchPath = resolver.getSearchPath();
-        for (int i = 0; overlay == null && i + 1 < searchPath.length; i++) {
+        for (String searchPathElement : resolver.getSearchPath()) {
             if (overlayType.startsWith("/")) {
-                if (overlayType.startsWith(searchPath[i])) {
+                if (overlayType.startsWith(searchPathElement)) {
                     overlay = resolver.getResource(overlayType);
                 }
             } else {
-                overlay = resolver.getResource(searchPath[i] + overlayType);
+                overlay = resolver.getResource(searchPathElement + overlayType);
             }
         }
         if (overlay != null) {

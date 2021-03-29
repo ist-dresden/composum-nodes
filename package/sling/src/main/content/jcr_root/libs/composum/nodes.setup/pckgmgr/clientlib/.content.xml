@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+        xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+        jcr:primaryType="sling:Folder"
+        sling:resourceType="composum/nodes/commons/clientlib"
+        category="[composum.nodes.console.pckgmgr]"
+        order="{Long}100">
+    <css jcr:primaryType="sling:OrderedFolder"
+            depends="[
+                    category:composum.nodes.console.default
+                ]"
+            embed="[
+                    composum/nodes/pckgmgr/css/query.css,
+                    composum/nodes/pckgmgr/css/pckgmgr.css
+                ]">
+        <group jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/pckgmgr/group/general/general.css
+                    ]"/>
+        <jcrpckg jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/pckgmgr/jcrpckg/general/clientlib,
+                        composum/nodes/pckgmgr/jcrpckg/filter/clientlib,
+                        composum/nodes/pckgmgr/jcrpckg/coverage/clientlib,
+                        composum/nodes/pckgmgr/jcrpckg/options/clientlib
+                    ]"/>
+    </css>
+    <js jcr:primaryType="sling:OrderedFolder"
+            depends="[
+                    category:composum.nodes.console.default
+                ]">
+        <dialogs jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/pckgmgr/js/dialogs.js
+                    ]"/>
+        <group jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/pckgmgr/group/js/group.js
+                    ]"/>
+        <jcrpckg jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/pckgmgr/jcrpckg/general/clientlib,
+                        composum/nodes/pckgmgr/jcrpckg/filter/clientlib,
+                        composum/nodes/pckgmgr/jcrpckg/coverage/clientlib,
+                        composum/nodes/pckgmgr/jcrpckg/options/clientlib
+                    ]"/>
+        <pckgmgr jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/pckgmgr/js/query.js,
+                        composum/nodes/pckgmgr/js/pckgmgr.js
+                    ]"/>
+    </js>
+</jcr:root>
