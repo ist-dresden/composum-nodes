@@ -15,7 +15,7 @@ if [ -z "${SCOPE}" ]; then SCOPE="$2"; fi
 if [ -z "$4" ]; then USER="admin:admin"; else USER="$4"; fi
 INSTPATH="/libs/composum/nodes/install"
 
-echo "install to '${URI}':"
+echo "remove at '${URI}':"
 for key in ${SCOPE}; do
   file="composum-nodes-${key}-$3.jar"
   bundle="com.composum.nodes.${key}"

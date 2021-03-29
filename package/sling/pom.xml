@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.nodes</groupId>
+        <artifactId>composum-nodes-package</artifactId>
+        <version>2.4.4-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>composum-nodes-sling-package</artifactId>
+    <packaging>content-package</packaging>
+
+    <name>Composum Nodes Sling Package</name>
+    <description>Composum Nodes Package - the Composum Nodes tools collection with initial content separated</description>
+
+    <build>
+        <resources>
+
+            <resource>
+                <directory>${project.basedir}/src/main/content/jcr_root</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/.vlt*</exclude>
+                    <exclude>**/.DS_Store</exclude>
+                    <exclude>**/.gitignore</exclude>
+                </excludes>
+            </resource>
+
+            <resource>
+                <directory>${basedir}/src/main/content/META-INF</directory>
+                <targetPath>${project.build.directory}/vault-work/META-INF</targetPath>
+            </resource>
+
+            <resource>
+                <directory>${project.build.directory}/content/jcr_root</directory>
+                <filtering>false</filtering>
+            </resource>
+
+        </resources>
+        <plugins>
+
+            <!-- extract and embed the content of the bundles -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+
+                    <execution>
+                        <id>prepare-content</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/content</outputDirectory>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <excludeTransitive>true</excludeTransitive>
+                            <includes>
+                                root/**
+                            </includes>
+                            <excludes>
+                                **/*.json
+                            </excludes>
+                            <fileMappers>
+                                <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                    <pattern>root/</pattern>
+                                    <replacement>jcr_root/</replacement>
+                                </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                    <pattern>jcr_root/libs/composum/nodes/</pattern>
+                                    <replacement>jcr_root/libs/composum/nodes.setup/</replacement>
+                                </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                    <pattern>jcr_root/libs/composum/nodes.setup/install/</pattern>
+                                    <replacement>jcr_root/libs/composum/nodes.setup/upload/</replacement>
+                                </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                            </fileMappers>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>copy-bundles</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${project.groupId}.setup</groupId>
+                                    <artifactId>composum-nodes-package-setup-hook</artifactId>
+                                    <outputDirectory>${project.build.directory}/vault-work/META-INF/vault/hooks</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+
+                </executions>
+                <inherited>false</inherited>
+            </plugin>
+
+            <plugin>
+                <groupId>com.day.jcr.vault</groupId>
+                <artifactId>content-package-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+
+                    <group>${package.group}</group>
+                    <properties>
+                        <createdBy>${package.company}</createdBy>
+                    </properties>
+
+                    <builtContentDirectory>${project.build.outputDirectory}</builtContentDirectory>
+
+                    <subPackages>
+                        <subPackage>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-nodes-jslibs-package</artifactId>
+                            <filter>true</filter>
+                        </subPackage>
+                    </subPackages>
+
+                    <embeddeds>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-nodes-commons-bundle</artifactId>
+                            <target>/libs/composum/nodes.setup/upload</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-nodes-console-bundle</artifactId>
+                            <target>/libs/composum/nodes.setup/upload</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-nodes-usermgr-bundle</artifactId>
+                            <target>/libs/composum/nodes.setup/upload</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-nodes-pckgmgr-bundle</artifactId>
+                            <target>/libs/composum/nodes.setup/upload</target>
+                        </embedded>
+                        <embedded>
+                            <groupId>${project.groupId}.setup</groupId>
+                            <artifactId>composum-nodes-package-setup-bundle</artifactId>
+                            <target>/libs/composum/nodes/install</target>
+                        </embedded>
+                    </embeddeds>
+
+                    <filters>
+
+                        <filter>
+                            <root>/libs/composum/nodes/install</root>
+                            <includes>
+                                <include>.*/composum-nodes-package-setup-bundle-.*\.jar</include>
+                                <include>.*/.*\.LoginAdminWhitelist.fragment-composum_nodes_setup.*</include>
+                            </includes>
+                        </filter>
+
+                        <filter>
+                            <root>/libs/composum/nodes.setup/upload</root>
+                            <includes>
+                                <include>.*/composum-nodes-commons-.*\.jar</include>
+                                <include>.*/composum-nodes-console-.*\.jar</include>
+                                <include>.*/composum-nodes-usermgr-.*\.jar</include>
+                                <include>.*/.*\.LoginAdminWhitelist.fragment-composum_core_.*</include>
+                            </includes>
+                        </filter>
+
+                        <filter>
+                            <root>/libs/composum/nodes.setup</root>
+                        </filter>
+
+                        <filter>
+                            <root>/libs/fonts/composum</root>
+                        </filter>
+
+                    </filters>
+
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+    <dependencies>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-jslibs-package</artifactId>
+            <version>${project.version}</version>
+            <type>content-package</type>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-commons-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-console-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-console</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-usermgr-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-usermgr</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-pckgmgr-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-pckgmgr</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-config</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}.setup</groupId>
+            <artifactId>composum-nodes-package-setup-hook</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}.setup</groupId>
+            <artifactId>composum-nodes-package-setup-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+    </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installBundle</id>
+        </profile>
+        <profile>
+            <id>installPackage</id>
+            <activation>
+                <property>
+                    <name>deploy.package</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>com.day.jcr.vault</groupId>
+                        <artifactId>content-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-content-package</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>installContent</id>
+        </profile>
+
+    </profiles>
+</project>

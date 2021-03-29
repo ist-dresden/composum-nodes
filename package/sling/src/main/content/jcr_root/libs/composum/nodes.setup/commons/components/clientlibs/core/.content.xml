@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        jcr:primaryType="sling:Folder"
+        sling:resourceType="composum/nodes/commons/clientlib"
+        jcr:description="embeds the necessary set of dependencies to use the core features"
+        category="[composum.components.core]"
+        order="{Long}110">
+    <css jcr:primaryType="sling:OrderedFolder"
+            embed="[
+                    category:composum.components.base
+                ]"/>
+    <js jcr:primaryType="sling:OrderedFolder"
+            embed="[
+                    category:composum.components.base,
+                    composum/nodes/commons/components/js/core.js,
+                    composum/nodes/commons/components/js/i18n.js,
+                    composum/nodes/commons/components/js/nodes.js
+                ]"/>
+</jcr:root>

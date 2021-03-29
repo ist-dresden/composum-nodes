@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.nodes</groupId>
+        <artifactId>composum-nodes</artifactId>
+        <version>2.4.4-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>composum-nodes-package</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Composum Nodes Package</name>
+    <description>Composum Nodes Package reactor</description>
+
+    <properties>
+        <package.group>com/composum/nodes</package.group>
+        <package.company>IST GmbH Dresden</package.company>
+    </properties>
+
+    <modules>
+        <module>jslibs</module>
+        <module>commons</module>
+        <module>console</module>
+        <module>pckgmgr</module>
+        <module>usermgr</module>
+        <module>setup</module>
+        <module>sling</module>
+        <module>aem</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- Composum -->
+            <dependency>
+                <groupId>com.composum.nodes</groupId>
+                <artifactId>composum-nodes-usermgr-bundle</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.composum.nodes</groupId>
+                <artifactId>composum-nodes-pckgmgr-bundle</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.composum.nodes</groupId>
+                <artifactId>composum-nodes-console-bundle</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.composum.nodes</groupId>
+                <artifactId>composum-nodes-commons-bundle</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+</project>

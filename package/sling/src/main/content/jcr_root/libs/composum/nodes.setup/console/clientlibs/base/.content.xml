@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+        xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+        jcr:primaryType="sling:Folder"
+        sling:resourceType="composum/nodes/commons/clientlib"
+        category="[composum.nodes.console.base]"
+        order="{Long}100">
+    <link jcr:primaryType="sling:OrderedFolder">
+        <cpn-64 jcr:primaryType="nt:unstructured"
+                rel="shortcut icon"
+                embed="composum/nodes/commons/components/images/cpn-64.png"/>
+        <cpn-128 jcr:primaryType="nt:unstructured"
+                rel="apple-touch-icon"
+                embed="composum/nodes/commons/components/images/cpn-128.png"/>
+    </link>
+    <css jcr:primaryType="sling:OrderedFolder"
+            depends="[
+                      fonts/awesome/4.7.0/css/font-awesome.css,
+                      jslibs/bootstrap/3.4.1/css/bootstrap.css,
+                      jslibs/x-editable/1.5.3/bootstrap3-editable/css/bootstrap-editable.css,
+                      jslibs/jstree/3.3.8/themes/proton/style.css,
+                      jslibs/trumbowyg/2.3.0/ui/trumbowyg.css
+                ]"
+            embed="[
+                    jslibs/bootstrap-table/1.7.0/bootstrap-table.css,
+                    jslibs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.css,
+                    jslibs/bootstrap-slider/10.6.1/css/bootstrap-slider.css,
+                    jslibs/bootstrap-colorpicker/3.1.2/css/bootstrap-colorpicker.css,
+                    jslibs/bootstrap-fileinput/4.3.6/css/fileinput.css,
+                    jslibs/split-pane/1.0.0/split-pane.css,
+                    category:composum.components.widgets,
+                    composum/nodes/commons/components/system/css/system.css,
+                    composum/nodes/console/page/css/console.css
+                ]"/>
+    <js jcr:primaryType="sling:OrderedFolder">
+        <aem-6.1 jcr:primaryType="nt:unstructured"
+                optional="{Boolean}true"
+                embed="[
+                        /etc/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js,
+                        /etc/clientlibs/granite/jquery/granite/csrf/source/csrf.js
+                    ]"/>
+        <aem-6.4 jcr:primaryType="nt:unstructured"
+                optional="{Boolean}true"
+                embed="[
+                        /libs/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js,
+                        /libs/clientlibs/granite/jquery/granite/csrf/source/csrf.js
+                    ]"/>
+        <libs jcr:primaryType="nt:unstructured"
+                depends="[
+                        jslibs/bootstrap/3.4.1/js/bootstrap.js,
+                        jslibs/trumbowyg/2.3.0/trumbowyg.js
+                    ]"
+                embed="[
+                        jslibs/js-base64/2.5.2/base64.js,
+                        jslibs/loglevel/1.6.1/loglevel.js,
+                        jslibs/underscore/1.9.1/underscore.js,
+                        jslibs/moment/2.24.0/moment-with-locales.js,
+                        jslibs/backbone/1.4.0/backbone.js,
+                        jslibs/bootstrap-table/1.7.0/bootstrap-table.js,
+                        jslibs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.js,
+                        jslibs/typeahead/3.1.0/bootstrap3-typeahead.js,
+                        jslibs/bootstrap-slider/10.6.1/bootstrap-slider.js,
+                        jslibs/bootstrap-colorpicker/3.1.2/js/bootstrap-colorpicker.js,
+                        jslibs/bootstrap-fileinput/4.3.6/js/fileinput.js,
+                        jslibs/split-pane/1.0.0/split-pane.js,
+                        jslibs/jstree/3.3.8/jstree.js
+                    ]"/>
+        <components jcr:primaryType="nt:unstructured"
+                embed="[
+                        category:composum.components.widgets
+                    ]"/>
+        <console jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/commons/components/js/nodes.js,
+                        composum/nodes/commons/components/system/js/system.js,
+                        composum/nodes/console/js/splitPane.js,
+                        composum/nodes/console/js/dialogs.js,
+                        composum/nodes/console/js/nodes.js,
+                        composum/nodes/console/js/console.js,
+                        composum/nodes/console/js/tree.js
+                    ]"/>
+    </js>
+</jcr:root>

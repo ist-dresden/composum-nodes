@@ -129,10 +129,6 @@
             <groupId>com.composum.nodes</groupId>
             <artifactId>composum-nodes-commons</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-jslibs</artifactId>
-        </dependency>
 
         <!-- Apache Sling -->
         <dependency>

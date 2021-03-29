@@ -35,7 +35,7 @@
     "sling:resourceType": "composum/nodes/browser/query/template",
     "jcr:title": "search by jcr:uuid",
     "group": "Nodes",
-    "order": 120,
+    "order": 150,
     "jcr:description": "\u003cp\u003eis searching for a node with a specific uuid\u003c/p\u003e",
     "xpath": "/jcr:root//*[@jcr:uuid\u003d\u0027${uuid}\u0027]"
   }
