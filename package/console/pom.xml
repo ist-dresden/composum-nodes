@@ -6,13 +6,13 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-package</artifactId>
-        <version>2.4.4-SNAPSHOT</version>
+        <version>2.5.0</version>
     </parent>
 
     <artifactId>composum-nodes-console-bundle</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Composum Nodes API (Console) Bundle</name>
+    <name>Composum Nodes Console Bundle</name>
     <description>general components and objects to use the Sling API - no initial content</description>
 
     <properties>
