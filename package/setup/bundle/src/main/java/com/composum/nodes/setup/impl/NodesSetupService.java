@@ -69,7 +69,7 @@ public class NodesSetupService implements JobConsumer {
     public static final String NODES_CONTENT_PATH = "/libs/composum/nodes";
     /** {@value #NODES_BUNDLES_PATH} - the path where artefacts to install are put for automatical installation and from where obsolete / replaced bundles are deleted. */
     public static final String NODES_BUNDLES_PATH = NODES_CONTENT_PATH + "/" + INSTALL_FOLDER;
-    /** {@value #SETUP_NODES_FOLDER} - temporary place for new content to replace the stuff in {@val NODES_CONTENT_PATH} .  */
+    /** {@value #SETUP_NODES_FOLDER} - temporary place for new content to replace the stuff in {@value #NODES_CONTENT_PATH} .  */
     public static final String SETUP_NODES_FOLDER = NODES_CONTENT_PATH + SETUP_EXT;
     /** {@value #SETUP_BUNDLES_PATH} a place the sling package puts the new bundles temporarily, to be moved by this service. */
     public static final String SETUP_BUNDLES_PATH = SETUP_NODES_FOLDER + "/" + UPLOAD_FOLDER;
