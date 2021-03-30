@@ -99,6 +99,9 @@ public class NodesSetupService implements JobConsumer {
             Pattern.compile("^(.*/)?composum-sling-core-commons-.*\\.jar$")
     };
 
+    protected static final String REP_POLICY = "rep:policy";
+    protected static final String REP_ACCESS_CONTROLLABLE = "rep:AccessControllable";
+
     @Reference
     private DynamicClassLoaderManager dynamicClassLoaderManager;
 
@@ -170,7 +173,7 @@ public class NodesSetupService implements JobConsumer {
                 LOG.error("Composum Nodes setup: can't adapt to Session, failed!");
             }
         } catch (LoginException lex) {
-            LOG.error("Composum Nodes setup: " + lex.getMessage());
+            LOG.error("Composum Nodes setup: cannot get administrative resolver - {}" + lex.getMessage());
             LOG.error("\n\nComposum Nodes setup: process failed!\n");
         }
         return JobResult.OK; // always OK, no retry!
@@ -203,7 +206,6 @@ public class NodesSetupService implements JobConsumer {
     protected void setupNodesBundlesAndContent(@NotNull final Session session)
             throws RepositoryException, PackageException, IOException {
         try {
-            boolean bundlesRemoved = false;
             // check for the setup folder and perform installation if found
             Node nodesSetupFolder = session.getNode(SETUP_NODES_FOLDER);
             try {
@@ -222,6 +224,7 @@ public class NodesSetupService implements JobConsumer {
                 session.save();
             } catch (PathNotFoundException ignore) {
             }
+            moveAcl(session.getNode(NODES_CONTENT_PATH), nodesSetupFolder, false);
             // remove the content resources
             removeNodesContent(session);
             // setup of the new Nodes content resources (move from 'nodes.setup' to 'nodes')
@@ -244,10 +247,30 @@ public class NodesSetupService implements JobConsumer {
                 String version = matcher.group("version");
                 installPackage(session, NODES_PACKAGES_PATH + "composum-nodes-jslibs-package-" + version + ".zip");
             } else {
-                LOG.warn("Couldn't determine our version from ", bundleContext.getBundle().getLocation());
+                LOG.warn("Composum Nodes setup: Couldn't determine our version from {}", bundleContext.getBundle().getLocation());
             }
         } catch (PathNotFoundException ignore) {
             LOG.info("\n\nComposum Nodes setup: no Nodes install folder found [ {} ]\n", SETUP_NODES_FOLDER);
+        }
+    }
+
+    /**
+     * This moves any ACL restrictions from the subnodes of src to the nodes of target. This violates the constraints for the
+     * src since the rep:policy nodes are removed, but src will be deleted, anyway.
+     */
+    protected void moveAcl(Node src, Node target, boolean isSubnode) throws RepositoryException {
+        for (NodeIterator it = src.getNodes(); it.hasNext(); ) {
+            Node srcChild = it.nextNode();
+            String name = srcChild.getName();
+            if (!REP_POLICY.equals(name) && target.hasNode(name)) {
+                Node targetChild = target.getNode(name);
+                moveAcl(srcChild, targetChild, true);
+            }
+        }
+        if (isSubnode && src.isNodeType(REP_ACCESS_CONTROLLABLE)) {
+            target.addMixin(REP_ACCESS_CONTROLLABLE);
+            LOG.info("Composum Nodes setup: keeping ACL on {}", src.getPath());
+            src.getSession().move(src.getNode(REP_POLICY).getPath(), target.getPath() + '/' + REP_POLICY);
         }
     }
 
@@ -313,7 +336,7 @@ public class NodesSetupService implements JobConsumer {
             NodeIterator iterator = nodesContent.getNodes();
             while (iterator.hasNext()) {
                 Node node = iterator.nextNode();
-                if (!INSTALL_FOLDER.equals(node.getName())) {
+                if (!INSTALL_FOLDER.equals(node.getName()) && !REP_POLICY.equals(node.getName())) {
                     LOG.info("Composum Nodes setup: removing node [ {} ]", node.getPath());
                     node.remove();
                 }
