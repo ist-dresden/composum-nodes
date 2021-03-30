@@ -183,7 +183,7 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
                 session.save();
                 this.setFinishedState(ResourceState.INSTALLED);
             } catch (Exception e) {
-                logger.warn("Exception executing PackageInstallTask: " + e, e);
+                logger.warn("Exception executing PackageInstallTask for {} : {}", this.getResource().getURL(), e.toString(), e);
             } finally {
                 if (jm != null) {
                     bundleContext.ungetService(jmRef);
