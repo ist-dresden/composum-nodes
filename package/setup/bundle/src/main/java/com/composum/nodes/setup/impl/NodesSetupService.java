@@ -38,6 +38,19 @@ import java.util.regex.Pattern;
 import static org.osgi.framework.Bundle.STARTING;
 import static org.osgi.framework.Bundle.UNINSTALLED;
 
+/**
+ * Ensures orderly removal of obsolete (e.g. Composum Core V1) bundles / configurations and replacing / updating
+ * new Composum Nore bundles and replacing the content in {@value #NODES_CONTENT_PATH}.
+ * The service registers itself as a job (to be executed after the bundle is active) for this. The process is as follows:
+ * <ol>
+ *     <li>Remove all obsolete and to be replaced bundles / configurations from {@value #NODES_BUNDLES_PATH}</li>
+ *     <li>Moves all bundles in {@value #SETUP_BUNDLES_PATH} to {@value #NODES_BUNDLES_PATH} to be picked up by the OSGI installer and then removes {@value #SETUP_BUNDLES_PATH}</li>
+ *     <li>Replaces the content of {@value #NODES_CONTENT_PATH} with the content of {@value #SETUP_NODES_FOLDER}</li>
+ *     <li>Installs the composum-nodes-jslibs-package again to make sure it wasn't trashed by a bundle removal</li>
+ *     <li>Removes the bundle containing this and it's LoginAdminWhitelist configuration (even if something previous failed).</li>
+ * </ol>
+ * It's sensible to check whether there were any errors logged after this (search for "Composum Nodes setup").
+ */
 @Component(
         immediate = true,
         property = {
@@ -54,18 +67,23 @@ public class NodesSetupService implements JobConsumer {
     public static final String INSTALL_FOLDER = "install";
     public static final String UPLOAD_FOLDER = "upload";
     public static final String NODES_CONTENT_PATH = "/libs/composum/nodes";
+    /** {@value #NODES_BUNDLES_PATH} - the path where artefacts to install are put for automatical installation and from where obsolete / replaced bundles are deleted. */
     public static final String NODES_BUNDLES_PATH = NODES_CONTENT_PATH + "/" + INSTALL_FOLDER;
+    /** {@value #SETUP_NODES_FOLDER} - temporary place for new content to replace the stuff in {@value #NODES_CONTENT_PATH} .  */
     public static final String SETUP_NODES_FOLDER = NODES_CONTENT_PATH + SETUP_EXT;
+    /** {@value #SETUP_BUNDLES_PATH} a place the sling package puts the new bundles temporarily, to be moved by this service. */
     public static final String SETUP_BUNDLES_PATH = SETUP_NODES_FOLDER + "/" + UPLOAD_FOLDER;
     public static final String NODES_PACKAGES_PATH = "com/composum/nodes/";
     public static final Pattern VERSION_PATTERN = Pattern.compile(
             "^(.*/)?composum-nodes-package-setup-bundle-(?<version>(.+))\\.jar$");
 
+    /** Matches the artifacts belonging to this setup bundle, which have to be removed later (used only for installation). */
     public static final Pattern[] INSTALL_ARTIFACTS = new Pattern[]{
             Pattern.compile("^composum-nodes-package-setup-bundle-(.+)\\.jar$"),
             Pattern.compile("^.*\\.LoginAdminWhitelist\\.fragment-composum_nodes_setup\\.config$")
     };
 
+    /** Matches the old (Composum Core) bundles to be removed and the new (Composum Nodes) bundles to be replaced. */
     public static final Pattern[] BUNDLES_TO_UNINSTALL = new Pattern[]{
             Pattern.compile("^(.*/)?composum-nodes-jslibs-.*\\.jar$"),
             Pattern.compile("^(.*/)?composum-sling-core-jslibs-.*\\.jar$"),
@@ -81,6 +99,9 @@ public class NodesSetupService implements JobConsumer {
             Pattern.compile("^(.*/)?composum-sling-core-commons-.*\\.jar$")
     };
 
+    protected static final String REP_POLICY = "rep:policy";
+    protected static final String REP_ACCESS_CONTROLLABLE = "rep:AccessControllable";
+
     @Reference
     private DynamicClassLoaderManager dynamicClassLoaderManager;
 
@@ -93,7 +114,7 @@ public class NodesSetupService implements JobConsumer {
     @Reference
     private Packaging packaging;
 
-    private BundleContext bundleContext;
+    private volatile BundleContext bundleContext;
 
     @Activate
     protected void activate(BundleContext bundleContext) {
@@ -116,38 +137,43 @@ public class NodesSetupService implements JobConsumer {
         try (ResourceResolver resolver = resolverFactory.getAdministrativeResourceResolver(null)) {
             Session session = resolver.adaptTo(Session.class);
             if (session != null) {
+                BundleContext origBundleContext = this.bundleContext;
                 try {
                     // check for the setup folder and perform installation if found
                     Node nodesSetupFolder = session.getNode(SETUP_NODES_FOLDER);
-                    BundleContext bundleContext = this.bundleContext;
                     if (removeNodesBundles(session)) {
                         wait(3); // wait if bundles has been removed; maybe this bundle is also restarted...
                     }
                     // check for new activation of the setup bundle during bundle removal
-                    if (bundleContext.equals(this.bundleContext)) {
+                    if (origBundleContext.equals(this.bundleContext)) {
                         setupNodesBundlesAndContent(session);
-                        LOG.info("\n\nComposum Nodes setup: process succeeded.\n");
-                        try {
-                            // final removal of the Nodes setup artifacts (setup-bundle and the configuration)
-                            removeInstallArtifacts(session);
-                            session.save();
-                        } catch (RepositoryException exx) {
-                            LOG.error("Composum Nodes setup: " + exx.toString());
-                        }
-                    } else {
+                        session.save();
+                        LOG.info("\n\nComposum Nodes setup: SUCCESS.\n");
+                    } else { // the bundle might have been restarted during the uninstallation.
                         LOG.info("\n\nComposum Nodes setup: process stopped - waiting for a following job.\n");
                     }
                 } catch (PathNotFoundException ignore) {
                     LOG.info("\n\nComposum Nodes setup: no Nodes install folder found [ {} ]\n", SETUP_NODES_FOLDER);
                 } catch (RepositoryException | PackageException | IOException | RuntimeException ex) {
                     LOG.error("Composum Nodes setup: " + ex.getMessage(), ex);
-                    LOG.error("\n\nComposum Nodes setup: process failed!\n");
+                    LOG.error("\n\nComposum Nodes setup: process FAILED! Please retry or continue manually.\n");
+                } finally {
+                    if (origBundleContext.equals(this.bundleContext)) { // only remove ourselves if we haven't been restarted
+                        try {
+                            // final removal of the Nodes setup artifacts (setup-bundle and the configuration)
+                            session.refresh(false); // remove any half-committed changes that might block this
+                            removeInstallArtifacts(session);
+                            session.save();
+                        } catch (RepositoryException exx) {
+                            LOG.error("Composum Nodes setup: setup bundle + conf could not be removed - please remove manually.",  exx);
+                        }
+                    }
                 }
             } else {
                 LOG.error("Composum Nodes setup: can't adapt to Session, failed!");
             }
         } catch (LoginException lex) {
-            LOG.error("Composum Nodes setup: " + lex.getMessage());
+            LOG.error("Composum Nodes setup: cannot get administrative resolver - {}" + lex.getMessage());
             LOG.error("\n\nComposum Nodes setup: process failed!\n");
         }
         return JobResult.OK; // always OK, no retry!
@@ -157,7 +183,7 @@ public class NodesSetupService implements JobConsumer {
             throws RepositoryException {
         boolean bundlesRemoved = false;
         try {
-            // check for the setup folder and perform installation if found
+            // check for the setup folder and perform installation only if found
             Node nodesSetupFolder = session.getNode(SETUP_NODES_FOLDER);
             // remove existing bundles and install new bundles
             bundlesRemoved = removeUploadedBundles(session);
@@ -180,7 +206,6 @@ public class NodesSetupService implements JobConsumer {
     protected void setupNodesBundlesAndContent(@NotNull final Session session)
             throws RepositoryException, PackageException, IOException {
         try {
-            boolean bundlesRemoved = false;
             // check for the setup folder and perform installation if found
             Node nodesSetupFolder = session.getNode(SETUP_NODES_FOLDER);
             try {
@@ -199,6 +224,7 @@ public class NodesSetupService implements JobConsumer {
                 session.save();
             } catch (PathNotFoundException ignore) {
             }
+            moveAcl(session.getNode(NODES_CONTENT_PATH), nodesSetupFolder, false);
             // remove the content resources
             removeNodesContent(session);
             // setup of the new Nodes content resources (move from 'nodes.setup' to 'nodes')
@@ -220,6 +246,8 @@ public class NodesSetupService implements JobConsumer {
                 wait(3);
                 String version = matcher.group("version");
                 installPackage(session, NODES_PACKAGES_PATH + "composum-nodes-jslibs-package-" + version + ".zip");
+            } else {
+                LOG.warn("Composum Nodes setup: Couldn't determine our version from {}", bundleContext.getBundle().getLocation());
             }
         } catch (PathNotFoundException ignore) {
             LOG.info("\n\nComposum Nodes setup: no Nodes install folder found [ {} ]\n", SETUP_NODES_FOLDER);
@@ -227,11 +255,31 @@ public class NodesSetupService implements JobConsumer {
     }
 
     /**
+     * This moves any ACL restrictions from the subnodes of src to the nodes of target. This violates the constraints for the
+     * src since the rep:policy nodes are removed, but src will be deleted, anyway.
+     */
+    protected void moveAcl(Node src, Node target, boolean isSubnode) throws RepositoryException {
+        for (NodeIterator it = src.getNodes(); it.hasNext(); ) {
+            Node srcChild = it.nextNode();
+            String name = srcChild.getName();
+            if (!REP_POLICY.equals(name) && target.hasNode(name)) {
+                Node targetChild = target.getNode(name);
+                moveAcl(srcChild, targetChild, true);
+            }
+        }
+        if (isSubnode && src.isNodeType(REP_ACCESS_CONTROLLABLE)) {
+            target.addMixin(REP_ACCESS_CONTROLLABLE);
+            LOG.info("Composum Nodes setup: keeping ACL on {}", src.getPath());
+            src.getSession().move(src.getNode(REP_POLICY).getPath(), target.getPath() + '/' + REP_POLICY);
+        }
+    }
+
+    /**
      * (re-)install a package or subpackage if subpackages are specified
      *
-     * @param session         the curren session
+     * @param session         the current session
      * @param packagePath     the relative path of the package to install
-     * @param subpckgPatterns a set of subpackage name patterns, eachb matchin subpackage will be installed
+     * @param subpckgPatterns a set of subpackage name patterns, each matching subpackage will be installed
      */
     protected void installPackage(@NotNull final Session session, @NotNull final String packagePath,
                                   @NotNull final Pattern... subpckgPatterns)
@@ -288,7 +336,7 @@ public class NodesSetupService implements JobConsumer {
             NodeIterator iterator = nodesContent.getNodes();
             while (iterator.hasNext()) {
                 Node node = iterator.nextNode();
-                if (!INSTALL_FOLDER.equals(node.getName())) {
+                if (!INSTALL_FOLDER.equals(node.getName()) && !REP_POLICY.equals(node.getName())) {
                     LOG.info("Composum Nodes setup: removing node [ {} ]", node.getPath());
                     node.remove();
                 }
@@ -317,13 +365,13 @@ public class NodesSetupService implements JobConsumer {
                         result = true;
                     }
                 } catch (RepositoryException ex) {
-                    LOG.error(ex.toString());
+                    LOG.error("Composum Nodes setup: could not remove bundles / configs from " + NODES_BUNDLES_PATH, ex);
                 }
             }
             session.save();
         } catch (PathNotFoundException ignore) {
         } catch (RepositoryException ex) {
-            LOG.error(ex.getMessage(), ex);
+            LOG.error("Composum Nodes setup: could not remove bundles / configs from " + NODES_BUNDLES_PATH, ex);
         }
         return result;
     }
@@ -352,7 +400,7 @@ public class NodesSetupService implements JobConsumer {
                                 bundle.uninstall();
                             }
                         } catch (BundleException | IllegalStateException ex) {
-                            LOG.error(ex.toString());
+                            LOG.error("Composum Nodes setup: trouble uninstalling bundle {}", bundle.getLocation(), ex);
                         }
                     }
                 }
@@ -390,7 +438,7 @@ public class NodesSetupService implements JobConsumer {
                         bundleNode.remove();
                     }
                 } catch (RepositoryException ex) {
-                    LOG.error(ex.toString());
+                    LOG.error("Composum Nodes setup: trouble cleaning up " + NODES_BUNDLES_PATH,ex);
                 }
             }
         } catch (PathNotFoundException ignore) {
