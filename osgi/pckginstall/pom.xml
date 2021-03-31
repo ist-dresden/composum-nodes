@@ -43,6 +43,9 @@
                         </Export-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>
                         <Bundle-Activator>com.composum.sling.core.osgi.pckginstall.PackageTransformerBundleActivator</Bundle-Activator>
+                        <Sling-Initial-Content>
+                            root/libs/composum/nodes/install/pckginstall;path:=/libs/composum/nodes/install/pckginstall;overwrite:=true
+                        </Sling-Initial-Content>
                     </instructions>
                 </configuration>
             </plugin>
