@@ -39,9 +39,10 @@
                         <Include-Resource>{maven-resources}</Include-Resource>
                         <Import-Package>*</Import-Package>
                         <Export-Package>
-                            com.composum.sling.core.pckginstall.*
+                            com.composum.sling.core.osgi.pckginstall.*
                         </Export-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>
+                        <Bundle-Activator>com.composum.sling.core.osgi.pckginstall.PackageTransformerBundleActivator</Bundle-Activator>
                     </instructions>
                 </configuration>
             </plugin>
