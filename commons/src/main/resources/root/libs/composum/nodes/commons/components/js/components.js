@@ -95,7 +95,6 @@
                         $el: this.$('.' + c.tabbed)
                     };
                     var $tabNav = this.tabbed.$nav = this.$('.' + c.base + c._nav);
-                    var tabList = this.tabbed.list = [];
                     var tabMap = this.tabbed.map = {};
                     $tabNav.html('');
                     this.tabbed.$el.find('.' + c.base + c._panel).each(function () {
@@ -104,7 +103,6 @@
                         var tabLabel = $tabPanel.data('label');
                         $tabNav.append('<li role="presentation"><a role="tab" data-toggle="tab" href="#'
                             + tabId + '" data-key="' + $tabPanel.data('key') + '">' + tabLabel + '</a></li>');
-                        tabList.push($tabPanel);
                         tabMap[tabId] = {
                             id: tabId,
                             label: tabLabel,
@@ -252,15 +250,18 @@
              * finalize all data (values) before the following submit (prepare data for storing)
              */
             finalize: function () {
-                var c = components.const.form;
-                this.$(widgets.const.css.selector.general).each(function () {
-                    if (this.view) {
-                        if (_.isFunction(this.view.finalize)) {
-                            // prepare each widget independent
-                            this.view.finalize.apply(this.view);
+                if (!this.finalized) {
+                    this.finalized = true;
+                    var c = components.const.form;
+                    this.$(widgets.const.css.selector.general).each(function () {
+                        if (this.view) {
+                            if (_.isFunction(this.view.finalize)) {
+                                // prepare each widget independent
+                                this.view.finalize.apply(this.view);
+                            }
                         }
-                    }
-                });
+                    });
+                }
             },
 
             /**
