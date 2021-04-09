@@ -160,6 +160,17 @@ public class CpnlElFunctions {
     }
 
     /**
+     * Builds the URL for a repository asset path using the LinkUtil.getURL() method.
+     *
+     * @param request the current request (domain host hint)
+     * @param path    the repository path
+     * @return the URL built in the context of the requested domain host
+     */
+    public static String asset(SlingHttpServletRequest request, String path) {
+        return XSS.getValidHref(LinkUtil.getUrl(request, path, null, ""));
+    }
+
+    /**
      * Builds the URL for a repository path using the LinkUtil.getURL() method.
      *
      * @param request the current request (domain host hint)

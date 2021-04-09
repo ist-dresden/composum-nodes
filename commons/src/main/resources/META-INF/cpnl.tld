@@ -501,6 +501,13 @@
     </function>
 
     <function>
+        <description>Builds the URL for a repository asset path using the LinkUtil.getURL() method</description>
+        <name>asset</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String asset(org.apache.sling.api.SlingHttpServletRequest,java.lang.String)</function-signature>
+    </function>
+
+    <function>
         <description>Builds the URL for a repository path using the LinkUtil.getURL() method</description>
         <name>url</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
