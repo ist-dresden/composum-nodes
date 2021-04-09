@@ -19,7 +19,7 @@
     <js jcr:primaryType="sling:OrderedFolder">
         <jquery jcr:primaryType="nt:unstructured"
                 embed="[
-                        jslibs/jquery/([2-3].*:3.4.1)/jquery.js
+                        jslibs/jquery/([2-3].*:3.6.0)/jquery.js
                     ]"/>
         <aem-6.1 jcr:primaryType="nt:unstructured"
                 optional="{Boolean}true"

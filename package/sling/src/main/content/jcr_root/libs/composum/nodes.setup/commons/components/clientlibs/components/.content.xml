@@ -22,7 +22,7 @@
                 ]"/>
     <js jcr:primaryType="sling:OrderedFolder"
             depends="[
-                    jslibs/jquery/([2-3].*:3.4.1)/jquery.js,
+                    jslibs/jquery/([2-3].*:3.6.0)/jquery.js,
                     jslibs/js-base64/2.5.2/base64.js,
                     jslibs/loglevel/(1.*:1.6.1)/loglevel.js,
                     jslibs/underscore/(1.*:1.9.1)/underscore.js,

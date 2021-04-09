@@ -161,6 +161,9 @@
                             <root>/libs/jslibs/jquery/3.4.1</root>
                         </filter>
                         <filter>
+                            <root>/libs/jslibs/jquery/3.6.0</root>
+                        </filter>
+                        <filter>
                             <root>/libs/jslibs/js-base64/2.5.2</root>
                         </filter>
                         <filter>
