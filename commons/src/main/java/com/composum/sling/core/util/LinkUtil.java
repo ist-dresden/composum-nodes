@@ -351,18 +351,16 @@ public class LinkUtil {
                 extension = ""; // no extension necessary to add
             }
         }
-        if (extension == null) {
+        if (extension == null && !resource.isFile()) {
             String resourceType = resource.getResourceType();
             String primaryType;
-            if (resourceType != null &&
-                    (primaryType = resource.getPrimaryType()) != null && !primaryType.equals(resourceType)) {
+            if ((primaryType = resource.getPrimaryType()) != null && !primaryType.equals(resourceType)) {
                 extension = EXT_HTML; // use '.html' by default if a real resource type is present
             } else {
                 ResourceHandle content = resource.getContentResource();
                 if (content.isValid() && !ResourceUtil.isNonExistingResource(content)) {
                     resourceType = content.getResourceType();
-                    if (resourceType != null &&
-                            (primaryType = content.getPrimaryType()) != null && !primaryType.equals(resourceType)) {
+                    if ((primaryType = content.getPrimaryType()) != null && !primaryType.equals(resourceType)) {
                         extension = EXT_HTML; // use '.html' by default if a content resource exists with a real resource type
                     }
                 }
