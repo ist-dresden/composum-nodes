@@ -1,4 +1,4 @@
-package com.composum.sling.core.pckginstall;
+package com.composum.sling.core.osgi.pckginstall;
 
 import org.junit.Assert;
 import org.junit.Test;

@@ -1,4 +1,4 @@
-package com.composum.sling.core.pckginstall;
+package com.composum.sling.core.osgi.pckginstall;
 
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
