@@ -12,8 +12,10 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
+import org.hamcrest.Matchers;
 import org.junit.*;
 import org.junit.rules.ErrorCollector;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
@@ -27,7 +29,9 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.List;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -183,10 +187,10 @@ public class SourceModelTest {
                 "assetsfolder/withadditionaldata.jpg.dir/.content.xml : 1098 | 3497581146\n" +
                 "assetsfolder/_nt_resourcewithoutfile : 83358 | 2844564088\n" +
                 "assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 221 | 1068843391\n" +
-                "ntunstructuredwithjcrcontent/.content.xml : 450 | 3351525387\n" +
+                "ntunstructuredwithjcrcontent/.content.xml : 822 | 2340931679\n" +
                 "ntunstructuredwithjcrcontent/folderbinprop.binary : 20 | 2592797726\n" +
                 "ntunstructuredwithjcrcontent/_jcr_content/binprop.binary : 20 | 2592797726\n" +
-                "subfolder/.content.xml : 3917 | 3943574023\n" +
+                "subfolder/.content.xml : 3917 | 3270208475\n" +
                 "subfolder/_jcr_content/propertytest/binary.binary : 86 | 1434328335\n" +
                 "subfolder/_jcr_content/propertytest/binary with-weird na_me.binary : 86 | 1434328335\n" +
                 "subfolder/_jcr_content/assets/withadditionaldata.jpg : 76910 | 2714537933\n" +
@@ -250,7 +254,39 @@ public class SourceModelTest {
 
     }
 
-    /** Instantiates an annotation interface so that it returns it's defaults. */
+    /**
+     * Sort ordering generate package with package manager in sling:
+     * jcr:description, jcr:encoding, jcr:mimeType, jcr:mixinTypes,jcr:primaryType,jcr:title, aaa, bar, binprop, something, zzz
+     * AEM Package export e.g.  cq:lastReplicationAction, cq:styleId, cq:template, cq:templateType, jcr:description
+     * jcr:encoding, jcr:mimeType, jcr:mixinTypes, jcr:primaryType, jcr:title, aaa, bar, binprop, something, zzz.
+     * Old sourcemodel: jcr:primaryType, jcr:mixinTypes, cpl:last-publicMode, jcr:description, jcr:encoding, jcr:mimeType, jcr:title, aaa, bar, binprop, something, zzz
+     */
+    @Test
+    public void attributeOrdering() {
+        Resource resource = resolver.getResource("/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/jcr:content");
+        NodesConfiguration myconfig = Mockito.spy(config);
+        ec.checkThat(myconfig.isSourceAdvancedSortAttributes(), is(true));
+
+        {
+            SourceModel model = new SourceModel(myconfig, beanContext, resource);
+            List<String> properties = model.getPropertyList().stream().map(SourceModel.Property::getName).collect(Collectors.toList());
+            ec.checkThat(properties.toString(),is("[jcr:primaryType, jcr:mixinTypes, cpl:last-publicMode, jcr:description, jcr:encoding, jcr:mimeType, jcr:title, aaa, bar, binprop, something, zzz]"));
+                    // wrong: is("[jcr:primaryType, jcr:mixinTypes, aaa, bar, binprop, something, zzz, jcr:description, jcr:encoding, jcr:mimeType, jcr:title]")
+        }
+
+        Mockito.when(myconfig.isSourceAdvancedSortAttributes()).thenReturn(false);
+        ec.checkThat(myconfig.isSourceAdvancedSortAttributes(), is(false));
+
+        { // "backwards compatible" to AEM / vault: just sort alphabetically, but namespaced stuff first
+            SourceModel model = new SourceModel(myconfig, beanContext, resource);
+            List<String> properties = model.getPropertyList().stream().map(SourceModel.Property::getName).collect(Collectors.toList());
+            ec.checkThat(properties.toString(), is("[cpl:last-publicMode, jcr:description, jcr:encoding, jcr:mimeType, jcr:mixinTypes, jcr:primaryType, jcr:title, aaa, bar, binprop, something, zzz]"));
+        }
+    }
+
+    /**
+     * Instantiates an annotation interface so that it returns it's defaults.
+     */
     protected static class DefaultsForAnnotations implements InvocationHandler {
 
         /**

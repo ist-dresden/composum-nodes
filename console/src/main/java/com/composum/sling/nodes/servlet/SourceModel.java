@@ -2,7 +2,6 @@ package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
-import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.NodesConfiguration;
@@ -203,8 +202,8 @@ public class SourceModel extends ConsoleSlingBean {
      * @param path a resource path in the resource repository tree; maybe a mounted resource path
      * @return 'true' if the path is equal to the export root path
      */
-    public boolean isRootPath(@Nonnull final String path) {
-        return getExportRootPath().equals(path);
+    public boolean isRootPath(@Nonnull final String aPath) {
+        return getExportRootPath().equals(aPath);
     }
 
     //
@@ -480,7 +479,7 @@ public class SourceModel extends ConsoleSlingBean {
                 .append(ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT))
                 .append("</entry>\n")
                 .append("</properties>");
-        writer.flush(); // don't close since that closes the zipStream 8-{
+        writer.flush(); // don't close since that closes the zipStream
         zipStream.closeEntry();
     }
 
@@ -501,7 +500,7 @@ public class SourceModel extends ConsoleSlingBean {
                 .append("\"/>\n")
                 .append("</workspaceFilter>\n");
 
-        writer.flush(); // don't close since that closes the zipStream 8-{
+        writer.flush(); // don't close since that closes the zipStream
         zipStream.closeEntry();
     }
 
@@ -924,7 +923,7 @@ public class SourceModel extends ConsoleSlingBean {
     protected Comparator<Property> getPropertyComparator() {
         if (propertyComparator == null) {
             propertyComparator =
-                    Comparator.nullsLast(Comparator.comparing(Property::getNs))
+                    Comparator.comparing(Property::getNs, Comparator.nullsLast(Comparator.naturalOrder()))
                             .thenComparing(Property::getName);
             if (this.config.isSourceAdvancedSortAttributes()) {
                 propertyComparator = Comparator.comparing(Property::getOrderingLevel).thenComparing(propertyComparator);
@@ -995,7 +994,7 @@ public class SourceModel extends ConsoleSlingBean {
 
         public String getNs() {
             int ddot = name.indexOf(':');
-            return ddot > 0 ? name.substring(0, ddot) : "";
+            return ddot > 0 ? name.substring(0, ddot) : null;
         }
 
         public boolean isMultiValue() {
