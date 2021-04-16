@@ -1,0 +1,35 @@
+
+.composum-nodes-usermgr-graph {
+    height: 100%;
+}
+
+.composum-nodes-usermgr-graph svg {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.composum-nodes-usermgr-graph_image {
+    position: absolute;
+    top: 39px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+}
+
+.composum-nodes-usermgr-graph_image.visible {
+    display: block;
+    padding: 10px;
+    background: #f8f8f8;
+}
+
+.composum-nodes-usermgr-graph_image img {
+    display: block;
+    max-width: 100%;
+    margin: 0 auto;
+    background: #fff;
+}
+
+.composum-nodes-usermgr-graph_image button {
+    display: none;
+}

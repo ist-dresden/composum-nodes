@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>2.5.2</version>
+        <version>2.5.3</version>
     </parent>
 
     <artifactId>composum-nodes-usermgr</artifactId>
@@ -147,6 +147,10 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.jcr.api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.xss</artifactId>
         </dependency>
 
         <!-- JCR API, Jackrabbit -->
