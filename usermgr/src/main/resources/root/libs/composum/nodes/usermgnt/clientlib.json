@@ -1,4 +1,5 @@
 {
+  "jcr:primaryType": "sling:Folder",
   "sling:resourceType": "composum/nodes/commons/clientlib",
   "category": [
     "composum.nodes.console.usermgnt"
@@ -9,13 +10,15 @@
       "category:composum.nodes.console.default"
     ],
     "embed": [
+      "composum/nodes/usermgnt/graph/view/css/graph.css",
       "composum/nodes/usermgnt/css/usermanagement.css"
     ]
   },
   "js": {
     "jcr:primaryType": "sling:OrderedFolder",
     "depends": [
-      "category:composum.nodes.console.default"
+      "category:composum.nodes.console.default",
+      "category:composum.nodes.external.graphviz"
     ],
     "dialogs": {
       "embed": [
@@ -44,7 +47,9 @@
         "composum/nodes/usermgnt/js/preferencestab.js",
         "composum/nodes/usermgnt/js/groupstab.js",
         "composum/nodes/usermgnt/js/memberstab.js",
-        "composum/nodes/usermgnt/js/grouptab.js"
+        "composum/nodes/usermgnt/js/grouptab.js",
+        "composum/nodes/usermgnt/graph/view/js/graph.js",
+        "composum/nodes/usermgnt/graph/view/js/view.js"
       ]
     },
     "query": {
@@ -55,6 +60,21 @@
     },
     "startup": {
       "embed": "composum/nodes/usermgnt/js/startup.js"
+    }
+  },
+  "graphviz": {
+    "jcr:primaryType": "sling:Folder",
+    "sling:resourceType": "composum/nodes/commons/clientlib",
+    "category": [
+      "composum.nodes.external.graphviz"
+    ],
+    "js": {
+      "jcr:primaryType": "sling:OrderedFolder",
+      "depends": [
+        "https://d3js.org/d3.v5.min.js",
+        "https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js",
+        "https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"
+      ]
     }
   }
 }
