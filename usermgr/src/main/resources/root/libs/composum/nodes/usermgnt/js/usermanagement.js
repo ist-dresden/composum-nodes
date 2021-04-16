@@ -176,6 +176,9 @@
             selector: '> .group',
             tabType: usermanagement.GroupTab
         }, {
+            selector: '> .graph',
+            tabType: usermanagement.GraphTab
+        }, {
             // the fallback to the basic implementation as a default rule
             selector: '> div',
             tabType: core.console.DetailTab

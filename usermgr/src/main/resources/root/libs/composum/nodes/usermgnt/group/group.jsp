@@ -11,7 +11,8 @@
                 <a class="profile fa fa-user btn btn-default" href="#profile" data-group="profile" title="Profile"><span class="label">Profile</span></a>
                 <a class="preferences fa fa-wrench btn btn-default" href="#preferences" data-group="preferences" title="Preferences"><span class="label">Preferences</span></a>
                 <a class="groups fa fa-expand btn btn-default" href="#groups" data-group="groups" title="Groups"><span class="label">Groups</span></a>
-                <a class="groups fa fa-compress btn btn-default" href="#members" data-group="members" title="Members"><span class="label">Members</span></a>
+                <a class="members fa fa-compress btn btn-default" href="#members" data-group="members" title="Members"><span class="label">Members</span></a>
+                <a class="graph fa fa-map-o btn btn-default" href="#graph" data-group="view" title="Graph"><span class="label">Graph</span></a>
             </div>
         </div>
     </div>
