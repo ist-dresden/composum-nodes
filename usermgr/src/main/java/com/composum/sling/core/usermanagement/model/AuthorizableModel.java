@@ -1,12 +1,11 @@
 package com.composum.sling.core.usermanagement.model;
 
+import com.composum.sling.core.usermanagement.service.Authorizables;
 import com.google.gson.stream.JsonWriter;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
-import org.apache.jackrabbit.api.security.user.UserManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.jcr.RepositoryException;
 import java.io.IOException;
@@ -27,7 +26,11 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
     protected final Set<String> memberOf;
     protected final Set<String> declaredMemberOf;
 
-    protected AuthorizableModel(Authorizable authorizable) throws RepositoryException {
+    protected final Authorizables.Context context;
+
+    protected AuthorizableModel(@NotNull final Authorizables.Context context,
+                                @NotNull final Authorizable authorizable) throws RepositoryException {
+        this.context = context;
         id = authorizable.getID();
         path = authorizable.getPath();
         principalName = authorizable.getPrincipal().getName();
@@ -62,24 +65,24 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
     }
 
     @NotNull
-    public Collection<GroupModel> getGroupsOf(@Nullable final UserManager userManager)
+    public Collection<GroupModel> getGroupsOf(@NotNull final Authorizables.Context context)
             throws RepositoryException {
-        return getGroups(userManager, getMemberOf());
+        return getGroups(context, getMemberOf());
     }
 
     @NotNull
-    public Collection<GroupModel> getDeclaredGroupsOf(@Nullable final UserManager userManager)
+    public Collection<GroupModel> getDeclaredGroupsOf(@NotNull final Authorizables.Context context)
             throws RepositoryException {
-        return getGroups(userManager, getDeclaredMemberOf());
+        return getGroups(context, getDeclaredMemberOf());
     }
 
     @NotNull
-    public static Collection<UserModel> getUsers(@Nullable final UserManager userManager,
+    public static Collection<UserModel> getUsers(@NotNull final Authorizables.Context context,
                                                  @NotNull final Set<String> idSet)
             throws RepositoryException {
         List<UserModel> result = new ArrayList<>();
-        for (User jcrUser : Authorizables.loadAuthorizables(userManager, User.class, idSet)) {
-            result.add(new UserModel(jcrUser));
+        for (User jcrUser : context.getService().loadAuthorizables(context, User.class, idSet)) {
+            result.add(new UserModel(context, jcrUser));
         }
         return result;
     }
@@ -106,12 +109,12 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
     }
 
     @NotNull
-    public static Collection<GroupModel> getGroups(@Nullable final UserManager userManager,
+    public static Collection<GroupModel> getGroups(@NotNull final Authorizables.Context context,
                                                    @NotNull final Set<String> idSet)
             throws RepositoryException {
         List<GroupModel> result = new ArrayList<>();
-        for (Group jcrGroup : Authorizables.loadAuthorizables(userManager, Group.class, idSet)) {
-            result.add(new GroupModel(jcrGroup));
+        for (Group jcrGroup : context.getService().loadAuthorizables(context, Group.class, idSet)) {
+            result.add(new GroupModel(context, jcrGroup));
         }
         return result;
     }

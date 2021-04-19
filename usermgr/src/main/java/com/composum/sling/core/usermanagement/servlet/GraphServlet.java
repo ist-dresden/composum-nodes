@@ -2,6 +2,7 @@ package com.composum.sling.core.usermanagement.servlet;
 
 import com.composum.sling.core.usermanagement.model.AuthorizableModel;
 import com.composum.sling.core.usermanagement.model.AuthorizablesGraph;
+import com.composum.sling.core.usermanagement.service.Authorizables;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
@@ -57,6 +58,9 @@ public class GraphServlet extends SlingSafeMethodsServlet {
     @Reference
     protected XSSFilter xssFilter;
 
+    @Reference
+    protected Authorizables authorizablesService;
+
     @Override
     protected void doGet(@NotNull final SlingHttpServletRequest request,
                          @NotNull final SlingHttpServletResponse response)
@@ -75,7 +79,7 @@ public class GraphServlet extends SlingSafeMethodsServlet {
                             try {
                                 final String context = selectors.length > 1 ? selectors[1] : "page";
                                 Resource config = resolver.getResource(COMPONENT_BASE + context + "/" + JcrConstants.JCR_CONTENT);
-                                final AuthorizablesGraph graph = getGraph(request);
+                                final AuthorizablesGraph graph = getGraph(request, response);
                                 response.setContentType("text/html;charset=UTF-8");
                                 graph.toGraphviz(response.getWriter(), config, node -> nodeUrl(request, context, node));
                             } catch (RepositoryException ex) {
@@ -99,7 +103,7 @@ public class GraphServlet extends SlingSafeMethodsServlet {
                     }
                 case "json":
                     try {
-                        final AuthorizablesGraph graph = getGraph(request);
+                        final AuthorizablesGraph graph = getGraph(request, response);
                         response.setContentType("text/html;charset=UTF-8");
                         graph.toJson(new JsonWriter(response.getWriter()));
                     } catch (RepositoryException ex) {
@@ -112,12 +116,13 @@ public class GraphServlet extends SlingSafeMethodsServlet {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST);
     }
 
-    protected AuthorizablesGraph getGraph(@NotNull final SlingHttpServletRequest request)
+    protected AuthorizablesGraph getGraph(@NotNull final SlingHttpServletRequest request,
+                                          @NotNull final SlingHttpServletResponse response)
             throws RepositoryException {
         String type = xssFilter.filter(request.getParameter("type"));
         String name = xssFilter.filter(request.getParameter("name"));
         String path = xssFilter.filter(request.getParameter("path"));
-        return new AuthorizablesGraph(request.getResourceResolver(), type, name, path);
+        return new AuthorizablesGraph(new Authorizables.Context(authorizablesService, request, response), type, name, path);
     }
 
     protected String nodeUrl(@NotNull final SlingHttpServletRequest request,

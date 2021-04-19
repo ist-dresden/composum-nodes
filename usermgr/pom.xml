@@ -152,6 +152,10 @@
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.xss</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.serviceusermapper</artifactId>
+        </dependency>
 
         <!-- JCR API, Jackrabbit -->
         <dependency>

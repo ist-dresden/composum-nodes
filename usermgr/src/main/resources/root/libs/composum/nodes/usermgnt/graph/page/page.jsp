@@ -22,6 +22,7 @@
             <option value="" <%=type == null ? "selected" : ""%>>all</option>
             <option <%="user".equals(type) ? "selected" : ""%>>user</option>
             <option <%="group".equals(type) ? "selected" : ""%>>group</option>
+            <option <%="service".equals(type) ? "selected" : ""%>>service</option>
         </select>
     </div>
     <div class="composum-nodes-usermgr-graph_page-form_field form-field_name">

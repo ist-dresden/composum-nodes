@@ -1,10 +1,9 @@
 package com.composum.sling.core.usermanagement.model;
 
+import com.composum.sling.core.usermanagement.service.Authorizables;
 import com.google.gson.stream.JsonWriter;
 import org.apache.jackrabbit.api.security.user.Group;
-import org.apache.jackrabbit.api.security.user.UserManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.jcr.RepositoryException;
 import java.io.IOException;
@@ -16,8 +15,9 @@ public class GroupModel extends AuthorizableModel {
     protected final Set<String> members;
     protected final Set<String> declaredMembers;
 
-    public GroupModel(Group jcrGroup) throws RepositoryException {
-        super(jcrGroup);
+    public GroupModel(@NotNull final Authorizables.Context context,
+                      @NotNull final Group jcrGroup) throws RepositoryException {
+        super(context, jcrGroup);
         members = stripIDs(jcrGroup.getMembers());
         declaredMembers = stripIDs(jcrGroup.getDeclaredMembers());
     }
@@ -38,27 +38,27 @@ public class GroupModel extends AuthorizableModel {
     }
 
     @NotNull
-    public Collection<UserModel> getUsers(@Nullable final UserManager userManager)
+    public Collection<UserModel> getUsers(@NotNull final Authorizables.Context context)
             throws RepositoryException {
-        return getUsers(userManager, getMembers());
+        return getUsers(context, getMembers());
     }
 
     @NotNull
-    public Collection<UserModel> getDeclaredUsers(@Nullable final UserManager userManager)
+    public Collection<UserModel> getDeclaredUsers(@NotNull final Authorizables.Context context)
             throws RepositoryException {
-        return getUsers(userManager, getDeclaredMembers());
+        return getUsers(context, getDeclaredMembers());
     }
 
     @NotNull
-    public Collection<GroupModel> getGroups(@Nullable final UserManager userManager)
+    public Collection<GroupModel> getGroups(@NotNull final Authorizables.Context context)
             throws RepositoryException {
-        return getGroups(userManager, getMembers());
+        return getGroups(context, getMembers());
     }
 
     @NotNull
-    public Collection<GroupModel> getDeclaredGroups(@Nullable final UserManager userManager)
+    public Collection<GroupModel> getDeclaredGroups(@NotNull final Authorizables.Context context)
             throws RepositoryException {
-        return getGroups(userManager, getDeclaredMembers());
+        return getGroups(context, getDeclaredMembers());
     }
 
     public void toJson(JsonWriter writer) throws IOException {

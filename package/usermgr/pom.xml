@@ -187,6 +187,11 @@
             <artifactId>org.apache.sling.xss</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.serviceusermapper</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
     <profiles>

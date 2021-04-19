@@ -1,10 +1,13 @@
 package com.composum.sling.core.usermanagement.model;
 
+import com.composum.sling.core.usermanagement.service.Authorizables;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.jcr.RepositoryException;
@@ -23,17 +26,33 @@ public class UserModel extends AuthorizableModel {
     protected final boolean disabled;
     protected final String disabledReason;
 
-    public UserModel(User jcrUser) throws RepositoryException {
-        super(jcrUser);
-        admin = jcrUser.isAdmin();
-        systemUser = jcrUser.isSystemUser();
-        disabled = jcrUser.isDisabled();
-        disabledReason = jcrUser.getDisabledReason();
+    public UserModel(@NotNull final Authorizables.Context context,
+                     @NotNull final User jcrUser)
+            throws RepositoryException {
+        this(context, (Authorizable) jcrUser);
+    }
+
+    protected UserModel(@NotNull final Authorizables.Context context,
+                        @NotNull final Authorizable authorizable)
+            throws RepositoryException {
+        super(context, authorizable);
+        if (authorizable instanceof User) {
+            User jcrUser = (User) authorizable;
+            admin = jcrUser.isAdmin();
+            systemUser = jcrUser.isSystemUser();
+            disabled = jcrUser.isDisabled();
+            disabledReason = jcrUser.getDisabledReason();
+        } else {
+            admin = false;
+            systemUser = true;
+            disabled = false;
+            disabledReason = null;
+        }
         Map<String, Object> properties = new TreeMap<>();
-        Iterator<String> propertyNames = jcrUser.getPropertyNames();
+        Iterator<String> propertyNames = authorizable.getPropertyNames();
         while (propertyNames.hasNext()) {
             String name = propertyNames.next();
-            Value[] property = jcrUser.getProperty(name);
+            Value[] property = authorizable.getProperty(name);
             String[] vs = new String[property.length];
             for (int i = 0; i < property.length; i++) {
                 vs[i] = property[i].getString();
@@ -54,6 +73,10 @@ public class UserModel extends AuthorizableModel {
 
     public boolean isSystemUser() {
         return systemUser;
+    }
+
+    public boolean isServiceUser() {
+        return false;
     }
 
     public boolean isDisabled() {

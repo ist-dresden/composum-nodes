@@ -1,5 +1,7 @@
 package com.composum.sling.core.usermanagement.model;
 
+import com.composum.sling.core.usermanagement.service.Authorizables;
+import com.composum.sling.core.usermanagement.service.Service;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
@@ -7,7 +9,6 @@ import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,24 +67,27 @@ public class AuthorizablesGraph {
     protected final Set<Relation> targetRelations = new HashSet<>();
     protected final Set<Relation> sourceRelations = new HashSet<>();
 
-    public AuthorizablesGraph(@NotNull final ResourceResolver resolver,
+    protected final Authorizables.Context context;
+
+    public AuthorizablesGraph(@NotNull final Authorizables.Context context,
                               @Nullable final String selector,
                               @Nullable final String nameQueryPattern,
                               @Nullable final String pathPattern)
             throws RepositoryException {
-        this(resolver, Authorizables.selector(selector), nameQueryPattern,
+        this(context, Authorizables.selector(selector), nameQueryPattern,
                 StringUtils.isNotBlank(pathPattern) ? new Authorizables.Filter.Path(pathPattern) : null);
     }
 
-    public AuthorizablesGraph(@NotNull final ResourceResolver resolver,
+    public AuthorizablesGraph(@NotNull final Authorizables.Context context,
                               @Nullable final Class<? extends Authorizable> selector,
                               @Nullable final String nameQueryPattern,
                               @Nullable final Authorizables.Filter filter)
             throws RepositoryException {
-        UserManager userManager = Authorizables.getUserManager(resolver);
+        this.context = context;
+        UserManager userManager = context.getUserManager();
         if (userManager != null) {
-            Set<Authorizable> authorizables = Authorizables.findAuthorizables(
-                    userManager, selector, nameQueryPattern, filter);
+            Set<Authorizable> authorizables = context.getService().findAuthorizables(
+                    context, selector, nameQueryPattern, filter);
             for (Authorizable authorizable : authorizables) {
                 addNode(authorizable);
             }
@@ -106,14 +110,26 @@ public class AuthorizablesGraph {
         if (authorizable != null) {
             result = nodes.get(authorizable.getID());
             if (result == null) {
-                result = authorizable.isGroup()
-                        ? new GroupModel((Group) authorizable)
-                        : new UserModel((User) authorizable);
-                nodes.put(result.getId(), result);
-                indexes.put(result.getId(), ++index);
+                result = createNode(authorizable);
+                if (result != null) {
+                    nodes.put(result.getId(), result);
+                    indexes.put(result.getId(), ++index);
+                }
             }
         }
         return result;
+    }
+
+    @Nullable
+    protected AuthorizableModel createNode(@NotNull final Authorizable authorizable)
+            throws RepositoryException {
+        return authorizable instanceof Group
+                ? new GroupModel(context, (Group) authorizable)
+                : authorizable instanceof User
+                ? new UserModel(context, (User) authorizable)
+                : authorizable instanceof Service
+                ? new ServiceModel(context, (Service) authorizable)
+                : null;
     }
 
     protected void addTargetRelations(@NotNull final UserManager userManager,
@@ -144,15 +160,13 @@ public class AuthorizablesGraph {
                                       @Nullable final Authorizables.Filter filter,
                                       @NotNull final AuthorizableModel target, @NotNull final Set<String> done)
             throws RepositoryException {
-        if (target.isGroup()) {
-            Set<Authorizable> sources = Authorizables.findAuthorizables(
-                    userManager, selector, null, authorizable
-                            -> (filter == null || filter.accept(authorizable))
-                            && isSourceOfTarget(authorizable, target.getId()));
-            for (Authorizable source : sources) {
-                if (done.add(source.getID())) {
-                    sourceRelations.add(new Relation(addNode(source), target));
-                }
+        Set<Authorizable> sources = context.getService().findAuthorizables(
+                context, selector, null, authorizable
+                        -> (filter == null || filter.accept(authorizable))
+                        && isSourceOfTarget(authorizable, target.getId()));
+        for (Authorizable source : sources) {
+            if (done.add(source.getID())) {
+                sourceRelations.add(new Relation(addNode(source), target));
             }
         }
     }
@@ -267,17 +281,19 @@ public class AuthorizablesGraph {
     protected String getColor(AuthorizableModel node) {
         boolean isFocussed = singleFocus != null && singleFocus.getId().equals(node.getId());
         if (node.isGroup()) {
-            return isFocussed ? "#4CBAC4" : "#C6FBFF";
+            return isFocussed ? "#4cbac4" : "#c6fbff";
         } else {
             UserModel user = (UserModel) node;
             if (user.isDisabled()) {
-                return isFocussed ? "#E38585" : "#FFC2C2";
+                return isFocussed ? "#e38585" : "#ffc2c2";
             } else if (user.isAdmin()) {
-                return isFocussed ? "#54C478" : "#6EFD9D";
+                return isFocussed ? "#54c478" : "#6efd9d";
+            } else if (user.isServiceUser()) {
+                return isFocussed ? "#d6aa69" : "#e5d2ba";
             } else if (user.isSystemUser()) {
-                return isFocussed ? "#AEAEAE" : "#DDDDDD";
+                return isFocussed ? "#aeaeae" : "#dddddd";
             } else {
-                return isFocussed ? "#F1F55B" : "#FCFFBF";
+                return isFocussed ? "#fbff52" : "#fbffb3";
             }
         }
     }
