@@ -59,10 +59,36 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>features</id>
+                        <id>create-fm</id>
                         <phase>package</phase>
                         <goals>
                             <goal>include-artifact</goal>
+                        </goals>
+                        <configuration>
+                            <includeArtifactClassifier>artifact</includeArtifactClassifier>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>aggregate</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>aggregate-features</goal>
+                        </goals>
+                        <configuration>
+                            <aggregates>
+                                <aggregate>
+                                    <!-- Classifier from the include-artifact generation -->
+                                    <includeClassifier>artifact</includeClassifier>
+                                    <!-- Additional FM to be included into this project -->
+                                    <filesInclude>**/*.json</filesInclude>
+                                </aggregate>
+                            </aggregates>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>attach</id>
+                        <phase>package</phase>
+                        <goals>
                             <goal>attach-features</goal>
                         </goals>
                     </execution>

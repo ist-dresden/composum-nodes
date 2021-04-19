@@ -68,6 +68,12 @@
                                         <version>${project.version}</version>
                                         <type>slingosgifeature</type>
                                     </includeArtifact>
+                                    <includeArtifact>
+                                        <groupId>com.composum.nodes</groupId>
+                                        <artifactId>composum-nodes-config</artifactId>
+                                        <version>${project.version}</version>
+                                        <type>slingosgifeature</type>
+                                    </includeArtifact>
                                 </aggregate>
                             </aggregates>
                         </configuration>
