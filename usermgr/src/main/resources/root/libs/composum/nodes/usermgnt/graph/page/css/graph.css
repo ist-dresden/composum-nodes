@@ -12,14 +12,29 @@
 .composum-nodes-usermgr-graph_body h3,
 .composum-nodes-usermgr-graph_page-form label,
 .composum-nodes-usermgr-graph_page-form input,
-.composum-nodes-usermgr-graph_page-form button {
+.composum-nodes-usermgr-graph_page-form button,
+.composum-nodes-usermgr-graph table th,
+.composum-nodes-usermgr-graph table td {
     font-family: sans-serif;
 }
 
 .composum-nodes-usermgr-graph_page-form label,
 .composum-nodes-usermgr-graph_page-form input,
-.composum-nodes-usermgr-graph_page-form button {
+.composum-nodes-usermgr-graph_page-form button,
+.composum-nodes-usermgr-graph table th,
+.composum-nodes-usermgr-graph table td {
     font-size: 13px;
+}
+
+.composum-nodes-usermgr-graph_mode a,
+.composum-nodes-usermgr-graph_mode a:visited {
+    text-decoration: none;
+    color: blue;
+}
+
+.composum-nodes-usermgr-graph_body.graphviz .composum-nodes-usermgr-graph_mode a.graphviz,
+.composum-nodes-usermgr-graph_body.table .composum-nodes-usermgr-graph_mode a.table {
+    text-decoration: underline;
 }
 
 .composum-nodes-usermgr-graph_page-form .composum-nodes-usermgr-graph_page-form_field {
@@ -45,6 +60,10 @@
 .composum-nodes-usermgr-graph_show-image {
     margin-left: 30px;
     white-space: nowrap;
+}
+
+.composum-nodes-usermgr-graph_body.table .composum-nodes-usermgr-graph_show-image {
+    display: none;
 }
 
 .composum-nodes-usermgr-graph_page-form {

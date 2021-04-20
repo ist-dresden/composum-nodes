@@ -2,6 +2,7 @@ package com.composum.sling.core.usermanagement.servlet;
 
 import com.composum.sling.core.usermanagement.model.AuthorizableModel;
 import com.composum.sling.core.usermanagement.model.AuthorizablesGraph;
+import com.composum.sling.core.usermanagement.model.AuthorizablesTable;
 import com.composum.sling.core.usermanagement.service.Authorizables;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.codec.EncoderException;
@@ -49,6 +50,7 @@ public class GraphServlet extends SlingSafeMethodsServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphServlet.class);
 
+    public static final String BROWSER_PATH = "/bin/browser.html";
     public static final String MANAGER_PATH = "/bin/users.html";
     public static final String SERVLET_PATH = "/bin/cpm/users/graph";
     public static final String COMPONENT_BASE = "/libs/composum/nodes/usermgnt/graph/";
@@ -81,7 +83,22 @@ public class GraphServlet extends SlingSafeMethodsServlet {
                                 Resource config = resolver.getResource(COMPONENT_BASE + context + "/" + JcrConstants.JCR_CONTENT);
                                 final AuthorizablesGraph graph = getGraph(request, response);
                                 response.setContentType("text/html;charset=UTF-8");
-                                graph.toGraphviz(response.getWriter(), config, node -> nodeUrl(request, context, node));
+                                graph.toGraphviz(response.getWriter(), config,
+                                        node -> nodeUrl(request, context, node));
+                            } catch (RepositoryException ex) {
+                                LOG.error(ex.getMessage(), ex);
+                                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+                            }
+                            return;
+                        case "table":
+                            try {
+                                final String context = selectors.length > 1 ? selectors[1] : "page";
+                                Resource config = resolver.getResource(COMPONENT_BASE + context + "/" + JcrConstants.JCR_CONTENT);
+                                final AuthorizablesTable table = getTable(request, response);
+                                response.setContentType("text/html;charset=UTF-8");
+                                table.toTable(resolver, response.getWriter(), config,
+                                        node -> nodeUrl(request, context, node),
+                                        (node, path) -> pathUrl(request, context, node, path));
                             } catch (RepositoryException ex) {
                                 LOG.error(ex.getMessage(), ex);
                                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
@@ -125,6 +142,15 @@ public class GraphServlet extends SlingSafeMethodsServlet {
         return new AuthorizablesGraph(new Authorizables.Context(authorizablesService, request, response), type, name, path);
     }
 
+    protected AuthorizablesTable getTable(@NotNull final SlingHttpServletRequest request,
+                                          @NotNull final SlingHttpServletResponse response)
+            throws RepositoryException {
+        String type = xssFilter.filter(request.getParameter("type"));
+        String name = xssFilter.filter(request.getParameter("name"));
+        String path = xssFilter.filter(request.getParameter("path"));
+        return new AuthorizablesTable(new Authorizables.Context(authorizablesService, request, response), type, name, path);
+    }
+
     protected String nodeUrl(@NotNull final SlingHttpServletRequest request,
                              @NotNull final String option, @NotNull final AuthorizableModel node) {
         StringBuilder url = new StringBuilder();
@@ -151,6 +177,20 @@ public class GraphServlet extends SlingSafeMethodsServlet {
             }
         } catch (EncoderException ex) {
             LOG.error(ex.getMessage(), ex);
+        }
+        return url.toString();
+    }
+
+    protected String pathUrl(@NotNull final SlingHttpServletRequest request, @NotNull final String option,
+                             @NotNull final AuthorizableModel node, @NotNull final String path) {
+        StringBuilder url = new StringBuilder();
+        switch (option) {
+            default:
+            case "page":
+                return null;
+            case "view":
+                url.append(BROWSER_PATH).append(path);
+                break;
         }
         return url.toString();
     }

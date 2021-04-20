@@ -13,6 +13,9 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+/**
+ * an Authorizable facade to represent a service user (bundle or subservice) as a member of an Authorizable set
+ */
 public class Service implements Authorizable {
 
     public static final String SERVICE_USER_ROOT = "/home/service";
@@ -29,8 +32,9 @@ public class Service implements Authorizable {
     protected final String path;
     protected final Mapping mapping;
     protected final Principal principal;
-    protected final Set<Group> declaredMemberOf;
-    protected final Set<Group> memberOf;
+
+    private transient Set<Group> declaredMemberOf;
+    private transient Set<Group> memberOf;
 
     public Service(Authorizables.Context context, Mapping mapping) throws RepositoryException {
         this.mapping = mapping;
@@ -44,30 +48,38 @@ public class Service implements Authorizable {
             path = SERVICE_USER_ROOT + "/" + serviceName.replace('.', '/');
         }
         principal = new ServicePrincipal();
-        declaredMemberOf = new LinkedHashSet<>();
-        memberOf = new LinkedHashSet<>();
-        Authorizable authorizable;
-        String user = mapping.map(mapping.getServiceName(), mapping.getSubServiceName());
-        if (StringUtils.isNotBlank(user)) {
-            authorizable = context.getService().getAuthorizable(context, user);
-            if (authorizable != null) {
-                declaredMemberOf.add(new GroupFacade(authorizable));
-            }
-        }
-        Iterable<String> principals = mapping.mapPrincipals(mapping.getServiceName(), mapping.getSubServiceName());
-        if (principals != null) {
-            for (String principal : principals) {
+    }
+
+    /**
+     * to avoid a possible endless loop during construction the relations are set up in a separate step
+     */
+    public void initialize(Authorizables.Context context) throws RepositoryException {
+        if (declaredMemberOf == null) {
+            declaredMemberOf = new LinkedHashSet<>();
+            memberOf = new LinkedHashSet<>();
+            Authorizable authorizable;
+            String user = mapping.map(mapping.getServiceName(), mapping.getSubServiceName());
+            if (StringUtils.isNotBlank(user)) {
                 authorizable = context.getService().getAuthorizable(context, user);
                 if (authorizable != null) {
                     declaredMemberOf.add(new GroupFacade(authorizable));
                 }
             }
-        }
-        for (Group group : declaredMemberOf) {
-            memberOf.add(group);
-            Iterator<Group> groups = group.memberOf();
-            while (groups.hasNext()) {
-                memberOf.add(groups.next());
+            Iterable<String> principals = mapping.mapPrincipals(mapping.getServiceName(), mapping.getSubServiceName());
+            if (principals != null) {
+                for (String principal : principals) {
+                    authorizable = context.getService().getAuthorizable(context, principal);
+                    if (authorizable != null) {
+                        declaredMemberOf.add(new GroupFacade(authorizable));
+                    }
+                }
+            }
+            for (Group group : declaredMemberOf) {
+                memberOf.add(group);
+                Iterator<Group> groups = group.memberOf();
+                while (groups.hasNext()) {
+                    memberOf.add(groups.next());
+                }
             }
         }
     }

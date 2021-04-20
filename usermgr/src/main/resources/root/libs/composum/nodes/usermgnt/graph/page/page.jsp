@@ -8,7 +8,9 @@
     <link rel="stylesheet" href="/libs/composum/nodes/usermgnt/graph/page/css/graph.css">
 </head>
 <body class="composum-nodes-usermgr-graph_body">
-<h3>Authorizables Graph</h3>
+<h3 class="composum-nodes-usermgr-graph_mode">Authorizables
+    <a href="#" class="graphviz">Graph</a> / <a href="#" class="table">Table</a>
+</h3>
 <%
     String type = slingRequest.getParameter("type");
     String name = slingRequest.getParameter("name");
@@ -44,13 +46,14 @@
 <script src="/libs/composum/nodes/usermgnt/graph/view/js/graph.js"></script>
 <script>
     $(document).ready(function () {
+        $('.composum-nodes-usermgr-graph_mode a').click(window.CPM.nodes.usermgr.graph.selectMode);
+        $('.composum-nodes-usermgr-graph_show-image').click(window.CPM.nodes.usermgr.graph.showSvgImage);
         window.CPM.nodes.usermgr.graph.render(
             <%= type != null ? "'" + type + "'" : "''"%>,
             <%= name != null ? "'" + name + "'" : "''"%>,
             <%= path != null ? "'" + path + "'" : "''"%>,
             "page"
         );
-        $('.composum-nodes-usermgr-graph_show-image').click(window.CPM.nodes.usermgr.graph.showSvgImage);
     });
 </script>
 </body>

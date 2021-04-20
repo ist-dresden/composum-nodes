@@ -33,13 +33,21 @@ public class AuthorizablesImpl implements Authorizables {
     @Nullable
     public Authorizable getAuthorizable(@NotNull final Context context, @NotNull final String id)
             throws RepositoryException {
-        Authorizable authorizable = null;
-        UserManager userManager = context.getUserManager();
-        if (userManager != null) {
-            authorizable = userManager.getAuthorizable(id);
-        }
+        Authorizable authorizable = context.getAuthorizables().get(id);
         if (authorizable == null) {
-            authorizable = getServiceUser(context, id);
+            UserManager userManager = context.getUserManager();
+            if (userManager != null) {
+                authorizable = userManager.getAuthorizable(id);
+            }
+            if (authorizable == null) {
+                authorizable = getServiceUser(context, id);
+            }
+            if (authorizable != null) {
+                context.getAuthorizables().put(id, authorizable);
+            }
+            if (authorizable instanceof Service) {
+                ((Service) authorizable).initialize(context);
+            }
         }
         return authorizable;
     }
@@ -79,13 +87,7 @@ public class AuthorizablesImpl implements Authorizables {
         List<T> result = new ArrayList<>();
         UserManager userManager = context.getUserManager();
         for (String id : idSet) {
-            Authorizable authorizable = null;
-            if (userManager != null) {
-                authorizable = userManager.getAuthorizable(id);
-            }
-            if (authorizable == null) {
-                authorizable = getServiceUser(context, id);
-            }
+            Authorizable authorizable = getAuthorizable(context, id);
             if (selector.isInstance(authorizable)) {
                 result.add(selector.cast(authorizable));
             }
@@ -132,6 +134,7 @@ public class AuthorizablesImpl implements Authorizables {
             for (Mapping mapping : mappings) {
                 Service service = new Service(context, mapping);
                 if (namePattern == null || namePattern.matcher(service.getID()).matches()) {
+                    service.initialize(context);
                     serviceUsers.add(service);
                 }
             }

@@ -45,7 +45,7 @@ public interface Authorizables {
             protected final Pattern pattern;
 
             public Path(@NotNull final String pattern) {
-                this(Pattern.compile(pattern));
+                this(Pattern.compile(pattern.replaceAll("%", ".*")));
             }
 
             public Path(@NotNull final Pattern pattern) {
@@ -73,6 +73,8 @@ public interface Authorizables {
         protected final ResourceResolver resolver;
 
         private transient UserManager userManager;
+
+        protected final Map<String, Authorizable> authorizables = new HashMap<>();
 
         public Context(@NotNull final Authorizables service,
                        @NotNull final SlingHttpServletRequest request,
@@ -109,6 +111,10 @@ public interface Authorizables {
                 }
             }
             return userManager;
+        }
+
+        public Map<String, Authorizable> getAuthorizables() {
+            return authorizables;
         }
     }
 

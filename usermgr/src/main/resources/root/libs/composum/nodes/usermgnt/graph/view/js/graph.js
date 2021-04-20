@@ -22,6 +22,15 @@ window.CPM.nodes.usermgr.graph = window.CPM.nodes.usermgr.graph || {};
         });
     };
 
+    graph.selectMode = function (event) {
+        event.preventDefault();
+        const $target = $(event.currentTarget);
+        const mode = $target.attr('class');
+        localStorage.setItem('composum.nodes.users.graph', JSON.stringify({mode: mode}));
+        window.location.reload();
+        return false;
+    };
+
     graph.render = function (type, name, path, selector, callback) {
         let params = '';
         if (type) {
@@ -34,24 +43,35 @@ window.CPM.nodes.usermgr.graph = window.CPM.nodes.usermgr.graph || {};
             params += '&path=' + encodeURIComponent(path);
         }
         params = params.replace(/^&/, '?');
+        const profile = JSON.parse(localStorage.getItem('composum.nodes.users.graph') || '{}');
+        const mode = profile.mode || 'graphviz';
+        $('.composum-nodes-usermgr-graph_body').removeClass('graphviz table').addClass(mode);
         $.ajax({
-            url: '/bin/cpm/users/graph.graphviz' + (selector ? '.' + selector : '') + '.html' + params,
+            url: '/bin/cpm/users/graph.' + mode + (selector ? '.' + selector : '') + '.html' + params,
             cache: false
-        }).done(function (dot) {
+        }).done(function (content) {
             const $graph = $('.composum-nodes-usermgr-graph');
-            const graphviz = d3.select($graph[0]).graphviz();
-            graphviz.on('end', function () {
-                const $svg = $graph.find('svg');
-                const $img = $('.composum-nodes-usermgr-graph_image img');
-                if ($svg.length > 0 && $img.length > 0) {
-                    try {
-                        $img.attr('src', graph.svg2img($svg[0]));
-                    } catch (ex) {
-                        if (console) console.log(ex);
-                    }
-                }
-            });
-            graphviz.renderDot(dot, callback);
+            switch (mode) {
+                default:
+                case 'graphviz':
+                    const graphviz = d3.select($graph[0]).graphviz();
+                    graphviz.on('end', function () {
+                        const $svg = $graph.find('svg');
+                        const $img = $('.composum-nodes-usermgr-graph_image img');
+                        if ($svg.length > 0 && $img.length > 0) {
+                            try {
+                                $img.attr('src', graph.svg2img($svg[0]));
+                            } catch (ex) {
+                                if (console) console.log(ex);
+                            }
+                        }
+                    });
+                    graphviz.renderDot(content, callback);
+                    break;
+                case'table':
+                    $graph.html(content);
+                    break;
+            }
         });
     };
 

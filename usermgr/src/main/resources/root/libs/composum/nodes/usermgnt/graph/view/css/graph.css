@@ -33,3 +33,97 @@
 .composum-nodes-usermgr-graph_image button {
     display: none;
 }
+
+/* graph */
+
+.composum-nodes-usermgr-graph table {
+    width: 100%;
+    border: none;
+    border-collapse: collapse;
+}
+
+.composum-nodes-usermgr-graph table tr {
+    border-bottom: 1px solid #ffffff;
+}
+
+.composum-nodes-usermgr-graph table tr:nth-child(even) {
+    opacity: 0.85;
+}
+
+.composum-nodes-usermgr-graph table th,
+.composum-nodes-usermgr-graph table td {
+    padding: 3px 6px;
+    vertical-align: top;
+}
+
+.composum-nodes-usermgr-graph table a,
+.composum-nodes-usermgr-graph table a:visited {
+    text-decoration: none;
+    color: inherit;
+}
+
+.composum-nodes-usermgr-graph table tr.group {
+    background-color: #c6fbff;
+}
+
+.composum-nodes-usermgr-graph table tr.group.focus {
+    background-color: #4cbac4;
+}
+
+.composum-nodes-usermgr-graph table tr.disabled {
+    background-color: #ffc2c2;
+}
+
+.composum-nodes-usermgr-graph table tr.disabled.focus {
+    background-color: #e38585;
+}
+
+.composum-nodes-usermgr-graph table tr.admin {
+    background-color: #6efd9d;
+}
+
+.composum-nodes-usermgr-graph table tr.admin.focus {
+    background-color: #54c478;
+}
+
+.composum-nodes-usermgr-graph table tr.system {
+    background-color: #dddddd;
+}
+
+.composum-nodes-usermgr-graph table tr.system.focus {
+    background-color: #aeaeae;
+}
+
+.composum-nodes-usermgr-graph table tr.service {
+    background-color: #e5d2ba;
+}
+
+.composum-nodes-usermgr-graph table tr.service.focus {
+    background-color: #d6aa69;
+}
+
+.composum-nodes-usermgr-graph table tr.user {
+    background-color: #fbffb3;
+}
+
+.composum-nodes-usermgr-graph table tr.user.focus {
+    background-color: #fbff52;
+}
+
+.composum-nodes-usermgr-graph table td.ac-rules {
+    padding: 2px 0;
+}
+
+.composum-nodes-usermgr-graph table td.ac-rules span {
+    display: inline-block;
+    margin: 0 6px;
+    white-space: nowrap;
+}
+
+.composum-nodes-usermgr-graph table .ac-rules .grant {
+    color: #006600;
+}
+
+.composum-nodes-usermgr-graph table .ac-rules .deny {
+    color: #880000;
+}
