@@ -9,9 +9,9 @@
 </head>
 <body class="composum-nodes-usermgr-graph_body">
 <h3 class="composum-nodes-usermgr-graph_mode">Authorizables
-    <a href="#" class="graphviz">Graph</a> / <a href="#" class="table">Table</a>
+    <a href="#" class="graphviz">Graph</a> / <a href="#" class="paths" title="Affected Paths">Paths</a>
 </h3>
-<%
+    <%
     String type = slingRequest.getParameter("type");
     String name = slingRequest.getParameter("name");
     String path = slingRequest.getParameter("path");
@@ -58,3 +58,4 @@
 </script>
 </body>
 </html>
+

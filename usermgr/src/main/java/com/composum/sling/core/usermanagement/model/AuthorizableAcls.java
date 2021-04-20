@@ -124,7 +124,10 @@ public class AuthorizableAcls {
         while (aclResources.hasNext()) {
             Resource aclResource = aclResources.next();
             String path = aclResource.getPath();
-            path = path.substring(0, path.indexOf("/rep:policy"));
+            int repNodePos = path.indexOf("/rep:policy");
+            if (repNodePos >= 0) {
+                path = path.substring(0, repNodePos);
+            }
             if (StringUtils.isBlank(path)) {
                 path = "/";
             }

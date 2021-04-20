@@ -20,10 +20,8 @@
 
 .composum-nodes-usermgr-graph_page-form label,
 .composum-nodes-usermgr-graph_page-form input,
-.composum-nodes-usermgr-graph_page-form button,
-.composum-nodes-usermgr-graph table th,
-.composum-nodes-usermgr-graph table td {
-    font-size: 13px;
+.composum-nodes-usermgr-graph_page-form button {
+    font-size: 14px;
 }
 
 .composum-nodes-usermgr-graph_mode a,
@@ -33,7 +31,7 @@
 }
 
 .composum-nodes-usermgr-graph_body.graphviz .composum-nodes-usermgr-graph_mode a.graphviz,
-.composum-nodes-usermgr-graph_body.table .composum-nodes-usermgr-graph_mode a.table {
+.composum-nodes-usermgr-graph_body.paths .composum-nodes-usermgr-graph_mode a.paths {
     text-decoration: underline;
 }
 
@@ -62,7 +60,7 @@
     white-space: nowrap;
 }
 
-.composum-nodes-usermgr-graph_body.table .composum-nodes-usermgr-graph_show-image {
+.composum-nodes-usermgr-graph_body.paths .composum-nodes-usermgr-graph_show-image {
     display: none;
 }
 
@@ -71,10 +69,10 @@
     flex-wrap: nowrap;
 }
 
-.composum-nodes-usermgr-graph_wrapper {
+.composum-nodes-usermgr-graph_wrapper,
+.composum-nodes-usermgr-paths_wrapper {
     flex-grow: 1;
     border: 1px solid #888888;
-    overflow: auto;
 }
 
 .composum-nodes-usermgr-graph_image {

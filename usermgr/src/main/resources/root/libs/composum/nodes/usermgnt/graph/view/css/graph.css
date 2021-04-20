@@ -1,4 +1,9 @@
 
+.composum-nodes-usermgr-graph_wrapper,
+.composum-nodes-usermgr-paths_wrapper {
+    overflow: auto;
+}
+
 .composum-nodes-usermgr-graph {
     height: 100%;
 }
@@ -34,35 +39,45 @@
     display: none;
 }
 
-/* graph */
+/* paths */
 
-.composum-nodes-usermgr-graph table {
+.composum-nodes-usermgr-graph table,
+.composum-nodes-usermgr-paths table {
     width: 100%;
     border: none;
     border-collapse: collapse;
 }
 
-.composum-nodes-usermgr-graph table tr {
+.composum-nodes-usermgr-graph table tr,
+.composum-nodes-usermgr-paths table tr {
     border-bottom: 1px solid #ffffff;
 }
 
-.composum-nodes-usermgr-graph table tr:nth-child(even) {
+.composum-nodes-usermgr-graph table tr:nth-child(even),
+.composum-nodes-usermgr-paths table tr:nth-child(even) {
     opacity: 0.85;
 }
 
 .composum-nodes-usermgr-graph table th,
-.composum-nodes-usermgr-graph table td {
-    padding: 3px 6px;
+.composum-nodes-usermgr-graph table td,
+.composum-nodes-usermgr-paths table th,
+.composum-nodes-usermgr-paths table td {
+    padding: 2px 5px;
     vertical-align: top;
+    line-height: 23px;
+    font-size: 14px;
 }
 
 .composum-nodes-usermgr-graph table a,
-.composum-nodes-usermgr-graph table a:visited {
+.composum-nodes-usermgr-graph table a:visited,
+.composum-nodes-usermgr-paths table a,
+.composum-nodes-usermgr-paths table a:visited {
     text-decoration: none;
     color: inherit;
 }
 
-.composum-nodes-usermgr-graph table tr.group {
+.composum-nodes-usermgr-graph table tr.group,
+.composum-nodes-usermgr-paths table tr.group {
     background-color: #c6fbff;
 }
 
@@ -70,15 +85,17 @@
     background-color: #4cbac4;
 }
 
-.composum-nodes-usermgr-graph table tr.disabled {
+.composum-nodes-usermgr-graph table tr.disabled,
+.composum-nodes-usermgr-paths table tr.disabled {
     background-color: #ffc2c2;
 }
 
-.composum-nodes-usermgr-graph table tr.disabled.focus {
+.composum-nodes-usermgr-graph table tr.disabled.focus{
     background-color: #e38585;
 }
 
-.composum-nodes-usermgr-graph table tr.admin {
+.composum-nodes-usermgr-graph table tr.admin,
+.composum-nodes-usermgr-paths table tr.admin {
     background-color: #6efd9d;
 }
 
@@ -86,7 +103,8 @@
     background-color: #54c478;
 }
 
-.composum-nodes-usermgr-graph table tr.system {
+.composum-nodes-usermgr-graph table tr.system,
+.composum-nodes-usermgr-paths table tr.system {
     background-color: #dddddd;
 }
 
@@ -94,7 +112,8 @@
     background-color: #aeaeae;
 }
 
-.composum-nodes-usermgr-graph table tr.service {
+.composum-nodes-usermgr-graph table tr.service,
+.composum-nodes-usermgr-paths table tr.service {
     background-color: #e5d2ba;
 }
 
@@ -102,7 +121,8 @@
     background-color: #d6aa69;
 }
 
-.composum-nodes-usermgr-graph table tr.user {
+.composum-nodes-usermgr-graph table tr.user,
+.composum-nodes-usermgr-paths table tr.user {
     background-color: #fbffb3;
 }
 
@@ -110,20 +130,24 @@
     background-color: #fbff52;
 }
 
-.composum-nodes-usermgr-graph table td.ac-rules {
+.composum-nodes-usermgr-graph table td.ac-rules,
+.composum-nodes-usermgr-paths table td.ac-rules {
     padding: 2px 0;
 }
 
-.composum-nodes-usermgr-graph table td.ac-rules span {
+.composum-nodes-usermgr-graph table td.ac-rules span,
+.composum-nodes-usermgr-paths table td.ac-rules span {
     display: inline-block;
-    margin: 0 6px;
+    margin: 0 5px;
     white-space: nowrap;
 }
 
-.composum-nodes-usermgr-graph table .ac-rules .grant {
+.composum-nodes-usermgr-graph table .ac-rules .grant,
+.composum-nodes-usermgr-paths table .ac-rules .grant {
     color: #006600;
 }
 
-.composum-nodes-usermgr-graph table .ac-rules .deny {
+.composum-nodes-usermgr-graph table .ac-rules .deny,
+.composum-nodes-usermgr-paths table .ac-rules .deny {
     color: #880000;
 }

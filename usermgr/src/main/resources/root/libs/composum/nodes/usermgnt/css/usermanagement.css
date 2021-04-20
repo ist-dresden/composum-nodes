@@ -30,3 +30,14 @@ button.addsystemuser:hover {
 .jstree-node.systemuser .jstree-icon {
     color: #a94442;
 }
+
+/* Paths */
+
+.composum-nodes-usermgr-graph_wrapper,
+.composum-nodes-usermgr-paths_wrapper {
+    position: absolute;
+    top: 39px;
+    left: 0;
+    right: 0;
+    bottom: 41px;
+}

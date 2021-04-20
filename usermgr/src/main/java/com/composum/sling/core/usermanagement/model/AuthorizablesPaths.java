@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class AuthorizablesTable extends AuthorizablesView {
+public class AuthorizablesPaths extends AuthorizablesView {
 
     public static final Map<String, Object> DEFAULT_NODE_CFG = new HashMap<String, Object>() {{
         put("style", "filled");
@@ -23,7 +23,7 @@ public class AuthorizablesTable extends AuthorizablesView {
         put("fontsize", "10.0");
     }};
 
-    public AuthorizablesTable(@NotNull final Authorizables.Context context,
+    public AuthorizablesPaths(@NotNull final Authorizables.Context context,
                               @Nullable final String selector,
                               @Nullable final String nameQueryPattern,
                               @Nullable final String pathPattern)
@@ -32,7 +32,7 @@ public class AuthorizablesTable extends AuthorizablesView {
                 StringUtils.isNotBlank(pathPattern) ? new Authorizables.Filter.Path(pathPattern) : null);
     }
 
-    public AuthorizablesTable(@NotNull final Authorizables.Context context,
+    public AuthorizablesPaths(@NotNull final Authorizables.Context context,
                               @Nullable final Class<? extends Authorizable> selector,
                               @Nullable final String nameQueryPattern,
                               @Nullable final Authorizables.Filter filter)
@@ -40,10 +40,10 @@ public class AuthorizablesTable extends AuthorizablesView {
         super(context, selector, nameQueryPattern, filter);
     }
 
-    public void toTable(@NotNull final ResourceResolver resolver,
-                        @NotNull final Writer writer, @Nullable final Resource config,
-                        @Nullable final AuthorizablesView.NodeUrlBuilder nodeUrlBuilder,
-                        @Nullable final AuthorizablesView.PathUrlBuilder pathUrlBuilder)
+    public void toPathsTable(@NotNull final ResourceResolver resolver,
+                             @NotNull final Writer writer, @Nullable final Resource config,
+                             @Nullable final AuthorizablesView.NodeUrlBuilder nodeUrlBuilder,
+                             @Nullable final AuthorizablesView.PathUrlBuilder pathUrlBuilder)
             throws IOException {
         writer.append("<table class=\"composum-nodes-usermgr-graph_table\">\n  <tbody>\n");
         for (AuthorizableModel node : nodes.values()) {

@@ -176,6 +176,9 @@
             selector: '> .group',
             tabType: usermanagement.GroupTab
         }, {
+            selector: '> .paths',
+            tabType: usermanagement.PathsTab
+        }, {
             selector: '> .graph',
             tabType: usermanagement.GraphTab
         }, {

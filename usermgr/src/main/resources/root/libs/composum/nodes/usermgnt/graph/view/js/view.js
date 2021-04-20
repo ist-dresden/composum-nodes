@@ -4,6 +4,20 @@
 
     (function (usermanagement, graph, core) {
 
+        usermanagement.PathsTab = core.console.DetailTab.extend({
+
+            initialize: function (options) {
+                this.$graph = this.$('.composum-nodes-usermgr-paths');
+                this.$reload = this.$('.paths-toolbar .reload');
+                this.$reload.click(_.bind(this.reload, this));
+                this.reload();
+            },
+
+            reload: function (event) {
+                graph.render(undefined, usermanagement.current.node.name, undefined, 'view.paths');
+            }
+        });
+
         usermanagement.GraphTab = core.console.DetailTab.extend({
 
             initialize: function (options) {

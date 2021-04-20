@@ -43,20 +43,32 @@ window.CPM.nodes.usermgr.graph = window.CPM.nodes.usermgr.graph || {};
             params += '&path=' + encodeURIComponent(path);
         }
         params = params.replace(/^&/, '?');
-        const profile = JSON.parse(localStorage.getItem('composum.nodes.users.graph') || '{}');
-        const mode = profile.mode || 'graphviz';
-        $('.composum-nodes-usermgr-graph_body').removeClass('graphviz table').addClass(mode);
+        let mode = 'graphviz';
+        const parts = /^([^.]+)\.([^.]+)/.exec(selector);
+        if (parts) {
+            selector = parts[1];
+            mode = parts[2];
+        }
+        if (selector !== 'view') {
+            const profile = JSON.parse(localStorage.getItem('composum.nodes.users.graph') || '{}');
+            mode = profile.mode || 'graphviz';
+            $('.composum-nodes-usermgr-graph_body').removeClass('graphviz paths').addClass(mode);
+        }
         $.ajax({
             url: '/bin/cpm/users/graph.' + mode + (selector ? '.' + selector : '') + '.html' + params,
             cache: false
         }).done(function (content) {
-            const $graph = $('.composum-nodes-usermgr-graph');
+            let $canvas = $('.composum-nodes-usermgr-' + (mode === 'graphviz' ? 'graph' : 'paths'));
+            if ($canvas.length < 1) {
+                // fallback to the alternative rendering template if preferred template not found
+                $canvas = $('.composum-nodes-usermgr-' + (mode === 'graphviz' ? 'paths' : 'graph'));
+            }
             switch (mode) {
                 default:
                 case 'graphviz':
-                    const graphviz = d3.select($graph[0]).graphviz();
+                    const graphviz = d3.select($canvas[0]).graphviz();
                     graphviz.on('end', function () {
-                        const $svg = $graph.find('svg');
+                        const $svg = $canvas.find('svg');
                         const $img = $('.composum-nodes-usermgr-graph_image img');
                         if ($svg.length > 0 && $img.length > 0) {
                             try {
@@ -68,8 +80,8 @@ window.CPM.nodes.usermgr.graph = window.CPM.nodes.usermgr.graph || {};
                     });
                     graphviz.renderDot(content, callback);
                     break;
-                case'table':
-                    $graph.html(content);
+                case 'paths':
+                    $canvas.html(content);
                     break;
             }
         });

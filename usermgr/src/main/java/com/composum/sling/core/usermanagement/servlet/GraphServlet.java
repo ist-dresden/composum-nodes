@@ -2,7 +2,7 @@ package com.composum.sling.core.usermanagement.servlet;
 
 import com.composum.sling.core.usermanagement.model.AuthorizableModel;
 import com.composum.sling.core.usermanagement.model.AuthorizablesGraph;
-import com.composum.sling.core.usermanagement.model.AuthorizablesTable;
+import com.composum.sling.core.usermanagement.model.AuthorizablesPaths;
 import com.composum.sling.core.usermanagement.service.Authorizables;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.codec.EncoderException;
@@ -90,13 +90,13 @@ public class GraphServlet extends SlingSafeMethodsServlet {
                                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
                             }
                             return;
-                        case "table":
+                        case "paths":
                             try {
                                 final String context = selectors.length > 1 ? selectors[1] : "page";
                                 Resource config = resolver.getResource(COMPONENT_BASE + context + "/" + JcrConstants.JCR_CONTENT);
-                                final AuthorizablesTable table = getTable(request, response);
+                                final AuthorizablesPaths paths = getPaths(request, response);
                                 response.setContentType("text/html;charset=UTF-8");
-                                table.toTable(resolver, response.getWriter(), config,
+                                paths.toPathsTable(resolver, response.getWriter(), config,
                                         node -> nodeUrl(request, context, node),
                                         (node, path) -> pathUrl(request, context, node, path));
                             } catch (RepositoryException ex) {
@@ -108,8 +108,10 @@ public class GraphServlet extends SlingSafeMethodsServlet {
                             option = "page";
                         case "page":
                         case "view":
+                            final String context = selectors.length > 1 ? selectors[1] : "";
                             final RequestDispatcherOptions options = new RequestDispatcherOptions();
                             options.setForceResourceType("composum/nodes/usermgnt/graph/" + option);
+                            options.setReplaceSelectors(context);
                             final RequestDispatcher dispatcher =
                                     request.getRequestDispatcher(request.getResource(), options);
                             if (dispatcher != null) {
@@ -142,20 +144,20 @@ public class GraphServlet extends SlingSafeMethodsServlet {
         return new AuthorizablesGraph(new Authorizables.Context(authorizablesService, request, response), type, name, path);
     }
 
-    protected AuthorizablesTable getTable(@NotNull final SlingHttpServletRequest request,
+    protected AuthorizablesPaths getPaths(@NotNull final SlingHttpServletRequest request,
                                           @NotNull final SlingHttpServletResponse response)
             throws RepositoryException {
         String type = xssFilter.filter(request.getParameter("type"));
         String name = xssFilter.filter(request.getParameter("name"));
         String path = xssFilter.filter(request.getParameter("path"));
-        return new AuthorizablesTable(new Authorizables.Context(authorizablesService, request, response), type, name, path);
+        return new AuthorizablesPaths(new Authorizables.Context(authorizablesService, request, response), type, name, path);
     }
 
     protected String nodeUrl(@NotNull final SlingHttpServletRequest request,
                              @NotNull final String option, @NotNull final AuthorizableModel node) {
-        StringBuilder url = new StringBuilder();
+        StringBuilder url = new StringBuilder(request.getContextPath());
         try {
-            StringBuilder params = new StringBuilder(request.getContextPath());
+            StringBuilder params = new StringBuilder();
             switch (option) {
                 default:
                 case "page":
@@ -183,7 +185,7 @@ public class GraphServlet extends SlingSafeMethodsServlet {
 
     protected String pathUrl(@NotNull final SlingHttpServletRequest request, @NotNull final String option,
                              @NotNull final AuthorizableModel node, @NotNull final String path) {
-        StringBuilder url = new StringBuilder();
+        StringBuilder url = new StringBuilder(request.getContextPath());
         switch (option) {
             default:
             case "page":
