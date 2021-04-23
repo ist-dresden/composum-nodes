@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class AuthorizablesGraph extends AuthorizablesView {
+public class AuthorizablesGraph extends AuthorizablesMap {
 
     public static final Map<String, Object> DEFAULT_NODE_CFG = new HashMap<String, Object>() {{
         put("style", "filled");
@@ -50,7 +50,7 @@ public class AuthorizablesGraph extends AuthorizablesView {
     }
 
     public void toGraphviz(@NotNull final Writer writer,
-                           @Nullable final Resource config, @Nullable final AuthorizablesView.NodeUrlBuilder urlBuilder)
+                           @Nullable final Resource config, @Nullable final AuthorizablesMap.NodeUrlBuilder urlBuilder)
             throws IOException {
         writer.append("digraph {\n");
         writeConfig(writer, config, "graph", null);

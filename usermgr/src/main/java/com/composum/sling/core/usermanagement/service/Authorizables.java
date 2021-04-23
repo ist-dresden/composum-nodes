@@ -29,7 +29,7 @@ public interface Authorizables {
     Map<String, Class<? extends Authorizable>> SELECTORS = new HashMap<String, Class<? extends Authorizable>>() {{
         put("user", User.class);
         put("group", Group.class);
-        put("service", Service.class);
+        put("service", ServiceUser.class);
     }};
 
     static @Nullable Class<? extends Authorizable> selector(@Nullable final String key) {

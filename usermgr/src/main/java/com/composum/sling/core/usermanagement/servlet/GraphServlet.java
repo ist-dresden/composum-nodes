@@ -141,7 +141,8 @@ public class GraphServlet extends SlingSafeMethodsServlet {
         String type = xssFilter.filter(request.getParameter("type"));
         String name = xssFilter.filter(request.getParameter("name"));
         String path = xssFilter.filter(request.getParameter("path"));
-        return new AuthorizablesGraph(new Authorizables.Context(authorizablesService, request, response), type, name, path);
+        return new AuthorizablesGraph(new Authorizables.Context(authorizablesService, request, response),
+                type, name, path);
     }
 
     protected AuthorizablesPaths getPaths(@NotNull final SlingHttpServletRequest request,
@@ -150,7 +151,9 @@ public class GraphServlet extends SlingSafeMethodsServlet {
         String type = xssFilter.filter(request.getParameter("type"));
         String name = xssFilter.filter(request.getParameter("name"));
         String path = xssFilter.filter(request.getParameter("path"));
-        return new AuthorizablesPaths(new Authorizables.Context(authorizablesService, request, response), type, name, path);
+        String text = xssFilter.filter(request.getParameter("text"));
+        return new AuthorizablesPaths(new Authorizables.Context(authorizablesService, request, response),
+                type, name, path, text);
     }
 
     protected String nodeUrl(@NotNull final SlingHttpServletRequest request,

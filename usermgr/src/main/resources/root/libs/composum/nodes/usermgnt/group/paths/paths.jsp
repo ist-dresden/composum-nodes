@@ -12,7 +12,7 @@
                 </button--%>
             </div>
         </div>
-        <div class="graph-container">
+        <div class="paths-container">
             <sling:include resourceType="composum/nodes/usermgnt/graph/view" replaceSelectors="paths"/>
         </div>
     </div>

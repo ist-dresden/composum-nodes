@@ -1,6 +1,7 @@
 package com.composum.sling.core.usermanagement.model;
 
 import com.composum.sling.core.usermanagement.service.Authorizables;
+import com.composum.sling.core.usermanagement.service.ServiceUser;
 import com.google.gson.stream.JsonWriter;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
@@ -12,13 +13,26 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 public abstract class AuthorizableModel implements Serializable, Comparable<AuthorizableModel> {
 
+    public static final String TYPE_GROUP = "group";
+    public static final String TYPE_USER = "user";
+    public static final String TYPE_SERVICE = "service";
+
+    public static final Map<String, String> TYPE_TO_ICON = new HashMap<String, String>() {{
+        put(TYPE_GROUP, "users");
+        put(TYPE_USER, "user");
+        put(TYPE_SERVICE, "cog");
+    }};
+
+    protected final String type;
     protected final String id;
     protected final String path;
     protected final String principalName;
@@ -28,9 +42,13 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
 
     protected final Authorizables.Context context;
 
+    private transient Collection<GroupModel> modelOf;
+    private transient Collection<GroupModel> declaredModelOf;
+
     protected AuthorizableModel(@NotNull final Authorizables.Context context,
                                 @NotNull final Authorizable authorizable) throws RepositoryException {
         this.context = context;
+        type = getType(authorizable);
         id = authorizable.getID();
         path = authorizable.getPath();
         principalName = authorizable.getPrincipal().getName();
@@ -41,6 +59,14 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
     public abstract boolean isGroup();
 
     public abstract void toJson(JsonWriter writer) throws IOException;
+
+    public @NotNull String getType() {
+        return type;
+    }
+
+    public @NotNull String getTypeIcon() {
+        return TYPE_TO_ICON.get(getType());
+    }
 
     public @NotNull String getId() {
         return id;
@@ -65,26 +91,21 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
     }
 
     @NotNull
-    public Collection<GroupModel> getGroupsOf(@NotNull final Authorizables.Context context)
+    public Collection<GroupModel> getModelOf()
             throws RepositoryException {
-        return getGroups(context, getMemberOf());
-    }
-
-    @NotNull
-    public Collection<GroupModel> getDeclaredGroupsOf(@NotNull final Authorizables.Context context)
-            throws RepositoryException {
-        return getGroups(context, getDeclaredMemberOf());
-    }
-
-    @NotNull
-    public static Collection<UserModel> getUsers(@NotNull final Authorizables.Context context,
-                                                 @NotNull final Set<String> idSet)
-            throws RepositoryException {
-        List<UserModel> result = new ArrayList<>();
-        for (User jcrUser : context.getService().loadAuthorizables(context, User.class, idSet)) {
-            result.add(new UserModel(context, jcrUser));
+        if (modelOf == null) {
+            modelOf = getGroups(context, getMemberOf());
         }
-        return result;
+        return modelOf;
+    }
+
+    @NotNull
+    public Collection<GroupModel> getDeclaredModelOf()
+            throws RepositoryException {
+        if (declaredModelOf == null) {
+            declaredModelOf = getGroups(context, getDeclaredMemberOf());
+        }
+        return declaredModelOf;
     }
 
     @Override
@@ -105,7 +126,20 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
     }
 
     protected String getKey() {
-        return (isGroup() ? "0:" : "1:") + getId();
+        return getRank() + ':' + getId();
+    }
+
+    protected abstract int getRank();
+
+    @NotNull
+    public static Collection<UserModel> getUsers(@NotNull final Authorizables.Context context,
+                                                 @NotNull final Set<String> idSet)
+            throws RepositoryException {
+        List<UserModel> result = new ArrayList<>();
+        for (User jcrUser : context.getService().loadAuthorizables(context, User.class, idSet)) {
+            result.add(new UserModel(context, jcrUser));
+        }
+        return result;
     }
 
     @NotNull
@@ -120,6 +154,23 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
     }
 
     @NotNull
+    public static Collection<AuthorizableModel> getModels(@NotNull final Authorizables.Context context,
+                                                          @NotNull final Set<String> idSet)
+            throws RepositoryException {
+        List<AuthorizableModel> result = new ArrayList<>();
+        for (Authorizable authorizable : context.getService().loadAuthorizables(context, Authorizable.class, idSet)) {
+            if (authorizable instanceof Group) {
+                result.add(new GroupModel(context, (Group) authorizable));
+            } else if (authorizable instanceof User) {
+                result.add(new UserModel(context, (User) authorizable));
+            } else if (authorizable instanceof ServiceUser) {
+                result.add(new ServiceUserModel(context, (ServiceUser) authorizable));
+            }
+        }
+        return result;
+    }
+
+    @NotNull
     protected static Set<String> stripIDs(@NotNull final Iterator<? extends Authorizable> authorizableIterator)
             throws RepositoryException {
         Set<String> idSet = new TreeSet<>();
@@ -128,5 +179,15 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
             idSet.add(authorizable.getID());
         }
         return idSet;
+    }
+
+    protected static String getType(@NotNull final Authorizable authorizable) {
+        if (authorizable instanceof Group) {
+            return TYPE_GROUP;
+        } else if (authorizable instanceof ServiceUser) {
+            return TYPE_SERVICE;
+        } else {
+            return TYPE_USER;
+        }
     }
 }

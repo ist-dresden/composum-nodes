@@ -5,6 +5,9 @@ import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
+import com.composum.sling.core.usermanagement.model.AuthorizablesTree;
+import com.composum.sling.core.usermanagement.model.TreeNode;
+import com.composum.sling.core.usermanagement.service.Authorizables;
 import com.composum.sling.core.util.ResponseUtil;
 import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
@@ -13,12 +16,18 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.user.*;
+import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.security.user.Query;
+import org.apache.jackrabbit.api.security.user.QueryBuilder;
+import org.apache.jackrabbit.api.security.user.User;
+import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -37,7 +46,13 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Mirko Zeibig
@@ -69,6 +84,9 @@ public class UserManagementServlet extends AbstractServiceServlet {
     @Reference
     private NodesConfiguration coreConfig;
 
+    @Reference
+    protected Authorizables authorizablesService;
+
     @Override
     protected boolean isEnabled() {
         return coreConfig.isEnabled(this);
@@ -86,7 +104,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.groups, new GetGroups());
         // curl -u admin:admin http://localhost:9090/bin/cpm/usermanagement.group.json/mygroup
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.group, new GetGroup());
-        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.tree, new GetTree());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.tree, new GetAuthrizablesTree());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.properties, new GetProperties());
         // curl -u admin:admin http://localhost:9090/bin/cpm/usermanagement.groupsofauthorizable.json/eeee
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json, Operation.groupsofauthorizable, new GetGroupsOfAuthorizable());
@@ -363,6 +381,28 @@ public class UserManagementServlet extends AbstractServiceServlet {
             final Group group = (Group) userManager.getAuthorizable(groupName);
             group.removeMember(authorizable);
             session.save();
+        }
+    }
+
+    public class GetAuthrizablesTree implements ServletOperation {
+
+        @Override
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response, ResourceHandle resource)
+                throws RepositoryException, IOException {
+            final ResourceResolver resolver = request.getResourceResolver();
+            final Authorizables.Context context = new Authorizables.Context(authorizablesService, request, response);
+            String path = AbstractServiceServlet.getPath(request);
+            if (StringUtils.isBlank(path) || "/".equals(path)) {
+                path = "/home";
+            }
+            final AuthorizablesTree tree = new AuthorizablesTree(context, null, null, "^" + path);
+            TreeNode node = tree.getRootNode().getNode(path);
+            if (node != null) {
+                try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
+                    node.toJson(jsonWriter, false);
+                }
+            }
         }
     }
 

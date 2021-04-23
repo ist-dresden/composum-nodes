@@ -16,9 +16,9 @@ import java.util.Set;
 /**
  * an Authorizable facade to represent a service user (bundle or subservice) as a member of an Authorizable set
  */
-public class Service implements Authorizable {
+public class ServiceUser implements Authorizable {
 
-    public static final String SERVICE_USER_ROOT = "/home/service";
+    public static final String SERVICE_USER_ROOT = "/home/services";
 
     public class ServicePrincipal implements Principal {
 
@@ -28,6 +28,9 @@ public class Service implements Authorizable {
         }
     }
 
+    protected final String serviceName;
+    protected final String serviceInfo;
+
     protected final String id;
     protected final String path;
     protected final Mapping mapping;
@@ -36,10 +39,10 @@ public class Service implements Authorizable {
     private transient Set<Group> declaredMemberOf;
     private transient Set<Group> memberOf;
 
-    public Service(Authorizables.Context context, Mapping mapping) throws RepositoryException {
+    public ServiceUser(Authorizables.Context context, Mapping mapping) throws RepositoryException {
         this.mapping = mapping;
-        String serviceName = mapping.getServiceName();
-        String serviceInfo = mapping.getSubServiceName();
+        serviceName = mapping.getServiceName();
+        serviceInfo = mapping.getSubServiceName();
         if (StringUtils.isNotBlank(serviceInfo)) {
             id = serviceName + ":" + serviceInfo;
             path = SERVICE_USER_ROOT + "/" + serviceName.replace('.', '/') + "/" + serviceInfo;
@@ -62,7 +65,7 @@ public class Service implements Authorizable {
             if (StringUtils.isNotBlank(user)) {
                 authorizable = context.getService().getAuthorizable(context, user);
                 if (authorizable != null) {
-                    declaredMemberOf.add(new GroupFacade(authorizable));
+                    declaredMemberOf.add(new GroupFacade(authorizable, this));
                 }
             }
             Iterable<String> principals = mapping.mapPrincipals(mapping.getServiceName(), mapping.getSubServiceName());
@@ -70,7 +73,7 @@ public class Service implements Authorizable {
                 for (String principal : principals) {
                     authorizable = context.getService().getAuthorizable(context, principal);
                     if (authorizable != null) {
-                        declaredMemberOf.add(new GroupFacade(authorizable));
+                        declaredMemberOf.add(new GroupFacade(authorizable, this));
                     }
                 }
             }
@@ -82,6 +85,14 @@ public class Service implements Authorizable {
                 }
             }
         }
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public String getServiceInfo() {
+        return serviceInfo;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.composum.sling.core.usermanagement.service.impl;
 
 import com.composum.sling.core.usermanagement.service.Authorizables;
-import com.composum.sling.core.usermanagement.service.Service;
+import com.composum.sling.core.usermanagement.service.ServiceUser;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Query;
@@ -45,8 +45,8 @@ public class AuthorizablesImpl implements Authorizables {
             if (authorizable != null) {
                 context.getAuthorizables().put(id, authorizable);
             }
-            if (authorizable instanceof Service) {
-                ((Service) authorizable).initialize(context);
+            if (authorizable instanceof ServiceUser) {
+                ((ServiceUser) authorizable).initialize(context);
             }
         }
         return authorizable;
@@ -100,7 +100,7 @@ public class AuthorizablesImpl implements Authorizables {
                                                        @Nullable final Class<? extends Authorizable> selector,
                                                        @Nullable final String nameQueryPattern)
             throws RepositoryException {
-        if (selector == null || !selector.equals(Service.class)) {
+        if (selector == null || !selector.equals(ServiceUser.class)) {
             UserManager userManager = context.getUserManager();
             if (userManager != null) {
                 final Query authorizableQuery = new Query() {
@@ -121,18 +121,18 @@ public class AuthorizablesImpl implements Authorizables {
     }
 
     @NotNull
-    protected List<Service> findServiceUsers(@NotNull final Context context,
-                                             @Nullable final Class<? extends Authorizable> selector,
-                                             @Nullable final String nameQueryPattern)
+    protected List<ServiceUser> findServiceUsers(@NotNull final Context context,
+                                                 @Nullable final Class<? extends Authorizable> selector,
+                                                 @Nullable final String nameQueryPattern)
             throws RepositoryException {
-        List<Service> serviceUsers = new ArrayList<>();
-        if (selector == null || selector.equals(Service.class)) {
+        List<ServiceUser> serviceUsers = new ArrayList<>();
+        if (selector == null || selector.equals(ServiceUser.class)) {
             Pattern namePattern = StringUtils.isNotBlank(nameQueryPattern)
                     ? Pattern.compile("^" + nameQueryPattern.replaceAll("%", ".*") + "$")
                     : null;
             List<Mapping> mappings = serviceUserMapper.getActiveMappings();
             for (Mapping mapping : mappings) {
-                Service service = new Service(context, mapping);
+                ServiceUser service = new ServiceUser(context, mapping);
                 if (namePattern == null || namePattern.matcher(service.getID()).matches()) {
                     service.initialize(context);
                     serviceUsers.add(service);
@@ -143,11 +143,11 @@ public class AuthorizablesImpl implements Authorizables {
     }
 
     @Nullable
-    protected Service getServiceUser(@NotNull final Context context, @NotNull final String id)
+    protected ServiceUser getServiceUser(@NotNull final Context context, @NotNull final String id)
             throws RepositoryException {
         List<Mapping> mappings = serviceUserMapper.getActiveMappings();
         for (Mapping mapping : mappings) {
-            Service service = new Service(context, mapping);
+            ServiceUser service = new ServiceUser(context, mapping);
             if (id.equals(service.getID())) {
                 return service;
             }

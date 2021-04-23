@@ -5,39 +5,49 @@ import org.apache.jackrabbit.api.security.user.Group;
 import org.jetbrains.annotations.NotNull;
 
 import javax.jcr.RepositoryException;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.Value;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * represents an authorizable as a group; used to construct a service user as a member of the assigned system users
+ */
 public class GroupFacade implements Group {
 
     protected final Authorizable delegate;
+    protected final Authorizable member;
 
-    public GroupFacade(@NotNull final Authorizable delegate) {
+    public GroupFacade(@NotNull final Authorizable delegate, @NotNull final Authorizable member) {
         this.delegate = delegate;
+        this.member = member;
     }
 
     @Override
     public Iterator<Authorizable> getDeclaredMembers() throws RepositoryException {
-        return delegate instanceof Group ? ((Group) delegate).getDeclaredMembers() : Collections.emptyIterator();
+        return delegate instanceof Group
+                ? ((Group) delegate).getDeclaredMembers()
+                : Collections.singleton(member).iterator();
     }
 
     @Override
     public Iterator<Authorizable> getMembers() throws RepositoryException {
-        return delegate instanceof Group ? ((Group) delegate).getMembers() : Collections.emptyIterator();
+        return delegate instanceof Group
+                ? ((Group) delegate).getMembers()
+                : Collections.singleton(member).iterator();
     }
 
     @Override
     public boolean isDeclaredMember(Authorizable authorizable) throws RepositoryException {
-        return delegate instanceof Group && ((Group) delegate).isDeclaredMember(authorizable);
+        return authorizable.equals(member) ||
+                (delegate instanceof Group && ((Group) delegate).isDeclaredMember(authorizable));
     }
 
     @Override
     public boolean isMember(Authorizable authorizable) throws RepositoryException {
-        return delegate instanceof Group && ((Group) delegate).isMember(authorizable);
+        return authorizable.equals(member) ||
+                (delegate instanceof Group && ((Group) delegate).isMember(authorizable));
     }
 
     @Override
@@ -126,7 +136,7 @@ public class GroupFacade implements Group {
     }
 
     @Override
-    public String getPath() throws UnsupportedRepositoryOperationException, RepositoryException {
+    public String getPath() throws RepositoryException {
         return delegate.getPath();
     }
 }

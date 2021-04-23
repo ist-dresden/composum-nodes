@@ -45,6 +45,9 @@
                 console.components.SplitView.prototype.initialize.apply(this, [options]);
                 $(document).on('path:select', _.bind(this.onPathSelect, this));
                 $(document).on('path:selected', _.bind(this.onPathSelected, this));
+                $(document).on('path:changed', _.bind(this.onReloadTriggered, this));
+                $(document).on('path:deleted', _.bind(this.onReloadTriggered, this));
+                $(document).on('detail:reload', _.bind(this.onReloadTriggered, this));
                 core.unauthorizedDelegate = core.console.authorize;
             },
 
@@ -59,6 +62,13 @@
                 usermanagement.tree.selectNode(path, _.bind(function (path) {
                     usermanagement.treeActions.refreshNodeState();
                 }, this));
+            },
+
+            onReloadTriggered: function (event, path) {
+                if (!usermanagement.detailView.busy) {
+                    usermanagement.treeActions.refreshNodeState();
+                    usermanagement.detailView.reload();
+                }
             }
         });
 
@@ -70,9 +80,10 @@
 
             initialize: function (options) {
                 this.initialSelect = this.$el.attr('data-selected');
-                if (!this.initialSelect || this.initialSelect == '/') {
-                    this.initialSelect = core.console.getProfile().get('usermanagement', 'current', "/");
+                if (!this.initialSelect || this.initialSelect === '/' || this.initialSelect === '/home') {
+                    this.initialSelect = core.console.getProfile().get('usermanagement', 'current', "/home");
                 }
+                this.rootPath = '/home';
                 core.components.Tree.prototype.initialize.apply(this, [options]);
             },
 
@@ -91,7 +102,6 @@
                 }
                 return node;
             }
-
         });
 
         usermanagement.tree = core.getView('#usermanagement-tree', usermanagement.Tree);
@@ -120,7 +130,6 @@
             },
 
             reload: function () {
-                //this.table.loadContent();
             },
 
             addUser: function (event) {
@@ -139,7 +148,6 @@
                 dialog.show(function () {
                     dialog.setUser(path);
                 }, _.bind(this.reload, this));
-
             },
 
             addGroup: function (event) {
@@ -151,12 +159,20 @@
 
         usermanagement.treeActions = core.getView('.tree-actions', usermanagement.TreeActions);
 
-
         //
         // detail view (console)
         //
 
         usermanagement.detailViewTabTypes = [{
+            selector: '> .group',
+            tabType: usermanagement.GroupTab
+        }, {
+            selector: '> .service-user',
+            tabType: usermanagement.ServiceUserTab
+        }, {
+            selector: '> .system-user',
+            tabType: usermanagement.SystemUserTab
+        }, {
             selector: '> .user',
             tabType: usermanagement.UserTab
         }, {
@@ -172,9 +188,6 @@
         }, {
             selector: '> .members',
             tabType: usermanagement.MembersTab
-        }, {
-            selector: '> .group',
-            tabType: usermanagement.GroupTab
         }, {
             selector: '> .paths',
             tabType: usermanagement.PathsTab
@@ -217,7 +230,7 @@
             }
         });
 
-        usermanagement.DetailView = core.getView('#usermanagement-view', usermanagement.DetailView);
+        usermanagement.detailView = core.getView('#usermanagement-view', usermanagement.DetailView);
 
     })(CPM.nodes.usermanagement, CPM.console, CPM.core);
 

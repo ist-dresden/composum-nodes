@@ -9,15 +9,21 @@ import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class UserModel extends AuthorizableModel {
+
+    private static final Logger LOG = LoggerFactory.getLogger(UserModel.class);
 
     protected final ValueMap values;
 
@@ -25,6 +31,8 @@ public class UserModel extends AuthorizableModel {
     protected final boolean systemUser;
     protected final boolean disabled;
     protected final String disabledReason;
+
+    private transient Collection<AuthorizableModel> serviceUsers;
 
     public UserModel(@NotNull final Authorizables.Context context,
                      @NotNull final User jcrUser)
@@ -63,8 +71,18 @@ public class UserModel extends AuthorizableModel {
     }
 
     @Override
+    protected int getRank() {
+        return 1;
+    }
+
+    @Override
     public boolean isGroup() {
         return false;
+    }
+
+    @Override
+    public @NotNull String getTypeIcon() {
+        return isSystemUser() && !isServiceUser() ? "user-o" : TYPE_TO_ICON.get(getType());
     }
 
     public boolean isAdmin() {
@@ -85,6 +103,21 @@ public class UserModel extends AuthorizableModel {
 
     public @Nullable String getDisabledReason() {
         return disabledReason;
+    }
+
+    public Collection<AuthorizableModel> getServiceUsers() {
+        if (serviceUsers == null) {
+            serviceUsers = new ArrayList<>();
+            try {
+                AuthorizablesRefs refs = new AuthorizablesRefs(context, null, getId());
+                for (AuthorizablesMap.Relation relation : refs.sourceRelations) {
+                    serviceUsers.add(relation.source);
+                }
+            } catch (RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+            }
+        }
+        return serviceUsers;
     }
 
     public void toJson(JsonWriter writer) throws IOException {

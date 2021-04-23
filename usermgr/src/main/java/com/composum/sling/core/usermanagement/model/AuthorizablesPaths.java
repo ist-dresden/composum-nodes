@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class AuthorizablesPaths extends AuthorizablesView {
+public class AuthorizablesPaths extends AuthorizablesMap {
 
     public static final Map<String, Object> DEFAULT_NODE_CFG = new HashMap<String, Object>() {{
         put("style", "filled");
@@ -23,21 +23,27 @@ public class AuthorizablesPaths extends AuthorizablesView {
         put("fontsize", "10.0");
     }};
 
+    protected final String textPattern;
+
     public AuthorizablesPaths(@NotNull final Authorizables.Context context,
                               @Nullable final String selector,
                               @Nullable final String nameQueryPattern,
-                              @Nullable final String pathPattern)
+                              @Nullable final String pathPattern,
+                              @Nullable final String textPattern)
             throws RepositoryException {
         this(context, Authorizables.selector(selector), nameQueryPattern,
-                StringUtils.isNotBlank(pathPattern) ? new Authorizables.Filter.Path(pathPattern) : null);
+                StringUtils.isNotBlank(pathPattern) ? new Authorizables.Filter.Path(pathPattern) : null,
+                textPattern);
     }
 
     public AuthorizablesPaths(@NotNull final Authorizables.Context context,
                               @Nullable final Class<? extends Authorizable> selector,
                               @Nullable final String nameQueryPattern,
-                              @Nullable final Authorizables.Filter filter)
+                              @Nullable final Authorizables.Filter filter,
+                              @Nullable final String textPattern)
             throws RepositoryException {
         super(context, selector, nameQueryPattern, filter);
+        this.textPattern = textPattern;
     }
 
     public void toPathsTable(@NotNull final ResourceResolver resolver,

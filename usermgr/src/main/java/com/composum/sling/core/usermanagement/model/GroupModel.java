@@ -15,11 +15,21 @@ public class GroupModel extends AuthorizableModel {
     protected final Set<String> members;
     protected final Set<String> declaredMembers;
 
+    private transient Collection<UserModel> users;
+    private transient Collection<UserModel> declaredUsers;
+    private transient Collection<GroupModel> groups;
+    private transient Collection<GroupModel> declaredGroups;
+
     public GroupModel(@NotNull final Authorizables.Context context,
                       @NotNull final Group jcrGroup) throws RepositoryException {
         super(context, jcrGroup);
         members = stripIDs(jcrGroup.getMembers());
         declaredMembers = stripIDs(jcrGroup.getDeclaredMembers());
+    }
+
+    @Override
+    protected int getRank() {
+        return 3;
     }
 
     @Override
@@ -38,27 +48,39 @@ public class GroupModel extends AuthorizableModel {
     }
 
     @NotNull
-    public Collection<UserModel> getUsers(@NotNull final Authorizables.Context context)
+    public Collection<UserModel> getUsers()
             throws RepositoryException {
-        return getUsers(context, getMembers());
+        if (users == null) {
+            users = getUsers(context, getMembers());
+        }
+        return users;
     }
 
     @NotNull
-    public Collection<UserModel> getDeclaredUsers(@NotNull final Authorizables.Context context)
+    public Collection<UserModel> getDeclaredUsers()
             throws RepositoryException {
-        return getUsers(context, getDeclaredMembers());
+        if (declaredUsers == null) {
+            declaredUsers = getUsers(context, getDeclaredMembers());
+        }
+        return declaredUsers;
     }
 
     @NotNull
-    public Collection<GroupModel> getGroups(@NotNull final Authorizables.Context context)
+    public Collection<GroupModel> getGroups()
             throws RepositoryException {
-        return getGroups(context, getMembers());
+        if (groups == null) {
+            groups = getGroups(context, getMembers());
+        }
+        return groups;
     }
 
     @NotNull
-    public Collection<GroupModel> getDeclaredGroups(@NotNull final Authorizables.Context context)
+    public Collection<GroupModel> getDeclaredGroups()
             throws RepositoryException {
-        return getGroups(context, getDeclaredMembers());
+        if (declaredGroups == null) {
+            declaredGroups = getGroups(context, getDeclaredMembers());
+        }
+        return declaredGroups;
     }
 
     public void toJson(JsonWriter writer) throws IOException {

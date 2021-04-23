@@ -1,3 +1,36 @@
+
+.btn.btn-default.fa-users {
+    color: #666;
+}
+
+/******/
+
+#usermanagement .user-table td.name {
+    min-width: 200px;
+}
+
+#usermanagement .blank.detail-panel .general {
+    visibility: hidden;
+}
+
+/*
+ * Tree / Tree Actions
+ */
+
+button.addsystemuser,
+button.addsystemuser:focus,
+button.addsystemuser:hover {
+    color: #31708f; /* info */
+}
+
+.jstree-node.systemuser .jstree-icon {
+    color: #31708f; /* info */
+}
+
+.jstree-node.systemuser .jstree-icon.fa-user:before {
+    content: '\f2c0' /* fa-user-o */
+}
+
 /**
  * Query Panel
  */
@@ -11,33 +44,126 @@
     color: #a94442;
 }
 
-/******/
+/*
+ * Authorizable
+ */
 
-#usermanagement .user-table td.name {
-    min-width: 200px;
+.authorizable {
+    padding: 10px;
 }
 
-#usermanagement .blank.detail-panel .general {
-    visibility: hidden;
+.authorizable .top-panel {
+    margin-bottom: 20px;
 }
 
-button.addsystemuser,
-button.addsystemuser:focus,
-button.addsystemuser:hover {
-    color: #a94442;
+.authorizable .headline {
+    display: flex;
 }
 
-.jstree-node.systemuser .jstree-icon {
-    color: #a94442;
+.authorizable .title {
+    font-size: 20px;
 }
 
-/* Paths */
+.authorizable .title {
+    flex-grow: 1;
+    align-self: flex-end;
+    margin: 0;
+    font-weight: bold;
+    color: #31708f; /* info */
+}
+
+.authorizable .status {
+    width: 100px;
+    margin: 0;
+}
+
+.authorizable .status .indicator {
+    display: inline-block;
+    line-height: 27px;
+    font-size: 20px;
+    color: #3c763d; /* success */
+}
+
+.authorizable .status .indicator.system {
+    color: #ccc;
+}
+
+.authorizable .status .indicator.disabled {
+    color: #a94442; /* danger */
+}
+
+.authorizable .disabled-reason {
+    display: inline-block;
+    margin: 0;
+    font-style: italic;
+    color: #a94442; /* danger */
+}
+
+.authorizable .profile-name {
+    margin: 10px 0 15px;
+    font-size: 18px;
+    color: #777; /* muted */
+}
+
+.authorizable .info-panel .profile,
+.authorizable .info-panel .members,
+.authorizable .info-panel .groups {
+    border-left: 1px solid #ccc;
+    padding-left: 10px;
+}
+
+.authorizable .info-panel .members ul,
+.authorizable .info-panel .groups ul {
+    margin: 5px 0;
+    padding-left: 10px;
+    list-style: none;
+}
+
+.authorizable .info-panel .reference .fa {
+    width: 20px;
+    font-size: 12px;
+}
+
+.authorizable .empty-message {
+    font-style: italic;
+    color: #777 /* muted */
+}
+
+.authorizable .label {
+    display: block;
+    padding: 0;
+    margin-bottom: 5px;
+    text-align: left;
+    font-weight: bold;
+    color: #777; /* muted */
+}
+
+.authorizable .profile .property {
+    margin: 5px 0 10px;
+}
+
+.authorizable .profile .property .value {
+    margin: 0 0 0 15px;
+}
+
+/*
+ * Paths
+ */
 
 .composum-nodes-usermgr-graph_wrapper,
 .composum-nodes-usermgr-paths_wrapper {
     position: absolute;
-    top: 39px;
+    top: 40px;
     left: 0;
     right: 0;
-    bottom: 41px;
+    bottom: 42px;
+}
+
+/*
+ * Dialogs
+ */
+
+.form-group.approve .name {
+    font-weight: bold;
+    color: #31708f; /* info */
 }

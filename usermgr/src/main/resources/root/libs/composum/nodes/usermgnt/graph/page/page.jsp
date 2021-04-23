@@ -11,10 +11,11 @@
 <h3 class="composum-nodes-usermgr-graph_mode">Authorizables
     <a href="#" class="graphviz">Graph</a> / <a href="#" class="paths" title="Affected Paths">Paths</a>
 </h3>
-    <%
+<%
     String type = slingRequest.getParameter("type");
     String name = slingRequest.getParameter("name");
     String path = slingRequest.getParameter("path");
+    String text = slingRequest.getParameter("text");
 %>
 <form action="/bin/cpm/users/graph.page.html" method="GET"
       class="composum-nodes-usermgr-graph_page-form">
@@ -52,6 +53,7 @@
             <%= type != null ? "'" + type + "'" : "''"%>,
             <%= name != null ? "'" + name + "'" : "''"%>,
             <%= path != null ? "'" + path + "'" : "''"%>,
+            <%= text != null ? "'" + text + "'" : "''"%>,
             "page"
         );
     });
