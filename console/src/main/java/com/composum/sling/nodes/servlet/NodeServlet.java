@@ -135,12 +135,12 @@ public class NodeServlet extends NodeTreeServlet {
     @Reference
     protected NodesConfiguration nodesConfig;
 
-    protected Map<String, ResourceFilter> nodeFilters = new LinkedHashMap<>();
+    protected final Map<String, ResourceFilter> nodeFilters = new LinkedHashMap<>();
 
     /**
      * injection of the filter configurations provided by the OSGi configuration
      */
-    protected List<FilterConfiguration> filterConfigurations = new ArrayList<>();
+    protected final List<FilterConfiguration> filterConfigurations = new ArrayList<>();
 
     /**
      * for each configured filter in the OSGi configuration
