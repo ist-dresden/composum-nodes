@@ -56,10 +56,15 @@ public class AuthorizablesImpl implements Authorizables {
     @NotNull
     public Set<Authorizable> findAuthorizables(@NotNull final Context context,
                                                @Nullable final Class<? extends Authorizable> selector,
-                                               @Nullable final String nameQueryPattern,
+                                               @Nullable String nameQueryPattern,
                                                @Nullable final Filter filter)
             throws RepositoryException {
         Set<Authorizable> result = new HashSet<>();
+        if (StringUtils.isNotBlank(nameQueryPattern)) {
+            nameQueryPattern = nameQueryPattern
+                    .replaceAll("\\.\\*", "%")
+                    .replace('*', '%');
+        }
         UserManager userManager = context.getUserManager();
         if (userManager != null) {
             Iterator<Authorizable> iterator = findAuthorizables(context, selector, nameQueryPattern);

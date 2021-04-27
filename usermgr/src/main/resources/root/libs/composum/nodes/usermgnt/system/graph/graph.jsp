@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component var="user" type="com.composum.sling.core.usermanagement.view.User" scope="request">
-    <div class="graph detail-panel">
+    <div class="graph detail-tab">
         <div class="graph-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
                 <button class="toggle-image fa fa-image btn btn-default" title="Toggle SVG Image view"><span

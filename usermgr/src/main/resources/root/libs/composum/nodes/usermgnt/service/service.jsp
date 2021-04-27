@@ -12,7 +12,7 @@
                 <a class="graph fa fa-map-o btn btn-default" href="#graph" data-group="view" title="Graph"><span class="label">Graph</span></a>
             </div>
         </div>
-    </div>
-    <div class="detail-content">
+        <div class="detail-content">
+        </div>
     </div>
 </cpn:component>

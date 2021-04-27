@@ -44,27 +44,32 @@ window.CPM.nodes.usermgr.graph = window.CPM.nodes.usermgr.graph || {};
 
     /**
      * renders the graph or the paths table controlled by the local stored profile or the 'selector' parameter
+     * @param $element the DOM element wich contains the rendering canvas element
      * @param type the authorizable type filter ('user', 'group' or 'service'; optional)
      * @param name the authorizable name query pattern (uses '%' as wildcard; optional)
      * @param path the authorizable name filter pattern (a regex; supports '%' as wildcard; optional)
      * @param selector the 'page' (single page) or 'view' (console view) selector, optional with an added subselector (e.g. 'view.paths')
      * @param callback an optional callback function in the 'graph' mode to complete the rendered graph
      */
-    graph.render = function (type, name, path, text, selector, callback) {
-        let params = '';
+    graph.render = function ($element, type, name, path, text, selector, callback) {
+        let query = '';
         if (type) {
-            params += '&type=' + encodeURIComponent(type);
+            query += '&type=' + encodeURIComponent(type);
         }
         if (name) {
-            params += '&name=' + encodeURIComponent(name);
+            query += '&name=' + encodeURIComponent(name);
         }
         if (path) {
-            params += '&path=' + encodeURIComponent(path);
+            query += '&path=' + encodeURIComponent(path);
         }
         if (text) {
-            params += '&text=' + encodeURIComponent(text);
+            query += '&text=' + encodeURIComponent(text);
         }
-        params = params.replace(/^&/, '?');
+        query = query.replace(/^&/, '?');
+        graph.execute($element, query, selector, callback);
+    };
+
+    graph.execute = function ($element, query, selector, callback) {
         let mode = 'graphviz';
         const parts = /^([^.]+)\.([^.]+)/.exec(selector);
         if (parts) {
@@ -79,23 +84,24 @@ window.CPM.nodes.usermgr.graph = window.CPM.nodes.usermgr.graph || {};
         }
         // load the data accordint to the mode into the canvas element...
         $.ajax({
-            url: '/bin/cpm/users/graph.' + mode + (selector ? '.' + selector : '') + '.html' + params,
+            url: '/bin/cpm/users/graph.' + mode + (selector ? '.' + selector : '') + '.html' + query,
             cache: false
         }).done(function (content) {
-            let $canvas = $('.composum-nodes-usermgr-' + (mode === 'graphviz' ? 'graph' : 'paths'));
+            let $canvas = $element.find('.composum-nodes-usermgr-' + (mode === 'graphviz' ? 'graph' : 'paths'));
             if ($canvas.length < 1) {
                 // fallback to the alternative rendering template if preferred template not found
-                $canvas = $('.composum-nodes-usermgr-' + (mode === 'graphviz' ? 'paths' : 'graph'));
+                $canvas = $element.find('.composum-nodes-usermgr-' + (mode === 'graphviz' ? 'paths' : 'graph'));
             }
             switch (mode) {
                 default:
                 case 'graphviz':
-                    const graphviz = d3.select($canvas[0]).graphviz();
+                    $canvas.html('<div class="graphviz-canvas"></div>');
+                    const graphviz = d3.select($canvas.find('.graphviz-canvas')[0]).graphviz();
                     graphviz.on('end', function () {
                         // prepare the image directly on the end of the graph rendering
                         // to ensure that the 1:1 zoom is used for image rendering
                         const $svg = $canvas.find('svg');
-                        const $img = $('.composum-nodes-usermgr-graph_image img');
+                        const $img = $element.find('.composum-nodes-usermgr-graph_image img');
                         if ($svg.length > 0 && $img.length > 0) {
                             try {
                                 $img.attr('src', graph.svg2img($svg[0]));
@@ -108,6 +114,9 @@ window.CPM.nodes.usermgr.graph = window.CPM.nodes.usermgr.graph || {};
                     break;
                 case 'paths':
                     $canvas.html(content);
+                    if (callback) {
+                        callback();
+                    }
                     break;
             }
         });

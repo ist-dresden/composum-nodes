@@ -39,7 +39,9 @@
     <button type="submit">Submit</button>
     <button type="button" class="composum-nodes-usermgr-graph_show-image">Show Image ...</button>
 </form>
-<sling:include resourceType="composum/nodes/usermgnt/graph/view"/>
+<div class="composum-nodes-usermgr-graph_page-canvas">
+    <sling:include resourceType="composum/nodes/usermgnt/graph/view"/>
+</div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
@@ -50,6 +52,7 @@
         $('.composum-nodes-usermgr-graph_mode a').click(window.CPM.nodes.usermgr.graph.selectMode);
         $('.composum-nodes-usermgr-graph_show-image').click(window.CPM.nodes.usermgr.graph.showSvgImage);
         window.CPM.nodes.usermgr.graph.render(
+            $('.composum-nodes-usermgr-graph_page-canvas'),
             <%= type != null ? "'" + type + "'" : "''"%>,
             <%= name != null ? "'" + name + "'" : "''"%>,
             <%= path != null ? "'" + path + "'" : "''"%>,

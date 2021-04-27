@@ -9,6 +9,12 @@
     padding: 0 10px 10px;
 }
 
+.composum-nodes-usermgr-graph_page-canvas {
+    flex-grow: 1;
+    border: 1px solid #888888;
+    overflow: auto;
+}
+
 .composum-nodes-usermgr-graph_body h3,
 .composum-nodes-usermgr-graph_page-form label,
 .composum-nodes-usermgr-graph_page-form input,
@@ -72,7 +78,6 @@
 .composum-nodes-usermgr-graph_wrapper,
 .composum-nodes-usermgr-paths_wrapper {
     flex-grow: 1;
-    border: 1px solid #888888;
 }
 
 .composum-nodes-usermgr-graph_image {
@@ -90,4 +95,72 @@
     position: absolute;
     top: 10px;
     right: 10px;
+}
+
+/*
+ * paths
+ */
+
+.composum-nodes-usermgr-graph table tr,
+.composum-nodes-usermgr-paths table tr {
+    border-bottom: 1px solid #ffffff;
+}
+
+.composum-nodes-usermgr-graph table tr:nth-child(even),
+.composum-nodes-usermgr-paths table tr:nth-child(even) {
+    opacity: 0.85;
+}
+
+.composum-nodes-usermgr-graph table tr.group,
+.composum-nodes-usermgr-paths table tr.group {
+    background-color: #eeeeee;
+}
+
+.composum-nodes-usermgr-graph table tr.group.focus {
+    background-color: #cccccc;
+}
+
+.composum-nodes-usermgr-graph table tr.disabled,
+.composum-nodes-usermgr-paths table tr.disabled {
+    background-color: #e0c6c6;
+}
+
+.composum-nodes-usermgr-graph table tr.disabled.focus {
+    background-color: #d4a5a4;
+}
+
+.composum-nodes-usermgr-graph table tr.admin,
+.composum-nodes-usermgr-paths table tr.admin {
+    background-color: #d6f1d7;
+}
+
+.composum-nodes-usermgr-graph table tr.admin.focus {
+    background-color: #abd5ab;
+}
+
+.composum-nodes-usermgr-graph table tr.system,
+.composum-nodes-usermgr-paths table tr.system {
+    background-color: #c7dbe5;
+}
+
+.composum-nodes-usermgr-graph table tr.system.focus {
+    background-color: #96b6c6;
+}
+
+.composum-nodes-usermgr-graph table tr.service,
+.composum-nodes-usermgr-paths table tr.service {
+    background-color: #d8cfe5;
+}
+
+.composum-nodes-usermgr-graph table tr.service.focus {
+    background-color: #b5a3ce;
+}
+
+.composum-nodes-usermgr-graph table tr.user,
+.composum-nodes-usermgr-paths table tr.user {
+    background-color: #d3e3d3;
+}
+
+.composum-nodes-usermgr-graph table tr.user.focus {
+    background-color: #aac9aa;
 }

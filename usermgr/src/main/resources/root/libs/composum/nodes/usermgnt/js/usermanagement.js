@@ -26,7 +26,7 @@
                                 nodeUrl: core.getContextUrl('/bin/users.html' + core.encodePath(path))
                             };
 
-                            core.console.getProfile().set('usermanagement', 'current', path);
+                            core.console.getProfile().set('usermgr', 'current', path);
                             if (history.replaceState) {
                                 history.replaceState(usermanagement.current.path, name, usermanagement.current.nodeUrl);
                             }
@@ -42,7 +42,9 @@
         usermanagement.Usermanagement = console.components.SplitView.extend({
 
             initialize: function (options) {
-                console.components.SplitView.prototype.initialize.apply(this, [options]);
+                console.components.SplitView.prototype.initialize.apply(this, [_.extend(options || {}, {
+                    id: 'usermgr'
+                })]);
                 $(document).on('path:select', _.bind(this.onPathSelect, this));
                 $(document).on('path:selected', _.bind(this.onPathSelected, this));
                 $(document).on('path:changed', _.bind(this.onReloadTriggered, this));
@@ -81,7 +83,7 @@
             initialize: function (options) {
                 this.initialSelect = this.$el.attr('data-selected');
                 if (!this.initialSelect || this.initialSelect === '/' || this.initialSelect === '/home') {
-                    this.initialSelect = core.console.getProfile().get('usermanagement', 'current', "/home");
+                    this.initialSelect = core.console.getProfile().get('usermgr', 'current', "/home");
                 }
                 this.rootPath = '/home';
                 core.components.Tree.prototype.initialize.apply(this, [options]);
@@ -164,16 +166,16 @@
         //
 
         usermanagement.detailViewTabTypes = [{
-            selector: '> .group',
+            selector: '> .general-group',
             tabType: usermanagement.GroupTab
         }, {
-            selector: '> .service-user',
+            selector: '> .general-service',
             tabType: usermanagement.ServiceUserTab
         }, {
-            selector: '> .system-user',
+            selector: '> .general-system',
             tabType: usermanagement.SystemUserTab
         }, {
-            selector: '> .user',
+            selector: '> .general-user',
             tabType: usermanagement.UserTab
         }, {
             selector: '> .profile',
@@ -206,7 +208,7 @@
         usermanagement.DetailView = core.console.DetailView.extend({
 
             getProfileId: function () {
-                return 'usermanagement';
+                return 'usermgr';
             },
 
             getCurrentPath: function () {

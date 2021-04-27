@@ -115,19 +115,19 @@ public class AuthorizablesGraph extends AuthorizablesMap {
     protected String getColor(AuthorizableModel node) {
         boolean isFocussed = singleFocus != null && singleFocus.getId().equals(node.getId());
         if (node.isGroup()) {
-            return isFocussed ? "#4cbac4" : "#c6fbff";
+            return isFocussed ? "#cccccc" : "#eeeeee";
         } else {
             UserModel user = (UserModel) node;
             if (user.isDisabled()) {
-                return isFocussed ? "#e38585" : "#ffc2c2";
+                return isFocussed ? "#d4a5a4" : "#e0c6c6";
             } else if (user.isAdmin()) {
-                return isFocussed ? "#54c478" : "#6efd9d";
+                return isFocussed ? "#abd5ab" : "#d6f1d7";
             } else if (user.isServiceUser()) {
-                return isFocussed ? "#d6aa69" : "#e5d2ba";
+                return isFocussed ? "#b5a3ce" : "#d8cfe5";
             } else if (user.isSystemUser()) {
-                return isFocussed ? "#aeaeae" : "#dddddd";
+                return isFocussed ? "#96b6c6" : "#c7dbe5";
             } else {
-                return isFocussed ? "#fbff52" : "#fbffb3";
+                return isFocussed ? "#aac9aa" : "#d3e3d3";
             }
         }
     }

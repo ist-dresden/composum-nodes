@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="group" type="com.composum.sling.core.usermanagement.view.Group" scope="request">
-    <div class="preferences detail-panel full-table-view">
+    <div class="preferences detail-tab full-table-view">
         <div class="table-toolbar">
             <div class="btn-group btn-group-sm" role="group">
                 <button class="checkpoint fa fa-ban btn btn-default" title="Disable"><span class="label">Disable user</span></button>

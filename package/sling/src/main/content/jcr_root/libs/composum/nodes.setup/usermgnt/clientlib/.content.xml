@@ -31,6 +31,10 @@
                         composum/nodes/browser/js/property.js,
                         composum/nodes/browser/js/properties.js
                     ]"/>
+        <startup jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/usermgnt/js/startup.js
+                    ]"/>
         <dialogs jcr:primaryType="nt:unstructured"
                 embed="[
                         composum/nodes/usermgnt/dialogs/deleteresource/js/deleteresource.js,
@@ -65,10 +69,6 @@
         <usermanagement jcr:primaryType="nt:unstructured"
                 embed="[
                         composum/nodes/usermgnt/js/usermanagement.js
-                    ]"/>
-        <startup jcr:primaryType="nt:unstructured"
-                embed="[
-                        composum/nodes/usermgnt/js/startup.js
                     ]"/>
     </js>
     <graphviz jcr:primaryType="sling:Folder"

@@ -120,28 +120,22 @@ public class UserModel extends AuthorizableModel {
         return serviceUsers;
     }
 
-    public void toJson(JsonWriter writer) throws IOException {
-        writer.beginObject();
-        writer.name("type").value("user");
-        writer.name("id").value(getId());
-        writer.name("name").value(getPrincipalName());
-        writer.name("path").value(getPath());
+    @Override
+    protected void toJsonData(JsonWriter writer) throws IOException {
+        super.toJsonData(writer);
         writer.name("admin").value(isAdmin());
         writer.name("system").value(isSystemUser());
         writer.name("disabled").value(isDisabled());
         if (StringUtils.isNotBlank(getDisabledReason())) {
             writer.name("reason").value(getDisabledReason());
         }
-        writer.name("declaredMemberOf").beginArray();
-        for (String id : getDeclaredMemberOf()) {
-            writer.value(id);
+        for (Map.Entry<String, Object> property : values.entrySet()) {
+            Object value = property.getValue();
+            if (value != null) {
+                writer.name(property.getKey()).value(value.toString());
+            }
         }
-        writer.endArray();
-        writer.name("memberOf").beginArray();
-        for (String id : getMemberOf()) {
-            writer.value(id);
-        }
-        writer.endArray();
-        writer.endObject();
+        // for backwards compatibility
+        writer.name("systemUser").value(isSystemUser());
     }
 }

@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component var="model" type="com.composum.sling.core.usermanagement.view.Group" scope="request">
-    <div class="group detail-panel">
+    <div class="general-group detail-tab">
         <div class="detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
                 <button type="button" class="reload fa fa-refresh btn btn-default"

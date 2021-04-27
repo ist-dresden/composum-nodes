@@ -45,7 +45,7 @@ public interface Authorizables {
             protected final Pattern pattern;
 
             public Path(@NotNull final String pattern) {
-                this(Pattern.compile(pattern.replaceAll("%", ".*")));
+                this(createPattern(pattern));
             }
 
             public Path(@NotNull final Pattern pattern) {
@@ -55,11 +55,18 @@ public interface Authorizables {
             @Override
             public boolean accept(Authorizable authorizable) {
                 try {
-                    return pattern.matcher(authorizable.getPath()).find();
+                    return pattern.matcher(authorizable.getPath()).matches();
                 } catch (RepositoryException ignore) {
                 }
                 return false;
             }
+        }
+
+        static Pattern createPattern(@NotNull final String pattern) {
+            return Pattern.compile(pattern
+                    .replaceAll("\\*", ".*")
+                    .replaceAll("\\.\\.\\*", ".*")
+                    .replaceAll("%", ".*"));
         }
     }
 
@@ -71,9 +78,11 @@ public interface Authorizables {
         protected final SlingHttpServletRequest request;
         protected final SlingHttpServletResponse response;
         protected final ResourceResolver resolver;
+        protected final Session session;
 
         private transient UserManager userManager;
 
+        // the map to cache authorizables during requst execution
         protected final Map<String, Authorizable> authorizables = new HashMap<>();
 
         public Context(@NotNull final Authorizables service,
@@ -83,6 +92,13 @@ public interface Authorizables {
             this.request = request;
             this.response = response;
             resolver = request.getResourceResolver();
+            session = resolver.adaptTo(Session.class);
+        }
+
+        public void commit() throws RepositoryException {
+            if (session != null) {
+                session.save();
+            }
         }
 
         public @NotNull Authorizables getService() {
@@ -101,10 +117,13 @@ public interface Authorizables {
             return response;
         }
 
+        public Session getSession() {
+            return session;
+        }
+
         public @Nullable UserManager getUserManager() {
-            if (userManager == null) {
+            if (userManager == null && session != null) {
                 try {
-                    final Session session = resolver.adaptTo(Session.class);
                     userManager = session instanceof JackrabbitSession ? ((JackrabbitSession) session).getUserManager() : null;
                 } catch (RepositoryException ex) {
                     LOG.error(ex.getMessage(), ex);

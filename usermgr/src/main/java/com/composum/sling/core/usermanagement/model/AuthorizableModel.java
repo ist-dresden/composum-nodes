@@ -29,6 +29,7 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
     public static final Map<String, String> TYPE_TO_ICON = new HashMap<String, String>() {{
         put(TYPE_GROUP, "users");
         put(TYPE_USER, "user");
+        put("system", "user-o");
         put(TYPE_SERVICE, "cog");
     }};
 
@@ -58,7 +59,31 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
 
     public abstract boolean isGroup();
 
-    public abstract void toJson(JsonWriter writer) throws IOException;
+    public void toJson(JsonWriter writer) throws IOException {
+        writer.beginObject();
+        toJsonData(writer);
+        writer.endObject();
+    }
+
+    protected void toJsonData(JsonWriter writer) throws IOException {
+        writer.name("type").value(getType());
+        writer.name("id").value(getId());
+        writer.name("name").value(getPrincipalName());
+        writer.name("path").value(getPath());
+        writer.name("declaredMemberOf").beginArray();
+        for (String id : getDeclaredMemberOf()) {
+            writer.value(id);
+        }
+        writer.endArray();
+        writer.name("memberOf").beginArray();
+        for (String id : getMemberOf()) {
+            writer.value(id);
+        }
+        writer.endArray();
+        // for backwards compatibility
+        writer.name("principalName").value(getPrincipalName());
+        writer.name("isGroup").value(isGroup());
+    }
 
     public @NotNull String getType() {
         return type;

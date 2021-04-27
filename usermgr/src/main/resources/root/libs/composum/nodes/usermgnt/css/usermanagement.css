@@ -35,13 +35,93 @@ button.addsystemuser:hover {
  * Query Panel
  */
 
+#usermanagement-query .query-panel .query-toolbar,
+#usermanagement-query .query-panel .query-form,
+#usermanagement-query .query-panel .query-input,
+#usermanagement-query .query-panel .btn-group {
+    display: flex;
+    flex-wrap: nowrap;
+    margin: 0;
+}
+
+#usermanagement-query .query-panel .query-form,
+#usermanagement-query .query-panel .query-input,
+#usermanagement-query .query-panel .query-input .pattern {
+    flex-grow: 1;
+}
+
+#usermanagement-query .query-panel .query-input .pattern,
+#usermanagement-query .query-panel .query-form .btn-group {
+    margin-left: 5px;
+}
+
+#usermanagement-query .query-panel .query-toolbar .btn-default {
+    width: 31px;
+    height: 29px;
+    padding: 4px 7px 3px;
+    font-size: 14px;
+}
+
+#usermanagement-query .query-panel .query-toolbar .exec {
+    color: #31708f; /* info */
+}
+
+#usermanagement-query .query-panel .query-toolbar select,
+#usermanagement-query .query-panel .query-toolbar input {
+    margin-top: 2px;
+    height: 27px;
+}
+
+#usermanagement-query .query-panel .query-input .type {
+    width: auto;
+    padding: 4px 4px 3px;
+}
+
+#usermanagement-query .query-panel .query-result tbody td a {
+    color: inherit;
+}
+
 #usermanagement-query .query-panel .query-result td.icon {
     padding: 7px 5px 7px 10px !important;
     text-align: center;
 }
 
+#usermanagement-query .query-panel .query-result .group .icon {
+    color: #666;
+}
+
 #usermanagement-query .query-result .systemuser {
-    color: #a94442;
+    color: #31708f; /* info */
+}
+
+#usermanagement-query .query-panel .query-result .composum-nodes-usermgr-paths_wrapper {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+}
+
+#usermanagement-query .query-panel .query-result .composum-nodes-usermgr-paths_wrapper tr {
+    border: none;
+}
+
+#usermanagement-query .query-panel .query-result .composum-nodes-usermgr-paths_wrapper td {
+    white-space: normal;
+}
+
+#usermanagement-query .query-panel .query-result .composum-nodes-usermgr-paths_wrapper td.authorizable-id {
+    position: relative;
+    padding-left: 34px !important;
+    white-space: nowrap;
+}
+
+#usermanagement-query .query-panel .query-result .composum-nodes-usermgr-paths_wrapper td .icon {
+    position: absolute;
+    top: 7px;
+    left: 10px;
+    width: 15px;
+    text-align: center;
 }
 
 /*
@@ -49,7 +129,13 @@ button.addsystemuser:hover {
  */
 
 .authorizable {
+    position: absolute;
+    top: 39px;
+    left: 0;
+    right: 0;
+    bottom: 41px;
     padding: 10px;
+    overflow: auto;
 }
 
 .authorizable .top-panel {

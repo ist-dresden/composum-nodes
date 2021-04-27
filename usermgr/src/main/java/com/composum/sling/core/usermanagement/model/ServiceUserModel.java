@@ -2,11 +2,9 @@ package com.composum.sling.core.usermanagement.model;
 
 import com.composum.sling.core.usermanagement.service.Authorizables;
 import com.composum.sling.core.usermanagement.service.ServiceUser;
-import com.google.gson.stream.JsonWriter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.jcr.RepositoryException;
-import java.io.IOException;
 import java.util.Collection;
 
 public class ServiceUserModel extends UserModel {
@@ -63,25 +61,5 @@ public class ServiceUserModel extends UserModel {
             declaredUserOf = getModels(context, getDeclaredMemberOf());
         }
         return declaredUserOf;
-    }
-
-    @Override
-    public void toJson(JsonWriter writer) throws IOException {
-        writer.beginObject();
-        writer.name("type").value("service");
-        writer.name("id").value(getId());
-        writer.name("name").value(getPrincipalName());
-        writer.name("path").value(getPath());
-        writer.name("declaredMemberOf").beginArray();
-        for (String id : getDeclaredMemberOf()) {
-            writer.value(id);
-        }
-        writer.endArray();
-        writer.name("memberOf").beginArray();
-        for (String id : getMemberOf()) {
-            writer.value(id);
-        }
-        writer.endArray();
-        writer.endObject();
     }
 }

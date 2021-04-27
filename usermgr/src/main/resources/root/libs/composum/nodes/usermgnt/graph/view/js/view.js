@@ -15,7 +15,7 @@
 
             reload: function (event) {
                 let text = undefined;
-                graph.render(undefined, usermanagement.current.node.name, undefined, text, 'view.paths');
+                graph.render(this.$el, undefined, usermanagement.current.node.name, undefined, text, 'view.paths');
             }
         });
 
@@ -37,7 +37,7 @@
             },
 
             reload: function (event) {
-                graph.render(undefined, usermanagement.current.node.name, undefined, undefined,
+                graph.render(this.$el, undefined, usermanagement.current.node.name, undefined, undefined,
                     'view', _.bind(function () {
                         this.$graph.find('svg').find('a').click(_.bind(function (event) {
                             const path = $(event.currentTarget).attr('title');

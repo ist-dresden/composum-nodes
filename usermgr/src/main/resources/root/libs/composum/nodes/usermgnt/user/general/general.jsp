@@ -4,10 +4,11 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component var="model" type="com.composum.sling.core.usermanagement.view.User" scope="request">
-    <div class="user detail-panel">
+    <div class="general-user detail-tab">
         <div class="detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <button class="disable-user fa fa-ban btn btn-default" title="${cpn:i18n(slingRequest,'Disable User')}"><span
+                <button class="disable-user fa fa-ban btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Disable User')}"><span
                         class="label">${cpn:i18n(slingRequest,'Disable User')}</span></button>
                 <button class="enable-user fa fa-check-circle-o btn btn-default"
                         title="${cpn:i18n(slingRequest,'Enable User')}"><span

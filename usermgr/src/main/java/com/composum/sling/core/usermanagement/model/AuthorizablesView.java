@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.jcr.RepositoryException;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -55,10 +56,6 @@ public class AuthorizablesView {
         this.context = context;
         Set<Authorizable> authorizables = context.getService().findAuthorizables(
                 context, selector, nameQueryPattern, filter);
-        if (authorizables.size() < 1 && StringUtils.isNotBlank(nameQueryPattern)) {
-            authorizables = context.getService().findAuthorizables(
-                    context, null, nameQueryPattern, null);
-        }
         for (Authorizable authorizable : authorizables) {
             addNode(authorizable);
         }
@@ -67,6 +64,10 @@ public class AuthorizablesView {
 
     public AuthorizableModel getSingleFocus() {
         return singleFocus;
+    }
+
+    public Collection<AuthorizableModel> getAuthorizableModels() {
+        return nodes.values();
     }
 
     protected AuthorizableModel addNode(@Nullable final Authorizable authorizable)

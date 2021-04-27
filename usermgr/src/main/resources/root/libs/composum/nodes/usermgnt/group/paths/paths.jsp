@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component var="user" type="com.composum.sling.core.usermanagement.view.User" scope="request">
-    <div class="paths detail-panel">
+    <div class="paths detail-tab">
         <div class="paths-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
                 <%--button class="open-paths-page fa fa-external-link btn btn-default"

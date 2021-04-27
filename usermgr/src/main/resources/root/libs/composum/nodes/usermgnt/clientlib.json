@@ -35,6 +35,9 @@
         "composum/nodes/browser/js/properties.js"
       ]
     },
+    "startup": {
+      "embed": "composum/nodes/usermgnt/js/startup.js"
+    },
     "dialogs": {
       "embed": [
         "composum/nodes/usermgnt/dialogs/deleteresource/js/deleteresource.js",
@@ -70,9 +73,6 @@
     },
     "usermanagement": {
       "embed": "composum/nodes/usermgnt/js/usermanagement.js"
-    },
-    "startup": {
-      "embed": "composum/nodes/usermgnt/js/startup.js"
     }
   },
   "graphviz": {

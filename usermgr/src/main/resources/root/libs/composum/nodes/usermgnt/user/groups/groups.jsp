@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component var="user" type="com.composum.sling.core.usermanagement.view.User" scope="request">
-    <div class="groups detail-panel full-table-view">
+    <div class="groups detail-tab full-table-view">
         <div class="table-toolbar">
             <div class="btn-group btn-group-sm" role="group">
                     <button class="add-authorizable-to-group fa fa-plus btn btn-default" title="Add user to group"><span class="label">Add user to group</span></button>

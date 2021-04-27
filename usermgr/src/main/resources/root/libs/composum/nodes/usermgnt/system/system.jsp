@@ -17,7 +17,7 @@
                         class="label">Graph</span></a>
             </div>
         </div>
-    </div>
-    <div class="detail-content">
+        <div class="detail-content">
+        </div>
     </div>
 </cpn:component>

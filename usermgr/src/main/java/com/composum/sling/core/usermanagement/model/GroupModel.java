@@ -83,30 +83,18 @@ public class GroupModel extends AuthorizableModel {
         return declaredGroups;
     }
 
-    public void toJson(JsonWriter writer) throws IOException {
-        writer.beginObject();
-        writer.name("type").value("group");
-        writer.name("id").value(getId());
-        writer.name("name").value(getPrincipalName());
-        writer.name("path").value(getPath());
+    @Override
+    protected void toJsonData(JsonWriter writer) throws IOException {
+        super.toJsonData(writer);
         writer.name("declaredMembers").beginArray();
         for (String id : getDeclaredMembers()) {
             writer.value(id);
         }
-        writer.name("Members").beginArray();
+        writer.endArray();
+        writer.name("members").beginArray();
         for (String id : getMembers()) {
             writer.value(id);
         }
-        writer.name("declaredMemberOf").beginArray();
-        for (String id : getDeclaredMemberOf()) {
-            writer.value(id);
-        }
         writer.endArray();
-        writer.name("memberOf").beginArray();
-        for (String id : getMemberOf()) {
-            writer.value(id);
-        }
-        writer.endArray();
-        writer.endObject();
     }
 }

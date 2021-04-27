@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects />
 <cpn:component id="group" type="com.composum.sling.core.usermanagement.view.Group" scope="request">
-    <div class="group detail-panel full-table-view">
+    <div class="group detail-panel">
         <div class="detail-tabs action-bar btn-toolbar" role="toolbar">
             <div class="btn-group btn-group-sm" role="group">
                 <a class="general fa fa-address-card-o btn btn-default" href="#general" data-group="general" title="General"><span class="label">General</span></a>
@@ -14,8 +14,7 @@
                 <a class="graph fa fa-map-o btn btn-default" href="#graph" data-group="view" title="Graph"><span class="label">Graph</span></a>
             </div>
         </div>
+        <div class="detail-content">
+        </div>
     </div>
-    <div class="detail-content">
-    </div>
-
 </cpn:component>

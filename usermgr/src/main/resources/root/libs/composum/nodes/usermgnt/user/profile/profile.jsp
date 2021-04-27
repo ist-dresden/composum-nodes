@@ -3,7 +3,7 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <sling:defineObjects/>
 <cpn:component var="model" type="com.composum.sling.core.usermanagement.view.User" scope="request">
-    <div class="profile detail-panel full-table-view">
+    <div class="profile detail-tab full-table-view">
         <div class="table-toolbar">
             <div class="btn-group btn-group-sm" role="group">
                 <button class="add fa fa-plus btn btn-default" title="${cpn:i18n(slingRequest,'Add new property')}">
