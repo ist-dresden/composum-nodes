@@ -8,7 +8,6 @@
 
     (function (usermanagement, core) {
 
-        
     })(CPM.nodes.usermanagement, CPM.core);
 
 })();

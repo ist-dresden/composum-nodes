@@ -8,15 +8,17 @@
 
     (function (browser, core) {
 
-        browser.getPropertyDialog = function () {
-            return core.getView('#browser-view-property-dialog', browser.PropertyDialog);
+        browser.getPropertyDialog = function (path) {
+            return core.getView('#browser-view-property-dialog', browser.PropertyDialog, {
+                path: path
+            });
         };
 
-        browser.openNewPropertyDialog = function (callback) {
-            var dialog = browser.getPropertyDialog();
+        browser.openNewPropertyDialog = function (callback, path) {
+            var dialog = browser.getPropertyDialog(path);
             dialog.show(_.bind(function () {
                 dialog.setProperty(new browser.Property({
-                        path: browser.getCurrentPath()
+                        path: path
                     })
                 );
             }, this), callback);
@@ -64,6 +66,7 @@
         browser.PropertyDialog = core.components.Dialog.extend({
 
             initialize: function (options) {
+                this.path = options.path;
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$title = this.$('h4.modal-title');
@@ -216,7 +219,7 @@
                 if (this.form.isValid()) {
                     this.lock();
                     this.getProperty().save(_.bind(function () {
-                            $(document).trigger('path:changed', [browser.getCurrentPath()]);
+                            $(document).trigger('path:changed', [this.path]);
                             this.hide();
                         }, this),
                         _.bind(function (result) {
@@ -232,7 +235,7 @@
             deleteProperty: function () {
                 this.lock();
                 this.getProperty().destroy(_.bind(function () {
-                        $(document).trigger('path:changed', [browser.getCurrentPath()]);
+                        $(document).trigger('path:changed', [this.path]);
                         this.hide();
                     }, this),
                     _.bind(function (result) {

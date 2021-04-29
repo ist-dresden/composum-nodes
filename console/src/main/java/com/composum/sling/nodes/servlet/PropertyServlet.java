@@ -246,9 +246,20 @@ public class PropertyServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (resource == null || !resource.isValid()) {
+            if (resource == null) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
+            }
+
+            if (!resource.isValid()) {
+                try {
+                    resource = ResourceHandle.use(ResourceUtil.getOrCreateResource(request.getResourceResolver(),
+                            resource.getPath(), "nt:unstructured"));
+                } catch (RepositoryException ex) {
+                    LOG.error(ex.getMessage(), ex);
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    return;
+                }
             }
 
             try {
@@ -316,11 +327,26 @@ public class PropertyServlet extends AbstractServiceServlet {
             public Object result;
         }
 
+        protected ResourceHandle prepare(@Nonnull final SlingHttpServletRequest request,
+                                         @Nonnull final SlingHttpServletResponse response,
+                                         ResourceHandle resource)
+                throws RepositoryException {
+            return resource;
+        }
+
         @Override
         public void doIt(@Nonnull final SlingHttpServletRequest request,
                          @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
+
+            try {
+                resource = prepare(request, response, resource);
+            } catch (RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                return;
+            }
 
             if (resource == null || !resource.isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -408,6 +434,19 @@ public class PropertyServlet extends AbstractServiceServlet {
     }
 
     protected class CopyOperation extends BulkOperation {
+
+        @Override
+        protected ResourceHandle prepare(@Nonnull final SlingHttpServletRequest request,
+                                         @Nonnull final SlingHttpServletResponse response,
+                                         ResourceHandle resource)
+                throws RepositoryException {
+
+            if (resource != null && !resource.isValid()) {
+                resource = ResourceHandle.use(ResourceUtil.getOrCreateResource(request.getResourceResolver(),
+                        resource.getPath(), "nt:unstructured"));
+            }
+            return resource;
+        }
 
         @Override
         public void doIt(@Nonnull final SlingHttpServletRequest request,

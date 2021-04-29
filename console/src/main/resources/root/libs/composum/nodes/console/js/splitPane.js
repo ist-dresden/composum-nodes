@@ -11,7 +11,7 @@
         components.SplitView = Backbone.View.extend({
 
             initialize: function (options) {
-                this.id = this.$el.attr('id');
+                this.id = options.id || this.$el.attr('id');
                 this.profile = core.console.getProfile().get(this.id, 'split', {
                     horizontal: undefined,
                     vertical: undefined,
