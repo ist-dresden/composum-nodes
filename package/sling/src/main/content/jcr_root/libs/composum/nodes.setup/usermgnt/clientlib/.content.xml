@@ -9,38 +9,59 @@
                     category:composum.nodes.console.default
                 ]"
             embed="[
+                    composum/nodes/usermgnt/graph/view/css/graph.css,
                     composum/nodes/usermgnt/css/usermanagement.css
-                ]"/>
+                ]">
+        <browser jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/browser/css/properties.css
+                    ]"/>
+    </css>
     <js jcr:primaryType="sling:OrderedFolder"
             depends="[
-                    category:composum.nodes.console.default
+                    category:composum.nodes.console.default,
+                    category:composum.nodes.external.graphviz
                 ]">
+        <browser jcr:primaryType="nt:unstructured"
+                depends="[
+                        jslibs/x-editable/1.5.3/bootstrap3-editable/js/bootstrap-editable.js
+                    ]"
+                embed="[
+                        composum/nodes/browser/js/x-editable.js,
+                        composum/nodes/browser/js/property.js,
+                        composum/nodes/browser/js/properties.js
+                    ]"/>
+        <startup jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/usermgnt/js/startup.js
+                    ]"/>
         <dialogs jcr:primaryType="nt:unstructured"
                 embed="[
-                        composum/nodes/usermgnt/dialogs/adduser/adduserdialog.js,
-                        composum/nodes/usermgnt/dialogs/addsystemuser/addsystemuserdialog.js,
-                        composum/nodes/usermgnt/dialogs/addmember/addmemberdialog.js,
-                        composum/nodes/usermgnt/dialogs/addtogroup/addtogroupdialog.js,
-                        composum/nodes/usermgnt/dialogs/addgroup/addgroupdialog.js,
-                        composum/nodes/usermgnt/dialogs/deleteauthorizable/deleteauthorizabledialog.js,
-                        composum/nodes/usermgnt/dialogs/disableuser/disableuserdialog.js,
-                        composum/nodes/usermgnt/dialogs/changepassword/changepwdialog.js
+                        composum/nodes/commons/components/user/profile/dialog/js/dialog.js,
+                        composum/nodes/usermgnt/dialogs/deleteresource/js/deleteresource.js,
+                        composum/nodes/usermgnt/dialogs/adduser/js/adduserdialog.js,
+                        composum/nodes/usermgnt/dialogs/addsystemuser/js/addsystemuserdialog.js,
+                        composum/nodes/usermgnt/dialogs/addmember/js/addmemberdialog.js,
+                        composum/nodes/usermgnt/dialogs/addtogroup/js/addtogroupdialog.js,
+                        composum/nodes/usermgnt/dialogs/addgroup/js/addgroupdialog.js,
+                        composum/nodes/usermgnt/dialogs/deleteauthorizable/js/deleteauthorizabledialog.js,
+                        composum/nodes/usermgnt/dialogs/disableuser/js/disableuserdialog.js,
+                        composum/nodes/usermgnt/dialogs/changepasswor/js/changepwdialog.js
                     ]"/>
         <tables jcr:primaryType="nt:unstructured"
                 embed="[
-                        composum/nodes/usermgnt/js/propertiestable.js,
                         composum/nodes/usermgnt/js/groupstable.js,
                         composum/nodes/usermgnt/js/usertable.js,
                         composum/nodes/usermgnt/js/memberstable.js
                     ]"/>
         <tabs jcr:primaryType="nt:unstructured"
                 embed="[
-                        composum/nodes/usermgnt/js/usertab.js,
-                        composum/nodes/usermgnt/js/profiletab.js,
-                        composum/nodes/usermgnt/js/preferencestab.js,
+                        composum/nodes/usermgnt/js/generaltabs.js,
+                        composum/nodes/usermgnt/js/propertytabs.js,
                         composum/nodes/usermgnt/js/groupstab.js,
                         composum/nodes/usermgnt/js/memberstab.js,
-                        composum/nodes/usermgnt/js/grouptab.js
+                        composum/nodes/usermgnt/graph/view/js/graph.js,
+                        composum/nodes/usermgnt/graph/view/js/view.js
                     ]"/>
         <query jcr:primaryType="nt:unstructured"
                 embed="[
@@ -50,9 +71,15 @@
                 embed="[
                         composum/nodes/usermgnt/js/usermanagement.js
                     ]"/>
-        <startup jcr:primaryType="nt:unstructured"
-                embed="[
-                        composum/nodes/usermgnt/js/startup.js
-                    ]"/>
     </js>
+    <graphviz jcr:primaryType="sling:Folder"
+            sling:resourceType="composum/nodes/commons/clientlib"
+            category="[composum.nodes.external.graphviz]">
+        <js jcr:primaryType="sling:OrderedFolder"
+                depends="[
+                    https://d3js.org/d3.v5.min.js,
+                    https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js,
+                    https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.min.js
+                ]"/>
+    </graphviz>
 </jcr:root>

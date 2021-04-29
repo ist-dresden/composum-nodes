@@ -1,0 +1,17 @@
+{
+  "jcr:primaryType": "sling:Folder",
+  "sling:resourceType": "composum/nodes/usermgnt/graph/page",
+  "jcr:content": {
+    "jcr:primaryType": "nt:unstructured",
+    "graph": {
+      "jcr:primaryType": "nt:unstructured",
+      "splines": "spline"
+    },
+    "node": {
+      "jcr:primaryType": "nt:unstructured",
+      "style": "filled",
+      "fontname": "sans-serif",
+      "fontsize": "10.0"
+    }
+  }
+}

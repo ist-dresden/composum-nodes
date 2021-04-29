@@ -1,10 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0"
-        xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
-        jcr:primaryType="nt:unstructured"
-        folderbinprop="{Binary}">
+          xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+          xmlns:cpl="http://sling.composum.com/platform/1.0"
+          jcr:primaryType="nt:unstructured"
+          folderbinprop="{Binary}">
     <jcr:content
             jcr:primaryType="nt:unstructured"
             jcr:description="This node should be in it's own directory though it is not an nt:folder since it has a jcr:content"
-            binprop="{Binary}"/>
+            binprop="{Binary}"
+            jcr:mimeType="application/octet-stream"
+            something="foo"
+            jcr:encoding="UTF-8"
+            bar="baz"
+            cpl:last-publicMode="inPlace"
+            jcr:mixinTypes="[mix:title,mix:mimeType]"
+            jcr:title="Titling title"
+            zzz="bar"
+            aaa="baz"
+    />
 </jcr:root>

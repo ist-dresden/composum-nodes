@@ -1,78 +1,88 @@
 package com.composum.sling.core.usermanagement.view;
 
-import com.composum.sling.core.util.XSS;
-import com.composum.sling.nodes.console.ConsoleSlingBean;
+import com.composum.sling.core.usermanagement.model.UserModel;
+import com.composum.sling.core.user.UserProfile;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.SyntheticResource;
+import org.jetbrains.annotations.NotNull;
 
 import javax.jcr.RepositoryException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Objects;
+
+import static com.composum.sling.core.user.UserProfile.NN_PROFILE;
 
 /**
  * Created by mzeibig on 16.11.15.
  */
-public class User extends ConsoleSlingBean {
-    private org.apache.jackrabbit.api.security.user.User user;
+public class User extends View {
 
-    public org.apache.jackrabbit.api.security.user.User getUser() throws RepositoryException {
-        if (this.user == null)  {
-            final JackrabbitSession session = (JackrabbitSession) getSession();
-            final UserManager userManager = session.getUserManager();
-            Authorizable authorizableByPath = userManager.getAuthorizableByPath(
-                    XSS.filter(getRequest().getRequestPathInfo().getSuffix()));
-            this.user = (org.apache.jackrabbit.api.security.user.User) authorizableByPath;
+    private transient Boolean isAdmin;
+    private transient UserProfile profile;
+
+    @Override
+    protected @NotNull Class<? extends Authorizable> getSelector() {
+        return org.apache.jackrabbit.api.security.user.User.class;
+    }
+
+    public @NotNull UserModel getUser() {
+        return (UserModel) Objects.requireNonNull(getModel());
+    }
+
+    public boolean getHasProfile() {
+        return getProfile().isValid();
+    }
+
+    public @NotNull UserProfile getProfile() {
+        if (profile == null) {
+            String profilePath = getPath() + "/" + NN_PROFILE;
+            Resource profileRes = getResolver().getResource(profilePath);
+            profile = new UserProfile(context, profileRes != null ? profileRes
+                    : new SyntheticResource(getResolver(), profilePath, null));
         }
-        return this.user;
+        return profile;
     }
 
-    public String getUserId() throws RepositoryException {
-        return getUser().getID();
+    public String getUserLabel() {
+        if (isAdmin()) {
+            return "Administrator";
+        } else if (isSystemUser()) {
+            return "System User";
+        } else {
+            return "User";
+        }
     }
 
-    public String getUserPath() throws RepositoryException {
-        return getUser().getPath();
+    public boolean isSystemUser() {
+        return getUser().isSystemUser();
     }
 
-    public boolean isAdmin() throws RepositoryException {
+    public boolean isAdmin() {
         return getUser().isAdmin();
     }
 
-    public boolean isDisabled() throws RepositoryException {
+    public boolean isDisabled() {
         return getUser().isDisabled();
     }
 
-    public String getDisabledReason() throws RepositoryException {
+    public String getDisabledReason() {
         return getUser().getDisabledReason();
-    }
-
-    public List<String> getGroups() throws RepositoryException {
-        List<String> groups = new ArrayList<>();
-        Iterator<org.apache.jackrabbit.api.security.user.Group> groupIterator = getUser().memberOf();
-        while (groupIterator.hasNext()) {
-            Group group = groupIterator.next();
-            groups.add(group.getID());
-        }
-        return groups;
-    }
-
-    public String getSuffix() {
-        return XSS.filter(getRequest().getRequestPathInfo().getSuffix());
     }
 
     /**
      * Returns true if the current request user is the admin user.
      */
     public boolean isCurrentUserAdmin() throws RepositoryException {
-    	boolean isAdmin = false;
-        final JackrabbitSession session = (JackrabbitSession) getSession();
-        final UserManager userManager = session.getUserManager();
-        Authorizable a = userManager.getAuthorizable(getRequest().getUserPrincipal());
-        if (a instanceof org.apache.jackrabbit.api.security.user.User) {
-        	isAdmin = ((org.apache.jackrabbit.api.security.user.User)a).isAdmin();
+        if (isAdmin == null) {
+            isAdmin = false;
+            final JackrabbitSession session = (JackrabbitSession) getSession();
+            final UserManager userManager = session.getUserManager();
+            Authorizable a = userManager.getAuthorizable(getRequest().getUserPrincipal());
+            if (a instanceof org.apache.jackrabbit.api.security.user.User) {
+                isAdmin = ((org.apache.jackrabbit.api.security.user.User) a).isAdmin();
+            }
         }
         return isAdmin;
     }

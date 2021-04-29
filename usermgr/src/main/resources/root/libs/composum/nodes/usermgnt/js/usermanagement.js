@@ -14,38 +14,55 @@
             return usermanagement.current ? usermanagement.current.path : undefined;
         };
 
-        usermanagement.setCurrentPath = function (path) {
+        usermanagement.setCurrentPath = function (path, supressEvent, suppressPush) {
             if (!usermanagement.current || usermanagement.current.path !== path) {
                 if (path) {
-                    core.getJson('/bin/cpm/usermanagement.tree.json' + core.encodePath(path), undefined, undefined,
-                        _.bind(function (result) {
-                            usermanagement.current = {
-                                path: path,
-                                node: result.responseJSON,
-                                viewUrl: core.getContextUrl('/bin/users.view.html' + core.encodePath(path)),
-                                nodeUrl: core.getContextUrl('/bin/users.html' + core.encodePath(path))
-                            };
-
-                            core.console.getProfile().set('usermanagement', 'current', path);
-                            if (history.replaceState) {
-                                history.replaceState(usermanagement.current.path, name, usermanagement.current.nodeUrl);
-                            }
+                    this.refreshState(path, _.bind(function () {
+                        core.console.getProfile().set('usermgr', 'current', path);
+                        if (history.pushState && !suppressPush) {
+                            history.pushState(usermanagement.current.path, name, usermanagement.current.nodeUrl);
+                        }
+                        if (!supressEvent) {
                             $(document).trigger("path:selected", [path]);
-                        }, this));
+                        }
+                    }, this));
                 } else {
                     usermanagement.current = undefined;
-                    $(document).trigger("path:selected", [path]);
+                    if (!supressEvent) {
+                        $(document).trigger("path:selected", []);
+                    }
                 }
             }
+        };
+
+        usermanagement.refreshState = function (path, callback) {
+            core.getJson('/bin/cpm/usermanagement.tree.json' + core.encodePath(path),
+                undefined, undefined, _.bind(function (result) {
+                    usermanagement.current = {
+                        path: path,
+                        node: result.responseJSON,
+                        viewUrl: core.getContextUrl('/bin/users.view.html' + core.encodePath(path)),
+                        nodeUrl: core.getContextUrl('/bin/users.html' + core.encodePath(path))
+                    };
+                    if (_.isFunction(callback)) {
+                        callback();
+                    }
+                }, this));
         };
 
         usermanagement.Usermanagement = console.components.SplitView.extend({
 
             initialize: function (options) {
-                console.components.SplitView.prototype.initialize.apply(this, [options]);
+                console.components.SplitView.prototype.initialize.apply(this, [_.extend(options || {}, {
+                    id: 'usermgr'
+                })]);
                 $(document).on('path:select', _.bind(this.onPathSelect, this));
                 $(document).on('path:selected', _.bind(this.onPathSelected, this));
+                $(document).on('path:changed', _.bind(this.onReloadTriggered, this));
+                $(document).on('path:deleted', _.bind(this.onReloadTriggered, this));
+                $(document).on('detail:reload', _.bind(this.onReloadTriggered, this));
                 core.unauthorizedDelegate = core.console.authorize;
+                window.onpopstate = _.bind(this.onPopState, this);
             },
 
             onPathSelect: function (event, path) {
@@ -59,6 +76,19 @@
                 usermanagement.tree.selectNode(path, _.bind(function (path) {
                     usermanagement.treeActions.refreshNodeState();
                 }, this));
+            },
+
+            onReloadTriggered: function (event, path) {
+                if (!usermanagement.detailView.busy) {
+                    usermanagement.treeActions.refreshNodeState();
+                    usermanagement.detailView.reload();
+                }
+            },
+
+            onPopState: function (event) {
+                if (event.state) {
+                    usermanagement.setCurrentPath(event.state, false, true);
+                }
             }
         });
 
@@ -70,9 +100,10 @@
 
             initialize: function (options) {
                 this.initialSelect = this.$el.attr('data-selected');
-                if (!this.initialSelect || this.initialSelect == '/') {
-                    this.initialSelect = core.console.getProfile().get('usermanagement', 'current', "/");
+                if (!this.initialSelect || this.initialSelect === '/' || this.initialSelect === '/home') {
+                    this.initialSelect = core.console.getProfile().get('usermgr', 'current', "/home");
                 }
+                this.rootPath = '/home';
                 core.components.Tree.prototype.initialize.apply(this, [options]);
             },
 
@@ -91,7 +122,6 @@
                 }
                 return node;
             }
-
         });
 
         usermanagement.tree = core.getView('#usermanagement-tree', usermanagement.Tree);
@@ -120,7 +150,6 @@
             },
 
             reload: function () {
-                //this.table.loadContent();
             },
 
             addUser: function (event) {
@@ -139,7 +168,6 @@
                 dialog.show(function () {
                     dialog.setUser(path);
                 }, _.bind(this.reload, this));
-
             },
 
             addGroup: function (event) {
@@ -151,13 +179,21 @@
 
         usermanagement.treeActions = core.getView('.tree-actions', usermanagement.TreeActions);
 
-
         //
         // detail view (console)
         //
 
         usermanagement.detailViewTabTypes = [{
-            selector: '> .user',
+            selector: '> .general-group',
+            tabType: usermanagement.GroupTab
+        }, {
+            selector: '> .general-service',
+            tabType: usermanagement.ServiceUserTab
+        }, {
+            selector: '> .general-system',
+            tabType: usermanagement.SystemUserTab
+        }, {
+            selector: '> .general-user',
             tabType: usermanagement.UserTab
         }, {
             selector: '> .profile',
@@ -173,8 +209,11 @@
             selector: '> .members',
             tabType: usermanagement.MembersTab
         }, {
-            selector: '> .group',
-            tabType: usermanagement.GroupTab
+            selector: '> .paths',
+            tabType: usermanagement.PathsTab
+        }, {
+            selector: '> .graph',
+            tabType: usermanagement.GraphTab
         }, {
             // the fallback to the basic implementation as a default rule
             selector: '> div',
@@ -187,7 +226,7 @@
         usermanagement.DetailView = core.console.DetailView.extend({
 
             getProfileId: function () {
-                return 'usermanagement';
+                return 'usermgr';
             },
 
             getCurrentPath: function () {
@@ -211,7 +250,7 @@
             }
         });
 
-        usermanagement.DetailView = core.getView('#usermanagement-view', usermanagement.DetailView);
+        usermanagement.detailView = core.getView('#usermanagement-view', usermanagement.DetailView);
 
     })(CPM.nodes.usermanagement, CPM.console, CPM.core);
 

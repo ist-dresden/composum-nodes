@@ -126,4 +126,39 @@
 
     </message>
 
+    <user jcr:primaryType="sling:Folder">
+
+        <User_Profile jcr:primaryType="sling:MessageEntry"
+                sling:key="User Profile" sling:message="Nutzerprofil"/>
+        <Edit_User_Profile jcr:primaryType="sling:MessageEntry"
+                sling:key="Edit User Profile" sling:message="Nutzerprofil Bearbeiten"/>
+        <Given_Name jcr:primaryType="sling:MessageEntry"
+                sling:key="Given Name" sling:message="Vorname"/>
+        <Family_Name jcr:primaryType="sling:MessageEntry"
+                sling:key="Family Name" sling:message="Nachname"/>
+        <Job_Title jcr:primaryType="sling:MessageEntry"
+                sling:key="Job Title" sling:message="Job-Titel"/>
+        <Phone_Number jcr:primaryType="sling:MessageEntry"
+                sling:key="Phone Number" sling:message="Telefonnummer"/>
+        <Address jcr:primaryType="sling:MessageEntry"
+                sling:key="Address" sling:message="Adresse"/>
+        <Street jcr:primaryType="sling:MessageEntry"
+                sling:key="Street" sling:message="Straße"/>
+        <Postal_Code jcr:primaryType="sling:MessageEntry"
+                sling:key="Postal Code" sling:message="PLZ"/>
+        <City jcr:primaryType="sling:MessageEntry"
+                sling:key="City" sling:message="Ort"/>
+        <Country jcr:primaryType="sling:MessageEntry"
+                sling:key="Country" sling:message="Land"/>
+        <About_me jcr:primaryType="sling:MessageEntry"
+                sling:key="About me" sling:message="Über mich"/>
+        <Gender jcr:primaryType="sling:MessageEntry"
+                sling:key="Gender" sling:message="Geschlecht"/>
+        <female jcr:primaryType="sling:MessageEntry"
+                sling:key="female" sling:message="weiblich"/>
+        <male jcr:primaryType="sling:MessageEntry"
+                sling:key="male" sling:message="männlich"/>
+
+    </user>
+
 </jcr:root>

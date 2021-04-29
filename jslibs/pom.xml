@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>2.5.1-SNAPSHOT</version>
+        <version>2.6.0</version>
     </parent>
 
     <artifactId>composum-nodes-jslibs</artifactId>
@@ -59,6 +59,7 @@
                             root/libs/jslibs/iframeResizer/4.0.4;path:=/libs/jslibs/iframeResizer/4.0.4;overwrite:=true,
                             root/libs/jslibs/jquery/2.2.4;path:=/libs/jslibs/jquery/2.2.4;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/jquery/3.4.1;path:=/libs/jslibs/jquery/3.4.1;overwrite:=true;ignoreImportProviders:="json,xml",
+                            root/libs/jslibs/jquery/3.6.0;path:=/libs/jslibs/jquery/3.6.0;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/js-base64/2.5.2;path:=/libs/jslibs/js-base64/2.5.2;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/jstree/3.3.8;path:=/libs/jslibs/jstree/3.3.8;overwrite:=true;ignoreImportProviders:="json,xml",
                             root/libs/jslibs/loglevel/1.6.1;path:=/libs/jslibs/loglevel/1.6.1;overwrite:=true;ignoreImportProviders:="json,xml",
