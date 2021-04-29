@@ -37,6 +37,7 @@
                     ]"/>
         <dialogs jcr:primaryType="nt:unstructured"
                 embed="[
+                        composum/nodes/commons/components/user/profile/dialog/js/dialog.js,
                         composum/nodes/usermgnt/dialogs/deleteresource/js/deleteresource.js,
                         composum/nodes/usermgnt/dialogs/adduser/js/adduserdialog.js,
                         composum/nodes/usermgnt/dialogs/addsystemuser/js/addsystemuserdialog.js,

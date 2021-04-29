@@ -7,14 +7,14 @@
     <div class="graph detail-tab">
         <div class="graph-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <button class="toggle-image fa fa-image btn btn-default" title="Toggle SVG Image view"><span
-                        class="label">Toggle SVG Image view</span></button>
+                <button class="toggle-image fa fa-image btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Toggle SVG Image view')}"><span
+                        class="label">${cpn:i18n(slingRequest,'Toggle SVG Image view')}</span></button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <%--button class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
-                </button--%>
                 <button class="open-graph-page fa fa-external-link btn btn-default"
-                        title="Open Authorizable Graph page"><span class="label">Open Authorizable Graph page</span>
+                        title="${cpn:i18n(slingRequest,'Open Authorizable Graph page')}"><span
+                        class="label">${cpn:i18n(slingRequest,'Open Authorizable Graph page')}</span>
                 </button>
             </div>
         </div>

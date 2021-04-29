@@ -6,6 +6,12 @@
 <cpn:component var="model" type="com.composum.sling.core.usermanagement.view.ServiceUser" scope="request">
     <div class="paths detail-tab">
         <div class="paths-toolbar detail-toolbar">
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="reload fa fa-refresh btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Reload')}"><span
+                        class="label">${cpn:i18n(slingRequest,'Reload')}</span>
+                </button>
+            </div>
         </div>
         <div class="paths-container">
             <sling:include resourceType="composum/nodes/usermgnt/graph/view" replaceSelectors="paths"/>

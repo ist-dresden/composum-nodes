@@ -7,9 +7,10 @@
     <div class="paths detail-tab">
         <div class="paths-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <%--button class="open-paths-page fa fa-external-link btn btn-default"
-                        title="Open Authorizable Paths page"><span class="label">Open Authorizable Paths page</span>
-                </button--%>
+                <button type="button" class="reload fa fa-refresh btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Reload')}"><span
+                        class="label">${cpn:i18n(slingRequest,'Reload')}</span>
+                </button>
             </div>
         </div>
         <div class="paths-container">

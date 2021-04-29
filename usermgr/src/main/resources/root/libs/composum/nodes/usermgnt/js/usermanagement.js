@@ -14,29 +14,40 @@
             return usermanagement.current ? usermanagement.current.path : undefined;
         };
 
-        usermanagement.setCurrentPath = function (path) {
+        usermanagement.setCurrentPath = function (path, supressEvent, suppressPush) {
             if (!usermanagement.current || usermanagement.current.path !== path) {
                 if (path) {
-                    core.getJson('/bin/cpm/usermanagement.tree.json' + core.encodePath(path), undefined, undefined,
-                        _.bind(function (result) {
-                            usermanagement.current = {
-                                path: path,
-                                node: result.responseJSON,
-                                viewUrl: core.getContextUrl('/bin/users.view.html' + core.encodePath(path)),
-                                nodeUrl: core.getContextUrl('/bin/users.html' + core.encodePath(path))
-                            };
-
-                            core.console.getProfile().set('usermgr', 'current', path);
-                            if (history.replaceState) {
-                                history.replaceState(usermanagement.current.path, name, usermanagement.current.nodeUrl);
-                            }
+                    this.refreshState(path, _.bind(function () {
+                        core.console.getProfile().set('usermgr', 'current', path);
+                        if (history.pushState && !suppressPush) {
+                            history.pushState(usermanagement.current.path, name, usermanagement.current.nodeUrl);
+                        }
+                        if (!supressEvent) {
                             $(document).trigger("path:selected", [path]);
-                        }, this));
+                        }
+                    }, this));
                 } else {
                     usermanagement.current = undefined;
-                    $(document).trigger("path:selected", [path]);
+                    if (!supressEvent) {
+                        $(document).trigger("path:selected", []);
+                    }
                 }
             }
+        };
+
+        usermanagement.refreshState = function (path, callback) {
+            core.getJson('/bin/cpm/usermanagement.tree.json' + core.encodePath(path),
+                undefined, undefined, _.bind(function (result) {
+                    usermanagement.current = {
+                        path: path,
+                        node: result.responseJSON,
+                        viewUrl: core.getContextUrl('/bin/users.view.html' + core.encodePath(path)),
+                        nodeUrl: core.getContextUrl('/bin/users.html' + core.encodePath(path))
+                    };
+                    if (_.isFunction(callback)) {
+                        callback();
+                    }
+                }, this));
         };
 
         usermanagement.Usermanagement = console.components.SplitView.extend({

@@ -1,0 +1,4 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "sling:resourceType": "composum/nodes/commons/components/user/profile/dialog"
+}

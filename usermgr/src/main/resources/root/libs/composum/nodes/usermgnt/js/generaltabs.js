@@ -42,30 +42,54 @@
 
             initialize: function (options) {
                 usermanagement.GeneralTab.prototype.initialize.call(this, options);
-                this.$disableUserButton = this.$('.detail-toolbar .disable-user');
-                this.$disableUserButton.click(_.bind(this.disableUser, this));
-                this.$enableUserButton = this.$('.detail-toolbar .enable-user');
-                this.$enableUserButton.click(_.bind(this.enableUser, this));
+                this.$toggleDisabled = this.$('.detail-toolbar .toggle-disabled');
+                this.$editProfileButton = this.$('.detail-toolbar .edit-profile');
                 this.$changePasswordButton = this.$('.detail-toolbar .change-password');
+                this.$toggleDisabled.click(_.bind(this.toggleDisabled, this));
+                this.$editProfileButton.click(_.bind(this.editProfile, this));
                 this.$changePasswordButton.click(_.bind(this.changePassword, this));
                 var current = usermanagement.current.node;
                 if (current.disabled) {
-                    this.$disableUserButton.addClass('disabled');
-                    this.$enableUserButton.removeClass('disabled');
+                    this.$toggleDisabled.removeClass('fa-ban');
+                    this.$toggleDisabled.addClass('fa-check-circle-o');
+                    this.$toggleDisabled.attr('title', this.$toggleDisabled.data('title-enable'));
                 } else {
-                    this.$disableUserButton.removeClass('disabled');
-                    this.$enableUserButton.addClass('disabled');
+                    this.$toggleDisabled.attr('title', this.$toggleDisabled.data('title-disable'));
                 }
                 if (current.systemUser) {
                     this.$changePasswordButton.addClass('disabled');
                 }
             },
 
-            disableUser: function () {
-                var dialog = usermanagement.getDisableUserDialog();
-                dialog.show(function () {
-                    dialog.setUser(usermanagement.current.node.name);
-                }, _.bind(this.refresh, this));
+            toggleDisabled: function () {
+                if (usermanagement.current.node.disabled) {
+                    var path = usermanagement.current.node.name;
+                    core.ajaxPost(
+                        "/bin/cpm/usermanagement.enable.json/" + path,
+                        {},
+                        {
+                            dataType: 'json'
+                        },
+                        _.bind(function () {
+                            usermanagement.refreshState(usermanagement.getCurrentPath(), _.bind(this.refresh, this));
+                        }, this),
+                        _.bind(function (result) {
+                            core.alert('danger', 'Error', 'Error on enable user', result);
+                        }, this));
+                } else {
+                    var dialog = usermanagement.getDisableUserDialog();
+                    dialog.show(function () {
+                        dialog.setUser(usermanagement.current.node.name);
+                    }, _.bind(this.refresh, this));
+                }
+            },
+
+            enableUser: function () {
+            },
+
+            editProfile: function () {
+                core.nodes.commons.user.openProfileDialog(usermanagement.getCurrentPath(),
+                    undefined, undefined, _.bind(this.refresh, this));
             },
 
             changePassword: function () {
@@ -73,22 +97,6 @@
                 dialog.show(function () {
                     dialog.setUser(usermanagement.current.node.name);
                 }, _.bind(this.refresh, this));
-            },
-
-            enableUser: function () {
-                var path = usermanagement.current.node.name;
-                core.ajaxPost(
-                    "/bin/cpm/usermanagement.enable.json/" + path,
-                    {},
-                    {
-                        dataType: 'json'
-                    },
-                    _.bind(function (result) {
-                        this.refresh();
-                    }, this),
-                    _.bind(function (result) {
-                        core.alert('danger', 'Error', 'Error on enable user', result);
-                    }, this));
             }
         });
 

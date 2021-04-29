@@ -7,8 +7,12 @@
     <div class="members detail-tab full-table-view">
         <div class="table-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <button class="add-authorizable-to-group fa fa-plus btn btn-default" title="Add authorizable to group"><span class="label">Add authorizable to group</span></button>
-                <button class="remove-authorizable-from-group fa fa-minus btn btn-default" title="Remove authorizable from group"><span class="label">Remove authorizable from group</span></button>
+                <button class="add-authorizable-to-group fa fa-plus btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Add authorizable to group')}"><span
+                        class="label">${cpn:i18n(slingRequest,'Add authorizable to group')}</span></button>
+                <button class="remove-authorizable-from-group fa fa-minus btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Remove authorizable from group')}"><span
+                        class="label">${cpn:i18n(slingRequest,'Remove authorizable from group')}</span></button>
             </div>
         </div>
         <div class="table-container">

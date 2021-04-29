@@ -6,14 +6,12 @@
 <cpn:component var="model" type="com.composum.sling.core.usermanagement.view.User" scope="request">
     <div class="general-system detail-tab">
         <div class="detail-toolbar">
-            <div class="btn-group btn-group-sm" role="group">
-                <button class="disable-user fa fa-ban btn btn-default" title="${cpn:i18n(slingRequest,'Disable User')}"><span
-                        class="label">${cpn:i18n(slingRequest,'Disable User')}</span></button>
-                <button class="enable-user fa fa-check-circle-o btn btn-default"
-                        title="${cpn:i18n(slingRequest,'Enable User')}"><span
-                        class="label">${cpn:i18n(slingRequest,'Enable User')}</span>
-                </button>
-            </div>
+            <cpn:div test="${model.currentUserAdmin}" class="btn-group btn-group-sm" role="group">
+                <button class="toggle-disabled fa fa-ban btn btn-default"
+                        data-title-disable="${cpn:i18n(slingRequest,'Disable User')}"
+                        data-title-enable="${cpn:i18n(slingRequest,'Enable User')}"><span
+                        class="label"></span></button>
+            </cpn:div>
             <div class="btn-group btn-group-sm" role="group">
                 <button type="button" class="reload fa fa-refresh btn btn-default"
                         title="${cpn:i18n(slingRequest,'Reload')}"><span

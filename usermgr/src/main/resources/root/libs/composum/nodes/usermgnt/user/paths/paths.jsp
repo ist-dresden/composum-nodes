@@ -7,6 +7,10 @@
     <div class="paths detail-tab">
         <div class="paths-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="reload fa fa-refresh btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Reload')}"><span
+                        class="label">${cpn:i18n(slingRequest,'Reload')}</span>
+                </button>
             </div>
         </div>
         <div class="paths-container">

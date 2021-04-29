@@ -1,0 +1,305 @@
+{
+  "jcr:primaryType": "sling:Folder",
+  "jcr:language": "de",
+  "jcr:mixinTypes": [
+    "mix:language"
+  ],
+  "sling:basename": "composum-nodes-usermgr",
+  "query": {
+    "jcr:primaryType": "sling:Folder",
+    "Search_G_U": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Search Groups and Users",
+      "sling:message": "Nutzer und Gruppen Suchen"
+    },
+    "Users": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Users",
+      "sling:message": "Nutzer"
+    },
+    "Search_A_P": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Search Affected Paths",
+      "sling:message": "Betroffene Pfade Suchen"
+    },
+    "Paths": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Paths",
+      "sling:message": "Pfade"
+    },
+    "Search_Graph": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Search using the Graph",
+      "sling:message": "Im Graphen Suchen"
+    },
+    "All": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "All",
+      "sling:message": "Alles"
+    },
+    "User": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "User",
+      "sling:message": "Nutzer"
+    },
+    "Group": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Group",
+      "sling:message": "Gruppe"
+    },
+    "Authorizable_Name": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Authorizable Name",
+      "sling:message": "Authorizable-Name"
+    },
+    "Authorizable_Path": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Authorizable Path",
+      "sling:message": "Authorizable-Pfad"
+    },
+    "Affected_Path": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Affected Path",
+      "sling:message": "Betroffener Pfad"
+    },
+    "Execute_query": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Execute query",
+      "sling:message": "Suche ausführen"
+    },
+    "no_affected_paths": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "no affected paths found",
+      "sling:message": "keine betroffenen Pfade gefunden"
+    }
+  },
+  "view": {
+    "Groups": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Groups",
+      "sling:message": "Gruppen"
+    },
+    "Members": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Members",
+      "sling:message": "Mitglieder"
+    },
+    "Member_of": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Member of",
+      "sling:message": "Mitglied von"
+    },
+    "Affected_Paths": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Affected Paths",
+      "sling:message": "Betroffene Pfade"
+    },
+    "no_relations": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "no relations configured",
+      "sling:message": "keine Beziehungen konfiguriert"
+    },
+    "no_Group_members": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "no Group members configured",
+      "sling:message": "keine Gruppenmitglieder konfiguriert"
+    },
+    "no_User_members": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "no User members configured",
+      "sling:message": "keine Benutzermitglieder konfiguriert"
+    },
+    "Toggle_SVG_Image": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Toggle SVG Image view",
+      "sling:message": "SVG-Bildansicht umschalten"
+    },
+    "Open_Graph": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Open Authorizable Graph page",
+      "sling:message": "Graph der 'Authorizables' öffnen"
+    },
+    "group_to_group": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Add group to group",
+      "sling:message": "Gruppe zur Gruppe hinzufügen"
+    },
+    "Remove_group_group": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Remove group from group",
+      "sling:message": "Gruppe aus Gruppe entfernen"
+    },
+    "authorizable_to_group": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Add authorizable to group",
+      "sling:message": "'Authorizable' zur Gruppe hinzufügen"
+    },
+    "remove_authorizable_group": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Remove authorizable from group",
+      "sling:message": "'Authorizable' aus Gruppe entfernen"
+    },
+    "Service_User": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Service User",
+      "sling:message": "Service-Nutzer"
+    },
+    "System_Users": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "System Users",
+      "sling:message": "System-Nutzer"
+    },
+    "Edit_User_Profile": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Edit User Profile",
+      "sling:message": "Nutzerprofil Bearbeiten"
+    },
+    "no_servive_users_rel": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "no Service User references",
+      "sling:message": "keine Service-Nutzer-Referenzen"
+    },
+    "Add_user_to_group": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Add user to group",
+      "sling:message": "Benutzer zur Gruppe hinzufügen"
+    },
+    "Remove_user_from_group": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Remove user from group",
+      "sling:message": "Benutzer aus Gruppe entfernen"
+    },
+    "Profile": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Profile",
+      "sling:message": "Profil"
+    },
+    "Preferences": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Preferences",
+      "sling:message": "Voreinstellungen"
+    },
+    "Add_property": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Add new property",
+      "sling:message": "Neue Eigenschaft hinzufügen"
+    },
+    "Remove_properties": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Remove selected properties",
+      "sling:message": "Ausgewählte Eigenschaften entfernen"
+    },
+    "Copy_properties": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Copy selected properties",
+      "sling:message": "Ausgewählte Eigenschaften kopieren"
+    },
+    "Paste_properties": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Paste copied properties",
+      "sling:message": "Kopierte Eigenschaften einfügen"
+    },
+    "Delete_Preferences": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Delete Preferences",
+      "sling:message": "Voreinstellungen löschen"
+    },
+    "Delete_Profile": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Delete Profile",
+      "sling:message": "Profil löschen"
+    }
+  },
+  "dialog": {
+    "Create_Group": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Create a New Group",
+      "sling:message": "Eine neue Gruppe Erzeugen"
+    },
+    "Groupname": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Groupname",
+      "sling:message": "Nutzer"
+    },
+    "Intermediate_Path": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Intermediate Path",
+      "sling:message": "Intermediate Pfad"
+    },
+    "Add_A_T_group": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Add authorizable to group",
+      "sling:message": "'Authorizable' zu Gruppen hinzufügen"
+    },
+    "Authorizable": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Authorizable",
+      "sling:message": "'Authorizable'"
+    },
+    "Create_System_User": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Create New System User",
+      "sling:message": "Neuen Systemnutzer erzeugen"
+    },
+    "Username": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Username",
+      "sling:message": "Nutzername"
+    },
+    "Create_User": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Create New User",
+      "sling:message": "Einen neuen Nutzer Anlegen"
+    },
+    "Password": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Password",
+      "sling:message": "Passwort"
+    },
+    "Change_Password": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Change Password",
+      "sling:message": "Passwort Ändern"
+    },
+    "Old_Password": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Old Password",
+      "sling:message": "Altes Passwort"
+    },
+    "Delete_Authorizable": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Delete Authorizable",
+      "sling:message": "'Authorizable' Löschen"
+    },
+    "Delete_Resource": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Delete Resource",
+      "sling:message": "Ressource Löschen"
+    },
+    "want_to_delete": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Do you really want to delete the ",
+      "sling:message": "Möchten Sie dies wirklich löschen: "
+    },
+    "Disable_User": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Disable User",
+      "sling:message": "Nutzer Deaktivieren"
+    },
+    "Enable_User": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Enable User",
+      "sling:message": "Nutzer Aktivieren"
+    },
+    "Reason": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Reason",
+      "sling:message": "Grund"
+    },
+    "Disable": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Disable",
+      "sling:message": "Deaktivieren"
+    }
+  }
+}

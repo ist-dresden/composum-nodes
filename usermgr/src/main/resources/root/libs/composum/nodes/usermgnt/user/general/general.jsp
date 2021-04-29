@@ -6,13 +6,16 @@
 <cpn:component var="model" type="com.composum.sling.core.usermanagement.view.User" scope="request">
     <div class="general-user detail-tab">
         <div class="detail-toolbar">
+            <cpn:div test="${model.currentUserAdmin}" class="btn-group btn-group-sm" role="group">
+                <button class="toggle-disabled fa fa-ban btn btn-default"
+                        data-title-disable="${cpn:i18n(slingRequest,'Disable User')}"
+                        data-title-enable="${cpn:i18n(slingRequest,'Enable User')}"><span
+                        class="label"></span></button>
+            </cpn:div>
             <div class="btn-group btn-group-sm" role="group">
-                <button class="disable-user fa fa-ban btn btn-default"
-                        title="${cpn:i18n(slingRequest,'Disable User')}"><span
-                        class="label">${cpn:i18n(slingRequest,'Disable User')}</span></button>
-                <button class="enable-user fa fa-check-circle-o btn btn-default"
-                        title="${cpn:i18n(slingRequest,'Enable User')}"><span
-                        class="label">${cpn:i18n(slingRequest,'Enable User')}</span>
+                <button type="button" class="edit-profile fa fa-edit btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Edit User Profile')}"><span
+                        class="label">${cpn:i18n(slingRequest,'Edit User Profile')}</span>
                 </button>
                 <button class="change-password fa fa-key btn btn-default"
                         title="${cpn:i18n(slingRequest,'Change Password')}"><span
@@ -48,7 +51,9 @@
                         <cpn:div class="row">
                             <cpn:div class="col col-md-6 col-xs-12">
                                 <cpn:div class="profile">
-                                    <sling:call script="profile.jsp"/>
+                                    <sling:include path="${model.profile.path}"
+                                                   resourceType="composum/nodes/commons/components/user/profile"
+                                                   replaceSelectors="properties"/>
                                 </cpn:div>
                             </cpn:div>
                             <cpn:div class="col col-md-6 col-xs-12">

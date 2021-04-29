@@ -15,7 +15,18 @@
 
             reload: function (event) {
                 let text = undefined;
-                graph.render(this.$el, undefined, usermanagement.current.node.name, undefined, text, 'view.paths');
+                graph.render(this.$el, undefined, usermanagement.current.node.name, undefined, text,
+                    'view.paths', _.bind(function () {
+                        this.$el.find('.authorizable-id').find('a').click(_.bind(function (event) {
+                            const path = $(event.currentTarget).data('path');
+                            if (path) {
+                                event.preventDefault();
+                                usermanagement.setCurrentPath(path);
+                                return false;
+                            }
+                            return true;
+                        }, this));
+                    }, this));
             }
         });
 
