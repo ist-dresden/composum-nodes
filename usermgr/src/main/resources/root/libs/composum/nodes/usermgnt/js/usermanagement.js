@@ -139,10 +139,6 @@
             },
 
             refreshNodeState: function () {
-                var node = this.tree.current();
-                if (node) {
-                    // todo
-                }
             },
 
             refreshTree: function (event) {

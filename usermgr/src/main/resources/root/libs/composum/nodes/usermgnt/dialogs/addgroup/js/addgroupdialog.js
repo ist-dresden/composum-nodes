@@ -35,10 +35,9 @@
                     },
                     _.bind(function (result) {
                         this.hide();
-                        usermanagement.tree.refresh(function () {
-                            var path = JSON.parse(result.responseText).path;
-                            $(document).trigger("path:select", [path]);
-                        });
+                        var path = JSON.parse(result.responseText).path;
+                        $(document).trigger('path:inserted', [path]);
+                        $(document).trigger("path:select", [path]);
                     }, this),
                     _.bind(function (result) {
                         this.hide();
