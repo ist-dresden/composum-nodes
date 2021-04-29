@@ -82,6 +82,7 @@
                         </Include-Resource>
                         <Import-Package>
                             org.apache.sling.api.resource.*;version="[2.10,3)",
+                            org.apache.sling.serviceusermapping.*;version="[1.3,2)",
                             *
                         </Import-Package>
                         <Export-Package>
@@ -185,6 +186,11 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.xss</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.serviceusermapper</artifactId>
             <scope>compile</scope>
         </dependency>
 

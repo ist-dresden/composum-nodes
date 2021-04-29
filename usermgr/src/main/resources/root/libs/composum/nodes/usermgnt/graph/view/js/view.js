@@ -4,6 +4,32 @@
 
     (function (usermanagement, graph, core) {
 
+        usermanagement.PathsTab = core.console.DetailTab.extend({
+
+            initialize: function (options) {
+                this.$graph = this.$('.composum-nodes-usermgr-paths');
+                this.$reload = this.$('.paths-toolbar .reload');
+                this.$reload.click(_.bind(this.reload, this));
+                this.reload();
+            },
+
+            reload: function (event) {
+                let text = undefined;
+                graph.render(this.$el, undefined, usermanagement.current.node.name, undefined, text,
+                    'view.paths', _.bind(function () {
+                        this.$el.find('.authorizable-id').find('a').click(_.bind(function (event) {
+                            const path = $(event.currentTarget).data('path');
+                            if (path) {
+                                event.preventDefault();
+                                usermanagement.setCurrentPath(path);
+                                return false;
+                            }
+                            return true;
+                        }, this));
+                    }, this));
+            }
+        });
+
         usermanagement.GraphTab = core.console.DetailTab.extend({
 
             initialize: function (options) {
@@ -22,17 +48,18 @@
             },
 
             reload: function (event) {
-                graph.render(undefined, usermanagement.current.node.name, undefined, 'view', _.bind(function () {
-                    this.$graph.find('svg').find('a').click(_.bind(function (event) {
-                        const path = $(event.currentTarget).attr('title');
-                        if (path) {
-                            event.preventDefault();
-                            usermanagement.setCurrentPath(path);
-                            return false;
-                        }
-                        return true;
+                graph.render(this.$el, undefined, usermanagement.current.node.name, undefined, undefined,
+                    'view', _.bind(function () {
+                        this.$graph.find('svg').find('a').click(_.bind(function (event) {
+                            const path = $(event.currentTarget).attr('title');
+                            if (path) {
+                                event.preventDefault();
+                                usermanagement.setCurrentPath(path);
+                                return false;
+                            }
+                            return true;
+                        }, this));
                     }, this));
-                }, this));
             },
 
             toggleImageView: function () {

@@ -1,13 +1,9 @@
 package com.composum.sling.core.usermanagement.model;
 
-import com.google.gson.stream.JsonWriter;
+import com.composum.sling.core.usermanagement.service.Authorizables;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.Group;
-import org.apache.jackrabbit.api.security.user.User;
-import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,43 +11,10 @@ import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
-public class AuthorizablesGraph {
-
-    public interface UrlBuilder {
-
-        @Nullable
-        String buildUrl(AuthorizableModel node);
-    }
-
-    protected class Relation {
-
-        protected final AuthorizableModel source;
-        protected final AuthorizableModel target;
-
-        public Relation(@NotNull final AuthorizableModel source, @NotNull final AuthorizableModel target) {
-            this.source = source;
-            this.target = target;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            Relation otherRel;
-            return other instanceof Relation &&
-                    (otherRel = (Relation) other).target.equals(target) && otherRel.source.equals(source);
-        }
-
-        @Override
-        public int hashCode() {
-            return source.hashCode() + target.hashCode();
-        }
-    }
+public class AuthorizablesGraph extends AuthorizablesMap {
 
     public static final Map<String, Object> DEFAULT_NODE_CFG = new HashMap<String, Object>() {{
         put("style", "filled");
@@ -59,150 +22,35 @@ public class AuthorizablesGraph {
         put("fontsize", "10.0");
     }};
 
-    protected int index = 0;
-    protected final AuthorizableModel singleFocus;
-    protected final Map<String, Integer> indexes = new LinkedHashMap<>();
-    protected final Map<String, AuthorizableModel> nodes = new TreeMap<>();
-    protected final Set<Relation> targetRelations = new HashSet<>();
-    protected final Set<Relation> sourceRelations = new HashSet<>();
-
-    public AuthorizablesGraph(@NotNull final ResourceResolver resolver,
+    public AuthorizablesGraph(@NotNull final Authorizables.Context context,
                               @Nullable final String selector,
                               @Nullable final String nameQueryPattern,
                               @Nullable final String pathPattern)
             throws RepositoryException {
-        this(resolver, Authorizables.selector(selector), nameQueryPattern,
+        this(context, Authorizables.selector(selector), nameQueryPattern,
                 StringUtils.isNotBlank(pathPattern) ? new Authorizables.Filter.Path(pathPattern) : null);
     }
 
-    public AuthorizablesGraph(@NotNull final ResourceResolver resolver,
+    public AuthorizablesGraph(@NotNull final Authorizables.Context context,
                               @Nullable final Class<? extends Authorizable> selector,
                               @Nullable final String nameQueryPattern,
                               @Nullable final Authorizables.Filter filter)
             throws RepositoryException {
-        UserManager userManager = Authorizables.getUserManager(resolver);
-        if (userManager != null) {
-            Set<Authorizable> authorizables = Authorizables.findAuthorizables(
-                    userManager, selector, nameQueryPattern, filter);
-            for (Authorizable authorizable : authorizables) {
-                addNode(authorizable);
-            }
-            singleFocus = nodes.size() == 1 ? nodes.values().iterator().next() : null;
-            Set<String> singleFocusDone = singleFocus != null ? new HashSet<>() : null;
-            for (AuthorizableModel source : nodes.values()) {
-                addTargetRelations(userManager, source, singleFocusDone);
-            }
-            if (singleFocus != null) {
-                addSourceRelations(userManager, selector, filter, singleFocus, singleFocusDone);
-            }
-        } else {
-            singleFocus = null;
-        }
+        super(context, selector, nameQueryPattern, filter);
     }
 
-    protected AuthorizableModel addNode(@Nullable final Authorizable authorizable)
+    @Override
+    protected void extendedScan(@Nullable final Class<? extends Authorizable> selector,
+                                @Nullable final Authorizables.Filter filter,
+                                @Nullable final Set<String> singleFocusDone)
             throws RepositoryException {
-        AuthorizableModel result = null;
-        if (authorizable != null) {
-            result = nodes.get(authorizable.getID());
-            if (result == null) {
-                result = authorizable.isGroup()
-                        ? new GroupModel((Group) authorizable)
-                        : new UserModel((User) authorizable);
-                nodes.put(result.getId(), result);
-                indexes.put(result.getId(), ++index);
-            }
+        if (singleFocus != null && singleFocusDone != null) {
+            addSourceRelations(selector, filter, singleFocus, singleFocusDone);
         }
-        return result;
-    }
-
-    protected void addTargetRelations(@NotNull final UserManager userManager,
-                                      @NotNull final AuthorizableModel source, @Nullable final Set<String> done)
-            throws RepositoryException {
-        String id = source.getId();
-        if (done != null) {
-            if (!done.add(id)) {
-                return;
-            }
-        }
-        for (String targetId : source.getDeclaredMemberOf()) {
-            AuthorizableModel target = nodes.get(targetId);
-            if (target == null && done != null) {
-                target = addNode(userManager.getAuthorizable(targetId));
-            }
-            if (target != null) {
-                targetRelations.add(new Relation(source, target));
-                if (done != null) {
-                    addTargetRelations(userManager, target, done);
-                }
-            }
-        }
-    }
-
-    protected void addSourceRelations(@NotNull final UserManager userManager,
-                                      @Nullable final Class<? extends Authorizable> selector,
-                                      @Nullable final Authorizables.Filter filter,
-                                      @NotNull final AuthorizableModel target, @NotNull final Set<String> done)
-            throws RepositoryException {
-        if (target.isGroup()) {
-            Set<Authorizable> sources = Authorizables.findAuthorizables(
-                    userManager, selector, null, authorizable
-                            -> (filter == null || filter.accept(authorizable))
-                            && isSourceOfTarget(authorizable, target.getId()));
-            for (Authorizable source : sources) {
-                if (done.add(source.getID())) {
-                    sourceRelations.add(new Relation(addNode(source), target));
-                }
-            }
-        }
-    }
-
-    protected boolean isSourceOfTarget(Authorizable source, String targetId)
-            throws RepositoryException {
-        Iterator<Group> targets = source.declaredMemberOf();
-        while (targets.hasNext()) {
-            if (targetId.equals(targets.next().getID())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void toJson(@NotNull final JsonWriter writer) throws IOException {
-        writer.beginObject();
-        if (singleFocus != null) {
-            writer.name("focus");
-            singleFocus.toJson(writer);
-            writer.name("sources").beginArray();
-            for (Relation relation : sourceRelations) {
-                relation.source.toJson(writer);
-            }
-            writer.endArray();
-            writer.name("targets").beginArray();
-            for (Relation relation : targetRelations) {
-                relation.target.toJson(writer);
-            }
-            writer.endArray();
-        } else {
-            writer.name("nodes").beginArray();
-            for (AuthorizableModel node : nodes.values()) {
-                node.toJson(writer);
-            }
-            writer.endArray();
-            writer.name("relations").beginArray();
-            for (Relation relation : targetRelations) {
-                writer.beginObject();
-                writer.name("source").value(relation.source.getId());
-                writer.name("target").value(relation.target.getId());
-                writer.endObject();
-            }
-            writer.endArray();
-        }
-        writer.endObject();
     }
 
     public void toGraphviz(@NotNull final Writer writer,
-                           @Nullable final Resource config, @Nullable final UrlBuilder urlBuilder)
+                           @Nullable final Resource config, @Nullable final AuthorizablesMap.NodeUrlBuilder urlBuilder)
             throws IOException {
         writer.append("digraph {\n");
         writeConfig(writer, config, "graph", null);
@@ -267,17 +115,19 @@ public class AuthorizablesGraph {
     protected String getColor(AuthorizableModel node) {
         boolean isFocussed = singleFocus != null && singleFocus.getId().equals(node.getId());
         if (node.isGroup()) {
-            return isFocussed ? "#4CBAC4" : "#C6FBFF";
+            return isFocussed ? "#cccccc" : "#eeeeee";
         } else {
             UserModel user = (UserModel) node;
             if (user.isDisabled()) {
-                return isFocussed ? "#E38585" : "#FFC2C2";
+                return isFocussed ? "#d4a5a4" : "#e0c6c6";
             } else if (user.isAdmin()) {
-                return isFocussed ? "#54C478" : "#6EFD9D";
+                return isFocussed ? "#abd5ab" : "#d6f1d7";
+            } else if (user.isServiceUser()) {
+                return isFocussed ? "#b5a3ce" : "#d8cfe5";
             } else if (user.isSystemUser()) {
-                return isFocussed ? "#AEAEAE" : "#DDDDDD";
+                return isFocussed ? "#96b6c6" : "#c7dbe5";
             } else {
-                return isFocussed ? "#F1F55B" : "#FCFFBF";
+                return isFocussed ? "#aac9aa" : "#d3e3d3";
             }
         }
     }

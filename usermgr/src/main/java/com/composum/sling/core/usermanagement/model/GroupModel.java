@@ -1,10 +1,9 @@
 package com.composum.sling.core.usermanagement.model;
 
+import com.composum.sling.core.usermanagement.service.Authorizables;
 import com.google.gson.stream.JsonWriter;
 import org.apache.jackrabbit.api.security.user.Group;
-import org.apache.jackrabbit.api.security.user.UserManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.jcr.RepositoryException;
 import java.io.IOException;
@@ -16,10 +15,21 @@ public class GroupModel extends AuthorizableModel {
     protected final Set<String> members;
     protected final Set<String> declaredMembers;
 
-    public GroupModel(Group jcrGroup) throws RepositoryException {
-        super(jcrGroup);
+    private transient Collection<UserModel> users;
+    private transient Collection<UserModel> declaredUsers;
+    private transient Collection<GroupModel> groups;
+    private transient Collection<GroupModel> declaredGroups;
+
+    public GroupModel(@NotNull final Authorizables.Context context,
+                      @NotNull final Group jcrGroup) throws RepositoryException {
+        super(context, jcrGroup);
         members = stripIDs(jcrGroup.getMembers());
         declaredMembers = stripIDs(jcrGroup.getDeclaredMembers());
+    }
+
+    @Override
+    protected int getRank() {
+        return 3;
     }
 
     @Override
@@ -38,53 +48,53 @@ public class GroupModel extends AuthorizableModel {
     }
 
     @NotNull
-    public Collection<UserModel> getUsers(@Nullable final UserManager userManager)
+    public Collection<UserModel> getUsers()
             throws RepositoryException {
-        return getUsers(userManager, getMembers());
+        if (users == null) {
+            users = getUsers(context, getMembers());
+        }
+        return users;
     }
 
     @NotNull
-    public Collection<UserModel> getDeclaredUsers(@Nullable final UserManager userManager)
+    public Collection<UserModel> getDeclaredUsers()
             throws RepositoryException {
-        return getUsers(userManager, getDeclaredMembers());
+        if (declaredUsers == null) {
+            declaredUsers = getUsers(context, getDeclaredMembers());
+        }
+        return declaredUsers;
     }
 
     @NotNull
-    public Collection<GroupModel> getGroups(@Nullable final UserManager userManager)
+    public Collection<GroupModel> getGroups()
             throws RepositoryException {
-        return getGroups(userManager, getMembers());
+        if (groups == null) {
+            groups = getGroups(context, getMembers());
+        }
+        return groups;
     }
 
     @NotNull
-    public Collection<GroupModel> getDeclaredGroups(@Nullable final UserManager userManager)
+    public Collection<GroupModel> getDeclaredGroups()
             throws RepositoryException {
-        return getGroups(userManager, getDeclaredMembers());
+        if (declaredGroups == null) {
+            declaredGroups = getGroups(context, getDeclaredMembers());
+        }
+        return declaredGroups;
     }
 
-    public void toJson(JsonWriter writer) throws IOException {
-        writer.beginObject();
-        writer.name("type").value("group");
-        writer.name("id").value(getId());
-        writer.name("name").value(getPrincipalName());
-        writer.name("path").value(getPath());
+    @Override
+    protected void toJsonData(JsonWriter writer) throws IOException {
+        super.toJsonData(writer);
         writer.name("declaredMembers").beginArray();
         for (String id : getDeclaredMembers()) {
             writer.value(id);
         }
-        writer.name("Members").beginArray();
+        writer.endArray();
+        writer.name("members").beginArray();
         for (String id : getMembers()) {
             writer.value(id);
         }
-        writer.name("declaredMemberOf").beginArray();
-        for (String id : getDeclaredMemberOf()) {
-            writer.value(id);
-        }
         writer.endArray();
-        writer.name("memberOf").beginArray();
-        for (String id : getMemberOf()) {
-            writer.value(id);
-        }
-        writer.endArray();
-        writer.endObject();
     }
 }

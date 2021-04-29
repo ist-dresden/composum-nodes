@@ -1,7 +1,7 @@
-<%@page session="false" pageEncoding="utf-8"%>
-<%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2"%>
-<%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0"%>
-<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@page session="false" pageEncoding="utf-8" %>
+<%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
+<%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="group" type="com.composum.sling.core.usermanagement.view.Group" scope="request">
     <div id="add-member-dialog" class="dialog modal fade" role="dialog" aria-hidden="true">
@@ -10,9 +10,10 @@
                 <cpn:form classes="widget-form" enctype="multipart/form-data"
                           action="/bin/cpm/usermanagement.disable.json">
                     <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="${cpn:i18n(slingRequest,'Close')}"><span
                                 aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title">Add authorizable to group</h4>
+                        <h4 class="modal-title">${cpn:i18n(slingRequest,'Add authorizable to group')}</h4>
                     </div>
 
                     <div class="modal-body">
@@ -20,23 +21,24 @@
                             <div class="alert"></div>
                         </div>
 
-                        <input name="_charset_" type="hidden" value="UTF-8" />
+                        <input name="_charset_" type="hidden" value="UTF-8"/>
                         <div class="form-group">
-                            <label class="control-label">Group</label>
+                            <label class="control-label">${cpn:i18n(slingRequest,'Group')}</label>
                             <input name="group" class="widget text-field-widget form-control" type="text"
-                                   data-rules="mandatory" readonly />
+                                   data-rules="mandatory" readonly/>
                         </div>
                         <div class="form-group">
-                            <label class="control-label">Authorizable</label>
+                            <label class="control-label">${cpn:i18n(slingRequest,'Authorizable')}</label>
                             <input name="authorizable" class="widget text-field-widget form-control" type="text"
-                                   placeholder="enter authorizable" data-rules="mandatory" />
+                                   data-rules="mandatory"/>
                         </div>
 
                     </div>
 
                     <div class="modal-footer buttons">
-                        <button type="button" class="btn btn-default cancel" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary create">Add</button>
+                        <button type="button" class="btn btn-default cancel"
+                                data-dismiss="modal">${cpn:i18n(slingRequest,'Cancel')}</button>
+                        <button type="submit" class="btn btn-primary create">${cpn:i18n(slingRequest,'Add')}</button>
                     </div>
 
                 </cpn:form>

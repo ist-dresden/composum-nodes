@@ -1,9 +1,16 @@
 
-.composum-nodes-usermgr-graph {
+.composum-nodes-usermgr-graph_wrapper,
+.composum-nodes-usermgr-paths_wrapper {
+    overflow: auto;
+}
+
+.composum-nodes-usermgr-graph,
+.composum-nodes-usermgr-paths {
     height: 100%;
 }
 
-.composum-nodes-usermgr-graph svg {
+.composum-nodes-usermgr-graph svg,
+.composum-nodes-usermgr-paths svg {
     width: 100% !important;
     height: 100% !important;
 }
@@ -32,4 +39,87 @@
 
 .composum-nodes-usermgr-graph_image button {
     display: none;
+}
+
+/* paths */
+
+.composum-nodes-usermgr-graph table,
+.composum-nodes-usermgr-paths table {
+    width: 100%;
+    border: none;
+    border-collapse: collapse;
+}
+
+.composum-nodes-usermgr-graph table th,
+.composum-nodes-usermgr-graph table td,
+.composum-nodes-usermgr-paths table th,
+.composum-nodes-usermgr-paths table td {
+    padding: 2px 5px;
+    vertical-align: top;
+    line-height: 23px;
+    font-size: 14px;
+}
+
+.composum-nodes-usermgr-graph table a,
+.composum-nodes-usermgr-graph table a:visited,
+.composum-nodes-usermgr-paths table a,
+.composum-nodes-usermgr-paths table a:visited {
+    text-decoration: none;
+    color: inherit;
+}
+
+.composum-nodes-usermgr-graph table td.authorizable-id,
+.composum-nodes-usermgr-paths table td.authorizable-id {
+    position: relative;
+    padding-left: 34px !important;
+    white-space: nowrap;
+}
+
+.composum-nodes-usermgr-graph table td .icon,
+.composum-nodes-usermgr-paths table td .icon {
+    position: absolute;
+    top: 7px;
+    left: 9px;
+    width: 15px;
+    text-align: center;
+}
+
+.composum-nodes-usermgr-graph table td.empty,
+.composum-nodes-usermgr-paths table td.empty {
+    font-style: italic;
+    color: #888;
+}
+
+.composum-nodes-usermgr-graph table tr.service .icon,
+.composum-nodes-usermgr-paths table tr.service .icon,
+.composum-nodes-usermgr-graph table tr.system .icon,
+.composum-nodes-usermgr-paths table tr.system .icon {
+    color: #31708f; /* info */
+}
+
+.composum-nodes-usermgr-graph table tr.group .icon,
+.composum-nodes-usermgr-paths table tr.group .icon {
+    color: #666;
+}
+
+.composum-nodes-usermgr-graph table td.ac-rules,
+.composum-nodes-usermgr-paths table td.ac-rules {
+    padding: 2px 0;
+}
+
+.composum-nodes-usermgr-graph table td.ac-rules span,
+.composum-nodes-usermgr-paths table td.ac-rules span {
+    display: inline-block;
+    margin: 0 5px;
+    white-space: nowrap;
+}
+
+.composum-nodes-usermgr-graph table .ac-rules .grant,
+.composum-nodes-usermgr-paths table .ac-rules .grant {
+    color: #006600;
+}
+
+.composum-nodes-usermgr-graph table .ac-rules .deny,
+.composum-nodes-usermgr-paths table .ac-rules .deny {
+    color: #880000;
 }
