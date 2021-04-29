@@ -46,7 +46,7 @@
                         composum/nodes/usermgnt/dialogs/addgroup/js/addgroupdialog.js,
                         composum/nodes/usermgnt/dialogs/deleteauthorizable/js/deleteauthorizabledialog.js,
                         composum/nodes/usermgnt/dialogs/disableuser/js/disableuserdialog.js,
-                        composum/nodes/usermgnt/dialogs/changepasswor/js/changepwdialog.js
+                        composum/nodes/usermgnt/dialogs/changepassword/js/changepwdialog.js
                     ]"/>
         <tables jcr:primaryType="nt:unstructured"
                 embed="[
