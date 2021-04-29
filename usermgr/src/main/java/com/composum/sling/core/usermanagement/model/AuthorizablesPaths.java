@@ -1,9 +1,9 @@
 package com.composum.sling.core.usermanagement.model;
 
 import com.composum.sling.core.usermanagement.service.Authorizables;
-import com.composum.sling.core.util.I18N;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 
 public class AuthorizablesPaths extends AuthorizablesMap {
@@ -120,7 +121,7 @@ public class AuthorizablesPaths extends AuthorizablesMap {
                 && StringUtils.isNotBlank(url = pathUrlBuilder.buildUrl(node, path))) {
             writer.append("<a href=\"").append(url).append("\" data-path=\"").append(path).append("\">");
         }
-        writer.append(path != null ? path : I18N.get(context.getRequest(),"no affected paths found"));
+        writer.append(path != null ? path : i18n(context.getRequest(), "no affected paths found"));
         if (url != null) {
             writer.append("</a>");
         }
@@ -145,5 +146,11 @@ public class AuthorizablesPaths extends AuthorizablesMap {
                     .append(rule.toString()).append("</span>");
         }
         writer.append("</td>");
+    }
+
+    protected @NotNull String i18n(@NotNull final SlingHttpServletRequest request, @NotNull final String text) {
+        ResourceBundle bundle = request.getResourceBundle(request.getLocale());
+        String translated = bundle != null ? bundle.getString(text) : null;
+        return translated != null ? translated : text;
     }
 }
