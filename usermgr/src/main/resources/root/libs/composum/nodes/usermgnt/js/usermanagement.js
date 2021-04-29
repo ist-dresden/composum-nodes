@@ -62,6 +62,7 @@
                 $(document).on('path:deleted', _.bind(this.onReloadTriggered, this));
                 $(document).on('detail:reload', _.bind(this.onReloadTriggered, this));
                 core.unauthorizedDelegate = core.console.authorize;
+                window.onpopstate = _.bind(this.onPopState, this);
             },
 
             onPathSelect: function (event, path) {
@@ -81,6 +82,12 @@
                 if (!usermanagement.detailView.busy) {
                     usermanagement.treeActions.refreshNodeState();
                     usermanagement.detailView.reload();
+                }
+            },
+
+            onPopState: function (event) {
+                if (event.state) {
+                    usermanagement.setCurrentPath(event.state, false, true);
                 }
             }
         });

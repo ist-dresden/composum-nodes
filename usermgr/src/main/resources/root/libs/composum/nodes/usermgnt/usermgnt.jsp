@@ -54,15 +54,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="split-pane-divider"></div>
+                <div class="split-pane-divider split-pane-divider-main-horizontal"></div>
                 <div class="split-pane-component right-pane">
                     <div id="split-view-vertical-split" class="split-pane vertical-split fixed-top">
-                        <div class="split-pane-component top-pane">
+                        <div class="split-pane-component top-pane query-split-pane">
                             <div id="usermanagement-query">
                                 <sling:call script="query.jsp"/>
                             </div>
                         </div>
-                        <div class="split-pane-divider"></div>
+                        <div class="split-pane-divider split-pane-divider-main-vertical"></div>
                         <div class="split-pane-component bottom-pane">
                             <div id="usermanagement-view">
                                 <sling:call script="view.jsp"/>
@@ -82,6 +82,7 @@
         </div>
     </div>
     <sling:call script="script.jsp"/>
+    <sling:include resourceType="composum/nodes/console/components/tryLogin"/>
     </body>
     </html>
 </cpn:component>

@@ -40,8 +40,6 @@
                         dataType: 'post'
                     },
                     _.bind(function(result) {
-                        usermanagement.current.node.disabled = true;
-                        usermanagement.tree.refresh();
                         this.hide();
                     }, this),
                     _.bind(function(result) {

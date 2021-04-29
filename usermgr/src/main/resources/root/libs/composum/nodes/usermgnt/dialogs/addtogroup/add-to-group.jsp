@@ -29,7 +29,7 @@
                         <div class="form-group">
                             <label class="control-label">${cpn:i18n(slingRequest,'Group')}</label>
                             <input name="group" class="widget text-field-widget form-control" type="text"
-                                   placeholder="enter group" data-rules="mandatory"/>
+                                   data-rules="mandatory"/>
                         </div>
 
                     </div>

@@ -29,12 +29,12 @@
                         <cpn:div test="${!user.currentUserAdmin}" class="form-group">
                             <label class="control-label">${cpn:i18n(slingRequest,'Old Password')}</label>
                             <input name="oldPassword" class="widget text-field-widget form-control" type="password"
-                                   placeholder="enter password" data-rules="mandatory"/>
+                                   data-rules="mandatory"/>
                         </cpn:div>
                         <div class="form-group">
                             <label class="control-label">${cpn:i18n(slingRequest,'Password')}</label>
                             <input name="password" class="widget text-field-widget form-control" type="password"
-                                   placeholder="enter password" data-rules="mandatory"/>
+                                   data-rules="mandatory"/>
                         </div>
 
                     </div>

@@ -11,8 +11,11 @@ import org.apache.sling.serviceusermapping.Mapping;
 import org.apache.sling.serviceusermapping.ServiceUserMapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import java.util.ArrayList;
@@ -27,8 +30,17 @@ import java.util.regex.Pattern;
 @Component
 public class AuthorizablesImpl implements Authorizables {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AuthorizablesImpl.class);
+
     @Reference
     protected ServiceUserMapper serviceUserMapper;
+
+    private boolean incompatibleServiceMapper = false;
+
+    @Activate
+    protected void activate() {
+        incompatibleServiceMapper = false;
+    }
 
     @Nullable
     public Authorizable getAuthorizable(@NotNull final Context context, @NotNull final String id)
@@ -131,17 +143,22 @@ public class AuthorizablesImpl implements Authorizables {
                                                  @Nullable final String nameQueryPattern)
             throws RepositoryException {
         List<ServiceUser> serviceUsers = new ArrayList<>();
-        if (selector == null || selector.equals(ServiceUser.class)) {
+        if (!incompatibleServiceMapper && (selector == null || selector.equals(ServiceUser.class))) {
             Pattern namePattern = StringUtils.isNotBlank(nameQueryPattern)
                     ? Pattern.compile("^" + nameQueryPattern.replaceAll("%", ".*") + "$")
                     : null;
-            List<Mapping> mappings = serviceUserMapper.getActiveMappings();
-            for (Mapping mapping : mappings) {
-                ServiceUser service = new ServiceUser(context, mapping);
-                if (namePattern == null || namePattern.matcher(service.getID()).matches()) {
-                    service.initialize(context);
-                    serviceUsers.add(service);
+            try {
+                List<Mapping> mappings = serviceUserMapper.getActiveMappings();
+                for (Mapping mapping : mappings) {
+                    ServiceUser service = new ServiceUser(context, mapping);
+                    if (namePattern == null || namePattern.matcher(service.getID()).matches()) {
+                        service.initialize(context);
+                        serviceUsers.add(service);
+                    }
                 }
+            } catch (NoSuchMethodError nsme) { // ensure compatibility to AEM <6.5
+                incompatibleServiceMapper = true;
+                LOG.warn("incompatible ServiceUserMapper - no service user support (" + nsme + ")");
             }
         }
         return serviceUsers;

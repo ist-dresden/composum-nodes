@@ -144,6 +144,16 @@
       "sling:key": "Service User",
       "sling:message": "Service-Nutzer"
     },
+    "Service_Users": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Service Users",
+      "sling:message": "Service-Nutzer"
+    },
+    "System_User": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "System User",
+      "sling:message": "System-Nutzer"
+    },
     "System_Users": {
       "jcr:primaryType": "sling:MessageEntry",
       "sling:key": "System Users",

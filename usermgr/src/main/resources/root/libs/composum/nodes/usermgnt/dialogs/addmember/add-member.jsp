@@ -30,7 +30,7 @@
                         <div class="form-group">
                             <label class="control-label">${cpn:i18n(slingRequest,'Authorizable')}</label>
                             <input name="authorizable" class="widget text-field-widget form-control" type="text"
-                                   placeholder="enter authorizable" data-rules="mandatory"/>
+                                   data-rules="mandatory"/>
                         </div>
 
                     </div>

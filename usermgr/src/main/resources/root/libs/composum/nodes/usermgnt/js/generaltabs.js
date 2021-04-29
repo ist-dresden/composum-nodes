@@ -80,7 +80,9 @@
                     var dialog = usermanagement.getDisableUserDialog();
                     dialog.show(function () {
                         dialog.setUser(usermanagement.current.node.name);
-                    }, _.bind(this.refresh, this));
+                    }, _.bind(function () {
+                        usermanagement.refreshState(usermanagement.getCurrentPath(), _.bind(this.refresh, this));
+                    }, this));
                 }
             },
 

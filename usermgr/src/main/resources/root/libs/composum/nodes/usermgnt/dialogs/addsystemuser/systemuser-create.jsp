@@ -24,13 +24,12 @@
                         <div class="form-group">
                             <label class="control-label">${cpn:i18n(slingRequest,'Username')}</label>
                             <input name="username" class="widget text-field-widget form-control" type="text"
-                                   placeholder="enter username" data-rules="mandatory" autocomplete="off"/>
+                                   data-rules="mandatory" autocomplete="off"/>
                         </div>
 
                         <div class="form-group">
                             <label class="control-label">${cpn:i18n(slingRequest,'Intermediate Path')}</label>
-                            <input name="intermediatePath" class="widget text-field-widget form-control" type="text"
-                                   placeholder="enter path"/>
+                            <input name="intermediatePath" class="widget text-field-widget form-control" type="text"/>
                         </div>
 
                     </div>
