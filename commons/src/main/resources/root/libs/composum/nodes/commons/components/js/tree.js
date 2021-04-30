@@ -49,6 +49,7 @@
             'acl': {'icon': 'fa fa-key text-muted'},
             'authorizablefolder': {'icon': 'fa fa-diamond text-muted'},
             'group': {'icon': 'fa fa-group text-muted'},
+            'service': {'icon': 'fa fa-cog text-info'},
             'user': {'icon': 'fa fa-user'},
             'linkedfile': {'icon': 'fa fa-link text-muted'},
             'file': {'icon': 'fa fa-file-o'},

@@ -1,0 +1,171 @@
+
+.detail-view .bootstrap-table .fixed-table-toolbar .search input {
+    margin-top: 3px;
+    padding: 4px 8px;
+}
+
+.detail-view .detail-toolbar .input-group,
+.detail-view .bootstrap-table .fixed-table-toolbar .search input {
+    max-width: 170px;
+}
+
+.detail-view .detail-toolbar .btn span.label,
+.detail-view .bootstrap-table .fixed-table-toolbar .btn span.label {
+    display: none;
+}
+
+/**
+ * Tables
+ */
+
+.detail-view .table-container .fixed-table-container,
+.detail-view .table-container .bootstrap-table table,
+.detail-view .table-container .bootstrap-table table tr,
+.detail-view .table-container .bootstrap-table table th,
+.detail-view .table-container .bootstrap-table table td {
+    border: none;
+}
+
+.detail-view .table-container .bootstrap-table table th .th-inner {
+    line-height: 25px;
+    padding: 0;
+}
+
+.detail-view .table-container .bootstrap-table table th,
+.detail-view .table-container .bootstrap-table table td {
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 25px;
+    padding: 2px 5px !important;
+}
+
+.detail-view .table-container .bootstrap-table table th.bs-checkbox,
+.detail-view .table-container .bootstrap-table table td.bs-checkbox {
+    padding: 8px 5px 8px 6px !important;
+}
+
+.detail-view .table-container .bootstrap-table thead tr {
+    border-bottom: 1px solid #aaa;
+}
+
+.detail-view .table-container .bootstrap-table table th {
+    background-color: #fff;
+}
+
+/**
+ * Properties
+ */
+
+.detail-view .table-container .bootstrap-table .fixed-table-toolbar .bars {
+    line-height: 27px;
+}
+
+.detail-view .table-container .bootstrap-table .fixed-table-toolbar .bars,
+.detail-view .table-container .bootstrap-table .fixed-table-toolbar .search {
+    margin: 0 0 0 5px;
+}
+
+.detail-view .table-container .bootstrap-table table td {
+    position: relative;
+}
+
+.detail-view .table-container .bootstrap-table table td .editable {
+    border-bottom: none;
+}
+
+.detail-view .table-container .bootstrap-table table td .editable-inline,
+.detail-view .table-container .bootstrap-table table td .editable-inline .form-group,
+.detail-view .table-container .bootstrap-table table td .editable-inline .editable-input,
+.detail-view .table-container .bootstrap-table table td .editable-inline .editable-input input {
+    width: 100%;
+}
+
+.detail-view .table-container .bootstrap-table table td .editable-inline {
+    padding-right: 86px;
+}
+
+.detail-view .table-container .bootstrap-table table td.checkbox .editable-inline,
+.detail-view .table-container .bootstrap-table table td.checkbox .editable-inline .editable-input {
+    width: auto;
+}
+
+.detail-view .table-container .bootstrap-table table td .editable-inline .editable-input input,
+.detail-view .table-container .bootstrap-table table td .editable-inline .editable-input select {
+    height: 25px;
+    font-size: 14px;
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 1;
+}
+
+.detail-view .table-container .bootstrap-table table td .editable-inline .editable-input .editable-checkbox input {
+    width: 19px;
+    height: 19px;
+    margin: 3px !important;
+}
+
+.detail-view .table-container .bootstrap-table table tr.editable td.value.checkbox {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.detail-view .table-container .bootstrap-table table td .editable-inline .editable-input .editable-checkbox {
+    min-width: 30px;
+}
+
+.detail-view .table-container .bootstrap-table table tr.protected td {
+    color: #aaa;
+}
+
+.detail-view .table-container .bootstrap-table table tr.current td {
+    background: #76b6ec
+}
+
+.detail-view .table-container .bootstrap-table table tr.protected td .editable {
+    color: #888;
+}
+
+.detail-view .table-container .bootstrap-table table td .target-link {
+    position: absolute;
+    top: 4px;
+    right: 10px;
+    padding: 3px 4px 1px 5px;
+    font-size: 10px;
+    color: #666;
+}
+
+.detail-view .full-table-view .bootstrap-table .fixed-table-container {
+    position: absolute;
+    top: 39px;
+    left: 0;
+    right: 0;
+    bottom: 42px;
+}
+
+#browser-view-property-dialog form.default button.upload {
+    display: none;
+}
+
+#browser-view-property-dialog form.binary button.save {
+    display: none;
+}
+
+#browser-view-property-dialog .form-group.value {
+    clear: both;
+}
+
+/*
+ * property value widget
+ */
+
+.property-value-widget.single-value .item-select {
+    display: none;
+}
+
+.property-value-widget.single-value .multi-form-item {
+    padding-left: 0;
+}
+
+.property-value-widget.single-value textarea.form-control {
+    min-height: 239px;
+}

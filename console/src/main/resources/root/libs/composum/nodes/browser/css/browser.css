@@ -632,11 +632,6 @@
     background-color: #e4e4e4;
 }
 
-#browser-view .node-view-panel .detail-toolbar,
-#browser-view .node-view-panel .full-table-view .bootstrap-table .fixed-table-toolbar {
-    top: 0;
-}
-
 #browser-view .node-view-panel .node-tabs .btn-group {
     z-index: 10;
 }
@@ -649,23 +644,32 @@
     bottom: 0;
 }
 
-#browser-view .node-view-panel .node-view-content .detail-content,
-#browser-view .node-view-panel .node-view-content .full-table-view .fixed-table-container {
+/*
+ * Detail Panel
+ */
+
+.detail-view .detail-toolbar,
+.detail-view .full-table-view .bootstrap-table .fixed-table-toolbar {
+    top: 0;
+}
+
+.detail-view .detail-content,
+.detail-view .full-table-view .fixed-table-container {
     position: absolute;
     top: 34px;
     left: 0;
     right: 0;
-    bottom: 41px;
+    bottom: 0;
     overflow: auto;
 }
 
-#browser-view .node-view-content .detail-toolbar .btn-group {
+.detail-view .detail-toolbar .btn-group {
     display: inline-block;
     margin: 0;
 }
 
-#browser-view .node-view-content .detail-toolbar,
-#browser-view .node-view-content .full-table-view .bootstrap-table .fixed-table-toolbar {
+.detail-view .detail-toolbar,
+.detail-view .full-table-view .bootstrap-table .fixed-table-toolbar {
     position: absolute;
     top: 0;
     right: 0;
@@ -673,213 +677,42 @@
     padding: 0 6px 0 0;
 }
 
-#browser-view .node-view-content .detail-toolbar .btn.fa-download {
+.detail-view .detail-toolbar .btn.fa-download {
     padding: 5px 9px 3px;
 }
 
-#browser-view .node-view-content .detail-toolbar .input-group,
-#browser-view .node-view-content .detail-toolbar .input-group-addon,
-#browser-view .node-view-content .detail-toolbar .input-group .form-control,
-#browser-view .node-view-content .detail-toolbar .select-buttons-widget .btn,
-#browser-view .node-view-content .detail-toolbar select,
-#browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .search input {
+.detail-view .detail-toolbar .input-group,
+.detail-view .detail-toolbar .input-group-addon,
+.detail-view .detail-toolbar .input-group .form-control,
+.detail-view .detail-toolbar .select-buttons-widget .btn,
+.detail-view .detail-toolbar select,
+.detail-view .bootstrap-table .fixed-table-toolbar .search input {
     height: 25px;
 }
 
-#browser-view .node-view-content .detail-toolbar .input-group-addon.text-muted {
+.detail-view .detail-toolbar .input-group-addon.text-muted {
     color: #777 /* muted */
 }
 
-#browser-view .node-view-content .detail-toolbar .select-buttons-widget .btn {
+.detail-view .detail-toolbar .select-buttons-widget .btn {
     margin-top: 2px;
     width: 25px;
     padding: 2px 0;
     text-align: center;
 }
 
-#browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .search input {
-    margin-top: 3px;
-    padding: 4px 8px;
-}
-
-#browser-view .node-view-content .detail-toolbar .input-group,
-#browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .search input {
-    max-width: 170px;
-}
-
-#browser-view .node-view-content .detail-toolbar .input-group-addon,
-#browser-view .node-view-content .detail-toolbar select {
+.detail-view .detail-toolbar .input-group-addon,
+.detail-view .detail-toolbar select {
     font-size: 14px;
     padding: 1px 6px;
 }
 
-#browser-view .node-view-content .detail-toolbar .input-group.selectors .input-group-addon {
+.detail-view .detail-toolbar .input-group.selectors .input-group-addon {
     padding: 3px 3px 1px;
 }
 
-#browser-view .node-view-content .detail-toolbar .input-group input {
+.detail-view .detail-toolbar .input-group input {
     padding: 5px;
-}
-
-#browser-view .node-view-content .detail-toolbar .btn span.label,
-#browser-view .node-view-content .bootstrap-table .fixed-table-toolbar .btn span.label {
-    display: none;
-}
-
-/**
- * Tables
- */
-
-#browser-view .fixed-table-container,
-#browser-view .bootstrap-table table,
-#browser-view .bootstrap-table table tr,
-#browser-view .bootstrap-table table th,
-#browser-view .bootstrap-table table td {
-    border: none;
-}
-
-#browser-view .bootstrap-table table th .th-inner {
-    line-height: 25px;
-    padding: 0;
-}
-
-#browser-view .bootstrap-table table th,
-#browser-view .bootstrap-table table td {
-    font-size: 14px;
-    font-weight: normal;
-    line-height: 25px;
-    padding: 2px 5px !important;
-}
-
-#browser-view .bootstrap-table table th.bs-checkbox,
-#browser-view .bootstrap-table table td.bs-checkbox {
-    padding: 8px 5px 8px 6px !important;
-}
-
-#browser-view .bootstrap-table thead tr {
-    border-bottom: 1px solid #aaa;
-}
-
-#browser-view .bootstrap-table table th {
-    background-color: #fff;
-}
-
-/**
- * Properties
- */
-
-#browser-view .bootstrap-table .fixed-table-toolbar .bars {
-    line-height: 27px;
-}
-
-#browser-view .bootstrap-table .fixed-table-toolbar .bars,
-#browser-view .bootstrap-table .fixed-table-toolbar .search {
-    margin: 0 0 0 5px;
-}
-
-#browser-view .bootstrap-table table td {
-    position: relative;
-}
-
-#browser-view .bootstrap-table table td .editable {
-    border-bottom: none;
-}
-
-#browser-view .bootstrap-table table td .editable-inline,
-#browser-view .bootstrap-table table td .editable-inline .form-group,
-#browser-view .bootstrap-table table td .editable-inline .editable-input,
-#browser-view .bootstrap-table table td .editable-inline .editable-input input {
-    width: 100%;
-}
-
-#browser-view .bootstrap-table table td .editable-inline {
-    padding-right: 86px;
-}
-
-#browser-view .bootstrap-table table td.checkbox .editable-inline,
-#browser-view .bootstrap-table table td.checkbox .editable-inline .editable-input {
-    width: auto;
-}
-
-#browser-view .bootstrap-table table td .editable-inline .editable-input input,
-#browser-view .bootstrap-table table td .editable-inline .editable-input select {
-    height: 25px;
-    font-size: 14px;
-    padding-top: 0;
-    padding-bottom: 0;
-    line-height: 1;
-}
-
-#browser-view .bootstrap-table table td .editable-inline .editable-input .editable-checkbox input {
-    width: 19px;
-    height: 19px;
-    margin: 3px !important;
-}
-
-#browser-view .bootstrap-table table tr.editable td.value.checkbox {
-    margin-top: 0;
-    margin-bottom: 0;
-}
-
-#browser-view .bootstrap-table table td .editable-inline .editable-input .editable-checkbox {
-    min-width: 30px;
-}
-
-#browser-view .bootstrap-table table tr.protected td {
-    color: #aaa;
-}
-
-#browser-view .bootstrap-table table tr.current td {
-    background: #76b6ec
-}
-
-#browser-view .bootstrap-table table tr.protected td .editable {
-    color: #888;
-}
-
-#browser-view .bootstrap-table table td .target-link {
-    position: absolute;
-    top: 4px;
-    right: 10px;
-    padding: 3px 4px 1px 5px;
-    font-size: 10px;
-    color: #666;
-}
-
-#browser-view .full-table-view .bootstrap-table .fixed-table-container {
-    position: absolute;
-    top: 37px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-}
-
-#browser-view-property-dialog form.default button.upload {
-    display: none;
-}
-
-#browser-view-property-dialog form.binary button.save {
-    display: none;
-}
-
-#browser-view-property-dialog .form-group.value {
-    clear: both;
-}
-
-/*
- * property value widget
- */
-
-.property-value-widget.single-value .item-select {
-    display: none;
-}
-
-.property-value-widget.single-value .multi-form-item {
-    padding-left: 0;
-}
-
-.property-value-widget.single-value textarea.form-control {
-    min-height: 239px;
 }
 
 /*

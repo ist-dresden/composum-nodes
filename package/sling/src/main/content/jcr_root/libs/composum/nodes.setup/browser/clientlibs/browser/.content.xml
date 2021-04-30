@@ -12,6 +12,7 @@
                     composum/nodes/console/components/codeeditor/clientlib,
                     composum/nodes/browser/css/nodes.css,
                     composum/nodes/browser/css/browser.css,
+                    composum/nodes/browser/css/properties.css,
                     composum/nodes/browser/components/favorites/clientlib
                 ]"/>
     <js jcr:primaryType="sling:OrderedFolder"

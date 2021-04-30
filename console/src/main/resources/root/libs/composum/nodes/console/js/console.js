@@ -182,8 +182,10 @@
          */
         console.DetailTab = Backbone.View.extend({
 
+            /**
+             * @abstract
+             */
             reload: function () {
-                //this.$el.closest('.detail-content');
             }
         });
 
@@ -498,37 +500,44 @@
             reload: function () {
                 this.path = this.getCurrentPath();
                 if (this.path) {
-                    // AJAX load for the current path with the 'viewUrl' from 'console.current'
-                    this.$el.load(this.getViewUri(), _.bind(function () {
-                        // initialize detail view with the loaded content
-                        this.$detailView = this.$('.detail-view');
-                        this.$detailTabs = this.$detailView.find('.detail-tabs');
-                        this.$detailContent = this.$detailView.find('.detail-content');
-                        // add the click handler to the tab toolbar links
-                        this.$detailTabs.find('a').click(_.bind(this.tabSelected, this));
-                        // get the group key of the last view from profile and restore this tab state if possible
-                        var group = core.console.getProfile().get(this.getProfileId(), 'detailTab');
-                        var $tab;
-                        if (group) {
-                            // determinte the last view by the group id if such a view is available
-                            $tab = this.$detailView.find('a[data-group="' + group + '"]');
+                    if (!this.busy) {
+                        this.busy = true;
+                        try {
+                            // AJAX load for the current path with the 'viewUrl' from 'console.current'
+                            this.$el.load(this.getViewUri(), _.bind(function () {
+                                // initialize detail view with the loaded content
+                                this.$detailView = this.$('.detail-view');
+                                this.$detailTabs = this.$detailView.find('.detail-tabs');
+                                this.$detailContent = this.$detailView.find('.detail-content');
+                                // add the click handler to the tab toolbar links
+                                this.$detailTabs.find('a').click(_.bind(this.tabSelected, this));
+                                // get the group key of the last view from profile and restore this tab state if possible
+                                var group = core.console.getProfile().get(this.getProfileId(), 'detailTab');
+                                var $tab;
+                                if (group) {
+                                    // determinte the last view by the group id if such a view is available
+                                    $tab = this.$detailView.find('a[data-group="' + group + '"]');
+                                }
+                                if (!$tab || $tab.length < 1) {
+                                    if (group === 'edit') { // special fallback from 'edit' to 'view
+                                        $tab = this.$detailView.find('a[data-group="view"]');
+                                    }
+                                    if (!$tab || $tab.length < 1) {
+                                        // if the group of the last view is not available use the view of the first tab
+                                        $tab = this.$detailTabs.find('a');
+                                    }
+                                }
+                                // get the tab key from the links anchor and select the tab
+                                var tab = $tab.attr('href').substring(1);
+                                this.selectTab(tab, group); // remember the group key(!)
+                                if (_.isFunction(this.onReload)) {
+                                    this.onReload();
+                                }
+                            }, this));
+                        } finally {
+                            this.busy = false;
                         }
-                        if (!$tab || $tab.length < 1) {
-                            if (group === 'edit') { // special fallback from 'edit' to 'view
-                                $tab = this.$detailView.find('a[data-group="view"]');
-                            }
-                            if (!$tab || $tab.length < 1) {
-                                // if the group of the last view is not available use the view of the first tab
-                                $tab = this.$detailTabs.find('a');
-                            }
-                        }
-                        // get the tab key from the links anchor and select the tab
-                        var tab = $tab.attr('href').substring(1);
-                        this.selectTab(tab, group); // remember the group key(!)
-                        if (_.isFunction(this.onReload)) {
-                            this.onReload();
-                        }
-                    }, this));
+                    }
                 } else {
                     this.$el.html(''); // clear the view if nothing selected
                 }

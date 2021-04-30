@@ -1,26 +1,22 @@
 package com.composum.sling.core.usermanagement.view;
 
-import com.composum.sling.core.util.XSS;
-import com.composum.sling.nodes.console.ConsoleSlingBean;
+import com.composum.sling.core.usermanagement.model.GroupModel;
+import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * Created by mzeibig on 17.11.15.
  */
-public class Group extends ConsoleSlingBean {
-    private String groupId;
-    private String groupPath;
+public class Group extends View {
 
-    public String getGroupId() {
-        return groupId;
+    @Override
+    protected @NotNull Class<? extends Authorizable> getSelector() {
+        return org.apache.jackrabbit.api.security.user.Group.class;
     }
 
-    public String getGroupPath() {
-        return groupPath;
+    public @NotNull GroupModel getGroup() {
+        return (GroupModel) Objects.requireNonNull(getModel());
     }
-
-    public String getSuffix() {
-        return XSS.filter(getRequest().getRequestPathInfo().getSuffix());
-    }
-
-
 }
