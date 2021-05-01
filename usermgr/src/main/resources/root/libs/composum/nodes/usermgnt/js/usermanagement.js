@@ -117,9 +117,7 @@
             },
 
             onNodeSelected: function (path, node) {
-                if (!this.preventFromSelect) {
-                    $(document).trigger("path:select", [path]);
-                }
+                $(document).trigger("path:select", [path]);
             },
 
             refreshNodeState: function ($node, node) {
