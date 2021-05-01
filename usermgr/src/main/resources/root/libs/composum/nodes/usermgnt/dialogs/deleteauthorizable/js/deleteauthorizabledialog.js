@@ -31,17 +31,17 @@
             deleteAuthorizable: function (event) {
                 event.preventDefault();
                 var path = usermanagement.getCurrentPath();
-
                 core.ajaxDelete(
                     "/bin/cpm/usermanagement.authorizable.json" + path,
                     {
                         dataType: 'json'
                     },
-                    _.bind(function(result) {
+                    _.bind(function (result) {
                         this.hide();
+                        $(document).trigger('path:deleted', [path]);
                         usermanagement.tree.refresh();
                     }, this),
-                    _.bind(function(result) {
+                    _.bind(function (result) {
                         this.hide();
                         core.alert('danger', 'Error', 'Error deleting Authorizable', result);
                     }, this));

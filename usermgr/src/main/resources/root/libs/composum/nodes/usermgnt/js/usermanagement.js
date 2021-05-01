@@ -69,7 +69,12 @@
                 if (!path) {
                     path = event.data.path;
                 }
-                usermanagement.setCurrentPath(path);
+                try {
+                    usermanagement.tree.preventFromSelect = true;
+                    usermanagement.setCurrentPath(path);
+                } finally {
+                    usermanagement.tree.preventFromSelect = false;
+                }
             },
 
             onPathSelected: function (event, path) {
@@ -139,10 +144,6 @@
             },
 
             refreshNodeState: function () {
-                var node = this.tree.current();
-                if (node) {
-                    // todo
-                }
             },
 
             refreshTree: function (event) {

@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-package</artifactId>
-        <version>2.6.0</version>
+        <version>2.6.1</version>
     </parent>
 
     <artifactId>composum-nodes-jslibs-package</artifactId>
@@ -26,11 +26,7 @@
                     <exclude>**/.DS_Store</exclude>
                     <exclude>**/.gitignore</exclude>
                 </excludes>
-            </resource>
-
-            <resource>
-                <directory>${basedir}/src/main/content/META-INF</directory>
-                <targetPath>${project.build.directory}/vault-work/META-INF</targetPath>
+                <targetPath>${project.build.directory}/content/jcr_root</targetPath>
             </resource>
 
             <resource>
@@ -82,8 +78,8 @@
             </plugin>
 
             <plugin>
-                <groupId>com.day.jcr.vault</groupId>
-                <artifactId>content-package-maven-plugin</artifactId>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>filevault-package-maven-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
 
@@ -92,7 +88,9 @@
                         <createdBy>${package.company}</createdBy>
                     </properties>
 
-                    <builtContentDirectory>${project.build.outputDirectory}</builtContentDirectory>
+                    <jcrRootSourceDirectory>${project.build.directory}/content/jcr_root</jcrRootSourceDirectory>
+                    <skipValidation>true</skipValidation>
+                    <thumbnailImage>${basedir}/src/main/content/META-INF/vault/definition/thumbnail.png</thumbnailImage>
 
                     <filters>
 
@@ -188,6 +186,9 @@
                             <root>/libs/jslibs/typeahead/3.1.0</root>
                         </filter>
                         <filter>
+                            <root>/libs/jslibs/typeahead/4.0.2</root>
+                        </filter>
+                        <filter>
                             <root>/libs/jslibs/underscore/1.8.3</root>
                         </filter>
                         <filter>
@@ -212,11 +213,4 @@
         </dependency>
 
     </dependencies>
-    <profiles>
-
-        <profile>
-            <id>installPackage</id>
-        </profile>
-
-    </profiles>
 </project>

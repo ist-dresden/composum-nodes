@@ -36,10 +36,10 @@
                     },
                     _.bind(function (result) {
                         this.hide();
-                        usermanagement.tree.refresh(function () {
-                            var path = JSON.parse(result.responseText).path;
-                            $(document).trigger("path:select", [path]);
-                        });
+                        var data = JSON.parse(result.responseText);
+                        var path = data.path;
+                        $(document).trigger('path:inserted', [core.getParentPath(path), core.getNameFromPath(path)]);
+                        $(document).trigger("path:select", [path]);
                     }, this),
                     _.bind(function (result) {
                         this.hide();

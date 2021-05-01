@@ -2,6 +2,7 @@
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <sling:defineObjects/>
+<cpn:bundle basename="composum-nodes"/>
 <cpn:component var="profile" type="com.composum.sling.core.user.UserProfile" scope="request">
     <div id="user-create-dialog" class="dialog modal fade" role="dialog" aria-hidden="true">
         <div class="modal-dialog">
