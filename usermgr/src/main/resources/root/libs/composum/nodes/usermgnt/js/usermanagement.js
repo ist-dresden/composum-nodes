@@ -69,7 +69,12 @@
                 if (!path) {
                     path = event.data.path;
                 }
-                usermanagement.setCurrentPath(path);
+                try {
+                    usermanagement.tree.preventFromSelect = true;
+                    usermanagement.setCurrentPath(path);
+                } finally {
+                    usermanagement.tree.preventFromSelect = false;
+                }
             },
 
             onPathSelected: function (event, path) {
@@ -112,7 +117,9 @@
             },
 
             onNodeSelected: function (path, node) {
-                $(document).trigger("path:select", [path]);
+                if (!this.preventFromSelect) {
+                    $(document).trigger("path:select", [path]);
+                }
             },
 
             refreshNodeState: function ($node, node) {
