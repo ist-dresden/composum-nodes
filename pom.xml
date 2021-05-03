@@ -109,7 +109,7 @@
                     </configuration>
                 </plugin>
 
-                <!-- FIXME move to parent in composum-meta -->
+                <!-- TODO remove when parent in composum-meta is released -->
                 <!-- https://mvnrepository.com/artifact/org.apache.sling/slingfeature-maven-plugin -->
                 <plugin>
                     <groupId>org.apache.sling</groupId>
