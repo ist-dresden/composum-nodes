@@ -12,7 +12,7 @@
 
     <groupId>com.composum.nodes</groupId>
     <artifactId>composum-nodes</artifactId>
-    <version>2.6.1-SNAPSHOT</version>
+    <version>2.6.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Composum Nodes</name>
@@ -109,7 +109,7 @@
                     </configuration>
                 </plugin>
 
-                <!-- FIXME move to parent in composum-meta -->
+                <!-- TODO remove when parent in composum-meta is released -->
                 <!-- https://mvnrepository.com/artifact/org.apache.sling/slingfeature-maven-plugin -->
                 <plugin>
                     <groupId>org.apache.sling</groupId>
