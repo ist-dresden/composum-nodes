@@ -1,11 +1,12 @@
 <%@page session="false" pageEncoding="utf-8" %>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <sling:defineObjects/>
-<html>
+<html data-context-path="${slingRequest.contextPath}">
 <head>
     <meta name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1, user-scalable=no"/>
-    <link rel="stylesheet" href="/libs/composum/nodes/usermgnt/graph/view/css/graph.css">
-    <link rel="stylesheet" href="/libs/composum/nodes/usermgnt/graph/page/css/graph.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css"/>
+    <link rel="stylesheet" href="/libs/composum/nodes/usermgnt/graph/view/css/graph.css"/>
+    <link rel="stylesheet" href="/libs/composum/nodes/usermgnt/graph/page/css/graph.css"/>
 </head>
 <body class="composum-nodes-usermgr-graph_body">
 <h3 class="composum-nodes-usermgr-graph_mode">Authorizables
