@@ -8,7 +8,7 @@
             userPath += '/profile';
         }
         core.openFormDialog('/libs/composum/nodes/commons/components/user/profile/dialog.html'
-            + encodeURIComponent(userPath), user.ProfileDialog, config, initView, callback);
+            + core.encodePath(userPath), user.ProfileDialog, config, initView, callback);
     };
 
 })(CPM.namespace('nodes.commons.user'), CPM.core);

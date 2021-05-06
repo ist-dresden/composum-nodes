@@ -321,6 +321,11 @@
       "jcr:primaryType": "sling:MessageEntry",
       "sling:key": "male",
       "sling:message": "männlich"
+    },
+    "none": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "none",
+      "sling:message": "ohne"
     }
   }
 }

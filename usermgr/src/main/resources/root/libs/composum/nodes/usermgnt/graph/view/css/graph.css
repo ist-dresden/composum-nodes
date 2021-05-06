@@ -6,7 +6,9 @@
 
 .composum-nodes-usermgr-graph,
 .composum-nodes-usermgr-paths {
+    width: 100%;
     height: 100%;
+    overflow: auto;
 }
 
 .composum-nodes-usermgr-graph svg,
