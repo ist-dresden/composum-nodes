@@ -8,15 +8,19 @@
 
             initialize: function (options) {
                 this.$graph = this.$('.composum-nodes-usermgr-paths');
+                this.$filter = this.$('.paths-toolbar .filter');
                 this.$reload = this.$('.paths-toolbar .reload');
+                this.$filter.val(core.console.getProfile().get('usermgr', 'paths_filter', ''));
+                this.$filter.on('change', _.bind(this.reload, this));
                 this.$reload.click(_.bind(this.reload, this));
                 this.reload();
             },
 
-            reload: function (event) {
-                let text = undefined;
+            reload: function () {
+                const text = this.$filter.val();
                 graph.render(this.$el, undefined, usermanagement.current.node.name, undefined, text,
                     'view.paths', _.bind(function () {
+                        core.console.getProfile().set('usermgr', 'paths_filter', text || '');
                         this.$el.find('.authorizable-id').find('a').click(_.bind(function (event) {
                             const path = $(event.currentTarget).data('path');
                             if (path) {
