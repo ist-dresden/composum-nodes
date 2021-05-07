@@ -16,6 +16,7 @@ public class ExportCfg extends ConfigItem {
     public static final String PROP_EXPORT_TYPE = "exportType";
     public static final String PROP_QUERY = "query";
     public static final String PROP_FILTER = "filter";
+    public static final String PROP_PROPERTIES = "properties";
 
     public ExportCfg(BeanContext context, Resource resource) {
         super(context, resource);
@@ -30,11 +31,7 @@ public class ExportCfg extends ConfigItem {
     }
 
     public String getFilename() {
-        String filename = getProperty(PROP_FILENAME, "");
-        if (StringUtils.isNotBlank(filename) && !filename.startsWith("/")) {
-            filename = "/" + filename;
-        }
-        return filename;
+        return getProperty(PROP_FILENAME, RequestUtil.getParameter(getRequest(), PROP_FILENAME, ""));
     }
 
     public String getSelectors() {
@@ -55,5 +52,16 @@ public class ExportCfg extends ConfigItem {
 
     public String getFilter() {
         return getProperty(PROP_FILTER, RequestUtil.getParameter(getRequest(), PROP_FILTER, ""));
+    }
+
+    public String getProperties() {
+        String[] properties = getProperty(PROP_PROPERTIES, String[].class);
+        if (properties == null) {
+            String propertySet = XSS.filter(request.getParameter(PROP_PROPERTIES));
+            if (StringUtils.isNotBlank(propertySet)) {
+                properties = StringUtils.split(propertySet, ',');
+            }
+        }
+        return properties != null ? StringUtils.join(properties, ',') : "";
     }
 }

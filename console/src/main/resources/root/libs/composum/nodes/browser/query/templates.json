@@ -1,6 +1,33 @@
 {
   "jcr:primaryType": "sling:Folder",
   "sling:resourceType": "composum/nodes/browser/query/template/set",
+  "text-search": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "composum/nodes/browser/query/template",
+    "jcr:title": "text search",
+    "group": "General",
+    "order": 60,
+    "jcr:description": "\u003cp\u003eis searching for nodes containing the specified text\u003c/p\u003e",
+    "xpath": "/jcr:root${root_path.path}//*[jcr:contains(.,'${text.3}')]"
+  },
+  "by-property-value": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "composum/nodes/browser/query/template",
+    "jcr:title": "search by property value",
+    "group": "General",
+    "order": 90,
+    "jcr:description": "\u003cp\u003eis searching for nodes containing a specified property value pattern\u003c/p\u003e",
+    "xpath": "/jcr:root${root_path.path}//*[jcr:like(${property_name},'%${property_value}%')]"
+  },
+  "by-property-name": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "composum/nodes/browser/query/template",
+    "jcr:title": "search by property name",
+    "group": "General",
+    "order": 120,
+    "jcr:description": "\u003cp\u003eis searching for nodes containing a specified property (name)\u003c/p\u003e",
+    "xpath": "/jcr:root${root_path.path}//*[@${property_name}]"
+  },
   "by-types": {
     "jcr:primaryType": "nt:unstructured",
     "sling:resourceType": "composum/nodes/browser/query/template",
