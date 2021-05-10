@@ -95,6 +95,25 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>slingfeature-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <jarStartOrder>20</jarStartOrder>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>features</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>include-artifact</goal>
+                            <goal>attach-features</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
