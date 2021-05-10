@@ -82,9 +82,13 @@ window.CPM.nodes.usermgr.graph = window.CPM.nodes.usermgr.graph || {};
             mode = profile.mode || 'graphviz';
             $('.composum-nodes-usermgr-graph_body').removeClass('graphviz paths').addClass(mode);
         }
-        // load the data accordint to the mode into the canvas element...
+        if (query && mode !== 'paths') {
+            query = query.replace(/[?&]text=[^&]*/, '').replace(/^&/, '?');
+        }
+        // load the data according to the mode into the canvas element...
+        var url = '/bin/cpm/users/graph.' + mode + (selector ? '.' + selector : '') + '.html' + query;
         $.ajax({
-            url: '/bin/cpm/users/graph.' + mode + (selector ? '.' + selector : '') + '.html' + query,
+            url: graph.getContextUrl(url),
             cache: false
         }).done(function (content) {
             let $canvas = $element.find('.composum-nodes-usermgr-' + (mode === 'graphviz' ? 'graph' : 'paths'));
@@ -121,5 +125,15 @@ window.CPM.nodes.usermgr.graph = window.CPM.nodes.usermgr.graph || {};
             }
         });
     };
+
+    graph.getContextUrl = function (url) {
+        if (url && !url.match(/^https?:\/\//i)) {  // ignore 'external' URLs
+            var contextPath = $('html').data('context-path');
+            if (contextPath && url.indexOf(contextPath) !== 0) {
+                url = contextPath + url;
+            }
+        }
+        return url;
+    }
 
 })(window.CPM.nodes.usermgr.graph);

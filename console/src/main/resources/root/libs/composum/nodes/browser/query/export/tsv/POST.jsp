@@ -1,12 +1,13 @@
 <%@page session="false" pageEncoding="utf-8"
-        import="org.apache.sling.api.resource.Resource,
+        import="org.apache.commons.lang3.StringUtils,
+                org.apache.sling.api.resource.Resource,
                 org.apache.sling.api.resource.ValueMap,
-                java.io.PrintWriter,
-                com.composum.sling.core.util.XSS" %><%
+                java.io.PrintWriter" %><%
 %><%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %><%
 %><sling:defineObjects/><%
-    String filename = XSS.filter(slingRequest.getRequestPathInfo().getSuffix());
-    if (filename == null) {
+    ValueMap values = resource.getValueMap();
+    String filename = values.get("filename", String.class);
+    if (StringUtils.isBlank(filename)) {
         filename = "query-export.tsv";
     } else {
         while (filename.startsWith("/")) {
@@ -15,15 +16,43 @@
     }
     slingResponse.setContentType("text/tab-separated-values; charset=UTF-8");
     slingResponse.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+    String[] propertySet = values.get("properties", new String[]{
+            "name;Name",
+            "path;Path",
+            "jcr:title;Title",
+            "jcr:primaryType;Primary Type",
+            "sling:resourceType;Resource Type"
+    });
     PrintWriter writer = slingResponse.getWriter();
-    writer.println("Name\tPath\tTitle\tPrimary Type\tResource Type");
+    for (int i = 0; i < propertySet.length; i++) {
+        String[] keyLabel = StringUtils.split(propertySet[i], ";", 2);
+        if (i > 0) {
+            writer.print('\t');
+        }
+        writer.append((keyLabel.length < 2 ? keyLabel[0] : keyLabel[1]).replace('\t', ' '));
+    }
+    writer.println();
     for (Resource item : resource.getChildren()) {
-        ValueMap valueMap = item.adaptTo(ValueMap.class);
-        writer.append(item.getName().replace('\t', ' ')).append("\t");
-        writer.append(item.getPath().replace('\t', ' ')).append("\t");
-        writer.append(valueMap.get("title", valueMap.get("jcr:title", "")).replace('\t', ' ')).append("\t");
-        writer.append(valueMap.get("jcr:primaryType", "")).append("\t");
-        writer.append(valueMap.get("sling:resourceType", ""));
+        ValueMap valueMap = item.getValueMap();
+        for (int i = 0; i < propertySet.length; i++) {
+            String[] keyLabel = StringUtils.split(propertySet[i], ";", 2);
+            if (i > 0) {
+                writer.print('\t');
+            }
+            Object value;
+            switch (keyLabel[0]) {
+                case "name":
+                    value = item.getName();
+                    break;
+                case "path":
+                    value = item.getPath();
+                    break;
+                default:
+                    value = valueMap.get(keyLabel[0]);
+                    break;
+            }
+            writer.append(value != null ? value.toString().replace('\t', ' ') : "");
+        }
         writer.println();
     }
 %>

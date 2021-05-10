@@ -31,11 +31,11 @@
                             <option value="service">${cpn:i18n(slingRequest,'Service')}</option>
                         </select>
                         <input name="name" type="text" class="name pattern form-control"
-                               placeholder="${cpn:i18n(slingRequest,'Authorizable Name')}">
+                               placeholder="${cpn:i18n(slingRequest,'Authorizable Name')}"/>
                         <input name="path" type="text" class="path pattern form-control"
-                               placeholder="${cpn:i18n(slingRequest,'Authorizable Path')}">
+                               placeholder="${cpn:i18n(slingRequest,'Authorizable Path')}"/>
                         <input name="text" type="text" class="text hidden pattern form-control"
-                               placeholder="${cpn:i18n(slingRequest,'Affected Path')}">
+                               placeholder="${cpn:i18n(slingRequest,'Affected Path')}"/>
                     </div>
                     <div class="btn-group btn-group-sm" role="group">
                         <button type="submit" class="exec fa fa-play btn btn-default"

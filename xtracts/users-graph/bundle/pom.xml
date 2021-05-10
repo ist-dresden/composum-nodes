@@ -1,57 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.composum.nodes</groupId>
-        <artifactId>composum-nodes</artifactId>
+        <artifactId>composum-nodes-users-graph</artifactId>
         <version>2.6.2</version>
     </parent>
 
-    <artifactId>composum-nodes-usermgr</artifactId>
+    <artifactId>composum-nodes-users-graph-bundle</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Composum Nodes User Managmenent</name>
-    <description>a console module to manage users via JCR API</description>
+    <name>Composum Nodes Users Graph Bundle</name>
 
     <properties>
-        <bundle.name>com.composum.nodes.usermgr</bundle.name>
+        <bundle.category>composum,nodes</bundle.category>
+        <bundle.name>com.composum.nodes.users.graph</bundle.name>
+        <source.java>${project.basedir}/../../../usermgr/src/main/java</source.java>
+        <source.resources>${project.basedir}/../../../usermgr/src/main/resources</source.resources>
     </properties>
 
     <build>
+        <sourceDirectory>${source.java}</sourceDirectory>
+
         <plugins>
 
             <plugin>
-                <groupId>pl.project13.maven</groupId>
-                <artifactId>git-commit-id-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compileSourceRoots>${source.java}</compileSourceRoots>
+                    <excludes>
+                        <exclude>**/usermanagement/*</exclude>
+                        <exclude>**/usermanagement/core/**</exclude>
+                        <exclude>**/usermanagement/view/**</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
 
             <plugin>
-                <!-- Minify the JS-Resources - needs the build-helper-maven-plugin -->
-                <groupId>com.samaxes.maven</groupId>
-                <artifactId>minify-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>minify-javascripts</id>
-                        <goals>
-                            <goal>minify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <!-- Needed for the minify-maven-plugin. -->
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>add-minified-resource</id>
-                        <goals>
-                            <goal>add-resource</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
             </plugin>
 
             <plugin>
@@ -92,9 +85,6 @@
                             !com.composum.sling.core.usermanagement.*.impl.*,
                             com.composum.sling.core.usermanagement.*
                         </Export-Package>
-                        <Sling-Initial-Content>
-                            root/libs/composum/nodes/usermgnt;path:=/libs/composum/nodes/usermgnt;overwrite:=true
-                        </Sling-Initial-Content>
                     </instructions>
                 </configuration>
             </plugin>
@@ -116,20 +106,6 @@
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.annotation</artifactId>
-        </dependency>
-
-        <!-- Composum -->
-        <dependency>
-            <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-console</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-commons</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-jslibs</artifactId>
         </dependency>
 
         <!-- Apache Sling -->
@@ -192,12 +168,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-        </dependency>
-
-
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>jstl</artifactId>
         </dependency>
 
     </dependencies>

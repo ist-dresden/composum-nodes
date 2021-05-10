@@ -47,7 +47,8 @@
     flex-wrap: nowrap;
 }
 
-.composum-nodes-usermgr-graph_page-form .composum-nodes-usermgr-graph_page-form_field.form-field_path {
+.composum-nodes-usermgr-graph_page-form .composum-nodes-usermgr-graph_page-form_field.form-field_path,
+.composum-nodes-usermgr-graph_page-form .composum-nodes-usermgr-graph_page-form_field.form-field_text {
     flex-grow: 1;
     max-width: 350px;
 }
@@ -59,6 +60,14 @@
 
 .composum-nodes-usermgr-graph_page-form .composum-nodes-usermgr-graph_page-form_field input {
     flex-grow: 1;
+}
+
+.composum-nodes-usermgr-graph_body .composum-nodes-usermgr-graph_page-form_field.form-field_text {
+    display: none;
+}
+
+.composum-nodes-usermgr-graph_body.paths .composum-nodes-usermgr-graph_page-form_field.form-field_text {
+    display: flex;
 }
 
 .composum-nodes-usermgr-graph_show-image {
