@@ -4,11 +4,13 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="strategy" type="com.composum.sling.nodes.query.ExportCfg">
-    <form class="query-export-form" target="_blank"
-          action="/bin/cpm/nodes/node.query${strategy.selectors}.bin${strategy.filename}" method="POST">
+    <form class="query-export-form" method="POST"
+          action="/bin/cpm/nodes/node.query${strategy.selectors}.bin">
         <input type="hidden" name="export" value="${strategy.exportType}"/>
         <input type="hidden" name="query" value="${strategy.query}"/>
         <input type="hidden" name="filter" value="${strategy.filter}"/>
+        <input type="hidden" name="properties" value="${strategy.properties}"/>
+        <input type="hidden" name="filename" value="${strategy.filename}"/>
         <a class="query-export-link" href="#"
            title="${cpn:i18n(slingRequest,strategy.description)}">${cpn:i18n(slingRequest,strategy.title)}</a>
     </form>

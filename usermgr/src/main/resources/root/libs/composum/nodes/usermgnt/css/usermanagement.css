@@ -128,6 +128,19 @@ button.addsystemuser:hover {
  * Authorizable
  */
 
+.detail-content .paths .detail-toolbar {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.detail-content .paths .detail-toolbar .input-group {
+    margin: 0 5px;
+}
+
+.detail-content .paths .detail-toolbar .input-group input {
+    margin-top: 2px;
+}
+
 .detail-toolbar .toggle-disabled {
     color: #3c763d; /* success */
 }
