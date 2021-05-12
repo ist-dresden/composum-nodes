@@ -12,7 +12,7 @@
 
     <groupId>com.composum.nodes</groupId>
     <artifactId>composum-nodes</artifactId>
-    <version>2.6.2</version>
+    <version>2.6.3</version>
     <packaging>pom</packaging>
 
     <name>Composum Nodes</name>
@@ -107,6 +107,20 @@
                         <user>${sling.user}</user>
                         <password>${sling.password}</password>
                     </configuration>
+                </plugin>
+
+                <!-- TODO remove when parent in composum-meta is released -->
+                <!-- https://mvnrepository.com/artifact/org.apache.sling/slingfeature-maven-plugin -->
+                <plugin>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>slingfeature-maven-plugin</artifactId>
+                    <version>1.5.0</version>
+                </plugin>
+                <!-- https://mvnrepository.com/artifact/org.apache.sling/sling-kickstart-maven-plugin -->
+                <plugin>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>sling-kickstart-maven-plugin</artifactId>
+                    <version>0.0.8</version>
                 </plugin>
 
             </plugins>

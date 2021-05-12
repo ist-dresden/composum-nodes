@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes.osgi</groupId>
         <artifactId>composum-nodes-osgi</artifactId>
-        <version>2.6.2</version>
+        <version>2.6.3</version>
     </parent>
 
     <artifactId>composum-nodes-osgi-package-installer</artifactId>
@@ -48,6 +48,51 @@
                         </Sling-Initial-Content>
                     </instructions>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>slingfeature-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <jarStartOrder>20</jarStartOrder>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>create-fm</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>include-artifact</goal>
+                        </goals>
+                        <configuration>
+                            <includeArtifactClassifier>artifact</includeArtifactClassifier>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>aggregate</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>aggregate-features</goal>
+                        </goals>
+                        <configuration>
+                            <aggregates>
+                                <aggregate>
+                                    <!-- Classifier from the include-artifact generation -->
+                                    <includeClassifier>artifact</includeClassifier>
+                                    <!-- Additional FM to be included into this project -->
+                                    <filesInclude>**/*.json</filesInclude>
+                                </aggregate>
+                            </aggregates>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>attach</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>attach-features</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>

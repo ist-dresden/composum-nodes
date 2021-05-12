@@ -1,0 +1,10 @@
+{
+  "configurations":{
+    "org.apache.sling.jcr.base.internal.LoginAdminWhitelist.fragment~composum_nodes_pckinstall.config":{
+      "whitelist.bundles":[
+        "com.composum.nodes.pckginstall"
+      ],
+      "whitelist.name":"composum_core_pckinstall"
+    }
+  }
+}

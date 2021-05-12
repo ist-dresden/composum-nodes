@@ -5,8 +5,8 @@
 
     <parent>
         <groupId>com.composum.nodes</groupId>
-        <artifactId>composum-nodes-local-projects</artifactId>
-        <version>2.6.2</version>
+        <artifactId>composum-nodes-xtracts</artifactId>
+        <version>2.6.3</version>
     </parent>
 
     <artifactId>composum-nodes-users-graph</artifactId>

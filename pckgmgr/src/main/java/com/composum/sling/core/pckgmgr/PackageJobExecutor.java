@@ -7,6 +7,7 @@ import com.composum.sling.core.pckgmgr.util.PackageProgressTracker;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.io.ImportOptions;
+import org.apache.jackrabbit.vault.packaging.DependencyHandling;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.PackageException;
@@ -229,6 +230,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             options.setAutoSaveThreshold(getProperty(job, JOB_PROPERTY_SAVE_THRESHOLD, config.package_save_threshold()));
             options.setImportMode(getProperty(job, JOB_PROPERTY_IMPORT_MODE, ImportMode.REPLACE));
             options.setHookClassLoader(getDynamicClassLoaderManager().getDynamicClassLoader());
+            options.setDependencyHandling(DependencyHandling.BEST_EFFORT);
             return options;
         }
 
