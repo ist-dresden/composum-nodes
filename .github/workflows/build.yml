@@ -18,8 +18,8 @@ jobs:
           java-version: '8'
           distribution: 'adopt'
           server-id: archiva
-          server-username: ${{ secrets.NEXUS_BUILD_USER }}
-          server-password: ${{ secrets.NEXUS_BUILD_PASSWD }}
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
       - name: Cache Maven packages
         uses: actions/cache@v2
         with:
@@ -28,3 +28,6 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots install deploy
+        env:
+          MAVEN_USERNAME: ${{ secrets.NEXUS_BUILD_USER }}
+          MAVEN_PASSWORD: ${{ secrets.NEXUS_BUILD_PASSWD }}
