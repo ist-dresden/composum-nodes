@@ -7,11 +7,11 @@
   "order": 90,
   "exportType": "composum/nodes/browser/query/export/csv",
   "properties": [
-    "name;Name",
     "path;Path",
     "jcr:title;Title",
     "jcr:primaryType;Primary Type",
     "sling:resourceType;Resource Type"
   ],
+  "separator": ";",
   "filename": "query-export.csv"
 }

@@ -14,7 +14,8 @@
             filename = filename.substring(1);
         }
     }
-    slingResponse.setContentType("text/comma-separated-values; charset=UTF-8");
+    String separator = values.get("separator", ";");
+    slingResponse.setContentType("text/csv;charset=UTF-8;header=present");
     slingResponse.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
     String[] propertySet = values.get("properties", new String[]{
             "name;Name",
@@ -27,7 +28,7 @@
     for (int i = 0; i < propertySet.length; i++) {
         String[] keyLabel = StringUtils.split(propertySet[i], ";", 2);
         if (i > 0) {
-            writer.print(',');
+            writer.print(separator);
         }
         writer.append("\"").append((keyLabel.length < 2 ? keyLabel[0] : keyLabel[1]).replaceAll("\"", "\"\"")).append("\"");
     }
@@ -37,7 +38,7 @@
         for (int i = 0; i < propertySet.length; i++) {
             String[] keyLabel = StringUtils.split(propertySet[i], ";", 2);
             if (i > 0) {
-                writer.print(',');
+                writer.print(separator);
             }
             Object value;
             switch (keyLabel[0]) {

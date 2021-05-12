@@ -85,6 +85,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -658,15 +659,20 @@ public class NodeServlet extends NodeTreeServlet {
             SyntheticQueryResult resultResource = new SyntheticQueryResult(resolver, syntheticPath, result, filter, rendererType);
             resultResource.putValue("query", queryString);
 
-            String[] properties = new String[0];
-            String propertySet = XSS.filter(request.getParameter("properties"));
-            if (StringUtils.isNotBlank(propertySet)) {
-                resultResource.putValue("properties", StringUtils.split(propertySet, ','));
-            }
-
-            String filename = XSS.filter(request.getParameter("filename"));
-            if (StringUtils.isNotBlank(filename)) {
-                resultResource.putValue("filename", filename);
+            Enumeration<?> parameters = request.getParameterNames();
+            while (parameters.hasMoreElements()) {
+                String name = (String) parameters.nextElement();
+                String value = XSS.filter(request.getParameter(name));
+                if (StringUtils.isNotEmpty(value)) {
+                    switch (name) {
+                        case "properties":
+                            resultResource.putValue(name, StringUtils.split(value, ','));
+                            break;
+                        default:
+                            resultResource.putValue(name, value);
+                            break;
+                    }
+                }
             }
 
             RequestDispatcherOptions options = new RequestDispatcherOptions();

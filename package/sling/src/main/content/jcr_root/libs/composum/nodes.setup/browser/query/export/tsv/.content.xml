@@ -8,5 +8,5 @@
         group="TXT"
         order="{Long}60"
         exportType="composum/nodes/browser/query/export/tsv"
-        properties="[name;Name,path;Path,jcr:title;Title,jcr:primaryType;Primary Type,sling:resourceType;Resource Type]"
+        properties="[path;Path,jcr:title;Title,jcr:primaryType;Primary Type,sling:resourceType;Resource Type]"
         filename="query-export.tsv"/>

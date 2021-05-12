@@ -16,6 +16,7 @@ public class ExportCfg extends ConfigItem {
     public static final String PROP_EXPORT_TYPE = "exportType";
     public static final String PROP_QUERY = "query";
     public static final String PROP_FILTER = "filter";
+    public static final String PROP_SEPARATOR = "separator";
     public static final String PROP_PROPERTIES = "properties";
 
     public ExportCfg(BeanContext context, Resource resource) {
@@ -52,6 +53,11 @@ public class ExportCfg extends ConfigItem {
 
     public String getFilter() {
         return getProperty(PROP_FILTER, RequestUtil.getParameter(getRequest(), PROP_FILTER, ""));
+    }
+
+    public String getSeparator() {
+        return getProperty(PROP_SEPARATOR, RequestUtil.getParameter(getRequest(), PROP_SEPARATOR,
+                getProperty("character", "")));
     }
 
     public String getProperties() {

@@ -7,7 +7,6 @@
   "order": 60,
   "exportType": "composum/nodes/browser/query/export/tsv",
   "properties": [
-    "name;Name",
     "path;Path",
     "jcr:title;Title",
     "jcr:primaryType;Primary Type",
