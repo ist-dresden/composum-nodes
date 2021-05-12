@@ -230,7 +230,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             options.setAutoSaveThreshold(getProperty(job, JOB_PROPERTY_SAVE_THRESHOLD, config.package_save_threshold()));
             options.setImportMode(getProperty(job, JOB_PROPERTY_IMPORT_MODE, ImportMode.REPLACE));
             options.setHookClassLoader(getDynamicClassLoaderManager().getDynamicClassLoader());
-            options.setDependencyHandling(DependencyHandling.REQUIRED);
+            options.setDependencyHandling(DependencyHandling.BEST_EFFORT);
             return options;
         }
 
