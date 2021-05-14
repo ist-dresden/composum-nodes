@@ -13,6 +13,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -27,18 +28,19 @@ public class NodesComponentsService implements ComponentsService {
         Resource overlay = null;
         String overlayPath = null;
         Resource template = null;
-        Iterator<String> searchPathIterator = Arrays.asList(resolver.getSearchPath()).iterator();
+        List<String> searchPath = Arrays.asList(resolver.getSearchPath());
+        Iterator<String> searchPathIterator = searchPath.iterator();
         if (overlayType.startsWith("/")) {
-            String overlayEntry = null;
-            while (searchPathIterator.hasNext() && overlayPath == null) {
-                String thisEntry = searchPathIterator.next();
-                if (overlayType.startsWith(thisEntry)) {
-                    overlayEntry = thisEntry;
+            template = getTemplate(resolver, overlayType, searchPathIterator);
+            if (template != null) {
+                overlayPath = overlayType;
+            } else {
+                List<String> reversePath = new ArrayList<>(searchPath);
+                Collections.reverse(reversePath);
+                template = getTemplate(resolver, overlayType, reversePath.iterator());
+                if (template != null) {
                     overlayPath = overlayType;
                 }
-            }
-            while(searchPathIterator.hasNext() && overlayEntry != null && template == null) {
-                template = resolver.getResource(searchPathIterator.next() + overlayType.substring(overlayEntry.length()));
             }
         } else { // resource type - search search path for last entry that doesn't exist yet
             String lastEntry = null;
@@ -82,6 +84,25 @@ public class NodesComponentsService implements ComponentsService {
             return true;
         }
         return false;
+    }
+
+    protected Resource getTemplate(@Nonnull final ResourceResolver resolver,
+                                   @Nonnull final String overlayType,
+                                   @Nonnull final Iterator<String> searchPathIterator) {
+        String overlayPath = null;
+        Resource template = null;
+        String overlayEntry = null;
+        while (searchPathIterator.hasNext() && overlayPath == null) {
+            String thisEntry = searchPathIterator.next();
+            if (overlayType.startsWith(thisEntry)) {
+                overlayEntry = thisEntry;
+                overlayPath = overlayType;
+            }
+        }
+        while (searchPathIterator.hasNext() && template == null) {
+            template = resolver.getResource(searchPathIterator.next() + overlayType.substring(overlayEntry.length()));
+        }
+        return template;
     }
 
     public static final List<String> IGNORED_PROPERTIES = new ArrayList<String>() {{
