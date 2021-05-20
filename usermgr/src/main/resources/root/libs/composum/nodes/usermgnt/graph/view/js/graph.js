@@ -82,6 +82,9 @@ window.CPM.nodes.usermgr.graph = window.CPM.nodes.usermgr.graph || {};
             mode = profile.mode || 'graphviz';
             $('.composum-nodes-usermgr-graph_body').removeClass('graphviz paths').addClass(mode);
         }
+        if (query && mode !== 'paths') {
+            query = query.replace(/[?&]text=[^&]*/, '').replace(/^&/, '?');
+        }
         // load the data according to the mode into the canvas element...
         var url = '/bin/cpm/users/graph.' + mode + (selector ? '.' + selector : '') + '.html' + query;
         $.ajax({

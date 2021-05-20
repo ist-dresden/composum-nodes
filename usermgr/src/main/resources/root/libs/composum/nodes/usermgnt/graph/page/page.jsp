@@ -23,19 +23,23 @@
     <div class="composum-nodes-usermgr-graph_page-form_field form-field_type">
         <label>Type</label>
         <select name="type">
-            <option value="" <%=type == null ? "selected" : ""%>>all</option>
-            <option <%="user".equals(type) ? "selected" : ""%>>user</option>
-            <option <%="group".equals(type) ? "selected" : ""%>>group</option>
-            <option <%="service".equals(type) ? "selected" : ""%>>service</option>
+            <option value="" <%= type == null ? "selected" : "" %>>all</option>
+            <option <%= "user".equals(type) ? "selected" : "" %>>user</option>
+            <option <%= "group".equals(type) ? "selected" : "" %>>group</option>
+            <option <%= "service".equals(type) ? "selected" : "" %>>service</option>
         </select>
     </div>
     <div class="composum-nodes-usermgr-graph_page-form_field form-field_name">
         <label title="the authorizable name or a query pattern (%) for filtering by name">Name</label>
-        <input name="name" type="text" value="<%= name != null ? name : ""%>"/>
+        <input name="name" type="text" value="<%= name != null ? name : "" %>" placeholder="Authorizable Name"/>
     </div>
     <div class="composum-nodes-usermgr-graph_page-form_field form-field_path">
         <label title="a regular expression for filtering by authorizable path (find)">Path</label>
-        <input name="path" type="text" value="<%= path != null ? path : ""%>"/>
+        <input name="path" type="text" value="<%= path != null ? path : "" %>" placeholder="Authorizable Path"/>
+    </div>
+    <div class="composum-nodes-usermgr-graph_page-form_field form-field_text">
+        <label title="a regular expression for filtering by authorizable path (find)">Affected</label>
+        <input name="text" type="text" value="<%= text != null ? text : "" %>" placeholder="Affected Path"/>
     </div>
     <button type="submit">Submit</button>
     <button type="button" class="composum-nodes-usermgr-graph_show-image">Show Image ...</button>
@@ -54,10 +58,10 @@
         $('.composum-nodes-usermgr-graph_show-image').click(window.CPM.nodes.usermgr.graph.showSvgImage);
         window.CPM.nodes.usermgr.graph.render(
             $('.composum-nodes-usermgr-graph_page-canvas'),
-            <%= type != null ? "'" + type + "'" : "''"%>,
-            <%= name != null ? "'" + name + "'" : "''"%>,
-            <%= path != null ? "'" + path + "'" : "''"%>,
-            <%= text != null ? "'" + text + "'" : "''"%>,
+            <%= type != null ? "'" + type + "'" : "''" %>,
+            <%= name != null ? "'" + name + "'" : "''" %>,
+            <%= path != null ? "'" + path + "'" : "''" %>,
+            <%= text != null ? "'" + text + "'" : "''" %>,
             "page"
         );
     });

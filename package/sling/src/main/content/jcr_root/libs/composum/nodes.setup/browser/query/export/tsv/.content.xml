@@ -7,4 +7,6 @@
         jcr:description="a simple tab separated text file; see /libs/composum/nodes/browser/query/export/tsv"
         group="TXT"
         order="{Long}60"
-        exportType="composum/nodes/browser/query/export/tsv"/>
+        exportType="composum/nodes/browser/query/export/tsv"
+        properties="[path;Path,jcr:title;Title,jcr:primaryType;Primary Type,sling:resourceType;Resource Type]"
+        filename="query-export.tsv"/>

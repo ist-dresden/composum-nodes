@@ -11,6 +11,7 @@ import org.apache.sling.api.wrappers.ModifiableValueMapDecorator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import javax.jcr.query.QueryResult;
 import java.util.Collections;
@@ -39,14 +40,14 @@ public class SyntheticQueryResult extends SyntheticResource {
         super(resolver, path, resourceType);
         this.queryResult = queryResult;
         this.filter = filter;
-        valueMap = new ModifiableValueMapDecorator(new HashMap<String, Object>());
+        valueMap = new ModifiableValueMapDecorator(new HashMap<>());
         putValue(ResourceUtil.PROP_RESOURCE_TYPE, resourceType);
     }
 
     @Override
     public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
         if (ValueMap.class.isAssignableFrom(type)) {
-            return (AdapterType) valueMap;
+            return type.cast(valueMap);
         }
         return super.adaptTo(type);
     }
@@ -56,12 +57,13 @@ public class SyntheticQueryResult extends SyntheticResource {
     }
 
     @Override
+    @Nonnull
     public Iterator<Resource> listChildren() {
         try {
             return new ResourceNodeIterator(getResourceResolver(), queryResult.getNodes(), filter);
         } catch (RepositoryException ex) {
             LOG.error(ex.getMessage(), ex);
-            return Collections.<Resource>emptyList().iterator();
+            return Collections.emptyIterator();
         }
     }
 }

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.nodes</groupId>
+        <artifactId>composum-nodes-users-graph</artifactId>
+        <version>2.6.4-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>composum-nodes-users-graph-package</artifactId>
+    <packaging>content-package</packaging>
+
+    <name>Composum Nodes Users Graph Package</name>
+
+    <properties>
+        <package.group>com/composum/nodes</package.group>
+        <package.company>IST GmbH Dresden</package.company>
+    </properties>
+
+    <build>
+        <resources>
+
+            <resource>
+                <directory>src/main/content/jcr_root</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/.vlt*</exclude>
+                    <exclude>**/.DS_Store</exclude>
+                    <exclude>**/.gitignore</exclude>
+                </excludes>
+            </resource>
+
+            <resource>
+                <directory>${basedir}/src/main/content/META-INF</directory>
+                <targetPath>${project.build.directory}/vault-work/META-INF</targetPath>
+            </resource>
+
+            <resource>
+                <directory>${project.build.directory}/content/jcr_root</directory>
+                <excludes>
+                    <exclude>**/mixins.css</exclude>
+                    <exclude>**/variables.css</exclude>
+                </excludes>
+            </resource>
+
+        </resources>
+        <plugins>
+
+            <!-- extract and embed the content of the bundles -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+
+                    <execution>
+                        <id>prepare-content</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/content</outputDirectory>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+
+                            <artifactItems>
+
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>composum-nodes-sling-package</artifactId>
+                                    <version>${composum.nodes.version}</version>
+                                    <type>content-package</type>
+                                    <includes>
+                                        jcr_root/libs/composum/nodes.setup/usermgnt/graph/**
+                                    </includes>
+                                    <fileMappers>
+                                        <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                            <pattern>jcr_root/libs/composum/nodes.setup/</pattern>
+                                            <replacement>jcr_root/libs/composum/nodes/</replacement>
+                                        </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                    </fileMappers>
+                                </artifactItem>
+
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+
+                </executions>
+                <inherited>false</inherited>
+            </plugin>
+
+            <plugin>
+                <groupId>com.day.jcr.vault</groupId>
+                <artifactId>content-package-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+
+                    <group>${package.group}</group>
+                    <properties>
+                        <createdBy>${package.company}</createdBy>
+                    </properties>
+
+                    <builtContentDirectory>${project.build.outputDirectory}</builtContentDirectory>
+
+                    <embeddeds>
+                        <embedded>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>composum-nodes-users-graph-bundle</artifactId>
+                            <target>/libs/composum/nodes/install</target>
+                        </embedded>
+                    </embeddeds>
+
+                    <filters>
+
+                        <filter>
+                            <root>/libs/composum/nodes/install</root>
+                            <includes>
+                                <include>.*/composum-nodes-users-graph-bundle-.*\.jar</include>
+                            </includes>
+                        </filter>
+
+                        <filter>
+                            <root>/libs/composum/nodes/usermgnt</root>
+                        </filter>
+
+                    </filters>
+
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+    <dependencies>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-users-graph-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-sling-package</artifactId>
+            <version>${composum.nodes.version}</version>
+            <type>content-package</type>
+        </dependency>
+
+    </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installAemPackage</id>
+            <activation>
+                <property>
+                    <name>deploy.package</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>com.day.jcr.vault</groupId>
+                        <artifactId>content-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-content-package</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+</project>

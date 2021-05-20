@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.composum.nodes.setup</groupId>
         <artifactId>composum-nodes-setup</artifactId>
-        <version>2.6.2-SNAPSHOT</version>
+        <version>2.6.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>composum-nodes-slingfeature</artifactId>
-    <packaging>slingfeature</packaging>
+    <packaging>pom</packaging>
 
     <name>Composum Nodes Feature</name>
     <description>Sling feature for easy integration of Composum Console in slingstart projects.</description>
@@ -20,48 +20,78 @@
 
             <plugin>
                 <groupId>org.apache.sling</groupId>
-                <artifactId>slingstart-maven-plugin</artifactId>
+                <artifactId>slingfeature-maven-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
-                    <usePomDependencies>true</usePomDependencies>
+                    <jarStartOrder>20</jarStartOrder>
+                    <includeDependenciesWithScope>compile</includeDependenciesWithScope>
+                    <verbose>true</verbose>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>aggregate-fm</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>aggregate-features</goal>
+                        </goals>
+                        <configuration>
+                            <aggregates>
+                                <aggregate>
+                                    <filesInclude>**/*.json</filesInclude>
+                                    <includeArtifact>
+                                        <groupId>com.composum.nodes</groupId>
+                                        <artifactId>composum-nodes-commons</artifactId>
+                                        <version>${project.version}</version>
+                                        <type>slingosgifeature</type>
+                                    </includeArtifact>
+                                    <includeArtifact>
+                                        <groupId>com.composum.nodes</groupId>
+                                        <artifactId>composum-nodes-console</artifactId>
+                                        <version>${project.version}</version>
+                                        <type>slingosgifeature</type>
+                                    </includeArtifact>
+                                    <includeArtifact>
+                                        <groupId>com.composum.nodes</groupId>
+                                        <artifactId>composum-nodes-jslibs</artifactId>
+                                        <version>${project.version}</version>
+                                        <type>slingosgifeature</type>
+                                    </includeArtifact>
+                                    <includeArtifact>
+                                        <groupId>com.composum.nodes</groupId>
+                                        <artifactId>composum-nodes-pckgmgr</artifactId>
+                                        <version>${project.version}</version>
+                                        <type>slingosgifeature</type>
+                                    </includeArtifact>
+                                    <includeArtifact>
+                                        <groupId>com.composum.nodes</groupId>
+                                        <artifactId>composum-nodes-usermgr</artifactId>
+                                        <version>${project.version}</version>
+                                        <type>slingosgifeature</type>
+                                    </includeArtifact>
+                                    <includeArtifact>
+                                        <groupId>com.composum.nodes</groupId>
+                                        <artifactId>composum-nodes-config</artifactId>
+                                        <version>${project.version}</version>
+                                        <type>slingosgifeature</type>
+                                    </includeArtifact>
+                                </aggregate>
+                            </aggregates>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>install-fm</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>attach-features</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
     </build>
 
     <dependencies>
-
-        <!-- Composum -->
-        <dependency>
-            <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-commons</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-jslibs</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-console</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-pckgmgr</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.composum.nodes</groupId>
-            <artifactId>composum-nodes-usermgr</artifactId>
-        </dependency>
-
-        <!-- Commons Lang -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <!-- Overwrite version from parent pom because version 3.0 creates problems in sling 8 because it 
-                 has same symbolic name as commons-lang2 and overwrites this version, though not backward compatible. -->
-            <version>3.3.2</version>
-        </dependency>
 
     </dependencies>
 </project>

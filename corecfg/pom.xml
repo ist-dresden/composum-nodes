@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>2.6.2-SNAPSHOT</version>
+        <version>2.6.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>composum-nodes-config</artifactId>
@@ -42,6 +42,25 @@
                         </Sling-Initial-Content>
                     </instructions>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>slingfeature-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <jarStartOrder>20</jarStartOrder>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>features</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>include-artifact</goal>
+                            <goal>attach-features</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>

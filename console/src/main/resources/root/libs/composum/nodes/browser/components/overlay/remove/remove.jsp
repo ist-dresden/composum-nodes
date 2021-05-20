@@ -11,7 +11,7 @@
                     <button type="button" class="close" data-dismiss="modal"
                             aria-label="${cpn:i18n(slingRequest,'Cancel')}"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">${cpn:i18n(slingRequest,'Remove the Overlay')}</h4>
+                    <h4 class="modal-title">${cpn:i18n(slingRequest,'Remove the Overlay / Base')}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="messages">
@@ -22,10 +22,10 @@
                     </div>
                     <div class="form-group">
                         <cpn:text class="text" i18n="true"
-                                  type="rich">Do you really want to delete the current overlay? This cannot be undone.</cpn:text>
+                                  type="rich">Do you really want to delete the current overlay / base? This cannot be undone.</cpn:text>
                     </div>
                     <div class="form-group">
-                        <label class="control-label">${cpn:i18n(slingRequest,'Overlay Path')}</label>
+                        <label class="control-label">${cpn:i18n(slingRequest,'Overlay / Base Path')}</label>
                         <input name="path" class="form-control" type="text" disabled="disabled"
                                value="${cpn:value(slingRequest.requestPathInfo.suffix)}"/>
                     </div>

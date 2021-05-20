@@ -85,6 +85,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -135,12 +136,12 @@ public class NodeServlet extends NodeTreeServlet {
     @Reference
     protected NodesConfiguration nodesConfig;
 
-    protected Map<String, ResourceFilter> nodeFilters = new LinkedHashMap<>();
+    protected final Map<String, ResourceFilter> nodeFilters = new LinkedHashMap<>();
 
     /**
      * injection of the filter configurations provided by the OSGi configuration
      */
-    protected List<FilterConfiguration> filterConfigurations = new ArrayList<>();
+    protected final List<FilterConfiguration> filterConfigurations = new ArrayList<>();
 
     /**
      * for each configured filter in the OSGi configuration
@@ -381,16 +382,23 @@ public class NodeServlet extends NodeTreeServlet {
     //
 
     /**
+     * the 'some words' query input pattern string
+     */
+    public static final String WORDS = "[^/( \\[*]+( +[^/ (\\[]+)*";
+
+    /**
      * the pattern to check for a XPATH query and their simplified variation
      */
     public static final Pattern XPATH_QUERY = Pattern.compile(
-            "^((/jcr:root)?/[^ (\\[]*)( +([^ /(\\[]+) *|(.*))$"
+            "^(?<path>(/jcr:root)?/[^ (\\[*]*)( +(?<words>" + WORDS + ") *|(.*))$"
     );
 
     /**
-     * the pattern to check for a simple text (word) query
+     * the pattern to check for a XPATH query and their simplified variation
      */
-    public static final Pattern WORD_QUERY = Pattern.compile("^ *([^ /]+) *$");
+    public static final Pattern SQL2_QUERY = Pattern.compile(
+            "^select( +(?<words>" + WORDS + ") *|(.*))$"
+    );
 
     protected abstract class AbstractQueryOperation implements ServletOperation {
 
@@ -400,7 +408,7 @@ public class NodeServlet extends NodeTreeServlet {
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            String queryString = RequestUtil.getParameter(request, PARAM_QUERY, "");
+            String queryString = RequestUtil.getParameter(request, PARAM_QUERY, "").trim();
             @SuppressWarnings("deprecation") String queryLang = Query.XPATH;
 
             String text;
@@ -408,24 +416,23 @@ public class NodeServlet extends NodeTreeServlet {
             Matcher matcher = XPATH_QUERY.matcher(queryString);
             if (matcher.matches()) {
                 // check for a single word after the path pattern - use it as simple text pattern
-                text = matcher.group(4);
+                text = matcher.group("words");
                 if (StringUtils.isNotBlank(text)) {
                     // use simple text separated from path
-                    queryString = getSimpleQuery(matcher.group(1), text);
+                    queryString = getSimpleQuery(matcher.group("path"), text);
                 }
                 // add the 'jcr:root' if not present
                 if (!queryString.startsWith("/jcr:root")) {
                     queryString = "/jcr:root" + queryString;
                 }
             } else {
-                // check for a single word only - use it as simple text pattern
-                matcher = WORD_QUERY.matcher(queryString);
+                matcher = SQL2_QUERY.matcher(queryString);
                 if (matcher.matches()) {
-                    // simple text
-                    queryString = getSimpleQuery(getPath(request), matcher.group(1));
-                } else {
                     // SQL-2...
                     queryLang = Query.JCR_SQL2;
+                } else {
+                    // simple text query relative to the path from the URL (suffix or parameter)
+                    queryString = getSimpleQuery(getPath(request), queryString);
                 }
             }
 
@@ -437,7 +444,10 @@ public class NodeServlet extends NodeTreeServlet {
                     QueryManager queryManager = workspace.getQueryManager();
 
                     Query query = queryManager.createQuery(queryString, queryLang);
-                    query.setLimit(nodesConfig.getQueryResultLimit() + 1);
+                    Long queryLimit = getQueryLimit();
+                    if (queryLimit != null) {
+                        query.setLimit(queryLimit);
+                    }
                     QueryResult result = query.execute();
 
                     ResourceFilter filter = getNodeFilter(request);
@@ -471,6 +481,11 @@ public class NodeServlet extends NodeTreeServlet {
             } else {
                 return filter.accept(resource);
             }
+        }
+
+        @Nullable
+        protected Long getQueryLimit() {
+            return nodesConfig.getQueryResultLimit() + 1;
         }
 
         protected abstract void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
@@ -626,6 +641,12 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ExportQueryOperation extends AbstractQueryOperation {
 
         @Override
+        @Nullable
+        protected Long getQueryLimit() {
+            return null;
+        }
+
+        @Override
         protected void writeQueryResult(@Nonnull final SlingHttpServletRequest request,
                                         @Nonnull final SlingHttpServletResponse response,
                                         @Nonnull final String queryString, @Nonnull final QueryResult result,
@@ -637,6 +658,22 @@ public class NodeServlet extends NodeTreeServlet {
             String syntheticPath = "/libs/composum/nodes/browser/query/export";
             SyntheticQueryResult resultResource = new SyntheticQueryResult(resolver, syntheticPath, result, filter, rendererType);
             resultResource.putValue("query", queryString);
+
+            Enumeration<?> parameters = request.getParameterNames();
+            while (parameters.hasMoreElements()) {
+                String name = (String) parameters.nextElement();
+                String value = XSS.filter(request.getParameter(name));
+                if (StringUtils.isNotEmpty(value)) {
+                    switch (name) {
+                        case "properties":
+                            resultResource.putValue(name, StringUtils.split(value, ','));
+                            break;
+                        default:
+                            resultResource.putValue(name, value);
+                            break;
+                    }
+                }
+            }
 
             RequestDispatcherOptions options = new RequestDispatcherOptions();
             options.setForceResourceType(rendererType);

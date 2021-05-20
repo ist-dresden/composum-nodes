@@ -7,4 +7,7 @@
         jcr:description="a simple CSV export; see /libs/composum/nodes/browser/query/export/csv"
         group="TXT"
         order="{Long}90"
-        exportType="composum/nodes/browser/query/export/csv"/>
+        exportType="composum/nodes/browser/query/export/csv"
+        properties="[path;Path,jcr:title;Title,jcr:primaryType;Primary Type,sling:resourceType;Resource Type]"
+        separator=";"
+        filename="query-export.csv"/>
