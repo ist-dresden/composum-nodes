@@ -316,7 +316,7 @@ public class PackageServlet extends AbstractServiceServlet {
             BeanContext context = new BeanContext.Servlet(getServletContext(), bundleContext, request, response);
             String path = PackageUtil.getPath(request);
             boolean merged = RequestUtil.checkSelector(request, "merged")
-                    || !Packages.REGISTRY_BASED_PATH.matcher(path).matches();
+                    || !Packages.REGISTRY_BASED_PATH.matcher(path).matches() && !"/".equals(path);
             RegistryTree tree = new RegistryTree(merged);
             RegistryItem treeItem = tree.getItem(context, path);
             if (treeItem != null) {
@@ -346,7 +346,6 @@ public class PackageServlet extends AbstractServiceServlet {
                 writer.name("type").value(registry.getClass().getSimpleName());
                 writer.name("packages").beginArray();
                 for (PackageId pckgId : registry.packages()) {
-                    RegisteredPackage pckg = registry.open(pckgId);
                     writer.beginObject();
                     writer.name("id").value(pckgId.toString());
                     writer.name("filename").value(RegistryUtil.getFilename(pckgId));

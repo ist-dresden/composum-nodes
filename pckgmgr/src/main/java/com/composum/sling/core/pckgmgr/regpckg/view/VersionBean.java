@@ -24,6 +24,7 @@ public class VersionBean extends ConsoleSlingBean implements PackageView {
 
     protected boolean loaded = false;
 
+    // FIXME(hps,21.05.21) Rather use eager loading, as regPckg is someting that should be closed.
     private transient RegisteredPackage regPckg;
     private transient VaultPackage vltPckg;
 

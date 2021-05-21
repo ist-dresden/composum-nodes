@@ -124,42 +124,43 @@ public class VersionNode extends AbstractNode implements PackageView {
             PackageRegistries service = context.getService(PackageRegistries.class);
             PackageRegistry registry = service.getRegistries(context.getResolver()).getRegistry(getPath());
             if (registry != null) {
-                RegisteredPackage pckg = registry.open(packageId);
-                if (pckg != null) {
-                    Map<String, Object> pckgProps = new PropertyMap();
-                    put("package", pckgProps);
-                    pckgProps.put("installed", installed = pckg.isInstalled());
-                    pckgProps.put("installTime", this.installTime = pckg.getInstallationTime());
-                    pckgProps.put("size", pckg.getSize());
-                    VaultPackage vaultPckg = pckg.getPackage();
-                    pckgProps.put("valid", valid = vaultPckg.isValid());
-                    MetaInf metaInf = vaultPckg.getMetaInf();
-                    put("properties", RegistryUtil.properties(pckg));
-                    if (RequestUtil.checkSelector(context.getRequest(), "filter")) {
-                        List<Map<String, Object>> filterList = new ArrayList<>();
-                        put("filter", filterList);
-                        WorkspaceFilter filter = pckg.getWorkspaceFilter();
-                        for (PathFilterSet filterSet : filter.getFilterSets()) {
-                            Map<String, Object> setProps = new PropertyMap();
-                            filterList.add(setProps);
-                            setProps.put("root", filterSet.getRoot());
-                            //setProps.put("type", filterSet.getType());
-                            setProps.put("importMode", filterSet.getImportMode());
-                            List<Map<String, Object>> entryList = new ArrayList<>();
-                            for (FilterSet.Entry<PathFilter> entry : filterSet.getEntries()) {
-                                Map<String, Object> entryProps = new PropertyMap();
-                                entryList.add(entryProps);
-                                PathFilter pathFilter = entry.getFilter();
-                                entryProps.put(entry.isInclude() ? "include" : "exclude", pathFilter.toString());
-                                //entryProps.put("absolute", pathFilter.isAbsolute());
-                            }
-                            if (entryList.size() > 0) {
-                                setProps.put("entries", entryList);
+                try (RegisteredPackage pckg = registry.open(packageId)) {
+                    if (pckg != null) {
+                        Map<String, Object> pckgProps = new PropertyMap();
+                        put("package", pckgProps);
+                        pckgProps.put("installed", installed = pckg.isInstalled());
+                        pckgProps.put("installTime", this.installTime = pckg.getInstallationTime());
+                        pckgProps.put("size", pckg.getSize());
+                        VaultPackage vaultPckg = pckg.getPackage();
+                        pckgProps.put("valid", valid = vaultPckg.isValid());
+                        MetaInf metaInf = vaultPckg.getMetaInf();
+                        put("properties", RegistryUtil.properties(pckg));
+                        if (RequestUtil.checkSelector(context.getRequest(), "filter")) {
+                            List<Map<String, Object>> filterList = new ArrayList<>();
+                            put("filter", filterList);
+                            WorkspaceFilter filter = pckg.getWorkspaceFilter();
+                            for (PathFilterSet filterSet : filter.getFilterSets()) {
+                                Map<String, Object> setProps = new PropertyMap();
+                                filterList.add(setProps);
+                                setProps.put("root", filterSet.getRoot());
+                                //setProps.put("type", filterSet.getType());
+                                setProps.put("importMode", filterSet.getImportMode());
+                                List<Map<String, Object>> entryList = new ArrayList<>();
+                                for (FilterSet.Entry<PathFilter> entry : filterSet.getEntries()) {
+                                    Map<String, Object> entryProps = new PropertyMap();
+                                    entryList.add(entryProps);
+                                    PathFilter pathFilter = entry.getFilter();
+                                    entryProps.put(entry.isInclude() ? "include" : "exclude", pathFilter.toString());
+                                    //entryProps.put("absolute", pathFilter.isAbsolute());
+                                }
+                                if (entryList.size() > 0) {
+                                    setProps.put("entries", entryList);
+                                }
                             }
                         }
+                    } else {
+                        LOG.warn("can't open package '{}' ({})", packageId, registry);
                     }
-                } else {
-                    LOG.warn("can't open package '{}' ({})", packageId, registry);
                 }
             } else {
                 LOG.warn("no registry found for '{}'", getPath());
