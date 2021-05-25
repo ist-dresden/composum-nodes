@@ -23,49 +23,57 @@ if [ -n "$4" ]; then
 fi
 
 if [ -z "$CPM_HOST" ]; then
-   CPM_HOST=localhost
+  CPM_HOST=localhost
 fi
 
 if [ -z "$CPM_PORT" ]; then
-   CPM_PORT=9090
+  CPM_PORT=9090
 fi
 
 if [ -z "$CPM_PROTOCOL" ]; then
-   CPM_PROTOCOL=http
+  CPM_PROTOCOL=http
 fi
 
 if [ -z "$CPM_ADMINUSER" ]; then
-   CPM_ADMINUSER=admin
+  CPM_ADMINUSER=admin
 fi
 
 if [ -z "$CPM_ADMINPASSWD" ]; then
-   CPM_ADMINPASSWD=admin
+  CPM_ADMINPASSWD=admin
 fi
 
-dirname=`pwd`
-rootdir=$dirname
-path=`basename $dirname`
-while [ `basename "$rootdir"` != "jcr_root" -a `dirname "$rootdir"` != "$rootdir" ]; do
-    rootdir=`dirname $rootdir`;
-    path=`basename $rootdir`/$path
+dirname=$(pwd)
+rootdir="$dirname"
+path=$(basename $dirname)
+while [ $(basename "$rootdir") != "jcr_root" -a $(basename "$rootdir") != "root" -a $(dirname "$rootdir") != "$rootdir" ]; do
+  rootdir=$(dirname $rootdir)
+  path=$(basename $rootdir)/$path
 done
-rootdir=`dirname $rootdir`;
-# echo $rootdir $path
-cd $rootdir
+rootdir=$(dirname $rootdir)
 
-echo Arguments "$*"
-echo Dir: $(pwd)
-echo URL: $CPM_PROTOCOL://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/sourceupload.zip/${path#jcr_root/}
+jcrpath="${path#jcr_root/}"
+jcrpath="${jcrpath#root/}"
+url="$CPM_PROTOCOL://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/sourceupload.zip/${jcrpath}"
 
-TMPFIL=`mktemp -u`.zip
-trap "{ rm -f $TMPFIL; }" EXIT
+echo "Arguments: $*"
+echo "Dir: $(pwd)"
+echo "Root: $rootdir"
+echo "Path: $jcrpath"
+echo "URL: $url"
 
-if command -v 7z &> /dev/null
-then
-  7z a $TMPFIL $path
+TMPFIL=$(mktemp -u).zip
+TMPDIR=$(mktemp -d)
+trap "{ rm -f $TMPFIL; rm -fr $TMPDIR; }" EXIT
+
+mkdir -p $TMPDIR/jcr_root/$jcrpath
+cp -cR $(pwd) $(dirname $TMPDIR/jcr_root/$jcrpath/)
+
+cd $TMPDIR
+if command -v 7z &>/dev/null; then
+  7z a $TMPFIL jcr_root/$jcrpath
   7z l $TMPFIL
 else
-  zip -vr $TMPFIL $path
+  zip -vr $TMPFIL jcr_root/$jcrpath
   echo
   echo "WARNING: 7z not found -> using zip which might not support unicode."
 fi
@@ -73,4 +81,4 @@ fi
 # the parameter :operation=updatetree currently serves no purpose but to sneakily prevent the Sling POST servlet to
 # create a node at /bin/cpm/... when the servlet is present.
 
-curl -u $CPM_ADMINUSER:$CPM_ADMINPASSWD -v -F "file=@$TMPFIL" $CPM_PROTOCOL://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/sourceupload.zip/${path#jcr_root/}
+curl -u $CPM_ADMINUSER:$CPM_ADMINPASSWD -D - -F "file=@$TMPFIL" $url
