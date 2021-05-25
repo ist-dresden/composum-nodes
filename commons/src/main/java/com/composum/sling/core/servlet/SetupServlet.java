@@ -128,6 +128,7 @@ public class SetupServlet extends AbstractServiceServlet {
                             } finally {
                                 CoreRepositorySetupService.TRACKER.set(null);
                             }
+                            session.save();
                             int warnings = (int) status.get(PN_WARNINGS);
                             int errors = (int) status.get(PN_ERRORS);
                             sumWarnings += warnings;
@@ -140,7 +141,7 @@ public class SetupServlet extends AbstractServiceServlet {
             } catch (Exception ex) {
                 sumErrors++;
                 LOG.error(ex.getMessage(), ex);
-                writer.println("ERROR: " + ex.toString());
+                writer.println("ERROR: " + ex);
             }
             writer.println("finished (warnings: " + sumWarnings + ", errors: " + sumErrors + ").");
             writer.flush();

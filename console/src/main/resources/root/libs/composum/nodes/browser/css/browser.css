@@ -659,7 +659,7 @@
     top: 34px;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: 42px;
     overflow: auto;
 }
 
@@ -1065,7 +1065,7 @@
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: 0px;
     overflow: hidden;
 }
 

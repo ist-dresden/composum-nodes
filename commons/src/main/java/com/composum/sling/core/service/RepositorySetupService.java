@@ -13,6 +13,7 @@ import java.util.Map;
  */
 public interface RepositorySetupService {
 
+	String USER_PATH = "userPath";
     String GROUP_PATH = "groupPath";
     String MEMBER_OF = "memberOf";
 
@@ -20,17 +21,17 @@ public interface RepositorySetupService {
      * adds ACL accordiong to rules declared as JSON file; e.g.
      * <ul>
      *     <li>allow read for 'everyone' on root ('/') to walk trough (this node only)</li>
-     *     <li>allow read for 'a-group' on '/apps' and all subnodes and ensure that this folder and the group exists</li>
-     *     <li>make 'everyone' a member of 'a-group' (both principals must exist)</li>
+	 *     <li>deny read for 'a-group' on '/apps' and all subnodes and ensure that this folder and the group exists</li>
+	 *     <li>make 'everyone' and 'someone' a member of 'a-group' (both principals must exist)</li>
      *     <li>remove each ACL for 'a-group' from '/conf' and ensure that this group exists</li>
      * </ul>
      * [{
      *   "path": "/",
      *   "acl": [{
      *     "principal": "everyone",
-     *     "acl": [{
-     *       "allow": true,
-     *       "privileges": "jcr:read",
+	 *     "reset": true,
+	 *     "rules": [{
+	 *       "grant": "jcr:read",
      *       "restrictions": {
      *         "rep:glob": ""
      *       }
@@ -40,16 +41,20 @@ public interface RepositorySetupService {
      *   "path": "/apps",
      *   "jcr:primaryType": "sling:Folder"
      *   "acl": [{
-     *     "principal": "a-group",
+	 *     "principal": [
+	 *       "a-group"
+	 *       "another-group"
+	 *     ],
      *     "groupPath": "example",
-     *     "acl": [{
-     *       "allow": true,
-     *       "privileges": [
+	 *     "deny": [
      *         "jcr:read"
      *       ]
      *     }]
      *   },{
-     *     "principal": "everyone",
+	 *     "principal": [
+	 *       "everyone",
+	 *       "someone"
+	 *     ],
      *     "memberOf": [
      *       "a-group"
      *     ]
@@ -57,7 +62,11 @@ public interface RepositorySetupService {
      * },{
      *   "path": "/conf",
      *   "acl": [{
-     *     "principal": "a-group"
+	 *     "principal": "a-user",
+	 *     "userPath": "example",
+	 *     "memberOf": [
+	 *       "a-group"
+	 *     ]
      *   }]
      * }]
      *
