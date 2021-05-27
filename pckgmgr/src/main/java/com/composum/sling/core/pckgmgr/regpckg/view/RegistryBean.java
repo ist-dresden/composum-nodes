@@ -59,7 +59,7 @@ public class RegistryBean extends ConsoleSlingBean {
     public String getTitle() {
         if (title == null) {
             title = getName();
-            PackageRegistry registry = getPackaeRegistry(context);
+            PackageRegistry registry = getPackageRegistry(context);
             if (registry != null) {
                 title = registry.getClass().getSimpleName();
             }
@@ -71,7 +71,7 @@ public class RegistryBean extends ConsoleSlingBean {
     protected Map<String, List<PackageBean>> getGroups() {
         if (groups == null) {
             groups = new TreeMap<>();
-            PackageRegistry registry = getPackaeRegistry(context);
+            PackageRegistry registry = getPackageRegistry(context);
             if (registry != null) {
                 try {
                     for (PackageId packageId : registry.packages()) {
@@ -92,7 +92,7 @@ public class RegistryBean extends ConsoleSlingBean {
     }
 
     @Nullable
-    protected PackageRegistry getPackaeRegistry(BeanContext context) {
+    protected PackageRegistry getPackageRegistry(BeanContext context) {
         PackageRegistries service = context.getService(PackageRegistries.class);
         PackageRegistries.Registries registries = service.getRegistries(context.getResolver());
         return registries.getRegistry(getNamespace());

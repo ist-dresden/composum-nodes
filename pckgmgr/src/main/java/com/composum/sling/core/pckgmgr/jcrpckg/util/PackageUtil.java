@@ -1,8 +1,11 @@
 package com.composum.sling.core.pckgmgr.jcrpckg.util;
 
+import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.pckgmgr.Packages;
 import com.composum.sling.core.pckgmgr.jcrpckg.tree.TreeNode;
+import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
+import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.XSS;
@@ -10,6 +13,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
@@ -17,6 +21,7 @@ import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.jackrabbit.vault.util.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -28,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.el.PropertyNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -160,7 +166,7 @@ public class PackageUtil {
         return path;
     }
 
-    public static ViewType getViewType(JcrPackageManager manager, SlingHttpServletRequest request, String path) {
+    public static ViewType getViewType(BeanContext context, SlingHttpServletRequest request, String path) {
         if ("/".equals(path)){
             return ViewType.packages;
         }
@@ -169,30 +175,48 @@ public class PackageUtil {
         }
         ViewType type = ViewType.group;
         try {
+            JcrPackageManager manager = PackageUtil.getPackageManager(context.getService(Packaging.class), request);
             Resource resource = getResource(manager, request, path);
             JcrPackage jcrPackage = getJcrPackage(manager, resource);
             if (jcrPackage != null) {
                 type = ViewType.valueOf(Packages.getMode(request).name());
             } else {
-                // probably an invalid package - should shown as a package
-                String lowercase = path.toLowerCase();
-                if (lowercase.endsWith(".zip") || lowercase.endsWith(".jar")) {
-                    type = ViewType.valueOf(Packages.getMode(request).name());
+                PackageRegistries.Registries registries = context.getService(PackageRegistries.class).getRegistries(request.getResourceResolver());
+                Pair<String, PackageId> found = registries.resolve(path);
+                if (found != null) {
+                    if (path.equals(RegistryUtil.toPath("", found.getRight()))
+                            || path.equals(RegistryUtil.toPath(found.getLeft(), found.getRight()))) {
+                        type = ViewType.version;
+                    } else if (path.equals(RegistryUtil.toPackagePath("", found.getRight()))
+                            || path.equals(RegistryUtil.toPackagePath(found.getLeft(), found.getRight()))) {
+                        type = ViewType.regpckg;
+                    }
+                } else {
+                    // probably an invalid package - should shown as a package
+                    String lowercase = path.toLowerCase();
+                    if (lowercase.endsWith(".zip") || lowercase.endsWith(".jar")) {
+                        type = ViewType.valueOf(Packages.getMode(request).name());
+                    }
                 }
             }
-        } catch (RepositoryException rex) {
-            LOG.error(rex.toString());
+        } catch (RepositoryException | IOException | RuntimeException ex) {
+            LOG.error("Error accessing {}", path, ex);
         }
         return type;
     }
 
-    public static String getGroupPath(JcrPackage pckg) throws RepositoryException {
+    @Nullable
+    public static String getGroupPath(@Nullable JcrPackage pckg) throws RepositoryException {
         return getGroupPath(pckg.getDefinition());
     }
 
-    public static String getGroupPath(JcrPackageDefinition pckgDef) {
-        String group = pckgDef.get(JcrPackageDefinition.PN_GROUP);
-        group = StringUtils.isNotBlank(group) ? ("/" + group + "/") : "/";
+    @Nullable
+    public static String getGroupPath(@Nullable JcrPackageDefinition pckgDef) {
+        String group = null;
+        if (pckgDef != null) {
+            group = pckgDef.get(JcrPackageDefinition.PN_GROUP);
+            group = StringUtils.isNotBlank(group) ? ("/" + group + "/") : "/";
+        }
         return group;
     }
 

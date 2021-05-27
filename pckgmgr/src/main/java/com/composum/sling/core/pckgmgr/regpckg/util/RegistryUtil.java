@@ -4,6 +4,7 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.Packages;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
+import jdk.nashorn.internal.runtime.PropertyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.PackageProperties;
@@ -76,16 +77,21 @@ public interface RegistryUtil {
 
     @Nonnull
     static String toPath(@Nullable final String namespace, @Nonnull final PackageId packageId) {
+        String versionAppendix = StringUtils.isNotBlank(packageId.getVersionString()) ? packageId.getVersionString() : NO_VERSION;
+        return toPackagePath(namespace, packageId) + '/' + versionAppendix;
+    }
+
+    /** Path for the package, without the version. */
+    @Nonnull
+    static String toPackagePath(@Nullable final String namespace, @Nonnull final PackageId packageId) {
         StringBuilder path = new StringBuilder();
         String group = packageId.getGroup();
         String name = packageId.getName();
-        String version = packageId.getVersionString();
-        if (namespace != null) {
+        if (StringUtils.isNotBlank(namespace)) {
             path.append("/@").append(namespace);
         }
         path.append('/').append(StringUtils.isNotBlank(group) ? group : NO_GROUP)
-                .append('/').append(name)
-                .append('/').append(StringUtils.isNotBlank(version) ? version : NO_VERSION);
+                .append('/').append(name);
         return path.toString();
     }
 

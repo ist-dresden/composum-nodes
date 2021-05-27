@@ -40,13 +40,7 @@ public class PackageManagerBean extends ConsoleSlingBean {
 
     public String getViewType() {
         if (type == null) {
-            JcrPackageManager manager = null;
-            try {
-                manager = PackageUtil.getPackageManager(context.getService(Packaging.class), getRequest());
-                type = PackageUtil.getViewType(manager, getRequest(), getPath());
-            } catch (RepositoryException rex) {
-                LOG.error(rex.toString());
-            }
+            type = PackageUtil.getViewType(context, getRequest(), getPath());
         }
         return type != null ? type.name() : "";
     }

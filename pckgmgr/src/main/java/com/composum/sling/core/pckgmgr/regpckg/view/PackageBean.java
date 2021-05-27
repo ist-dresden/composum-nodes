@@ -8,6 +8,7 @@ import com.composum.sling.core.pckgmgr.regpckg.tree.VersionNode;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.jackrabbit.vault.packaging.PackageId;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.SyntheticResource;
 import org.slf4j.Logger;
@@ -27,8 +28,10 @@ public class PackageBean extends ConsoleSlingBean implements PackageView, Compar
     protected Map<String, VersionBean> versionSet = new LinkedHashMap<>();
 
     @Override
-    public void initialize(BeanContext context, Resource resource) {
-        String path = resource != null ? resource.getPath() : RegistryUtil.requestPath(request);
+    public void initialize(BeanContext context) {
+        SlingHttpServletRequest request = context.getRequest();
+        String path = RegistryUtil.requestPath(request);
+        super.initialize(context,new SyntheticResource(context.getResolver(), path, RESOURCE_TYPE));
         try {
             load(context);
         } catch (IOException ex) {
