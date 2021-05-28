@@ -124,14 +124,14 @@ public class VersionNode extends AbstractNode implements PackageView {
             PackageRegistries service = context.getService(PackageRegistries.class);
             PackageRegistry registry = service.getRegistries(context.getResolver()).getRegistry(getPath());
             if (registry != null) {
-                try (RegisteredPackage pckg = registry.open(packageId)) {
+                try (RegisteredPackage pckg = registry.open(packageId);
+                     VaultPackage vaultPckg = pckg != null ? pckg.getPackage() : null) {
                     if (pckg != null) {
                         Map<String, Object> pckgProps = new PropertyMap();
                         put("package", pckgProps);
                         pckgProps.put("installed", installed = pckg.isInstalled());
                         pckgProps.put("installTime", this.installTime = pckg.getInstallationTime());
                         pckgProps.put("size", pckg.getSize());
-                        VaultPackage vaultPckg = pckg.getPackage();
                         pckgProps.put("valid", valid = vaultPckg.isValid());
                         MetaInf metaInf = vaultPckg.getMetaInf();
                         put("properties", RegistryUtil.properties(pckg));

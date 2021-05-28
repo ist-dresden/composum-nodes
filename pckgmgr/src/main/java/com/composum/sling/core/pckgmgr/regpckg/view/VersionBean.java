@@ -3,6 +3,7 @@ package com.composum.sling.core.pckgmgr.regpckg.view;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.util.ISO8601;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class VersionBean extends ConsoleSlingBean implements PackageView {
+public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCloseable {
 
     public static final String RESOURCE_TYPE = "";
 
@@ -55,6 +56,25 @@ public class VersionBean extends ConsoleSlingBean implements PackageView {
         } catch (IOException ex) {
             LOG.error(ex.getMessage(), ex);
             invalid = true;
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            if (vltPckg != null) {
+                vltPckg.close();
+            }
+        } catch (Exception e) {
+            LOG.error("Error closing {}", getPath(), e);
+        } finally {
+            try {
+                if (regPckg != null) {
+                    regPckg.close();
+                }
+            } catch (Exception e) {
+                LOG.error("Error closing {}", getPath(), e);
+            }
         }
     }
 

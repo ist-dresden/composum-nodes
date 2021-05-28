@@ -18,14 +18,14 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class PackageBean extends ConsoleSlingBean implements PackageView, Comparable<PackageBean> {
+public class PackageBean extends ConsoleSlingBean implements PackageView, Comparable<PackageBean>, AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageBean.class);
 
     public static final String RESOURCE_TYPE = "";
 
     protected VersionBean currentVersion;
-    protected Map<String, VersionBean> versionSet = new LinkedHashMap<>();
+    protected final Map<String, VersionBean> versionSet = new LinkedHashMap<>();
 
     @Override
     public void initialize(BeanContext context) {
@@ -37,6 +37,14 @@ public class PackageBean extends ConsoleSlingBean implements PackageView, Compar
         } catch (IOException ex) {
             LOG.error(ex.getMessage(), ex);
         }
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (currentVersion != null) {
+            currentVersion.close();
+        }
+        versionSet.values().stream().forEach(VersionBean::close);
     }
 
     public PackageBean() {

@@ -26,7 +26,7 @@ import java.util.List;
 
 import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
 
-public class PackageBean extends ConsoleSlingBean {
+public class PackageBean extends ConsoleSlingBean implements AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageBean.class);
 
@@ -335,5 +335,12 @@ public class PackageBean extends ConsoleSlingBean {
 
     public String[] getReplaces() {
         return PackageUtil.getMultiProperty(pckgDef, PackageUtil.DEF_REPLACES);
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (pckg != null) {
+            pckg.close();
+        }
     }
 }
