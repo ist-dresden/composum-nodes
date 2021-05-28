@@ -4,8 +4,8 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.Packages;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
-import jdk.nashorn.internal.runtime.PropertyMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.apache.jackrabbit.vault.packaging.SubPackageHandling;
@@ -27,6 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.core.pckgmgr.Packages.PACKAGE_PATH;
+import static com.composum.sling.core.pckgmgr.Packages.REGISTRY_PATH_PREFIX;
 
 public interface RegistryUtil {
 
@@ -95,21 +96,21 @@ public interface RegistryUtil {
         return path.toString();
     }
 
-    static RegisteredPackage open(@Nonnull final BeanContext context,
+    static Pair<String, RegisteredPackage> open(@Nonnull final BeanContext context,
                                   @Nullable final String namespace, @Nonnull final PackageId packageId)
             throws IOException {
         PackageRegistries service = context.getService(PackageRegistries.class);
         return open(service.getRegistries(context.getResolver()), namespace, packageId);
     }
 
-    static RegisteredPackage open(@Nonnull final BeanContext context,
+    static Pair<String, RegisteredPackage> open(@Nonnull final BeanContext context,
                                   @Nonnull final String path)
             throws IOException {
         PackageRegistries service = context.getService(PackageRegistries.class);
         return open(service.getRegistries(context.getResolver()), path);
     }
 
-    static RegisteredPackage open(@Nonnull final PackageRegistries.Registries registries,
+    static Pair<String, RegisteredPackage> open(@Nonnull final PackageRegistries.Registries registries,
                                   @Nonnull final String path)
             throws IOException {
         String namespace = RegistryUtil.namespace(path);
@@ -117,14 +118,18 @@ public interface RegistryUtil {
         return open(registries, namespace, packageId);
     }
 
-    static RegisteredPackage open(@Nonnull final PackageRegistries.Registries registries,
-                                  @Nullable final String namespace, @Nonnull final PackageId packageId)
+    static Pair<String, RegisteredPackage> open(@Nonnull final PackageRegistries.Registries registries,
+                                                @Nullable final String namespace, @Nonnull final PackageId packageId)
             throws IOException {
         PackageRegistry registry = null;
         if (StringUtils.isNotBlank(namespace)) {
             registry = registries.getRegistry(namespace);
         }
-        return registry != null ? registry.open(packageId) : registries.open(packageId);
+        if (registry != null) {
+            RegisteredPackage pckg = registry.open(packageId);
+            return pckg != null ? Pair.of(namespace, pckg) : null;
+        }
+        return registries.open(packageId);
     }
 
     @Nonnull
@@ -145,9 +150,9 @@ public interface RegistryUtil {
     }
 
     @Nonnull
-    static String getDownloadURI(@Nullable final PackageRegistry registry, @Nonnull final PackageId id) {
+    static String getDownloadURI(@Nullable String namespace, @Nonnull PackageId id) {
         StringBuilder uri = new StringBuilder("/bin/cpm/package.download.zip");
-        uri.append(toPath(registry, id));
+        uri.append(toPath(namespace, id));
         return uri.toString();
     }
 

@@ -51,10 +51,11 @@ public interface PackageRegistries {
         Pair<PackageRegistry, PackageId> resolve(@Nonnull Dependency dependency, boolean onlyInstalled) throws IOException;
 
         /**
-         * Opens a {@link RegisteredPackage} - remember to close it (AutoCloseable).
+         * Opens a {@link RegisteredPackage} - remember to close it (AutoCloseable). As additional information we return
+         * the namespace where it was found.
          */
         @Nullable
-        RegisteredPackage open(@Nonnull PackageId id) throws IOException;
+        Pair<String, RegisteredPackage> open(@Nonnull PackageId id) throws IOException;
 
     }
 

@@ -36,10 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-import java.util.function.Function;
 import java.util.regex.Matcher;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.composum.sling.core.pckgmgr.Packages.REGISTRY_BASED_PATH;
 
@@ -173,18 +170,20 @@ public class PackageRegistriesImpl implements PackageRegistries {
 
         @Override
         @Nullable
-        public RegisteredPackage open(@Nonnull final PackageId id) throws IOException {
+        public Pair<String, RegisteredPackage> open(@Nonnull final PackageId id) throws IOException {
+            String namespace = null;
             RegisteredPackage pckg = null;
-            for (PackageRegistry registry : iterable()) {
-                pckg = registry.open(id);
+            for (Map.Entry<String, PackageRegistry> entry : registries.entrySet()) {
+                pckg = entry.getValue().open(id);
                 if (pckg != null) {
+                    namespace = entry.getKey();
                     break;
                 }
             }
             if (LOG.isDebugEnabled()) {
                 LOG.debug("open({}): {}", id, pckg);
             }
-            return pckg;
+            return pckg != null ? Pair.of(namespace, pckg) : null;
         }
 
         protected void add(@Nullable final PackageRegistry registry) {

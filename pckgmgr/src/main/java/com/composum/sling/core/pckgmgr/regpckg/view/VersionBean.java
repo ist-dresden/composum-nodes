@@ -2,9 +2,10 @@ package com.composum.sling.core.pckgmgr.regpckg.view;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
+import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.util.ISO8601;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
@@ -43,6 +44,7 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     private transient VaultPackage vltPckg;
     private transient PackageProperties packageProps;
     private transient boolean invalid;
+    private transient String registryNamespace;
 
     @Override
     public void initialize(BeanContext context, Resource resource) {
@@ -90,8 +92,14 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
                 RegistryUtil.toPath(namespace, packageId), RESOURCE_TYPE));
     }
 
+    /** Namespace as given in the path. This is empty in mixed mode - then only {@link #getRegistryNamespace()} is set. */
     public String getNamespace() {
         return namespace;
+    }
+
+    /** Namespace of the registry, if the package was really found. */
+    public String getRegistryNamespace() {
+        return registryNamespace;
     }
 
     public PackageId getPackageId() {
@@ -129,7 +137,11 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
 
     public void load(BeanContext context) throws IOException {
         if (regPckg == null) {
-            regPckg = RegistryUtil.open(context, getNamespace(), getPackageId());
+            Pair<String, RegisteredPackage> foundPckg = RegistryUtil.open(context, getNamespace(), getPackageId());
+            if (foundPckg != null) {
+                regPckg = foundPckg.getRight();
+                registryNamespace = foundPckg.getLeft();
+            }
         }
         if (regPckg != null) {
             packageProps = regPckg.getPackageProperties();
@@ -160,8 +172,7 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     }
 
     public String getDownloadUrl() {
-        return "invalid-download-yet";
-        // FIXME(hps,27.05.21) implement, compare com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean
+        return LinkUtil.getUrl(getRequest(), RegistryUtil.getDownloadURI(registryNamespace, getPackageId()));
     }
 
     public List<PathFilterSet> getFilterList() {
