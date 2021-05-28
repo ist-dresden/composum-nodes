@@ -27,7 +27,9 @@
 
     <tag>
         <description>
-            Creates a component model from a given className
+            Creates a component model from a given className. If it's a com.composum.sling.core.SlingBean, initialization is supported;
+            if it's a com.composum.sling.core.bean.SlingBeanFactory annotated with com.composum.sling.core.bean.BeanFactory,
+            the corresponding service is used to create it.
         </description>
         <name>component</name>
         <tag-class>com.composum.sling.cpnl.ComponentTag</tag-class>
@@ -41,7 +43,7 @@
             <type>java.lang.String</type>
         </attribute>
         <attribute>
-            <description>the variable name one of 'var' or 'id' must be declared</description>
+            <description>The variable name where the created component model is stored. One of 'var' or 'id' must be declared</description>
             <name>var</name>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
@@ -76,6 +78,14 @@
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
             <type>org.apache.sling.api.resource.Resource</type>
+        </attribute>
+        <attribute>
+            <description>If set (default true) and if the component is java.lang.AutoCloseable, it's close method is called when the tag rendering is finished.
+                In that case, you might need to be careful not to use the component outside of the tag.</description>
+            <name>close</name>
+            <required>false</required>
+            <rtexprvalue>false</rtexprvalue>
+            <type>java.lang.Boolean</type>
         </attribute>
     </tag>
 
