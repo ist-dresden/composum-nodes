@@ -95,6 +95,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -1238,14 +1239,25 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
+            List<PathFilterSet> filters;
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
-            Session session = RequestUtil.getSession(request);
+            if (jcrPackage != null) {
+                filters = PackageUtil.getFilterList(jcrPackage.getDefinition());
+                jcrPackage.close();
+            } else { // try to find it in the registries
+                PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                String path = RegistryUtil.requestPath(request);
+                Pair<String, PackageId> location = registries.resolve(path);
+                Pair<String, RegisteredPackage> pckgEntry = location != null ? registries.open(location.getRight()) : null;
+                try (RegisteredPackage pckg = pckgEntry != null ? pckgEntry.getRight() : null) {
+                    filters = pckg != null ? pckg.getWorkspaceFilter().getFilterSets() : Collections.emptyList();
+                }
+            }
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             writer.beginArray();
 
-            List<PathFilterSet> filters = PackageUtil.getFilterList(jcrPackage.getDefinition());
             for (PathFilterSet filter : filters) {
                 writer.beginObject();
                 writer.name("root").value(filter.getRoot());
