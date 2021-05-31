@@ -1,14 +1,16 @@
 package com.composum.sling.core.pckgmgr.regpckg.view;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.jackrabbit.util.ISO8601;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
+import org.apache.jackrabbit.vault.fs.io.AccessControlHandling;
+import org.apache.jackrabbit.vault.packaging.Dependency;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.apache.jackrabbit.vault.packaging.VaultPackage;
@@ -22,10 +24,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCloseable {
 
@@ -185,11 +186,6 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
         // FIXME(hps,27.05.21) implement, compare com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean
     }
 
-    public String getThumbnailUrl() {
-        // FIXME(hps,27.05.21) implement, compare com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean
-        return "";
-    }
-
     public String getInstallationTime() {
         return packageProps != null ? format(regPckg.getInstallationTime(), null) : null;
     }
@@ -217,6 +213,48 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     public String getLastWrappedBy() {
         return packageProps != null ? packageProps.getLastWrappedBy() : "--";
     }
+
+    public String getAcHandling() {
+        AccessControlHandling acHandling = packageProps.getACHandling();
+        return acHandling != null ? acHandling.name() : "";
+    }
+
+    public String getAcHandlingLabel() {
+        AccessControlHandling acHandling = packageProps.getACHandling();
+        return acHandling != null ? acHandling.name() : "-- -- ";
+    }
+
+    public boolean getRequiresRestart() {
+        return RegistryUtil.booleanProperty(packageProps,PackageUtil.DEF_REQUIRES_RESTART, false);
+    }
+
+    public boolean getRequiresRoot() {
+        return packageProps.requiresRoot();
+    }
+
+    public String getProviderName()
+    {
+        return packageProps.getProperty(PackageUtil.DEF_PROVIDER_NAME);
+    }
+
+    public String getProviderUrl() {
+        return packageProps.getProperty(PackageUtil.DEF_PROVIDER_URL);
+    }
+
+    public String getProviderLink() {
+        return packageProps.getProperty(PackageUtil.DEF_PROVIDER_LINK);
+    }
+
+    public String[] getDependencies() {
+        return Arrays.stream(packageProps.getDependencies()).map(Object::toString).toArray(String[]::new);
+    }
+
+    public String[] getReplaces() {
+        // TODO: what is the format here? Does that really exist? That's just a guess here.
+        String replaces = packageProps.getProperty(PackageUtil.DEF_REPLACES);
+        return StringUtils.isNotBlank(replaces) ? replaces.split(",") : null;
+    }
+
 
     /**
      * Formats a date, including a workaround for <a href="https://issues.apache.org/jira/browse/JCRVLT-526>JCRVLT-526</a> when reading dates from {@link PackageProperties}.

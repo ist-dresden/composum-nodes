@@ -3,8 +3,8 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
-<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean" scope="request">
-    <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean"--%>
+<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.VersionBean" scope="request">
+    <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.VersionBean"--%>
     <div class="advanced-view">
         <div class="ac-handling select-option option-field">
             <div class="name-line"><i class="option-icon fa fa-key"></i><span class="name">AC handling</span><span
