@@ -4,6 +4,9 @@
     "acl": [
       {
         "principal": "everyone",
+        "memberOf": [
+          "testgroup"
+        ],
         "groupPath": "${base}",
         "acl": [
           {
