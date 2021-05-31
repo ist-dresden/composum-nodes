@@ -219,20 +219,11 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     }
 
     /**
-     * Parses a weird format com.day.jcr.vault:content-package-maven-plugin produces but that cannot be parsed by {@link ISO8601#parse(String)}, for example 2021-05-26T15:12:21.673+0200 instead of 2021-05-26T15:12:21.673+02:00 , see {@link #format(Calendar, String)}.
+     * Formats a date, including a workaround for <a href="https://issues.apache.org/jira/browse/JCRVLT-526>JCRVLT-526</a> when reading dates from {@link PackageProperties}.
+     * Usage e.g. {code}format(packageProps.getLastModified(), packageProps.getProperty(PackageProperties.NAME_LAST_MODIFIED)){code}
      */
-    private static final Pattern BROKEN_DATEFMT_PATTERN = Pattern.compile("(?<notimezone>.*)(?<timezonestart>[+-][0-9][0-9])(?<timezoneend>[0-9][0-9])");
-
-    /**
-     * Tries to correct for a weird format com.day.jcr.vault:content-package-maven-plugin produces but that cannot be parsed by {@link ISO8601#parse(String)}, for example 2021-05-26T15:12:21.673+0200 instead of 2021-05-26T15:12:21.673+02:00 .
-     */
-    protected String format(Calendar date, String dateRep) {
-        if (date == null && StringUtils.isNotBlank(dateRep)) {
-            Matcher brokenFmt = BROKEN_DATEFMT_PATTERN.matcher(dateRep);
-            if (brokenFmt.matches()) {
-                date = ISO8601.parse(brokenFmt.group("notimezone") + brokenFmt.group("timezonestart") + ":" + brokenFmt.group("timezoneend"));
-            }
-        }
+    protected String format(Calendar rawDate, String dateRep) {
+        Calendar date = RegistryUtil.readPackagePropertyDate(rawDate, dateRep);
         return date != null ? new SimpleDateFormat(DATE_FORMAT).format(date.getTime()) : "";
     }
 

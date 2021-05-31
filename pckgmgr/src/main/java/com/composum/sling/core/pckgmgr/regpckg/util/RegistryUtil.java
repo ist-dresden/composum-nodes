@@ -6,6 +6,7 @@ import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.jackrabbit.util.ISO8601;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.apache.jackrabbit.vault.packaging.SubPackageHandling;
@@ -27,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.core.pckgmgr.Packages.PACKAGE_PATH;
+import static com.composum.sling.core.pckgmgr.Packages.REGISTRY_BASED_PATH;
 import static com.composum.sling.core.pckgmgr.Packages.REGISTRY_PATH_PREFIX;
 
 public interface RegistryUtil {
@@ -51,6 +53,18 @@ public interface RegistryUtil {
     static String namespace(@Nonnull final String namespaceOrPath) {
         Matcher matcher = Packages.REGISTRY_BASED_PATH.matcher(namespaceOrPath);
         return matcher.matches() ? matcher.group("ns") : namespaceOrPath;
+    }
+
+    @Nullable
+    static String pathWithoutNamespace(@Nullable String fullPath) {
+        String path = null;
+        if (fullPath != null) {
+            Matcher m = REGISTRY_BASED_PATH.matcher(fullPath);
+            if (m.matches()) {
+                path = m.group("path");
+            }
+        }
+        return path;
     }
 
     @Nonnull
@@ -164,20 +178,46 @@ public interface RegistryUtil {
                 : defaultValue;
     }
 
+    /** Formats a date in ISO8601 format without timezone. */
     static String date(Calendar calendar) {
         return calendar != null ? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(calendar.getTime()) : null;
     }
+
+    /**
+     * Not for public use, only {@link #readPackagePropertyDate(Calendar, String)}. Parses a weird format com.day.jcr.vault:content-package-maven-plugin produces but that cannot be parsed by {@link ISO8601#parse(String)}, for example 2021-05-26T15:12:21.673+0200 instead of 2021-05-26T15:12:21.673+02:00 , see {@link #format(Calendar, String)}.
+     */
+    static final Pattern BROKEN_DATEFMT_PATTERN = Pattern.compile("(?<notimezone>.*)(?<timezonestart>[+-][0-9][0-9])(?<timezoneend>[0-9][0-9])");
+
+    /**
+     * Workaround for <a href="https://issues.apache.org/jira/browse/JCRVLT-526>JCRVLT-526</a> to read dates from {@link PackageProperties}.
+     * Tries to correct for a weird format com.day.jcr.vault:content-package-maven-plugin produces but that cannot be parsed by {@link ISO8601#parse(String)}, for example 2021-05-26T15:12:21.673+0200 instead of 2021-05-26T15:12:21.673+02:00 .
+     * Usage e.g. {code}format(packageProps.getLastModified(), packageProps.getProperty(PackageProperties.NAME_LAST_MODIFIED)){code}
+     */
+    static Calendar readPackagePropertyDate(Calendar rawDate, String dateRep) {
+        Calendar date = rawDate;
+        if (date == null && StringUtils.isNotBlank(dateRep)) {
+            Matcher brokenFmt = BROKEN_DATEFMT_PATTERN.matcher(dateRep);
+            if (brokenFmt.matches()) {
+                date = ISO8601.parse(brokenFmt.group("notimezone") + brokenFmt.group("timezonestart") + ":" + brokenFmt.group("timezoneend"));
+            }
+        }
+        return date;
+    }
+
 
     @Nonnull
     static Map<String, Object> properties(@Nonnull final RegisteredPackage pckg) throws IOException {
         Map<String, Object> properties = new PropertyMap();
         PackageProperties pckgProps = pckg.getPackageProperties();
-        properties.put(PackageProperties.NAME_CREATED, pckgProps.getCreated());
+        properties.put(PackageProperties.NAME_CREATED,
+                readPackagePropertyDate(pckgProps.getCreated(), pckgProps.getProperty(PackageProperties.NAME_CREATED)));
         properties.put(PackageProperties.NAME_CREATED_BY, pckgProps.getCreatedBy());
         properties.put(PackageProperties.NAME_DESCRIPTION, pckgProps.getDescription());
-        properties.put(PackageProperties.NAME_LAST_MODIFIED, pckgProps.getLastModified());
+        properties.put(PackageProperties.NAME_LAST_MODIFIED,
+                readPackagePropertyDate(pckgProps.getLastModified(), pckgProps.getProperty(PackageProperties.NAME_LAST_MODIFIED)));
         properties.put(PackageProperties.NAME_LAST_MODIFIED_BY, pckgProps.getLastModifiedBy());
-        properties.put(PackageProperties.NAME_LAST_WRAPPED, pckgProps.getLastWrapped());
+        properties.put(PackageProperties.NAME_LAST_WRAPPED,
+                readPackagePropertyDate(pckgProps.getLastWrapped(), pckgProps.getProperty(PackageProperties.NAME_LAST_WRAPPED)));
         properties.put(PackageProperties.NAME_LAST_WRAPPED_BY, pckgProps.getLastWrappedBy());
         properties.put(PackageProperties.NAME_PACKAGE_TYPE, pckgProps.getPackageType());
         properties.put(PackageProperties.NAME_AC_HANDLING, pckgProps.getACHandling());

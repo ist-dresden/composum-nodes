@@ -30,6 +30,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.vault.fs.api.FilterSet;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.api.PathFilter;
@@ -43,8 +44,11 @@ import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.PackageException;
 import org.apache.jackrabbit.vault.packaging.PackageId;
+import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.apache.jackrabbit.vault.packaging.Packaging;
+import org.apache.jackrabbit.vault.packaging.VaultPackage;
 import org.apache.jackrabbit.vault.packaging.registry.PackageRegistry;
+import org.apache.jackrabbit.vault.packaging.registry.RegisteredPackage;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
@@ -79,6 +83,8 @@ import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -628,6 +634,10 @@ public class PackageServlet extends AbstractServiceServlet {
         }
     }
 
+    /**
+     * Enables downloading packages. If the path is a JCR path to a package, we deliver it from there, otherwise we try to
+     * find it in the PackageRegistries.
+     */
     protected class DownloadOperation implements ServletOperation {
 
         @Override
@@ -639,11 +649,27 @@ public class PackageServlet extends AbstractServiceServlet {
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
+            boolean delivered;
             if (jcrPackage != null) {
+                delivered = deliverJcrPackage(response, jcrPackage);
+            } else {
+                delivered = deliverRegistryPackage(request, response, manager);
+            }
 
-                Property data;
-                Binary binary;
-                InputStream stream;
+            if (!delivered) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                        PackageUtil.getPath(request) + " can not be found in the repository");
+            }
+
+        }
+
+        protected boolean deliverJcrPackage(@Nonnull SlingHttpServletResponse response, @Nonnull JcrPackage jcrPackage) throws RepositoryException, IOException {
+            Property data;
+            Binary binary = null;
+            InputStream stream = null;
+            boolean delivered = false;
+
+            try {
                 if ((data = jcrPackage.getData()) != null &&
                         (binary = data.getBinary()) != null &&
                         (stream = binary.getStream()) != null) {
@@ -657,19 +683,64 @@ public class PackageServlet extends AbstractServiceServlet {
                     }
 
                     response.setContentType(ZIP_CONTENT_TYPE);
+                    if (jcrPackage.getSize() > 0) {
+                        response.setContentLength((int) jcrPackage.getSize());
+                    }
                     OutputStream output = response.getOutputStream();
                     IOUtils.copy(stream, output);
-
-                } else {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            PackageUtil.getPath(request) + " is not a package or has no content");
+                    delivered = true;
                 }
-
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        PackageUtil.getPath(request) + " can not be found in the repository");
+            } finally {
+                if (stream != null) stream.close();
+                if (binary != null) binary.dispose();
+                jcrPackage.close();
             }
+
+            return delivered;
         }
+
+        protected boolean deliverRegistryPackage(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response, @Nonnull JcrPackageManager manager) throws IOException, RepositoryException {
+            boolean delivered;
+            PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+            String path = RegistryUtil.requestPath(request);
+            Pair<String, PackageId> location = registries.resolve(path);
+            Pair<String, RegisteredPackage> pckgEntry = location != null ? registries.open(location.getRight()) : null;
+            try (RegisteredPackage pckg = pckgEntry != null ? pckgEntry.getRight() : null;
+                 VaultPackage vaultPckg = pckg != null ? pckg.getPackage() : null) {
+
+                if (vaultPckg != null && vaultPckg.getFile() != null && vaultPckg.getFile().canRead()) {
+                    File file = vaultPckg.getFile();
+
+                    response.setHeader("Content-Disposition", "inline; filename=" + RegistryUtil.getFilename(location.getRight()));
+                    response.setContentType(ZIP_CONTENT_TYPE);
+                    Calendar lastModified = RegistryUtil.readPackagePropertyDate(vaultPckg.getProperties().getLastModified(), vaultPckg.getProperties().getProperty(PackageProperties.NAME_LAST_MODIFIED));
+                    if (lastModified == null) {
+                        lastModified = RegistryUtil.readPackagePropertyDate(vaultPckg.getProperties().getCreated(), vaultPckg.getProperties().getProperty(PackageProperties.NAME_CREATED));
+                    }
+                    if (lastModified != null) {
+                        response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, lastModified.getTimeInMillis());
+                    }
+                    response.setContentLength((int) file.length());
+                    OutputStream output = response.getOutputStream();
+                    try (FileInputStream stream = new FileInputStream(file)) {
+                        IOUtils.copy(stream, output);
+                    }
+                    delivered = true;
+
+                } else { // no file -> probably a Jcr package
+                    String pathNoNs = RegistryUtil.pathWithoutNamespace(path);
+                    JcrPackage jcrPackage = manager.open(pckg.getId());
+                    if (jcrPackage != null) {
+                        delivered = deliverJcrPackage(response, jcrPackage);
+                    } else { // shouln't happen - unknown registry type? No idea what to do here.
+                        LOG.warn("Bug: Could not download package at {}", path);
+                        delivered = false;
+                    }
+                }
+            }
+            return delivered;
+        }
+
     }
 
     protected class UploadOperation implements ServletOperation {
