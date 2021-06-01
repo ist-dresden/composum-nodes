@@ -27,11 +27,13 @@
         </div>
         <div class="provider-url link-option option-field">
             <div class="name-line">Provider URL</div>
-            <div class="value-line"><a href="${cpn:url(slingRequest,pckg.providerUrl)}" class="link value-text">${cpn:text(pckg.providerUrl)}</a></div>
+            <div class="value-line"><a href="${cpn:url(slingRequest,pckg.providerUrl)}"
+                                       class="link value-text">${cpn:text(pckg.providerUrl)}</a></div>
         </div>
         <div class="provider-link link-option option-field">
             <div class="name-line">Provider Link</div>
-            <div class="value-line"><a href="${cpn:url(slingRequest,pckg.providerLink)}" class="link value-text">${cpn:text(pckg.providerLink)}</a></div>
+            <div class="value-line"><a href="${cpn:url(slingRequest,pckg.providerLink)}"
+                                       class="link value-text">${cpn:text(pckg.providerLink)}</a></div>
         </div>
     </div>
     <div class="relations-view">
@@ -55,11 +57,77 @@
             <table class="relations-table bootstrap-table table table-striped">
                 <thead>
                 <tr>
-                    <th class="th-inner">Replaces</th>
+                    <th class="th-inner">Satisfied Dependencies</th>
+                </tr>
+                </thead>
+                <tbody>
+                <c:forEach items="${pckg.satisfiedDependencies}" var="relation">
+                    <tr>
+                        <td class="relation">${cpn:text(relation)}</td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
+        <div class="replaces">
+            <table class="relations-table bootstrap-table table table-striped">
+                <thead>
+                <tr>
+                    <th class="th-inner">Resolved But Not Installed Dependencies</th>
+                </tr>
+                </thead>
+                <tbody>
+                <c:forEach items="${pckg.notInstalledDependencies}" var="relation">
+                    <tr>
+                        <td class="relation">${cpn:text(relation)}</td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
+        <div class="replaces">
+            <table class="relations-table bootstrap-table table table-striped">
+                <thead>
+                <tr>
+                    <th class="th-inner">Unresolveable Dependencies</th>
                 </tr>
                 </thead>
                 <tbody>
                 <c:forEach items="${pckg.replaces}" var="relation">
+                    <tr>
+                        <td class="relation">${cpn:text(relation)}</td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
+        <c:if test="${not empty pckg.replaces}">
+            <div class="replaces">
+                <table class="relations-table bootstrap-table table table-striped">
+                    <thead>
+                    <tr>
+                        <th class="th-inner">Replaces</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <c:forEach items="${pckg.replaces}" var="relation">
+                        <tr>
+                            <td class="relation">${cpn:text(relation)}</td>
+                        </tr>
+                    </c:forEach>
+                    </tbody>
+                </table>
+            </div>
+        </c:if>
+        <div class="usedby">
+            <table class="relations-table bootstrap-table table table-striped">
+                <thead>
+                <tr>
+                    <th class="th-inner">Used by</th>
+                </tr>
+                </thead>
+                <tbody>
+                <c:forEach items="${pckg.usages}" var="relation">
                     <tr>
                         <td class="relation">${cpn:text(relation)}</td>
                     </tr>

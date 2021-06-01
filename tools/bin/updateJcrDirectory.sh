@@ -82,3 +82,5 @@ fi
 # create a node at /bin/cpm/... when the servlet is present.
 
 curl -u $CPM_ADMINUSER:$CPM_ADMINPASSWD -D - -F "file=@$TMPFIL" $url
+
+echo "$(basename $0) uploaded /$jcrpath"

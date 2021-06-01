@@ -2,6 +2,7 @@ package com.composum.sling.core.pckgmgr.regpckg.view;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
+import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
@@ -10,10 +11,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.io.AccessControlHandling;
-import org.apache.jackrabbit.vault.packaging.Dependency;
+import org.apache.jackrabbit.vault.packaging.NoSuchPackageException;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.apache.jackrabbit.vault.packaging.VaultPackage;
+import org.apache.jackrabbit.vault.packaging.registry.DependencyReport;
 import org.apache.jackrabbit.vault.packaging.registry.RegisteredPackage;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
@@ -41,11 +43,28 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
 
     protected boolean loaded = false;
 
-    private transient RegisteredPackage regPckg;
-    private transient VaultPackage vltPckg;
-    private transient PackageProperties packageProps;
-    private transient boolean invalid;
-    private transient String registryNamespace;
+    protected transient RegisteredPackage regPckg;
+    protected transient VaultPackage vltPckg;
+    protected transient PackageProperties packageProps;
+    protected transient boolean invalid;
+    protected transient String registryNamespace;
+    protected transient PackageRegistries.Registries registries;
+
+    protected String[] satisfiedDependencies;
+    protected String[] notInstalledDependencies;
+    protected String[] unresolvedDependencies;
+
+    public VersionBean() {
+    }
+
+    public VersionBean(BeanContext context, String path) {
+        super(context, new SyntheticResource(context.getResolver(), path, RESOURCE_TYPE));
+    }
+
+    public VersionBean(BeanContext context, String namespace, PackageId packageId) {
+        super(context, new SyntheticResource(context.getResolver(),
+                RegistryUtil.toPath(namespace, packageId), RESOURCE_TYPE));
+    }
 
     @Override
     public void initialize(BeanContext context, Resource resource) {
@@ -57,9 +76,28 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
         try {
             load(context);
         } catch (IOException ex) {
-            LOG.error(ex.getMessage(), ex);
+            LOG.error("Error loading {}", getPackageId(), ex);
             invalid = true;
         }
+    }
+
+    public void load(BeanContext context) throws IOException {
+        if (registries == null) {
+            PackageRegistries service = context.getService(PackageRegistries.class);
+            registries = service.getRegistries(context.getResolver());
+        }
+        if (regPckg == null) {
+            Pair<String, RegisteredPackage> foundPckg = RegistryUtil.open(context, getNamespace(), getPackageId());
+            if (foundPckg != null) {
+                regPckg = foundPckg.getRight();
+                registryNamespace = foundPckg.getLeft();
+            }
+        }
+        if (regPckg != null) {
+            packageProps = regPckg.getPackageProperties();
+            vltPckg = regPckg.getPackage();
+        }
+        loaded = true;
     }
 
     @Override
@@ -79,18 +117,6 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
                 LOG.error("Error closing {}", getPath(), e);
             }
         }
-    }
-
-    public VersionBean() {
-    }
-
-    public VersionBean(BeanContext context, String path) {
-        super(context, new SyntheticResource(context.getResolver(), path, RESOURCE_TYPE));
-    }
-
-    public VersionBean(BeanContext context, String namespace, PackageId packageId) {
-        super(context, new SyntheticResource(context.getResolver(),
-                RegistryUtil.toPath(namespace, packageId), RESOURCE_TYPE));
     }
 
     /** Namespace as given in the path. This is empty in mixed mode - then only {@link #getRegistryNamespace()} is set. */
@@ -134,21 +160,6 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
 
     public boolean isLoaded() {
         return loaded;
-    }
-
-    public void load(BeanContext context) throws IOException {
-        if (regPckg == null) {
-            Pair<String, RegisteredPackage> foundPckg = RegistryUtil.open(context, getNamespace(), getPackageId());
-            if (foundPckg != null) {
-                regPckg = foundPckg.getRight();
-                registryNamespace = foundPckg.getLeft();
-            }
-        }
-        if (regPckg != null) {
-            packageProps = regPckg.getPackageProperties();
-            vltPckg = regPckg.getPackage();
-        }
-        loaded = true;
     }
 
     public String getDescription() {
@@ -249,12 +260,53 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
         return Arrays.stream(packageProps.getDependencies()).map(Object::toString).toArray(String[]::new);
     }
 
+    protected void calculateDependencies() {
+        if (unresolvedDependencies == null) {
+            try {
+                DependencyReport reportInstalled = registries.getRegistry(getRegistryNamespace()).analyzeDependencies(getPackageId(), true);;
+                DependencyReport reportAll = registries.getRegistry(getRegistryNamespace()).analyzeDependencies(getPackageId(), false);
+                satisfiedDependencies = Arrays.stream(reportInstalled.getResolvedDependencies()).map(Object::toString).toArray(String[]::new);
+                List<PackageId> uninstalledDependencyList = new ArrayList<>(Arrays.asList(reportAll.getResolvedDependencies()));
+                uninstalledDependencyList.removeAll(Arrays.asList(reportInstalled.getResolvedDependencies()));
+                notInstalledDependencies = uninstalledDependencyList.stream().map(Object::toString).toArray(String[]::new);
+                unresolvedDependencies = Arrays.stream(reportAll.getUnresolvedDependencies()).map(Object::toString).toArray(String[]::new);
+            } catch (IOException | NoSuchPackageException | RuntimeException e) {
+                LOG.error("Error calculating dependencies for {}", getPath(), e);
+            }
+        }
+    }
+
+    public String[] getSatisfiedDependencies() {
+        calculateDependencies();
+        return satisfiedDependencies;
+    }
+
+    public String[] getNotInstalledDependencies() {
+        calculateDependencies();
+        return notInstalledDependencies;
+    }
+
+    public String[] getUnresolvedDependencies() {
+        calculateDependencies();
+        return unresolvedDependencies;
+    }
+
     public String[] getReplaces() {
         // TODO: what is the format here? Does that really exist? That's just a guess here.
         String replaces = packageProps.getProperty(PackageUtil.DEF_REPLACES);
         return StringUtils.isNotBlank(replaces) ? replaces.split(",") : null;
     }
 
+    public String[] getUsages() {
+        String[] result = null;
+        try {
+            PackageId[] usages = registries.getRegistry(getRegistryNamespace()).usage(getPackageId());
+            result = Arrays.stream(usages).map(Object::toString).toArray(String[]::new);
+        } catch (IOException e) {
+            LOG.error("Error calculating dependencies for {}", getPackageId(), e);
+        }
+        return result;
+    }
 
     /**
      * Formats a date, including a workaround for <a href="https://issues.apache.org/jira/browse/JCRVLT-526>JCRVLT-526</a> when reading dates from {@link PackageProperties}.
