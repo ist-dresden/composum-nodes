@@ -482,8 +482,17 @@ public class PackageUtil {
             throws RepositoryException, IOException {
         writer.beginObject();
         writer.name("definition");
-        toJson(writer, jcrPackage.getDefinition());
+        JcrPackageDefinition definition = jcrPackage.getDefinition();
+        toJson(writer, definition);
         JsonUtil.jsonMapEntries(writer, additionalAttributes);
+        writer.name("packageid");
+        writer.beginObject();
+        writer.name("name").value(definition.get("name"));
+        writer.name("group").value(definition.get("group"));
+        writer.name("version").value(definition.get("version"));
+        writer.name("downloadName").value((String) additionalAttributes.get("name"));
+        // no "registry" here.
+        writer.endObject();
         writer.endObject();
     }
 

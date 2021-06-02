@@ -6,6 +6,7 @@ import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.registry.PackageRegistry;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,9 @@ public class RegistryBean extends ConsoleSlingBean {
 
     @Override
     public void initialize(BeanContext context, Resource resource) {
-        this.namespace = RegistryUtil.namespace(resource.getPath());
+        SlingHttpServletRequest request = context.getRequest();
+        String path = RegistryUtil.requestPath(request);
+        this.namespace = RegistryUtil.namespace(path);
         super.initialize(context, resource);
     }
 

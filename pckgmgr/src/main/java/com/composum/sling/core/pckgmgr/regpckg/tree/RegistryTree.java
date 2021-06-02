@@ -66,7 +66,7 @@ public class RegistryTree extends AbstractNode {
             if (merged) {
                 for (PackageId pckgId : registry.packages()) {
                     GroupNode group = RegistryNode.getGroup(this, "", pckgId.getGroup());
-                    group.addPackage(pckgId);
+                    group.addPackage(namespace, pckgId);
                 }
             } else {
                 RegistryNode node = new RegistryNode(namespace, registry);

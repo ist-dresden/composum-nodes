@@ -9,8 +9,6 @@ p/version/general/general.jsp
     <div class="detail-panel package ${pckg.cssClasses}">
         <div class="display-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <button class="edit fa fa-pencil btn btn-default" title="Edit package properties"><span class="label">Edit</span>
-                </button>
                 <a type="button" class="download fa fa-download btn btn-default" href="${pckg.downloadUrl}"
                    title="Download this package"><span class="label">Download</span></a>
             </div>
@@ -20,22 +18,10 @@ p/version/general/general.jsp
                         class="symbol fa fa-sign-in fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
                         class="label">Install</span></button>
-                <button class="assemble btn btn-default btn-stack" title="(Re)Build this package"><span
-                        class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
-                        class="symbol fa fa-archive fa-stack-1x"></i><i
-                        class="error fa fa-stack-2x">!</i></span><span
-                        class="label">Assemble</span></button>
-                <button class="uninstall btn btn-default btn-stack" title="Uninstall this package"><span
-                        class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
-                        class="symbol fa fa-history fa-stack-1x"></i><i
-                        class="error fa fa-stack-2x">!</i></span><span
-                        class="label">Rewrap</span></button>
                 <button class="delete fa fa-trash btn btn-default" title="Delete this package"><span class="label">Delete</span>
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button class="create fa fa-plus btn btn-default" title="Create a new package"><span class="label">Create</span>
-                </button>
                 <button class="upload fa fa-upload btn btn-default" title="Upload a new package"><span class="label">Upload</span>
                 </button>
             </div>

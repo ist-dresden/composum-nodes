@@ -60,15 +60,32 @@
         },
 
         createPackage: function (event) {
-            pckgmgr.action.createPackage(this.tree.current());
+            var dialog = pckgmgr.getCreatePackageDialog();
+            dialog.show(_.bind(function () {
+                var parentNode = this.tree.current();
+                var parentPath = parentNode.path;
+                if (parentNode.type === 'package') {
+                    parentPath = core.getParentPath(parentPath);
+                }
+                if (parentNode) {
+                    dialog.initGroup(parentPath.substring(1));
+                }
+            }, this));
         },
 
         deletePackage: function (event) {
-            pckgmgr.action.deletePackage(pckgmgr.current);
+            if (pckgmgr.current.path) {
+                var dialog = pckgmgr.getDeletePackageDialog();
+                dialog.show(_.bind(function () {
+                    dialog.setPackage(pckgmgr.current);
+                }, this));
+            }
         },
 
         uploadPackage: function (event) {
-            pckgmgr.action.uploadPackage(pckgmgr.current);
+            var dialog = pckgmgr.getUploadPackageDialog();
+            dialog.show(_.bind(function () {
+            }, this));
         },
 
         downloadPackage: function (event) {

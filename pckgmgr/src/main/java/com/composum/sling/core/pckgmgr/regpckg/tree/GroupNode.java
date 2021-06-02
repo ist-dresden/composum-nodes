@@ -49,14 +49,14 @@ public class GroupNode extends AbstractNode {
         return group;
     }
 
-    public PackageNode addPackage(PackageId id) {
+    public PackageNode addPackage(@Nonnull String registryNamespace, @Nonnull PackageId id) {
         Map<String, RegistryItem> items = Objects.requireNonNull(getItemsMap());
         PackageNode pckg = (PackageNode) items.get("1_" + id.getName());
         if (pckg == null) {
             pckg = new PackageNode(this, id);
             items.put("1_" + id.getName(), pckg);
         }
-        pckg.addVersion(id);
+        pckg.addVersion(registryNamespace, id);
         return pckg;
     }
 }

@@ -44,15 +44,16 @@ public interface RegistryUtil {
         add("on");
     }};
 
+    @Nonnull
     static String namespace(@Nonnull final PackageRegistry registry) {
         Matcher matcher = REGISTRY_CLASS_NS.matcher(registry.getClass().getName());
         return matcher.matches() ? matcher.group(1).toLowerCase() : NO_REGISTRY;
     }
 
-    @Nonnull
-    static String namespace(@Nonnull final String namespaceOrPath) {
-        Matcher matcher = Packages.REGISTRY_BASED_PATH.matcher(namespaceOrPath);
-        return matcher.matches() ? matcher.group("ns") : namespaceOrPath;
+    @Nullable
+    static String namespace(@Nonnull final String namespacedPathOrPath) {
+        Matcher matcher = Packages.REGISTRY_BASED_PATH.matcher(namespacedPathOrPath);
+        return matcher.matches() ? matcher.group("ns") : null;
     }
 
     @Nullable
@@ -65,6 +66,15 @@ public interface RegistryUtil {
             }
         }
         return path;
+    }
+
+    /** Adds the namespace to the path if it isn't already in there. */
+    @Nullable
+    static String pathWithNamespace(@Nullable String namespace, @Nullable String path) {
+        if (StringUtils.isBlank(namespace) || StringUtils.equals(namespace(path), namespace)) {
+            return path;
+        }
+        return "/" + REGISTRY_PATH_PREFIX + namespace + StringUtils.defaultString(path);
     }
 
     @Nonnull
@@ -110,28 +120,32 @@ public interface RegistryUtil {
         return path.toString();
     }
 
+    @Nullable
     static Pair<String, RegisteredPackage> open(@Nonnull final BeanContext context,
-                                  @Nullable final String namespace, @Nonnull final PackageId packageId)
+                                                @Nullable final String namespace, @Nonnull final PackageId packageId)
             throws IOException {
         PackageRegistries service = context.getService(PackageRegistries.class);
         return open(service.getRegistries(context.getResolver()), namespace, packageId);
     }
 
+    @Nullable
     static Pair<String, RegisteredPackage> open(@Nonnull final BeanContext context,
-                                  @Nonnull final String path)
+                                                @Nonnull final String path)
             throws IOException {
         PackageRegistries service = context.getService(PackageRegistries.class);
         return open(service.getRegistries(context.getResolver()), path);
     }
 
+    @Nullable
     static Pair<String, RegisteredPackage> open(@Nonnull final PackageRegistries.Registries registries,
-                                  @Nonnull final String path)
+                                                @Nonnull final String path)
             throws IOException {
         String namespace = RegistryUtil.namespace(path);
         PackageId packageId = RegistryUtil.fromPath(path);
         return open(registries, namespace, packageId);
     }
 
+    @Nullable
     static Pair<String, RegisteredPackage> open(@Nonnull final PackageRegistries.Registries registries,
                                                 @Nullable final String namespace, @Nonnull final PackageId packageId)
             throws IOException {
@@ -147,7 +161,7 @@ public interface RegistryUtil {
     }
 
     @Nonnull
-    static String requestPath(SlingHttpServletRequest request) {
+    static String requestPath(@Nonnull SlingHttpServletRequest request) {
         return PackageUtil.getPath(request);
     }
 
@@ -179,7 +193,8 @@ public interface RegistryUtil {
     }
 
     /** Formats a date in ISO8601 format without timezone. */
-    static String date(Calendar calendar) {
+    @Nullable
+    static String date(@Nullable Calendar calendar) {
         return calendar != null ? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(calendar.getTime()) : null;
     }
 
@@ -193,7 +208,7 @@ public interface RegistryUtil {
      * Tries to correct for a weird format com.day.jcr.vault:content-package-maven-plugin produces but that cannot be parsed by {@link ISO8601#parse(String)}, for example 2021-05-26T15:12:21.673+0200 instead of 2021-05-26T15:12:21.673+02:00 .
      * Usage e.g. {code}format(packageProps.getLastModified(), packageProps.getProperty(PackageProperties.NAME_LAST_MODIFIED)){code}
      */
-    static Calendar readPackagePropertyDate(Calendar rawDate, String dateRep) {
+    static Calendar readPackagePropertyDate(Calendar rawDate, @Nonnull String dateRep) {
         Calendar date = rawDate;
         if (date == null && StringUtils.isNotBlank(dateRep)) {
             Matcher brokenFmt = BROKEN_DATEFMT_PATTERN.matcher(dateRep);
@@ -251,11 +266,13 @@ public interface RegistryUtil {
             return null;
         }
 
+        @Nonnull
         public <T> T add(@Nonnull final String key, @Nonnull final T value) {
             put(key, value);
             return value;
         }
 
+        @Nullable
         public Object adapt(@Nullable Object value) {
             if (value instanceof Calendar) {
                 value = date((Calendar) value);

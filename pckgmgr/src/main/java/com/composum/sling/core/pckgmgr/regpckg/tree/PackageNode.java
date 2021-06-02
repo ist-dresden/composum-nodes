@@ -134,7 +134,7 @@ public class PackageNode extends AbstractNode implements PackageView {
     }
 
     @Nonnull
-    public VersionNode addVersion(PackageId id) {
+    public VersionNode addVersion(@Nonnull String registryNamespace, @Nonnull PackageId id) {
         String versionKey = id.getVersionString();
         if (StringUtils.isBlank(versionKey)) {
             versionKey = RegistryUtil.NO_VERSION;
@@ -142,7 +142,7 @@ public class PackageNode extends AbstractNode implements PackageView {
         Map<String, RegistryItem> items = Objects.requireNonNull(getItemsMap());
         VersionNode version = (VersionNode) items.get(versionKey);
         if (version == null) {
-            version = new VersionNode(this, id, versionKey);
+            version = new VersionNode(this, registryNamespace, id, versionKey);
             items.put(versionKey, version);
         }
         return version;

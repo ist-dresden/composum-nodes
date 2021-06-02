@@ -41,7 +41,7 @@ public class RegistryNode extends AbstractNode {
         if (registry != null) {
             for (PackageId pckgId : registry.packages()) {
                 GroupNode group = getGroup(this, getPath(), pckgId.getGroup());
-                group.addPackage(pckgId);
+                group.addPackage(getName(), pckgId);
             }
         }
         setLoaded(true);

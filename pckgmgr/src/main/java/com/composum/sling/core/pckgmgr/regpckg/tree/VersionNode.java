@@ -7,11 +7,13 @@ import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil.PropertyMap;
 import com.composum.sling.core.pckgmgr.regpckg.view.PackageView;
 import com.composum.sling.core.util.RequestUtil;
 import com.google.gson.stream.JsonWriter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.fs.api.FilterSet;
 import org.apache.jackrabbit.vault.fs.api.PathFilter;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.MetaInf;
+import org.apache.jackrabbit.vault.fs.config.Registry;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.VaultPackage;
 import org.apache.jackrabbit.vault.packaging.registry.PackageRegistry;
@@ -36,23 +38,26 @@ public class VersionNode extends AbstractNode implements PackageView {
     protected final String namespace;
     protected final PackageId packageId;
     protected final String version;
+    protected final String registryNamespace;
 
     private transient Boolean valid;
     private transient Boolean installed;
     private transient Calendar installTime;
 
-    public VersionNode(PackageNode pckg, PackageId packageId, String version) {
+    public VersionNode(@Nonnull PackageNode pckg, @Nonnull String registryNamespace, @Nonnull PackageId packageId, @Nonnull String version) {
         String path = pckg.getPath() + "/" + version;
         this.pckg = pckg;
         this.namespace = RegistryUtil.namespace(path);
         this.packageId = packageId;
         this.version = version;
+        this.registryNamespace = registryNamespace;
         put(KEY_PATH, path);
         put(KEY_NAME, version);
         put(KEY_TEXT, version);
         put(KEY_TYPE, "version");
     }
 
+    /** The namespace encoded in the path - can be empty if the tree is merged. */
     @Override
     public String getNamespace() {
         return namespace;
@@ -60,6 +65,11 @@ public class VersionNode extends AbstractNode implements PackageView {
 
     public PackageId getPackageId() {
         return packageId;
+    }
+
+    /** Returns the full path for the version, including the registry namespace - even in merged mode. */
+    public String getNamespacedPath() {
+        return RegistryUtil.pathWithNamespace(registryNamespace, getPath());
     }
 
     @Override
@@ -113,6 +123,21 @@ public class VersionNode extends AbstractNode implements PackageView {
 
     public PropertyMap getPackageProps() {
         return (PropertyMap) get("package");
+    }
+
+    @Override
+    protected void toTreeProperties(@Nonnull JsonWriter writer) throws IOException {
+        super.toTreeProperties(writer);
+        writer.name("namespace").value(registryNamespace);
+        writer.name("namespacedPath").value(getNamespacedPath());
+        writer.name("packageid");
+        writer.beginObject();
+        writer.name("name").value(packageId.getName());
+        writer.name("group").value(packageId.getGroup());
+        writer.name("version").value(packageId.getVersionString());
+        writer.name("downloadName").value(packageId.getDownloadName());
+        writer.name("registry").value(registryNamespace);
+        writer.endObject();
     }
 
     @Override

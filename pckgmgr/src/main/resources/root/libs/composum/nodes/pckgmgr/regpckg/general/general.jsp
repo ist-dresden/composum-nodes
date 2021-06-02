@@ -3,8 +3,8 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
-p/regpckg/general/general.jsp FIXME
 <cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean" scope="request">
+    <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean"--%>
     <div class="detail-panel package ${pckg.cssClasses}">
         <div class="display-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
