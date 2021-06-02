@@ -4,9 +4,13 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.Packages;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
+import com.composum.sling.core.util.JsonUtil;
+import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.util.ISO8601;
+import org.apache.jackrabbit.vault.packaging.JcrPackage;
+import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.apache.jackrabbit.vault.packaging.SubPackageHandling;
@@ -17,6 +21,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -198,6 +203,15 @@ public interface RegistryUtil {
         return calendar != null ? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(calendar.getTime()) : null;
     }
 
+    public static void toJson(JsonWriter writer, String namespace, PackageId packageId) throws IOException {
+        writer.beginObject();
+        writer.name("name").value(packageId.getName());
+        writer.name("group").value(packageId.getGroup());
+        writer.name("version").value(packageId.getVersionString());
+        writer.name("downloadName").value((String) packageId.getDownloadName());
+        writer.name("registry").value(namespace);
+        writer.endObject();
+    }
     /**
      * Not for public use, only {@link #readPackagePropertyDate(Calendar, String)}. Parses a weird format com.day.jcr.vault:content-package-maven-plugin produces but that cannot be parsed by {@link ISO8601#parse(String)}, for example 2021-05-26T15:12:21.673+0200 instead of 2021-05-26T15:12:21.673+02:00 , see {@link #format(Calendar, String)}.
      */
@@ -218,7 +232,6 @@ public interface RegistryUtil {
         }
         return date;
     }
-
 
     @Nonnull
     static Map<String, Object> properties(@Nonnull final RegisteredPackage pckg) throws IOException {

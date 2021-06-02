@@ -4,6 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean" scope="request">
+    <%--@elvariable id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean"--%>
     <div id="pckg-delete-dialog" class="dialog modal fade" role="dialog" aria-hidden="true">
         <div class="modal-dialog form-panel">
             <div class="modal-content">
@@ -20,19 +21,30 @@
                         </div>
 
                         <input name="_charset_" type="hidden" value="UTF-8"/>
+                        <c:if test="${not empty pckgmgr.registries}">
+                            <div class="form-group registry">
+                                <label class="control-label" for="pckg-delete-registry">Registry</label>
+                                <select name="registry" class="widget select-widget form-control" id="pckg-delete-registry">
+                                    <option value="" selected></option>
+                                    <c:forEach items="${pckgmgr.registries}" var="registry">
+                                        <option value="${registry.key}">${cpn:text(registry.value)}</option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                        </c:if>
                         <div class="form-group">
-                            <label class="control-label">Group</label>
-                            <input name="group" class="widget primary-type-widget form-control" type="text"
+                            <label class="control-label" for="pckg-delete-group">Group</label>
+                            <input name="group" class="widget primary-type-widget form-control" type="text" id="pckg-delete-group"
                                    placeholder="enter group name (path)" autofocus/>
                         </div>
                         <div class="form-group">
-                            <label class="control-label">Package Name</label>
-                            <input name="name" class="widget text-field-widget form-control" type="text"
+                            <label class="control-label" for="pckg-delete-name">Package Name</label>
+                            <input name="name" class="widget text-field-widget form-control" type="text" id="pckg-delete-name"
                                    placeholder="enter package name" data-rules="mandatory"/>
                         </div>
                         <div class="form-group">
-                            <label class="control-label">Version</label>
-                            <input name="version" class="widget text-field-widget form-control" type="text"
+                            <label class="control-label" for="pck-delete-version">Version</label>
+                            <input name="version" class="widget text-field-widget form-control" type="text" id="pck-delete-version"
                                    placeholder="enter version key (number)" data-rules="mandatory"/>
                         </div>
                     </div>

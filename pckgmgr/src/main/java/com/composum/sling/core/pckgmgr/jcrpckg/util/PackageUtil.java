@@ -477,8 +477,8 @@ public class PackageUtil {
     // JSON mapping helpers
     //
 
-    public static void toJson(JsonWriter writer, JcrPackage jcrPackage,
-                              Map<String, Object> additionalAttributes)
+    public static void toJson(@Nonnull JsonWriter writer, @Nonnull JcrPackage jcrPackage,
+                              @Nullable Map<String, Object> additionalAttributes)
             throws RepositoryException, IOException {
         writer.beginObject();
         writer.name("definition");
@@ -490,7 +490,9 @@ public class PackageUtil {
         writer.name("name").value(definition.get("name"));
         writer.name("group").value(definition.get("group"));
         writer.name("version").value(definition.get("version"));
-        writer.name("downloadName").value((String) additionalAttributes.get("name"));
+        if (additionalAttributes != null) {
+            writer.name("downloadName").value((String) additionalAttributes.get("name"));
+        }
         // no "registry" here.
         writer.endObject();
         writer.endObject();

@@ -131,13 +131,7 @@ public class VersionNode extends AbstractNode implements PackageView {
         writer.name("namespace").value(registryNamespace);
         writer.name("namespacedPath").value(getNamespacedPath());
         writer.name("packageid");
-        writer.beginObject();
-        writer.name("name").value(packageId.getName());
-        writer.name("group").value(packageId.getGroup());
-        writer.name("version").value(packageId.getVersionString());
-        writer.name("downloadName").value(packageId.getDownloadName());
-        writer.name("registry").value(registryNamespace);
-        writer.endObject();
+        RegistryUtil.toJson(writer, registryNamespace, packageId);
     }
 
     @Override

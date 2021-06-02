@@ -42,7 +42,9 @@ import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.NoSuchPackageException;
 import org.apache.jackrabbit.vault.packaging.PackageException;
+import org.apache.jackrabbit.vault.packaging.PackageExistsException;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.apache.jackrabbit.vault.packaging.Packaging;
@@ -100,6 +102,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * The servlet to provide download and upload of content packages and package definitions.
@@ -123,6 +126,8 @@ public class PackageServlet extends AbstractServiceServlet {
     public static final String SERVLET_PATH = "/bin/cpm/package";
     public static final String PARAM_GROUP = "group";
     public static final String PARAM_FORCE = "force";
+    /** The key (namespace) of the PackageRegistry, {@link PackageRegistries.Registries#getNamespaces()}.  */
+    public static final String PARAM_REGISTRY = "registry";
 
     private volatile long jobIdleTimeout;
 
@@ -621,12 +626,33 @@ public class PackageServlet extends AbstractServiceServlet {
                          @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
+            String deletedPath = request.getRequestPathInfo().getSuffix();
+            String namespace = RegistryUtil.namespace(deletedPath);
+            if (StringUtils.isBlank(namespace)) {
+                deleteJcrPackage(request, response, resource);
+            } else {
+                PackageId packageId = RegistryUtil.fromPath(deletedPath);
+                PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                PackageRegistry registry = registries.getRegistry(namespace);
+                JsonWriter writer = ResponseUtil.getJsonWriter(response);
+                try {
+                    registry.remove(packageId);
+                    jsonAnswer(writer, "delete", "successful", namespace, packageId);
+                } catch (NoSuchPackageException | ClassCastException e) {
+                    // (probably bug in FileVault: if package deletion requested in JCR but is in FS -> ClassCastException.
+                    LOG.warn("Registry {} : could not find requested package {}", namespace, packageId, e);
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                            packageId + " can not be found in the registry " + namespace);
+                }
 
+            }
+        }
+
+        private void deleteJcrPackage(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException {
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
             if (jcrPackage != null) {
-
                 manager.remove(jcrPackage);
 
                 JsonWriter writer = ResponseUtil.getJsonWriter(response);
@@ -752,23 +778,33 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            RequestParameterMap parameters = request.getRequestParameterMap();
-
-            RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
-            if (file != null) {
-                InputStream input = file.getInputStream();
+            boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
+            String namespace = request.getParameter(PARAM_REGISTRY);
+            RequestParameter file = request.getRequestParameter(AbstractServiceServlet.PARAM_FILE);
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            try (InputStream input = file != null ? file.getInputStream() : null) {
                 if (input != null) {
-                    boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
+                    if (StringUtils.isBlank(namespace)) {
+                        JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
+                        JcrPackage jcrPackage = manager.upload(input, force);
 
-                    JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
-                    JcrPackage jcrPackage = manager.upload(input, force);
-
-                    JsonWriter writer = ResponseUtil.getJsonWriter(response);
-                    jsonAnswer(writer, "upload", "successful", manager, jcrPackage);
+                        jsonAnswer(writer, "upload", "successful", manager, jcrPackage);
+                    } else {
+                        PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                        PackageRegistry registry = registries.getRegistry(namespace);
+                        if (registry != null) {
+                            PackageId packageId = registry.register(input, force);
+                            jsonAnswer(writer, "upload", "successful", namespace, packageId);
+                        } else {
+                            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "unknown registry " + registry);
+                        }
+                    }
+                } else {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                            "no package file accessible");
                 }
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "no package file accessible");
+            } catch (PackageExistsException e) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "package exists already: " + e.getId());
             }
         }
     }
@@ -1478,6 +1514,18 @@ public class PackageServlet extends AbstractServiceServlet {
         writer.name("path").value(PackageUtil.getPackagePath(pckgMgr, jcrPackage));
         writer.name("package");
         PackageUtil.toJson(writer, jcrPackage, null);
+        writer.endObject();
+    }
+
+    protected static void jsonAnswer(JsonWriter writer,
+                                     String operation, String status, String namespace, PackageId packageId)
+            throws IOException, RepositoryException {
+        writer.beginObject();
+        writer.name("operation").value(operation);
+        writer.name("status").value(status);
+        writer.name("path").value(RegistryUtil.toPath(namespace, packageId));
+        writer.name("package");
+        RegistryUtil.toJson(writer, namespace, packageId);
         writer.endObject();
     }
 

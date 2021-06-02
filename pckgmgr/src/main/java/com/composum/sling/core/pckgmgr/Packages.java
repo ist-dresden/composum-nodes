@@ -33,6 +33,6 @@ public interface Packages {
 
     Pattern REGISTRY_BASED_PATH = Pattern.compile("^/" + REGISTRY_PATH_PREFIX + "(?<ns>[^/]+)(?<path>/.+)?$");
 
-    Pattern PACKAGE_PATH = Pattern.compile("^(/" + REGISTRY_PATH_PREFIX + "(?<ns>[^/]+))?" +
+    Pattern PACKAGE_PATH = Pattern.compile("^(/" + REGISTRY_PATH_PREFIX + "(?<ns>[^/]+))?+" +
             "(/(?<group>.+))?/(?<name>[^/]+)/(?<version>[^/]+)$");
 }

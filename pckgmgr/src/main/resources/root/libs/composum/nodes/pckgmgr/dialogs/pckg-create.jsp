@@ -4,6 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean" scope="request">
+    <%--@elvariable id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean"--%>
     <div id="pckg-create-dialog" class="dialog modal fade" role="dialog" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content form-panel default">
@@ -22,18 +23,18 @@
                         <input name="_charset_" type="hidden" value="UTF-8"/>
 
                         <div class="form-group">
-                            <label class="control-label">Group</label>
-                            <input name="group" class="widget primary-type-widget form-control" type="text"
+                            <label class="control-label" for="pckg-create-group">Group</label>
+                            <input name="group" class="widget primary-type-widget form-control" type="text" id="pckg-create-group"
                                    placeholder="enter group name (path)"/>
                         </div>
                         <div class="form-group">
-                            <label class="control-label">Package Name</label>
-                            <input name="name" class="widget text-field-widget form-control" type="text"
+                            <label class="control-label" for="pckg-create-name">Package Name</label>
+                            <input name="name" class="widget text-field-widget form-control" type="text" id="pckg-create-name"
                                    placeholder="enter package name" autofocus data-rules="mandatory"/>
                         </div>
                         <div class="form-group">
-                            <label class="control-label">Version</label>
-                            <input name="version" class="widget text-field-widget form-control" type="text"
+                            <label class="control-label" for="pckg-create-version">Version</label>
+                            <input name="version" class="widget text-field-widget form-control" type="text" id="pckg-create-version"
                                    placeholder="enter version key (number)" data-rules="mandatory"/>
                         </div>
                     </div>
