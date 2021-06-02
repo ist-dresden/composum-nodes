@@ -561,7 +561,8 @@
             <dependency>
                 <groupId>org.apache.sling</groupId>
                 <artifactId>org.apache.sling.event</artifactId>
-                <version>[3.3.0,5)</version>
+                <!-- 2.6.2021: If that range isn't excluded, it complains about a missing 4.2.21-SNAPSHOT. Something broken in the apache snapshot repo? -->
+                <version>[3.3.0,4.2.18],[4.2.22,5)</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
