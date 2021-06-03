@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import java.io.IOException;
@@ -117,7 +118,7 @@ public class CoreConfigImpl implements CoreConfiguration {
 
     private volatile Map<String, Boolean> enabledServlets;
 
-    private volatile Dictionary properties;
+    private volatile Dictionary<String, Object> properties;
 
     @Nonnull
     private Configuration getConfig() {
@@ -207,21 +208,33 @@ public class CoreConfigImpl implements CoreConfiguration {
     }
 
     @Override
-    public Dictionary getProperties() {
+    @Nonnull
+    public Dictionary<String, Object> getProperties() {
         return properties;
     }
 
     @Override
-    public String getLoginUrl() {
-        return StringUtils.defaultIfBlank(getConfig().loginurl(), DEFAULT_LOGINURL);
+    @Nonnull
+    public String getLoginUrl(@Nullable final String targetUri) {
+        String loginUrl = StringUtils.defaultIfBlank(getConfig().loginurl(), DEFAULT_LOGINURL);
+        if (StringUtils.isNotBlank(targetUri)) {
+            loginUrl += (loginUrl.indexOf('?') < 0 ? '?' : '&') + RESOURCE_PARAMETER + "=" + targetUri;
+        }
+        return loginUrl;
     }
 
     @Override
-    public String getLogoutUrl() {
-        return StringUtils.defaultIfBlank(getConfig().logouturl(), DEFAULT_LOGOUTURL);
+    @Nonnull
+    public String getLogoutUrl(@Nullable final String targetUri) {
+        String logoutUrl = StringUtils.defaultIfBlank(getConfig().logouturl(), DEFAULT_LOGOUTURL);
+        if (StringUtils.isNotBlank(targetUri)) {
+            logoutUrl += (logoutUrl.indexOf('?') < 0 ? '?' : '&') + RESOURCE_PARAMETER + "=" + targetUri;
+        }
+        return logoutUrl;
     }
 
     @Override
+    @Nonnull
     public String getLoggedoutUrl() {
         return StringUtils.defaultIfBlank(getConfig().loggedouturl(), DEFAULT_LOGGEDOUTURL);
     }
