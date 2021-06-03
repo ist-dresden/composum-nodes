@@ -1,10 +1,12 @@
 package com.composum.sling.core.service.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.Session;
 import java.io.InputStream;
@@ -12,6 +14,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -46,6 +49,16 @@ public class CoreRepositorySetupServiceTest {
             groupPath = intermediatePath;
             return null;
         }
+
+        @Override
+        protected void makeMemberAvailable(@Nonnull final Session session, @Nonnull final String memberId,
+                                           @Nonnull final List<String> groupIds, @Nullable final String groupPath) {
+            for (String groupId : groupIds) {
+                if (StringUtils.isNotBlank(groupPath)) {
+                    makeGroupAvailable(session, groupId, groupPath);
+                }
+            }
+        }
     }
 
     @Test
@@ -53,9 +66,11 @@ public class CoreRepositorySetupServiceTest {
         TestService service = new TestService();
         try (
                 InputStream stream = getClass().getResourceAsStream(JAVA_RESOURCE_BASE + "acl.json");
-                Reader streamReader = new InputStreamReader(stream, UTF_8)
+                Reader streamReader = stream != null ? new InputStreamReader(stream, UTF_8) : null
         ) {
-            service.addJsonAcl(Mockito.mock(Session.class), streamReader, null);
+            if (streamReader != null) {
+                service.addJsonAcl(Mockito.mock(Session.class), streamReader, null);
+            }
         }
     }
 
@@ -64,11 +79,13 @@ public class CoreRepositorySetupServiceTest {
         TestService service = new TestService();
         try (
                 InputStream stream = getClass().getResourceAsStream(JAVA_RESOURCE_BASE + "acl.json");
-                Reader streamReader = new InputStreamReader(stream, UTF_8)
+                Reader streamReader = stream != null ? new InputStreamReader(stream, UTF_8) : null
         ) {
-            service.addJsonAcl(Mockito.mock(Session.class), streamReader, new HashMap<String, Object>() {{
-                put("base", "my/groups");
-            }});
+            if (streamReader != null) {
+                service.addJsonAcl(Mockito.mock(Session.class), streamReader, new HashMap<String, Object>() {{
+                    put("base", "my/groups");
+                }});
+            }
             assertEquals("my/groups", service.groupPath);
         }
     }

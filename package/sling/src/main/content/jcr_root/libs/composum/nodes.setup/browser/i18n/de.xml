@@ -16,17 +16,17 @@
     <components jcr:primaryType="sling:Folder">
 
         <overlay-path jcr:primaryType="sling:MessageEntry"
-                sling:key="Overlay Path" sling:message="Overlay-Pfad"/>
+                sling:key="Overlay / Base Path" sling:message="Overlay- / Basis-Pfad"/>
         <create-overlay-title jcr:primaryType="sling:MessageEntry"
-                sling:key="Create an Overlay" sling:message="Ein Overlay anlegen"/>
+                sling:key="Create an Overlay / Base" sling:message="Ein Overlay / eine Basis anlegen"/>
         <create-overlay-text jcr:primaryType="sling:MessageEntry"
-                sling:key="Do you want to create an overlay to the current component or copy from this template again?"
-                sling:message="Wollen sie ein Overlay zur aktuellen Komponente anlegen bzw. erneut von dieser Vorlage kopieren?"/>
+                sling:key="Do you want to create an overlay / base to the current component or copy from this template again?"
+                sling:message="Wollen sie ein Overlay / eine Basis zur aktuellen Komponente anlegen bzw. erneut von dieser Vorlage kopieren?"/>
         <remove-overlay-title jcr:primaryType="sling:MessageEntry"
-                sling:key="Remove the Overlay" sling:message="Das Overlay löschen"/>
+                sling:key="Remove the Overlay / Base" sling:message="Das Overlay / die Basis löschen"/>
         <remove-overlay-text jcr:primaryType="sling:MessageEntry"
-                sling:key="Do you really want to delete the current overlay? This cannot be undone."
-                sling:message="EWollen Sie das aktuelle Overlay wirklich löschen; dies kann nicht rückgängig gemacht werden?"/>
+                sling:key="Do you really want to delete the current overlay / base? This cannot be undone."
+                sling:message="Wollen Sie das aktuelle Overlay / die Basis wirklich löschen; dies kann nicht rückgängig gemacht werden?"/>
 
     </components>
 
