@@ -6,6 +6,7 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.Dictionary;
@@ -21,7 +22,7 @@ public interface CoreConfiguration {
      * Parameter that can be appended to {@link #getLoginUrl()} to save the current rendered resource, to allow
      * re-rendering it after the user logged in.
      */
-    public static final String RESOURCE_PARAMETER = "resource";
+    String RESOURCE_PARAMETER = "resource";
 
     boolean isEnabled(AbstractServiceServlet servlet);
 
@@ -33,19 +34,37 @@ public interface CoreConfiguration {
 
     /**
      * The (relative) logout URL (including parameters) to use instead of the default /system/sling/logout
-     * .html?logout=true&GLO=true . (The GLO=true parameter is relevant for singlesignon logout if Keycloak
-     * authentication is installed.)
+     * .html?logout=true&GLO=true (The GLO=true parameter is relevant for singlesignon logout if Keycloak
+     * authentication is installed). A parameter {@link #RESOURCE_PARAMETER} - the targetUri - can be appended
+     * if after user logout in the user should redirect to rendering that resource.
      */
-    String getLogoutUrl();
+    @Nonnull
+    String getLogoutUrl(@Nullable String targetUri);
 
-    /** The URL to redirect to after the user was logged out successfully. */
+    @Deprecated
+    @Nonnull
+    default String getLogoutUrl() {
+        return getLogoutUrl(null);
+    }
+
+    /**
+     * The URL to redirect to after the user was logged out successfully.
+     */
+    @Nonnull
     String getLoggedoutUrl();
 
     /**
-     * The URL to redirect to when the user should login. A parameter {@link #RESOURCE_PARAMETER} can be appended
-     * if after user loging in the user should redirect to rendering that resource.
+     * The URL to redirect to when the user should login. A parameter {@link #RESOURCE_PARAMETER} - the targetUri -
+     * can be appended if after user login in the user should redirect to rendering that resource.
      */
-    String getLoginUrl();
+    @Nonnull
+    String getLoginUrl(@Nullable String targetUri);
+
+    @Deprecated
+    @Nonnull
+    default String getLoginUrl() {
+        return getLoginUrl(null);
+    }
 
     /**
      * The (readonly) properties useable for extensions. E.g. introduce a new property in a newer nodes version, and use
