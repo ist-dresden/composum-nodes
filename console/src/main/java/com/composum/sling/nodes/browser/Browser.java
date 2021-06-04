@@ -62,25 +62,26 @@ public class Browser extends ConsoleServletBean {
 
     static {
         EDITOR_MODES = new HashMap<>();
+        EDITOR_MODES.put("config", "text");
+        EDITOR_MODES.put("css", "css");
+        EDITOR_MODES.put("dart", "dart");
+        EDITOR_MODES.put("ecma", "javascript");
+        EDITOR_MODES.put("esp", "jsp");
+        EDITOR_MODES.put("groovy", "groovy");
+        EDITOR_MODES.put(HTML, HTML);
+        EDITOR_MODES.put("java", "java");
+        EDITOR_MODES.put("javascript", "javascript");
+        EDITOR_MODES.put("js", "javascript");
         EDITOR_MODES.put("json", "json");
+        EDITOR_MODES.put(JSP, JSP);
+        EDITOR_MODES.put("less", "less");
+        EDITOR_MODES.put("markdown", "markdown");
+        EDITOR_MODES.put("scala", "scala");
+        EDITOR_MODES.put("text", "text");
+        EDITOR_MODES.put("txt", "text");
         EDITOR_MODES.put("xml", "xml");
         EDITOR_MODES.put("xslt", "xml");
         EDITOR_MODES.put("xslt+xml", "xml");
-        EDITOR_MODES.put(HTML, HTML);
-        EDITOR_MODES.put(JSP, JSP);
-        EDITOR_MODES.put("esp", "jsp");
-        EDITOR_MODES.put("css", "css");
-        EDITOR_MODES.put("less", "less");
-        EDITOR_MODES.put("js", "javascript");
-        EDITOR_MODES.put("ecma", "javascript");
-        EDITOR_MODES.put("javascript", "javascript");
-        EDITOR_MODES.put("dart", "dart");
-        EDITOR_MODES.put("groovy", "groovy");
-        EDITOR_MODES.put("java", "java");
-        EDITOR_MODES.put("scala", "scala");
-        EDITOR_MODES.put("markdown", "markdown");
-        EDITOR_MODES.put("text", "text");
-        EDITOR_MODES.put("txt", "text");
     }
 
     public static final Map<String, String> FILE_ICONS;
