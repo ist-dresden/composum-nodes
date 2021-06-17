@@ -76,6 +76,7 @@ public class Browser extends ConsoleServletBean {
         EDITOR_MODES.put(JSP, JSP);
         EDITOR_MODES.put("less", "less");
         EDITOR_MODES.put("markdown", "markdown");
+        EDITOR_MODES.put("md", "markdown");
         EDITOR_MODES.put("scala", "scala");
         EDITOR_MODES.put("text", "text");
         EDITOR_MODES.put("txt", "text");
