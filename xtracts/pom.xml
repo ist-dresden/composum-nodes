@@ -21,6 +21,7 @@
 
     <modules>
         <module>users-graph</module>
+        <module>debugutil</module>
     </modules>
 
 </project>
