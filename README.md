@@ -14,7 +14,7 @@ Usage: just open
 * /bin/packages.html for the Package Manager
 * /bin/users.html for the User Manager
 
-on your sling instance.
+on your Sling instance.
 
 * [Composum Nodes Homepage](https://www.composum.com/home/nodes.html)
 
