@@ -17,9 +17,6 @@ jobs:
         with:
           java-version: '8'
           distribution: 'adopt'
-          server-id: archiva
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
       - name: Cache Maven packages
         uses: actions/cache@v2
         with:
@@ -28,8 +25,8 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots install
-      - name: Deploy with Maven
-        run: mvn --batch-mode deploy
-        env:
-          MAVEN_USERNAME: ${{ secrets.NEXUS_BUILD_USER }}
-          MAVEN_PASSWORD: ${{ secrets.NEXUS_BUILD_PASSWD }}
+      - run: mkdir staging && cp target/*.jar staging && cp target/*.zip staging
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Package
+          path: staging
