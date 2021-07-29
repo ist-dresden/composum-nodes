@@ -397,7 +397,7 @@ public class NodeServlet extends NodeTreeServlet {
      * the pattern to check for a XPATH query and their simplified variation
      */
     public static final Pattern SQL2_QUERY = Pattern.compile(
-            "^select( +(?<words>" + WORDS + ") *|(.*))$"
+            "(?i)^\\s?select(\\s+(?<words>" + WORDS + ")\\s*|(.*))$"
     );
 
     protected abstract class AbstractQueryOperation implements ServletOperation {
