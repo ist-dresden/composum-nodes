@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-users-graph</artifactId>
-        <version>2.6.6</version>
+        <version>2.6.7-SNAPSHOT</version>
     </parent>
 
     <artifactId>composum-nodes-users-graph-bundle</artifactId>
