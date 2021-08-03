@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-package</artifactId>
-        <version>2.6.5</version>
+        <version>2.6.6</version>
     </parent>
 
     <artifactId>composum-nodes-aem-package</artifactId>
@@ -80,6 +80,10 @@
                                             <pattern>jcr_root/libs/composum/nodes/upload/</pattern>
                                             <replacement>jcr_root/libs/composum/nodes/install/</replacement>
                                         </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                        <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                            <pattern>jcr_root/libs/composum/nodes/install/(.*\.config)</pattern>
+                                            <replacement>jcr_root/libs/composum/nodes/config/$1</replacement>
+                                        </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
                                     </fileMappers>
                                 </artifactItem>
 
@@ -130,6 +134,12 @@
                                 <include>.*/composum-nodes-usermgr.*\.jar</include>
                                 <include>.*/composum-nodes-jslibs.*\.jar</include><!-- for removal -->
                                 <include>.*/composum-nodes-config.*\.jar</include><!-- for removal -->
+                            </includes>
+                        </filter>
+
+                        <filter>
+                            <root>/libs/composum/nodes/config</root>
+                            <includes>
                                 <include>.*/.*\.LoginAdminWhitelist.fragment-composum_core.*</include>
                             </includes>
                         </filter>
