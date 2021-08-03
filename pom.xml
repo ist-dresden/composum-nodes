@@ -39,15 +39,15 @@
             <id>${release.repository.id}</id>
             <url>${release.repository.url}</url>
         </repository>
-        <snapshotRepository>
+        <!--snapshotRepository>
             <id>github</id>
             <name>GitHub Packages</name>
             <url>https://maven.pkg.github.com/ist-dresden/composum-nodes</url>
-        </snapshotRepository>
-        <!--snapshotRepository>
+        </snapshotRepository-->
+        <snapshotRepository>
             <id>archiva</id>
             <url>https://build.ist-software.com/nexus/repository/maven-snapshots</url>
-        </snapshotRepository-->
+        </snapshotRepository>
     </distributionManagement>
 
     <modules>
