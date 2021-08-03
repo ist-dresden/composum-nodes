@@ -24,9 +24,6 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Build with Maven
-        run: mvn --batch-mode --update-snapshots install
-      - run: mkdir staging && cp target/*.jar staging && cp target/*.zip staging
-      - uses: actions/upload-artifact@v2
-        with:
-          name: Package
-          path: staging
+        run: mvn --batch-mode --update-snapshots clean deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.SNAPSHOT_REPO_TOKEN }}

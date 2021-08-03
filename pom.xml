@@ -40,9 +40,14 @@
             <url>${release.repository.url}</url>
         </repository>
         <snapshotRepository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/ist-dresden/composum-nodes</url>
+        </snapshotRepository>
+        <!--snapshotRepository>
             <id>archiva</id>
             <url>https://build.ist-software.com/nexus/repository/maven-snapshots</url>
-        </snapshotRepository>
+        </snapshotRepository-->
     </distributionManagement>
 
     <modules>
@@ -76,7 +81,7 @@
                             <configuration>
                                 <webappSourceDir>${basedir}/src/main/resources</webappSourceDir>
                                 <webappTargetDir>${project.build.directory}/generated-sources/minify</webappTargetDir>
-                          </configuration>
+                            </configuration>
                         </execution>
                     </executions>
                 </plugin>
