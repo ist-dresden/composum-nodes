@@ -30,7 +30,7 @@ public class UserManagerServlet extends AbstractConsoleServlet {
 
     public static final String RESOURCE_TYPE = "composum/nodes/usermgnt";
 
-    public static final String CONSOLE_PATH = "/libs/composum/nodes/usermgnt/content/usermanagement";
+    public static final String CONSOLE_PATH = "/usermgnt/content/usermanagement";
 
     public static final Pattern PATH_PATTERN = Pattern.compile("^(" + SERVLET_PATH + "(\\.[^/]+)?\\.html)(/.*)?$");
 
@@ -54,6 +54,6 @@ public class UserManagerServlet extends AbstractConsoleServlet {
 
     @Override
     protected String getConsolePath(BeanContext context) {
-        return config.checkConsoleAccess() ? CONSOLE_PATH : null;
+        return config.checkConsoleAccess() ? config.getApplicationPath() + CONSOLE_PATH : null;
     }
 }

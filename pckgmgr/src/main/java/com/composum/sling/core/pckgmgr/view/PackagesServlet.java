@@ -30,7 +30,7 @@ public class PackagesServlet extends AbstractConsoleServlet {
 
     public static final String RESOURCE_TYPE = "composum/nodes/pckgmgr";
 
-    public static final String CONSOLE_PATH = "/libs/composum/nodes/pckgmgr/content/pckgmgr";
+    public static final String CONSOLE_PATH = "/pckgmgr/content/pckgmgr";
 
     public static final Pattern PATH_PATTERN = Pattern.compile("^(" + SERVLET_PATH + "(\\.[^/]+)?\\.html)(/.*)?$");
 
@@ -54,6 +54,6 @@ public class PackagesServlet extends AbstractConsoleServlet {
 
     @Override
     protected String getConsolePath(BeanContext context) {
-        return config.checkConsoleAccess() ? CONSOLE_PATH : null;
+        return config.checkConsoleAccess() ? config.getApplicationPath() + CONSOLE_PATH : null;
     }
 }

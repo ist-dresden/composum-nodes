@@ -12,8 +12,8 @@
     <artifactId>composum-nodes-aem-cloud</artifactId>
     <packaging>content-package</packaging>
 
-    <name>Composum Nodes AEM Package</name>
-    <description>Composum Nodes Package - the Composum Nodes tools collection for AEM with initial content separated</description>
+    <name>Composum Nodes AEM Cloud Package</name>
+    <description>Composum Nodes Package - the Composum Nodes tools collection for AEM Cloud with all content in /apps</description>
 
     <build>
         <resources>

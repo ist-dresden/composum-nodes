@@ -11,6 +11,8 @@ import java.util.Dictionary;
  */
 public interface NodesConfiguration {
 
+    String getApplicationPath();
+
     boolean checkConsoleAccess();
 
     @Nonnull

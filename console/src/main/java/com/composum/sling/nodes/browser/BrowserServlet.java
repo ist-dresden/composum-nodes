@@ -30,7 +30,7 @@ public class BrowserServlet extends AbstractConsoleServlet {
 
     public static final String RESOURCE_TYPE = "composum/nodes/browser";
 
-    public static final String CONSOLE_PATH = "/libs/composum/nodes/browser/content/browser";
+    public static final String CONSOLE_PATH = "/browser/content/browser";
 
     public static final Pattern PATH_PATTERN = Pattern.compile("^(" + SERVLET_PATH + "(\\.[^/]+)?\\.html)(/.*)?$");
 
@@ -54,6 +54,6 @@ public class BrowserServlet extends AbstractConsoleServlet {
 
     @Override
     protected String getConsolePath(BeanContext context) {
-        return config.checkConsoleAccess() ? CONSOLE_PATH : null;
+        return config.checkConsoleAccess() ? config.getApplicationPath() + CONSOLE_PATH : null;
     }
 }

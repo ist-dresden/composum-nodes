@@ -655,7 +655,7 @@ public class NodeServlet extends NodeTreeServlet {
 
             String rendererType = XSS.filter(request.getParameter("export"));
 
-            String syntheticPath = "/libs/composum/nodes/browser/query/export";
+            String syntheticPath = nodesConfig.getApplicationPath() + "/browser/query/export";
             SyntheticQueryResult resultResource = new SyntheticQueryResult(resolver, syntheticPath, result, filter, rendererType);
             resultResource.putValue("query", queryString);
 
