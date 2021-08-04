@@ -29,6 +29,7 @@
         <module>setup</module>
         <module>sling</module>
         <module>aem</module>
+        <module>cloud</module>
     </modules>
 
     <build>
