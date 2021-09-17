@@ -123,6 +123,9 @@
                             <root>/apps/cq/core/content/nav/tools/composum</root>
                         </filter>
                         <filter>
+                            <root>/libs/composum/nodes/aem/browser</root>
+                        </filter>
+                        <filter>
                             <root>/libs/composum/nodes/aem/console</root>
                         </filter>
 
