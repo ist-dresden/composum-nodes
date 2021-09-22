@@ -183,6 +183,42 @@ public interface PathReferencesService {
         interface Property {
 
             /**
+             * a value which contains references of the searched path
+             */
+            interface Value {
+
+                /**
+                 * @return the whole property value text
+                 */
+                String getText();
+
+                /**
+                 * @return the set of occurences of the searched path in the text
+                 */
+                List<String> getPath();
+
+                /**
+                 * @return 'true', if at least one ocurrence of the path is absolute
+                 */
+                boolean isAbsolute();
+
+                /**
+                 * @return 'true', if at least one ocurrence of the path is relative
+                 */
+                boolean isRelative();
+
+                /**
+                 * @return 'true', if at least one ocurrence of the path is referencing a child resource
+                 */
+                boolean isChildPath();
+
+                /**
+                 * @return 'true', if the text seems to be a rich text
+                 */
+                boolean isRichText();
+            }
+
+            /**
              * @return the name of the matching property
              */
             @Nonnull
@@ -192,13 +228,13 @@ public interface PathReferencesService {
              * @return the first (the single one) matching value
              */
             @Nullable
-            String getValue();
+            Value getValue();
 
             /**
              * @return the set of matching values, maybe more than one if the property is a multi value property
              */
             @Nonnull
-            List<String> getValues();
+            List<Value> getValues();
 
             /**
              * @return 'true', if one of the matching values seems to be a rich text value
@@ -235,7 +271,7 @@ public interface PathReferencesService {
          * @return the value of the first matching property (one of the matching values)
          */
         @Nullable
-        String getValue();
+        Property.Value getValue();
 
         /**
          * @return 'true', if the first matching value seems to be a rich text value
@@ -251,6 +287,6 @@ public interface PathReferencesService {
      * @return the iterator to traverse the found referrers
      */
     @Nonnull
-    Iterator<Hit> findReferrers(@Nonnull ResourceResolver resolver, @Nonnull Options options,
-                                @Nonnull String searchRoot, @Nonnull String path);
+    Iterator<Hit> findReferences(@Nonnull ResourceResolver resolver, @Nonnull Options options,
+                                 @Nonnull String searchRoot, @Nonnull String path);
 }

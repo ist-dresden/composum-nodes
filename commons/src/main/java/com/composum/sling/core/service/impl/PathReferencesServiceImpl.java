@@ -17,6 +17,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component(
         property = {
@@ -31,8 +33,103 @@ public class PathReferencesServiceImpl implements PathReferencesService {
 
             protected class HitProperty implements Property {
 
+                protected class HitValue implements Value {
+
+                    @Nonnull
+                    protected final String text;
+
+                    private transient List<String> path;
+                    private transient Boolean absolute;
+                    private transient Boolean relative;
+                    private transient Boolean childPath;
+                    private transient Boolean richText;
+
+                    public HitValue(@Nonnull final String text) {
+                        this.text = text;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return getText();
+                    }
+
+                    @Override
+                    @Nonnull
+                    public String getText() {
+                        return text;
+                    }
+
+                    @Override
+                    @Nonnull
+                    public List<String> getPath() {
+                        if (path == null) {
+                            path = new ArrayList<>();
+                            boolean includeChildren = HitIterator.this.options.isIncludeChildren()
+                                    || HitIterator.this.options.isChildrenOnly();
+                            if (HitIterator.this.options.isUseAbsolutePath()) {
+                                collectOccurences(path, getText(), HitIterator.this.getAbsPath(), includeChildren);
+                            }
+                            if (HitIterator.this.options.isUseRelativePath()) {
+                                collectOccurences(path, getText(), HitIterator.this.getPath(), includeChildren);
+                            }
+                        }
+                        return path;
+                    }
+
+                    @Override
+                    public boolean isAbsolute() {
+                        if (absolute == null) {
+                            absolute = false;
+                            for (String path : getPath()) {
+                                if (path.startsWith(HitIterator.this.getAbsPath())) {
+                                    absolute = true;
+                                    break;
+                                }
+                            }
+                        }
+                        return absolute;
+                    }
+
+                    @Override
+                    public boolean isRelative() {
+                        if (relative == null) {
+                            relative = false;
+                            for (String path : getPath()) {
+                                if (path.startsWith(HitIterator.this.getPath())) {
+                                    relative = true;
+                                    break;
+                                }
+                            }
+                        }
+                        return relative;
+                    }
+
+                    @Override
+                    public boolean isChildPath() {
+                        if (childPath == null) {
+                            childPath = false;
+                            for (String path : getPath()) {
+                                if (!path.equals(HitIterator.this.getAbsPath())
+                                        && !path.equals(HitIterator.this.getPath())) {
+                                    childPath = true;
+                                    break;
+                                }
+                            }
+                        }
+                        return childPath;
+                    }
+
+                    @Override
+                    public boolean isRichText() {
+                        if (richText == null) {
+                            richText = getText().contains("=\"");
+                        }
+                        return richText;
+                    }
+                }
+
                 protected final String name;
-                protected final List<String> value = new ArrayList<>();
+                protected final List<Value> value = new ArrayList<>();
                 private transient Boolean richText;
 
                 public HitProperty(@Nonnull final String name) {
@@ -56,26 +153,26 @@ public class PathReferencesServiceImpl implements PathReferencesService {
 
                 @Override
                 @Nullable
-                public String getValue() {
+                public Value getValue() {
                     return value.isEmpty() ? null : value.get(0);
                 }
 
                 @Override
                 @Nonnull
-                public List<String> getValues() {
+                public List<Value> getValues() {
                     return value;
                 }
 
                 public void addValue(@Nonnull final String value) {
-                    this.value.add(value);
+                    this.value.add(new HitValue(value));
                 }
 
                 @Override
                 public boolean isRichText() {
                     if (richText == null) {
                         richText = false;
-                        for (String val : value) {
-                            if (richText = val.contains("=\"")) {
+                        for (Value val : value) {
+                            if (richText = val.isRichText()) {
                                 break;
                             }
                         }
@@ -176,7 +273,7 @@ public class PathReferencesServiceImpl implements PathReferencesService {
 
             @Override
             @Nullable
-            public String getValue() {
+            public Property.Value getValue() {
                 Property property = getProperty();
                 return property != null ? property.getValue() : null;
             }
@@ -245,8 +342,8 @@ public class PathReferencesServiceImpl implements PathReferencesService {
 
     @Override
     @Nonnull
-    public Iterator<Hit> findReferrers(@Nonnull final ResourceResolver resolver, @Nonnull final Options options,
-                                       @Nonnull String searchRoot, @Nonnull String path) {
+    public Iterator<Hit> findReferences(@Nonnull final ResourceResolver resolver, @Nonnull final Options options,
+                                        @Nonnull String searchRoot, @Nonnull String path) {
         while (searchRoot.endsWith("/")) {
             searchRoot = searchRoot.substring(0, searchRoot.length() - 1);
         }
@@ -328,5 +425,29 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                 queryBuilder.append(" or jcr:like(./").append(propertyName).append(",'%=\"").append(path).append("/%')");
             }
         }
+    }
+
+    protected static void collectOccurences(@Nonnull final List<String> collection, @Nonnull final String text,
+                                            @Nonnull final String path, boolean includeChildren) {
+        collectOccurences(collection, text, path, propertyValuePattern(path, includeChildren));
+        collectOccurences(collection, text, path, richTextPattern(path, includeChildren));
+    }
+
+    protected static void collectOccurences(@Nonnull final List<String> collection, @Nonnull final String text,
+                                            @Nonnull final String path, @Nonnull final Pattern pattern) {
+        Matcher matcher = pattern.matcher(text);
+        int pos = 0;
+        while (matcher.find(pos)) {
+            collection.add(matcher.group("path"));
+            pos = matcher.end();
+        }
+    }
+
+    protected static Pattern richTextPattern(@Nonnull final String path, boolean includeChildren) {
+        return Pattern.compile("(=[\"'])(?<path>" + path + (includeChildren ? "(/[^\"']+)?" : "") + ")([\"'])");
+    }
+
+    protected static Pattern propertyValuePattern(@Nonnull final String path, boolean includeChildren) {
+        return Pattern.compile("^(?<path>" + path + (includeChildren ? "(/.+)?" : "") + ")$");
     }
 }
