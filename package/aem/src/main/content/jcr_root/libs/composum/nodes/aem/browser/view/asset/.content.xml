@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+        jcr:primaryType="nt:unstructured"
+        id="aem-asset"
+        sling:resourceType="composum/nodes/browser/view">
+    <pattern jcr:primaryType="nt:unstructured"
+            primaryType="dam:Asset"/>
+    <tabs jcr:primaryType="nt:unstructured">
+        <properties jcr:primaryType="nt:unstructured"
+                key="properties" icon="list" group="properties"
+                label="Properties" title="Node Properties"/>
+        <generic.aem-asset jcr:primaryType="nt:unstructured"
+                key="view" icon="eye" group="view"
+                label="View" title="Display Asset"
+                resourceType="composum/nodes/aem/browser/view/asset/tab">
+            <toolbar jcr:primaryType="nt:unstructured">
+                <resolver jcr:primaryType="nt:unstructured"
+                        type="button" icon="external-link" title="Resolver Mapping ON/OFF"/>
+                <selectors jcr:primaryType="nt:unstructured"
+                        type="text" label=".x." title="Sling selectors"/>
+                <parameters jcr:primaryType="nt:unstructured"
+                        type="text" icon="question" title="URL parameters"/>
+                <actions jcr:primaryType="nt:unstructured">
+                    <reload jcr:primaryType="nt:unstructured"
+                            type="button" icon="refresh" label="Reload" title="Reload"/>
+                    <open jcr:primaryType="nt:unstructured"
+                            type="button" icon="globe" label="Open" title="Open in a separate view"/>
+                    <assetmgr jcr:primaryType="nt:unstructured"
+                            type="link" icon="picture-o" label="Asset Manager" title="Switch to asset manager"
+                            href="/bin/assets.html${path}" target="assets"/>
+                </actions>
+                <file jcr:primaryType="nt:unstructured">
+                    <download jcr:primaryType="nt:unstructured"
+                            type="link" icon="download" label="Download" title="Download Asset"
+                            href="" target="_blank"/>
+                    <update jcr:primaryType="nt:unstructured"
+                            type="button" icon="upload" title="Change Asset"/>
+                </file>
+            </toolbar>
+            <content jcr:primaryType="nt:unstructured"
+                    sling:resourceType="composum/nodes/aem/browser/view/asset/content"/>
+        </generic.aem-asset>
+        <json jcr:primaryType="nt:unstructured"
+                key="source json" icon="code" group="json"
+                label="JSON" title="Source view as JSON (switchable to XML)"/>
+        <xml jcr:primaryType="nt:unstructured"
+                key="source xml" icon="code" css="hidden" group="xml"
+                label="XML" title="Source view as XML (switchable to JSON)"/>
+        <acl jcr:primaryType="nt:unstructured" condition="acl"
+                key="acl" icon="key" group="acl"
+                title="Access Rules" label="ACL"/>
+        <version jcr:primaryType="nt:unstructured" condition="versionable"
+                key="version" icon="history" group="version"
+                label="Versions" title="Versions"/>
+    </tabs>
+</jcr:root>
