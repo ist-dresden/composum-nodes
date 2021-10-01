@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * a service to search for resources which are referencing a given path
+ * the service for finding and changing resource references
  */
 public interface PathReferencesService {
 
@@ -30,9 +30,11 @@ public interface PathReferencesService {
 
         protected String basePath = "";
         protected String primaryType = null;
+        protected String contentPath = null;
         protected String resourceName = null;
         protected String resourceType = null;
         protected String propertyName = null;
+        protected boolean useTextSearch = true;
         protected boolean useAbsolutePath = true;
         protected boolean useRelativePath = false;
         protected boolean includeChildren = false;
@@ -49,6 +51,11 @@ public interface PathReferencesService {
             return primaryType;
         }
 
+        @Nullable
+        public String getContentPath() {
+            return contentPath;
+        }
+
         public String getResourceName() {
             return resourceName;
         }
@@ -59,6 +66,10 @@ public interface PathReferencesService {
 
         public String getPropertyName() {
             return propertyName;
+        }
+
+        public boolean isUseTextSearch() {
+            return useTextSearch;
         }
 
         public boolean isUseAbsolutePath() {
@@ -104,6 +115,14 @@ public interface PathReferencesService {
         }
 
         /**
+         * an optional relative content path; maybe 'null'
+         */
+        public Options contentPath(@Nonnull final String name) {
+            contentPath = name;
+            return this;
+        }
+
+        /**
          * the node name of the searched referrers; maybe 'null'
          */
         public Options resourceName(@Nonnull final String name) {
@@ -131,6 +150,14 @@ public interface PathReferencesService {
         }
 
         /**
+         * if 'true' the path is searched using the fulltext search (jcr:contains())
+         */
+        public Options useTextSearch(final boolean flag) {
+            useTextSearch = flag;
+            return this;
+        }
+
+        /**
          * if 'true' the absolute path variant of the searched path is checked
          */
         public Options useAbsolutePath(final boolean flag) {
@@ -153,7 +180,6 @@ public interface PathReferencesService {
             includeChildren = flag;
             return this;
         }
-
 
         /**
          * if 'true' a search for subpages of the specified path to search is executed
@@ -188,14 +214,30 @@ public interface PathReferencesService {
             interface Value {
 
                 /**
+                 * @return the index of the value in a multi value set
+                 */
+                int getIndex();
+
+                /**
+                 * replaces the old path of the value with the given new one
+                 *
+                 * @param newPath the new path
+                 * @return the modified value
+                 */
+                @Nonnull
+                String apply(@Nonnull final String newPath);
+
+                /**
                  * @return the whole property value text
                  */
+                @Nonnull
                 String getText();
 
                 /**
                  * @return the set of occurences of the searched path in the text
                  */
-                List<String> getPath();
+                @Nonnull
+                List<String> getPaths();
 
                 /**
                  * @return 'true', if at least one ocurrence of the path is absolute
@@ -231,10 +273,21 @@ public interface PathReferencesService {
             Value getValue();
 
             /**
+             * @return the content text of the first (the single one) matching value
+             */
+            @Nonnull
+            String getText();
+
+            /**
              * @return the set of matching values, maybe more than one if the property is a multi value property
              */
             @Nonnull
             List<Value> getValues();
+
+            /**
+             * @return 'true', the property is a multi value property
+             */
+            boolean isMulti();
 
             /**
              * @return 'true', if one of the matching values seems to be a rich text value
@@ -253,6 +306,12 @@ public interface PathReferencesService {
          */
         @Nonnull
         Set<String> getPropertyNames();
+
+        /**
+         * @return the set of the names of the matching properties
+         */
+        @Nonnull
+        Iterable<Property> getProperties();
 
         /**
          * @param propertyName the name of the matching property
@@ -280,6 +339,8 @@ public interface PathReferencesService {
     }
 
     /**
+     * searches resources which are referencing the given path
+     *
      * @param resolver   the resolver (the user/session context)
      * @param options    the options to create the search query
      * @param searchRoot the repository root path of the area to browse
@@ -289,4 +350,14 @@ public interface PathReferencesService {
     @Nonnull
     Iterator<Hit> findReferences(@Nonnull ResourceResolver resolver, @Nonnull Options options,
                                  @Nonnull String searchRoot, @Nonnull String path);
+
+    /**
+     * replaces each occurrence of the paths found in a previous search
+     * by the new path in the properties of the found resource (hit)
+     *
+     * @param resolver the resolver (user/session) to use for searching
+     * @param hit      the repository resource which has to be changed
+     * @param newPath  the new path value
+     */
+    void changeReferences(@Nonnull ResourceResolver resolver, @Nonnull Hit hit, @Nonnull String newPath);
 }

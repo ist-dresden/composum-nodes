@@ -390,7 +390,7 @@ public class NodeServlet extends NodeTreeServlet {
      * the pattern to check for a XPATH query and their simplified variation
      */
     public static final Pattern XPATH_QUERY = Pattern.compile(
-            "^(?<path>(/jcr:root)?/[^ (\\[*]*)( +(?<words>" + WORDS + ") *|(.*))$"
+            "^(?<path>(/jcr:root)?/[^ (\\[*]*)( +(?<words>" + WORDS + ")*|(.*))$"
     );
 
     /**
