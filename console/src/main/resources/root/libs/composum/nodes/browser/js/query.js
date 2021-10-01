@@ -49,6 +49,7 @@
                 var query = this.$queryInput.val();
                 core.ajaxGet('/bin/cpm/nodes/node.query.html', {
                     data: {
+                        _charset_: 'UTF-8',
                         query: this.prepareQuery(query),
                         filter: this.isFiltered() ? browser.tree.filter : ''
                     }
