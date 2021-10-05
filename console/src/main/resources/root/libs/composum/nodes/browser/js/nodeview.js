@@ -845,9 +845,7 @@
             tabSelected: function (event) {
                 browser.nodeView.tabSelected(event);
             }
-
         });
-
 
         //
         // detail view (console)
@@ -890,6 +888,9 @@
         }, {
             selector: '> .versions',
             tabType: browser.VersionsTab
+        }, {
+            selector: '> .references',
+            tabType: browser.references.Tab
         }, function ($detailContent) {
             // the generic implementation...
             var $content = $detailContent.find('> div');

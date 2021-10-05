@@ -1,6 +1,8 @@
 package com.composum.nodes.debugutil;
 
 import java.io.IOException;
+import java.util.Objects;
+import java.util.regex.Pattern;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -9,6 +11,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
@@ -61,7 +64,8 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
  * curl -u admin:admin -F file=@"$TMPFIL" -F name="tmp $path" -F force=true -F install=true http://localhost:6502/crx/packmgr/service.jsp
  * curl -u admin:admin -F cmd=delete http://localhost:6502/crx/packmgr/service/.json/etc/packages/my_packages/${PKG%%.zip}-1.zip
  * <p>
- * This can also be deployed
+ *
+ * @see "https://gist.github.com/stoerr/a54c58b4b05770c6a7ee39654ea84305"
  */
 @Component(service = Servlet.class,
         property = {
@@ -74,18 +78,33 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 @Designate(ocd = DownloadJcrTreeAsPackageServlet.Configuration.class)
 public class DownloadJcrTreeAsPackageServlet extends SlingSafeMethodsServlet {
 
-    final String PARAM_PACKAGENAME = "packageName";
+    /**
+     * Parameter that specifies the name of the package; default is automatically generated from the path.
+     */
+    private static final String PARAM_PACKAGENAME = "packageName";
 
-    private Configuration config;
+    /**
+     * Parameter that sets the import mode of the package, default: {@link ImportMode#REPLACE} .
+     */
+    private static final String PARAM_MERGE = "merge";
 
+    private volatile Configuration config;
+
+    @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
         if (config == null || !config.enabled()) {
             super.doGet(request, response);
             return;
         }
+
+        String userID = request.getResourceResolver().getUserID();
+        if (userID == null || !Pattern.compile(config.allowedUserRegex()).matcher(userID).matches()) {
+            throw new IllegalArgumentException("Not allowed for user " + userID);
+        }
+
         RequestPathInfo pathInfo = request.getRequestPathInfo();
-        String resourcePath = pathInfo.getSuffix();
+        String resourcePath = Objects.requireNonNull(pathInfo.getSuffix(), "Suffix required to determine resource.");
         ResourceResolver resolver = request.getResourceResolver();
         Resource resource = resolver.getResource(resourcePath);
         if (resource == null) {
@@ -98,20 +117,24 @@ public class DownloadJcrTreeAsPackageServlet extends SlingSafeMethodsServlet {
             throw new IllegalArgumentException("For security reasons only allowed for admin");
         }
         resourcePath = resource.getPath();
+
         String packageName = "tmp-" + resourcePath.replaceAll("[^a-zA-Z0-9_-]+", "_");
         if (StringUtils.isNotBlank(request.getParameter(PARAM_PACKAGENAME))) {
             packageName = request.getParameter(PARAM_PACKAGENAME);
         }
+
+        String mergeParam = request.getParameter(PARAM_MERGE);
+        ImportMode importMode = StringUtils.isNotBlank(mergeParam) ? ImportMode.valueOf(mergeParam) : null;
 
         response.setContentType("application/zip");
         response.addHeader("Content-Disposition", "attachment; filename=" +
                 packageName + ".zip");
 
         BundleContext bundleContext = FrameworkUtil.getBundle(Packaging.class).getBundleContext();
-        ServiceReference packagingRef = bundleContext.getServiceReference(Packaging.class.getName());
-        Packaging packaging = (Packaging) bundleContext.getService(packagingRef);
+        ServiceReference<Packaging> packagingRef = bundleContext.getServiceReference(Packaging.class);
+        Packaging packaging = bundleContext.getService(packagingRef);
         try {
-            writePackage(resource, packageName, request, packaging, response.getOutputStream());
+            writePackage(resource, packageName, request, packaging, importMode, response.getOutputStream());
         } catch (RepositoryException | PackageException e) {
             throw new ServletException(e);
         } finally {
@@ -120,15 +143,19 @@ public class DownloadJcrTreeAsPackageServlet extends SlingSafeMethodsServlet {
         }
     }
 
-    private void writePackage(Resource resource, String packageName, SlingHttpServletRequest request, Packaging packaging, ServletOutputStream outputStream) throws IOException, RepositoryException, PackageException {
+    private void writePackage(Resource resource, String packageName, SlingHttpServletRequest request, Packaging packaging,
+                              ImportMode importMode, ServletOutputStream outputStream) throws IOException, RepositoryException, PackageException {
 
         JcrPackageManager pkgmgr = packaging.getPackageManager(request.getResourceResolver().adaptTo(Session.class));
 
         JcrPackage jcrPackage = pkgmgr.create("my_packages", packageName, "1");
         try {
-            JcrPackageDefinition pkgdef = jcrPackage.getDefinition();
+            JcrPackageDefinition pkgdef = Objects.requireNonNull(jcrPackage.getDefinition());
             DefaultWorkspaceFilter workspaceFilter = new DefaultWorkspaceFilter();
             workspaceFilter.add(new PathFilterSet(resource.getPath()));
+            if (importMode != null) {
+                workspaceFilter.setImportMode(importMode);
+            }
             pkgdef.setFilter(workspaceFilter, false);
 
             pkgmgr.assemble(pkgdef, null, outputStream);
@@ -139,6 +166,17 @@ public class DownloadJcrTreeAsPackageServlet extends SlingSafeMethodsServlet {
                 // ignore
             }
         }
+    }
+
+    @Activate
+    @Modified
+    protected void activate(Configuration config) {
+        this.config = config;
+    }
+
+    @Deactivate
+    protected void deactivate() {
+        this.config = null;
     }
 
     @ObjectClassDefinition(
@@ -159,17 +197,11 @@ public class DownloadJcrTreeAsPackageServlet extends SlingSafeMethodsServlet {
                 description = "Enable the servlet"
         )
         boolean enabled() default false;
-    }
 
-    @Activate
-    @Modified
-    protected void activate(Configuration config) {
-        this.config = config;
-    }
-
-    @Deactivate
-    protected void deactivate() {
-        this.config = null;
+        @AttributeDefinition(
+                description = "Regex for allowed users, matching the complete username"
+        )
+        String allowedUserRegex() default "admin";
     }
 
 }
