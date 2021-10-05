@@ -338,6 +338,13 @@ public interface PathReferencesService {
         boolean isRichText();
     }
 
+    interface HitIterator extends Iterator<Hit> {
+
+        String getQueryString();
+
+        Throwable getThrowable();
+    }
+
     /**
      * searches resources which are referencing the given path
      *
@@ -348,8 +355,8 @@ public interface PathReferencesService {
      * @return the iterator to traverse the found referrers
      */
     @Nonnull
-    Iterator<Hit> findReferences(@Nonnull ResourceResolver resolver, @Nonnull Options options,
-                                 @Nonnull String searchRoot, @Nonnull String path);
+    HitIterator findReferences(@Nonnull ResourceResolver resolver, @Nonnull Options options,
+                               @Nonnull String searchRoot, @Nonnull String path);
 
     /**
      * replaces each occurrence of the paths found in a previous search

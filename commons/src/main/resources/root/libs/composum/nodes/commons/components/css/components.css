@@ -152,6 +152,17 @@ fieldset {
     padding-left: 0;
 }
 
+.form-checkbox {
+    height: 59px;
+    padding-top: 23px;
+    margin-bottom: 5px;
+}
+
+.form-checkbox-col {
+    height: 36px;
+    margin-bottom: 5px;
+}
+
 /**
  * Radio Group
  */

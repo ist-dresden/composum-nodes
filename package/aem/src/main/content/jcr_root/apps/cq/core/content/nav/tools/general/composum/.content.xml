@@ -2,5 +2,8 @@
 <jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0"
         xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
         jcr:primaryType="nt:unstructured"
+        jcr:description="The 'Swiss-Knife' for the content repository and the component development."
         jcr:title="Composum Nodes"
-        id="composum-nodes"/>
+        href="/bin/browser.html"
+        id="composum-browser"
+        target="_blank"/>

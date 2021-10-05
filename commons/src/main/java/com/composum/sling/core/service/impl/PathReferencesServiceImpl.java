@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 import javax.jcr.query.Query;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.regex.Pattern;
 )
 public class PathReferencesServiceImpl implements PathReferencesService {
 
-    protected static class HitIterator implements Iterator<Hit> {
+    protected static class HitIteratorImpl implements HitIterator {
 
         protected class IteratorHit implements Hit {
 
@@ -68,23 +69,23 @@ public class PathReferencesServiceImpl implements PathReferencesService {
 
                     @Nonnull
                     protected String applyVal(@Nonnull final String newPath) {
-                        final String basePath = HitIterator.this.options.getBasePath();
+                        final String basePath = HitIteratorImpl.this.options.getBasePath();
                         final String relPath = relPath(basePath, newPath);
                         if (isAbsolute()) {
-                            return getText().replaceAll("^" + HitIterator.this.absPath, absPath(basePath, relPath));
+                            return getText().replaceAll("^" + HitIteratorImpl.this.absPath, absPath(basePath, relPath));
                         } else {
-                            return getText().replaceAll("^" + HitIterator.this.relPath, relPath);
+                            return getText().replaceAll("^" + HitIteratorImpl.this.relPath, relPath);
                         }
                     }
 
                     @Nonnull
                     protected String applyText(@Nonnull final String newPath) {
-                        final String basePath = HitIterator.this.options.getBasePath();
+                        final String basePath = HitIteratorImpl.this.options.getBasePath();
                         final String relPath = relPath(basePath, newPath);
                         if (isAbsolute()) {
-                            return getText().replaceAll("^=\"" + HitIterator.this.absPath, "=\"" + absPath(basePath, relPath));
+                            return getText().replaceAll("^=\"" + HitIteratorImpl.this.absPath, "=\"" + absPath(basePath, relPath));
                         } else {
-                            return getText().replaceAll("^=\"" + HitIterator.this.relPath, "=\"" + relPath);
+                            return getText().replaceAll("^=\"" + HitIteratorImpl.this.relPath, "=\"" + relPath);
                         }
                     }
 
@@ -99,13 +100,13 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                     public List<String> getPaths() {
                         if (paths == null) {
                             paths = new ArrayList<>();
-                            boolean includeChildren = HitIterator.this.options.isIncludeChildren()
-                                    || HitIterator.this.options.isChildrenOnly();
-                            if (HitIterator.this.options.isUseAbsolutePath()) {
-                                collectOccurrences(paths, getText(), HitIterator.this.getAbsPath(), includeChildren);
+                            boolean includeChildren = HitIteratorImpl.this.options.isIncludeChildren()
+                                    || HitIteratorImpl.this.options.isChildrenOnly();
+                            if (HitIteratorImpl.this.options.isUseAbsolutePath()) {
+                                collectOccurrences(paths, getText(), HitIteratorImpl.this.getAbsPath(), includeChildren);
                             }
-                            if (HitIterator.this.options.isUseRelativePath()) {
-                                collectOccurrences(paths, getText(), HitIterator.this.getRelPath(), includeChildren);
+                            if (HitIteratorImpl.this.options.isUseRelativePath()) {
+                                collectOccurrences(paths, getText(), HitIteratorImpl.this.getRelPath(), includeChildren);
                             }
                         }
                         return paths;
@@ -116,7 +117,7 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                         if (absolute == null) {
                             absolute = false;
                             for (String path : getPaths()) {
-                                if (path.startsWith(HitIterator.this.getAbsPath())) {
+                                if (path.startsWith(HitIteratorImpl.this.getAbsPath())) {
                                     absolute = true;
                                     break;
                                 }
@@ -130,7 +131,7 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                         if (relative == null) {
                             relative = false;
                             for (String path : getPaths()) {
-                                if (path.startsWith(HitIterator.this.getRelPath())) {
+                                if (path.startsWith(HitIteratorImpl.this.getRelPath())) {
                                     relative = true;
                                     break;
                                 }
@@ -144,8 +145,8 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                         if (childPath == null) {
                             childPath = false;
                             for (String path : getPaths()) {
-                                if (!path.equals(HitIterator.this.getAbsPath())
-                                        && !path.equals(HitIterator.this.getRelPath())) {
+                                if (!path.equals(HitIteratorImpl.this.getAbsPath())
+                                        && !path.equals(HitIteratorImpl.this.getRelPath())) {
                                     childPath = true;
                                     break;
                                 }
@@ -250,7 +251,7 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                 if (propertyMap == null) {
                     propertyMap = new HashMap<>();
                     final ValueMap resourceValues = resource.getValueMap();
-                    final String propertyName = HitIterator.this.options.getPropertyName();
+                    final String propertyName = HitIteratorImpl.this.options.getPropertyName();
                     if (StringUtils.isBlank(propertyName)) {
                         for (Map.Entry<String, Object> entry : resourceValues.entrySet()) {
                             String key = entry.getKey();
@@ -296,8 +297,9 @@ public class PathReferencesServiceImpl implements PathReferencesService {
             }
 
             protected boolean isMatchingValue(@Nonnull final String value) {
-                return (options.isUseAbsolutePath() && isMatchingValue(value, HitIterator.this.getAbsPath()))
-                        || (options.isUseRelativePath() && isMatchingValue(value, HitIterator.this.getRelPath()));
+                final boolean searchRelative = options.isUseRelativePath() && !HitIteratorImpl.this.getRelPath().startsWith("/");
+                return ((options.isUseAbsolutePath() || !searchRelative) && isMatchingValue(value, HitIteratorImpl.this.getAbsPath()))
+                        || (searchRelative && isMatchingValue(value, HitIteratorImpl.this.getRelPath()));
             }
 
             protected boolean isMatchingValue(@Nonnull final String value, @Nonnull final String path) {
@@ -358,17 +360,30 @@ public class PathReferencesServiceImpl implements PathReferencesService {
         protected final String absPath;
         protected final String relPath;
         protected final Iterator<Resource> searchResult;
+        protected final Throwable throwable;
 
         protected IteratorHit next = null;
 
-        public HitIterator(@Nonnull final Options options, @Nonnull final String queryString,
-                           @Nonnull final String absPath, @Nonnull final String relPath,
-                           @Nonnull final Iterator<Resource> searchResult) {
+        public HitIteratorImpl(@Nonnull final Options options, @Nonnull final String queryString,
+                               @Nonnull final String absPath, @Nonnull final String relPath,
+                               @Nonnull final Iterator<Resource> searchResult) {
             this.options = options;
             this.queryString = queryString;
             this.absPath = absPath;
             this.relPath = relPath;
             this.searchResult = searchResult;
+            this.throwable = null;
+        }
+
+        public HitIteratorImpl(@Nonnull final Options options, @Nonnull final String queryString,
+                               @Nonnull final String absPath, @Nonnull final String relPath,
+                               @Nonnull final Throwable throwable) {
+            this.options = options;
+            this.queryString = queryString;
+            this.absPath = absPath;
+            this.relPath = relPath;
+            this.searchResult = Collections.emptyIterator();
+            this.throwable = throwable;
         }
 
         @Nullable
@@ -405,16 +420,23 @@ public class PathReferencesServiceImpl implements PathReferencesService {
             return absPath;
         }
 
+        @Override
         @Nonnull
         public String getQueryString() {
             return queryString;
+        }
+
+        @Override
+        @Nullable
+        public Throwable getThrowable() {
+            return throwable;
         }
     }
 
     @Override
     @Nonnull
-    public Iterator<Hit> findReferences(@Nonnull final ResourceResolver resolver, @Nonnull final Options options,
-                                        @Nonnull String searchRoot, @Nonnull String path) {
+    public HitIterator findReferences(@Nonnull final ResourceResolver resolver, @Nonnull final Options options,
+                                      @Nonnull String searchRoot, @Nonnull String path) {
         while (searchRoot.endsWith("/")) {
             searchRoot = searchRoot.substring(0, searchRoot.length() - 1);
         }
@@ -456,18 +478,19 @@ public class PathReferencesServiceImpl implements PathReferencesService {
             queryBuilder.append("@sling:resourceType='").append(resourceType).append("' and (");
             brackets++;
         }
+        final boolean searchRelative = options.isUseRelativePath() && !relPath.startsWith("/");
         if (options.isUseTextSearch()) {
             queryBuilder.append("jcr:contains(").append(propertyName.startsWith("@") ? propertyName : ".")
-                    .append(",'").append(relPath).append("')");
+                    .append(",'").append(searchRelative ? relPath : absPath).append("')");
         } else {
-            if (options.isUseAbsolutePath()) {
+            if (options.isUseAbsolutePath() || !searchRelative) {
                 addPathExpression(options, queryBuilder, propertyName, absPath);
             }
-            if (options.isUseRelativePath() && !path.startsWith("/")) {
+            if (searchRelative) {
                 if (options.isUseAbsolutePath()) {
                     queryBuilder.append(" or ");
                 }
-                addPathExpression(options, queryBuilder, propertyName, path);
+                addPathExpression(options, queryBuilder, propertyName, relPath);
             }
         }
         while (--brackets >= 0) {
@@ -475,8 +498,13 @@ public class PathReferencesServiceImpl implements PathReferencesService {
         }
         queryBuilder.append("]");
         final String queryString = queryBuilder.toString();
-        //noinspection deprecation
-        return new HitIterator(options, queryString, absPath, relPath, resolver.findResources(queryString, Query.XPATH));
+        try {
+            //noinspection deprecation
+            Iterator<Resource> result = resolver.findResources(queryString, Query.XPATH);
+            return new HitIteratorImpl(options, queryString, absPath, relPath, result);
+        } catch (Exception ex) {
+            return new HitIteratorImpl(options, queryString, absPath, relPath, ex);
+        }
     }
 
     protected void addPathExpression(@Nonnull final Options options, @Nonnull final StringBuilder queryBuilder,
