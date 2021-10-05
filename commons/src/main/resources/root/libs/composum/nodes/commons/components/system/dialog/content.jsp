@@ -4,6 +4,7 @@
 <sling:defineObjects/>
 <cpn:component var="model" type="com.composum.sling.core.ResourceModel">
     <form class="composum-nodes-system-dialog_form widget-form">
+        <input name="_charset_" type="hidden" value="UTF-8"/>
         <ul class="composum-commons-form-tab-nav nav nav-tabs" role="tablist">
         </ul>
         <div class="composum-nodes-system-dialog_panels tab-content composum-commons-form-tabbed">

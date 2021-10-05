@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,7 +70,8 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
-        BeanContext context = createContext(request, response);
+        final HttpSession session = request.getSession(true);
+        final BeanContext context = createContext(request, response);
 
         // the pattern matching is not necessary but it prevents from errors thrown during unwanted requests
         final String pathInfo = request.getPathInfo();

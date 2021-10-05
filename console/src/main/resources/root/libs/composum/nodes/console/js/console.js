@@ -590,6 +590,9 @@
                         var tabTypes = this.getTabTypes();
                         for (var i = 0; !this.viewWidget && i < tabTypes.length; i++) {
                             var type = tabTypes[i];
+                            if (_.isFunction(type)) {
+                                type = type(this.$detailContent);
+                            }
                             this.viewWidget = core.getWidget(this.$detailContent, type.selector, type.tabType);
                         }
                         if (this.viewWidget) {
