@@ -126,6 +126,9 @@
                             <root>/apps/cq/core/content/nav/tools/composum</root><!-- for removal -->
                         </filter>
                         <filter>
+                            <root>/libs/composum/nodes/aem/browser</root>
+                        </filter>
+                        <filter>
                             <root>/libs/composum/nodes/aem/console</root>
                         </filter>
 
@@ -187,6 +190,21 @@
             <artifactId>composum-nodes-jslibs-package</artifactId>
             <version>${project.version}</version>
             <type>content-package</type>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-commons-bundle</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.scripting.jsp.taglib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
         </dependency>
 
     </dependencies>

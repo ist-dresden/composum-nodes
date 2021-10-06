@@ -72,6 +72,9 @@ public class BrowserViews {
             instance = (BrowserViews) session.getAttribute(SA_INSTANCE);
         } catch (ClassCastException ignore) {
         }
+        if (instance !=null && System.currentTimeMillis() - instance.created > 1800000L /* 30 min */){
+            instance = null;
+        }
         if (instance == null) {
             instance = new BrowserViews(request);
             session.setAttribute(SA_INSTANCE, instance);
@@ -396,6 +399,7 @@ public class BrowserViews {
     }
 
     protected final List<View> browserViews;
+    protected final long created;
 
     protected BrowserViews(@Nonnull final SlingHttpServletRequest request) {
         final ResourceResolver resolver = request.getResourceResolver();
@@ -405,6 +409,7 @@ public class BrowserViews {
         }
         browserViews = new ArrayList<>(viewMap.values());
         Collections.sort(browserViews);
+        created = System.currentTimeMillis();
     }
 
     protected void findBrowserViews(@Nonnull final ResourceResolver resolver,

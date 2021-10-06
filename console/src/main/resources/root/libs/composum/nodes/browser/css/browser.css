@@ -703,6 +703,7 @@
 
 .detail-view .detail-toolbar .input-group-addon,
 .detail-view .detail-toolbar select {
+    line-height: 19px;
     font-size: 14px;
     padding: 1px 6px;
 }
