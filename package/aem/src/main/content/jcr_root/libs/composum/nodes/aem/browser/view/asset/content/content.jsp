@@ -6,7 +6,7 @@
     <div class="image-frame ${genericView.mimeTypeCss}">
         <div class="image-background"
              style="background-image:url(${cpn:unmappedUrl(slingRequest,'/libs/composum/nodes/commons/images/image-background.png')})">
-            <img src=""/>
+            <img src="" alt=""/>
         </div>
     </div>
 </cpn:component>

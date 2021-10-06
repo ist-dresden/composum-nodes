@@ -21,25 +21,21 @@
                         type="text" label=".x." title="Sling selectors"/>
                 <parameters jcr:primaryType="nt:unstructured"
                         type="text" icon="question" title="URL parameters"/>
-                <actions jcr:primaryType="nt:unstructured">
+                <general jcr:primaryType="nt:unstructured">
                     <reload jcr:primaryType="nt:unstructured"
                             type="button" icon="refresh" label="Reload" title="Reload"/>
-                    <open jcr:primaryType="nt:unstructured"
-                            type="button" icon="globe" label="Open" title="Open in a separate view"/>
+                </general>
+                <actions jcr:primaryType="nt:unstructured">
                     <assetmgr jcr:primaryType="nt:unstructured"
                             type="link" icon="picture-o" label="Asset Manager" title="Switch to asset manager"
-                            href="/bin/assets.html${path}" target="assets"/>
-                </actions>
-                <file jcr:primaryType="nt:unstructured">
+                            href="" target="assets"/>
                     <download jcr:primaryType="nt:unstructured"
                             type="link" icon="download" label="Download" title="Download Asset"
-                            href="" target="_blank"/>
-                    <update jcr:primaryType="nt:unstructured"
-                            type="button" icon="upload" title="Change Asset"/>
-                </file>
+                            href=""/>
+                </actions>
             </toolbar>
             <content jcr:primaryType="nt:unstructured"
-                    sling:resourceType="composum/nodes/aem/browser/view/asset/content"/>
+                    resourceType="composum/nodes/aem/browser/view/asset/content"/>
         </generic.aem-asset>
         <json jcr:primaryType="nt:unstructured"
                 key="source json" icon="code" group="json"
@@ -47,6 +43,9 @@
         <xml jcr:primaryType="nt:unstructured"
                 key="source xml" icon="code" css="hidden" group="xml"
                 label="XML" title="Source view as XML (switchable to JSON)"/>
+        <references jcr:primaryType="nt:unstructured"
+                key="references" icon="crosshairs" group="references"
+                title="References" label="References"/>
         <acl jcr:primaryType="nt:unstructured" condition="acl"
                 key="acl" icon="key" group="acl"
                 title="Access Rules" label="ACL"/>

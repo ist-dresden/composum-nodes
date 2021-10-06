@@ -155,7 +155,7 @@
                         }
                     }
                 } else {
-                    extension = (urlMatch ? urlMatch[2] : ".html");
+                    extension = (urlMatch ? urlMatch[2] : (this.$extension.length > 0 ? '.html' : ''));
                 }
                 url += extension;
                 var suffix = this.$suffix.val();
