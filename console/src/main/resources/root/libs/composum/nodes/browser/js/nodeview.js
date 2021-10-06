@@ -8,6 +8,12 @@
 
     (function (browser, console, core) {
 
+        browser.genericTabTypes = {};
+
+        browser.registerGenericTab = function (id, type) {
+            browser.genericTabTypes[id] = type;
+        };
+
         /**
          * the abstract tab to display the current resource by their own view with
          * typical Sling URL variations specified in the views toolbar
@@ -149,7 +155,7 @@
                         }
                     }
                 } else {
-                    extension = (urlMatch ? urlMatch[2] : ".html");
+                    extension = (urlMatch ? urlMatch[2] : (this.$extension.length > 0 ? '.html' : ''));
                 }
                 url += extension;
                 var suffix = this.$suffix.val();
@@ -340,11 +346,10 @@
         browser.ImageTab = browser.AbstractFileTab.extend({
 
             initialize: function (options) {
-                this.isAsset = !!this.$el.data('asset');
                 options = _.extend(options, {
                     displayKey: 'imageView',
                     loadContent: _.bind(function (url) {
-                        if (!this.urlHasModifiers() && !this.isAsset) {
+                        if (!this.urlHasModifiers()) {
                             url = '/bin/cpm/nodes/node.load.bin' + url;
                         }
                         this.$image.attr('src', core.getContextUrl(url));
@@ -352,11 +357,6 @@
                 });
                 browser.AbstractFileTab.prototype.initialize.apply(this, [options]);
                 this.$image = this.$('.image-frame img');
-            },
-
-            getSelectors: function () {
-                var selectors = this.$selectors.val();
-                return this.isAsset ? selectors || 'asset' : selectors;
             }
         });
 
@@ -845,9 +845,7 @@
             tabSelected: function (event) {
                 browser.nodeView.tabSelected(event);
             }
-
         });
-
 
         //
         // detail view (console)
@@ -891,9 +889,16 @@
             selector: '> .versions',
             tabType: browser.VersionsTab
         }, {
-            // the fallback to the basic implementation as a default rule
-            selector: '> div',
-            tabType: core.console.DetailTab
+            selector: '> .references',
+            tabType: browser.references.Tab
+        }, function ($detailContent) {
+            // the generic implementation...
+            var $content = $detailContent.find('> div');
+            var type = $content.length > 0 ? browser.genericTabTypes[$content.data('id')] : undefined;
+            return {
+                selector: '> div',
+                tabType: type ? type : core.console.DetailTab
+            };
         }];
 
         /**

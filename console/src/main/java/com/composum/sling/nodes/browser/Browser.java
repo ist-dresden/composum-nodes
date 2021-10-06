@@ -309,7 +309,9 @@ public class Browser extends ConsoleServletBean {
         return resourceType;
     }
 
-    /** Remove any search path / /mnt/overlay from given path to a resource type = "normalize" path to resource type. */
+    /**
+     * Remove any search path / /mnt/overlay from given path to a resource type = "normalize" path to resource type.
+     */
     @Nullable
     protected String getResourceType(@Nullable String resourceType) {
         if (StringUtils.isNotBlank(resourceType)) {
@@ -326,7 +328,9 @@ public class Browser extends ConsoleServletBean {
         return resourceType;
     }
 
-    /** Returns the resource for a resourceType (the "highest" in the search path), or the resource if the path is absolute. */
+    /**
+     * Returns the resource for a resourceType (the "highest" in the search path), or the resource if the path is absolute.
+     */
     @Nullable
     protected Resource getTypeResource(@Nullable final String resourceType, boolean includeOverlay) {
         ResourceResolver resolver = getResolver();
@@ -355,6 +359,7 @@ public class Browser extends ConsoleServletBean {
 
     /**
      * The chain of resource super types. This is also included for content resources since this is used quite often in AEM.
+     *
      * @see "https://experienceleague.adobe.com/docs/experience-manager-65/developing/introduction/the-basics.html?lang=en#sling-request-processing"
      */
     @Nonnull
@@ -376,7 +381,9 @@ public class Browser extends ConsoleServletBean {
         return supertypeChain;
     }
 
-    /** Paths for the locations relevant to the resource typein search paths, /mnt/override / /mnt/overlay, mapped to the label information. */
+    /**
+     * Paths for the locations relevant to the resource typein search paths, /mnt/override / /mnt/overlay, mapped to the label information.
+     */
     @Nonnull
     protected Map<String, Reference> getResourceTypeSet() {
         if (resourceTypes == null) {
@@ -412,7 +419,9 @@ public class Browser extends ConsoleServletBean {
         return resourceTypes;
     }
 
-    /** Set of related paths: for resource types the resource type found in the search path and /mnt/(override|overlay), base paths, resource types. */
+    /**
+     * Set of related paths: for resource types the resource type found in the search path and /mnt/(override|overlay), base paths, resource types.
+     */
     @Nonnull
     public Map<String, Reference> getRelatedPathSet() {
         if (relatedPathSet == null) {
@@ -482,12 +491,14 @@ public class Browser extends ConsoleServletBean {
         return overlayAvailable;
     }
 
-    /** Path of resource type within /mnt/overlay . If not a declaring resource, this doesn't make sense -> null. */
+    /**
+     * Path of resource type within /mnt/overlay . If not a declaring resource, this doesn't make sense -> null.
+     */
     @Nullable
     public String getOverlayPath() {
         return isOverlayResource() ? getPath() :
-        isDeclaringType() ? getOverlayRoot() + "/" + getResourceType(getPath())
-                : null;
+                isDeclaringType() ? getOverlayRoot() + "/" + getResourceType(getPath())
+                        : null;
     }
 
     public String getOverrideRoot() {
@@ -505,7 +516,9 @@ public class Browser extends ConsoleServletBean {
         return overrideAvailable;
     }
 
-    /** Path within /mnt/override. */
+    /**
+     * Path within /mnt/override.
+     */
     @Nonnull
     public String getOverridePath() {
         return isOverrideResource() ? getPath() : getOverrideRoot() + getBasePath();
@@ -771,6 +784,10 @@ public class Browser extends ConsoleServletBean {
 
     public String getViewType() {
         if (viewType == null) {
+            BrowserViews.View genericView = BrowserViews.getView(context, getResource());
+            if (genericView != null) {
+                return "generic";
+            }
             viewType = "something";
             if (isFile()) {
                 if (isVideo()) {
@@ -805,8 +822,15 @@ public class Browser extends ConsoleServletBean {
     }
 
     public String getTabType() {
-        String selector = getRequest().getSelectors(new StringFilter.BlackList("^tab$"));
-        return StringUtils.isNotBlank(selector) ? selector.substring(1) : "properties";
+        String tabType = getRequest().getSelectors(new StringFilter.BlackList("^tab$"));
+        if (StringUtils.isBlank(tabType)) {
+            tabType = "properties";
+        } else if (tabType.startsWith(".generic.")) {
+            tabType = "generic";
+        } else {
+            tabType = tabType.substring(1);
+        }
+        return tabType;
     }
 
     public String getName() {

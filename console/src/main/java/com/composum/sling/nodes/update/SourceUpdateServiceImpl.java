@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.composum.sling.core.util.ResourceUtil.*;
+import static jdk.nashorn.internal.runtime.ScriptObject.isArray;
 
 
 @Component(
@@ -151,6 +152,9 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
                 if (!ignoredMetadataAttributes.contains(entry.getKey()) &&
                         !Objects.deepEquals(entry.getValue(), newvalues.get(entry.getKey()))) {
                     thisNodeChanged = true;
+                    if (isArray(entry.getValue()) != isArray(newvalues.get(entry.getKey()))) {
+                        newvalues.remove(entry.getKey()); // strangely, we cannot change multi-value-ness with a put
+                    }
                     newvalues.put(entry.getKey(), entry.getValue());
                 }
             }
@@ -204,6 +208,10 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
             LOG.error("Error at {} : {}", resource.getPath(), e.toString());
             throw e;
         }
+    }
+
+    protected boolean isArray(Object value) {
+        return value != null && value.getClass().isArray();
     }
 
     private void copyTypeInformation(ValueMap templatevalues, ModifiableValueMap newvalues) {

@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-package</artifactId>
-        <version>2.6.6</version>
+        <version>2.6.7</version>
     </parent>
 
     <artifactId>composum-nodes-aem-package</artifactId>
@@ -120,7 +120,13 @@
 
                     <filters>
                         <filter>
-                            <root>/apps/cq/core/content/nav/tools/composum</root>
+                            <root>/apps/cq/core/content/nav/tools/general/composum</root>
+                        </filter>
+                        <filter>
+                            <root>/apps/cq/core/content/nav/tools/composum</root><!-- for removal -->
+                        </filter>
+                        <filter>
+                            <root>/libs/composum/nodes/aem/browser</root>
                         </filter>
                         <filter>
                             <root>/libs/composum/nodes/aem/console</root>
@@ -186,5 +192,50 @@
             <type>content-package</type>
         </dependency>
 
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>composum-nodes-commons-bundle</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.scripting.jsp.taglib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+        </dependency>
+
     </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installAemNodesPackage</id>
+            <activation>
+                <property>
+                    <name>deploy.package</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.day.jcr.vault</groupId>
+                        <artifactId>content-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-content-package</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
 </project>

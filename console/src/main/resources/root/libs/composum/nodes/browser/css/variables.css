@@ -1,0 +1,11 @@
+#browser {
+    --cpn-font-size-default: 14px;
+    --cpn-line-height-default: 20px;
+    --cpn-font-size-small: 11px;
+    --cpn-line-height-small: 15px;
+    --cpn-color-text-muted: #777;
+    --cpn-color-toolbar-label: #555;
+    --cpn-detail-content-background: #f8f8f8;
+    --cpn-detail-list-item-padding: 0 5px;
+    --cpn-detail-list-line-height: 24px;
+}

@@ -528,7 +528,7 @@
                     options.forEach(function (option) {
                         if (_.isObject(option)) {
                             this.$input.append('<option value="' + (option.value || option.value === '' ? option.value
-                                : option.key || option.key === '' ? option.key : option.name || '') + '">'
+                                    : option.key || option.key === '' ? option.key : option.name || '') + '">'
                                 + (option.label || option.name || option.key || option.value) + '</option>');
                         } else {
                             this.$input.append('<option>' + option + '</option>');
@@ -903,7 +903,10 @@
         components.PathWidget = components.TextFieldWidget.extend({
 
             initialize: function (options) {
-                components.TextFieldWidget.prototype.initialize.apply(this, [_.extend({
+                options = _.extend({
+                    selector: {
+                        button: 'button.select'
+                    },
                     typeahead: {
                         minLength: 1,
                         source: _.bind(function (query, callback) {
@@ -937,7 +940,8 @@
                             return splitted[1] + '<b>' + pattern[2] + '</b>' + (splitted[2] || '');
                         }
                     }
-                }, options)]);
+                }, options);
+                components.TextFieldWidget.prototype.initialize.apply(this, [options]);
                 // retrieve element attributes
                 this.dialogTitle = this.$el.attr('title');
                 this.dialogLabel = this.$el.data('label');
@@ -947,7 +951,7 @@
                 this.setRootPath(this.config.rootPath);
                 this.setFilter(options.filter || this.$el.data('filter'));
                 // set up '.select' button if present
-                this.$selectButton = this.$('button.select');
+                this.$selectButton = this.$(options.selector.button);
                 if (this.$selectButton.length > 0) {
                     this.$selectButton.on('click', _.bind(this.selectPath, this));
                 }

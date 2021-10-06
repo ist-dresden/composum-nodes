@@ -21,10 +21,8 @@ import javax.jcr.query.Query;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class Consoles extends ConsolePage {
@@ -40,14 +38,7 @@ public class Consoles extends ConsolePage {
     public static final String PROP_DESCRIPTION = "description";
 
     public static final String PROP_PRECONDITION = "precondition";
-    public static final String PRECONDITION_CLASS_AVAILABILITY = "class";
-
-    public static final Map<String, PreconditionFilter> PRECONDITION_FILTERS;
-
-    static {
-        PRECONDITION_FILTERS = new HashMap<>();
-        PRECONDITION_FILTERS.put(PRECONDITION_CLASS_AVAILABILITY, new ClassAvailabilityFilter());
-    }
+    public static final String CONDITION_TYPE_CLASS = "class";
 
     public static final String CONTENT_QUERY_BASE = "/jcr:root";
     public static final String CONTENT_QUERY_RULE = "/content[@sling:resourceType='composum/nodes/console/page']";
@@ -62,19 +53,18 @@ public class Consoles extends ConsolePage {
 
         @Override
         public boolean accept(Resource resource) {
-            ValueMap values = resource.adaptTo(ValueMap.class);
-            String[] categories = values.get(CATEGORIES, new String[0]);
-            for (String category : categories) {
-                if (selectors.contains(category)) {
-                    String precondition = values.get(PROP_PRECONDITION, "");
-                    if (StringUtils.isNotBlank(precondition)) {
-                        String[] rule = StringUtils.split(precondition, ":");
-                        PreconditionFilter filter = PRECONDITION_FILTERS.get(rule[0]);
+            if (resource != null) {
+                ValueMap values = resource.getValueMap();
+                String[] categories = values.get(CATEGORIES, new String[0]);
+                for (String category : categories) {
+                    if (selectors.contains(category)) {
+                        String precondition = values.get(PROP_PRECONDITION, "");
+                        Condition filter = Condition.DEFAULT.getCondition(precondition);
                         if (filter != null) {
-                            return filter.accept(context, resource, rule.length > 1 ? rule[1] : null);
+                            return filter.accept(context, resource);
                         }
+                        return true;
                     }
-                    return true;
                 }
             }
             return false;
@@ -202,39 +192,6 @@ public class Consoles extends ConsolePage {
                     consoles.add(new Console(ResourceHandle.use(console)));
                 }
             }
-        }
-    }
-
-    //
-    // console module preconditions
-    //
-
-    /**
-     * the special filter to check the preconditions of a console module
-     */
-    public interface PreconditionFilter {
-
-        /**
-         * check the configured precondition for the console resource
-         */
-        boolean accept(BeanContext context, Resource resource, String precondition);
-    }
-
-    /**
-     * check the availability of a class as a precondition for a console module
-     */
-    public static class ClassAvailabilityFilter implements PreconditionFilter {
-
-        @Override
-        public boolean accept(BeanContext context, Resource resource, String className) {
-            boolean classAvailable = false;
-            try {
-                context.getType(className);
-                classAvailable = true;
-            } catch (Exception ex) {
-                LOG.warn("precondition check failed: " + ex.getMessage());
-            }
-            return classAvailable;
         }
     }
 }
