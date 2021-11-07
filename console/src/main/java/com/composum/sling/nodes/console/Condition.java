@@ -1,9 +1,14 @@
 package com.composum.sling.nodes.console;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.util.SlingUrl;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
@@ -16,6 +21,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.version.VersionManager;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,6 +36,8 @@ public interface Condition {
     String KEY_ACL = "acl";
     String KEY_JCR = "jcr";
     String KEY_CLASS = "class";
+    String KEY_SERVLET = "servlet";
+    String KEY_HTTP = "http";
 
     /**
      * check the configured condition for the given resource
@@ -133,6 +141,47 @@ public interface Condition {
                 LOG.warn("precondition check failed: " + ex.getMessage());
             }
             return classAvailable;
+        }
+    }
+
+    /**
+     * check the availability of an HTTP service
+     */
+    class HttpStatus implements Condition {
+
+        public static final Logger LOG = LoggerFactory.getLogger(ClassAvailability.class);
+
+        protected final int expectedStatus;
+        protected final String serviceUrl;
+
+        public HttpStatus(@Nonnull final String pattern) {
+            final String[] parts = StringUtils.split(pattern, ":", 2);
+            if (parts.length < 2) {
+                this.expectedStatus = HttpURLConnection.HTTP_OK;
+                this.serviceUrl = parts[0];
+            } else {
+                this.expectedStatus = Integer.parseInt(parts[0]);
+                this.serviceUrl = parts[1];
+            }
+        }
+
+        @Override
+        public boolean accept(@Nonnull final BeanContext context, @Nonnull final Resource resource) {
+            boolean serviceAvailable = false;
+            if (StringUtils.isNotBlank(serviceUrl))
+                try {
+                    final SlingHttpServletRequest request = context.getRequest();
+                    final String relativeUrl = new SlingUrl(request).fromUrl(serviceUrl).getUrl();
+                    final String absoluteUrl = LinkUtil.getAbsoluteUrl(request, relativeUrl);
+                    final HeadMethod httpMethod = new HeadMethod(absoluteUrl);
+                    httpMethod.addRequestHeader("Cookie", request.getHeader("Cookie"));
+                    final HttpClient httpClient = new HttpClient();
+                    final int status = httpClient.executeMethod(httpMethod);
+                    serviceAvailable = (status == expectedStatus);
+                } catch (Exception ex) {
+                    LOG.warn("precondition check failed: " + ex.getMessage());
+                }
+            return serviceAvailable;
         }
     }
 
@@ -264,5 +313,7 @@ public interface Condition {
             .addFactory(KEY_ACL, (key, pattern) -> CAN_HAVE_ACL)
             .addFactory(KEY_JCR, (key, pattern) -> JCR_RESOURCE)
             .addFactory(KEY_CLASS, (key, pattern) ->
-                    pattern instanceof String ? new ClassAvailability((String) pattern) : null);
+                    pattern instanceof String ? new ClassAvailability((String) pattern) : null)
+            .addFactory(KEY_HTTP, (key, pattern) ->
+                    pattern instanceof String ? new HttpStatus((String) pattern) : null);
 }

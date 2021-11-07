@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
         jcr:primaryType="sling:OrderedFolder"
         jcr:description="the console logo link target content node with the tools descriptions"
-        sling:resourceType="composum/nodes/console/page"/>
+        sling:resourceType="composum/nodes/console/page">
+    <tools jcr:primaryType="nt:unstructured"
+            consoleId="tools"
+            order="{Long}80"
+            menu="{Boolean}true"
+            jcr:title="Tools"
+            categories="[core,nodes,system]"
+            sling:resourceType="composum/nodes/console/tools"
+            jcr:description="the console tools navigation menu root">
+    </tools>
+</jcr:root>

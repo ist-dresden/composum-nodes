@@ -3,10 +3,47 @@
         xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
         jcr:primaryType="sling:OrderedFolder"
         sling:resourceType="composum/nodes/console/page">
-    <felix jcr:primaryType="nt:unstructured"
-            jcr:title="Felix"
-            description="/libs/composum/nodes/system/description"
-            sling:resourceType="composum/nodes/system/felix"
-            categories="[core]"
-            order="{Long}80"/>
+    <runtime jcr:primaryType="nt:unstructured"
+            consoleId="tools-runtime"
+            parentId="tools"
+            menu="{Boolean}true"
+            jcr:title="Runtime"
+            description="/libs/composum/nodes/system/tools/runtime/description"
+            sling:resourceType="composum/nodes/console/tools/page"
+            categories="[system]"
+            order="{Long}300">
+        <files jcr:primaryType="nt:unstructured"
+                consoleId="tools-runtime-files"
+                jcr:title="Files"
+                description="/libs/composum/nodes/system/tools/runtime/files/description"
+                sling:resourceType="composum/nodes/system/tools/runtime/files"
+                categories="[system]"
+                order="{Long}300"/>
+    </runtime>
+    <osgi jcr:primaryType="nt:unstructured"
+            consoleId="tools-osgi"
+            parentId="tools"
+            menu="{Boolean}true"
+            jcr:title="OSGi"
+            description="/libs/composum/nodes/system/tools/osgi/description"
+            sling:resourceType="composum/nodes/console/tools/page"
+            categories="[system]"
+            order="{Long}500">
+        <bundles jcr:primaryType="nt:unstructured"
+                consoleId="tools-osgi-bundles"
+                jcr:title="Bundles"
+                description="/libs/composum/nodes/system/tools/osgi/bundles/description"
+                sling:resourceType="composum/nodes/system/tools/osgi/bundles"
+                categories="[system]"
+                order="{Long}50"/>
+    </osgi>
+    <webconsole jcr:primaryType="nt:unstructured"
+            consoleId="tools-webconsole"
+            parentId="tools"
+            jcr:title="Web Console"
+            description="/libs/composum/nodes/system/tools/webconsole/description"
+            sling:resourceType="composum/nodes/system/tools/webconsole"
+            categories="[system]"
+            order="{Long}900"
+            precondition="http:/system/console"/>
 </jcr:root>

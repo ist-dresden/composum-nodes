@@ -1,5 +1,19 @@
 {
   "jcr:primaryType": "sling:OrderedFolder",
   "jcr:description": "the console logo link target content node with the tools descriptions",
-  "sling:resourceType": "composum/nodes/console/page"
+  "sling:resourceType": "composum/nodes/console/page",
+  "tools": {
+    "jcr:primaryType": "nt:unstructured",
+    "consoleId": "tools",
+    "order": 80,
+    "menu": true,
+    "jcr:title": "Tools",
+    "sling:resourceType": "composum/nodes/console/tools",
+    "categories": [
+      "core",
+      "nodes",
+      "system"
+    ],
+    "jcr:description": "the console tools navigation menu root"
+  }
 }
