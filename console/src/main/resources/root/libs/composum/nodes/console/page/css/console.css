@@ -514,6 +514,18 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     color: #fff;
 }
 
+/* tools menu */
+
+.navbar .nav-item.dropdown > a {
+    display: inline-block;
+    padding-right: 1px;
+}
+
+.navbar .nav-item.dropdown > a.dropdown-toggle {
+    margin-right: -1px;
+    padding: 19px 13px 17px 7px;
+}
+
 /*
  * user status
  */

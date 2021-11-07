@@ -10,8 +10,7 @@
     "description": "/libs/composum/nodes/usermgnt/description",
     "sling:redirect": "/bin/users.html",
     "categories": [
-      "nodes",
-      "usermgnt"
+      "users"
     ],
     "order": 40
   }

@@ -18,6 +18,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyType;
@@ -469,20 +470,25 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         String type = null;
         String mimeType = MimeTypeUtil.getMimeType(resource, "");
         if (StringUtils.isNotBlank(mimeType)) {
-            int delim = mimeType.indexOf('/');
-            String major = mimeType.substring(0, delim);
-            String minor = mimeType.substring(delim + 1);
-            type = major;
-            if ("text".equals(major)) {
-                type += "-" + minor;
-            } else if ("application".equals(major)) {
-                type = minor;
-            }
-            type = type.toLowerCase();
+            type = getMimeTypeKey(mimeType);
         }
         if (StringUtils.isNotBlank(type) && StringUtils.isNotBlank(prefix)) {
             type = prefix + type;
         }
         return type;
+    }
+
+    @Nonnull
+    public static String getMimeTypeKey(String mimeType) {
+        int delim = mimeType.indexOf('/');
+        String major = mimeType.substring(0, delim);
+        String minor = mimeType.substring(delim + 1);
+        String type = major;
+        if ("text".equals(major)) {
+            type += "-" + minor;
+        } else if ("application".equals(major)) {
+            type = minor;
+        }
+        return type.toLowerCase();
     }
 }

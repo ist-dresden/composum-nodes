@@ -1,14 +1,16 @@
 package com.composum.sling.nodes.console;
 
 import com.composum.sling.core.BeanContext;
-import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.ResourceFilter;
+import com.composum.sling.core.util.HttpUtil;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
+import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -16,16 +18,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import javax.jcr.Session;
+import javax.annotation.Nullable;
 import javax.jcr.query.Query;
+import java.io.IOException;
+import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
-public class Consoles extends ConsolePage {
+public class Consoles implements HttpUtil.CachableInstance {
 
     private static final Logger LOG = LoggerFactory.getLogger(Consoles.class);
 
@@ -34,34 +43,61 @@ public class Consoles extends ConsolePage {
     public static final String ORDER = "order";
     public static final int ORDER_DEFAULT = 50;
 
-    public static final String PROP_TARGET = "target";
-    public static final String PROP_DESCRIPTION = "description";
-
-    public static final String PROP_PRECONDITION = "precondition";
-    public static final String CONDITION_TYPE_CLASS = "class";
+    public static final String PN_CONSOLE_ID = "consoleId";
+    public static final String PN_PARENT_ID = "parentId";
+    public static final String PN_DESCRIPTION = "description";
+    public static final String PN_TARGET = "target";
+    public static final String PN_MENU = "menu";
+    public static final String PN_PRECONDITION = "precondition";
+    public static final String PN_CONTENT_SRC = "contentSrc";
 
     public static final String CONTENT_QUERY_BASE = "/jcr:root";
     public static final String CONTENT_QUERY_RULE = "/content[@sling:resourceType='composum/nodes/console/page']";
 
+    public static final String SA_INSTANCE = Consoles.class.getName() + "#instance";
+
+    @Nonnull
+    public static Consoles getInstance(@Nonnull final BeanContext context) {
+        final SlingHttpServletRequest request = Objects.requireNonNull(context.getRequest());
+        return HttpUtil.getInstance(request, SA_INSTANCE, new HttpUtil.InstanceFactory<Consoles>() {
+
+            @Override
+            public Class<Consoles> getType() {
+                return Consoles.class;
+            }
+
+            @Override
+            public Consoles newInstance(SlingHttpServletRequest request) {
+                return new Consoles(context);
+            }
+        });
+    }
+
     public class ConsoleFilter extends ResourceFilter.AbstractResourceFilter {
 
+        private final BeanContext context;
         private final List<String> selectors;
 
-        public ConsoleFilter(String... selectors) {
+        public ConsoleFilter(@Nonnull final BeanContext context, String... selectors) {
+            this.context = context;
             this.selectors = Arrays.asList(selectors);
         }
 
         @Override
-        public boolean accept(Resource resource) {
+        public boolean accept(@Nullable final Resource resource) {
             if (resource != null) {
-                ValueMap values = resource.getValueMap();
-                String[] categories = values.get(CATEGORIES, new String[0]);
-                for (String category : categories) {
+                final ValueMap values = resource.getValueMap();
+                final String[] categories = values.get(CATEGORIES, new String[0]);
+                for (final String category : categories) {
                     if (selectors.contains(category)) {
-                        String precondition = values.get(PROP_PRECONDITION, "");
-                        Condition filter = Condition.DEFAULT.getCondition(precondition);
-                        if (filter != null) {
-                            return filter.accept(context, resource);
+                        final String[] precondition = values.get(PN_PRECONDITION, new String[0]);
+                        for (final String condition : precondition) {
+                            final Condition filter = Condition.DEFAULT.getCondition(condition);
+                            if (filter != null) {
+                                if (!filter.accept(context, resource)) {
+                                    return false;
+                                }
+                            }
                         }
                         return true;
                     }
@@ -76,122 +112,271 @@ public class Consoles extends ConsolePage {
         }
 
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@Nonnull final StringBuilder builder) {
             builder.append("console(").append(StringUtils.join(selectors, ',')).append(")");
         }
     }
 
-    public class Console implements Comparable<Console> {
+    public class Console implements Comparable<Console>, Serializable {
 
-        private final ResourceHandle handle;
+        private final String id;
+        private final String name;
+        private final String path;
+        private final String title;
+        private final String description;
+        private final String target;
+        private final String contentSrc;
         private final int order;
 
-        public Console(ResourceHandle handle) {
-            this.handle = handle;
+        private Console parent = null;
+        private final String parentId;
+        private final boolean isMenu;
+        private final boolean isDeclaredMenu;
+        private final Map<String, Console> menuItems;
+
+        public Console(@Nonnull final ConsoleFilter filter, @Nonnull final ResourceHandle handle) {
+            this(filter, handle, handle.getProperty(PN_MENU, Boolean.FALSE));
+        }
+
+        public Console(@Nonnull final ConsoleFilter filter, @Nonnull final ResourceHandle handle, boolean isMenu) {
+            id = handle.getProperty(PN_CONSOLE_ID, String.class);
+            name = handle.getName();
+            path = handle.getPath();
+            title = handle.getTitle();
+            description = handle.getProperty(PN_DESCRIPTION, "");
+            target = handle.getProperty(PN_TARGET, "");
+            contentSrc = handle.getProperty(PN_CONTENT_SRC, "");
             order = handle.getProperty(ORDER, ORDER_DEFAULT);
+            parentId = handle.getProperty(PN_PARENT_ID, String.class);
+            this.isMenu = isMenu;
+            this.isDeclaredMenu = handle.getProperty(PN_MENU, Boolean.FALSE);
+            menuItems = new TreeMap<>();
+            if (isMenu) {
+                buildMenu(filter, handle);
+            }
         }
 
+        @Nonnull
         public String getLabel() {
-            return handle.getTitle();
+            return title;
         }
 
+        @Nonnull
+        public String getId() {
+            return StringUtils.isNotBlank(id) ? id : (parent != null ? (parent.getId() + "-" + getName()) : getName());
+        }
+
+        @Nonnull
         public String getName() {
-            return handle.getName();
+            return name;
         }
 
+        @Nonnull
         public String getPath() {
-            return handle.getPath();
+            return path;
         }
 
+        @Nonnull
         public String getDescription() {
-            return handle.getProperty(PROP_DESCRIPTION, "");
+            return description;
         }
 
-        public String getUrl() {
-            String suffix = XSS.filter(getRequest().getRequestPathInfo().getSuffix());
+        @Nonnull
+        public String getContentSrc() {
+            return contentSrc;
+        }
+
+        @Nonnull
+        public String getUrl(@Nonnull final SlingHttpServletRequest request) {
+            final String suffix = XSS.filter(request.getRequestPathInfo().getSuffix());
             // placeholder ${path} is already URL-encoded at that place since {} aren't valid in URL.
-            return StringUtils.replace(LinkUtil.getUnmappedUrl(getRequest(), getPath()),
+            final String url = StringUtils.replace(LinkUtil.getUnmappedUrl(request, getPath()),
                     "$%7Bpath%7D", StringUtils.isNotBlank(suffix) ? suffix : "");
+            return StringUtils.isNotBlank(url) ? url : "#";
         }
 
+        @Nonnull
         public String getLinkAttributes() {
-            StringBuilder builder = new StringBuilder();
-            String value;
-            if (StringUtils.isNotBlank(value = handle.getProperty(PROP_TARGET, ""))) {
-                builder.append(" target=\"").append(value).append("\"");
+            final StringBuilder builder = new StringBuilder();
+            if (StringUtils.isNotBlank(target)) {
+                builder.append(" target=\"").append(target).append("\"");
             }
             return builder.toString();
         }
 
         @Override
         public int compareTo(Console other) {
-            CompareToBuilder builder = new CompareToBuilder();
+            final CompareToBuilder builder = new CompareToBuilder();
             builder.append(order, other.order);
             builder.append(getPath(), other.getPath());
             return builder.toComparison();
         }
-    }
 
-    private transient List<Console> consoles;
-
-    public Consoles(BeanContext context, Resource resource) {
-        super(context, resource);
-    }
-
-    public Consoles(BeanContext context) {
-        super(context);
-    }
-
-    public Consoles() {
-        super();
-    }
-
-    //
-    // workspace, user and profile
-    //
-
-    public String getCurrentUser() {
-        Session session = getSession();
-        return session.getUserID();
-    }
-
-    public String getLogoutUrl() {
-        CoreConfiguration service = this.context.getService(CoreConfiguration.class);
-        return service != null ? service.getLogoutUrl() : null;
-    }
-
-    public String getWorkspaceName() {
-        return getSession().getWorkspace().getName();
-    }
-
-    public List<Console> getConsoles() {
-        if (consoles == null) {
-            consoles = new ArrayList<>();
-            ResourceResolver resolver = getResolver();
-            for (String path : resolver.getSearchPath()) {
-                findConsoles(consoles, CONTENT_QUERY_BASE + path + CONTENT_QUERY_RULE);
-            }
-            Collections.sort(consoles);
+        @Nullable
+        public String getParentId() {
+            return parentId;
         }
-        return consoles;
-    }
 
-    protected void findConsoles(List<Console> consoles, String query) {
-        ResourceResolver resolver = getResolver();
-        NodesConfiguration configuration = Objects.requireNonNull(getSling().getService(NodesConfiguration.class));
-        String[] categories = configuration.getConsoleCategories();
-        ResourceFilter consoleFilter = new ConsoleFilter(categories);
+        @Nullable
+        public Console getParent() {
+            return parent;
+        }
 
-        @SuppressWarnings("deprecation")
-        Iterator<Resource> consoleContentResources = resolver.findResources(query, Query.XPATH);
-        while (consoleContentResources.hasNext()) {
+        public boolean isMenu() {
+            return isMenu;
+        }
 
-            Resource consoleContent = consoleContentResources.next();
-            for (Resource console : consoleContent.getChildren()) {
-                if (consoleFilter.accept(console)) {
-                    consoles.add(new Console(ResourceHandle.use(console)));
+        public boolean isDeclaredMenu() {
+            return isDeclaredMenu;
+        }
+
+        public boolean isValidMenu() {
+            return !menuItems.isEmpty();
+        }
+
+        @Nonnull
+        public Collection<ConsoleModel> getMenuItems(@Nonnull final BeanContext context) {
+            final List<ConsoleModel> result = new ArrayList<>();
+            for (final Console console : menuItems.values()) {
+                if (!console.isDeclaredMenu() || console.isValidMenu()) {
+                    result.add(new ConsoleModel(context, console));
+                }
+            }
+            return result;
+        }
+
+        protected void addConsole(@Nonnull final Console console) {
+            menuItems.put(String.format("%04d", console.order) + "#" + console.getName(), console);
+            console.parent = this;
+        }
+
+        protected void buildMenu(@Nonnull final ConsoleFilter filter, @Nonnull final ResourceHandle handle) {
+            for (final Resource child : handle.getChildren()) {
+                if (filter.accept(child)) {
+                    final Console console = new Console(filter, ResourceHandle.use(child), true);
+                    consoleSet.put(console.getName(), console);
+                    addConsole(console);
                 }
             }
         }
+
+        @Nonnull
+        public String toString(@Nonnull final BeanContext context) {
+            final StringWriter buffer = new StringWriter();
+            final JsonWriter writer = new JsonWriter(buffer);
+            try {
+                final Console parent = getParent();
+                writer.beginObject();
+                if (parent != null) {
+                    writer.name("parent").value(parent.getId());
+                }
+                writer.name("id").value(getId());
+                writer.name("url").value(getUrl(context.getRequest()));
+                writer.endObject();
+                writer.flush();
+            } catch (IOException ioex) {
+                LOG.error(ioex.toString());
+            }
+            return buffer.toString();
+        }
+    }
+
+    private final TreeMap<String, Console> consoleSet;
+    private final Set<Console> toplevel;
+    private final long created;
+
+    public Consoles(@Nonnull final BeanContext context) {
+        consoleSet = new TreeMap<>();
+        ResourceResolver resolver = context.getResolver();
+        for (String path : resolver.getSearchPath()) {
+            findConsoles(context, CONTENT_QUERY_BASE + path + CONTENT_QUERY_RULE);
+        }
+        for (final Map.Entry<String, Console> entry : consoleSet.entrySet()) {
+            final Console console = entry.getValue();
+            final String parentId = console.getParentId();
+            final Console parent;
+            if (StringUtils.isNotBlank(parentId) && (parent = getConsole(parentId)) != null) {
+                parent.addConsole(console);
+            }
+        }
+        toplevel = new TreeSet<>();
+        for (final Map.Entry<String, Console> entry : consoleSet.entrySet()) {
+            final Console console = entry.getValue();
+            if (console.getParent() == null && (!console.isMenu() || console.isValidMenu())) {
+                toplevel.add(console);
+            }
+        }
+        for (final Map.Entry<String, Console> entry : new TreeMap<>(consoleSet).entrySet()) {
+            final String key = entry.getKey();
+            final Console console = entry.getValue();
+            if (console.isMenu() && !console.isValidMenu()) {
+                final String id = console.getId();
+                if (!key.equals(id)) {
+                    consoleSet.remove(key);
+                    consoleSet.put(id, console);
+                }
+            }
+        }
+        created = System.currentTimeMillis();
+    }
+
+    @Override
+    public long getCreated() {
+        return created;
+    }
+
+    @Nonnull
+    public Collection<ConsoleModel> getConsoles(@Nonnull final BeanContext context) {
+        final List<ConsoleModel> result = new ArrayList<>();
+        for (final Console console : toplevel) {
+            result.add(new ConsoleModel(context, console));
+        }
+        return result;
+    }
+
+    @Nullable
+    public ConsoleModel getConsole(@Nonnull final BeanContext context, @Nonnull final String name) {
+        final Console console = getConsole(name);
+        return console != null ? new ConsoleModel(context, console) : null;
+    }
+
+    @Nullable
+    public Console getConsole(@Nonnull final String name) {
+        return consoleSet.get(name);
+    }
+
+    protected void findConsoles(@Nonnull final BeanContext context, @Nonnull final String query) {
+        final SlingHttpServletRequest request = Objects.requireNonNull(context.getRequest());
+        final NodesConfiguration configuration = Objects.requireNonNull(context.getService(NodesConfiguration.class));
+        final String[] categories = configuration.getConsoleCategories();
+        final ConsoleFilter consoleFilter = new ConsoleFilter(context, categories);
+        final ResourceResolver resolver = context.getResolver();
+        @SuppressWarnings("deprecation") final Iterator<Resource> consoleContentResources = resolver.findResources(query, Query.XPATH);
+        while (consoleContentResources.hasNext()) {
+            final Resource consoleContent = consoleContentResources.next();
+            for (final Resource resource : consoleContent.getChildren()) {
+                if (consoleFilter.accept(resource)) {
+                    final Console console = new Console(consoleFilter, ResourceHandle.use(resource));
+                    consoleSet.putIfAbsent(console.getId(), console);
+                }
+            }
+        }
+    }
+
+    @Nonnull
+    public String toString(@Nonnull final BeanContext context) {
+        final StringWriter buffer = new StringWriter();
+        final JsonWriter writer = new JsonWriter(buffer);
+        try {
+            writer.beginObject();
+            for (Map.Entry<String, Console> entry : consoleSet.entrySet()) {
+                writer.name(entry.getKey()).jsonValue(entry.getValue().toString(context));
+            }
+            writer.endObject();
+            writer.flush();
+        } catch (IOException ioex) {
+            LOG.error(ioex.toString());
+        }
+        return buffer.toString();
     }
 }

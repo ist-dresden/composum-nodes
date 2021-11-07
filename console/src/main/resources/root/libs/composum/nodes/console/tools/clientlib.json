@@ -1,0 +1,34 @@
+{
+  "jcr:primaryType": "sling:Folder",
+  "sling:resourceType": "composum/nodes/commons/clientlib",
+  "description": "the client library for the console tool set",
+  "category": [
+    "composum.nodes.console.tools"
+  ],
+  "order": 100,
+  "link": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "depends": [
+      "category:composum.nodes.console.base"
+    ]
+  },
+  "css": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "depends": [
+      "category:composum.nodes.console.base"
+    ],
+    "embed": [
+      "composum/nodes/console/tools/css/tools.css"
+    ]
+  },
+  "js": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "depends": [
+      "jslibs/jquery/([3].*:3.6.0)/jquery.js",
+      "category:composum.nodes.console.base"
+    ],
+    "embed": [
+      "composum/nodes/console/tools/js/tools.js"
+    ]
+  }
+}

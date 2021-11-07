@@ -2,6 +2,7 @@ package com.composum.sling.nodes.browser;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.util.HttpUtil;
 import com.composum.sling.core.util.SerializableValueMap;
 import com.composum.sling.core.util.ValueEmbeddingReader;
 import com.composum.sling.nodes.console.Condition;
@@ -16,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.jcr.query.Query;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
@@ -28,11 +28,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class BrowserViews {
+public class BrowserViews implements HttpUtil.CachableInstance {
 
     private static final Logger LOG = LoggerFactory.getLogger(BrowserViews.class);
 
-    public static final String SA_INSTANCE = View.class.getName() + "#instance";
+    public static final String SA_INSTANCE = BrowserViews.class.getName() + "#instance";
 
     public static final String PN_ID = "id";
     public static final String PN_RANK = "rank";
@@ -66,20 +66,18 @@ public class BrowserViews {
 
     @Nonnull
     public static BrowserViews getInstance(@Nonnull final SlingHttpServletRequest request) {
-        final HttpSession session = request.getSession(true);
-        BrowserViews instance = null;
-        try {
-            instance = (BrowserViews) session.getAttribute(SA_INSTANCE);
-        } catch (ClassCastException ignore) {
-        }
-        if (instance !=null && System.currentTimeMillis() - instance.created > 1800000L /* 30 min */){
-            instance = null;
-        }
-        if (instance == null) {
-            instance = new BrowserViews(request);
-            session.setAttribute(SA_INSTANCE, instance);
-        }
-        return instance;
+        return HttpUtil.getInstance(request, SA_INSTANCE, new HttpUtil.InstanceFactory<BrowserViews>() {
+
+            @Override
+            public Class<BrowserViews> getType() {
+                return BrowserViews.class;
+            }
+
+            @Override
+            public BrowserViews newInstance(SlingHttpServletRequest request) {
+                return new BrowserViews(request);
+            }
+        });
     }
 
     public class ResourceContext {
@@ -410,6 +408,11 @@ public class BrowserViews {
         browserViews = new ArrayList<>(viewMap.values());
         Collections.sort(browserViews);
         created = System.currentTimeMillis();
+    }
+
+    @Override
+    public long getCreated() {
+        return created;
     }
 
     protected void findBrowserViews(@Nonnull final ResourceResolver resolver,

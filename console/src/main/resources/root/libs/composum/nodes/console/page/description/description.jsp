@@ -3,7 +3,7 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
-<cpn:component id="model" type="com.composum.sling.nodes.console.Consoles">
+<cpn:component id="model" type="com.composum.sling.nodes.console.ConsolesModel">
     <div class="description">
         <cpn:link href="/libs/composum/nodes/console/content.html"><h3>Overview</h3></cpn:link>
         <p>The Console is offering a set of tools for the platform management and system administration.
