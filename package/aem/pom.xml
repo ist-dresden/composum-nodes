@@ -31,10 +31,6 @@
 
             <resource>
                 <directory>${project.build.directory}/content/jcr_root</directory>
-                <excludes>
-                    <exclude>**/mixins.css</exclude>
-                    <exclude>**/variables.css</exclude>
-                </excludes>
             </resource>
 
         </resources>

@@ -56,7 +56,7 @@ public class NodesConfigImpl implements NodesConfiguration {
                 name = "Console Categories",
                 description = "the list of categories to determine the views in the core console"
         )
-        String[] console_categories() default {"core", "nodes"};
+        String[] console_categories() default {"core", "system", "nodes", "users"};
 
         @AttributeDefinition(
                 name = "Query Result Limit",

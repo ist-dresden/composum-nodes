@@ -138,7 +138,7 @@ public class JsonUtil {
     /**
      * Transforms a Map object into a JSON object (stream).
      */
-    public static void jsonMap(@Nonnull final JsonWriter writer, @Nullable final Map<String, Object> map)
+    public static void jsonMap(@Nonnull final JsonWriter writer, @Nullable final Map<String, ?> map)
             throws IOException {
         if (map != null) {
             writer.beginObject();
@@ -147,10 +147,10 @@ public class JsonUtil {
         }
     }
 
-    public static void jsonMapEntries(@Nonnull final JsonWriter writer, @Nullable final Map<String, Object> map)
+    public static void jsonMapEntries(@Nonnull final JsonWriter writer, @Nullable final Map<String, ?> map)
             throws IOException {
         if (map != null) {
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
+            for (Map.Entry<String, ?> entry : map.entrySet()) {
                 writer.name(entry.getKey());
                 jsonValue(writer, entry.getValue());
             }
@@ -167,10 +167,10 @@ public class JsonUtil {
             writer.nullValue();
         } else {
             if (value instanceof Map) {
-                jsonMap(writer, (Map<String, Object>) value);
+                jsonMap(writer, (Map<String, ?>) value);
             } else if (value instanceof Collection) {
                 writer.beginArray();
-                for (Object val : ((Collection<Object>) value)) {
+                for (Object val : ((Collection<?>) value)) {
                     jsonValue(writer, val);
                 }
                 writer.endArray();

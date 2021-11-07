@@ -1,7 +1,12 @@
 package com.composum.sling.core.util;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.servlets.HttpConstants;
 
+import javax.annotation.Nonnull;
+import javax.servlet.http.HttpSession;
+import java.io.Serializable;
 import java.util.Calendar;
 
 /**
@@ -29,7 +34,7 @@ public class HttpUtil extends HttpConstants {
      * so that we don't know and have to transmit the resource, anyway.
      *
      * @param ifModifiedSince value of the {@link #HEADER_IF_MODIFIED_SINCE} header
-     * @param lastModified date of the resource to be submitted
+     * @param lastModified    date of the resource to be submitted
      * @return if the resource transmission can be skipped since the browser has the current version
      */
     public static boolean notModifiedSince(long ifModifiedSince, Calendar lastModified) {
@@ -82,5 +87,44 @@ public class HttpUtil extends HttpConstants {
         return true;
     }
 
+    public interface CachableInstance extends Serializable {
 
+        long getCreated();
+    }
+
+    public interface InstanceFactory<Type extends CachableInstance> {
+
+        Class<Type> getType();
+
+        Type newInstance(SlingHttpServletRequest request);
+    }
+
+    @Nonnull
+    public static <Type extends CachableInstance> Type getInstance(@Nonnull final SlingHttpServletRequest request,
+                                                                   @Nonnull final String attributeKey,
+                                                                   @Nonnull final InstanceFactory<Type> factory) {
+        final HttpSession session = request.getSession(true);
+        Class<Type> type = factory.getType();
+        Type instance = null;
+        try {
+            Object object = session.getAttribute(attributeKey);
+            if (type.isInstance(object)) {
+                instance = type.cast(object);
+            }
+        } catch (ClassCastException ignore) {
+        }
+        if (instance != null) {
+            final String cacheControlHeader;
+            if (System.currentTimeMillis() - instance.getCreated() > 1800000L /* 30 min */
+                    || (StringUtils.isNotBlank(cacheControlHeader = request.getHeader(HttpUtil.HEADER_CACHE_CONTROL))
+                    && cacheControlHeader.contains(HttpUtil.VALUE_NO_CACHE))) {
+                instance = null;
+            }
+        }
+        if (instance == null) {
+            instance = factory.newInstance(request);
+            session.setAttribute(attributeKey, instance);
+        }
+        return instance;
+    }
 }
