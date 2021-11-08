@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        jcr:primaryType="sling:Folder"
+        sling:resourceType="composum/nodes/commons/clientlib">
+    <css jcr:primaryType="sling:OrderedFolder"
+            embed="[jslibs/highlight/9.15.6/styles/tomorrow.css]"/>
+    <js jcr:primaryType="sling:OrderedFolder"
+            embed="[jslibs/highlight/9.15.6/highlight.min.jss]"/>
+    <default jcr:primaryType="sling:Folder"
+            sling:resourceType="composum/nodes/commons/clientlib"
+            category="[code.highlight.default]">
+        <css jcr:primaryType="sling:OrderedFolder"
+                embed="[jslibs/highlight/9.15.6/styles/googlecode.css]"/>
+        <js jcr:primaryType="sling:OrderedFolder"
+                embed="[jslibs/highlight/9.15.6/highlight.min.js]"/>
+    </default>
+    <dark jcr:primaryType="sling:Folder"
+            sling:resourceType="composum/nodes/commons/clientlib"
+            category="[code.highlight.dark]">
+        <css jcr:primaryType="sling:OrderedFolder"
+                embed="[jslibs/highlight/9.15.6/styles/railscasts.css]"/>
+        <js jcr:primaryType="sling:OrderedFolder"
+                embed="[jslibs/highlight/9.15.6/highlight.min.js]"/>
+    </dark>
+</jcr:root>
