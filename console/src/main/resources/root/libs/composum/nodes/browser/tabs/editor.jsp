@@ -24,10 +24,17 @@
                        title="Edit text in a new window (browser tab)"><span class="label">Edit Window</span></a>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
-                    <a href="" class="download fa fa-download btn btn-default" title="Download text file"
-                       target="_blank"><span class="label">Download</span></a>
+                    <a href="" class="download fa fa-download btn btn-default" title="Download text file"><span
+                            class="label">Download</span></a>
                     <button type="button" class="update fa fa-upload btn btn-default"
                             title="Update text file"${writeDisabled}><span class="label">Update File</span></button>
+                </div>
+                <div class="btn-group btn-group-sm" role="group">
+                    <c:if test="${browser.renderable}">
+                        <cpn:link href="${browser.filePath}" class="fa fa-globe btn btn-default"
+                                  title="Open in a separate view" target="_blank"><span
+                                class="label">Open</span></cpn:link>
+                    </c:if>
                 </div>
             </div>
             <div class="editor-frame detail-content">

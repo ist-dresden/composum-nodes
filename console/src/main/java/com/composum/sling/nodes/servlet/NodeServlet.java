@@ -140,6 +140,8 @@ public class NodeServlet extends NodeTreeServlet {
     public static final Pattern NODE_NAME_PATTERN = Pattern.compile("^[^/" + ILLEGAL_NAME_CHARS + "]+$");
     public static final Pattern NODE_PATH_PATTERN = Pattern.compile("^(/[^/" + ILLEGAL_NAME_CHARS + "]+)+$");
 
+    public enum Disposition {inline, attachment}
+
     @Reference
     private ServiceRestrictions restrictions;
 
@@ -910,14 +912,14 @@ public class NodeServlet extends NodeTreeServlet {
         @Override
         public void doIt(@NotNull final SlingHttpServletRequest request,
                          @NotNull final SlingHttpServletResponse response,
-                         ResourceHandle resource)
+                         @Nullable final ResourceHandle resource)
                 throws ServletException, IOException {
 
-            Binary binary = ResourceUtil.getBinaryData(resource);
+            Binary binary = resource != null ? ResourceUtil.getBinaryData(resource) : null;
             if (binary != null) {
 
                 try {
-                    prepareResponse(response, resource);
+                    prepareResponse(request, response, resource);
 
                     response.setContentLength((int) binary.getSize());
                     response.setStatus(HttpServletResponse.SC_OK);
@@ -939,7 +941,7 @@ public class NodeServlet extends NodeTreeServlet {
                 FileHandle fileHandle = new FileHandle(resource);
                 if (fileHandle.isValid()) {
 
-                    prepareResponse(response, resource);
+                    prepareResponse(request, response, Objects.requireNonNull(resource));
                     response.setStatus(HttpServletResponse.SC_OK);
 
                     try (InputStream input = fileHandle.getStream();
@@ -953,7 +955,9 @@ public class NodeServlet extends NodeTreeServlet {
             }
         }
 
-        protected void prepareResponse(SlingHttpServletResponse response, ResourceHandle resource) {
+        protected void prepareResponse(@NotNull final SlingHttpServletRequest request,
+                                       @NotNull final SlingHttpServletResponse response,
+                                       @NotNull ResourceHandle resource) {
             MimeType mimeType = MimeTypeUtil.getMimeType(resource);
             if (mimeType != null) {
                 response.setContentType(mimeType.toString());
@@ -965,13 +969,15 @@ public class NodeServlet extends NodeTreeServlet {
 
         @Override
         @SuppressWarnings("Duplicates")
-        protected void prepareResponse(@NotNull final SlingHttpServletResponse response,
+        protected void prepareResponse(@NotNull final SlingHttpServletRequest request,
+                                       @NotNull final SlingHttpServletResponse response,
                                        @NotNull final ResourceHandle resource) {
-            super.prepareResponse(response, resource);
+            super.prepareResponse(request, response, resource);
 
             String filename = MimeTypeUtil.getFilename(resource, null);
             if (StringUtils.isNotBlank(filename)) {
-                response.setHeader("Content-Disposition", "inline; filename=" + filename);
+                Disposition disposition = RequestUtil.getSelector(request, Disposition.inline);
+                response.setHeader("Content-Disposition", disposition.name() + "; filename=" + filename);
             }
 
             Calendar lastModified = resource.getProperty(ResourceUtil.PROP_LAST_MODIFIED, Calendar.class);

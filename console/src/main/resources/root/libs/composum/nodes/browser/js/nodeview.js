@@ -312,7 +312,7 @@
 
             reload: function () {
                 browser.AbstractDisplayTab.prototype.reload.apply(this);
-                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.bin' + this.$el.data('file')));
+                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.attachment.bin' + this.$el.data('file')));
             },
 
             upload: function () {
@@ -389,7 +389,7 @@
             },
 
             reload: function () {
-                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.bin'
+                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.attachment.bin'
                     + this.$('.editor-frame .code-editor').data('file')));
             },
 

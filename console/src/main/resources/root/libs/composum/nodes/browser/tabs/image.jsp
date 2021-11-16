@@ -25,16 +25,15 @@
                 </div>
             </div>
             <div class="btn-group btn-group-sm" role="group">
+                <a href="" class="download fa fa-download btn btn-default" title="Download image"><span class="label">Download</span></a>
+                <button type="button" class="update fa fa-upload btn btn-default"
+                        title="Change Image"${writeDisabled}></button>
+            </div>
+            <div class="btn-group btn-group-sm" role="group">
                 <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
                 </button>
                 <button type="button" class="open fa fa-globe btn btn-default" title="Open in a separate view"><span
                         class="label">Open</span></button>
-            </div>
-            <div class="btn-group btn-group-sm" role="group">
-                <a href="" class="download fa fa-download btn btn-default" title="Download image"
-                   target="_blank"><span class="label">Download</span></a>
-                <button type="button" class="update fa fa-upload btn btn-default"
-                        title="Change Image"${writeDisabled}></button>
             </div>
         </div>
         <div class="detail-content">
