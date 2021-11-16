@@ -16,11 +16,11 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceUtil;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.wrappers.ModifiableValueMapDecorator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.query.Query;
 import java.io.IOException;
 import java.io.StringReader;
@@ -35,17 +35,17 @@ public class Scene {
 
     private static final Logger LOG = LoggerFactory.getLogger(Scene.class);
 
-    @Nonnull
+    @NotNull
     protected final BeanContext context;
-    @Nonnull
+    @NotNull
     protected final Config sceneConfig;
-    @Nonnull
+    @NotNull
     protected final Resource configResource;
-    @Nonnull
+    @NotNull
     protected final String scenePath;
-    @Nonnull
+    @NotNull
     protected final String contentPath;
-    @Nonnull
+    @NotNull
     protected final String contentType;
 
     private transient Map<String, Object> sceneProperties;
@@ -53,9 +53,9 @@ public class Scene {
     private transient String frameUrl;
     private transient String elementPath;
 
-    public Scene(@Nonnull final BeanContext context,
-                 @Nonnull final Config sceneConfig,
-                 @Nonnull final String contentType) {
+    public Scene(@NotNull final BeanContext context,
+                 @NotNull final Config sceneConfig,
+                 @NotNull final String contentType) {
         this.context = context;
         this.sceneConfig = sceneConfig;
         this.contentType = contentType;
@@ -70,7 +70,7 @@ public class Scene {
         this.contentPath = this.scenePath + "/_/" + this.sceneConfig.getKey();
     }
 
-    @Nonnull
+    @NotNull
     public String getFrameUrl(String toolId) {
         if (frameUrl == null) {
             frameUrl = "";
@@ -108,12 +108,12 @@ public class Scene {
         return frameUrl;
     }
 
-    @Nonnull
+    @NotNull
     public Config getConfig() {
         return sceneConfig;
     }
 
-    @Nonnull
+    @NotNull
     public String getElementPath() {
         if (elementPath == null) {
             String contentPath = getContentPath();
@@ -132,7 +132,7 @@ public class Scene {
         return elementPath;
     }
 
-    @Nonnull
+    @NotNull
     public String getContentPath() {
         return contentPath;
     }
@@ -141,7 +141,7 @@ public class Scene {
         return !ResourceUtil.isNonExistingResource(getContentResource());
     }
 
-    @Nonnull
+    @NotNull
     public Resource getContentResource() {
         if (contentResource == null) {
             final ResourceResolver resolver = context.getResolver();
@@ -184,11 +184,11 @@ public class Scene {
                 : null;
     }
 
-    protected Resource applyTemplate(@Nonnull final ResourceResolver resolver,
-                                     @Nonnull final Map<String, Object> properties,
-                                     @Nonnull final Resource contentParent,
-                                     @Nonnull final String name,
-                                     @Nonnull final Resource template,
+    protected Resource applyTemplate(@NotNull final ResourceResolver resolver,
+                                     @NotNull final Map<String, Object> properties,
+                                     @NotNull final Resource contentParent,
+                                     @NotNull final String name,
+                                     @NotNull final Resource template,
                                      final boolean resetContent)
             throws IOException {
         Resource content = contentParent.getChild(name);
@@ -224,9 +224,9 @@ public class Scene {
             "^jcr:(baseVersion|predecessors|versionHistory|isCheckedOut)$"
     );
 
-    protected void applyProperties(@Nonnull final Map<String, Object> properties,
-                                   @Nonnull final ModifiableValueMap content,
-                                   @Nonnull final ValueMap template)
+    protected void applyProperties(@NotNull final Map<String, Object> properties,
+                                   @NotNull final ModifiableValueMap content,
+                                   @NotNull final ValueMap template)
             throws IOException {
         List<String> forRemoval = new ArrayList<>();
         for (String name : content.keySet()) {
@@ -257,8 +257,8 @@ public class Scene {
         put(JcrConstants.JCR_PRIMARYTYPE, CoreConstants.TYPE_SLING_FOLDER);
     }};
 
-    protected Resource giveSceneContent(@Nonnull final ResourceResolver resolver,
-                                        @Nonnull String path)
+    protected Resource giveSceneContent(@NotNull final ResourceResolver resolver,
+                                        @NotNull String path)
             throws PersistenceException {
         Resource resource = resolver.getResource(path);
         if (resource == null) {

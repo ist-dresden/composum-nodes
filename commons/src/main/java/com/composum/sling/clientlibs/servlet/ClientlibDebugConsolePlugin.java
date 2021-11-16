@@ -21,11 +21,11 @@ import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
-import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
@@ -406,7 +406,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             writer.println(StringUtils.repeat(" ", INDENTAMOUNT * indentation) + modeName(mode) + " NOT PRESENT: " + (ref.optional ? "optional " : "mandatory ") + ref);
         }
 
-        @Nonnull
+        @NotNull
         private String modeName(VisitorMode mode) {
             return VisitorMode.EMBEDDED.equals(mode) ? " embeds " : " depends";
         }

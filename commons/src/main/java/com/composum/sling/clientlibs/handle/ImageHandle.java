@@ -1,12 +1,11 @@
 package com.composum.sling.clientlibs.handle;
 
 import org.apache.sling.api.resource.Resource;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class ImageHandle extends FileHandle {
 
-    public ImageHandle(@Nullable Resource resource) {
+    public ImageHandle(@NotNull Resource resource) {
         super(resource);
     }
 }

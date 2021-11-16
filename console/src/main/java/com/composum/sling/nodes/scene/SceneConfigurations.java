@@ -5,9 +5,9 @@ import com.composum.sling.core.util.CoreConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.query.Query;
 import javax.servlet.http.HttpSession;
 import java.io.Serializable;
@@ -122,8 +122,8 @@ public class SceneConfigurations implements Serializable {
 
     private final TreeMap<String, Config> sceneConfigs;
 
-    @Nonnull
-    public static SceneConfigurations instance(@Nonnull final SlingHttpServletRequest request) {
+    @NotNull
+    public static SceneConfigurations instance(@NotNull final SlingHttpServletRequest request) {
         SceneConfigurations instance = null;
         HttpSession session = request.getSession(false);
         if (session != null) {
@@ -146,12 +146,12 @@ public class SceneConfigurations implements Serializable {
         return sceneConfigs.get(name);
     }
 
-    @Nonnull
+    @NotNull
     public Collection<Config> getSceneConfigs() {
         return sceneConfigs.values();
     }
 
-    public SceneConfigurations(@Nonnull final ResourceResolver resolver) {
+    public SceneConfigurations(@NotNull final ResourceResolver resolver) {
         sceneConfigs = new TreeMap<>();
         for (String path : resolver.getSearchPath()) {
             findSceneConfigs(sceneConfigs, resolver, QUERY_BASE + path + QUERY_RULE);
@@ -163,8 +163,8 @@ public class SceneConfigurations implements Serializable {
         }
     }
 
-    protected void findSceneConfigs(@Nonnull final TreeMap<String, Config> pageConfigs,
-                                    @Nonnull final ResourceResolver resolver, @Nonnull final String query) {
+    protected void findSceneConfigs(@NotNull final TreeMap<String, Config> pageConfigs,
+                                    @NotNull final ResourceResolver resolver, @NotNull final String query) {
         @SuppressWarnings("deprecation")
         Iterator<Resource> pageConfigResources = resolver.findResources(query, Query.XPATH);
         while (pageConfigResources.hasNext()) {

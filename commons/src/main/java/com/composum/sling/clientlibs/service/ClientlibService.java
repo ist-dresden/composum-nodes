@@ -10,9 +10,9 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -35,8 +35,8 @@ public interface ClientlibService {
 
     /* Returns the minified sibling (e.g. ending .min.js if resource ends with .js) if there is one, otherwise
     resource itself is returned. */
-    @Nonnull
-    Resource getMinifiedSibling(@Nonnull Resource resource);
+    @NotNull
+    Resource getMinifiedSibling(@NotNull Resource resource);
 
     ClientlibConfiguration.Config getClientlibConfig();
 
@@ -85,9 +85,8 @@ public interface ClientlibService {
      * or, even worse, break the rendering.
      * If {onlyErrors} is false, we also include informational messages about all unreadable libraries.
      *
-     *
-     * @param type     if not null, only clientlibs / files of that type are checked
-     * @param resolver if not null, we use this resolver instead of an anonymous resolver to check readability
+     * @param type       if not null, only clientlibs / files of that type are checked
+     * @param resolver   if not null, we use this resolver instead of an anonymous resolver to check readability
      * @param onlyErrors if true, we skip informational messages
      * @return null if everything is OK, otherwise a description of the problems
      */

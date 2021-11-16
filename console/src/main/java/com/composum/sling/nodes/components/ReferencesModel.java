@@ -2,6 +2,7 @@ package com.composum.sling.nodes.components;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.service.PathReferencesService;
 import com.composum.sling.core.service.PathReferencesService.Hit;
 import com.composum.sling.core.service.PathReferencesService.HitIterator;
@@ -9,18 +10,20 @@ import com.composum.sling.core.service.PathReferencesService.Options;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.console.ConsoleServletBean;
+import com.composum.sling.nodes.servlet.NodeServlet;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Map;
 import java.util.TreeMap;
 
+@Restricted(key = NodeServlet.SERVICE_KEY)
 public class ReferencesModel extends ConsoleServletBean {
 
     private transient Map<String, Hit> references;
@@ -41,7 +44,7 @@ public class ReferencesModel extends ConsoleServletBean {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public ResourceHandle getResource() {
         Resource resource = null;
         final SlingHttpServletRequest request = context.getRequest();
@@ -57,12 +60,12 @@ public class ReferencesModel extends ConsoleServletBean {
         return !getReferences().isEmpty();
     }
 
-    @Nonnull
+    @NotNull
     public Iterable<Hit> getHits() {
         return getReferences().values();
     }
 
-    @Nonnull
+    @NotNull
     public Map<String, Hit> getReferences() {
         if (references == null) {
             references = new TreeMap<>();

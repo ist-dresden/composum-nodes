@@ -13,7 +13,7 @@ import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import javax.jcr.*;
 import javax.jcr.lock.Lock;
 import javax.jcr.lock.LockException;
@@ -485,7 +485,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         this.config = null;
     }
 
-    @Nonnull
+    @NotNull
     protected Configuration getConfiguration() {
         return Objects.requireNonNull(this.config, "Method called on deactivated service");
     }

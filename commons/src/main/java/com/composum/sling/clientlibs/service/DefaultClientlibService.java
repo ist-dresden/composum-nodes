@@ -39,6 +39,8 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.resource.ValueMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -50,8 +52,6 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -115,7 +115,9 @@ public class DefaultClientlibService implements ClientlibService {
 
     public static final Map<String, Object> CRUD_CACHE_FOLDER_PROPS;
 
-    /** Top node for the category cache within the {@link ClientlibConfiguration.Config#clientlibs_cache_root()}. */
+    /**
+     * Top node for the category cache within the {@link ClientlibConfiguration.Config#clientlibs_cache_root()}.
+     */
     protected static final String CATEGORYCACHE = "categorycache";
 
     static {
@@ -310,8 +312,8 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     @Override
-    @Nonnull
-    public Resource getMinifiedSibling(@Nonnull Resource resource) {
+    @NotNull
+    public Resource getMinifiedSibling(@NotNull Resource resource) {
         String path = resource.getPath();
         String minifiedPath = getMinifiedSibling(path);
         if (!path.equals(minifiedPath)) {
@@ -391,8 +393,10 @@ public class DefaultClientlibService implements ClientlibService {
         return resources;
     }
 
-    /** Retrieves the {@link ResourceFilter}s for a category from all {@link ClientlibPermissionPlugin}s. */
-    @Nonnull
+    /**
+     * Retrieves the {@link ResourceFilter}s for a category from all {@link ClientlibPermissionPlugin}s.
+     */
+    @NotNull
     protected List<ResourceFilter> getCategoryPermissionFilters(String category) {
         List<ResourceFilter> result = new ArrayList<>();
         for (ClientlibPermissionPlugin plugin : permissionPlugins) {
@@ -401,8 +405,10 @@ public class DefaultClientlibService implements ClientlibService {
         return result;
     }
 
-    /** Checks whether a clientlib matches all {@link ResourceFilter}s for the given category. */
-    protected boolean isClientlibPermitted(@Nonnull List<ResourceFilter> filters, Resource clientlibResource) {
+    /**
+     * Checks whether a clientlib matches all {@link ResourceFilter}s for the given category.
+     */
+    protected boolean isClientlibPermitted(@NotNull List<ResourceFilter> filters, Resource clientlibResource) {
         boolean permitted = true;
         for (ResourceFilter filter : filters) {
             permitted = permitted && filter.accept(clientlibResource);
@@ -813,7 +819,9 @@ public class DefaultClientlibService implements ClientlibService {
         }
     }
 
-    /** For each path contained here, remove all paths that are children of it, thus removing consequential errors. */
+    /**
+     * For each path contained here, remove all paths that are children of it, thus removing consequential errors.
+     */
     protected List<String> removeChildren(List<String> unreachablePaths) {
         Collections.sort(unreachablePaths); // ancestors appear before children
         List<String> result = new ArrayList<>();
@@ -831,7 +839,9 @@ public class DefaultClientlibService implements ClientlibService {
         return false;
     }
 
-    /** Returns true if the parent is an {ancestor} of the {resource} (and both are not null, of course. */
+    /**
+     * Returns true if the parent is an {ancestor} of the {resource} (and both are not null, of course.
+     */
     protected boolean isAncestorOrSelf(@Nullable String parentPath, @Nullable String childPath) {
         return parentPath != null && childPath != null && (
                 parentPath.equals(childPath) ||

@@ -5,6 +5,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.xss.XSSAPI;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,7 +16,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.internal.stubbing.answers.ThrowsException;
 
-import javax.annotation.Nonnull;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
@@ -107,7 +107,7 @@ public class LinkTagTest {
         ec.checkThat(render(tag), is("<a href=\"/bin/something.html/foo\"></a>"));
     }
 
-    @Nonnull
+    @NotNull
     protected String render(String href) throws JspException {
         LinkTag tag = new LinkTag();
         tag.setPageContext(pageContext);
@@ -115,7 +115,7 @@ public class LinkTagTest {
         return render(tag);
     }
 
-    @Nonnull
+    @NotNull
     private String render(LinkTag tag) throws JspException {
         result.setLength(0);
         tag.doStartTag();

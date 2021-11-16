@@ -2,7 +2,9 @@ package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.filter.StringFilter;
+import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
@@ -14,11 +16,11 @@ import org.apache.jackrabbit.util.ISO9075;
 import org.apache.jackrabbit.vault.util.PlatformNameFormat;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.NamespaceException;
 import javax.jcr.Node;
@@ -36,7 +38,17 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -108,6 +120,7 @@ import static org.apache.jackrabbit.JcrConstants.NT_RESOURCE;
  * @see "https://jackrabbit.apache.org/filevault/vaultfs.html"
  * @see org/apache/jackrabbit/vault/fs/config/defaultConfig-1.1.xml
  */
+@Restricted(key = SourceServlet.SERVICE_KEY)
 public class SourceModel extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(SourceModel.class);
@@ -167,7 +180,7 @@ public class SourceModel extends ConsoleSlingBean {
     /**
      * @return the root path to use for exporting artifacts, honors a root path (mount poiunt) of an extended resolver
      */
-    @Nonnull
+    @NotNull
     public String getExportRootPath() {
         String exportRootPath = "/";
         ResourceResolver resolver = getResolver();
@@ -184,8 +197,8 @@ public class SourceModel extends ConsoleSlingBean {
      * @param path the path to map for exporting
      * @return the path relative to the export root path
      */
-    @Nonnull
-    public String getExportPath(@Nonnull final String path) {
+    @NotNull
+    public String getExportPath(@NotNull final String path) {
         String exportPath = path;
         String exportRootPath = getExportRootPath();
         if (!"/".equals(exportRootPath)) {
@@ -202,7 +215,7 @@ public class SourceModel extends ConsoleSlingBean {
      * @param path a resource path in the resource repository tree; maybe a mounted resource path
      * @return 'true' if the path is equal to the export root path
      */
-    public boolean isRootPath(@Nonnull final String aPath) {
+    public boolean isRootPath(@NotNull final String aPath) {
         return getExportRootPath().equals(aPath);
     }
 
@@ -507,7 +520,7 @@ public class SourceModel extends ConsoleSlingBean {
     /**
      * Writes all the .content.xml of the parents of root into the zip.
      */
-    protected void writeParents(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Resource parent)
+    protected void writeParents(@NotNull ZipOutputStream zipStream, @NotNull String root, @Nullable Resource parent)
             throws IOException, RepositoryException {
         if (parent != null && !isRootPath(parent.getPath())) {
             writeParents(zipStream, root, parent.getParent());
@@ -521,7 +534,7 @@ public class SourceModel extends ConsoleSlingBean {
     /**
      * Writes a "naked" Zip about the node: no package metadata, no parent nodes.
      */
-    public void writeArchive(@Nonnull OutputStream output)
+    public void writeArchive(@NotNull OutputStream output)
             throws IOException, RepositoryException {
 
         ZipOutputStream zipStream = new ZipOutputStream(output);
@@ -537,7 +550,7 @@ public class SourceModel extends ConsoleSlingBean {
      * @param zipStream the stream to write to, not closed.
      * @param depthMode determines to what extent we write subnodes
      */
-    protected void writeIntoZip(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nonnull DepthMode depthMode)
+    protected void writeIntoZip(@NotNull ZipOutputStream zipStream, @NotNull String root, @NotNull DepthMode depthMode)
             throws IOException, RepositoryException {
         if (resource == null || ResourceUtil.isNonExistingResource(resource)) {
             return;
@@ -583,7 +596,7 @@ public class SourceModel extends ConsoleSlingBean {
      * Writes the current node as a file node (not the jcr:content but the parent) incl. it's binary data and possibly
      * additional data about nonstandard properties.
      */
-    protected void writeFile(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nonnull ResourceHandle file)
+    protected void writeFile(@NotNull ZipOutputStream zipStream, @NotNull String root, @NotNull ResourceHandle file)
             throws IOException, RepositoryException {
         if (file.getName().equals(JCR_CONTENT)) {
             // file format doesn't allow this - we need to write the file with the parent's name
@@ -652,7 +665,7 @@ public class SourceModel extends ConsoleSlingBean {
     /**
      * Writes the binary properties collected in {binaryProperties} into entries in the zip file.
      */
-    protected void writeBinaryProperties(@Nonnull ZipOutputStream zipStream, @Nonnull String root, @Nullable Queue<String> binaryProperties) throws IOException {
+    protected void writeBinaryProperties(@NotNull ZipOutputStream zipStream, @NotNull String root, @Nullable Queue<String> binaryProperties) throws IOException {
         if (binaryProperties == null || binaryProperties.isEmpty()) {
             return;
         }
@@ -680,7 +693,7 @@ public class SourceModel extends ConsoleSlingBean {
     /**
      * Turns a resource path into a proper name for a zip file with the appropriate encoding of troublesome chars.
      */
-    protected String getZipName(@Nonnull String root, @Nonnull String resourcePath) {
+    protected String getZipName(@NotNull String root, @NotNull String resourcePath) {
         String name = getExportPath(resourcePath);
         String exportRoot = getExportPath(root);
         if (name.startsWith(exportRoot)) {
@@ -694,7 +707,7 @@ public class SourceModel extends ConsoleSlingBean {
     /**
      * Returns the name for the zip entry for this resource.
      */
-    protected String getZipName(@Nonnull String root) {
+    protected String getZipName(@NotNull String root) {
         RenderingType renderingType = getRenderingType(resource, false);
         String zipName;
         switch (renderingType) {
@@ -733,7 +746,7 @@ public class SourceModel extends ConsoleSlingBean {
      * @param writeDeep also write subnodes; if false only properties of the node itself are written but no
      *                  children (and no jcr:content).
      */
-    public void writeXmlFile(@Nonnull Writer writer, boolean writeDeep) throws IOException, RepositoryException {
+    public void writeXmlFile(@NotNull Writer writer, boolean writeDeep) throws IOException, RepositoryException {
         DepthMode depthMode = writeDeep ? DepthMode.DEEP : DepthMode.PROPERTIESONLY;
         writeXmlFile(writer, depthMode, null, null);
     }
@@ -746,7 +759,7 @@ public class SourceModel extends ConsoleSlingBean {
      *                         written as a binary file
      * @param additionalFiles  if given, collects the {@link SourceModel}s that have to be written into another file
      */
-    protected void writeXmlFile(@Nonnull Writer writer, @Nonnull DepthMode depthMode,
+    protected void writeXmlFile(@NotNull Writer writer, @NotNull DepthMode depthMode,
                                 @Nullable Queue<String> binaryProperties, @Nullable Queue<SourceModel> additionalFiles)
             throws IOException, RepositoryException {
         List<String> namespaces = new ArrayList<>();
@@ -777,7 +790,7 @@ public class SourceModel extends ConsoleSlingBean {
         writer.append("</jcr:root>\n");
     }
 
-    protected void writeSubnodesAsXml(@Nonnull Writer writer, @Nonnull String indent, boolean inFullCoverageNode,
+    protected void writeSubnodesAsXml(@NotNull Writer writer, @NotNull String indent, boolean inFullCoverageNode,
                                       @Nullable Queue<String> binaryProperties, @Nullable Queue<SourceModel> additionalFiles)
             throws IOException {
         for (Resource subnode : getSubnodeList()) {
@@ -790,7 +803,7 @@ public class SourceModel extends ConsoleSlingBean {
     /**
      * Writes the node including subnodes as XML, using the base indentation.
      */
-    protected void writeXmlSubnode(@Nonnull Writer writer, @Nonnull String indent, boolean inFullCoverageNode,
+    protected void writeXmlSubnode(@NotNull Writer writer, @NotNull String indent, boolean inFullCoverageNode,
                                    @Nullable Queue<String> binaryProperties, @Nullable Queue<SourceModel> additionalFiles)
             throws IOException {
         String name = escapeXmlName(getName());
@@ -838,7 +851,7 @@ public class SourceModel extends ConsoleSlingBean {
         }
     }
 
-    protected void writeProperties(@Nonnull Writer writer, @Nonnull String indent,
+    protected void writeProperties(@NotNull Writer writer, @NotNull String indent,
                                    @Nullable Queue<String> binaryProperties) throws IOException {
         for (Property property : getPropertyList()) {
             if (binaryProperties != null && property.isBinary()) {

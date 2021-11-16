@@ -2,12 +2,15 @@ package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.clientlibs.handle.FileHandle;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.config.FilterConfiguration;
 import com.composum.sling.core.exception.ParameterValidationException;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.resource.SyntheticQueryResult;
+import com.composum.sling.core.service.ServiceRestrictions;
+import com.composum.sling.core.service.RestrictedService;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.NodeTreeServlet;
 import com.composum.sling.core.servlet.ServletOperation;
@@ -41,6 +44,8 @@ import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.servlets.post.SlingPostConstants;
 import org.apache.tika.mime.MimeType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -51,8 +56,6 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
@@ -95,11 +98,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.core.mapping.MappingRules.CHARSET;
+import static com.composum.sling.nodes.servlet.NodeServlet.SERVICE_KEY;
 
 /**
  * The JCR nodes service servlet to walk though and modify the entire hierarchy.
  */
-@Component(service = Servlet.class,
+@Component(service = {Servlet.class, RestrictedService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Node Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + NodeServlet.SERVLET_PATH,
@@ -110,9 +114,12 @@ import static com.composum.sling.core.mapping.MappingRules.CHARSET;
                 "sling.auth.requirements=" + NodeServlet.SERVLET_PATH
         }
 )
+@Restricted(key = SERVICE_KEY)
 public class NodeServlet extends NodeTreeServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodeServlet.class);
+
+    public static final String SERVICE_KEY = "nodes/repository/resources";
 
     public static final String SERVLET_PATH = "/bin/cpm/nodes/node";
 
@@ -132,6 +139,9 @@ public class NodeServlet extends NodeTreeServlet {
     public static final String ILLEGAL_NAME_CHARS = "<>&\"";
     public static final Pattern NODE_NAME_PATTERN = Pattern.compile("^[^/" + ILLEGAL_NAME_CHARS + "]+$");
     public static final Pattern NODE_PATH_PATTERN = Pattern.compile("^(/[^/" + ILLEGAL_NAME_CHARS + "]+)+$");
+
+    @Reference
+    private ServiceRestrictions restrictions;
 
     @Reference
     protected NodesConfiguration nodesConfig;
@@ -256,13 +266,9 @@ public class NodeServlet extends NodeTreeServlet {
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
     @Override
+    @NotNull
     protected ServletOperationSet<Extension, Operation> getOperations() {
         return operations;
-    }
-
-    @Override
-    protected boolean isEnabled() {
-        return nodesConfig.isEnabled(this);
     }
 
     /**
@@ -342,8 +348,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ListFiltersAsHtml implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -361,8 +367,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ListFiltersAsJson implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -403,8 +409,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected abstract class AbstractQueryOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -647,10 +653,10 @@ public class NodeServlet extends NodeTreeServlet {
         }
 
         @Override
-        protected void writeQueryResult(@Nonnull final SlingHttpServletRequest request,
-                                        @Nonnull final SlingHttpServletResponse response,
-                                        @Nonnull final String queryString, @Nonnull final QueryResult result,
-                                        @Nonnull final ResourceFilter filter, @Nonnull final ResourceResolver resolver)
+        protected void writeQueryResult(@NotNull final SlingHttpServletRequest request,
+                                        @NotNull final SlingHttpServletResponse response,
+                                        @NotNull final String queryString, @NotNull final QueryResult result,
+                                        @NotNull final ResourceFilter filter, @NotNull final ResourceResolver resolver)
                 throws ServletException, IOException {
 
             String rendererType = XSS.filter(request.getParameter("export"));
@@ -717,8 +723,8 @@ public class NodeServlet extends NodeTreeServlet {
 
         @Override
         @SuppressWarnings("Duplicates")
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -767,8 +773,8 @@ public class NodeServlet extends NodeTreeServlet {
 
         @Override
         @SuppressWarnings("Duplicates")
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -813,8 +819,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class TypeaheadOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -861,8 +867,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class GetMixinsOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -902,8 +908,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class LoadBinaryOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -959,8 +965,8 @@ public class NodeServlet extends NodeTreeServlet {
 
         @Override
         @SuppressWarnings("Duplicates")
-        protected void prepareResponse(@Nonnull final SlingHttpServletResponse response,
-                                       @Nonnull final ResourceHandle resource) {
+        protected void prepareResponse(@NotNull final SlingHttpServletResponse response,
+                                       @NotNull final ResourceHandle resource) {
             super.prepareResponse(response, resource);
 
             String filename = MimeTypeUtil.getFilename(resource, null);
@@ -989,8 +995,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class UpdateFileOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -1053,8 +1059,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class ToggleLockOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -1097,8 +1103,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class MoveOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -1272,8 +1278,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class CreateOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -1377,8 +1383,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class CopyOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -1460,8 +1466,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class DeleteOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -1532,8 +1538,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class MapGetOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -1608,8 +1614,8 @@ public class NodeServlet extends NodeTreeServlet {
     protected class MapPutOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 

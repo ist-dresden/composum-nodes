@@ -1,8 +1,16 @@
 package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.mapping.MappingRules;
-import com.composum.sling.core.util.*;
+import com.composum.sling.core.service.RestrictedService;
+import com.composum.sling.core.service.ServiceRestrictions;
+import com.composum.sling.core.util.I18N;
+import com.composum.sling.core.util.JsonUtil;
+import com.composum.sling.core.util.LinkUtil;
+import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
@@ -14,11 +22,19 @@ import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
+import org.jetbrains.annotations.NotNull;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.component.annotations.Deactivate;
 
-import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -27,7 +43,7 @@ import java.util.Map;
 /**
  * A basic class for all '/bin/{service}/path/to/resource' servlets.
  */
-public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
+public abstract class AbstractServiceServlet extends SlingAllMethodsServlet implements RestrictedService {
 
     public static final String PARAM_FILE = "file";
     public static final String PARAM_CMD = "cmd";
@@ -50,15 +66,53 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
 
     public static final String DATE_FORMAT = "yyyy-MM-DD HH:mm:ss";
 
-    protected abstract boolean isEnabled();
+    private ServiceRestrictions restrictionsService;
 
-    protected boolean isEnabled(SlingHttpServletResponse response) {
-        boolean enabled = isEnabled();
-        if (!enabled) {
-            response.setContentLength(0);
-            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+    @Deactivate
+    protected void deactivate() {
+        restrictionsService = null;
+    }
+
+    protected ServiceRestrictions getRestrictions() {
+        if (restrictionsService == null) {
+            final BundleContext bundleContext = FrameworkUtil.getBundle(getClass()).getBundleContext();
+            final ServiceReference<?> reference =
+                    bundleContext.getServiceReference(ServiceRestrictions.class.getName());
+            restrictionsService = (ServiceRestrictions) bundleContext.getService(reference);
         }
-        return enabled;
+        return restrictionsService;
+    }
+
+    @Override
+    public ServiceRestrictions.Key getServiceKey() {
+        final Restricted restricted = getClass().getAnnotation(Restricted.class);
+        return restricted != null ? new ServiceRestrictions.Key(restricted.key()) : null;
+    }
+
+    protected boolean isEnabled(@NotNull final SlingHttpServletRequest request,
+                                @NotNull final SlingHttpServletResponse response,
+                                @NotNull final ServiceRestrictions.Permission needed) {
+        return getRestrictions().isPermissible(request, getServiceKey(), needed);
+    }
+
+    @NotNull
+    protected ServiceRestrictions.Permission methodGetPermission(@NotNull final SlingHttpServletRequest request) {
+        return ServiceRestrictions.Permission.read;
+    }
+
+    @NotNull
+    protected ServiceRestrictions.Permission methodPostPermission(@NotNull final SlingHttpServletRequest request) {
+        return ServiceRestrictions.Permission.write;
+    }
+
+    @NotNull
+    protected ServiceRestrictions.Permission methodPutPermission(@NotNull final SlingHttpServletRequest request) {
+        return ServiceRestrictions.Permission.write;
+    }
+
+    @NotNull
+    protected ServiceRestrictions.Permission methodDeletePermission(@NotNull final SlingHttpServletRequest request) {
+        return ServiceRestrictions.Permission.write;
     }
 
     //
@@ -68,45 +122,54 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     /**
      * Each servlet implementation must provide access to its operation set for request delegation.
      */
-    protected abstract ServletOperationSet getOperations();
+    @NotNull
+    protected abstract ServletOperationSet<?, ?> getOperations();
 
     @Override
-    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
+    protected void doGet(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response)
             throws ServletException, IOException {
-
-        if (isEnabled(response)) {
+        if (isEnabled(request, response, methodGetPermission(request))) {
             setNoCacheHeaders(response);
             getOperations().doGet(request, response);
+        } else {
+            response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         }
     }
 
     @Override
-    protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
+    protected void doPost(@NotNull final SlingHttpServletRequest request,
+                          @NotNull final SlingHttpServletResponse response)
             throws ServletException, IOException {
-
-        if (isEnabled(response)) {
+        if (isEnabled(request, response, methodPostPermission(request))) {
             setNoCacheHeaders(response);
             getOperations().doPost(request, response);
+        } else {
+            response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         }
     }
 
     @Override
-    protected void doPut(SlingHttpServletRequest request, SlingHttpServletResponse response)
+    protected void doPut(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response)
             throws ServletException, IOException {
-
-        if (isEnabled(response)) {
+        if (isEnabled(request, response, methodPutPermission(request))) {
             setNoCacheHeaders(response);
             getOperations().doPut(request, response);
+        } else {
+            response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         }
     }
 
     @Override
-    protected void doDelete(SlingHttpServletRequest request, SlingHttpServletResponse response)
+    protected void doDelete(@NotNull final SlingHttpServletRequest request,
+                            @NotNull final SlingHttpServletResponse response)
             throws ServletException, IOException {
-
-        if (isEnabled(response)) {
+        if (isEnabled(request, response, methodDeletePermission(request))) {
             setNoCacheHeaders(response);
             getOperations().doDelete(request, response);
+        } else {
+            response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         }
     }
 
@@ -114,7 +177,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
     // HTTP control methods
     //
 
-    public static void setNoCacheHeaders(SlingHttpServletResponse response) {
+    public static void setNoCacheHeaders(@NotNull final SlingHttpServletResponse response) {
         response.setHeader("Cache-Control", "no-cache");
         response.addHeader("Cache-Control", "no-store");
         response.addHeader("Cache-Control", "must-revalidate");
@@ -132,7 +195,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
      * @param request the sling request with the resource path in the suffix
      * @return the resource (NOT <code>null</code>; returns a handle with an invalid resource if not resolvable)
      */
-    @Nonnull
+    @NotNull
     public static ResourceHandle getResource(SlingHttpServletRequest request) {
         ResourceResolver resolver = request.getResourceResolver();
         String path = getPath(request);
@@ -159,13 +222,16 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
      * @return the given resource if valid, otherwise the resource referenced by the raw suffix (no XSS filter)
      * if such a resource is available - to support select and rename of nodes with invalid names (node repair)
      */
-    @Nonnull
-    public static ResourceHandle tryToUseRawSuffix(@Nonnull final SlingHttpServletRequest request,
-                                                   @Nonnull ResourceHandle resource) {
+    @NotNull
+    public static ResourceHandle tryToUseRawSuffix(@NotNull final SlingHttpServletRequest request,
+                                                   @NotNull ResourceHandle resource) {
         if (!resource.isValid()) {
             // try to use the resource path as requested (without XSS filter) - in console context only!
             String resourcePath = request.getRequestPathInfo().getSuffix();
-            Resource requested = request.getResourceResolver().getResource(resourcePath);
+            Resource requested = null;
+            if (StringUtils.isNotBlank(resourcePath)) {
+                requested = request.getResourceResolver().getResource(resourcePath);
+            }
             if (requested != null) {
                 resource = ResourceHandle.use(requested);
             }
@@ -201,7 +267,7 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
         if (value instanceof String) {
             writer.value((String) value);
         } else if (value instanceof Map) {
-            Map map = (Map) value;
+            Map<?, ?> map = (Map<?, ?>) value;
             writer.beginObject();
             for (Object key : map.keySet()) {
                 writer.name(key.toString());
@@ -216,12 +282,12 @@ public abstract class AbstractServiceServlet extends SlingAllMethodsServlet {
             writer.endArray();
         } else if (value instanceof Iterable) {
             writer.beginArray();
-            for (Object v : (Iterable) value) {
+            for (Object v : (Iterable<?>) value) {
                 jsonValue(writer, v);
             }
             writer.endArray();
         } else if (value instanceof Iterator) {
-            Iterator iterator = (Iterator) value;
+            Iterator<?> iterator = (Iterator<?>) value;
             writer.beginArray();
             while (iterator.hasNext()) {
                 jsonValue(writer, iterator.next());

@@ -17,8 +17,8 @@ import org.apache.sling.api.resource.ValueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -138,7 +138,7 @@ public class JsonUtil {
     /**
      * Transforms a Map object into a JSON object (stream).
      */
-    public static void jsonMap(@Nonnull final JsonWriter writer, @Nullable final Map<String, ?> map)
+    public static void jsonMap(@NotNull final JsonWriter writer, @Nullable final Map<String, ?> map)
             throws IOException {
         if (map != null) {
             writer.beginObject();
@@ -147,7 +147,7 @@ public class JsonUtil {
         }
     }
 
-    public static void jsonMapEntries(@Nonnull final JsonWriter writer, @Nullable final Map<String, ?> map)
+    public static void jsonMapEntries(@NotNull final JsonWriter writer, @Nullable final Map<String, ?> map)
             throws IOException {
         if (map != null) {
             for (Map.Entry<String, ?> entry : map.entrySet()) {
@@ -161,7 +161,7 @@ public class JsonUtil {
      * Transforms an object into a JSON object (stream).
      */
     @SuppressWarnings("unchecked")
-    public static void jsonValue(@Nonnull final JsonWriter writer, @Nullable final Object value)
+    public static void jsonValue(@NotNull final JsonWriter writer, @Nullable final Object value)
             throws IOException {
         if (value == null) {
             writer.nullValue();
@@ -210,7 +210,7 @@ public class JsonUtil {
      * @param writer   the writer for the JSON transformation
      * @param resource the resource to transform
      */
-    public static void exportJson(@Nonnull final JsonWriter writer, @Nonnull final Resource resource)
+    public static void exportJson(@NotNull final JsonWriter writer, @NotNull final Resource resource)
             throws RepositoryException, IOException {
         exportJson(writer, resource, MappingRules.getDefaultMappingRules());
     }
@@ -220,7 +220,7 @@ public class JsonUtil {
      * @param resource the resource to transform
      * @param mapping  the mapping policy rule set
      */
-    public static void exportJson(@Nonnull final JsonWriter writer, @Nonnull final Resource resource,
+    public static void exportJson(@NotNull final JsonWriter writer, @NotNull final Resource resource,
                                   MappingRules mapping)
             throws RepositoryException, IOException {
         exportJson(writer, resource, mapping, 1);
@@ -261,8 +261,8 @@ public class JsonUtil {
      * @param resource the resource to transform
      * @param mapping  the mapping policy rule set
      */
-    public static void exportProperties(@Nonnull final JsonWriter writer,
-                                        @Nonnull final Resource resource, MappingRules mapping)
+    public static void exportProperties(@NotNull final JsonWriter writer,
+                                        @NotNull final Resource resource, MappingRules mapping)
             throws RepositoryException, IOException {
 
         String path = resource.getPath();
@@ -650,9 +650,9 @@ public class JsonUtil {
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonProperties(@Nonnull final Resource resource, @Nonnull final JsonWriter writer,
-                                           @Nonnull final StringFilter filter, @Nullable final Node node,
-                                           @Nonnull final MappingRules mapping)
+    public static void writeJsonProperties(@NotNull final Resource resource, @NotNull final JsonWriter writer,
+                                           @NotNull final StringFilter filter, @Nullable final Node node,
+                                           @NotNull final MappingRules mapping)
             throws RepositoryException, IOException {
         if (node != null) {
             TreeMap<String, Property> sortedProperties = new TreeMap<>();
@@ -689,9 +689,9 @@ public class JsonUtil {
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonValueMap(@Nonnull final Resource resource, @Nonnull final JsonWriter writer,
-                                         @Nonnull final StringFilter filter, @Nullable final ValueMap values,
-                                         @Nonnull final MappingRules mapping)
+    public static void writeJsonValueMap(@NotNull final Resource resource, @NotNull final JsonWriter writer,
+                                         @NotNull final StringFilter filter, @Nullable final ValueMap values,
+                                         @NotNull final MappingRules mapping)
             throws RepositoryException, IOException {
         if (values != null) {
             TreeMap<String, Object> sortedProperties = new TreeMap<>();
@@ -726,8 +726,8 @@ public class JsonUtil {
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonProperty(@Nonnull final Resource resource, @Nonnull final JsonWriter writer,
-                                         @Nullable final Property property, @Nonnull final MappingRules mapping)
+    public static void writeJsonProperty(@NotNull final Resource resource, @NotNull final JsonWriter writer,
+                                         @Nullable final Property property, @NotNull final MappingRules mapping)
             throws RepositoryException, IOException {
         if (property != null &&
                 (PropertyType.BINARY != property.getType() ||
@@ -794,9 +794,9 @@ public class JsonUtil {
     /**
      * Writes a resource property (without node - probably synthetic resource)
      */
-    public static void writeJsonProperty(@Nonnull final Resource resource, @Nonnull final JsonWriter writer,
+    public static void writeJsonProperty(@NotNull final Resource resource, @NotNull final JsonWriter writer,
                                          @Nullable final String name, @Nullable final Object value,
-                                         @Nonnull final MappingRules mapping)
+                                         @NotNull final MappingRules mapping)
             throws RepositoryException, IOException {
         if (name != null && value != null) {
             int type = PropertyType.STRING;
@@ -907,9 +907,9 @@ public class JsonUtil {
      * @throws javax.jcr.RepositoryException error on accessing JCR
      * @throws java.io.IOException           error on write JSON
      */
-    public static void writeJsonValue(@Nonnull final Resource resource, @Nonnull final JsonWriter writer,
-                                      @Nonnull final String name, @Nonnull final Object value,
-                                      @Nonnull final Integer type, @Nonnull final MappingRules mapping)
+    public static void writeJsonValue(@NotNull final Resource resource, @NotNull final JsonWriter writer,
+                                      @NotNull final String name, @NotNull final Object value,
+                                      @NotNull final Integer type, @NotNull final MappingRules mapping)
             throws RepositoryException, IOException {
         Value jcrValue = value instanceof Value ? (Value) value : null;
         switch (type) {

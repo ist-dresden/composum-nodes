@@ -3,8 +3,8 @@ package com.composum.sling.core.service;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -41,7 +41,7 @@ public interface PathReferencesService {
         protected boolean childrenOnly = false;
         protected boolean findRichText = false;
 
-        @Nonnull
+        @NotNull
         public String getBasePath() {
             return basePath;
         }
@@ -98,7 +98,7 @@ public interface PathReferencesService {
          * if an absolute path is searched the base path is used to build the relative variant of the absolute path if
          * this absolutre path starts with the base path
          */
-        public Options basePath(@Nonnull final String path) {
+        public Options basePath(@NotNull final String path) {
             basePath = path;
             while (basePath.endsWith("/")) {
                 basePath = basePath.substring(0, basePath.length() - 1);
@@ -109,7 +109,7 @@ public interface PathReferencesService {
         /**
          * the primary type of the searched referrers; maybe 'null'
          */
-        public Options primaryType(@Nonnull final String name) {
+        public Options primaryType(@NotNull final String name) {
             primaryType = name;
             return this;
         }
@@ -117,7 +117,7 @@ public interface PathReferencesService {
         /**
          * an optional relative content path; maybe 'null'
          */
-        public Options contentPath(@Nonnull final String name) {
+        public Options contentPath(@NotNull final String name) {
             contentPath = name;
             return this;
         }
@@ -125,7 +125,7 @@ public interface PathReferencesService {
         /**
          * the node name of the searched referrers; maybe 'null'
          */
-        public Options resourceName(@Nonnull final String name) {
+        public Options resourceName(@NotNull final String name) {
             resourceName = name;
             return this;
         }
@@ -133,7 +133,7 @@ public interface PathReferencesService {
         /**
          * the Sling resource type of the searched referrers; maybe 'null'
          */
-        public Options resourceType(@Nonnull final String name) {
+        public Options resourceType(@NotNull final String name) {
             resourceType = name;
             return this;
         }
@@ -141,7 +141,7 @@ public interface PathReferencesService {
         /**
          * the name of the property which is storing the reference; maybe 'null'
          */
-        public Options propertyName(@Nonnull final String name) {
+        public Options propertyName(@NotNull final String name) {
             propertyName = "*".equals(name) ? "" : name;
             if (propertyName.startsWith("@")) {
                 propertyName = propertyName.substring(1);
@@ -224,19 +224,19 @@ public interface PathReferencesService {
                  * @param newPath the new path
                  * @return the modified value
                  */
-                @Nonnull
-                String apply(@Nonnull final String newPath);
+                @NotNull
+                String apply(@NotNull final String newPath);
 
                 /**
                  * @return the whole property value text
                  */
-                @Nonnull
+                @NotNull
                 String getText();
 
                 /**
                  * @return the set of occurences of the searched path in the text
                  */
-                @Nonnull
+                @NotNull
                 List<String> getPaths();
 
                 /**
@@ -263,7 +263,7 @@ public interface PathReferencesService {
             /**
              * @return the name of the matching property
              */
-            @Nonnull
+            @NotNull
             String getName();
 
             /**
@@ -275,13 +275,13 @@ public interface PathReferencesService {
             /**
              * @return the content text of the first (the single one) matching value
              */
-            @Nonnull
+            @NotNull
             String getText();
 
             /**
              * @return the set of matching values, maybe more than one if the property is a multi value property
              */
-            @Nonnull
+            @NotNull
             List<Value> getValues();
 
             /**
@@ -298,19 +298,19 @@ public interface PathReferencesService {
         /**
          * @return the resource which is referencing the path
          */
-        @Nonnull
+        @NotNull
         Resource getResource();
 
         /**
          * @return the set of the names of the matching properties
          */
-        @Nonnull
+        @NotNull
         Set<String> getPropertyNames();
 
         /**
          * @return the set of the names of the matching properties
          */
-        @Nonnull
+        @NotNull
         Iterable<Property> getProperties();
 
         /**
@@ -318,7 +318,7 @@ public interface PathReferencesService {
          * @return the value of the specified property
          */
         @Nullable
-        Property getProperty(@Nonnull String propertyName);
+        Property getProperty(@NotNull String propertyName);
 
         /**
          * @return the first matching property (one of the matching properties)
@@ -354,9 +354,9 @@ public interface PathReferencesService {
      * @param path       the path for which the referers have to be found; maybe with wildcards ('*'/'%')
      * @return the iterator to traverse the found referrers
      */
-    @Nonnull
-    HitIterator findReferences(@Nonnull ResourceResolver resolver, @Nonnull Options options,
-                               @Nonnull String searchRoot, @Nonnull String path);
+    @NotNull
+    HitIterator findReferences(@NotNull ResourceResolver resolver, @NotNull Options options,
+                               @NotNull String searchRoot, @NotNull String path);
 
     /**
      * replaces each occurrence of the paths found in a previous search
@@ -366,5 +366,5 @@ public interface PathReferencesService {
      * @param hit      the repository resource which has to be changed
      * @param newPath  the new path value
      */
-    void changeReferences(@Nonnull ResourceResolver resolver, @Nonnull Hit hit, @Nonnull String newPath);
+    void changeReferences(@NotNull ResourceResolver resolver, @NotNull Hit hit, @NotNull String newPath);
 }

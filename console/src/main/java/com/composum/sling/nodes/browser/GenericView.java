@@ -2,20 +2,23 @@ package com.composum.sling.nodes.browser;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.RequestHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.util.LinkMapper;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.nodes.console.ConsoleServletBean;
+import com.composum.sling.nodes.servlet.NodeServlet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.tika.mime.MimeType;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+@Restricted(key = NodeServlet.SERVICE_KEY)
 public class GenericView extends ConsoleServletBean {
 
     private static final Logger LOG = getLogger(GenericView.class);
@@ -48,7 +51,7 @@ public class GenericView extends ConsoleServletBean {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public String getId() {
         return browserView.getId();
     }
@@ -70,18 +73,18 @@ public class GenericView extends ConsoleServletBean {
         return unmappedUrl;
     }
 
-    @Nonnull
+    @NotNull
     public String getViewResourceType() {
         final String resourceType = browserView.getViewResourceType();
         return StringUtils.isNotBlank(resourceType) ? resourceType : "composum/nodes/browser/view/generic";
     }
 
-    @Nonnull
+    @NotNull
     public String getTabResourceType() {
         return browserView.getTabResourceType();
     }
 
-    @Nonnull
+    @NotNull
     public List<BrowserViews.View.Tab> getViewTabs() {
         if (viewTabs == null) {
             viewTabs = browserView.getTabs(context, getResource());
@@ -89,7 +92,7 @@ public class GenericView extends ConsoleServletBean {
         return viewTabs;
     }
 
-    @Nonnull
+    @NotNull
     public BrowserViews.View.Toolbar getToolbar() {
         if (viewToolbar == null) {
             viewToolbar = browserView.getToolbar(context, getResource());
@@ -97,7 +100,7 @@ public class GenericView extends ConsoleServletBean {
         return viewToolbar;
     }
 
-    @Nonnull
+    @NotNull
     public BrowserViews.View.Content getContent() {
         if (viewContent == null) {
             viewContent = browserView.getContent(context, getResource());
@@ -105,7 +108,7 @@ public class GenericView extends ConsoleServletBean {
         return viewContent;
     }
 
-    @Nonnull
+    @NotNull
     public String getMimeTypeCss() {
         final String mimeType = getMimeType();
         return StringUtils.isNotBlank(mimeType)

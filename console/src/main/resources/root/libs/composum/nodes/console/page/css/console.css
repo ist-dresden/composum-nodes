@@ -480,8 +480,35 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     background-color: #080808;
 }
 
+.navbar .nav-permissions-status {
+    margin: 9px 0 9px 15px;
+    width: 24px;
+    height: 22px;
+    padding: 0;
+    text-align: center;
+    line-height: 20px;
+    background: #999;
+}
+
+.navbar .nav-permissions-status.user-read {
+    background: #7b7;
+}
+
+.navbar .nav-permissions-status.user-write {
+    background: #da0;
+}
+
+.navbar .nav-permissions-status.default-read {
+    color: #060;
+}
+
+.navbar .nav-permissions-status.default-write {
+    color: #b00;
+}
+
 .navbar .system.nav > li > a.nav-user-status {
     padding-right: 0;
+    padding-left: 10px;
 }
 
 .navbar .system.nav > li > a.nav-user-status em {

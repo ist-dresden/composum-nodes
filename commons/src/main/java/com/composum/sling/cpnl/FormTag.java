@@ -2,9 +2,9 @@ package com.composum.sling.cpnl;
 
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.jsp.JspWriter;
 import java.io.IOException;
 
@@ -51,8 +51,8 @@ public class FormTag extends UrlTag {
     }
 
     @Override
-    @Nonnull
-    protected String buildUrl(@Nonnull String urlValue, @Nullable final Boolean map){
+    @NotNull
+    protected String buildUrl(@NotNull String urlValue, @Nullable final Boolean map) {
         if (map != null) {
             urlValue = super.buildUrl(urlValue, map);
         } else {
@@ -62,7 +62,7 @@ public class FormTag extends UrlTag {
     }
 
     @Override
-    protected void writeAttributes (JspWriter writer) throws IOException {
+    protected void writeAttributes(JspWriter writer) throws IOException {
         super.writeAttributes(writer);
         if (StringUtils.isNotBlank(charset)) {
             writer.write(" accept-charset=\"");

@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import javax.jcr.AccessDeniedException;
 import javax.jcr.LoginException;
 import javax.jcr.Node;
@@ -89,9 +89,9 @@ public class ResponseUtil {
      * @throws RepositoryException error on accessing JCR
      * @throws IOException         error on write JSON
      */
-    public static void writeJsonProperty(@Nonnull final Resource resource,
-                                         @Nonnull final SlingHttpServletResponse response,
-                                         @Nonnull final Node node, @Nonnull final String name)
+    public static void writeJsonProperty(@NotNull final Resource resource,
+                                         @NotNull final SlingHttpServletResponse response,
+                                         @NotNull final Node node, @NotNull final String name)
             throws RepositoryException, IOException {
         JsonWriter jsonWriter = getJsonWriter(response);
         javax.jcr.Property property = node.getProperty(name);

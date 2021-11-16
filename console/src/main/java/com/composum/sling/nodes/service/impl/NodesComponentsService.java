@@ -7,10 +7,10 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.service.component.annotations.Component;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,7 +23,7 @@ public class NodesComponentsService implements ComponentsService {
 
     @Override
     @Nullable
-    public Resource createOverlay(@Nonnull final ResourceResolver resolver, @Nonnull final String overlayType)
+    public Resource createOverlay(@NotNull final ResourceResolver resolver, @NotNull final String overlayType)
             throws PersistenceException {
         Resource overlay = null;
         String overlayPath = null;
@@ -67,7 +67,7 @@ public class NodesComponentsService implements ComponentsService {
     }
 
     @Override
-    public boolean removeOverlay(@Nonnull final ResourceResolver resolver, @Nonnull final String overlayType)
+    public boolean removeOverlay(@NotNull final ResourceResolver resolver, @NotNull final String overlayType)
             throws PersistenceException {
         Resource overlay = null;
         for (String searchPathElement : resolver.getSearchPath()) {
@@ -86,9 +86,9 @@ public class NodesComponentsService implements ComponentsService {
         return false;
     }
 
-    protected Resource getTemplate(@Nonnull final ResourceResolver resolver,
-                                   @Nonnull final String overlayType,
-                                   @Nonnull final Iterator<String> searchPathIterator) {
+    protected Resource getTemplate(@NotNull final ResourceResolver resolver,
+                                   @NotNull final String overlayType,
+                                   @NotNull final Iterator<String> searchPathIterator) {
         String overlayPath = null;
         Resource template = null;
         String overlayEntry = null;
@@ -115,8 +115,8 @@ public class NodesComponentsService implements ComponentsService {
         add(JcrConstants.JCR_PREDECESSORS);
     }};
 
-    protected Resource copyTemplate(@Nonnull final ResourceResolver resolver,
-                                    @Nonnull final Resource template, @Nonnull final Resource parent)
+    protected Resource copyTemplate(@NotNull final ResourceResolver resolver,
+                                    @NotNull final Resource template, @NotNull final Resource parent)
             throws PersistenceException {
         ValueMap values = template.getValueMap();
         Resource resource = resolver.create(parent, template.getName(), new HashMap<String, Object>() {{
@@ -132,7 +132,7 @@ public class NodesComponentsService implements ComponentsService {
         return resource;
     }
 
-    protected Resource prepareParent(@Nonnull final ResourceResolver resolver,
+    protected Resource prepareParent(@NotNull final ResourceResolver resolver,
                                      final Resource template, final String targetPath)
             throws PersistenceException {
         Resource resource = resolver.getResource(targetPath);

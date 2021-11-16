@@ -12,11 +12,11 @@ import org.apache.commons.lang3.text.translate.EntityArrays;
 import org.apache.commons.lang3.text.translate.LookupTranslator;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.Format;
@@ -394,7 +394,7 @@ public class CpnlElFunctions {
      * @param type   the optional value type
      * @return the Format instance
      */
-    public static Format getFormatter(@Nonnull final Locale locale, @Nonnull final String format,
+    public static Format getFormatter(@NotNull final Locale locale, @NotNull final String format,
                                       @Nullable final Class<?>... type) {
         Format formatter = null;
         Pattern TEXT_FORMAT_STRING = Pattern.compile("^(\\{([^}]+)}(.+)|(.*\\{}.*))$");

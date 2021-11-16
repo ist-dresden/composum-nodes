@@ -2,19 +2,23 @@ package com.composum.sling.core.security;
 
 import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.servlet.SetupServlet;
 import com.composum.sling.core.util.RequestUtil;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@Restricted(key = SetupServlet.SERVICE_KEY)
 public class SetupConfiguration extends AbstractSlingBean {
 
+    @Restricted(key = SetupServlet.SERVICE_KEY)
     public class ScriptBean extends AbstractSlingBean implements Comparable<ScriptBean> {
 
         private final ConfigurationSet.ConfigScript script;
@@ -25,22 +29,23 @@ public class SetupConfiguration extends AbstractSlingBean {
                     SetupConfiguration.this.context.getResolver().getResource(script.getPath()));
         }
 
-        @Nonnull
+        @NotNull
         public String getScriptUrl() {
             return getRequest().getContextPath() + "/bin/browser.html" + getScript().getScriptPath();
         }
 
-        @Nonnull
+        @NotNull
         public ConfigurationSet.ConfigScript getScript() {
             return script;
         }
 
         @Override
-        public int compareTo(@Nonnull ScriptBean other) {
+        public int compareTo(@NotNull ScriptBean other) {
             return script.compareTo(other.script);
         }
     }
 
+    @Restricted(key = SetupServlet.SERVICE_KEY)
     public class ConfigBean extends AbstractSlingBean implements Comparable<ConfigBean> {
 
         private final ConfigurationSet.Configuration config;
@@ -53,18 +58,18 @@ public class SetupConfiguration extends AbstractSlingBean {
                     SetupConfiguration.this.context.getResolver().getResource(config.getPath()));
         }
 
-        @Nonnull
+        @NotNull
         public ConfigurationSet.Configuration getConfig() {
             return config;
         }
 
-        @Nonnull
+        @NotNull
         public List<ScriptBean> getScripts() {
             return scripts;
         }
 
         @Override
-        public int compareTo(@Nonnull ConfigBean other) {
+        public int compareTo(@NotNull ConfigBean other) {
             return config.compareTo(other.config);
         }
     }
@@ -103,7 +108,7 @@ public class SetupConfiguration extends AbstractSlingBean {
         return matchingSet;
     }
 
-    @Nonnull
+    @NotNull
     public ConfigurationSet getConfigurationSet() {
         if (configurationSet == null) {
             SlingHttpServletRequest request = getRequest();

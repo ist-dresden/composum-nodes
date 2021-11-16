@@ -4,8 +4,8 @@ import org.apache.sling.xss.ProtectionContext;
 import org.apache.sling.xss.XSSAPI;
 import org.apache.sling.xss.XSSFilter;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * the static access for the Sling XSSAPI / XSSFilter - wraps the Sling XSS services
@@ -15,12 +15,12 @@ public class XSS {
     protected static ServiceHandle<XSSAPI> XSSAPI_HANDLE = new ServiceHandle<>(XSSAPI.class);
     protected static ServiceHandle<XSSFilter> XSSFilter_HANDLE = new ServiceHandle<>(XSSFilter.class);
 
-    @Nonnull
+    @NotNull
     public static XSSAPI api() {
         return XSSAPI_HANDLE.getService();
     }
 
-    @Nonnull
+    @NotNull
     public static XSSFilter filter() {
         return XSSFilter_HANDLE.getService();
     }
@@ -90,7 +90,7 @@ public class XSS {
      * @param url the source URL
      * @return a sanitized URL (possibly empty)
      */
-    @Nonnull
+    @NotNull
     public static String getValidHref(@Nullable String url) {
         return api().getValidHref(url);
     }
@@ -249,7 +249,7 @@ public class XSS {
      * @param source a string containing the source HTML
      * @return a string containing the sanitized HTML which may be an empty string if {@code source} is {@code null} or empty
      */
-    @Nonnull
+    @NotNull
     public static String filterHTML(@Nullable String source) {
         return api().filterHTML(source);
     }

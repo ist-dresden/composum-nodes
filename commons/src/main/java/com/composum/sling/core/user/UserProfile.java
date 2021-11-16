@@ -2,16 +2,22 @@ package com.composum.sling.core.user;
 
 import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 import org.jetbrains.annotations.NotNull;
 
+import static com.composum.sling.core.user.UserProfile.SERVICE_KEY;
+
 /**
  * the user profile bean derived from the AEM user profile approach
  */
+@Restricted(key = SERVICE_KEY)
 public class UserProfile extends AbstractSlingBean {
+
+    public static final String SERVICE_KEY = "nodes/users/profile";
 
     public static final String PN_GENDER = "gender";
     public static final String PN_TITLE = "title";

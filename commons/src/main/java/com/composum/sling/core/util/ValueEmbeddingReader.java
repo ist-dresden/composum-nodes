@@ -6,8 +6,8 @@ import org.apache.sling.api.wrappers.ValueMapDecorator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -83,7 +83,7 @@ public class ValueEmbeddingReader extends Reader {
      * @param reader the text to read - probably with embedded value placeholders
      * @param values the set of available placeholders
      */
-    public ValueEmbeddingReader(@Nonnull Reader reader, @Nonnull Map<String, Object> values) {
+    public ValueEmbeddingReader(@NotNull Reader reader, @NotNull Map<String, Object> values) {
         this(reader, new ValueMapDecorator(values), null, null);
     }
 
@@ -93,7 +93,7 @@ public class ValueEmbeddingReader extends Reader {
      * @param locale          the locale to use for value formatting
      * @param resourceContext the context class for resource loading
      */
-    public ValueEmbeddingReader(@Nonnull Reader reader, @Nonnull Map<String, Object> values,
+    public ValueEmbeddingReader(@NotNull Reader reader, @NotNull Map<String, Object> values,
                                 @Nullable Locale locale, @Nullable Class<?> resourceContext) {
         this(reader, new ValueMapDecorator(values), locale, resourceContext);
     }
@@ -102,7 +102,7 @@ public class ValueEmbeddingReader extends Reader {
      * @param reader the text to read - probably with embedded value placeholders
      * @param values the set of available placeholders
      */
-    public ValueEmbeddingReader(@Nonnull Reader reader, @Nonnull ValueMap values) {
+    public ValueEmbeddingReader(@NotNull Reader reader, @NotNull ValueMap values) {
         this(reader, values, null, null);
     }
 
@@ -112,7 +112,7 @@ public class ValueEmbeddingReader extends Reader {
      * @param locale          the locale to use for value formatting
      * @param resourceContext the context class for resource loading
      */
-    public ValueEmbeddingReader(@Nonnull Reader reader, @Nonnull ValueMap values,
+    public ValueEmbeddingReader(@NotNull Reader reader, @NotNull ValueMap values,
                                 @Nullable Locale locale, @Nullable Class<?> resourceContext) {
         this.reader = reader;
         this.values = values;
@@ -126,7 +126,7 @@ public class ValueEmbeddingReader extends Reader {
     }
 
     @Override
-    public int read(@Nonnull char[] cbuf, int off, int len) throws IOException {
+    public int read(@NotNull char[] cbuf, int off, int len) throws IOException {
         if (embed != null) {
             if (this.len > 0) { // flush buffer before embedding a reader
                 return copy(cbuf, off, len);
@@ -147,7 +147,7 @@ public class ValueEmbeddingReader extends Reader {
         return copy(cbuf, off, len);
     }
 
-    protected int copy(@Nonnull char[] cbuf, int off, int len) {
+    protected int copy(@NotNull char[] cbuf, int off, int len) {
         int count = Math.min(this.len, len);
         if (count > 0) {
             System.arraycopy(this.buf, this.off, cbuf, off, count);

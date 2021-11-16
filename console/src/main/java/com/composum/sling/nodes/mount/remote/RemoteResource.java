@@ -10,9 +10,9 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.wrappers.ModifiableValueMapDecorator;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -23,11 +23,11 @@ public class RemoteResource implements Resource {
 
     public static class NonExisting extends RemoteResource {
 
-        public NonExisting(@Nonnull final RemoteResolver resolver, @Nonnull String path) {
+        public NonExisting(@NotNull final RemoteResolver resolver, @NotNull String path) {
             super(resolver, path);
         }
 
-        @Nonnull
+        @NotNull
         @Override
         public String getResourceType() {
             return Resource.RESOURCE_TYPE_NON_EXISTING;
@@ -46,7 +46,7 @@ public class RemoteResource implements Resource {
 
     protected ResourceMetadata metadata = new ResourceMetadata();
 
-    public RemoteResource(@Nonnull final RemoteResolver resolver, @Nonnull String path) {
+    public RemoteResource(@NotNull final RemoteResolver resolver, @NotNull String path) {
         this.resolver = resolver;
         if (StringUtils.isBlank(path) || !path.startsWith("/")) {
             throw new IllegalArgumentException("an absolute path is required (" + path + ")");
@@ -66,7 +66,7 @@ public class RemoteResource implements Resource {
         }
     }
 
-    protected RemoteResource(@Nonnull final RemoteResource template, @Nonnull final String path) {
+    protected RemoteResource(@NotNull final RemoteResource template, @NotNull final String path) {
         this(template.resolver, path);
         this.values = new ValueMapDecorator(new HashMap<>(template.values));
         this.children = new LinkedHashMap<>();
@@ -82,7 +82,7 @@ public class RemoteResource implements Resource {
      *
      * @return the set of children, loaded if not done already
      */
-    @Nonnull
+    @NotNull
     protected Map<String, Resource> children() {
         if (children == null) {
             if (resolver.provider.remoteReader.loadResource(this, true) == null) {
@@ -92,13 +92,13 @@ public class RemoteResource implements Resource {
         return children;
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public String getPath() {
         return path;
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public String getName() {
         return name;
@@ -115,13 +115,13 @@ public class RemoteResource implements Resource {
         return children().size() > 0;
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public Iterator<Resource> listChildren() {
         return children().values().iterator();
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public Iterable<Resource> getChildren() {
         return children().values();
@@ -129,14 +129,14 @@ public class RemoteResource implements Resource {
 
     @Nullable
     @Override
-    public Resource getChild(@Nonnull String relPath) {
+    public Resource getChild(@NotNull String relPath) {
         if (relPath.contains("/")) {
             return resolver.getResource(this, relPath);
         }
         return children().get(relPath);
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public String getResourceType() {
         return values.get(ResourceUtil.PROP_RESOURCE_TYPE,
@@ -161,19 +161,19 @@ public class RemoteResource implements Resource {
         return result;
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public ResourceResolver getResourceResolver() {
         return resolver;
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public ResourceMetadata getResourceMetadata() {
         return metadata;
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public ValueMap getValueMap() {
         return values;
@@ -182,7 +182,7 @@ public class RemoteResource implements Resource {
     @Nullable
     @Override
     @SuppressWarnings("unchecked")
-    public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
+    public <AdapterType> AdapterType adaptTo(@NotNull Class<AdapterType> type) {
         if (ModifiableValueMap.class.equals(type)) {
             if (modifiedValues == null) {
                 modifiedValues = new ModifiableValueMapDecorator(new HashMap<>(values));

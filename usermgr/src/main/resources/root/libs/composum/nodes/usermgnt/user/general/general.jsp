@@ -4,20 +4,22 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component var="model" type="com.composum.sling.core.usermanagement.view.User" scope="request">
+    <c:set var="writeAllowed" value="${model.permissible['nodes/users/manager']['write']}"/>
+    <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
     <div class="general-user detail-tab">
         <div class="detail-toolbar">
             <cpn:div test="${model.currentUserAdmin}" class="btn-group btn-group-sm" role="group">
-                <button class="toggle-disabled fa fa-ban btn btn-default"
+                <button class="toggle-disabled fa fa-ban btn btn-default"${writeDisabled}
                         data-title-disable="${cpn:i18n(slingRequest,'Disable User')}"
                         data-title-enable="${cpn:i18n(slingRequest,'Enable User')}"><span
                         class="label"></span></button>
             </cpn:div>
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="edit-profile fa fa-edit btn btn-default"
+                <button type="button" class="edit-profile fa fa-edit btn btn-default"${writeDisabled}
                         title="${cpn:i18n(slingRequest,'Edit User Profile')}"><span
                         class="label">${cpn:i18n(slingRequest,'Edit User Profile')}</span>
                 </button>
-                <button class="change-password fa fa-key btn btn-default"
+                <button class="change-password fa fa-key btn btn-default"${writeDisabled}
                         title="${cpn:i18n(slingRequest,'Change Password')}"><span
                         class="label">${cpn:i18n(slingRequest,'Change Password')}</span>
                 </button>
@@ -71,4 +73,6 @@
             </div>
         </div>
     </div>
+    <c:remove var="writeDisabled"/>
+    <c:remove var="writeAllowed"/>
 </cpn:component>

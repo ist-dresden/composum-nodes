@@ -5,13 +5,13 @@ import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 
-import javax.annotation.Nonnull;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -40,11 +40,11 @@ public class RemoteRequestFilter implements Filter {
             policy = ReferencePolicy.DYNAMIC,
             cardinality = ReferenceCardinality.MULTIPLE
     )
-    protected void addRemoteProvider(@Nonnull RemoteProvider provider) {
+    protected void addRemoteProvider(@NotNull RemoteProvider provider) {
         remoteProviders.put(provider.getProviderRoot(), provider);
     }
 
-    protected void removeRemoteProvider(@Nonnull RemoteProvider provider) {
+    protected void removeRemoteProvider(@NotNull RemoteProvider provider) {
         remoteProviders.remove(provider.getProviderRoot());
     }
 

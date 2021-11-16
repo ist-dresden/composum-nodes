@@ -4,13 +4,15 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component var="group" type="com.composum.sling.core.usermanagement.view.Group" scope="request">
+    <c:set var="writeAllowed" value="${group.permissible['nodes/users/manager']['write']}"/>
+    <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
     <div class="groups detail-tab full-table-view">
         <div class="table-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <button class="add-authorizable-to-group fa fa-plus btn btn-default"
+                <button class="add-authorizable-to-group fa fa-plus btn btn-default"${writeDisabled}
                         title="${cpn:i18n(slingRequest,'Add group to group')}"><span
                         class="label">${cpn:i18n(slingRequest,'Add group to group')}</span></button>
-                <button class="remove-authorizable-from-group fa fa-minus btn btn-default"
+                <button class="remove-authorizable-from-group fa fa-minus btn btn-default"${writeDisabled}
                         title="${cpn:i18n(slingRequest,'Remove group from group')}"><span
                         class="label">${cpn:i18n(slingRequest,'Remove group from group')}</span></button>
             </div>
@@ -22,4 +24,6 @@
             </table>
         </div>
     </div>
+    <c:remove var="writeDisabled"/>
+    <c:remove var="writeAllowed"/>
 </cpn:component>

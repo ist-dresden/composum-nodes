@@ -2,11 +2,11 @@ package com.composum.sling.cpnl;
 
 import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.jsp.JspWriter;
 import java.io.IOException;
 import java.text.Format;
@@ -73,8 +73,8 @@ public abstract class UrlTag extends TagBase {
         return formatter;
     }
 
-    @Nonnull
-    protected String buildUrl(@Nonnull String urlValue, @Nullable final Boolean map){
+    @NotNull
+    protected String buildUrl(@NotNull String urlValue, @Nullable final Boolean map) {
         if (StringUtils.startsWith(urlValue, "/") && !StringUtils.startsWith(urlValue, "//")) {
             // this should be a path; if it isn't a path we do not modify the href.
             // relative paths wouldn't make any sense here, anyway, so we ignore these.

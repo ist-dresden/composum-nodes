@@ -2,20 +2,22 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.service.RepositorySetupService;
+import com.composum.sling.core.service.RestrictedService;
 import com.composum.sling.core.service.impl.CoreRepositorySetupService;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.jcr.Session;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
@@ -24,10 +26,12 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.composum.sling.core.servlet.SetupServlet.SERVICE_KEY;
+
 /**
  * The service servlet to execute setup operations.
  */
-@Component(service = Servlet.class,
+@Component(service = {Servlet.class, RestrictedService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Setup Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SetupServlet.SERVLET_PATH,
@@ -35,9 +39,12 @@ import java.util.Map;
                 "sling.auth.requirements=" + SetupServlet.SERVLET_PATH
         }
 )
+@Restricted(key = SERVICE_KEY)
 public class SetupServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(SetupServlet.class);
+
+    public static final String SERVICE_KEY = "core/setup/execution";
 
     public static final String SERVLET_PATH = "/bin/cpm/nodes/setup";
 
@@ -61,13 +68,9 @@ public class SetupServlet extends AbstractServiceServlet {
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.txt);
 
     @Override
+    @NotNull
     protected ServletOperationSet<Extension, Operation> getOperations() {
         return operations;
-    }
-
-    @Override
-    protected boolean isEnabled() {
-        return coreConfig.isEnabled(this);
     }
 
     /**
@@ -84,7 +87,7 @@ public class SetupServlet extends AbstractServiceServlet {
     public class RunSetupScripts implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
                          final SlingHttpServletResponse response,
                          final ResourceHandle resource)
                 throws ServletException, IOException {

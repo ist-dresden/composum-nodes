@@ -15,10 +15,11 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyType;
@@ -128,11 +129,13 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable  ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (!(resource = AbstractServiceServlet.tryToUseRawSuffix(request, resource)).isValid()) {
+            if (resource == null ||
+                    !(resource = AbstractServiceServlet.tryToUseRawSuffix(request, resource)).isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
@@ -478,7 +481,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         return type;
     }
 
-    @Nonnull
+    @NotNull
     public static String getMimeTypeKey(String mimeType) {
         int delim = mimeType.indexOf('/');
         String major = mimeType.substring(0, delim);

@@ -3,9 +3,9 @@ package com.composum.sling.clientlibs.handle;
 import com.composum.sling.core.ResourceHandle;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.util.Arrays;
@@ -20,7 +20,9 @@ public class Clientlib implements ClientlibElement {
 
     private static final Logger LOG = getLogger(Clientlib.class);
 
-    /** Allowed characters in a category name, for use in regex character classes */
+    /**
+     * Allowed characters in a category name, for use in regex character classes
+     */
     public static final String CATEGORYNAME_CHARS = "a-zA-Z0-9._-";
 
     /**
@@ -36,22 +38,30 @@ public class Clientlib implements ClientlibElement {
      */
     public static final String PROP_ORDER = "order";
 
-    /** Resource type of client libraries. */
+    /**
+     * Resource type of client libraries.
+     */
     public static final String RESOURCE_TYPE = "composum/nodes/commons/clientlib";
 
-    /** A reference that matches this. */
+    /**
+     * A reference that matches this.
+     */
     @Override
     public ClientlibRef getRef() {
         return new ClientlibRef(getType(), resource.getPath(), true, null);
     }
 
-    /** A link that matches this. */
+    /**
+     * A link that matches this.
+     */
     @Override
     public ClientlibLink makeLink() {
         return new ClientlibLink(getType(), ClientlibLink.Kind.CLIENTLIB, resource.getPath(), null);
     }
 
-    /** Type of the element: {@link #link}, {@link #css}, {@link #js}, {@link #img}. */
+    /**
+     * Type of the element: {@link #link}, {@link #css}, {@link #js}, {@link #img}.
+     */
     public enum Type {
         link, css, js, img
     }
@@ -82,7 +92,7 @@ public class Clientlib implements ClientlibElement {
         return resource.getProperty(PROP_ORDER, 0);
     }
 
-    @Nonnull
+    @NotNull
     public List<String> getCategories() {
         return Arrays.asList(resource.getProperty(PROP_CATEGORY, new String[0]));
     }
