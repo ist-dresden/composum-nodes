@@ -1,6 +1,7 @@
 package com.composum.sling.nodes.query;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.XSS;
 import org.apache.commons.codec.binary.Base64;
@@ -9,6 +10,7 @@ import org.apache.sling.api.resource.Resource;
 
 import java.nio.charset.StandardCharsets;
 
+@Restricted(key = ConfigSet.SERVICE_KEY)
 public class ExportCfg extends ConfigItem {
 
     public static final String PROP_FILENAME = "filename";

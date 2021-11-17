@@ -20,8 +20,8 @@ import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.MessageFormat;
@@ -88,7 +88,7 @@ public class Status {
     }
 
     /** Construction */
-    public Status(@Nonnull final GsonBuilder gsonBuilder,
+    public Status(@NotNull final GsonBuilder gsonBuilder,
                   @Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response,
                   @Nullable Logger messageLogger) {
         this.gson = initGson(Objects.requireNonNull(gsonBuilder), () -> request).create();
@@ -105,7 +105,7 @@ public class Status {
      * @deprecated since it's dangerous to forget {@link #initGson(GsonBuilder, SlingHttpServletRequest)}.
      */
     @Deprecated
-    public Status(@Nonnull final Gson gson,
+    public Status(@NotNull final Gson gson,
                   @Nullable final SlingHttpServletRequest request, @Nullable final SlingHttpServletResponse response) {
         this.gson = Objects.requireNonNull(gson);
         this.request = request;
@@ -123,9 +123,9 @@ public class Status {
      * performs i18n according to the given request. If there is no request, we can skip this step as these classes are
      * annotated with {@link com.google.gson.annotations.JsonAdapter}.
      */
-    @Nonnull
-    public static GsonBuilder initGson(@Nonnull GsonBuilder gsonBuilder,
-                                       @Nonnull Supplier<SlingHttpServletRequest> requestProvider) {
+    @NotNull
+    public static GsonBuilder initGson(@NotNull GsonBuilder gsonBuilder,
+                                       @NotNull Supplier<SlingHttpServletRequest> requestProvider) {
         if (requestProvider != null) {
             return gsonBuilder.registerTypeAdapterFactory(new MessageTypeAdapterFactory(requestProvider));
         }
@@ -149,8 +149,8 @@ public class Status {
      * @return the validated parameter value, or null if that fails
      */
     @Nullable
-    public String getRequiredParameter(@Nonnull final String paramName,
-                                       @Nullable final Pattern pattern, @Nonnull final String errorMessage) {
+    public String getRequiredParameter(@NotNull final String paramName,
+                                       @Nullable final Pattern pattern, @NotNull final String errorMessage) {
         final RequestParameter requestParameter = request.getRequestParameter(paramName);
         String value = null;
         if (requestParameter != null) {
@@ -163,8 +163,8 @@ public class Status {
         return null;
     }
 
-    public List<String> getRequiredParameters(@Nonnull final String paramName,
-                                              @Nullable final Pattern pattern, @Nonnull final String errorMessage) {
+    public List<String> getRequiredParameters(@NotNull final String paramName,
+                                              @Nullable final Pattern pattern, @NotNull final String errorMessage) {
         final RequestParameter[] requestParameters = request.getRequestParameters(paramName);
         if (requestParameters == null || requestParameters.length < 1) {
             validationError(null, null, errorMessage);
@@ -200,7 +200,7 @@ public class Status {
         }
     }
 
-    @Nonnull
+    @NotNull
     public MessageContainer getMessages() {
         if (messages == null) { messages = new MessageContainer(messageLogger); }
         return messages;
@@ -227,29 +227,29 @@ public class Status {
     }
 
     /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
-    public void info(@Nonnull final String text, Object... args) {
+    public void info(@NotNull final String text, Object... args) {
         shortMessage(Level.info, text, args);
     }
 
     /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
-    public void validationInfo(@Nonnull final String context, @Nonnull final String label,
-                               @Nonnull final String text, Object... args) {
+    public void validationInfo(@NotNull final String context, @NotNull final String label,
+                               @NotNull final String text, Object... args) {
         addValidationMessage(Level.info, context, label, text, args);
     }
 
     /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
-    public void warn(@Nonnull final String text, Object... args) {
+    public void warn(@NotNull final String text, Object... args) {
         shortMessage(Level.warn, text, args);
     }
 
     /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
-    public void validationWarn(@Nonnull final String context, @Nonnull final String label,
-                               @Nonnull final String text, Object... args) {
+    public void validationWarn(@NotNull final String context, @NotNull final String label,
+                               @NotNull final String text, Object... args) {
         addValidationMessage(Level.warn, context, label, text, args);
     }
 
     /** For the meaning of arguments - compare {@link #shortMessage(Level, String, Object...)} . */
-    public void error(@Nonnull final String text, Object... args) {
+    public void error(@NotNull final String text, Object... args) {
         shortMessage(Level.error, text, args);
     }
 
@@ -258,14 +258,14 @@ public class Status {
      * This adds the {@link Exception#getLocalizedMessage()} as message argument and logs the exception if
      * a message logger is set.
      */
-    public void error(@Nonnull String text, @Nonnull Throwable exception) {
+    public void error(@NotNull String text, @NotNull Throwable exception) {
         getMessages().add(Message.error(text, exception.getLocalizedMessage()), exception);
         adjustToMessageLevel(Level.error);
     }
 
     /** For the meaning of arguments - compare {@link #addValidationMessage(Level, String, String, String, Object...)} . */
-    public void validationError(@Nonnull final String context, @Nonnull final String label,
-                                @Nonnull final String text, Object... args) {
+    public void validationError(@NotNull final String context, @NotNull final String label,
+                                @NotNull final String text, Object... args) {
         addValidationMessage(Level.error, context, label, text, args);
     }
 
@@ -275,8 +275,8 @@ public class Status {
      * @param name the key of the data element to insert in the status response
      * @return a Map for the data values of the added status object, created if neccesary.
      */
-    @Nonnull
-    public Map<String, Object> data(@Nonnull final String name) {
+    @NotNull
+    public Map<String, Object> data(@NotNull final String name) {
         if (data == null) { data = new LinkedHashMap<>();}
         Map<String, Object> object = data.computeIfAbsent(name, k -> new LinkedHashMap<>());
         return object;
@@ -288,7 +288,7 @@ public class Status {
      * @param name the key of the data element to insert in the status response
      * @see #reference(Map, Resource)
      */
-    public void reference(@Nonnull final String name, Resource resource) {
+    public void reference(@NotNull final String name, Resource resource) {
         Map<String, Object> object = data(name);
         reference(object, resource);
     }
@@ -311,8 +311,8 @@ public class Status {
      * @param name the key of the data element to insert in the status response
      * @return a new list of Map items for the data values of the added status object
      */
-    @Nonnull
-    public List<Map<String, Object>> list(@Nonnull final String name) {
+    @NotNull
+    public List<Map<String, Object>> list(@NotNull final String name) {
         if (list == null) { list = new LinkedHashMap<>(); }
         List<Map<String, Object>> object = list.computeIfAbsent(name, k -> new ArrayList<>());
         return object;
@@ -324,7 +324,7 @@ public class Status {
      *
      * @param name the key of the data element to insert in the status response
      */
-    public void list(@Nonnull final String name, Collection<Resource> items) {
+    public void list(@NotNull final String name, Collection<Resource> items) {
         List<Map<String, Object>> object = list(name);
         for (Resource item : items) {
             Map<String, Object> ref = new HashMap<>();
@@ -341,7 +341,7 @@ public class Status {
      * @param args  argument objects for the log like message preparation of text
      * @return the created and added message, if you need to add more attributes
      */
-    public Message shortMessage(@Nonnull final Level level, @Nonnull final String text, Object... args) {
+    public Message shortMessage(@NotNull final Level level, @NotNull final String text, Object... args) {
         return addMessage(new Message(level, text, args));
     }
 
@@ -355,10 +355,10 @@ public class Status {
      * @return the created and added message, if you need to add more attributes
      * @see MessageFormat
      */
-    @Nonnull
-    public Message addValidationMessage(@Nonnull final Level level, @Nullable final String context,
+    @NotNull
+    public Message addValidationMessage(@NotNull final Level level, @Nullable final String context,
                                         @Nullable final String label,
-                                        @Nonnull final String text, Object... args) {
+                                        @NotNull final String text, Object... args) {
         return addMessage(new Message(level, text, args).setContext(context).setLabel(label).setLogLevel(Level.debug));
     }
 
@@ -367,8 +367,8 @@ public class Status {
      *
      * @return the created and added message, if you need to add more attributes
      */
-    @Nonnull
-    public Message addMessage(@Nonnull final Message message) {
+    @NotNull
+    public Message addMessage(@NotNull final Message message) {
         if (messages == null) {
             messages = new MessageContainer(messageLogger);
         }
@@ -399,7 +399,7 @@ public class Status {
     /**
      * Writes this object as JSON using {@link Gson}.
      */
-    public void toJson(@Nonnull final JsonWriter writer) throws IOException {
+    public void toJson(@NotNull final JsonWriter writer) throws IOException {
         try {
             gson.toJson(this, getClass(), writer);
         } catch (JsonIOException e) {
@@ -412,7 +412,7 @@ public class Status {
      * Usable for logging: never throws up even if JSON generation fails, though it's
      * obviously lacking data then.
      */
-    @Nonnull
+    @NotNull
     public String getJsonString() {
         try (StringWriter statusString = new StringWriter()) {
             toJson(new JsonWriter(statusString));
@@ -448,7 +448,7 @@ public class Status {
         toJson(writer);
     }
 
-    @Nonnull
+    @NotNull
     public Gson getGson() {
         return gson;
     }
@@ -462,7 +462,7 @@ public class Status {
      *
      * @return this in builder-style
      */
-    @Nonnull
+    @NotNull
     public Status setMessageLogger(@Nullable Logger messageLogger) {
         this.messageLogger = messageLogger;
         return this;
@@ -479,9 +479,9 @@ public class Status {
      * or, if need be, {@link #setMessageLogger(Logger)}.
      * This is kept for backwards compatibility for a while.
      */
-    @Nonnull
+    @NotNull
     @Deprecated
-    public Status withLogging(@Nonnull Logger logger) {
+    public Status withLogging(@NotNull Logger logger) {
         return setMessageLogger(logger);
     }
 

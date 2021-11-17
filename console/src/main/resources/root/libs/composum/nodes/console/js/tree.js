@@ -209,14 +209,16 @@
                 if (event) {
                     event.preventDefault();
                 }
-                if (!path) {
-                    path = this.getCurrentPath();
-                }
-                core.console.getProfile().set('nodes', 'clipboard', {
-                    path: path
-                });
-                if (_.isFunction(callback)) {
-                    callback.call(this, path);
+                if (!$(event.currentTarget).hasClass('disabled')) {
+                    if (!path) {
+                        path = this.getCurrentPath();
+                    }
+                    core.console.getProfile().set('nodes', 'clipboard', {
+                        path: path
+                    });
+                    if (_.isFunction(callback)) {
+                        callback.call(this, path);
+                    }
                 }
             },
 
@@ -224,31 +226,33 @@
                 if (event) {
                     event.preventDefault();
                 }
-                if (!path) {
-                    path = this.getCurrentPath();
-                }
-                var clipboard = core.console.getProfile().get('nodes', 'clipboard');
-                if (path && clipboard && clipboard.path) {
-                    var name = core.getNameFromPath(clipboard.path);
-                    core.ajaxPut("/bin/cpm/nodes/node.copy.json" + core.encodePath(path), JSON.stringify({
-                        path: clipboard.path,
-                        name: name
-                    }), {
-                        dataType: 'json'
-                    }, _.bind(function (result) {
-                        $(document).trigger('path:inserted', [path, name]);
-                    }, this), _.bind(function (result) {
-                        var dialog = core.nodes.getCopyNodeDialog();
-                        dialog.show(_.bind(function () {
-                            dialog.setNodePath(clipboard.path);
-                            dialog.setTargetPath(path);
-                            dialog.errorMessage('Copy Node', result);
-                        }, this), _.bind(function () {
-                            if (_.isFunction(callback)) {
-                                callback.call(this, path);
-                            }
+                if (!$(event.currentTarget).hasClass('disabled')) {
+                    if (!path) {
+                        path = this.getCurrentPath();
+                    }
+                    var clipboard = core.console.getProfile().get('nodes', 'clipboard');
+                    if (path && clipboard && clipboard.path) {
+                        var name = core.getNameFromPath(clipboard.path);
+                        core.ajaxPut("/bin/cpm/nodes/node.copy.json" + core.encodePath(path), JSON.stringify({
+                            path: clipboard.path,
+                            name: name
+                        }), {
+                            dataType: 'json'
+                        }, _.bind(function (result) {
+                            $(document).trigger('path:inserted', [path, name]);
+                        }, this), _.bind(function (result) {
+                            var dialog = core.nodes.getCopyNodeDialog();
+                            dialog.show(_.bind(function () {
+                                dialog.setNodePath(clipboard.path);
+                                dialog.setTargetPath(path);
+                                dialog.errorMessage('Copy Node', result);
+                            }, this), _.bind(function () {
+                                if (_.isFunction(callback)) {
+                                    callback.call(this, path);
+                                }
+                            }, this));
                         }, this));
-                    }, this));
+                    }
                 }
             },
 
@@ -256,45 +260,53 @@
                 if (event) {
                     event.preventDefault();
                 }
-                var dialog = core.nodes.getMoveNodeDialog();
-                dialog.show(_.bind(function () {
-                    dialog.setNode(this.tree.current());
-                }, this));
+                if (!$(event.currentTarget).hasClass('disabled')) {
+                    var dialog = core.nodes.getMoveNodeDialog();
+                    dialog.show(_.bind(function () {
+                        dialog.setNode(this.tree.current());
+                    }, this));
+                }
             },
 
             renameNode: function (event) {
                 if (event) {
                     event.preventDefault();
                 }
-                var dialog = core.nodes.getRenameNodeDialog();
-                dialog.show(_.bind(function () {
-                    dialog.setNode(this.tree.current());
-                }, this));
+                if (!$(event.currentTarget).hasClass('disabled')) {
+                    var dialog = core.nodes.getRenameNodeDialog();
+                    dialog.show(_.bind(function () {
+                        dialog.setNode(this.tree.current());
+                    }, this));
+                }
             },
 
             nodeMixins: function (event) {
                 if (event) {
                     event.preventDefault();
                 }
-                var dialog = core.nodes.getNodeMixinsDialog();
-                dialog.show(_.bind(function () {
-                    dialog.setNode(this.tree.current());
-                }, this));
+                if (!$(event.currentTarget).hasClass('disabled')) {
+                    var dialog = core.nodes.getNodeMixinsDialog();
+                    dialog.show(_.bind(function () {
+                        dialog.setNode(this.tree.current());
+                    }, this));
+                }
             },
 
             toggleCheckout: function (event) {
                 if (event) {
                     event.preventDefault();
                 }
-                var node = this.tree.current();
-                if (node) {
-                    //node.jcrState.checkedOut
-                    core.ajaxPost('/bin/cpm/nodes/version.' + (node.jcrState.checkedOut ? 'checkin' : 'checkout') + '.json' + node.path,
-                        {}, {}, _.bind(function (result) {
-                            $(document).trigger('path:changed', [node.path]);
-                        }, this), _.bind(function (result) {
-                            core.alert('danger', 'Error', 'Error on toggle node lock', result);
-                        }, this));
+                if (!$(event.currentTarget).hasClass('disabled')) {
+                    var node = this.tree.current();
+                    if (node) {
+                        //node.jcrState.checkedOut
+                        core.ajaxPost('/bin/cpm/nodes/version.' + (node.jcrState.checkedOut ? 'checkin' : 'checkout') + '.json' + node.path,
+                            {}, {}, _.bind(function (result) {
+                                $(document).trigger('path:changed', [node.path]);
+                            }, this), _.bind(function (result) {
+                                core.alert('danger', 'Error', 'Error on toggle node lock', result);
+                            }, this));
+                    }
                 }
             },
 
@@ -302,16 +314,18 @@
                 if (event) {
                     event.preventDefault();
                 }
-                var node = this.tree.current();
-                if (node) {
-                    core.ajaxPost('/bin/cpm/nodes/node.toggle.lock' + node.path,
-                        {}, {}, undefined, undefined, _.bind(function (result) {
-                            if (result.status === 200) {
-                                $(document).trigger('path:changed', [node.path]);
-                            } else {
-                                core.alert('danger', 'Error', 'Error on toggle node lock', result);
-                            }
-                        }, this));
+                if (!$(event.currentTarget).hasClass('disabled')) {
+                    var node = this.tree.current();
+                    if (node) {
+                        core.ajaxPost('/bin/cpm/nodes/node.toggle.lock' + node.path,
+                            {}, {}, undefined, undefined, _.bind(function (result) {
+                                if (result.status === 200) {
+                                    $(document).trigger('path:changed', [node.path]);
+                                } else {
+                                    core.alert('danger', 'Error', 'Error on toggle node lock', result);
+                                }
+                            }, this));
+                    }
                 }
             },
 
@@ -319,41 +333,45 @@
                 if (event) {
                     event.preventDefault();
                 }
-                if (!path) {
-                    path = this.tree.getSelectedPath();
-                }
-                var dialog = core.nodes.getCreateNodeDialog();
-                dialog.show(_.bind(function () {
-                    if (path) {
-                        dialog.initParentPath(path);
+                if (!$(event.currentTarget).hasClass('disabled')) {
+                    if (!path) {
+                        path = this.tree.getSelectedPath();
                     }
-                }, this), _.bind(function () {
-                    if (_.isFunction(callback)) {
-                        callback.call(this, path);
-                    }
-                }, this));
-            },
-
-            deleteNode: function (event, path, callback) {
-                if (event) {
-                    event.preventDefault();
-                }
-                if (!path) {
-                    path = this.tree.getSelectedPath();
-                }
-                if (path) {
-                    var dialog = core.nodes.getDeleteNodeDialog();
+                    var dialog = core.nodes.getCreateNodeDialog();
                     dialog.show(_.bind(function () {
-                        dialog.setPath(path);
-                        if (event && (event.ctrlKey || event.metaKey)) {
-                            // show dialog if clicked with 'ctrl' or 'meta'
-                            dialog.setSmart(false);
+                        if (path) {
+                            dialog.initParentPath(path);
                         }
                     }, this), _.bind(function () {
                         if (_.isFunction(callback)) {
                             callback.call(this, path);
                         }
                     }, this));
+                }
+            },
+
+            deleteNode: function (event, path, callback) {
+                if (event) {
+                    event.preventDefault();
+                }
+                if (!$(event.currentTarget).hasClass('disabled')) {
+                    if (!path) {
+                        path = this.tree.getSelectedPath();
+                    }
+                    if (path) {
+                        var dialog = core.nodes.getDeleteNodeDialog();
+                        dialog.show(_.bind(function () {
+                            dialog.setPath(path);
+                            if (event && (event.ctrlKey || event.metaKey)) {
+                                // show dialog if clicked with 'ctrl' or 'meta'
+                                dialog.setSmart(false);
+                            }
+                        }, this), _.bind(function () {
+                            if (_.isFunction(callback)) {
+                                callback.call(this, path);
+                            }
+                        }, this));
+                    }
                 }
             },
 

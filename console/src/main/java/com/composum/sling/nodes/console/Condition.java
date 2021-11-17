@@ -1,6 +1,7 @@
 package com.composum.sling.nodes.console;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.SlingUrl;
@@ -11,11 +12,11 @@ import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -38,11 +39,12 @@ public interface Condition {
     String KEY_CLASS = "class";
     String KEY_SERVLET = "servlet";
     String KEY_HTTP = "http";
+    String KEY_PERMISSION = "permission";
 
     /**
      * check the configured condition for the given resource
      */
-    boolean accept(@Nonnull BeanContext context, @Nonnull Resource resource);
+    boolean accept(@NotNull BeanContext context, @NotNull Resource resource);
 
     abstract class Set implements Condition {
 
@@ -52,7 +54,21 @@ public interface Condition {
             this.conditions.addAll(Arrays.asList(conditions));
         }
 
-        protected static Condition fromProperties(@Nonnull final Set set, @Nonnull final Map<String, Object> properties) {
+        protected Set(String... rules) {
+            if (rules != null) {
+                for (String rule : rules) {
+                    Condition condition = DEFAULT.getCondition(rule);
+                    if (condition != null) {
+                        conditions.add(condition);
+                    }
+                }
+            }
+        }
+
+        protected Set() {
+        }
+
+        protected static Condition fromProperties(@NotNull final Set set, @NotNull final Map<String, Object> properties) {
             for (Map.Entry<String, Object> entry : properties.entrySet()) {
                 Condition condition = DEFAULT.getCondition(entry.getKey(), entry.getValue());
                 if (condition != null) {
@@ -69,18 +85,26 @@ public interface Condition {
             super(conditions);
         }
 
+        public And(String... conditions) {
+            super(conditions);
+        }
+
+        public And() {
+            super();
+        }
+
         @Nullable
         public static Condition fromResource(@Nullable final Resource resource) {
             return resource != null ? fromProperties(resource.getValueMap()) : null;
         }
 
-        @Nonnull
-        public static Condition fromProperties(@Nonnull final Map<String, Object> properties) {
+        @NotNull
+        public static Condition fromProperties(@NotNull final Map<String, Object> properties) {
             return fromProperties(new And(), properties);
         }
 
         @Override
-        public boolean accept(@Nonnull BeanContext context, @Nonnull Resource resource) {
+        public boolean accept(@NotNull BeanContext context, @NotNull Resource resource) {
             for (Condition condition : conditions) {
                 if (!condition.accept(context, resource)) {
                     return false;
@@ -96,17 +120,25 @@ public interface Condition {
             super(conditions);
         }
 
+        public Or(String... conditions) {
+            super(conditions);
+        }
+
+        public Or() {
+            super();
+        }
+
         @Nullable
         public static Condition fromResource(@Nullable final Resource resource) {
             return resource != null ? fromProperties(resource.getValueMap()) : null;
         }
 
-        public static Condition fromProperties(@Nonnull final Map<String, Object> properties) {
+        public static Condition fromProperties(@NotNull final Map<String, Object> properties) {
             return fromProperties(new Or(), properties);
         }
 
         @Override
-        public boolean accept(@Nonnull BeanContext context, @Nonnull Resource resource) {
+        public boolean accept(@NotNull BeanContext context, @NotNull Resource resource) {
             for (Condition condition : conditions) {
                 if (condition.accept(context, resource)) {
                     return true;
@@ -121,18 +153,49 @@ public interface Condition {
     /**
      * check the availability of a class as a precondition for a console module
      */
+    class NodesPermission implements Condition {
+
+        public static final Logger LOG = LoggerFactory.getLogger(ClassAvailability.class);
+
+        protected final ServiceRestrictions.Key key;
+        protected final ServiceRestrictions.Permission permission;
+
+        public NodesPermission(@NotNull final String pattern) {
+            final String[] keyValue = StringUtils.split(pattern, "=", 2);
+            key = new ServiceRestrictions.Key(keyValue[0]);
+            ServiceRestrictions.Permission perm = null;
+            if (keyValue.length > 1) {
+                try {
+                    perm = ServiceRestrictions.Permission.valueOf(keyValue[1]);
+                } catch (IllegalArgumentException ignore) {
+                    perm = ServiceRestrictions.Permission.none;
+                }
+            }
+            this.permission = perm != null ? perm : ServiceRestrictions.Permission.write;
+        }
+
+        @Override
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
+            final ServiceRestrictions restrictions = context.getService(ServiceRestrictions.class);
+            return restrictions != null && restrictions.isPermissible(context.getRequest(), key, permission);
+        }
+    }
+
+    /**
+     * check the availability of a class as a precondition for a console module
+     */
     class ClassAvailability implements Condition {
 
         public static final Logger LOG = LoggerFactory.getLogger(ClassAvailability.class);
 
         protected final String pattern;
 
-        public ClassAvailability(@Nonnull final String pattern) {
+        public ClassAvailability(@NotNull final String pattern) {
             this.pattern = pattern;
         }
 
         @Override
-        public boolean accept(@Nonnull final BeanContext context, @Nonnull final Resource resource) {
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
             boolean classAvailable = false;
             try {
                 context.getType(pattern);
@@ -154,7 +217,7 @@ public interface Condition {
         protected final int expectedStatus;
         protected final String serviceUrl;
 
-        public HttpStatus(@Nonnull final String pattern) {
+        public HttpStatus(@NotNull final String pattern) {
             final String[] parts = StringUtils.split(pattern, ":", 2);
             if (parts.length < 2) {
                 this.expectedStatus = HttpURLConnection.HTTP_OK;
@@ -166,7 +229,7 @@ public interface Condition {
         }
 
         @Override
-        public boolean accept(@Nonnull final BeanContext context, @Nonnull final Resource resource) {
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
             boolean serviceAvailable = false;
             if (StringUtils.isNotBlank(serviceUrl))
                 try {
@@ -191,7 +254,7 @@ public interface Condition {
     class JcrResource implements Condition {
 
         @Override
-        public boolean accept(@Nonnull final BeanContext context, @Nonnull final Resource resource) {
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
             return !ResourceUtil.isSyntheticResource(resource) && resource.adaptTo(Node.class) != null;
         }
     }
@@ -210,7 +273,7 @@ public interface Condition {
         public static final Logger LOG = LoggerFactory.getLogger(Versionable.class);
 
         @Override
-        public boolean accept(@Nonnull final BeanContext context, @Nonnull final Resource resource) {
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
             if (super.accept(context, resource)) {
                 final ResourceResolver resolver = resource.getResourceResolver();
                 final Session session = resolver.adaptTo(Session.class);
@@ -237,12 +300,12 @@ public interface Condition {
 
         protected final String pattern;
 
-        public PrimaryType(@Nonnull final String pattern) {
+        public PrimaryType(@NotNull final String pattern) {
             this.pattern = pattern;
         }
 
         @Override
-        public boolean accept(@Nonnull final BeanContext context, @Nonnull final Resource resource) {
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
             return StringUtils.isBlank(pattern)
                     || pattern.equals(resource.getValueMap().get(JcrConstants.JCR_PRIMARYTYPE, String.class));
         }
@@ -255,12 +318,12 @@ public interface Condition {
 
         protected final String pattern;
 
-        public ResourceType(@Nonnull final String pattern) {
+        public ResourceType(@NotNull final String pattern) {
             this.pattern = pattern;
         }
 
         @Override
-        public boolean accept(@Nonnull final BeanContext context, @Nonnull final Resource resource) {
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
             return StringUtils.isBlank(pattern) || resource.isResourceType(pattern);
         }
     }
@@ -274,7 +337,7 @@ public interface Condition {
     interface Factory {
 
         @Nullable
-        Condition getCondition(@Nonnull String key, @Nullable Object pattern);
+        Condition getCondition(@NotNull String key, @Nullable Object pattern);
     }
 
     class Options implements Factory {
@@ -283,7 +346,7 @@ public interface Condition {
 
         @Override
         @Nullable
-        public Condition getCondition(@Nonnull final String key, @Nullable final Object pattern) {
+        public Condition getCondition(@NotNull final String key, @Nullable final Object pattern) {
             final Factory factory = factorySet.get(key);
             return factory != null ? factory.getCondition(key.toLowerCase(), pattern) : null;
         }
@@ -297,8 +360,8 @@ public interface Condition {
             return null;
         }
 
-        @Nonnull
-        public Options addFactory(@Nonnull final String key, @Nonnull final Factory factory) {
+        @NotNull
+        public Options addFactory(@NotNull final String key, @NotNull final Factory factory) {
             factorySet.put(key, factory);
             return this;
         }
@@ -312,6 +375,8 @@ public interface Condition {
             .addFactory(KEY_VERSIONABLE, (key, pattern) -> VERSIONABLE)
             .addFactory(KEY_ACL, (key, pattern) -> CAN_HAVE_ACL)
             .addFactory(KEY_JCR, (key, pattern) -> JCR_RESOURCE)
+            .addFactory(KEY_PERMISSION, (key, pattern) ->
+                    pattern instanceof String ? new NodesPermission((String) pattern) : null)
             .addFactory(KEY_CLASS, (key, pattern) ->
                     pattern instanceof String ? new ClassAvailability((String) pattern) : null)
             .addFactory(KEY_HTTP, (key, pattern) ->

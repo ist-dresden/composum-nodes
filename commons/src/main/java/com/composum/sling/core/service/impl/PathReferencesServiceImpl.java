@@ -9,8 +9,8 @@ import org.apache.sling.api.resource.ValueMap;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.jcr.query.Query;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +38,7 @@ public class PathReferencesServiceImpl implements PathReferencesService {
 
                 protected class HitValue implements Value {
 
-                    @Nonnull
+                    @NotNull
                     protected final String text;
                     protected final int index;
 
@@ -48,7 +48,7 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                     private transient Boolean childPath;
                     private transient Boolean richText;
 
-                    public HitValue(@Nonnull final String text, int index) {
+                    public HitValue(@NotNull final String text, int index) {
                         this.text = text;
                         this.index = index;
                     }
@@ -62,13 +62,13 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                         return index;
                     }
 
-                    @Nonnull
-                    public String apply(@Nonnull final String newPath) {
+                    @NotNull
+                    public String apply(@NotNull final String newPath) {
                         return isRichText() ? applyText(newPath) : applyVal(newPath);
                     }
 
-                    @Nonnull
-                    protected String applyVal(@Nonnull final String newPath) {
+                    @NotNull
+                    protected String applyVal(@NotNull final String newPath) {
                         final String basePath = HitIteratorImpl.this.options.getBasePath();
                         final String relPath = relPath(basePath, newPath);
                         if (isAbsolute()) {
@@ -78,8 +78,8 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                         }
                     }
 
-                    @Nonnull
-                    protected String applyText(@Nonnull final String newPath) {
+                    @NotNull
+                    protected String applyText(@NotNull final String newPath) {
                         final String basePath = HitIteratorImpl.this.options.getBasePath();
                         final String relPath = relPath(basePath, newPath);
                         if (isAbsolute()) {
@@ -90,13 +90,13 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                     }
 
                     @Override
-                    @Nonnull
+                    @NotNull
                     public String getText() {
                         return text;
                     }
 
                     @Override
-                    @Nonnull
+                    @NotNull
                     public List<String> getPaths() {
                         if (paths == null) {
                             paths = new ArrayList<>();
@@ -169,12 +169,12 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                 protected final boolean multi;
                 private transient Boolean richText;
 
-                public HitProperty(@Nonnull final String name) {
+                public HitProperty(@NotNull final String name) {
                     this.name = name;
                     multi = true;
                 }
 
-                public HitProperty(@Nonnull final String name, @Nonnull String value) {
+                public HitProperty(@NotNull final String name, @NotNull String value) {
                     this.name = name;
                     multi = false;
                     addValue(value, 0);
@@ -185,7 +185,7 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                 }
 
                 @Override
-                @Nonnull
+                @NotNull
                 public String getName() {
                     return name;
                 }
@@ -197,19 +197,19 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                 }
 
                 @Override
-                @Nonnull
+                @NotNull
                 public String getText() {
                     final Value value = getValue();
                     return value != null ? value.getText() : "";
                 }
 
                 @Override
-                @Nonnull
+                @NotNull
                 public List<Value> getValues() {
                     return value;
                 }
 
-                protected void addValue(@Nonnull final String value, int index) {
+                protected void addValue(@NotNull final String value, int index) {
                     this.value.add(new HitValue(value, index));
                 }
 
@@ -241,12 +241,12 @@ public class PathReferencesServiceImpl implements PathReferencesService {
             }
 
             @Override
-            @Nonnull
+            @NotNull
             public Resource getResource() {
                 return resource;
             }
 
-            @Nonnull
+            @NotNull
             protected Map<String, Property> getPropertyMap() {
                 if (propertyMap == null) {
                     propertyMap = new HashMap<>();
@@ -285,8 +285,8 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                 return propertyMap;
             }
 
-            @Nonnull
-            protected HitProperty extractMatchingValues(@Nonnull final String key, @Nonnull final String[] value) {
+            @NotNull
+            protected HitProperty extractMatchingValues(@NotNull final String key, @NotNull final String[] value) {
                 HitProperty property = new HitProperty(key);
                 for (int i = 0; i < value.length; i++) {
                     if (isMatchingValue(value[i])) {
@@ -296,41 +296,41 @@ public class PathReferencesServiceImpl implements PathReferencesService {
                 return property;
             }
 
-            protected boolean isMatchingValue(@Nonnull final String value) {
+            protected boolean isMatchingValue(@NotNull final String value) {
                 final boolean searchRelative = options.isUseRelativePath() && !HitIteratorImpl.this.getRelPath().startsWith("/");
                 return ((options.isUseAbsolutePath() || !searchRelative) && isMatchingValue(value, HitIteratorImpl.this.getAbsPath()))
                         || (searchRelative && isMatchingValue(value, HitIteratorImpl.this.getRelPath()));
             }
 
-            protected boolean isMatchingValue(@Nonnull final String value, @Nonnull final String path) {
+            protected boolean isMatchingValue(@NotNull final String value, @NotNull final String path) {
                 return isMatchingVal(value, path) || (options.isFindRichText() && isMatchingText(value, path));
             }
 
-            protected boolean isMatchingVal(@Nonnull final String value, @Nonnull final String path) {
+            protected boolean isMatchingVal(@NotNull final String value, @NotNull final String path) {
                 return options.isChildrenOnly() ? value.startsWith(path + "/") :
                         (value.equals(path) || (options.isIncludeChildren() && value.startsWith(path + "/")));
             }
 
-            protected boolean isMatchingText(@Nonnull final String value, @Nonnull final String path) {
+            protected boolean isMatchingText(@NotNull final String value, @NotNull final String path) {
                 return ((options.isChildrenOnly() || options.isIncludeChildren()) && value.contains("=\"" + path + "/"))
                         || (!options.isChildrenOnly() && value.contains("=\"" + path + "\""));
             }
 
             @Override
-            @Nonnull
+            @NotNull
             public Iterable<Property> getProperties() {
                 return getPropertyMap().values();
             }
 
             @Override
-            @Nonnull
+            @NotNull
             public Set<String> getPropertyNames() {
                 return getPropertyMap().keySet();
             }
 
             @Override
             @Nullable
-            public Property getProperty(@Nonnull final String propertyName) {
+            public Property getProperty(@NotNull final String propertyName) {
                 return getPropertyMap().get(propertyName);
             }
 
@@ -364,9 +364,9 @@ public class PathReferencesServiceImpl implements PathReferencesService {
 
         protected IteratorHit next = null;
 
-        public HitIteratorImpl(@Nonnull final Options options, @Nonnull final String queryString,
-                               @Nonnull final String absPath, @Nonnull final String relPath,
-                               @Nonnull final Iterator<Resource> searchResult) {
+        public HitIteratorImpl(@NotNull final Options options, @NotNull final String queryString,
+                               @NotNull final String absPath, @NotNull final String relPath,
+                               @NotNull final Iterator<Resource> searchResult) {
             this.options = options;
             this.queryString = queryString;
             this.absPath = absPath;
@@ -375,9 +375,9 @@ public class PathReferencesServiceImpl implements PathReferencesService {
             this.throwable = null;
         }
 
-        public HitIteratorImpl(@Nonnull final Options options, @Nonnull final String queryString,
-                               @Nonnull final String absPath, @Nonnull final String relPath,
-                               @Nonnull final Throwable throwable) {
+        public HitIteratorImpl(@NotNull final Options options, @NotNull final String queryString,
+                               @NotNull final String absPath, @NotNull final String relPath,
+                               @NotNull final Throwable throwable) {
             this.options = options;
             this.queryString = queryString;
             this.absPath = absPath;
@@ -410,18 +410,18 @@ public class PathReferencesServiceImpl implements PathReferencesService {
             return result;
         }
 
-        @Nonnull
+        @NotNull
         public String getRelPath() {
             return relPath;
         }
 
-        @Nonnull
+        @NotNull
         public String getAbsPath() {
             return absPath;
         }
 
         @Override
-        @Nonnull
+        @NotNull
         public String getQueryString() {
             return queryString;
         }
@@ -434,9 +434,9 @@ public class PathReferencesServiceImpl implements PathReferencesService {
     }
 
     @Override
-    @Nonnull
-    public HitIterator findReferences(@Nonnull final ResourceResolver resolver, @Nonnull final Options options,
-                                      @Nonnull String searchRoot, @Nonnull String path) {
+    @NotNull
+    public HitIterator findReferences(@NotNull final ResourceResolver resolver, @NotNull final Options options,
+                                      @NotNull String searchRoot, @NotNull String path) {
         while (searchRoot.endsWith("/")) {
             searchRoot = searchRoot.substring(0, searchRoot.length() - 1);
         }
@@ -507,8 +507,8 @@ public class PathReferencesServiceImpl implements PathReferencesService {
         }
     }
 
-    protected void addPathExpression(@Nonnull final Options options, @Nonnull final StringBuilder queryBuilder,
-                                     @Nonnull final String propertyName, @Nonnull final String path) {
+    protected void addPathExpression(@NotNull final Options options, @NotNull final StringBuilder queryBuilder,
+                                     @NotNull final String propertyName, @NotNull final String path) {
         if (!options.isChildrenOnly()) {
             if (!path.contains("%")) {
                 queryBuilder.append("./").append(propertyName).append("='").append(path).append("'");
@@ -531,8 +531,8 @@ public class PathReferencesServiceImpl implements PathReferencesService {
     }
 
     @Override
-    public void changeReferences(@Nonnull final ResourceResolver resolver,
-                                 @Nonnull final Hit hit, @Nonnull final String newPath) {
+    public void changeReferences(@NotNull final ResourceResolver resolver,
+                                 @NotNull final Hit hit, @NotNull final String newPath) {
         final ModifiableValueMap modifiable = hit.getResource().adaptTo(ModifiableValueMap.class);
         if (modifiable != null) {
             for (final Hit.Property property : hit.getProperties()) {
@@ -558,14 +558,14 @@ public class PathReferencesServiceImpl implements PathReferencesService {
         }
     }
 
-    protected static void collectOccurrences(@Nonnull final List<String> collection, @Nonnull final String text,
-                                             @Nonnull final String path, boolean includeChildren) {
+    protected static void collectOccurrences(@NotNull final List<String> collection, @NotNull final String text,
+                                             @NotNull final String path, boolean includeChildren) {
         collectOccurrences(collection, text, propertyValuePattern(path, includeChildren));
         collectOccurrences(collection, text, richTextPattern(path, includeChildren));
     }
 
-    protected static void collectOccurrences(@Nonnull final List<String> collection, @Nonnull final String text,
-                                             @Nonnull final Pattern pattern) {
+    protected static void collectOccurrences(@NotNull final List<String> collection, @NotNull final String text,
+                                             @NotNull final Pattern pattern) {
         Matcher matcher = pattern.matcher(text);
         int pos = 0;
         while (matcher.find(pos)) {
@@ -574,16 +574,16 @@ public class PathReferencesServiceImpl implements PathReferencesService {
         }
     }
 
-    protected static Pattern richTextPattern(@Nonnull final String path, boolean includeChildren) {
+    protected static Pattern richTextPattern(@NotNull final String path, boolean includeChildren) {
         return Pattern.compile("(=[\"'])(?<path>" + path + (includeChildren ? "(/[^\"']+)?" : "") + ")([\"'])");
     }
 
-    protected static Pattern propertyValuePattern(@Nonnull final String path, boolean includeChildren) {
+    protected static Pattern propertyValuePattern(@NotNull final String path, boolean includeChildren) {
         return Pattern.compile("^(?<path>" + path + (includeChildren ? "(/.+)?" : "") + ")$");
     }
 
-    @Nonnull
-    protected static String relPath(@Nonnull final String basePath, @Nonnull String path) {
+    @NotNull
+    protected static String relPath(@NotNull final String basePath, @NotNull String path) {
         if (path.equals(basePath) || path.startsWith(basePath + "/")) {
             path = path.substring(basePath.length());
             while (path.startsWith("/")) {
@@ -593,8 +593,8 @@ public class PathReferencesServiceImpl implements PathReferencesService {
         return path;
     }
 
-    @Nonnull
-    protected static String absPath(@Nonnull final String basePath, @Nonnull final String relPath) {
+    @NotNull
+    protected static String absPath(@NotNull final String basePath, @NotNull final String relPath) {
         return relPath.startsWith("/") ? relPath : (basePath + "/" + relPath);
     }
 }

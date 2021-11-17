@@ -1,28 +1,37 @@
 <%@page session="false" pageEncoding="utf-8" %>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
+    <c:set var="writeAllowed" value="${browser.permissible['nodes/repository/permissions']['write']}"/>
+    <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
     <div class="acl detail-panel">
         <div class="acl-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <button class="add fa fa-plus btn btn-default" title="Add policy to current node"><span class="label">Add</span>
+                <button class="add fa fa-plus btn btn-default" title="Add policy to current node"${writeDisabled}><span
+                        class="label">Add</span>
                 </button>
-                <button class="remove fa fa-minus btn btn-default" title="Remove selected policies"><span class="label">Remove</span>
+                <button class="remove fa fa-minus btn btn-default" title="Remove selected policies"${writeDisabled}>
+                    <span class="label">Remove</span>
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button class="up fa fa-arrow-up btn btn-default" title="Move selected policies up"><span class="label">Up</span>
+                <button class="up fa fa-arrow-up btn btn-default"
+                        title="Move selected policies up"${writeDisabled}><span
+                        class="label">Up</span>
                 </button>
-                <button class="down fa fa-arrow-down btn btn-default" title="Move selected policies down"><span
-                        class="label">Down</span></button>
+                <button class="down fa fa-arrow-down btn btn-default"
+                        title="Move selected policies down"${writeDisabled}><span class="label">Down</span>
+                </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="run fa fa-cog btn btn-default" title="Setup Execution"
-                    ${browser.setupScript?'':'disabled'} data-path="${browser.filePath}"><span class="label">Run</span>
+                <button type="button" class="run fa fa-cog btn btn-default"
+                        title="Setup Execution"${browser.setupScript && writeAllowed?'':' disabled'}
+                        data-path="${browser.filePath}"><span class="label">Run</span>
                 </button>
-                <button type="button" class="setup fa fa-cogs btn btn-default" title="Setup Control View"><span
-                        class="label">Setup</span>
+                <button type="button" class="setup fa fa-cogs btn btn-default"
+                        title="Setup Control View"${writeDisabled}><span class="label">Setup</span>
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
@@ -52,4 +61,6 @@
             </div>
         </div>
     </div>
+    <c:remove var="writeDisabled"/>
+    <c:remove var="writeAllowed"/>
 </cpn:component>

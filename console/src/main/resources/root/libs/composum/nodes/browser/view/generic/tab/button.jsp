@@ -3,5 +3,5 @@
 <sling:defineObjects/>
 <button type="button"
         class="${genericElement.key} ${empty genericElement.icon?'':'fa fa-'}${genericElement.icon} btn btn-default ${genericElement.css}"
-        title="${genericElement.title}"><span class="label">${genericElement.label}</span>
+        title="${genericElement.title}"${genericElement.enabled?'':' disabled'}><span class="label">${genericElement.label}</span>
 </button>

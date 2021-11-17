@@ -15,6 +15,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -25,7 +26,6 @@ import org.osgi.service.metatype.annotations.AttributeType;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-import javax.annotation.Nonnull;
 import java.net.ProxySelector;
 
 @Component
@@ -88,7 +88,7 @@ public class RemoteProxyBuilder implements RemoteClientBuilder {
     private AuthScheme proxyAuthScheme = new BasicScheme();
 
     @Override
-    public void configure(@Nonnull final HttpClientContext context) {
+    public void configure(@NotNull final HttpClientContext context) {
         if (proxyCredentials != null) {
             CredentialsProvider credentialsProvider = context.getCredentialsProvider();
             if (credentialsProvider == null) {
@@ -108,7 +108,7 @@ public class RemoteProxyBuilder implements RemoteClientBuilder {
     }
 
     @Override
-    public void configure(@Nonnull final HttpClientBuilder builder) {
+    public void configure(@NotNull final HttpClientBuilder builder) {
         if (config != null) {
             if (config.proxy_system_default()) {
                 builder.setRoutePlanner(new SystemDefaultRoutePlanner(ProxySelector.getDefault()));

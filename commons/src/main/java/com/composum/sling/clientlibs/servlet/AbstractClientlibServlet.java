@@ -13,9 +13,9 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
@@ -30,10 +30,10 @@ public abstract class AbstractClientlibServlet extends SlingSafeMethodsServlet {
 
     private final Logger LOG = getLogger(AbstractClientlibServlet.class);
 
-    @Nonnull
+    @NotNull
     protected abstract ClientlibService getClientlibService();
 
-    @Nonnull
+    @NotNull
     protected abstract ClientlibConfiguration.Config getConfig();
 
     /**

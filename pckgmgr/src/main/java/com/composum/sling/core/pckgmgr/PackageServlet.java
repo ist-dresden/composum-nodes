@@ -1,12 +1,15 @@
 package com.composum.sling.core.pckgmgr;
 
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.concurrent.JobFacade;
 import com.composum.sling.core.concurrent.JobMonitor;
 import com.composum.sling.core.concurrent.JobUtil;
 import com.composum.sling.core.pckgmgr.util.PackageProgressTracker;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.util.PackageUtil.PackageItem;
+import com.composum.sling.core.service.ServiceRestrictions;
+import com.composum.sling.core.service.RestrictedService;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
@@ -19,11 +22,19 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jackrabbit.vault.fs.api.*;
+import org.apache.jackrabbit.vault.fs.api.FilterSet;
+import org.apache.jackrabbit.vault.fs.api.ImportMode;
+import org.apache.jackrabbit.vault.fs.api.PathFilter;
+import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
+import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
-import org.apache.jackrabbit.vault.packaging.*;
+import org.apache.jackrabbit.vault.packaging.JcrPackage;
+import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
+import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.PackageException;
+import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
@@ -53,16 +64,25 @@ import javax.jcr.query.Query;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The servlet to provide download and upload of content packages and package definitions.
  */
-@Component(service = Servlet.class,
+@Component(service = {Servlet.class, RestrictedService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Package Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + PackageServlet.SERVLET_PATH,
@@ -73,10 +93,13 @@ import java.util.*;
                 "sling.auth.requirements=" + PackageServlet.SERVLET_PATH
         }
 )
+@Restricted(key = PackageServlet.SERVICE_KEY)
 @Designate(ocd = PackageServlet.Configuration.class)
 public class PackageServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageServlet.class);
+
+    public static final String SERVICE_KEY = "nodes/packages/manager";
 
     public static final String SERVLET_PATH = "/bin/cpm/package";
     public static final String PARAM_GROUP = "group";
@@ -91,6 +114,9 @@ public class PackageServlet extends AbstractServiceServlet {
     // service references
 
     @Reference
+    private ServiceRestrictions restrictions;
+
+    @Reference
     private NodesConfiguration nodesConfig;
 
     @Reference
@@ -98,6 +124,12 @@ public class PackageServlet extends AbstractServiceServlet {
 
     @Reference
     private Packaging packaging;
+
+    @Activate
+    @Modified
+    protected void activate(Configuration configuration) {
+        jobIdleTimeout = configuration.package_job_timeout();
+    }
 
     //
     // Servlet operations
@@ -118,16 +150,6 @@ public class PackageServlet extends AbstractServiceServlet {
     @Override
     protected ServletOperationSet getOperations() {
         return operations;
-    }
-
-    @Override
-    protected boolean isEnabled() {
-        return nodesConfig.isEnabled(this);
-    }
-
-    @Activate @Modified
-    protected void activate(Configuration configuration) {
-        jobIdleTimeout = configuration.package_job_timeout();
     }
 
     /**

@@ -104,6 +104,7 @@
 
             initialize: function (options) {
 
+                this.permission = this.$el.data('permission');
                 this.path = options.path || this.$el.data('path');
                 this.selectPath = options.selectPath;
 
@@ -229,7 +230,7 @@
                     var columnKey = $column.attr('class');
                     if (columnKey === 'value') {
                         var $editable = $element.find('a.editable');
-                        if ($editable && $editable.length > 0
+                        if ($editable && $editable.length > 0 && this.permission === 'write'
                             // if not initialized already - is the case if the editing was canceled
                             && !$editable.hasClass('editable-click')) {
                             var editableType = this.editableTypes[type];
@@ -327,6 +328,9 @@
                                             path: path
                                         })
                                     );
+                                }
+                                if (this.permission !== 'write') {
+                                    dialog.readonly();
                                 }
                             }, this),
                             _.bind(this.loadContent, this));

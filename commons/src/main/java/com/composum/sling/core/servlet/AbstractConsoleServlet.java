@@ -1,6 +1,8 @@
 package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.StringUtils;
@@ -52,6 +54,11 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
      */
     protected String getConsolePath(BeanContext context) {
         return null;
+    }
+
+    public ServiceRestrictions.Key getServiceKey() {
+        final Restricted restricted = getClass().getAnnotation(Restricted.class);
+        return restricted != null ? new ServiceRestrictions.Key(restricted.key()) : null;
     }
 
     protected String getRequestPath(SlingHttpServletRequest request) {
@@ -125,8 +132,11 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
                 LOG.info("Access to {} denied for {}", consolePath,
                         context.getResolver().getUserID());
             }
-            return resource != null;
+            if (resource == null) {
+                return false;
+            }
         }
-        return true;
+        return context.getService(ServiceRestrictions.class)
+                .isPermissible(context.getRequest(), getServiceKey(), ServiceRestrictions.Permission.read);
     }
 }

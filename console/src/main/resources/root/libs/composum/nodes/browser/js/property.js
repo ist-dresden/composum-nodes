@@ -90,9 +90,17 @@
                 this.$name.on('change', _.bind(this.nameChanged, this));
 
                 this.$delete = this.$('button.delete');
+                this.$save = this.$('button.save');
+                this.$upload = this.$('button.upload');
                 this.$delete.click(_.bind(this.deleteProperty, this));
-                this.$('button.save').click(_.bind(this.saveProperty, this));
-                this.$('button.upload').click(_.bind(this.uploadBinary, this));
+                this.$save.click(_.bind(this.saveProperty, this));
+                this.$upload.click(_.bind(this.uploadBinary, this));
+            },
+
+            readonly: function () {
+                this.$delete.attr('disabled', 'disabled');
+                this.$save.attr('disabled', 'disabled');
+                this.$upload.attr('disabled', 'disabled');
             },
 
             typeChanged: function () {

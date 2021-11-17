@@ -12,7 +12,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Map;
@@ -27,8 +27,8 @@ public class CoreTranslationService implements TranslationService {
     protected static Gson gson = new GsonBuilder().create();
 
     @Override
-    @Nonnull
-    public JsonElement translate(@Nonnull final SlingHttpServletRequest request, @Nonnull final JsonElement element) {
+    @NotNull
+    public JsonElement translate(@NotNull final SlingHttpServletRequest request, @NotNull final JsonElement element) {
         if (element instanceof JsonObject) {
             JsonObject translated = new JsonObject();
             for (Map.Entry<String, JsonElement> entry : ((JsonObject) element).entrySet()) {
@@ -52,14 +52,14 @@ public class CoreTranslationService implements TranslationService {
     }
 
     @Override
-    @Nonnull
-    public JsonElement translate(@Nonnull final SlingHttpServletRequest request, @Nonnull final Reader reader) {
+    @NotNull
+    public JsonElement translate(@NotNull final SlingHttpServletRequest request, @NotNull final Reader reader) {
         return translate(request, gson.fromJson(reader, JsonElement.class));
     }
 
     @Override
-    public void translate(@Nonnull final SlingHttpServletRequest request,
-                          @Nonnull final Reader reader, @Nonnull final Writer writer) {
+    public void translate(@NotNull final SlingHttpServletRequest request,
+                          @NotNull final Reader reader, @NotNull final Writer writer) {
         JsonElement element = translate(request, reader);
         gson.toJson(element, writer);
     }

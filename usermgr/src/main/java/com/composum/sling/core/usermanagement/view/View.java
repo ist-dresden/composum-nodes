@@ -1,6 +1,8 @@
 package com.composum.sling.core.usermanagement.view;
 
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.filter.StringFilter;
+import com.composum.sling.core.usermanagement.core.UserManagementServlet;
 import com.composum.sling.core.usermanagement.model.AuthorizableModel;
 import com.composum.sling.core.usermanagement.model.AuthorizablesView;
 import com.composum.sling.core.usermanagement.model.UserModel;
@@ -22,6 +24,7 @@ import java.util.Set;
 /**
  *
  */
+@Restricted(key = UserManagementServlet.SERVICE_KEY)
 public class View extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(View.class);

@@ -3,9 +3,9 @@ package com.composum.sling.cpnl;
 import com.composum.sling.core.util.LinkMapper;
 import com.composum.sling.core.util.LinkUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.jsp.JspWriter;
 import java.io.IOException;
 
@@ -47,8 +47,8 @@ public class ImageTag extends UrlTag {
     }
 
     @Override
-    @Nonnull
-    protected String buildUrl(@Nonnull String urlValue, @Nullable final Boolean map) {
+    @NotNull
+    protected String buildUrl(@NotNull String urlValue, @Nullable final Boolean map) {
         if (map != null) {
             urlValue = LinkUtil.getUrl(request, urlValue, null, "",
                     map ? LinkMapper.RESOLVER : LinkMapper.CONTEXT);

@@ -1,6 +1,9 @@
 package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.service.RestrictedService;
+import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
@@ -24,6 +27,8 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -55,11 +60,12 @@ import java.util.List;
 import java.util.Map;
 
 import static com.composum.sling.core.mapping.MappingRules.CHARSET;
+import static com.composum.sling.nodes.servlet.SecurityServlet.SERVICE_KEY;
 
 /**
  * The service servlet to retrieve all general system settings.
  */
-@Component(service = Servlet.class,
+@Component(service = {Servlet.class, RestrictedService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Security Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SecurityServlet.SERVLET_PATH,
@@ -70,14 +76,20 @@ import static com.composum.sling.core.mapping.MappingRules.CHARSET;
                 "sling.auth.requirements=" + SecurityServlet.SERVLET_PATH
         }
 )
+@Restricted(key = SERVICE_KEY)
 public class SecurityServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityServlet.class);
+
+    public static final String SERVICE_KEY = "nodes/repository/permissions";
 
     public static final String SERVLET_PATH = "/bin/cpm/nodes/security";
     public static final String PARAM_SCOPE = "scope";
 
     public enum PolicyScope {local, effective}
+
+    @Reference
+    private ServiceRestrictions restrictions;
 
     @Reference
     private NodesConfiguration coreConfig;
@@ -93,13 +105,9 @@ public class SecurityServlet extends AbstractServiceServlet {
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
     @Override
-    protected ServletOperationSet getOperations() {
+    @NotNull
+    protected ServletOperationSet<Extension, Operation> getOperations() {
         return operations;
-    }
-
-    @Override
-    protected boolean isEnabled() {
-        return coreConfig.isEnabled(this);
     }
 
     /**
@@ -157,8 +165,9 @@ public class SecurityServlet extends AbstractServiceServlet {
     @SuppressWarnings("Duplicates")
     public class GetPrincipals implements ServletOperation {
         @Override
-        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                         final ResourceHandle resource) throws IOException, ServletException {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -201,8 +210,9 @@ public class SecurityServlet extends AbstractServiceServlet {
     public class RestrictionNames implements ServletOperation {
 
         @Override
-        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                         final ResourceHandle resource) throws IOException, ServletException {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -225,8 +235,9 @@ public class SecurityServlet extends AbstractServiceServlet {
     public class SupportedPrivileges implements ServletOperation {
 
         @Override
-        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                         final ResourceHandle resource) throws IOException, ServletException {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -253,8 +264,9 @@ public class SecurityServlet extends AbstractServiceServlet {
     public class ReorderOperation implements ServletOperation {
 
         @Override
-        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                         final ResourceHandle resource) throws IOException, ServletException {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource) throws IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
@@ -296,8 +308,9 @@ public class SecurityServlet extends AbstractServiceServlet {
     public class PutAccessPolicy implements ServletOperation {
 
         @Override
-        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                         final ResourceHandle resource)
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource)
                 throws ServletException, IOException {
 
             try {
@@ -333,8 +346,9 @@ public class SecurityServlet extends AbstractServiceServlet {
     public class RemoveAccessPolicy implements ServletOperation {
 
         @Override
-        public void doIt(final SlingHttpServletRequest request, final SlingHttpServletResponse response,
-                         final ResourceHandle resource) throws ServletException, IOException {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource) throws ServletException, IOException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final Session session = resolver.adaptTo(Session.class);
@@ -371,8 +385,9 @@ public class SecurityServlet extends AbstractServiceServlet {
     public class GetAccessPolicies implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource)
                 throws ServletException, IOException {
 
             try {
@@ -489,8 +504,9 @@ public class SecurityServlet extends AbstractServiceServlet {
     public class GetAllAccessPolicies extends GetAccessPolicies {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource)
                 throws ServletException, IOException {
 
             try {
@@ -544,8 +560,9 @@ public class SecurityServlet extends AbstractServiceServlet {
     public class GetHtmlAccessRules implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource)
                 throws ServletException, IOException {
 
             try {

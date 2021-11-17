@@ -3,4 +3,3 @@
 <sling:defineObjects/>
 <sling:call script="toolbar.jsp"/>
 <sling:call script="content.jsp"/>
-<sling:call script="clientlib.jsp"/>

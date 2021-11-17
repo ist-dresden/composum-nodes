@@ -1,6 +1,10 @@
 package com.composum.sling.clientlibs.servlet;
 
-import com.composum.sling.clientlibs.handle.*;
+import com.composum.sling.clientlibs.handle.Clientlib;
+import com.composum.sling.clientlibs.handle.ClientlibElement;
+import com.composum.sling.clientlibs.handle.ClientlibFile;
+import com.composum.sling.clientlibs.handle.ClientlibRef;
+import com.composum.sling.clientlibs.handle.ClientlibResourceFolder;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
@@ -9,11 +13,11 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -53,7 +57,7 @@ public class DebugClientlibGraphServlet extends SlingSafeMethodsServlet {
     public static final String SERVLET_PATH = "/bin/cpm/nodes/debug/clientlibgraph";
 
     @Override
-    protected void doGet(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response)
+    protected void doGet(@NotNull final SlingHttpServletRequest request, @NotNull final SlingHttpServletResponse response)
             throws ServletException, IOException {
         try {
             new ClientlibGrapher(request, response).run();
@@ -71,7 +75,7 @@ public class DebugClientlibGraphServlet extends SlingSafeMethodsServlet {
         private final String type;
         private final boolean compressfolders;
 
-        public ClientlibGrapher(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response) throws IOException {
+        public ClientlibGrapher(@NotNull final SlingHttpServletRequest request, @NotNull final SlingHttpServletResponse response) throws IOException {
             this.w = response.getWriter();
             this.request = request;
             this.response = response;

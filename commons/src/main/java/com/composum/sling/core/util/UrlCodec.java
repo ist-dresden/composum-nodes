@@ -4,8 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -133,7 +133,7 @@ public class UrlCodec {
      * @throws IllegalArgumentException if the admissibleCharacters don't contain '%'
      * @throws PatternSyntaxException   if the admissibleCharacters are not a well formed character class
      */
-    public UrlCodec(@Nonnull String admissibleCharacters, @Nonnull Charset charset) throws IllegalArgumentException, PatternSyntaxException {
+    public UrlCodec(@NotNull String admissibleCharacters, @NotNull Charset charset) throws IllegalArgumentException, PatternSyntaxException {
         this.charset = Objects.requireNonNull(charset);
         this.admissibleCharacters = Objects.requireNonNull(admissibleCharacters);
         this.charsToEncodeRegex = Pattern.compile("([^" + charsToEncode(admissibleCharacters) + "])+");
@@ -334,7 +334,7 @@ public class UrlCodec {
         return encoded;
     }
 
-    protected void checkResult(@Nonnull String encoded, boolean doThrow, CharBuffer out, CoderResult result) throws IllegalArgumentException {
+    protected void checkResult(@NotNull String encoded, boolean doThrow, CharBuffer out, CoderResult result) throws IllegalArgumentException {
         if (result.isError()) {
             if (doThrow) {
                 try {

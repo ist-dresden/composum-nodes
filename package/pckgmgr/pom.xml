@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-package</artifactId>
-        <version>2.7.2-SNAPSHOT</version>
+        <version>3.0.0</version>
     </parent>
 
     <artifactId>composum-nodes-pckgmgr-bundle</artifactId>

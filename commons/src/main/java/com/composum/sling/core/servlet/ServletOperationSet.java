@@ -21,7 +21,7 @@ import java.util.Map;
  * A set of operation for the implementation of one servlet based on different operations.
  * This set manages the operation for the servlet and is a delegate for the servlet interface methods.
  */
-public class ServletOperationSet<E extends Enum, O extends Enum> {
+public class ServletOperationSet<E extends Enum<?>, O extends Enum<?>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServletOperationSet.class);
 
@@ -73,20 +73,12 @@ public class ServletOperationSet<E extends Enum, O extends Enum> {
 
     public void setOperation(Method method, E extension, O operation,
                              ServletOperation implementation, boolean isDefault) {
-        Map<E, Map<O, ServletOperation>> extensions = operationMap.get(method);
-        if (extensions == null) {
-            extensions = new HashMap<>();
-            operationMap.put(method, extensions);
-        }
-        Map<O, ServletOperation> operations = extensions.get(extension);
-        if (operations == null) {
-            operations = new HashMap<>();
-            extensions.put(extension, operations);
-        }
+        Map<E, Map<O, ServletOperation>> extensions = operationMap.computeIfAbsent(method, k -> new HashMap<>());
+        Map<O, ServletOperation> operations = extensions.computeIfAbsent(extension, k -> new HashMap<>());
         if (implementation != null) {
             operations.put(operation, implementation);
         } else {
-            operations.remove(extensions);
+            operations.remove(operation);
         }
         // set as default operation if determined as default or if no default operation
         // determined before (the first registered operation is implicit the default)
@@ -105,11 +97,7 @@ public class ServletOperationSet<E extends Enum, O extends Enum> {
     }
 
     public void setDefaultOperation(Method method, E extension, O operation) {
-        Map<E, O> extensions = operationDefaults.get(method);
-        if (extensions == null) {
-            extensions = new HashMap<>();
-            operationDefaults.put(method, extensions);
-        }
+        Map<E, O> extensions = operationDefaults.computeIfAbsent(method, k -> new HashMap<>());
         if (operation != null) {
             extensions.put(extension, operation);
         } else {
@@ -123,9 +111,6 @@ public class ServletOperationSet<E extends Enum, O extends Enum> {
 
     /**
      * the extension hook if the resource is not simply build by the suffix
-     *
-     * @param request
-     * @return
      */
     protected ResourceHandle getResource(SlingHttpServletRequest request) {
         return AbstractServiceServlet.getResource(request);

@@ -2,16 +2,18 @@ package com.composum.sling.nodes.tools;
 
 import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 
-import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Restricted(key = OsgiBundlesServlet.SERVICE_KEY)
 public class OsgiBundlesModel extends AbstractSlingBean {
 
     private transient Map<String, OsgiBundleModel> bundles;
@@ -31,7 +33,7 @@ public class OsgiBundlesModel extends AbstractSlingBean {
         return active;
     }
 
-    @Nonnull
+    @NotNull
     public Collection<OsgiBundleModel> getBundles() {
         if (bundles == null) {
             bundles = new LinkedHashMap<>();

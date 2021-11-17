@@ -1,8 +1,10 @@
 package com.composum.sling.nodes.components.codeeditor;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.servlet.AbstractConsoleServlet;
 import com.composum.sling.nodes.NodesConfiguration;
+import com.composum.sling.nodes.servlet.SourceServlet;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.osgi.framework.Constants;
@@ -26,6 +28,7 @@ import static com.composum.sling.nodes.browser.BrowserServlet.CONSOLE_PATH;
         },
         immediate = true
 )
+@Restricted(key = SourceServlet.SERVICE_KEY)
 public class CodeEditorServlet extends AbstractConsoleServlet {
 
     public static final String SERVLET_PATH = "/bin/cpm/edit/code";

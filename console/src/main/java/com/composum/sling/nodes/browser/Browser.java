@@ -2,6 +2,7 @@ package com.composum.sling.nodes.browser;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.LinkUtil;
@@ -10,6 +11,7 @@ import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.components.codeeditor.CodeEditorServlet;
 import com.composum.sling.nodes.console.ConsoleServletBean;
 import com.composum.sling.nodes.scene.SceneConfigurations;
+import com.composum.sling.nodes.servlet.NodeServlet;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -17,10 +19,10 @@ import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.UnsupportedRepositoryOperationException;
@@ -41,6 +43,7 @@ import java.util.regex.Pattern;
 import static com.composum.sling.core.util.CoreConstants.PROP_RESOURCE_SUPER_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+@Restricted(key = NodeServlet.SERVICE_KEY)
 public class Browser extends ConsoleServletBean {
 
     private static final Logger LOG = getLogger(Browser.class);
@@ -123,20 +126,20 @@ public class Browser extends ConsoleServletBean {
 
     public static class Reference {
 
-        @Nonnull
+        @NotNull
         protected final String label;
         @Nullable
         protected final String tooltip;
-        @Nonnull
+        @NotNull
         protected final String path;
         @Nullable
         protected final String actions;
 
-        public Reference(@Nonnull final String label, @Nullable final String tooltip, @Nonnull final String path) {
+        public Reference(@NotNull final String label, @Nullable final String tooltip, @NotNull final String path) {
             this(label, tooltip, path, null);
         }
 
-        public Reference(@Nonnull final String label, @Nullable final String tooltip, @Nonnull final String path,
+        public Reference(@NotNull final String label, @Nullable final String tooltip, @NotNull final String path,
                          @Nullable final String actions) {
             this.label = label;
             this.tooltip = tooltip;
@@ -144,7 +147,7 @@ public class Browser extends ConsoleServletBean {
             this.actions = actions;
         }
 
-        @Nonnull
+        @NotNull
         public String getLabel() {
             return label;
         }
@@ -154,12 +157,12 @@ public class Browser extends ConsoleServletBean {
             return tooltip;
         }
 
-        @Nonnull
+        @NotNull
         public String getPath() {
             return path;
         }
 
-        @Nonnull
+        @NotNull
         public String getActions() {
             return actions != null ? actions : "";
         }
@@ -281,7 +284,7 @@ public class Browser extends ConsoleServletBean {
     /**
      * the content resource type (sling:resourceType) declared for the current resource
      */
-    @Nonnull
+    @NotNull
     public String getResourceType() {
         if (resourceType == null) {
             resourceType = "";
@@ -348,7 +351,7 @@ public class Browser extends ConsoleServletBean {
         return null;
     }
 
-    @Nonnull
+    @NotNull
     protected List<String> getTypeSearchPath(boolean includeOverlay) {
         List<String> typeSearchPath = new ArrayList<>(Arrays.asList(getResolver().getSearchPath()));
         if (includeOverlay) {
@@ -362,7 +365,7 @@ public class Browser extends ConsoleServletBean {
      *
      * @see "https://experienceleague.adobe.com/docs/experience-manager-65/developing/introduction/the-basics.html?lang=en#sling-request-processing"
      */
-    @Nonnull
+    @NotNull
     public List<String> getSupertypeChain() {
         if (supertypeChain == null) {
             supertypeChain = new ArrayList<>();
@@ -384,7 +387,7 @@ public class Browser extends ConsoleServletBean {
     /**
      * Paths for the locations relevant to the resource typein search paths, /mnt/override / /mnt/overlay, mapped to the label information.
      */
-    @Nonnull
+    @NotNull
     protected Map<String, Reference> getResourceTypeSet() {
         if (resourceTypes == null) {
             resourceTypes = new LinkedHashMap<>();
@@ -422,7 +425,7 @@ public class Browser extends ConsoleServletBean {
     /**
      * Set of related paths: for resource types the resource type found in the search path and /mnt/(override|overlay), base paths, resource types.
      */
-    @Nonnull
+    @NotNull
     public Map<String, Reference> getRelatedPathSet() {
         if (relatedPathSet == null) {
             if (isDeclaringType()) {
@@ -519,7 +522,7 @@ public class Browser extends ConsoleServletBean {
     /**
      * Path within /mnt/override.
      */
-    @Nonnull
+    @NotNull
     public String getOverridePath() {
         return isOverrideResource() ? getPath() : getOverrideRoot() + getBasePath();
     }
@@ -549,7 +552,7 @@ public class Browser extends ConsoleServletBean {
         return !availableScenes.isEmpty();
     }
 
-    @Nonnull
+    @NotNull
     public Collection<SceneConfigurations.Config> getAvailableScenes() {
         return SceneConfigurations.instance(getRequest()).getSceneConfigs();
     }
@@ -596,7 +599,7 @@ public class Browser extends ConsoleServletBean {
         return isFile;
     }
 
-    @Nonnull
+    @NotNull
     public String getFilePath() {
         if (isFile()) {
             ResourceHandle fileRes = resource;
@@ -610,7 +613,7 @@ public class Browser extends ConsoleServletBean {
         return "";
     }
 
-    @Nonnull
+    @NotNull
     public String getFileIcon() {
         if (fileIcon == null) {
             String mimeType = getMimeType();
@@ -709,7 +712,7 @@ public class Browser extends ConsoleServletBean {
 
     private transient String textSnippet;
 
-    @Nonnull
+    @NotNull
     public String getTextSnippet() {
         if (textSnippet == null) {
             textSnippet = "";

@@ -22,7 +22,8 @@
       "sling:resourceType": "composum/nodes/system/tools/runtime/files",
       "categories": [
         "system"
-      ]
+      ],
+      "precondition": "permission:system/runtime/files=read"
     }
   },
   "osgi": {
@@ -46,7 +47,8 @@
       "sling:resourceType": "composum/nodes/system/tools/osgi/bundles",
       "categories": [
         "system"
-      ]
+      ],
+      "precondition": "permission:system/osgi/bundles=read"
     }
   },
   "webconsole": {
@@ -60,6 +62,9 @@
     "categories": [
       "system"
     ],
-    "precondition": "http:/system/console"
+    "precondition": [
+      "permission:system/webconsole=read",
+      "http:/system/console"
+    ]
   }
 }

@@ -6,7 +6,7 @@ import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.event.impl.jobs.JobImpl;
 import org.apache.sling.event.jobs.Job;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.util.Calendar;
 import java.util.Objects;
 import java.util.Set;
@@ -70,10 +70,10 @@ public interface JobFacade extends Comparable<JobFacade> {
 
     class EventJob extends AbstractJobFacade {
 
-        @Nonnull
+        @NotNull
         public final Job job;
 
-        public EventJob(@Nonnull Job job) {
+        public EventJob(@NotNull Job job) {
             this.job = Objects.requireNonNull(job);
         }
 
@@ -180,10 +180,10 @@ public interface JobFacade extends Comparable<JobFacade> {
 
     class AuditJob extends AbstractJobFacade {
 
-        @Nonnull
+        @NotNull
         public final Resource resource;
 
-        public AuditJob(@Nonnull Resource resource) {
+        public AuditJob(@NotNull Resource resource) {
             this.resource = resource;
         }
 

@@ -12,7 +12,7 @@
 
     <groupId>com.composum.nodes</groupId>
     <artifactId>composum-nodes</artifactId>
-    <version>2.7.2-SNAPSHOT</version>
+    <version>3.0.0</version>
     <packaging>pom</packaging>
 
     <name>Composum Nodes</name>

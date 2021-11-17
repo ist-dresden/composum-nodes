@@ -6,8 +6,8 @@ import org.apache.commons.lang3.Validate;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -103,7 +103,7 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
      */
     @Override
     @Nullable
-    public <T> T get(@Nonnull final String name, @Nonnull final Class<T> type) {
+    public <T> T get(@NotNull final String name, @NotNull final Class<T> type) {
         Object value = get(name);
         if (value == null) {
             value = findInherited(name, type);
@@ -124,8 +124,8 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
      * @return inherited value if existing, otherwise the default value
      */
     @Override
-    @Nonnull
-    public <T> T get(@Nonnull final String name, @Nonnull final T defaultValue) {
+    @NotNull
+    public <T> T get(@NotNull final String name, @NotNull final T defaultValue) {
         Class<T> type = PropertyUtil.getType(defaultValue);
         T value = get(name, type);
         return value != null ? value : defaultValue;

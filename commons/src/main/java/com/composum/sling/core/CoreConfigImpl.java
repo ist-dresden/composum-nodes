@@ -1,10 +1,5 @@
 package com.composum.sling.core;
 
-import com.composum.sling.core.servlet.AbstractServiceServlet;
-import com.composum.sling.core.servlet.JobControlServlet;
-import com.composum.sling.core.servlet.SetupServlet;
-import com.composum.sling.core.servlet.SystemServlet;
-import com.composum.sling.core.servlet.TranslationServlet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -23,14 +18,12 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -72,30 +65,6 @@ public class CoreConfigImpl implements CoreConfiguration {
         String errorpages_default();
 
         @AttributeDefinition(
-                name = "Setup Servlet",
-                description = "the general on/off switch for the services of the Setup Servlet"
-        )
-        boolean setup_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "Jobcontrol Servlet",
-                description = "the general on/off switch for the services of the Jobcontrol Servlet"
-        )
-        boolean jobcontrol_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "System Servlet",
-                description = "the general on/off switch for the services of the System Servlet"
-        )
-        boolean system_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "Translation Servlet",
-                description = "the general on/off switch for the services of the Translation Servlet"
-        )
-        boolean translation_servlet_enabled() default true;
-
-        @AttributeDefinition(
                 name = "Logout URL",
                 description = "logout URL for the system"
         )
@@ -116,18 +85,11 @@ public class CoreConfigImpl implements CoreConfiguration {
 
     private volatile Configuration config;
 
-    private volatile Map<String, Boolean> enabledServlets;
-
     private volatile Dictionary<String, Object> properties;
 
-    @Nonnull
+    @NotNull
     private Configuration getConfig() {
         return Objects.requireNonNull(config, "CoreConfigImpl is not active");
-    }
-
-    @Override
-    public boolean isEnabled(AbstractServiceServlet servlet) {
-        return enabledServlets != null && Boolean.TRUE.equals(enabledServlets.get(servlet.getClass().getSimpleName()));
     }
 
     /**
@@ -208,13 +170,13 @@ public class CoreConfigImpl implements CoreConfiguration {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public Dictionary<String, Object> getProperties() {
         return properties;
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public String getLoginUrl(@Nullable final String targetUri) {
         String loginUrl = StringUtils.defaultIfBlank(getConfig().loginurl(), DEFAULT_LOGINURL);
         if (StringUtils.isNotBlank(targetUri)) {
@@ -224,7 +186,7 @@ public class CoreConfigImpl implements CoreConfiguration {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public String getLogoutUrl(@Nullable final String targetUri) {
         String logoutUrl = StringUtils.defaultIfBlank(getConfig().logouturl(), DEFAULT_LOGOUTURL);
         if (StringUtils.isNotBlank(targetUri)) {
@@ -234,7 +196,7 @@ public class CoreConfigImpl implements CoreConfiguration {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public String getLoggedoutUrl() {
         return StringUtils.defaultIfBlank(getConfig().loggedouturl(), DEFAULT_LOGGEDOUTURL);
     }
@@ -244,12 +206,6 @@ public class CoreConfigImpl implements CoreConfiguration {
     protected void activate(ComponentContext context, Configuration configuration) {
         this.properties = context.getProperties();
         this.config = configuration;
-        Map<String, Boolean> theEnabledServlets = new HashMap<>();
-        theEnabledServlets.put(SetupServlet.class.getSimpleName(), configuration.setup_servlet_enabled());
-        theEnabledServlets.put(SystemServlet.class.getSimpleName(), configuration.system_servlet_enabled());
-        theEnabledServlets.put(TranslationServlet.class.getSimpleName(), configuration.translation_servlet_enabled());
-        theEnabledServlets.put(JobControlServlet.class.getSimpleName(), configuration.jobcontrol_servlet_enabled());
-        enabledServlets = theEnabledServlets;
     }
 
     @Deactivate

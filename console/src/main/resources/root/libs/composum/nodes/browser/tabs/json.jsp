@@ -1,8 +1,11 @@
 <%@page session="false" pageEncoding="utf-8" %>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
+    <c:set var="writeAllowed" value="${browser.permissible['nodes/repository/resources']['write']}"/>
+    <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
     <div class="json detail-panel">
         <div class="json-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
@@ -49,7 +52,8 @@
                 <a href="" class="download fa fa-download btn btn-default" title="Download as JSON file"><span
                         class="label">Download</span></a>
                 <button type="button" class="upload fa fa-upload btn btn-default"
-                        title="Update from an uploaded JSON file"><span class="label">Upload</span></button>
+                        title="Update from an uploaded JSON file"${writeDisabled}><span class="label">Upload</span>
+                </button>
             </div>
             <div class="menu btn-group btn-group-sm dropdown" role="group">
                 <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload JSON view"><span
@@ -69,4 +73,6 @@
             <iframe src="" width="100%" height="100%" sandbox=""></iframe>
         </div>
     </div>
+    <c:remove var="writeDisabled"/>
+    <c:remove var="writeAllowed"/>
 </cpn:component>

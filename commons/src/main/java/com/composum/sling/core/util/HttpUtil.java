@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.servlets.HttpConstants;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import javax.servlet.http.HttpSession;
 import java.io.Serializable;
 import java.util.Calendar;
@@ -99,10 +99,10 @@ public class HttpUtil extends HttpConstants {
         Type newInstance(SlingHttpServletRequest request);
     }
 
-    @Nonnull
-    public static <Type extends CachableInstance> Type getInstance(@Nonnull final SlingHttpServletRequest request,
-                                                                   @Nonnull final String attributeKey,
-                                                                   @Nonnull final InstanceFactory<Type> factory) {
+    @NotNull
+    public static <Type extends CachableInstance> Type getInstance(@NotNull final SlingHttpServletRequest request,
+                                                                   @NotNull final String attributeKey,
+                                                                   @NotNull final InstanceFactory<Type> factory) {
         final HttpSession session = request.getSession(true);
         Class<Type> type = factory.getType();
         Type instance = null;

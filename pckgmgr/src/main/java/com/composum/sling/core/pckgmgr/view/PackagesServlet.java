@@ -1,6 +1,8 @@
 package com.composum.sling.core.pckgmgr.view;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.pckgmgr.PackageServlet;
 import com.composum.sling.core.servlet.AbstractConsoleServlet;
 import com.composum.sling.nodes.NodesConfiguration;
 import org.apache.sling.api.servlets.HttpConstants;
@@ -24,6 +26,7 @@ import java.util.regex.Pattern;
         },
         immediate = true
 )
+@Restricted(key = PackageServlet.SERVICE_KEY)
 public class PackagesServlet extends AbstractConsoleServlet {
 
     public static final String SERVLET_PATH = "/bin/packages";

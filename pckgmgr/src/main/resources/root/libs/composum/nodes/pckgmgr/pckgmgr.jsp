@@ -4,6 +4,11 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.view.PackageManagerBean" scope="request">
+    <%
+        if (!pckgmgr.isReadAllowed()) {
+            slingResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
+        } else {
+    %>
     <html data-context-path="${slingRequest.contextPath}">
     <sling:call script="head.jsp"/>
     <body id="pckgmgr" class="console left-open top-open">
@@ -11,6 +16,8 @@
         <sling:call script="dialogs.jsp"/>
         <sling:include resourceType="composum/nodes/console/components/navbar"/>
         <div id="content-wrapper">
+            <c:set var="writeAllowed" value="${pckgmgr.permissible['nodes/packages/manager']['write']}"/>
+            <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
             <div id="split-view-horizontal-split" class="split-pane horizontal-split fixed-left">
                 <div class="split-pane-component left-pane">
                     <div>
@@ -26,13 +33,16 @@
                                 </div>
                                 <div class="btn-group btn-group-sm" role="group">
                                     <button type="button" class="create fa fa-plus btn btn-default"
-                                            title="Create a new package"><span class="label">Create</span></button>
+                                            title="Create a new package"${writeDisabled}><span
+                                            class="label">Create</span></button>
                                     <button type="button" class="delete fa fa-minus btn btn-default"
-                                            title="Delete selected package"><span class="label">Delete</span></button>
+                                            title="Delete selected package"${writeDisabled}><span
+                                            class="label">Delete</span></button>
                                 </div>
                                 <div class="btn-group btn-group-sm" role="group">
                                     <button type="button" class="upload fa fa-upload btn btn-default"
-                                            title="Upload a new package"><span class="label">Upload</span></button>
+                                            title="Upload a new package"${writeDisabled}><span
+                                            class="label">Upload</span></button>
                                     <a type="button" class="download fa fa-download btn btn-default"
                                        title="Download selected package"><span class="label">Download</span></a>
                                 </div>
@@ -65,10 +75,13 @@
                 <div class="open-left"><a href="#" class="fa fa-angle-double-right" title="Restore left panel"></a>
                 </div>
             </div>
+            <c:remove var="writeDisabled"/>
+            <c:remove var="writeAllowed"/>
         </div>
     </div>
     <sling:call script="script.jsp"/>
     <sling:include resourceType="composum/nodes/console/components/tryLogin"/>
     </body>
     </html>
+    <%}%>
 </cpn:component>

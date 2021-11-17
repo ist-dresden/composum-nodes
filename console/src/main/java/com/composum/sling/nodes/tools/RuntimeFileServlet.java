@@ -1,5 +1,8 @@
-package com.composum.sling.nodes.servlet;
+package com.composum.sling.nodes.tools;
 
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.service.RestrictedService;
+import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.servlet.NodeTreeServlet;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.ResponseUtil;
@@ -17,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,16 +44,21 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
-@Component(service = Servlet.class,
+import static com.composum.sling.nodes.tools.RuntimeFileServlet.SERVICE_KEY;
+
+@Component(service = {Servlet.class, RestrictedService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=" + RuntimeFileServlet.SERVLET_LABEL,
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + RuntimeFileServlet.SERVLET_PATH,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
         }
 )
-public class RuntimeFileServlet extends SlingSafeMethodsServlet {
+@Restricted(key = SERVICE_KEY)
+public class RuntimeFileServlet extends SlingSafeMethodsServlet implements RestrictedService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RuntimeFileServlet.class);
+
+    public static final String SERVICE_KEY = "system/runtime/files";
 
     public static final String SERVLET_LABEL = "Composum Runtime File Servlet";
     public static final String SERVLET_PATH = "/bin/cpm/system/file";
@@ -125,13 +134,47 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet {
         }
     }
 
+    @Reference
+    protected ServiceRestrictions restrictions;
+
+    private ServiceRestrictions.Key serviceKey;
+    private ServiceRestrictions.Permission permission;
+    private boolean enabled = false;
+    private Pattern fileRestrictions;
+
+    protected void activate() {
+        serviceKey = new ServiceRestrictions.Key(SERVICE_KEY);
+        permission = restrictions.getPermission(serviceKey);
+        enabled = permission != ServiceRestrictions.Permission.none;
+        final String pattern = restrictions.getRestrictions(serviceKey);
+        fileRestrictions = StringUtils.isNotBlank(pattern) ? Pattern.compile(pattern) : null;
+    }
+
+    @Override
+    @NotNull
+    public ServiceRestrictions.Key getServiceKey() {
+        return serviceKey;
+    }
+
+    public final boolean isEnabled() {
+        return enabled;
+    }
+
+    public final ServiceRestrictions.Permission getPermission() {
+        return permission;
+    }
+
     @Nullable
     protected RuntimeFile getFile(@NotNull final SlingHttpServletRequest request, @Nullable final String suffix) {
         RuntimeFile rtFile = null;
         if (suffix != null) {
             final File file = new File("." + suffix);
             if (file.exists()) {
-                rtFile = new RuntimeFile(request, file);
+                final RuntimeFile candidate = new RuntimeFile(request, file);
+                if (isEnabled() && (fileRestrictions == null
+                        || fileRestrictions.matcher(candidate.getPath()).matches())) {
+                    rtFile = candidate;
+                }
             }
         }
         return rtFile;
@@ -141,22 +184,26 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet {
     protected void doGet(@NotNull final SlingHttpServletRequest request,
                          @NotNull final SlingHttpServletResponse response)
             throws IOException {
-        final RequestPathInfo pathInfo = request.getRequestPathInfo();
-        final String suffix = pathInfo.getSuffix();
-        final String[] selectors = pathInfo.getSelectors();
-        if (selectors.length > 0) {
-            switch (selectors[0]) {
-                case "tree":
-                    treeNode(request, response, suffix);
-                    return;
-                case "tail":
-                    tailLogfile(request, response, selectors, suffix);
-                    return;
-                default:
-                    break;
+        if (isEnabled()) {
+            final RequestPathInfo pathInfo = request.getRequestPathInfo();
+            final String suffix = pathInfo.getSuffix();
+            final String[] selectors = pathInfo.getSelectors();
+            if (selectors.length > 0) {
+                switch (selectors[0]) {
+                    case "tree":
+                        treeNode(request, response, suffix);
+                        return;
+                    case "tail":
+                        tailLogfile(request, response, selectors, suffix);
+                        return;
+                    default:
+                        break;
+                }
             }
+            downloadFile(request, response, suffix);
+        } else {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
         }
-        downloadFile(request, response, suffix);
     }
 
     protected void downloadFile(@NotNull final SlingHttpServletRequest request,
@@ -174,7 +221,7 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet {
                 IOUtils.copy(in, response.getOutputStream());
             }
         } else {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
         }
     }
 
@@ -197,7 +244,7 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet {
                     ? Pattern.compile(filter.replaceAll("([^ .\\])])?[*]", "$1\\\\*"))
                     : null);
         } else {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
         }
     }
 
@@ -302,7 +349,7 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet {
             writeFileNode(request, writer, rtFile);
             writer.endObject();
         } else {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
         }
     }
 
@@ -315,12 +362,15 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet {
         Set<File> fileSet = new TreeSet<>(Comparator.comparing(o -> ((o.isDirectory() ? "0:" : "1:") + o.getName())));
         fileSet.addAll(Arrays.asList(files != null ? files : new File[0]));
         for (File child : fileSet) {
-            writer.beginObject();
-            writeFileIdentifiers(request, writer, new RuntimeFile(request, child));
-            writer.name("state").beginObject(); // that's the 'jstree' state object
-            writer.name("loaded").value(false);
-            writer.endObject();
-            writer.endObject();
+            RuntimeFile rtChild = new RuntimeFile(request, child);
+            if (fileRestrictions == null || fileRestrictions.matcher(rtChild.getPath()).matches()) {
+                writer.beginObject();
+                writeFileIdentifiers(request, writer, new RuntimeFile(request, child));
+                writer.name("state").beginObject(); // that's the 'jstree' state object
+                writer.name("loaded").value(false);
+                writer.endObject();
+                writer.endObject();
+            }
         }
         writer.endArray();
     }
