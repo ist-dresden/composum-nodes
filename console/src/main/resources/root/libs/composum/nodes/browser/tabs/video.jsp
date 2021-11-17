@@ -26,8 +26,9 @@
             <div class="btn-group btn-group-sm" role="group">
                 <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
                 </button>
-                <button type="button" class="open fa fa-globe btn btn-default" title="Open in a separate view"><span
-                        class="label">Open</span></button>
+                <cpn:link href="${browser.filePath}" class="fa fa-globe btn btn-default"
+                          title="Open in a separate view" target="_blank"><span
+                        class="label">Open</span></cpn:link>
             </div>
         </div>
         <div class="detail-content">

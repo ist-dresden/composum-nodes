@@ -39,6 +39,10 @@
                     <button type="button" class="update fa fa-upload btn btn-default"
                             title="Update text file"${writeDisabled}><span class="label">Update File</span></button>
                 </div>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
+                    </button>
+                </div>
             </div>
             <div class="detail-content">
                 <div id="script-view" class="split-pane vertical-split fixed-bottom">

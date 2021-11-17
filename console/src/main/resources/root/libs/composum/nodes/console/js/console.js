@@ -168,7 +168,7 @@
                 core.removeClasses(this.$permissionStatus, /(user|default)-.+/).addClass(status);
                 this.$permissionStatus.find('i').removeClass().addClass('fa fa-' + {
                     'default-read': 'shield',
-                    'user-read': 'umbrella',
+                    'user-read': 'shield',
                     'default-write': 'wrench',
                     'user-write': 'wrench',
                 }[status]);

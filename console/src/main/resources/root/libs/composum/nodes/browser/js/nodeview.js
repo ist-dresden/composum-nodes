@@ -24,13 +24,6 @@
             urlPattern: new RegExp('^(.*/[^/]+)(\\.[^.]+)$'),
 
             initialize: function (options) {
-                /* get abstract members
-                 options: {
-                 displayKey: '...',
-                 loadContent: function(url) {
-                 this.$iframe.attr('src', url);
-                 }
-                 },*/
                 this.displayKey = options.displayKey;
                 this.loadContent = options.loadContent;
                 /* general initialization */
@@ -83,7 +76,9 @@
 
             reload: function () {
                 browser.nodeView.sourceViewTabVisibility();
-                this.loadContent(this.getUrl());
+                if (_.isFunction(this.loadContent)) {
+                    this.loadContent(this.getUrl());
+                }
             },
 
             open: function (event) {
@@ -352,6 +347,7 @@
                         if (!this.urlHasModifiers()) {
                             url = '/bin/cpm/nodes/node.load.bin' + url;
                         }
+                        this.$image.attr('src', '');
                         this.$image.attr('src', core.getContextUrl(url));
                     }, this)
                 });
@@ -371,6 +367,7 @@
                         }
                         var mimeType = this.$el.data('type');
                         this.$source.attr('type', mimeType);
+                        this.$source.attr('src', '');
                         this.$source.attr('src', core.getContextUrl(url));
                     }, this)
                 });
@@ -386,6 +383,9 @@
                 this.editor = core.getWidget(this.$el, '.widget.code-editor-widget', core.components.CodeEditorWidget);
                 this.$('.editor-toolbar .update').click(_.bind(this.upload, this));
                 this.$download = this.$('.editor-toolbar .download');
+                this.$('.detail-toolbar .reload').click(_.bind(function () {
+                    this.editor.loadText();
+                }, this));
             },
 
             reload: function () {

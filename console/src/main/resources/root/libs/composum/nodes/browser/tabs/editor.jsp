@@ -30,6 +30,8 @@
                             title="Update text file"${writeDisabled}><span class="label">Update File</span></button>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
+                    </button>
                     <c:if test="${browser.renderable}">
                         <cpn:link href="${browser.filePath}" class="fa fa-globe btn btn-default"
                                   title="Open in a separate view" target="_blank"><span

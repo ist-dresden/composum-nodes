@@ -185,7 +185,7 @@ public class BrowserViews implements HttpUtil.CachableInstance {
 
                 public Element(@NotNull final Element template,
                                @NotNull final BeanContext context, @NotNull final Resource resource) {
-                    name = resource.getName();
+                    name = template.name;
                     properties = template.properties;
                     condition = template.condition;
                     enabled = template.enabled;
@@ -201,7 +201,7 @@ public class BrowserViews implements HttpUtil.CachableInstance {
                 }
 
                 public boolean isEnabled() {
-                    return isEnabled;
+                    return isEnabled == null || isEnabled;
                 }
 
                 public String getType() {
