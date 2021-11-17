@@ -14,11 +14,11 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.query.Query;
 import java.io.IOException;
 import java.io.Serializable;
@@ -45,6 +45,7 @@ public class Consoles implements HttpUtil.CachableInstance {
 
     public static final String PN_CONSOLE_ID = "consoleId";
     public static final String PN_PARENT_ID = "parentId";
+    public static final String PN_PERM_SUPPORT = "permissionsSupport";
     public static final String PN_DESCRIPTION = "description";
     public static final String PN_TARGET = "target";
     public static final String PN_MENU = "menu";
@@ -56,8 +57,8 @@ public class Consoles implements HttpUtil.CachableInstance {
 
     public static final String SA_INSTANCE = Consoles.class.getName() + "#instance";
 
-    @Nonnull
-    public static Consoles getInstance(@Nonnull final BeanContext context) {
+    @NotNull
+    public static Consoles getInstance(@NotNull final BeanContext context) {
         final SlingHttpServletRequest request = Objects.requireNonNull(context.getRequest());
         return HttpUtil.getInstance(request, SA_INSTANCE, new HttpUtil.InstanceFactory<Consoles>() {
 
@@ -78,7 +79,7 @@ public class Consoles implements HttpUtil.CachableInstance {
         private final BeanContext context;
         private final List<String> selectors;
 
-        public ConsoleFilter(@Nonnull final BeanContext context, String... selectors) {
+        public ConsoleFilter(@NotNull final BeanContext context, String... selectors) {
             this.context = context;
             this.selectors = Arrays.asList(selectors);
         }
@@ -112,7 +113,7 @@ public class Consoles implements HttpUtil.CachableInstance {
         }
 
         @Override
-        public void toString(@Nonnull final StringBuilder builder) {
+        public void toString(@NotNull final StringBuilder builder) {
             builder.append("console(").append(StringUtils.join(selectors, ',')).append(")");
         }
     }
@@ -123,6 +124,7 @@ public class Consoles implements HttpUtil.CachableInstance {
         private final String name;
         private final String path;
         private final String title;
+        private final boolean permissionsSupport;
         private final String description;
         private final String target;
         private final String contentSrc;
@@ -134,15 +136,16 @@ public class Consoles implements HttpUtil.CachableInstance {
         private final boolean isDeclaredMenu;
         private final Map<String, Console> menuItems;
 
-        public Console(@Nonnull final ConsoleFilter filter, @Nonnull final ResourceHandle handle) {
+        public Console(@NotNull final ConsoleFilter filter, @NotNull final ResourceHandle handle) {
             this(filter, handle, handle.getProperty(PN_MENU, Boolean.FALSE));
         }
 
-        public Console(@Nonnull final ConsoleFilter filter, @Nonnull final ResourceHandle handle, boolean isMenu) {
+        public Console(@NotNull final ConsoleFilter filter, @NotNull final ResourceHandle handle, boolean isMenu) {
             id = handle.getProperty(PN_CONSOLE_ID, String.class);
             name = handle.getName();
             path = handle.getPath();
             title = handle.getTitle();
+            permissionsSupport = handle.getProperty(PN_PERM_SUPPORT, Boolean.FALSE);
             description = handle.getProperty(PN_DESCRIPTION, "");
             target = handle.getProperty(PN_TARGET, "");
             contentSrc = handle.getProperty(PN_CONTENT_SRC, "");
@@ -156,38 +159,42 @@ public class Consoles implements HttpUtil.CachableInstance {
             }
         }
 
-        @Nonnull
+        public boolean supportsPermissions() {
+            return permissionsSupport;
+        }
+
+        @NotNull
         public String getLabel() {
             return title;
         }
 
-        @Nonnull
+        @NotNull
         public String getId() {
             return StringUtils.isNotBlank(id) ? id : (parent != null ? (parent.getId() + "-" + getName()) : getName());
         }
 
-        @Nonnull
+        @NotNull
         public String getName() {
             return name;
         }
 
-        @Nonnull
+        @NotNull
         public String getPath() {
             return path;
         }
 
-        @Nonnull
+        @NotNull
         public String getDescription() {
             return description;
         }
 
-        @Nonnull
+        @NotNull
         public String getContentSrc() {
             return contentSrc;
         }
 
-        @Nonnull
-        public String getUrl(@Nonnull final SlingHttpServletRequest request) {
+        @NotNull
+        public String getUrl(@NotNull final SlingHttpServletRequest request) {
             final String suffix = XSS.filter(request.getRequestPathInfo().getSuffix());
             // placeholder ${path} is already URL-encoded at that place since {} aren't valid in URL.
             final String url = StringUtils.replace(LinkUtil.getUnmappedUrl(request, getPath()),
@@ -195,7 +202,7 @@ public class Consoles implements HttpUtil.CachableInstance {
             return StringUtils.isNotBlank(url) ? url : "#";
         }
 
-        @Nonnull
+        @NotNull
         public String getLinkAttributes() {
             final StringBuilder builder = new StringBuilder();
             if (StringUtils.isNotBlank(target)) {
@@ -234,8 +241,8 @@ public class Consoles implements HttpUtil.CachableInstance {
             return !menuItems.isEmpty();
         }
 
-        @Nonnull
-        public Collection<ConsoleModel> getMenuItems(@Nonnull final BeanContext context) {
+        @NotNull
+        public Collection<ConsoleModel> getMenuItems(@NotNull final BeanContext context) {
             final List<ConsoleModel> result = new ArrayList<>();
             for (final Console console : menuItems.values()) {
                 if (!console.isDeclaredMenu() || console.isValidMenu()) {
@@ -245,12 +252,12 @@ public class Consoles implements HttpUtil.CachableInstance {
             return result;
         }
 
-        protected void addConsole(@Nonnull final Console console) {
+        protected void addConsole(@NotNull final Console console) {
             menuItems.put(String.format("%04d", console.order) + "#" + console.getName(), console);
             console.parent = this;
         }
 
-        protected void buildMenu(@Nonnull final ConsoleFilter filter, @Nonnull final ResourceHandle handle) {
+        protected void buildMenu(@NotNull final ConsoleFilter filter, @NotNull final ResourceHandle handle) {
             for (final Resource child : handle.getChildren()) {
                 if (filter.accept(child)) {
                     final Console console = new Console(filter, ResourceHandle.use(child), true);
@@ -260,8 +267,8 @@ public class Consoles implements HttpUtil.CachableInstance {
             }
         }
 
-        @Nonnull
-        public String toString(@Nonnull final BeanContext context) {
+        @NotNull
+        public String toString(@NotNull final BeanContext context) {
             final StringWriter buffer = new StringWriter();
             final JsonWriter writer = new JsonWriter(buffer);
             try {
@@ -285,7 +292,7 @@ public class Consoles implements HttpUtil.CachableInstance {
     private final Set<Console> toplevel;
     private final long created;
 
-    public Consoles(@Nonnull final BeanContext context) {
+    public Consoles(@NotNull final BeanContext context) {
         consoleSet = new TreeMap<>();
         ResourceResolver resolver = context.getResolver();
         for (String path : resolver.getSearchPath()) {
@@ -325,8 +332,8 @@ public class Consoles implements HttpUtil.CachableInstance {
         return created;
     }
 
-    @Nonnull
-    public Collection<ConsoleModel> getConsoles(@Nonnull final BeanContext context) {
+    @NotNull
+    public Collection<ConsoleModel> getConsoles(@NotNull final BeanContext context) {
         final List<ConsoleModel> result = new ArrayList<>();
         for (final Console console : toplevel) {
             result.add(new ConsoleModel(context, console));
@@ -335,17 +342,17 @@ public class Consoles implements HttpUtil.CachableInstance {
     }
 
     @Nullable
-    public ConsoleModel getConsole(@Nonnull final BeanContext context, @Nonnull final String name) {
+    public ConsoleModel getConsole(@NotNull final BeanContext context, @NotNull final String name) {
         final Console console = getConsole(name);
         return console != null ? new ConsoleModel(context, console) : null;
     }
 
     @Nullable
-    public Console getConsole(@Nonnull final String name) {
+    public Console getConsole(@NotNull final String name) {
         return consoleSet.get(name);
     }
 
-    protected void findConsoles(@Nonnull final BeanContext context, @Nonnull final String query) {
+    protected void findConsoles(@NotNull final BeanContext context, @NotNull final String query) {
         final SlingHttpServletRequest request = Objects.requireNonNull(context.getRequest());
         final NodesConfiguration configuration = Objects.requireNonNull(context.getService(NodesConfiguration.class));
         final String[] categories = configuration.getConsoleCategories();
@@ -363,8 +370,8 @@ public class Consoles implements HttpUtil.CachableInstance {
         }
     }
 
-    @Nonnull
-    public String toString(@Nonnull final BeanContext context) {
+    @NotNull
+    public String toString(@NotNull final BeanContext context) {
         final StringWriter buffer = new StringWriter();
         final JsonWriter writer = new JsonWriter(buffer);
         try {

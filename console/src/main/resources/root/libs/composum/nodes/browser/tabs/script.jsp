@@ -1,13 +1,17 @@
 <%@page session="false" pageEncoding="utf-8" %>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
+    <c:set var="writeAllowed" value="${browser.permissible['nodes/repository/source']['write']}"/>
+    <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
     <div class="script detail-panel">
         <div class="widget code-editor-widget">
             <div class="editor-toolbar detail-toolbar">
                 <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="run-script btn btn-default btn-stack" title="Run Script"><span
+                    <button type="button" class="run-script btn btn-default btn-stack"
+                            title="Run Script"${browser.permissible['nodes/repository/execution']['write']?'':' disabled'}><span
                             class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                             class="symbol fa fa-play fa-stack-1x"></i><i
                             class="running fa fa-stop fa-stack-1x"></i><i
@@ -24,17 +28,20 @@
                     </div>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="start-editing fa fa-pencil btn btn-default" title="Edit Script"><span
-                            class="label">Edit</span></button>
-                    <a href="${browser.editCodeUrl}" target="${browser.current.path}"
-                       class="edit-window fa fa-edit btn btn-default"
+                    <button type="button" class="start-editing fa fa-pencil btn btn-default"
+                            title="Edit Script"${writeDisabled}><span class="label">Edit</span></button>
+                    <a href="${writeAllowed?browser.editCodeUrl:'#'}" target="${browser.current.path}"
+                       class="edit-window fa fa-edit btn btn-default${writeAllowed?'':' disabled'}"
                        title="Edit text in a new window (browser tab)"><span class="label">Edit Window</span></a>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
-                    <a href="" class="download fa fa-download btn btn-default" title="Download text file"
-                       target="_blank"><span class="label">Download</span></a>
-                    <button type="button" class="update fa fa-upload btn btn-default" title="Update text file"><span
-                            class="label">Update File</span></button>
+                    <a href="" class="download fa fa-download btn btn-default" title="Download text file"><span class="label">Download</span></a>
+                    <button type="button" class="update fa fa-upload btn btn-default"
+                            title="Update text file"${writeDisabled}><span class="label">Update File</span></button>
+                </div>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
+                    </button>
                 </div>
             </div>
             <div class="detail-content">
@@ -81,4 +88,6 @@
             </div>
         </div>
     </div>
+    <c:remove var="writeDisabled"/>
+    <c:remove var="writeAllowed"/>
 </cpn:component>

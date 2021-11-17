@@ -4,8 +4,8 @@ import com.google.gson.annotations.JsonAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.*;
 import java.util.function.Consumer;
@@ -62,7 +62,7 @@ public class MessageContainer implements Iterable<Message> {
     /**
      * A (unmodifiable) snapshot of the list of messages.
      */
-    @Nonnull
+    @NotNull
     public List<Message> getMessages() {
         synchronized (lockObject) {
             return messages != null ? Collections.unmodifiableList(new ArrayList<>(messages)) : Collections.emptyList();
@@ -76,7 +76,7 @@ public class MessageContainer implements Iterable<Message> {
      *
      * @return this MessageContainer, for builder-style operation chaining.
      */
-    @Nonnull
+    @NotNull
     public MessageContainer add(@Nullable Message message, @Nullable Throwable throwable) {
         if (message != null) {
             synchronized (lockObject) {
@@ -105,7 +105,7 @@ public class MessageContainer implements Iterable<Message> {
      *
      * @return this MessageContainer, for builder-style operation chaining.
      */
-    @Nonnull
+    @NotNull
     public MessageContainer add(@Nullable Message message) {
         Throwable throwable = null;
         List<Object> args = message.getArguments();
@@ -121,7 +121,7 @@ public class MessageContainer implements Iterable<Message> {
     /**
      * Adds all messages of a {@link MessageContainer} to this container.
      */
-    @Nonnull
+    @NotNull
     public MessageContainer addAll(@Nullable MessageContainer messageContainer) {
         if (messageContainer != null) {
             for (Message m : messageContainer) {
@@ -149,7 +149,7 @@ public class MessageContainer implements Iterable<Message> {
      *
      * @return this MessageContainer, for builder-style operation chaining.
      */
-    @Nonnull
+    @NotNull
     public MessageContainer clear() {
         synchronized (lockObject) {
             messages = null;

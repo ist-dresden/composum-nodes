@@ -18,7 +18,8 @@
                 description="/libs/composum/nodes/system/tools/runtime/files/description"
                 sling:resourceType="composum/nodes/system/tools/runtime/files"
                 categories="[system]"
-                order="{Long}300"/>
+                order="{Long}300"
+                precondition="permission:system/runtime/files=read"/>
     </runtime>
     <osgi jcr:primaryType="nt:unstructured"
             consoleId="tools-osgi"
@@ -35,7 +36,8 @@
                 description="/libs/composum/nodes/system/tools/osgi/bundles/description"
                 sling:resourceType="composum/nodes/system/tools/osgi/bundles"
                 categories="[system]"
-                order="{Long}50"/>
+                order="{Long}50"
+                precondition="permission:system/osgi/bundles=read"/>
     </osgi>
     <webconsole jcr:primaryType="nt:unstructured"
             consoleId="tools-webconsole"
@@ -45,5 +47,5 @@
             sling:resourceType="composum/nodes/system/tools/webconsole"
             categories="[system]"
             order="{Long}900"
-            precondition="http:/system/console"/>
+            precondition="[permission:system/webconsole=read,http:/system/console]"/>
 </jcr:root>

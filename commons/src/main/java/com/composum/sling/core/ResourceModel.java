@@ -3,12 +3,17 @@ package com.composum.sling.core;
 import com.composum.sling.core.util.PropertyUtil;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.HashMap;
 
+import static com.composum.sling.core.ResourceModel.SERVICE_KEY;
+
+@Restricted(key = SERVICE_KEY)
 public class ResourceModel extends AbstractSlingBean {
+
+    public static final String SERVICE_KEY = "nodes/repository/resources";
 
     private transient ValueMap propertyMap;
     private transient ValueMap values;
@@ -58,13 +63,13 @@ public class ResourceModel extends AbstractSlingBean {
 
         @Override
         @Nullable
-        public Object get(@Nonnull final Object key) {
+        public Object get(@NotNull final Object key) {
             return get((String) key, Object.class);
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public <T> T get(@Nonnull String name, @Nonnull Class<T> type) {
+        public <T> T get(@NotNull String name, @NotNull Class<T> type) {
             if (name.startsWith("_jcr_")) {
                 name = "jcr:" + name.substring(5);
             }
@@ -78,25 +83,25 @@ public class ResourceModel extends AbstractSlingBean {
 
         @SuppressWarnings("unchecked")
         @Override
-        @Nonnull
-        public <Type> Type get(@Nonnull String name, @Nonnull Type defaultValue) {
+        @NotNull
+        public <Type> Type get(@NotNull String name, @NotNull Type defaultValue) {
             Type value = (Type) get(name, defaultValue.getClass());
             return value != null ? value : defaultValue;
         }
 
-        protected abstract <T> T getValue(String key, @Nonnull Class<T> type);
+        protected abstract <T> T getValue(String key, @NotNull Class<T> type);
     }
 
     public class GenericProperty extends GenericMap {
 
         @Override
         @Nullable
-        public <T> T getValue(String key, @Nonnull Class<T> type) {
+        public <T> T getValue(String key, @NotNull Class<T> type) {
             return getProperty(key, type);
         }
     }
 
-    @Nonnull
+    @NotNull
     public ValueMap getProperty() {
         if (propertyMap == null) {
             propertyMap = new GenericProperty();

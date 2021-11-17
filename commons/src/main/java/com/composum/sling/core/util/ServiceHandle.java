@@ -8,7 +8,7 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 /**
@@ -26,7 +26,7 @@ public class ServiceHandle<T> {
 
     protected transient InstanceTracker serviceTracker;
 
-    @Nonnull
+    @NotNull
     public T getService() {
         if (service == null) {
             if (serviceTracker == null) {
@@ -51,7 +51,7 @@ public class ServiceHandle<T> {
     /**
      * @param type the concrete service type instance
      */
-    public ServiceHandle(@Nonnull final Class<T> type) {
+    public ServiceHandle(@NotNull final Class<T> type) {
         this.type = type;
     }
 

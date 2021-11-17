@@ -3,9 +3,13 @@ package com.composum.sling.nodes.tools;
 import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.service.ServiceRestrictions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -16,10 +20,7 @@ import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRevision;
 import org.osgi.framework.wiring.BundleWire;
 import org.osgi.framework.wiring.BundleWiring;
-import org.osgi.service.component.ComponentConstants;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +40,7 @@ import java.util.stream.Stream;
 
 import static org.osgi.framework.wiring.BundleRevision.TYPE_FRAGMENT;
 
+@Restricted(key = OsgiBundlesServlet.SERVICE_KEY)
 public class OsgiBundleModel extends AbstractSlingBean {
 
     public static final Pattern BUNDLE_ID_SUFFIX = Pattern.compile("/(?<id>[0-9]+)$");
@@ -130,7 +132,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
         protected final String symbolicName;
         protected final Version version;
 
-        public Exported(@Nonnull final String symbolicName, @Nullable final Version version) {
+        public Exported(@NotNull final String symbolicName, @Nullable final Version version) {
             this.symbolicName = symbolicName;
             this.version = version;
         }
@@ -143,7 +145,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
         protected final boolean optional;
         protected Resolved resolved;
 
-        public Imported(@Nonnull final String symbolicName, @Nullable final VersionRange version,
+        public Imported(@NotNull final String symbolicName, @Nullable final VersionRange version,
                         boolean optional) {
             this.symbolicName = symbolicName;
             this.version = version;
@@ -158,7 +160,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
         protected final Version version;
         protected final boolean active;
 
-        public Resolved(@Nonnull final Bundle bundle, @Nonnull final String symbolicName,
+        public Resolved(@NotNull final Bundle bundle, @NotNull final String symbolicName,
                         @Nullable final Version version) {
             this.bundle = bundle;
             this.symbolicName = symbolicName;
@@ -180,7 +182,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
         public int bundleId;
         public String description;
 
-        public ServiceModel(@Nonnull final ServiceReference<?> service) {
+        public ServiceModel(@NotNull final ServiceReference<?> service) {
             this.service = service;
             for (final String key : service.getPropertyKeys()) {
                 final Object value = service.getProperty(key);
@@ -250,7 +252,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
         }
     }
 
-    protected void initialize(@Nonnull final Bundle bundle) {
+    protected void initialize(@NotNull final Bundle bundle) {
         this.bundle = bundle;
         headers = new TreeMap<>();
         final Dictionary<String, String> bundleHeaders = bundle.getHeaders();
@@ -285,37 +287,37 @@ public class OsgiBundleModel extends AbstractSlingBean {
         return fragment;
     }
 
-    protected static boolean isFragment(@Nonnull final Bundle bundle) {
+    protected static boolean isFragment(@NotNull final Bundle bundle) {
         BundleRevision revision = bundle.adapt(BundleRevision.class);
         return revision != null && (revision.getTypes() & TYPE_FRAGMENT) != 0;
     }
 
-    @Nonnull
+    @NotNull
     public Long getBundleId() {
         return bundle.getBundleId();
     }
 
-    @Nonnull
+    @NotNull
     public Set<Map.Entry<String, String>> getHeaders() {
         return headers.entrySet();
     }
 
-    @Nonnull
+    @NotNull
     public String getName() {
         return name;
     }
 
-    @Nonnull
+    @NotNull
     public String getSymbolicName() {
         return bundle.getSymbolicName();
     }
 
-    @Nonnull
+    @NotNull
     public String getCategory() {
         return category;
     }
 
-    @Nonnull
+    @NotNull
     public State getState() {
         if (state == null) {
             state = getState(bundle);
@@ -323,7 +325,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
         return state;
     }
 
-    protected static State getState(@Nonnull final Bundle bundle) {
+    protected static State getState(@NotNull final Bundle bundle) {
         State state = State.valueOf(bundle.getState());
         if (isFragment(bundle) && state == State.resolved) {
             state = State.fragment;
@@ -341,22 +343,22 @@ public class OsgiBundleModel extends AbstractSlingBean {
         return state == State.active || state == State.fragment;
     }
 
-    @Nonnull
+    @NotNull
     public String getLastModified() {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(bundle.getLastModified()));
     }
 
-    @Nonnull
+    @NotNull
     public String getVersion() {
         return bundle.getVersion().toString();
     }
 
-    @Nonnull
+    @NotNull
     public String getLocation() {
         return bundle.getLocation();
     }
 
-    @Nonnull
+    @NotNull
     public Iterator<ServiceModel> getProvidedServices() {
         ServiceReference<?>[] registered = bundle.getRegisteredServices();
         final Iterator<ServiceReference<?>> services = Stream.of(
@@ -375,7 +377,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
         };
     }
 
-    @Nonnull
+    @NotNull
     public Iterator<ServiceModel> getUsedServices() {
         ServiceReference<?>[] registered = bundle.getServicesInUse();
         final Iterator<ServiceReference<?>> services = Stream.of(
@@ -399,7 +401,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
     }
 
     @Nullable
-    public Exported getExported(@Nonnull String symbolicName) {
+    public Exported getExported(@NotNull String symbolicName) {
         while (symbolicName.indexOf('.') > 0) {
             final Exported exported = getExportedSet().get(symbolicName);
             if (exported != null) {
@@ -429,7 +431,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
     }
 
     @Nullable
-    public Imported getImported(@Nonnull final String symbolicName) {
+    public Imported getImported(@NotNull final String symbolicName) {
         return getImportedSet().get(symbolicName);
     }
 
@@ -458,7 +460,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
     }
 
     @Nullable
-    public Resolved getResolved(@Nonnull String symbolicName) {
+    public Resolved getResolved(@NotNull String symbolicName) {
         while (symbolicName.indexOf('.') > 0) {
             final Resolved resolved = getResolvedSet().get(symbolicName);
             if (resolved != null) {
@@ -524,27 +526,27 @@ public class OsgiBundleModel extends AbstractSlingBean {
         private final String name;
         private final Map<String, List<String>> options = new HashMap<>();
 
-        public PackageReference(@Nonnull final String name) {
+        public PackageReference(@NotNull final String name) {
             this.name = name;
         }
 
-        @Nonnull
+        @NotNull
         public String getName() {
             return name;
         }
 
         @Nullable
-        public String getOption(@Nonnull final String key) {
+        public String getOption(@NotNull final String key) {
             final List<String> values = getOptionValues(key);
             return values != null ? StringUtils.join(values, ",") : null;
         }
 
         @Nullable
-        public List<String> getOptionValues(@Nonnull final String key) {
+        public List<String> getOptionValues(@NotNull final String key) {
             return options.get(key);
         }
 
-        protected void addOption(@Nonnull final String key, @Nonnull final String value) {
+        protected void addOption(@NotNull final String key, @NotNull final String value) {
             List<String> values = options.computeIfAbsent(key, k -> new ArrayList<>());
             values.add(value);
         }
@@ -559,7 +561,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
             return getOption("resolution");
         }
 
-        @Nonnull
+        @NotNull
         public String toString() {
             final String version = getVersion();
             return name + (StringUtils.isNotBlank(version) ? (";" + version) : "");
@@ -574,20 +576,20 @@ public class OsgiBundleModel extends AbstractSlingBean {
             return packages.isEmpty();
         }
 
-        @Nonnull
+        @NotNull
         public Set<String> getKeys() {
             return packages.keySet();
         }
 
-        public void add(@Nonnull final PackageReference packageRef) {
+        public void add(@NotNull final PackageReference packageRef) {
             packages.put(packageRef.getName(), packageRef);
         }
 
-        public void remove(@Nonnull final String key) {
+        public void remove(@NotNull final String key) {
             packages.remove(key);
         }
 
-        @Nonnull
+        @NotNull
         public Collection<PackageReference> getPackages() {
             return packages.values();
         }
@@ -598,8 +600,8 @@ public class OsgiBundleModel extends AbstractSlingBean {
     public static final Pattern PACKAGE_REF_OPTION = Pattern.compile(
             " *; *(?<key>[^:= \"']+) *:?= *(([\"'](?<values>[^\"']+)[\"'])|(?<value>[^;,]+))");
 
-    @Nonnull
-    protected PackageSet scanPackgeReferences(@Nonnull final String references) {
+    @NotNull
+    protected PackageSet scanPackgeReferences(@NotNull final String references) {
         final PackageSet result = new PackageSet();
         if (StringUtils.isNotBlank(references)) {
             final Matcher matcher = PACKAGE_REF_START.matcher(references);
@@ -632,7 +634,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
         return bundleContext;
     }
 
-    public OsgiBundleModel(@Nonnull final BeanContext context, @Nonnull final Bundle bundle) {
+    public OsgiBundleModel(@NotNull final BeanContext context, @NotNull final Bundle bundle) {
         this.context = context;
         this.resource = ResourceHandle.use(context.getResource());
         initialize(bundle);

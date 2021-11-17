@@ -4,6 +4,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.spi.resource.provider.ResolveContext;
 import org.apache.sling.spi.resource.provider.ResourceContext;
 import org.apache.sling.spi.resource.provider.ResourceProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -20,7 +21,6 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -157,14 +157,14 @@ public class RemoteProvider extends ResourceProvider<Object> {
     /**
      * @return 'true' if the path is part of the local repository tree (starts with the provider root)
      */
-    public boolean isLocal(@Nonnull final String path) {
+    public boolean isLocal(@NotNull final String path) {
         return path.equals(localRoot) || path.startsWith(localRoot + "/");
     }
 
     /**
      * @return the repository path of the local resource
      */
-    protected String localPath(@Nonnull String path) {
+    protected String localPath(@NotNull String path) {
         String localRoot = getProviderRoot();
         if (!isLocal(path)) {
             path = localRoot + (path.startsWith("/") ? "" : "/") + path;
@@ -175,7 +175,7 @@ public class RemoteProvider extends ResourceProvider<Object> {
     /**
      * @return the given (local) path transformed to the remote system
      */
-    protected String remotePath(@Nonnull String path) {
+    protected String remotePath(@NotNull String path) {
         String localRoot = getProviderRoot();
         if (isLocal(path)) {
             path = path.substring(localRoot.length());
@@ -186,7 +186,7 @@ public class RemoteProvider extends ResourceProvider<Object> {
     /**
      * @return 'true' if the given repository path should be ignored in the remote tree
      */
-    protected boolean ignoreIt(@Nonnull final String path) {
+    protected boolean ignoreIt(@NotNull final String path) {
         for (Pattern pattern : ignoredPathPatterns) {
             if (pattern.matcher(path).matches()) {
                 return true;
@@ -198,7 +198,7 @@ public class RemoteProvider extends ResourceProvider<Object> {
     /**
      * @return the mount point of this provider in the repository tree
      */
-    @Nonnull
+    @NotNull
     public String getProviderRoot() {
         return localRoot;
     }
@@ -208,8 +208,8 @@ public class RemoteProvider extends ResourceProvider<Object> {
      */
     @Nullable
     @Override
-    public Resource getResource(@Nonnull final ResolveContext<Object> ctx, @Nonnull final String path,
-                                @Nonnull final ResourceContext resourceContext, @Nullable final Resource parent) {
+    public Resource getResource(@NotNull final ResolveContext<Object> ctx, @NotNull final String path,
+                                @NotNull final ResourceContext resourceContext, @Nullable final Resource parent) {
         if (ignoreIt(path) || !remoteClient.isValid()) {
             return null;
         }
@@ -222,7 +222,7 @@ public class RemoteProvider extends ResourceProvider<Object> {
      */
     @Nullable
     @Override
-    public Iterator<Resource> listChildren(@Nonnull final ResolveContext<Object> ctx, @Nonnull final Resource parent) {
+    public Iterator<Resource> listChildren(@NotNull final ResolveContext<Object> ctx, @NotNull final Resource parent) {
         return parent.listChildren();
     }
 }

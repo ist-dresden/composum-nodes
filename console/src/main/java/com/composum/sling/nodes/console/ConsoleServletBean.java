@@ -5,7 +5,7 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.util.LinkMapper;
 import org.apache.sling.api.resource.Resource;
 
-public class ConsoleServletBean extends AbstractServletBean {
+public abstract class ConsoleServletBean extends AbstractServletBean {
 
     public ConsoleServletBean(BeanContext context, Resource resource) {
         super(context, resource);

@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-package</artifactId>
-        <version>2.7.1</version>
+        <version>3.0.0</version>
     </parent>
 
     <artifactId>composum-nodes-console-bundle</artifactId>
@@ -83,7 +83,6 @@
                         <Import-Package>
                             org.apache.sling.api.resource.*;version="[2.10,3)",
                             org.apache.sling.spi.resource.*;version="[1.1,2]",
-                            javax.annotation.*;version="[0,4)",
                             *
                         </Import-Package>
                         <Export-Package>

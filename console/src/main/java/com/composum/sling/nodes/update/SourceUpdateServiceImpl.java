@@ -10,24 +10,40 @@ import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.io.Importer;
 import org.apache.jackrabbit.vault.fs.io.ZipStreamArchive;
-import org.apache.sling.api.resource.*;
+import org.apache.sling.api.resource.ModifiableValueMap;
+import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeDefinition;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.composum.sling.core.util.ResourceUtil.*;
-import static jdk.nashorn.internal.runtime.ScriptObject.isArray;
+import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
+import static com.composum.sling.core.util.ResourceUtil.PROP_MIXINTYPES;
+import static com.composum.sling.core.util.ResourceUtil.PROP_PRIMARY_TYPE;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_LAST_MODIFIED;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_SLING_FOLDER;
 
 
 @Component(
@@ -75,7 +91,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
      * properties of nodes, below which there were changes.
      */
     @Override
-    public void updateFromZip(@Nonnull ResourceResolver resolver, @Nonnull InputStream rawZipInputStream, @Nonnull String nodePath)
+    public void updateFromZip(@NotNull ResourceResolver resolver, @NotNull InputStream rawZipInputStream, @NotNull String nodePath)
             throws IOException, RepositoryException {
         Session session = Objects.requireNonNull(resolver.adaptTo(Session.class));
         Resource tmpdir = makeTempdir(resolver);
@@ -135,7 +151,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         return ResourceUtil.getOrCreateResource(resolver, path, TYPE_SLING_FOLDER);
     }
 
-    private void equalize(@Nonnull Resource templateresource, @Nonnull Resource resource, Session session)
+    private void equalize(@NotNull Resource templateresource, @NotNull Resource resource, Session session)
             throws PersistenceException, RepositoryException {
         boolean thisNodeChanged = false;
         ValueMap templatevalues = ResourceUtil.getValueMap(templateresource);
@@ -252,7 +268,7 @@ public class SourceUpdateServiceImpl implements SourceUpdateService {
         return children.stream().filter(r -> !noRemoveNodeNames.contains(r.getName())).collect(Collectors.toList());
     }
 
-    private void checkForSamenameSiblings(Resource templateresource, @Nonnull Resource resource)
+    private void checkForSamenameSiblings(Resource templateresource, @NotNull Resource resource)
             throws IllegalArgumentException, RepositoryException {
         Node node = resource.adaptTo(Node.class);
         NodeDefinition definition = node.getDefinition();

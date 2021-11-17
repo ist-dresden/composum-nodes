@@ -6,12 +6,15 @@
     "jcr:mixinTypes": [
       "sling:Redirect"
     ],
+    "consoleId": "users",
     "jcr:title": "Users",
     "description": "/libs/composum/nodes/usermgnt/description",
     "sling:redirect": "/bin/users.html",
     "categories": [
       "users"
     ],
-    "order": 40
+    "order": 40,
+    "permissionsSupport": true,
+    "precondition": "permission:nodes/users/manager=read"
   }
 }

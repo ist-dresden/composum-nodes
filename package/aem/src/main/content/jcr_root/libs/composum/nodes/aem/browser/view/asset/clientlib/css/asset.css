@@ -1,0 +1,18 @@
+.aem-asset .detail-content .image-frame {
+    display: table;
+    margin: auto;
+    border: 1px solid #ccc;
+    padding: 5px;
+}
+
+.aem-asset .detail-content .image-frame .image-background {
+    display: inline-block;
+}
+
+.aem-asset .detail-content .image-frame img {
+    width: 100%;
+}
+
+.aem-asset .detail-content .image-frame.svg img {
+    min-width: 100px;
+}

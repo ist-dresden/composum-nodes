@@ -1,18 +1,21 @@
 package com.composum.sling.nodes.console;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.composum.sling.nodes.console.ConsolePage.SERVICE_KEY;
 import static com.composum.sling.nodes.console.Consoles.PN_CONSOLE_ID;
 
+@Restricted(key = SERVICE_KEY)
 public class ConsoleModel extends ConsolePage {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConsoleModel.class);
@@ -45,42 +48,46 @@ public class ConsoleModel extends ConsolePage {
         }
     }
 
-    @Nonnull
+    @NotNull
     public String getId() {
         return console != null ? console.getId() : getName();
     }
 
-    @Nonnull
+    @NotNull
     public String getName() {
         return console != null ? console.getName() : super.getName();
     }
 
-    @Nonnull
+    @NotNull
     public String getPath() {
         return console != null ? console.getPath() : super.getPath();
     }
 
-    @Nonnull
+    @NotNull
     public String getLabel() {
         return console != null ? console.getLabel() : getName();
     }
 
-    @Nonnull
+    public boolean isSupportsPermissions() {
+        return console != null && console.supportsPermissions();
+    }
+
+    @NotNull
     public String getDescription() {
         return console != null ? console.getDescription() : "";
     }
 
-    @Nonnull
+    @NotNull
     public String getContentSrc() {
         return console != null ? console.getContentSrc() : "";
     }
 
-    @Nonnull
+    @NotNull
     public String getUrl() {
         return console != null ? console.getUrl(context.getRequest()) : "#";
     }
 
-    @Nonnull
+    @NotNull
     public String getLinkAttributes() {
         return console != null ? console.getLinkAttributes() : "";
     }
@@ -93,18 +100,18 @@ public class ConsoleModel extends ConsolePage {
         return isMenu() && getMenuItems().size() > 0;
     }
 
-    @Nonnull
+    @NotNull
     public Collection<ConsoleModel> getMenuItems() {
         return console != null ? console.getMenuItems(context) : Collections.emptyList();
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public String toString() {
         return console != null ? console.toString(context) : "";
     }
 
-    @Nonnull
+    @NotNull
     public String getDataSet() {
         return Base64.encodeBase64String(Consoles.getInstance(context).toString(context).getBytes(StandardCharsets.UTF_8));
     }

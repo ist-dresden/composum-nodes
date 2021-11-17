@@ -11,8 +11,8 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -33,7 +33,7 @@ public class MessageTypeAdapterFactory implements TypeAdapterFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageTypeAdapterFactory.class);
 
-    @Nonnull
+    @NotNull
     protected final Supplier<SlingHttpServletRequest> requestProvider;
 
     /**
@@ -52,7 +52,7 @@ public class MessageTypeAdapterFactory implements TypeAdapterFactory {
     }
 
     /** If you want i18n. For use with {@link com.google.gson.GsonBuilder#registerTypeAdapterFactory(TypeAdapterFactory)}. */
-    public MessageTypeAdapterFactory(@Nonnull Supplier<SlingHttpServletRequest> requestProvider) {
+    public MessageTypeAdapterFactory(@NotNull Supplier<SlingHttpServletRequest> requestProvider) {
         this.requestProvider = Objects.requireNonNull(requestProvider);
     }
 
@@ -70,10 +70,10 @@ public class MessageTypeAdapterFactory implements TypeAdapterFactory {
     }
 
     protected static class MessageContainerTypeAdapter extends TypeAdapter<MessageContainer> {
-        @Nonnull
+        @NotNull
         protected final Gson gson;
 
-        public MessageContainerTypeAdapter(@Nonnull Gson gson) {
+        public MessageContainerTypeAdapter(@NotNull Gson gson) {
             this.gson = gson;
         }
 
@@ -103,13 +103,13 @@ public class MessageTypeAdapterFactory implements TypeAdapterFactory {
     }
 
     protected class MessageTypeAdapter extends TypeAdapter<Message> {
-        @Nonnull
+        @NotNull
         protected final Gson gson;
 
-        @Nonnull
+        @NotNull
         protected final TypeAdapter<Message> defaultGsonAdapter;
 
-        public MessageTypeAdapter(@Nonnull Gson gson, @Nonnull TypeAdapter<Message> defaultGsonAdapter) {
+        public MessageTypeAdapter(@NotNull Gson gson, @NotNull TypeAdapter<Message> defaultGsonAdapter) {
             this.gson = gson;
             this.defaultGsonAdapter = defaultGsonAdapter;
         }
@@ -127,8 +127,8 @@ public class MessageTypeAdapterFactory implements TypeAdapterFactory {
         }
 
         /** @see Message#prepareForJsonSerialization(SlingHttpServletRequest) */
-        @Nonnull
-        protected Message prepareI18nMessage(@Nonnull Message value) {
+        @NotNull
+        protected Message prepareI18nMessage(@NotNull Message value) {
             Message i18nMessage = value;
             try {
                 i18nMessage = value.prepareForJsonSerialization(requestProvider.get());

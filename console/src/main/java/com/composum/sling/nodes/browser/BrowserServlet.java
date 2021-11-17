@@ -1,8 +1,10 @@
 package com.composum.sling.nodes.browser;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.servlet.AbstractConsoleServlet;
 import com.composum.sling.nodes.NodesConfiguration;
+import com.composum.sling.nodes.servlet.NodeServlet;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.osgi.framework.Constants;
@@ -24,6 +26,7 @@ import java.util.regex.Pattern;
         },
         immediate = true
 )
+@Restricted(key = NodeServlet.SERVICE_KEY)
 public class BrowserServlet extends AbstractConsoleServlet {
 
     public static final String SERVLET_PATH = "/bin/browser";

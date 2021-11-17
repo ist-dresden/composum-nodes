@@ -1,10 +1,12 @@
 package com.composum.sling.core.pckgmgr.view;
 
 import com.composum.sling.core.BeanContext;
-import com.composum.sling.nodes.console.ConsoleSlingBean;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.pckgmgr.PackageJobExecutor;
+import com.composum.sling.core.pckgmgr.PackageServlet;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
 import com.composum.sling.core.util.LinkUtil;
+import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.io.AccessControlHandling;
@@ -25,6 +27,7 @@ import java.util.List;
 
 import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
 
+@Restricted(key = PackageServlet.SERVICE_KEY)
 public class PackageBean extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageBean.class);

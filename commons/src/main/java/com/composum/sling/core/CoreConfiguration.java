@@ -1,12 +1,11 @@
 package com.composum.sling.core;
 
-import com.composum.sling.core.servlet.AbstractServiceServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.Dictionary;
@@ -24,8 +23,6 @@ public interface CoreConfiguration {
      */
     String RESOURCE_PARAMETER = "resource";
 
-    boolean isEnabled(AbstractServiceServlet servlet);
-
     Resource getErrorpage(SlingHttpServletRequest request, int status);
 
     boolean forwardToErrorpage(SlingHttpServletRequest request,
@@ -38,11 +35,11 @@ public interface CoreConfiguration {
      * authentication is installed). A parameter {@link #RESOURCE_PARAMETER} - the targetUri - can be appended
      * if after user logout in the user should redirect to rendering that resource.
      */
-    @Nonnull
+    @NotNull
     String getLogoutUrl(@Nullable String targetUri);
 
     @Deprecated
-    @Nonnull
+    @NotNull
     default String getLogoutUrl() {
         return getLogoutUrl(null);
     }
@@ -50,18 +47,18 @@ public interface CoreConfiguration {
     /**
      * The URL to redirect to after the user was logged out successfully.
      */
-    @Nonnull
+    @NotNull
     String getLoggedoutUrl();
 
     /**
      * The URL to redirect to when the user should login. A parameter {@link #RESOURCE_PARAMETER} - the targetUri -
      * can be appended if after user login in the user should redirect to rendering that resource.
      */
-    @Nonnull
+    @NotNull
     String getLoginUrl(@Nullable String targetUri);
 
     @Deprecated
-    @Nonnull
+    @NotNull
     default String getLoginUrl() {
         return getLoginUrl(null);
     }
@@ -70,6 +67,6 @@ public interface CoreConfiguration {
      * The (readonly) properties useable for extensions. E.g. introduce a new property in a newer nodes version, and use
      * it if accessible already when depending on an older nodes version.
      */
-    @Nonnull
+    @NotNull
     Dictionary<String, Object> getProperties();
 }

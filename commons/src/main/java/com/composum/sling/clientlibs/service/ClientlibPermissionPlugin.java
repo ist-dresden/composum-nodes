@@ -1,8 +1,7 @@
 package com.composum.sling.clientlibs.service;
 
 import com.composum.sling.core.filter.ResourceFilter;
-
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Plugin for the clientlib service that can limit extendability.
@@ -25,7 +24,7 @@ public interface ClientlibPermissionPlugin {
      * not null - return {@link ResourceFilter#ALL} if this {@link ClientlibPermissionPlugin} does not pose a restriction
      * for a category.
      */
-    @Nonnull
-    ResourceFilter categoryFilter(@Nonnull String category);
+    @NotNull
+    ResourceFilter categoryFilter(@NotNull String category);
 
 }

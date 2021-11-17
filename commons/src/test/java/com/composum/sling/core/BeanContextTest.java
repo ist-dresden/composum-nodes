@@ -1,5 +1,6 @@
 package com.composum.sling.core;
 
+import com.composum.sling.core.service.ServiceRestrictions;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
@@ -7,17 +8,20 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.SyntheticResource;
 import org.apache.sling.api.wrappers.SlingHttpServletRequestWrapper;
 import org.apache.sling.api.wrappers.SlingHttpServletResponseWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.osgi.framework.BundleContext;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-
 import java.util.Locale;
 
 import static org.easymock.EasyMock.createMock;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Some tests for {@link BeanContext}.
@@ -25,6 +29,8 @@ import static org.junit.Assert.*;
  * @author Hans-Peter Stoerr
  */
 public class BeanContextTest {
+
+    public static final ServiceRestrictions.Key SERVICE_KEY = new ServiceRestrictions.Key("bean/context/test");
 
     final ResourceResolver resolver = createMock(ResourceResolver.class);
     final Resource resource = new SyntheticResource(resolver, "/whatever", "type");
@@ -107,6 +113,10 @@ public class BeanContextTest {
         public void initialize(BeanContext context) {
             initialized = true;
         }
-    }
 
+        @NotNull
+        public ServiceRestrictions.Key getServiceKey() {
+            return SERVICE_KEY;
+        }
+    }
 }

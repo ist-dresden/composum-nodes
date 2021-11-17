@@ -1,18 +1,20 @@
 package com.composum.sling.nodes.console;
 
 import com.composum.sling.core.BeanContext;
-import com.composum.sling.core.CoreConfiguration;
+import com.composum.sling.core.Restricted;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.jcr.Session;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
+import static com.composum.sling.nodes.console.ConsolePage.SERVICE_KEY;
+
+@Restricted(key = SERVICE_KEY)
 public class ConsolesModel extends ConsolePage {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConsolesModel.class);
@@ -29,47 +31,28 @@ public class ConsolesModel extends ConsolePage {
         super();
     }
 
-    //
-    // workspace, user and profile
-    //
-
-    public String getCurrentUser() {
-        Session session = getSession();
-        return session.getUserID();
-    }
-
-    public String getLogoutUrl() {
-        CoreConfiguration service = this.context.getService(CoreConfiguration.class);
-        return service != null ? service.getLogoutUrl() : null;
-    }
-
-    @Nonnull
-    public String getWorkspaceName() {
-        return getSession().getWorkspace().getName();
-    }
-
-    @Nonnull
+    @NotNull
     public Collection<ConsoleModel> getConsoles() {
         return getConfig().getConsoles(context);
     }
 
     @Nullable
-    public ConsoleModel getConsole(@Nonnull final String name) {
+    public ConsoleModel getConsole(@NotNull final String name) {
         return getConfig().getConsole(context, name);
     }
 
-    @Nonnull
+    @NotNull
     public Consoles getConfig() {
         return Consoles.getInstance(context);
     }
 
-    @Nonnull
+    @NotNull
     public String getDataSet() {
         return Base64.encodeBase64String(toString().getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public String toString() {
         return getConfig().toString(context);
     }

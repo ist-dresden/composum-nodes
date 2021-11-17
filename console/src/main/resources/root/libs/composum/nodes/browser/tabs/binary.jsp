@@ -7,13 +7,17 @@
     <div class="binary detail-panel" data-file="${cpn:path(browser.filePath)}">
         <div class="image-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
-                </button>
+                <a href="" class="download fa fa-download btn btn-default" title="Download File"><span class="label">Download</span></a>
+                <button type="button" class="update fa fa-upload btn btn-default" title="Change Content"></button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <a href="" class="download fa fa-download btn btn-default" title="Download File"
-                   target="_blank"><span class="label">Download</span></a>
-                <button type="button" class="update fa fa-upload btn btn-default" title="Change Content"></button>
+                <button type="button" class="reload fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
+                </button>
+                <c:if test="${browser.renderable}">
+                    <cpn:link href="${browser.filePath}" class="fa fa-globe btn btn-default"
+                              title="Open in a separate view" target="_blank"><span
+                            class="label">Open</span></cpn:link>
+                </c:if>
             </div>
         </div>
         <div class="frame-container detail-content">

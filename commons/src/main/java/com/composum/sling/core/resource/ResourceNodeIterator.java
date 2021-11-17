@@ -6,8 +6,8 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -21,11 +21,11 @@ public class ResourceNodeIterator implements Iterator<Resource> {
     protected final NodeIterator nodeIterator;
     protected final ResourceFilter filter;
 
-    public ResourceNodeIterator(@Nonnull final ResourceResolver resolver, @Nonnull final NodeIterator nodeIterator) {
+    public ResourceNodeIterator(@NotNull final ResourceResolver resolver, @NotNull final NodeIterator nodeIterator) {
         this(resolver, nodeIterator, null);
     }
 
-    public ResourceNodeIterator(@Nonnull final ResourceResolver resolver, @Nonnull final NodeIterator nodeIterator,
+    public ResourceNodeIterator(@NotNull final ResourceResolver resolver, @NotNull final NodeIterator nodeIterator,
                                 @Nullable ResourceFilter filter) {
         this.resolver = resolver;
         this.nodeIterator = nodeIterator;

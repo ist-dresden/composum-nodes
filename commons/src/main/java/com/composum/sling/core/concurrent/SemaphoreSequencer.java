@@ -7,7 +7,7 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.Objects;
@@ -21,11 +21,11 @@ public class SemaphoreSequencer implements SequencerService<SemaphoreSequencer.T
     private static final Logger LOG = LoggerFactory.getLogger(SemaphoreSequencer.class);
 
     public static final class Token implements SequencerService.Token {
-        @Nonnull
+        @NotNull
         protected final String key;
         protected final Semaphore semaphore;
 
-        protected Token(@Nonnull String key, Semaphore semaphore) {
+        protected Token(@NotNull String key, Semaphore semaphore) {
             this.key = key;
             this.semaphore = semaphore;
         }
@@ -53,7 +53,7 @@ public class SemaphoreSequencer implements SequencerService<SemaphoreSequencer.T
     volatile WeakHashMap<Token, WeakReference<Token>> activeTokens;
 
     @Override
-    @Nonnull
+    @NotNull
     public Token acquire(String key) {
 
         Token token;

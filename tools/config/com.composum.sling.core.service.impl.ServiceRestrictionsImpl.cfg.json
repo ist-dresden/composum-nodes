@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "defaultPermission": "read",
+  "userOption": "write:admin",
+  "restrictions": [
+    "nodes/packages/manager=write",
+    "system/runtime/files=read:^/((sling|launcher)(/logs(/[^.]+\\.log(.[0-9-]+)?)?)?)?$"
+  ]
+}

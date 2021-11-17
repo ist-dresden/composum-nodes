@@ -4,6 +4,8 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
+    <c:set var="writeAllowed" value="${browser.permissible['nodes/components/scenes']['write']}"/>
+    <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
     <div class="scene detail-panel" data-path="${browser.currentPathUrl}">
         <div class="scene-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
@@ -23,12 +25,12 @@
                 </button>
                 <button type="button" class="prepare fa fa-asterisk btn btn-default"
                         title="Prepare or reset the scenes content"><span
-                        class="label">Prepare</span>
+                        class="label"${writeDisabled}>Prepare</span>
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
                 <button type="button" class="remove fa fa-trash btn btn-default" title="Remove the scenes content"><span
-                        class="label">Remove</span>
+                        class="label"${writeDisabled}>Remove</span>
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
@@ -44,4 +46,6 @@
                     sandbox="allow-same-origin allow-scripts allow-modals allow-popups allow-forms allow-downloads"></iframe>
         </div>
     </div>
+    <c:remove var="writeDisabled"/>
+    <c:remove var="writeAllowed"/>
 </cpn:component>

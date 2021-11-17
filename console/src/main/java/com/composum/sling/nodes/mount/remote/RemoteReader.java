@@ -17,11 +17,11 @@ import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertySet;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.PropertyType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -67,15 +67,15 @@ public class RemoteReader {
     public static final String DAV_TYPE_FOLDER = DAV_NS + "folder";
     public static final String DAV_TYPE_UNKNOWN = DAV_NS + "unknown";
 
-    public RemoteReader(@Nonnull final RemoteProvider provider) {
+    public RemoteReader(@NotNull final RemoteProvider provider) {
         this.provider = provider;
     }
 
     /**
      * @return the resoures repository path on the remote system
      */
-    @Nonnull
-    public String remotePath(@Nonnull final RemoteResource resource) {
+    @NotNull
+    public String remotePath(@NotNull final RemoteResource resource) {
         return provider.remotePath(resource.getPath());
     }
 
@@ -87,7 +87,7 @@ public class RemoteReader {
      * @return the loaded resource; 'null' if the resource couldn't be loaded
      */
     @Nullable
-    public RemoteResource loadResource(@Nonnull final RemoteResource resource,
+    public RemoteResource loadResource(@NotNull final RemoteResource resource,
                                        boolean isKnownChild) {
         RemoteResource result = resource;
         resource.children = null;
@@ -127,13 +127,13 @@ public class RemoteReader {
     // WebDAV based fallback...
     //
 
-    @Nonnull
-    public String getDavUrl(@Nonnull final RemoteResource resource) {
+    @NotNull
+    public String getDavUrl(@NotNull final RemoteResource resource) {
         return getDavUrl(resource.getPath());
     }
 
-    @Nonnull
-    public String getDavUrl(@Nonnull final String resourcePath) {
+    @NotNull
+    public String getDavUrl(@NotNull final String resourcePath) {
         return provider.remoteClient.getHttpUrl(resourcePath);
     }
 
@@ -145,8 +145,8 @@ public class RemoteReader {
      * @param httpClient the client instance to execute the request
      * @return the status code of the request response
      */
-    protected int loadDavResource(@Nonnull final RemoteResource resource,
-                                  @Nonnull final HttpClient httpClient) {
+    protected int loadDavResource(@NotNull final RemoteResource resource,
+                                  @NotNull final HttpClient httpClient) {
         int statusCode = SC_NO_CONTENT;
         String url = getDavUrl(resource);
         LOG.debug("DAV.load({}) - '{}'", resource.getPath(), url);
@@ -193,7 +193,7 @@ public class RemoteReader {
         return statusCode;
     }
 
-    protected void adjustDavType(@Nonnull final RemoteResource resource, boolean isFolder) {
+    protected void adjustDavType(@NotNull final RemoteResource resource, boolean isFolder) {
         String primaryType = resource.values.get(JcrConstants.JCR_PRIMARYTYPE, String.class);
         if (StringUtils.isBlank(primaryType) || primaryType.startsWith(DAV_NS)) {
             if (isFolder) {
@@ -215,15 +215,15 @@ public class RemoteReader {
         }
     }
 
-    protected void loadDavResource(@Nonnull final RemoteResource resource,
-                                   @Nonnull final MultiStatusResponse response) {
+    protected void loadDavResource(@NotNull final RemoteResource resource,
+                                   @NotNull final MultiStatusResponse response) {
         DavPropertySet properties = response.getProperties(SC_OK);
         for (DavProperty<?> prop : properties) {
             addDavProperty(resource, prop);
         }
     }
 
-    protected void addDavProperty(@Nonnull final RemoteResource resource, @Nonnull final DavProperty<?> property) {
+    protected void addDavProperty(@NotNull final RemoteResource resource, @NotNull final DavProperty<?> property) {
         DavPropertyName propName = property.getName();
         String davNs = propName.getNamespace().getPrefix();
         if (NS_PREFIX_JCR.equals(davNs)) {
@@ -231,8 +231,8 @@ public class RemoteReader {
         }
     }
 
-    protected void addDavProperty(@Nonnull final RemoteResource resource,
-                                  @Nullable final String ns, @Nonnull final DavProperty<?> property) {
+    protected void addDavProperty(@NotNull final RemoteResource resource,
+                                  @Nullable final String ns, @NotNull final DavProperty<?> property) {
         DavPropertyName propName = property.getName();
         String key = ns != null ? ns + ":" + propName.getName() : propName.getName();
         Object value = property.getValue();
@@ -247,13 +247,13 @@ public class RemoteReader {
     // JSON based loading...
     //
 
-    @Nonnull
-    public String getJsonUrl(@Nonnull final RemoteResource resource) {
+    @NotNull
+    public String getJsonUrl(@NotNull final RemoteResource resource) {
         return getJsonUrl(resource.getPath());
     }
 
-    @Nonnull
-    public String getJsonUrl(@Nonnull final String path) {
+    @NotNull
+    public String getJsonUrl(@NotNull final String path) {
         String httpUrl = provider.remoteClient.getHttpUrl(path);
         return httpUrl.replaceAll("\\.", "%2E") + (path.endsWith("/") ? "" : "/") + ".1.json";
     }
@@ -266,8 +266,8 @@ public class RemoteReader {
      * @param httpClient the client instance to execute the request
      * @return the status code of the request response
      */
-    protected int loadJsonResource(@Nonnull final RemoteResource resource,
-                                   @Nonnull final HttpClient httpClient) {
+    protected int loadJsonResource(@NotNull final RemoteResource resource,
+                                   @NotNull final HttpClient httpClient) {
         int statusCode;
         String url = getJsonUrl(resource);
         LOG.debug("JSON.load({}) - '{}'", resource.getPath(), url);
@@ -294,8 +294,8 @@ public class RemoteReader {
         return statusCode;
     }
 
-    protected void loadJsonResource(@Nonnull final RemoteResource resource,
-                                    @Nonnull final JsonReader jsonReader)
+    protected void loadJsonResource(@NotNull final RemoteResource resource,
+                                    @NotNull final JsonReader jsonReader)
             throws IOException {
         resource.children = null; // children == null -> not loaded completely
         resource.values.clear();
@@ -508,7 +508,7 @@ public class RemoteReader {
     }
 
     @Nullable
-    public static Boolean toBoolean(@Nonnull final String string) {
+    public static Boolean toBoolean(@NotNull final String string) {
         return BOOLEAN_VALUES.get(string.toLowerCase());
     }
 
@@ -527,7 +527,7 @@ public class RemoteReader {
     };
 
     @Nullable
-    public static Calendar toDate(@Nonnull final String string) {
+    public static Calendar toDate(@NotNull final String string) {
         for (String format : DATE_FORMATS) {
             try {
                 Date date = new SimpleDateFormat(format, Locale.ENGLISH).parse(string);

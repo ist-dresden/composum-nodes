@@ -1,6 +1,8 @@
 package com.composum.sling.nodes.tools;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.service.ServiceRestrictions;
+import com.composum.sling.core.service.RestrictedService;
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
@@ -9,13 +11,15 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
-import javax.annotation.Nonnull;
 import javax.servlet.Servlet;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Dictionary;
@@ -23,39 +27,59 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 
-@Component(service = Servlet.class,
+@Component(service = {Servlet.class, RestrictedService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Tools Bundles Servlet",
                 ServletResolverConstants.SLING_SERVLET_RESOURCE_TYPES + "=" + OsgiBundlesServlet.RESOURCE_TYPE,
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
         }
 )
-public class OsgiBundlesServlet extends SlingSafeMethodsServlet {
+public class OsgiBundlesServlet extends SlingSafeMethodsServlet implements RestrictedService {
 
     public static final String RESOURCE_TYPE = "composum/nodes/system/tools/osgi/bundles";
+
+    public static final String SERVICE_KEY = "system/osgi/bundles";
+
+    @Reference
+    protected ServiceRestrictions restrictions;
+
+    private ServiceRestrictions.Permission permission;
+    private boolean enabled = false;
 
     protected BundleContext bundleContext;
 
     @Activate
     private void activate(final BundleContext bundleContext) {
         this.bundleContext = bundleContext;
+        permission = restrictions.getPermission(getServiceKey());
+        enabled = permission != ServiceRestrictions.Permission.none;
     }
 
     @Override
-    protected void doGet(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response) throws IOException {
-        final BeanContext context = new BeanContext.Servlet(getServletContext(), bundleContext, request, response);
-        final JsonWriter writer = ResponseUtil.getJsonWriter(response);
-        final OsgiBundleModel bundle = new OsgiBundleModel(context);
-        if (bundle.isValid()) {
-            writeBundle(context, writer, bundle);
+    @NotNull
+    public ServiceRestrictions.Key getServiceKey() {
+        return new ServiceRestrictions.Key(SERVICE_KEY);
+    }
+
+    @Override
+    protected void doGet(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response) throws IOException {
+        if (enabled) {
+            final BeanContext context = new BeanContext.Servlet(getServletContext(), bundleContext, request, response);
+            final JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            final OsgiBundleModel bundle = new OsgiBundleModel(context);
+            if (bundle.isValid()) {
+                writeBundle(context, writer, bundle);
+            } else {
+                writeBundles(context, writer);
+            }
         } else {
-            writeBundles(context, writer);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
         }
     }
 
-    protected void writeBundle(@Nonnull final BeanContext context, @Nonnull final JsonWriter writer,
-                               @Nonnull final OsgiBundleModel model)
+    protected void writeBundle(@NotNull final BeanContext context, @NotNull final JsonWriter writer,
+                               @NotNull final OsgiBundleModel model)
             throws IOException {
         writer.beginObject();
         writeProperties(writer, model);
@@ -113,7 +137,7 @@ public class OsgiBundlesServlet extends SlingSafeMethodsServlet {
         writer.endObject();
     }
 
-    protected void writeBundles(@Nonnull final BeanContext context, @Nonnull final JsonWriter writer)
+    protected void writeBundles(@NotNull final BeanContext context, @NotNull final JsonWriter writer)
             throws IOException {
         final OsgiBundlesModel model = new OsgiBundlesModel(context);
         final Collection<OsgiBundleModel> bundles = model.getBundles();
@@ -130,8 +154,8 @@ public class OsgiBundlesServlet extends SlingSafeMethodsServlet {
         writer.endObject();
     }
 
-    protected void writeServices(@Nonnull final JsonWriter writer,
-                                 @Nonnull final Iterator<OsgiBundleModel.ServiceModel> iterator)
+    protected void writeServices(@NotNull final JsonWriter writer,
+                                 @NotNull final Iterator<OsgiBundleModel.ServiceModel> iterator)
             throws IOException {
         writer.beginArray();
         while (iterator.hasNext()) {
@@ -181,8 +205,8 @@ public class OsgiBundlesServlet extends SlingSafeMethodsServlet {
         writer.endArray();
     }
 
-    protected void writeProperties(@Nonnull final JsonWriter writer,
-                                   @Nonnull final OsgiBundleModel model) throws IOException {
+    protected void writeProperties(@NotNull final JsonWriter writer,
+                                   @NotNull final OsgiBundleModel model) throws IOException {
         writer.name("id").value(model.getBundleId());
         writer.name("name").value(model.getName());
         writer.name("symbolicName").value(model.getSymbolicName());

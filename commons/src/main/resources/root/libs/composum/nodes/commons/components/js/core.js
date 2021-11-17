@@ -38,6 +38,25 @@
 
         log: log.getLogger('core'),
 
+        isPermissible: function (key, permission, granted, declined) {
+            core.getJson('/bin/cpm/core/restrictions.' + permission + '.json/' + key,
+                function (json) {
+                    if (json.success && json.data.result.permissible) {
+                        if (_.isFunction(granted)) {
+                            granted();
+                        }
+                    } else {
+                        if (_.isFunction(declined)) {
+                            declined();
+                        }
+                    }
+                }, function () {
+                    if (_.isFunction(declined)) {
+                        declined();
+                    }
+                });
+        },
+
         getHtml: function (url, onSuccess, onError, onComplete) {
             core.ajaxGet(url, {dataType: 'html'}, onSuccess, onError, onComplete);
         },
@@ -446,7 +465,7 @@
                 core.alert(typeOrResult.responseJSON)
             } else if (_.isObject(typeOrResult)) { // assuming a status response if 'type' is an object
                 core.messages(typeOrResult.success
-                    ? (typeOrResult.warning ? 'warn' : 'info') : 'danger',
+                        ? (typeOrResult.warning ? 'warn' : 'info') : 'danger',
                     typeOrResult.title, typeOrResult.messages)
             } else if (_.isObject(result) && result.title && _.isArray(result.messages)) { // status response
                 core.alert(result)
@@ -554,6 +573,19 @@
         },
 
         // general helpers
+
+        removeClasses: function ($el, pattern) {
+            var classes = $el.attr("class");
+            if (classes) {
+                var list = classes.toString().split(' ');
+                for (var i = 0; i < list.length; i++) {
+                    if (pattern.exec(list[i])) {
+                        $el.removeClass(list[i]);
+                    }
+                }
+            }
+            return $el;
+        },
 
         isEmptyObject: function (object) {
             var values = _.values(object);

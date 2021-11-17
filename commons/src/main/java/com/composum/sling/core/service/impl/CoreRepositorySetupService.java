@@ -21,8 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.helpers.MessageFormatter;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
@@ -67,7 +67,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     public static final ThreadLocal<Tracker> TRACKER = new ThreadLocal<>();
 
     @Override
-    public void addJsonAcl(@Nonnull final Session session, @Nonnull final String jsonFilePath,
+    public void addJsonAcl(@NotNull final Session session, @NotNull final String jsonFilePath,
                            @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
         if (StringUtils.isNotBlank(jsonFilePath)) {
@@ -86,7 +86,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     }
 
     @Override
-    public void addJsonAcl(@Nonnull final Session session, @Nonnull final Reader reader,
+    public void addJsonAcl(@NotNull final Session session, @NotNull final Reader reader,
                            @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
         try (final JsonReader jsonReader = new JsonReader(
@@ -104,7 +104,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     }
 
     @Override
-    public void removeJsonAcl(@Nonnull final Session session, @Nonnull final String jsonFilePath,
+    public void removeJsonAcl(@NotNull final Session session, @NotNull final String jsonFilePath,
                               @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
         if (StringUtils.isNotBlank(jsonFilePath)) {
@@ -123,7 +123,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     }
 
     @Override
-    public void removeJsonAcl(@Nonnull final Session session, @Nonnull final Reader reader,
+    public void removeJsonAcl(@NotNull final Session session, @NotNull final Reader reader,
                               @Nullable final Map<String, Object> values)
             throws RepositoryException, IOException {
         try (final JsonReader jsonReader = new JsonReader(
@@ -141,7 +141,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     }
 
     @SuppressWarnings("unchecked")
-    protected void addAclObject(@Nonnull final Session session, @Nonnull final JsonReader reader)
+    protected void addAclObject(@NotNull final Session session, @NotNull final JsonReader reader)
             throws RepositoryException {
         final Gson gson = new Gson();
         final Map<String, Object> map = gson.fromJson(reader, Map.class);
@@ -177,7 +177,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     }
 
     @SuppressWarnings("unchecked")
-    protected void removeAclObject(@Nonnull final Session session, @Nonnull final JsonReader reader)
+    protected void removeAclObject(@NotNull final Session session, @NotNull final JsonReader reader)
             throws RepositoryException {
         final Gson gson = new Gson();
         final Map<String, Object> map = gson.fromJson(reader, Map.class);
@@ -204,8 +204,8 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     }
 
     @SuppressWarnings("unchecked")
-    protected void addAcList(@Nonnull final Session session, @Nonnull final String path,
-                             @Nonnull final List<Map<String, Object>> list)
+    protected void addAcList(@NotNull final Session session, @NotNull final String path,
+                             @NotNull final List<Map<String, Object>> list)
             throws RepositoryException {
         info("adjust ACL '{}'...", path);
         for (final Map<String, Object> map : list) {
@@ -286,8 +286,8 @@ public class CoreRepositorySetupService implements RepositorySetupService {
     }
 
     @SuppressWarnings("unchecked")
-    protected void removeAcList(@Nonnull final Session session, @Nonnull final String path,
-                                @Nonnull final List<Map<String, Object>> list)
+    protected void removeAcList(@NotNull final Session session, @NotNull final String path,
+                                @NotNull final List<Map<String, Object>> list)
             throws RepositoryException {
         info("del ACL   ({})...", path);
         for (final Map<String, Object> map : list) {
@@ -309,10 +309,10 @@ public class CoreRepositorySetupService implements RepositorySetupService {
 
     // ACL
 
-    protected void addAcRule(@Nonnull final Session session, @Nonnull final String path,
-                             @Nonnull final String principalName, boolean allow,
-                             @Nonnull final String[] privilegeKeys,
-                             @Nonnull final Map<String, Object> restrictionKeys)
+    protected void addAcRule(@NotNull final Session session, @NotNull final String path,
+                             @NotNull final String principalName, boolean allow,
+                             @NotNull final String[] privilegeKeys,
+                             @NotNull final Map<String, Object> restrictionKeys)
             throws RepositoryException {
         try {
             final AccessControlManager acManager = session.getAccessControlManager();
@@ -336,7 +336,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
         }
     }
 
-    protected void removeAcRule(@Nonnull final Session session, @Nonnull final String path,
+    protected void removeAcRule(@NotNull final Session session, @NotNull final String path,
                                 @Nullable final String principal)
             throws RepositoryException {
         try {
@@ -368,8 +368,8 @@ public class CoreRepositorySetupService implements RepositorySetupService {
 
     // nodes
 
-    protected Node makeNodeAvailable(@Nonnull final Session session,
-                                     @Nonnull final String path, @Nonnull final String primaryType)
+    protected Node makeNodeAvailable(@NotNull final Session session,
+                                     @NotNull final String path, @NotNull final String primaryType)
             throws RepositoryException {
         Node node;
         try {
@@ -385,7 +385,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
         return node;
     }
 
-    protected void removeNode(@Nonnull final Session session, @Nonnull final String path)
+    protected void removeNode(@NotNull final Session session, @NotNull final String path)
             throws RepositoryException {
         Node node;
         try {
@@ -401,8 +401,8 @@ public class CoreRepositorySetupService implements RepositorySetupService {
 
     // users
 
-    protected Authorizable makeUserAvailable(@Nonnull final Session session,
-                                             @Nonnull final String id, @Nonnull final String intermediatePath)
+    protected Authorizable makeUserAvailable(@NotNull final Session session,
+                                             @NotNull final String id, @NotNull final String intermediatePath)
             throws RepositoryException {
         UserManager userManager = ((JackrabbitSession) session).getUserManager();
         Authorizable authorizable = userManager.getAuthorizable(id);
@@ -427,8 +427,8 @@ public class CoreRepositorySetupService implements RepositorySetupService {
 
     // groups
 
-    protected Authorizable makeGroupAvailable(@Nonnull final Session session,
-                                              @Nonnull final String id, @Nonnull final String intermediatePath)
+    protected Authorizable makeGroupAvailable(@NotNull final Session session,
+                                              @NotNull final String id, @NotNull final String intermediatePath)
             throws RepositoryException {
         final UserManager userManager = ((JackrabbitSession) session).getUserManager();
         Authorizable authorizable = userManager.getAuthorizable(id);
@@ -449,7 +449,7 @@ public class CoreRepositorySetupService implements RepositorySetupService {
         return authorizable;
     }
 
-    protected void removeGroup(@Nonnull final Session session, @Nonnull final String id)
+    protected void removeGroup(@NotNull final Session session, @NotNull final String id)
             throws RepositoryException {
         try {
             final UserManager userManager = ((JackrabbitSession) session).getUserManager();
@@ -466,8 +466,8 @@ public class CoreRepositorySetupService implements RepositorySetupService {
         }
     }
 
-    protected void makeMemberAvailable(@Nonnull final Session session, @Nonnull final String memberId,
-                                       @Nonnull final List<String> groupIds, @Nullable final String groupPath)
+    protected void makeMemberAvailable(@NotNull final Session session, @NotNull final String memberId,
+                                       @NotNull final List<String> groupIds, @Nullable final String groupPath)
             throws RepositoryException {
         try {
             final UserManager userManager = ((JackrabbitSession) session).getUserManager();
@@ -494,8 +494,8 @@ public class CoreRepositorySetupService implements RepositorySetupService {
         }
     }
 
-    protected void removeMember(@Nonnull final Session session,
-                                @Nonnull final String memberId, @Nonnull final List<String> groupIds)
+    protected void removeMember(@NotNull final Session session,
+                                @NotNull final String memberId, @NotNull final List<String> groupIds)
             throws RepositoryException {
         try {
             final UserManager userManager = ((JackrabbitSession) session).getUserManager();

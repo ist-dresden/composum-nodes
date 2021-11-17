@@ -1,8 +1,10 @@
 package com.composum.sling.core.pckgmgr.view;
 
-import com.composum.sling.nodes.console.ConsoleSlingBean;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.filter.StringFilter;
+import com.composum.sling.core.pckgmgr.PackageServlet;
 import com.composum.sling.core.pckgmgr.util.PackageUtil;
+import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.Packaging;
@@ -13,6 +15,7 @@ import javax.jcr.RepositoryException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Restricted(key = PackageServlet.SERVICE_KEY)
 public class PackageManagerBean extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageManagerBean.class);

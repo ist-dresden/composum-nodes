@@ -9,8 +9,8 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.util.ArrayList;
@@ -191,34 +191,34 @@ public class SlingUrl implements Cloneable {
     protected final SlingHttpServletRequest request;
     protected final LinkMapper linkMapper;
 
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request,
-                    @Nonnull final Resource resource) {
+    public SlingUrl(@NotNull final SlingHttpServletRequest request,
+                    @NotNull final Resource resource) {
         this(request, resource, null, null);
     }
 
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request,
-                    @Nonnull final Resource resource, @Nullable final String extension) {
+    public SlingUrl(@NotNull final SlingHttpServletRequest request,
+                    @NotNull final Resource resource, @Nullable final String extension) {
         this(request, resource, null, extension,
                 null, null, true, getLinkMapper(request, null));
     }
 
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request,
-                    @Nonnull final Resource resource,
+    public SlingUrl(@NotNull final SlingHttpServletRequest request,
+                    @NotNull final Resource resource,
                     @Nullable final String selectors, @Nullable final String extension) {
         this(request, resource, selectors, extension,
                 null, null, true, getLinkMapper(request, null));
     }
 
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request,
-                    @Nonnull final Resource resource,
+    public SlingUrl(@NotNull final SlingHttpServletRequest request,
+                    @NotNull final Resource resource,
                     @Nullable final String selectors, @Nullable final String extension,
                     @Nullable final String suffix) {
         this(request, resource, selectors, extension, suffix,
                 null, true, getLinkMapper(request, null));
     }
 
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request,
-                    @Nonnull final Resource resource,
+    public SlingUrl(@NotNull final SlingHttpServletRequest request,
+                    @NotNull final Resource resource,
                     @Nullable final String selectors, @Nullable final String extension,
                     @Nullable final String suffix,
                     @Nullable final String parameterString) {
@@ -226,8 +226,8 @@ public class SlingUrl implements Cloneable {
                 true, getLinkMapper(request, null));
     }
 
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request,
-                    @Nonnull final Resource resource,
+    public SlingUrl(@NotNull final SlingHttpServletRequest request,
+                    @NotNull final Resource resource,
                     @Nullable final String selectors, @Nullable final String extension,
                     @Nullable final String suffix,
                     @Nullable final String parameterString, boolean decodeParameters,
@@ -250,7 +250,7 @@ public class SlingUrl implements Cloneable {
      * Constructs a yet invalid SlingUrl that has to be initialized with one of the from* methods.
      * A linkmapper can be given if the url is a path.
      */
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request, @Nullable LinkMapper linkMapper) {
+    public SlingUrl(@NotNull final SlingHttpServletRequest request, @Nullable LinkMapper linkMapper) {
         this.request = Objects.requireNonNull(request, "request required");
         this.linkMapper = linkMapper;
     }
@@ -258,7 +258,7 @@ public class SlingUrl implements Cloneable {
     /**
      * Constructs a yet invalid SlingUrl that has to be initialized with one of the from* methods.
      */
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request) {
+    public SlingUrl(@NotNull final SlingHttpServletRequest request) {
         this(request, getLinkMapper(request, null));
     }
 
@@ -267,7 +267,7 @@ public class SlingUrl implements Cloneable {
      */
     // FIXME(hps,23.06.20) remove after merging and adapting other projects
     @Deprecated
-    public SlingUrl(@Nonnull final SlingHttpServletRequest request, String url) {
+    public SlingUrl(@NotNull final SlingHttpServletRequest request, String url) {
         this(request);
         fromUrl(url);
     }
@@ -287,8 +287,8 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
-    public SlingUrl fromUrl(@Nonnull final String url) {
+    @NotNull
+    public SlingUrl fromUrl(@NotNull final String url) {
         return fromUrl(url, true);
     }
 
@@ -298,8 +298,8 @@ public class SlingUrl implements Cloneable {
      * might parse it wrong, since we'd have to consult the resource tree to determine whether the resource path
      * is /a or /a.b/c .
      */
-    @Nonnull
-    public SlingUrl fromUrl(@Nonnull final String url, boolean decode) {
+    @NotNull
+    public SlingUrl fromUrl(@NotNull final String url, boolean decode) {
         parseUrl(url, decode);
         return this;
     }
@@ -311,7 +311,7 @@ public class SlingUrl implements Cloneable {
      * * might parse it wrong, since we'd have to consult the resource tree to determine whether the resource path
      * * is /a or /a.b/c .
      */
-    public SlingUrl fromUri(@Nonnull URI uri) {
+    public SlingUrl fromUri(@NotNull URI uri) {
         reset();
         boolean isHttp = uri.getScheme() != null && HTTP_SCHEME.matcher(uri.getScheme()).matches();
         boolean isFile = uri.getScheme() != null && FILE_SCHEME.matcher(uri.getScheme()).matches();
@@ -377,7 +377,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    public SlingUrl fromPathOrUrl(@Nonnull final String pathOrUrl, boolean decode) {
+    public SlingUrl fromPathOrUrl(@NotNull final String pathOrUrl, boolean decode) {
         if (isAbsolutePath(pathOrUrl)) return fromPath(pathOrUrl);
         else return fromUrl(pathOrUrl, true);
     }
@@ -389,7 +389,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    public SlingUrl fromPathOrUrl(@Nonnull final String pathOrUrl) {
+    public SlingUrl fromPathOrUrl(@NotNull final String pathOrUrl) {
         if (isAbsolutePath(pathOrUrl)) return fromPath(pathOrUrl);
         else return fromUrl(pathOrUrl, true);
     }
@@ -405,8 +405,8 @@ public class SlingUrl implements Cloneable {
      * @param resourcePath an absolute or relative path
      * @return this for builder style chaining
      */
-    @Nonnull
-    public SlingUrl fromPath(@Nonnull String resourcePath) {
+    @NotNull
+    public SlingUrl fromPath(@NotNull String resourcePath) {
         reset();
         type = resourcePath.startsWith("/") ? UrlType.HTTP : UrlType.RELATIVE;
         setResourcePath(resourcePath);
@@ -419,7 +419,7 @@ public class SlingUrl implements Cloneable {
      * @param request the HTTP request to use
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl fromRequest(HttpServletRequest request) {
         StringBuffer url = request.getRequestURL();
         String query = request.getQueryString();
@@ -429,7 +429,7 @@ public class SlingUrl implements Cloneable {
         return fromUrl(url.toString(), true);
     }
 
-    @Nonnull
+    @NotNull
     public SlingHttpServletRequest getRequest() {
         return request;
     }
@@ -483,7 +483,7 @@ public class SlingUrl implements Cloneable {
     /**
      * The path to the file including the filename, but not the extension, selectors etc.
      */
-    @Nonnull
+    @NotNull
     public String getPathAndName() {
         return defaultString(path) + defaultString(name);
     }
@@ -491,7 +491,7 @@ public class SlingUrl implements Cloneable {
     /**
      * The path to the file including the filename and the extension, but no selectors.
      */
-    @Nonnull
+    @NotNull
     public String getPathAndNameExt() {
         return defaultString(path) + defaultString(name) +
                 (isNotBlank(extension) ? "." + extension : "");
@@ -581,7 +581,7 @@ public class SlingUrl implements Cloneable {
         return setResourcePath(resourcePath);
     }
 
-    @Nonnull
+    @NotNull
     List<String> getSelectors() {
         return selectors;
     }
@@ -690,7 +690,7 @@ public class SlingUrl implements Cloneable {
      * <code>null</code> if the parameter is not present
      */
     @Nullable
-    public String getParameter(@Nonnull final String name) {
+    public String getParameter(@NotNull final String name) {
         List<String> values = parameters.get(name);
         return values != null ? (values.size() > 0 ? values.get(0) : "") : null;
     }
@@ -699,7 +699,7 @@ public class SlingUrl implements Cloneable {
      * @return an unmodifiable List of the parameter values if present
      */
     @Nullable
-    public List<String> getParameterValues(@Nonnull final String name) {
+    public List<String> getParameterValues(@NotNull final String name) {
         List<String> values = parameters.get(name);
         return values != null ? Collections.unmodifiableList(values) : null;
     }
@@ -709,7 +709,7 @@ public class SlingUrl implements Cloneable {
      * <p>
      * This is unmodifiable since otherwise we would have to trust the user to call {@link #clearTransients()} on every change.
      */
-    @Nonnull
+    @NotNull
     public Map<String, List<String>> getParameters() {
         return Collections.unmodifiableMap(parameters);
     }
@@ -783,7 +783,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl setFragment(@Nullable String fragment) {
         return fragment(fragment);
     }
@@ -794,7 +794,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl fragment(@Nullable String fragment) {
         this.fragment = fragment;
         clearTransients();
@@ -863,7 +863,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl setScheme(@Nullable String scheme) {
         return scheme(scheme);
     }
@@ -874,7 +874,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl scheme(@Nullable String scheme) {
         this.scheme = scheme;
         clearTransients();
@@ -896,7 +896,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl setUsername(@Nullable String username) {
         return username(username);
     }
@@ -907,7 +907,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl username(@Nullable String username) {
         this.username = username;
         clearTransients();
@@ -929,7 +929,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl setPassword(@Nullable String password) {
         return password(password);
     }
@@ -940,7 +940,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl password(@Nullable String password) {
         this.password = password;
         clearTransients();
@@ -961,7 +961,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl setHost(@Nullable String host) {
         return host(host);
     }
@@ -972,7 +972,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl host(@Nullable String host) {
         this.host = host;
         clearTransients();
@@ -993,7 +993,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl setPort(@Nullable Integer port) {
         return port(port);
     }
@@ -1004,7 +1004,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl port(@Nullable Integer port) {
         this.port = port;
         clearTransients();
@@ -1014,7 +1014,7 @@ public class SlingUrl implements Cloneable {
     /**
      * The type of the URL. Caution: this isn't available on all types.
      */
-    @Nonnull
+    @NotNull
     public UrlType getType() {
         return type;
     }
@@ -1025,8 +1025,8 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
-    public SlingUrl setType(@Nonnull UrlType type) {
+    @NotNull
+    public SlingUrl setType(@NotNull UrlType type) {
         return type(type);
     }
 
@@ -1036,8 +1036,8 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
-    public SlingUrl type(@Nonnull UrlType type) {
+    @NotNull
+    public SlingUrl type(@NotNull UrlType type) {
         this.type = Objects.requireNonNull(type);
         clearTransients();
         return this;
@@ -1057,7 +1057,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl setName(@Nullable String name) {
         return name(name);
     }
@@ -1068,7 +1068,7 @@ public class SlingUrl implements Cloneable {
      *
      * @return this for builder style chaining
      */
-    @Nonnull
+    @NotNull
     public SlingUrl name(@Nullable String name) {
         this.name = name;
         clearTransients();
@@ -1181,7 +1181,7 @@ public class SlingUrl implements Cloneable {
         return builder.toString();
     }
 
-    protected void parseUrl(@Nonnull final String url, final boolean decode) throws IllegalArgumentException {
+    protected void parseUrl(@NotNull final String url, final boolean decode) throws IllegalArgumentException {
         reset();
         Matcher schemeMatcher = SCHEME_PATTERN.matcher(url);
         int schemeLength = 0;
@@ -1283,7 +1283,7 @@ public class SlingUrl implements Cloneable {
         return decode ? UrlCodec.URLSAFE.decode(value) : value;
     }
 
-    protected void parseParameters(@Nonnull String parameterString, boolean decode) {
+    protected void parseParameters(@NotNull String parameterString, boolean decode) {
         parameterString = parameterString.trim();
         while (parameterString.startsWith("?")) {
             parameterString = parameterString.substring(1);
@@ -1297,7 +1297,7 @@ public class SlingUrl implements Cloneable {
         }
     }
 
-    protected static LinkMapper getLinkMapper(@Nonnull final SlingHttpServletRequest request,
+    protected static LinkMapper getLinkMapper(@NotNull final SlingHttpServletRequest request,
                                               @Nullable LinkMapper linkMapper) {
         if (linkMapper == null) {
             linkMapper = (LinkMapper) request.getAttribute(LinkMapper.LINK_MAPPER_REQUEST_ATTRIBUTE);

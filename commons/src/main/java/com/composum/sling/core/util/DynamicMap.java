@@ -2,7 +2,7 @@ package com.composum.sling.core.util;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -15,13 +15,13 @@ public class DynamicMap implements Map<String, String> {
 
     public interface Source {
 
-        @Nonnull
-        String issue(@Nonnull String key);
+        @NotNull
+        String issue(@NotNull String key);
     }
 
     protected final Source source;
 
-    public DynamicMap(@Nonnull final Source source) {
+    public DynamicMap(@NotNull final Source source) {
         this.source = source;
     }
 
@@ -62,26 +62,26 @@ public class DynamicMap implements Map<String, String> {
     }
 
     @Override
-    public void putAll(@Nonnull Map<? extends String, ? extends String> m) {
+    public void putAll(@NotNull Map<? extends String, ? extends String> m) {
     }
 
     @Override
     public void clear() {
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public Set<String> keySet() {
         return Collections.emptySet();
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public Collection<String> values() {
         return Collections.emptyList();
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public Set<Entry<String, String>> entrySet() {
         return Collections.emptySet();

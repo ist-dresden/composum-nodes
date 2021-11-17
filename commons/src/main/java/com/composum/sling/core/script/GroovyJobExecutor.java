@@ -21,7 +21,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,17 +71,17 @@ public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
     @Reference
     private DynamicClassLoaderManager dynamicClassLoaderManager;
 
-    @Nonnull
+    @NotNull
     protected ResourceResolverFactory getResolverFactory() {
         return resolverFactory;
     }
 
-    @Nonnull
+    @NotNull
     protected SequencerService<SequencerService.Token> getSequencer() {
         return sequencer;
     }
 
-    @Nonnull
+    @NotNull
     protected DynamicClassLoaderManager getDynamicClassLoaderManager() {
         return dynamicClassLoaderManager;
     }
@@ -96,14 +96,14 @@ public class GroovyJobExecutor extends AbstractJobExecutor<Object> {
         groovySetupScript = null;
     }
 
-    @Nonnull
+    @NotNull
     @Override
     protected String getJobTopic() {
         return GROOVY_TOPIC;
     }
 
     @Override
-    @Nonnull
+    @NotNull
     protected String getAuditBasePath() {
         return AUDIT_BASE_PATH;
     }
