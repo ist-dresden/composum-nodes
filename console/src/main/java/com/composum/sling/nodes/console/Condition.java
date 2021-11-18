@@ -5,9 +5,10 @@ import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.SlingUrl;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.HeadMethod;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
@@ -44,7 +45,7 @@ public interface Condition {
     /**
      * check the configured condition for the given resource
      */
-    boolean accept(@NotNull BeanContext context, @NotNull Resource resource);
+    boolean     accept(@NotNull BeanContext context, @NotNull Resource resource);
 
     abstract class Set implements Condition {
 
@@ -236,10 +237,10 @@ public interface Condition {
                     final SlingHttpServletRequest request = context.getRequest();
                     final String relativeUrl = new SlingUrl(request).fromUrl(serviceUrl).getUrl();
                     final String absoluteUrl = LinkUtil.getAbsoluteUrl(request, relativeUrl);
-                    final HeadMethod httpMethod = new HeadMethod(absoluteUrl);
-                    httpMethod.addRequestHeader("Cookie", request.getHeader("Cookie"));
-                    final HttpClient httpClient = new HttpClient();
-                    final int status = httpClient.executeMethod(httpMethod);
+                    final HttpHead httpMethod = new HttpHead(absoluteUrl);
+                    httpMethod.addHeader("Cookie", request.getHeader("Cookie"));
+                    final HttpClient httpClient = HttpClientBuilder.create().build();
+                    final int status = httpClient.execute(httpMethod).getStatusLine().getStatusCode();
                     serviceAvailable = (status == expectedStatus);
                 } catch (Exception ex) {
                     LOG.warn("precondition check failed: " + ex.getMessage());
