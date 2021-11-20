@@ -389,8 +389,10 @@
             },
 
             reload: function () {
-                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.attachment.bin'
-                    + this.$('.editor-frame .code-editor').data('file')));
+                window.setTimeout(_.bind(function () {
+                    this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.attachment.bin'
+                        + this.$('.editor-frame .code-editor').data('file')));
+                }, this), 200);
             },
 
             resize: function () {
