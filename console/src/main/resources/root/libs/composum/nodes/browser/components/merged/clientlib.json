@@ -1,0 +1,26 @@
+{
+  "jcr:primaryType": "sling:Folder",
+  "sling:resourceType": "composum/nodes/commons/clientlib",
+  "category": [
+    "composum.nodes.console.browser.merged"
+  ],
+  "order": 100,
+  "css": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "depends": [
+      "category:composum.nodes.console.base"
+    ],
+    "embed": [
+      "composum/nodes/browser/components/merged/css/merged.css"
+    ]
+  },
+  "js": {
+    "jcr:primaryType": "sling:OrderedFolder",
+    "depends": [
+      "category:composum.nodes.console.base"
+    ],
+    "embed": [
+      "composum/nodes/browser/components/merged/js/merged.js"
+    ]
+  }
+}

@@ -30,11 +30,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.composum.sling.nodes.components.MergedModel.METADATA_MERGED;
+import static com.composum.sling.nodes.components.MergedModel.isMergedResource;
+
 public interface Condition {
 
     String KEY_RESOURCE_TYPE = "resourceType";
     String KEY_PRIMARY_TYPE = "primaryType";
     String KEY_VERSIONABLE = "versionable";
+    String KEY_MERGED = "merged";
     String KEY_ACL = "acl";
     String KEY_JCR = "jcr";
     String KEY_CLASS = "class";
@@ -45,7 +49,7 @@ public interface Condition {
     /**
      * check the configured condition for the given resource
      */
-    boolean     accept(@NotNull BeanContext context, @NotNull Resource resource);
+    boolean accept(@NotNull BeanContext context, @NotNull Resource resource);
 
     abstract class Set implements Condition {
 
@@ -152,7 +156,7 @@ public interface Condition {
     // implementations
 
     /**
-     * check the availability of a class as a precondition for a console module
+     * check the permissions of a given service key (feature)
      */
     class NodesPermission implements Condition {
 
@@ -329,6 +333,18 @@ public interface Condition {
         }
     }
 
+    /**
+     * checks that the resources primary type matches the pattern
+     */
+    class MergedResource implements Condition {
+
+        @Override
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
+            return isMergedResource(resource);
+        }
+    }
+
+    Condition MERGED_RESOURCE = new MergedResource();
     Condition VERSIONABLE = new Versionable();
     Condition CAN_HAVE_ACL = new CanHaveAcl();
     Condition JCR_RESOURCE = new JcrResource();
@@ -373,6 +389,7 @@ public interface Condition {
                     pattern instanceof String ? new ResourceType((String) pattern) : null)
             .addFactory(KEY_PRIMARY_TYPE, (key, pattern) ->
                     pattern instanceof String ? new PrimaryType((String) pattern) : null)
+            .addFactory(KEY_MERGED, (key, pattern) -> MERGED_RESOURCE)
             .addFactory(KEY_VERSIONABLE, (key, pattern) -> VERSIONABLE)
             .addFactory(KEY_ACL, (key, pattern) -> CAN_HAVE_ACL)
             .addFactory(KEY_JCR, (key, pattern) -> JCR_RESOURCE)
