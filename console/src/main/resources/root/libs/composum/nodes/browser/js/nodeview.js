@@ -885,14 +885,17 @@
             selector: '> .xml',
             tabType: browser.XmlTab
         }, {
+            selector: '> .references',
+            tabType: browser.references.Tab
+        }, {
+            selector: '> .merged',
+            tabType: browser.merged.Tab
+        }, {
             selector: '> .acl',
             tabType: browser.PoliciesTab
         }, {
             selector: '> .versions',
             tabType: browser.VersionsTab
-        }, {
-            selector: '> .references',
-            tabType: browser.references.Tab
         }, function ($detailContent) {
             // the generic implementation...
             var $content = $detailContent.find('> div');
