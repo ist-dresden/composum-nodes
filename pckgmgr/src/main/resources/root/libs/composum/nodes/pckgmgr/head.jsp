@@ -3,5 +3,6 @@
 <%@ taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <head>
 <sling:call script="/libs/composum/nodes/console/page/head-meta.jsp"/>
+<cpn:clientlib type="link" category="composum.nodes.console.default"/>
 <cpn:clientlib type="css" category="composum.nodes.console.pckgmgr"/>
 </head>

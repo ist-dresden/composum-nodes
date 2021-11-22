@@ -15,13 +15,17 @@
         browser.PropertiesTab = core.console.DetailTab.extend({
 
             initialize: function (options) {
-                this.table = core.getWidget(this.$el, '.table-container', browser.PropertiesTable, {
+                this.table = core.getWidget(this.$el, '.table-container', browser.PropertiesTable, _.extend({
                     path: this.getPath,
-                    selectPath: this.selectPath
-                });
+                    selectPath: this.selectPath,
+                }, options));
                 this.$addButton = this.$('.table-toolbar .add');
-                this.$addButton.click(_.bind(function () {
-                    browser.openNewPropertyDialog(_.bind(this.reload, this), this.getPath());
+                this.$addButton.click(_.bind(function (event) {
+                    event.preventDefault();
+                    browser.openNewPropertyDialog(_.bind(function () {
+                        this.reload();
+                    }, this), this.getPath());
+                    return false;
                 }, this));
                 this.$removeButton = this.$('.table-toolbar .remove');
                 this.$removeButton.click(_.bind(this.removeSelection, this));
@@ -42,11 +46,20 @@
                 }
             },
 
-            reload: function () {
+            reload: function (event) {
+                if (event) {
+                    event.preventDefault();
+                }
                 this.table.loadContent();
+                return false;
+            },
+
+            propertyChanged: function (path) {
+                $(document).trigger('path:changed', [path]);
             },
 
             clipboardCopy: function (event) {
+                event.preventDefault();
                 var path = this.getPath();
                 if (path) {
                     var selected = this.table.getSelections();
@@ -59,9 +72,11 @@
                         names: names
                     });
                 }
+                return false;
             },
 
             clipboardPaste: function (event) {
+                event.preventDefault();
                 var path = this.getPath();
                 if (path) {
                     var clipboard = core.console.getProfile().get('properties', 'clipboard');
@@ -70,15 +85,17 @@
                             JSON.stringify(clipboard), {
                                 dataType: 'json'
                             }, _.bind(function (result) {
-                                $(document).trigger('path:changed', [path]);
+                                this.propertyChanged(path);
                             }, this), _.bind(function (result) {
                                 core.alert('danger', 'Error', 'Error on copying properties', result);
                             }, this));
                     }
                 }
+                return false;
             },
 
             removeSelection: function (event) {
+                event.preventDefault();
                 var path = this.getPath();
                 if (path) {
                     var selected = this.table.getSelections();
@@ -91,12 +108,13 @@
                             data: JSON.stringify({names: names}),
                             dataType: 'json'
                         }, _.bind(function (result) {
-                            $(document).trigger('path:changed', [path]);
+                            this.propertyChanged(path);
                         }, this), _.bind(function (result) {
                             core.alert('danger', 'Error', 'Error on removing properties', result);
                         }, this));
                     }
                 }
+                return false;
             }
         });
 
@@ -116,7 +134,7 @@
                 this.$table = this.$('.property-table');
                 this.$table.bootstrapTable({
 
-                    search: true,
+                    search: options.search !== undefined ? options.search : true,
                     showToggle: false,
                     striped: true,
 

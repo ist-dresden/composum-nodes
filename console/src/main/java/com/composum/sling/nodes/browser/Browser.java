@@ -8,6 +8,7 @@ import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.nodes.components.MergedModel;
 import com.composum.sling.nodes.components.codeeditor.CodeEditorServlet;
 import com.composum.sling.nodes.console.ConsoleServletBean;
 import com.composum.sling.nodes.scene.SceneConfigurations;
@@ -669,6 +670,10 @@ public class Browser extends ConsoleServletBean {
             isText = isFile() && StringUtils.isNotBlank(getTextType());
         }
         return isText;
+    }
+
+    public boolean isMergedResource() {
+        return MergedModel.isMergedResource(resource);
     }
 
     public boolean isJcrResource() {

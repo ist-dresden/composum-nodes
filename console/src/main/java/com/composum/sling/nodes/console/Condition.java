@@ -5,9 +5,10 @@ import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.SlingUrl;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.HeadMethod;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
@@ -29,11 +30,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.composum.sling.nodes.components.MergedModel.METADATA_MERGED;
+import static com.composum.sling.nodes.components.MergedModel.isMergedResource;
+
 public interface Condition {
 
     String KEY_RESOURCE_TYPE = "resourceType";
     String KEY_PRIMARY_TYPE = "primaryType";
     String KEY_VERSIONABLE = "versionable";
+    String KEY_MERGED = "merged";
     String KEY_ACL = "acl";
     String KEY_JCR = "jcr";
     String KEY_CLASS = "class";
@@ -151,7 +156,7 @@ public interface Condition {
     // implementations
 
     /**
-     * check the availability of a class as a precondition for a console module
+     * check the permissions of a given service key (feature)
      */
     class NodesPermission implements Condition {
 
@@ -236,10 +241,10 @@ public interface Condition {
                     final SlingHttpServletRequest request = context.getRequest();
                     final String relativeUrl = new SlingUrl(request).fromUrl(serviceUrl).getUrl();
                     final String absoluteUrl = LinkUtil.getAbsoluteUrl(request, relativeUrl);
-                    final HeadMethod httpMethod = new HeadMethod(absoluteUrl);
-                    httpMethod.addRequestHeader("Cookie", request.getHeader("Cookie"));
-                    final HttpClient httpClient = new HttpClient();
-                    final int status = httpClient.executeMethod(httpMethod);
+                    final HttpHead httpMethod = new HttpHead(absoluteUrl);
+                    httpMethod.addHeader("Cookie", request.getHeader("Cookie"));
+                    final HttpClient httpClient = HttpClientBuilder.create().build();
+                    final int status = httpClient.execute(httpMethod).getStatusLine().getStatusCode();
                     serviceAvailable = (status == expectedStatus);
                 } catch (Exception ex) {
                     LOG.warn("precondition check failed: " + ex.getMessage());
@@ -328,6 +333,18 @@ public interface Condition {
         }
     }
 
+    /**
+     * checks that the resources primary type matches the pattern
+     */
+    class MergedResource implements Condition {
+
+        @Override
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
+            return isMergedResource(resource);
+        }
+    }
+
+    Condition MERGED_RESOURCE = new MergedResource();
     Condition VERSIONABLE = new Versionable();
     Condition CAN_HAVE_ACL = new CanHaveAcl();
     Condition JCR_RESOURCE = new JcrResource();
@@ -372,6 +389,7 @@ public interface Condition {
                     pattern instanceof String ? new ResourceType((String) pattern) : null)
             .addFactory(KEY_PRIMARY_TYPE, (key, pattern) ->
                     pattern instanceof String ? new PrimaryType((String) pattern) : null)
+            .addFactory(KEY_MERGED, (key, pattern) -> MERGED_RESOURCE)
             .addFactory(KEY_VERSIONABLE, (key, pattern) -> VERSIONABLE)
             .addFactory(KEY_ACL, (key, pattern) -> CAN_HAVE_ACL)
             .addFactory(KEY_JCR, (key, pattern) -> JCR_RESOURCE)
