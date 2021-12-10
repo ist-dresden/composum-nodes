@@ -14,6 +14,32 @@
       "nodes",
       "system"
     ],
-    "jcr:description": "the console tools navigation menu root"
+    "jcr:description": "the console tools navigation menu root",
+    "cpm": {
+      "jcr:primaryType": "nt:unstructured",
+      "consoleId": "tools-composum",
+      "order": 700,
+      "menu": true,
+      "parent": "tools",
+      "jcr:title": "Composum",
+      "description": "/libs/composum/nodes/console/tools/cpm/description",
+      "sling:resourceType": "composum/nodes/console/tools/page",
+      "categories": [
+        "nodes"
+      ],
+      "clientlibs": {
+        "jcr:primaryType": "nt:unstructured",
+        "consoleId": "tools-cpm-clientlibs",
+        "order": 50,
+        "jcr:title": "Client Libraries",
+        "description": "/libs/composum/nodes/console/tools/cpm/clientlibs/description",
+        "sling:resourceType": "composum/nodes/console/tools/page",
+        "contentSrc": "/libs/composum/nodes/console/tools/cpm/clientlibs.html",
+        "categories": [
+          "nodes"
+        ],
+        "precondition": "servlet:com.composum.sling.nodes.servlet.ServletResourceType:/libs/composum/nodes/console/tools/cpm/clientlibs.html"
+      }
+    }
   }
 }
