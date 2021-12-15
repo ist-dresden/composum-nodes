@@ -26,28 +26,12 @@
  *
  * See also http://felix.apache.org/site/branding-the-web-console.html
  */
-body {
-	margin: 0 !important;
-}
-#main #title {
-	 margin-block-start: 0;
-}
-img.cq-LinkChecker {
-	display: none;
-}
-
 #main {
 	position: relative;
 	margin: 5px;
 	overflow-x: auto;
 }
-#main #main {
-	margin: 0;
-}
 #main img { border: none }
-#content > br:first-child {
-	display: none;
-}
 
 #title {
 	width: 100%;

@@ -33,7 +33,10 @@
       "categories": [
         "system"
       ],
-      "precondition": "permission:system/runtime/threads=read"
+      "precondition": [
+        "servlet:composum/nodes/system/tools/runtime/threaddump",
+        "permission:system/runtime/threads=read"
+      ]
     }
   },
   "sling": {
@@ -57,7 +60,10 @@
       "categories": [
         "system"
       ],
-      "precondition": "permission:system/sling/adapters=read"
+      "precondition": [
+        "servlet:composum/nodes/system/tools/sling/adapters",
+        "permission:system/sling/adapters=read"
+      ]
     },
     "requests": {
       "jcr:primaryType": "nt:unstructured",
@@ -69,7 +75,10 @@
       "categories": [
         "system"
       ],
-      "precondition": "permission:system/sling/requests=read"
+      "precondition": [
+        "servlet:composum/nodes/system/tools/sling/requests",
+        "permission:system/sling/requests=read"
+      ]
     },
     "resolver": {
       "jcr:primaryType": "nt:unstructured",
@@ -81,7 +90,10 @@
       "categories": [
         "system"
       ],
-      "precondition": "permission:system/sling/resolver=read"
+      "precondition": [
+        "servlet:composum/nodes/system/tools/sling/resolver",
+        "permission:system/sling/resolver=read"
+      ]
     },
     "servlets": {
       "jcr:primaryType": "nt:unstructured",
@@ -93,7 +105,10 @@
       "categories": [
         "system"
       ],
-      "precondition": "permission:system/sling/servlets=read"
+      "precondition": [
+        "servlet:composum/nodes/system/tools/sling/servlets",
+        "permission:system/sling/servlets=read"
+      ]
     },
     "jobs": {
       "jcr:primaryType": "nt:unstructured",
@@ -105,7 +120,10 @@
       "categories": [
         "system"
       ],
-      "precondition": "permission:system/sling/jobs=read"
+      "precondition": [
+        "servlet:composum/nodes/system/tools/sling/jobs",
+        "permission:system/sling/jobs=read"
+      ]
     }
   },
   "osgi": {

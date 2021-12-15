@@ -1,15 +1,18 @@
 package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.RequestBundle;
+import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.TagFilteringWriter;
 import com.composum.sling.core.util.ValueEmbeddingWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestPathInfo;
+import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolver;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.api.wrappers.SlingHttpServletRequestWrapper;
+import org.apache.sling.api.wrappers.ValueMapDecorator;
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,6 +94,12 @@ public class ServletResourceType extends GenericServlet {
                 description = "the filter options to find the designated service (webconsole plugin)"
         )
         String forward_servlet_serviceFilter();
+
+        @AttributeDefinition(
+                name = "Permission",
+                description = "the necessary permission to use this service"
+        )
+        String forward_servlet_permission();
 
         @AttributeDefinition(
                 name = "Webconsole Plugin",
@@ -201,6 +210,7 @@ public class ServletResourceType extends GenericServlet {
 
     protected class WebconsoleWrapper extends ServletWrapper {
 
+        public static final String PLUGIN_CATEGORY = "felix.webconsole.category";
         public static final String PLUGIN_LABEL = "felix.webconsole.label";
         public static final String PLUGIN_TITLE = "felix.webconsole.title";
         public static final String PLUGIN_CSS_REFERENCES = "felix.webconsole.css";
@@ -220,7 +230,8 @@ public class ServletResourceType extends GenericServlet {
                 "/css/reset-min.css",
                 "/css/jquery-ui.css",
                 "/css/webconsole.css",
-                "/css/admin_compat.css"
+                "/css/admin_compat.css",
+                "/css/corrections.css"
         };
         public final String[] JS_FILES = new String[]{
                 "/js/jquery-3.3.1.js",
@@ -233,12 +244,12 @@ public class ServletResourceType extends GenericServlet {
                 "/js/support.js"
         };
 
-        protected final Map<String, Object> properties;
+        protected final ValueMap properties;
         protected final String[] cssReferences;
 
         public WebconsoleWrapper(@NotNull final Servlet servlet, @NotNull final Map<String, Object> properties) {
             super(servlet);
-            this.properties = properties;
+            this.properties = new ValueMapDecorator(properties);
             this.cssReferences = toStringArray(properties.get(PLUGIN_CSS_REFERENCES));
         }
 
@@ -274,19 +285,13 @@ public class ServletResourceType extends GenericServlet {
             if ("GET".equalsIgnoreCase(request.getMethod())) {
                 renderPlugin(request, response);
             } else {
-                final ActionResponseWrapper responseWrapper = new ActionResponseWrapper(response);
-                super.service(request, responseWrapper);
+                if (request instanceof SlingHttpServletRequest &&
+                        isEnabled((SlingHttpServletRequest) request, ServiceRestrictions.Permission.write)) {
+                    final ActionResponseWrapper responseWrapper = new ActionResponseWrapper(response);
+                    super.service(request, responseWrapper);
+                }
                 renderPlugin(request, response);
             }
-        }
-
-        protected String getLabel(@NotNull HttpServletRequest request) {
-            final String label = request.getPathInfo();
-            int slash = label.indexOf("/", 1);
-            if (slash < 2) {
-                slash = label.length();
-            }
-            return label.substring(1, slash);
         }
 
         protected void renderPlugin(@NotNull HttpServletRequest request,
@@ -304,11 +309,13 @@ public class ServletResourceType extends GenericServlet {
                 }
             }
 
-            final String label = getLabel(request);
+            final ValueMap values = new ValueMapDecorator(new HashMap<>(properties));
+            final String category = values.get(PLUGIN_CATEGORY, "generic");
+            final String label = values.get(PLUGIN_LABEL, "generic");
+            final String cssClass = "webconsole-" + category.toLowerCase() + "-" + label.toLowerCase();
             final String title = config.webconsole_plugin_title();
             final Map<String, String> labelMap = Collections.singletonMap(label,
                     StringUtils.isNotBlank(title) ? title : label);
-            final Map<String, Object> values = new HashMap<>(properties);
 
             String appPath = config.webconsole_app_path();
             if (StringUtils.isBlank(appPath)) {
@@ -356,12 +363,12 @@ public class ServletResourceType extends GenericServlet {
                 appendJsLink(request, writer, jsFile);
             }
             writer.append("</head>\n" +
-                    "<body class=\"ui-widget\">\n" +
-                    "<div id=\"main\">\n");
+                    "<body class=\"ui-widget webconsole-plugin\">\n" +
+                    "<div id=\"main\" class=\"").append(cssClass).append("\">\n");
             if (StringUtils.isNotBlank(title)) {
-                writer.append("    <h2 id=\"title\">").append(title).append("</h2>\n");
+                writer.append("    <h2 id=\"title\" class=\"webconsole-plugin_title\">").append(title).append("</h2>\n");
             }
-            writer.append("    <div id=\"content\">\n");
+            writer.append("    <div id=\"content\" class=\"webconsole-plugin_content\">\n");
             ServletResponseWrapper responseWrapper = new ServletResponseWrapper(request, response, values);
             super.service(request, responseWrapper);
             responseWrapper.flush();
@@ -372,28 +379,32 @@ public class ServletResourceType extends GenericServlet {
 
         protected void appendCssLink(@NotNull final HttpServletRequest request, @NotNull final PrintWriter writer,
                                      @NotNull final String root, @NotNull final String path) {
-            writer.append("<link href=\"")
+            writer.append("    <link href=\"")
                     .append(request.getContextPath()).append(root).append(path)
-                    .append("\" rel=\"stylesheet\" type=\"text/css\">");
+                    .append("\" rel=\"stylesheet\" type=\"text/css\">\n");
         }
 
         protected void appendJsLink(@NotNull final HttpServletRequest request, @NotNull final PrintWriter writer,
                                     @NotNull final String path) {
-            writer.append("<script src=\"")
+            writer.append("    <script src=\"")
                     .append(request.getContextPath()).append(PLUGIN_TOOL_PATH).append(path)
-                    .append("\" type=\"text/javascript\"></script>");
+                    .append("\" type=\"text/javascript\"></script>\n");
         }
     }
 
     @Reference
-    DynamicClassLoaderManager classLoaderManager;
+    private ServiceRestrictions serviceRestrictions;
 
     @Reference
-    ServletResolver servletResolver;
+    private DynamicClassLoaderManager classLoaderManager;
+
+    @Reference
+    private ServletResolver servletResolver;
 
     private ComponentContext context;
 
     private Config config;
+    private ServiceRestrictions.Key permissionKey;
 
     private ServletWrapper forwardServlet;
 
@@ -401,6 +412,12 @@ public class ServletResourceType extends GenericServlet {
     protected void activate(ComponentContext context, Config config) {
         this.context = context;
         this.config = config;
+        permissionKey = new ServiceRestrictions.Key(config.forward_servlet_permission());
+    }
+
+    protected boolean isEnabled(@NotNull final SlingHttpServletRequest request,
+                                @NotNull final ServiceRestrictions.Permission needed) {
+        return permissionKey.isEmpty() || serviceRestrictions.isPermissible(request, permissionKey, needed);
     }
 
     protected ServletWrapper wrapServlet(@NotNull final BundleContext bundleContext,
@@ -417,18 +434,23 @@ public class ServletResourceType extends GenericServlet {
         return config.webconsole_plugin() ? new WebconsoleWrapper(servlet, properties) : new ServletWrapper(servlet);
     }
 
-    public void service(@NotNull ServletRequest request,
+    public void service(@NotNull ServletRequest servletRequest,
                         @NotNull ServletResponse response)
             throws ServletException, IOException {
-        if ((request instanceof HttpServletRequest) && (response instanceof HttpServletResponse)) {
-            final ServletWrapper forward = getForwardServlet();
-            if (forward != null) {
-                forward.service((HttpServletRequest) request, (HttpServletResponse) response);
+        if ((servletRequest instanceof HttpServletRequest) && (response instanceof HttpServletResponse)) {
+            SlingHttpServletRequest request = (SlingHttpServletRequest) servletRequest;
+            if (isEnabled(request, ServiceRestrictions.Permission.read)) {
+                final ServletWrapper forward = getForwardServlet();
+                if (forward != null) {
+                    forward.service((HttpServletRequest) servletRequest, (HttpServletResponse) response);
+                } else {
+                    ((HttpServletResponse) response).sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                }
             } else {
-                ((HttpServletResponse) response).sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                ((HttpServletResponse) response).sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
             }
         } else {
-            throw new ServletException("Not an HTTP request/response");
+            ((HttpServletResponse) response).sendError(HttpServletResponse.SC_BAD_GATEWAY);
         }
     }
 
