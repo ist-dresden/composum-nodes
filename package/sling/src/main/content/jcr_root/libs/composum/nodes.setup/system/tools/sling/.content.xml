@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+        jcr:primaryType="sling:Folder">
+    <adapters jcr:primaryType="nt:unstructured"
+            sling:resourceType="composum/nodes/system/tools/sling/adapters"/>
+    <requests jcr:primaryType="nt:unstructured"
+            sling:resourceType="composum/nodes/system/tools/sling/requests"/>
+    <resolver jcr:primaryType="nt:unstructured"
+            sling:resourceType="composum/nodes/system/tools/sling/resolver"/>
+    <servlets jcr:primaryType="nt:unstructured"
+            sling:resourceType="composum/nodes/system/tools/sling/servlets"/>
+    <jobs jcr:primaryType="nt:unstructured"
+            sling:resourceType="composum/nodes/system/tools/sling/jobs"/>
+</jcr:root>

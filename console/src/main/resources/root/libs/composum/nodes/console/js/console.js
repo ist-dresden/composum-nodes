@@ -145,6 +145,7 @@
 
             initialize: function () {
                 var consoleId = $('body').attr('id');
+                this.$('.nav-item a[data-redirect]').click(_.bind(this.dynamicRedirect, this));
                 this.$permissionStatus = this.$('.nav-permissions-status');
                 this.$permissionStatus.click(_.bind(this.togglePermission, this));
                 this.showPermission();
@@ -159,6 +160,21 @@
                     this.system = core.getWidget(this.$status, '.composum-nodes-system', CPM.nodes.system.Status);
                     $(document).on('system:health', _.bind(this.onSystemHealth, this));
                 }
+            },
+
+            dynamicRedirect: function (event) {
+                var $link = $(event.currentTarget);
+                var redirectUrl = $link.data('redirect');
+                if (redirectUrl) {
+                    var currentPath = CPM.nodes.browser ? CPM.nodes.browser.getCurrentPath() : '';
+                    var pathCondition = $link.data('path-condition');
+                    redirectUrl = redirectUrl.replaceAll(/\${path(\..+)?}/g,
+                        (!pathCondition || new RegExp(pathCondition).exec(currentPath)) ? (currentPath + '$1') : '');
+                    window.open(redirectUrl, $link.attr('target'));
+                    event.preventDefault();
+                    return false;
+                }
+                return true;
             },
 
             showPermission: function () {

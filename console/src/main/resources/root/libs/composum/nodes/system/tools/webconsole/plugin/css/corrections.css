@@ -1,0 +1,29 @@
+body {
+    margin: 0 !important;
+}
+
+#main #main {
+    margin: 0;
+}
+
+#main #title {
+    margin-block-start: 0;
+}
+
+#content > br:first-child {
+    display: none;
+}
+
+img.cq-LinkChecker {
+    display: none;
+}
+
+.webconsole-sling-adapters .webconsole-plugin_content > p {
+    display: none;
+}
+
+.webconsole-composum-clientlibs .webconsole-plugin_content > h2,
+.webconsole-composum-threaddump .webconsole-plugin_content > h2,
+.webconsole-composum-servicegraph .webconsole-plugin_content > h2 {
+    display: none;
+}
