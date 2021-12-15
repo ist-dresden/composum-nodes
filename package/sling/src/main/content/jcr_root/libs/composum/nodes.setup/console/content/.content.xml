@@ -12,5 +12,28 @@
             categories="[core,nodes,system]"
             sling:resourceType="composum/nodes/console/tools"
             jcr:description="the console tools navigation menu root">
+        <cpm jcr:primaryType="nt:unstructured"
+                jcr:title="Composum"
+                consoleId="tools-cpm"
+                order="{Long}700"
+                menu="{Boolean}true"
+                categories="[nodes,system]"
+                sling:resourceType="composum/nodes/console/tools/page">
+            <clientlibs jcr:primaryType="nt:unstructured"
+                    jcr:title="Client Libraries"
+                    consoleId="tools-cpm-clientlibs"
+                    order="{Long}50"
+                    categories="[nodes,system]"
+                    sling:resourceType="composum/nodes/console/tools/page"
+                    contentSrc="/libs/composum/nodes/console/tools/cpm/clientlibs.html"/>
+            <servicegraph jcr:primaryType="nt:unstructured"
+                    jcr:title="Service Graph"
+                    consoleId="tools-cpm-servicegraph"
+                    order="{Long}200"
+                    categories="[nodes,system]"
+                    sling:resourceType="composum/nodes/console/tools/page"
+                    contentSrc="/libs/composum/nodes/console/tools/cpm/servicegraph.html"
+                    precondition="permission:system/service/graph=read"/>
+        </cpm>
     </tools>
 </jcr:root>

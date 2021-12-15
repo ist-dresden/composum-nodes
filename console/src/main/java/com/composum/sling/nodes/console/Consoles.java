@@ -316,7 +316,7 @@ public class Consoles implements HttpUtil.CachableInstance {
         for (final Map.Entry<String, Console> entry : new TreeMap<>(consoleSet).entrySet()) {
             final String key = entry.getKey();
             final Console console = entry.getValue();
-            if (console.isMenu() && !console.isValidMenu()) {
+            if (console.isMenu()) {
                 final String id = console.getId();
                 if (!key.equals(id)) {
                     consoleSet.remove(key);

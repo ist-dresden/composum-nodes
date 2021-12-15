@@ -19,4 +19,32 @@
             categories="[aem,nodes]"
             order="{Long}30"
             target="aem"/>
+    <assets
+            jcr:primaryType="nt:unstructured"
+            jcr:title="Assets"
+            sling:redirect="/assets.html${path}"
+            categories="[aem,nodes]"
+            order="{Long}200"
+            target="aem"/>
+    <fragments
+            jcr:primaryType="nt:unstructured"
+            jcr:title="Fragments"
+            sling:redirect="/aem/experience-fragments.html${path}"
+            categories="[aem,nodes]"
+            order="{Long}300"
+            target="aem"/>
+    <sites
+            jcr:primaryType="nt:unstructured"
+            jcr:title="Sites"
+            sling:redirect="/sites.html${path}"
+            categories="[aem,nodes]"
+            order="{Long}400"
+            target="aem"/>
+    <editor
+            jcr:primaryType="nt:unstructured"
+            jcr:title="Editor"
+            sling:redirect="/editor.html${path}.html"
+            categories="[aem,nodes]"
+            order="{Long}500"
+            target="_blank"/>
 </jcr:root>

@@ -4,41 +4,51 @@
   "sling:resourceType": "composum/nodes/console/page",
   "tools": {
     "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Tools",
     "consoleId": "tools",
+    "jcr:description": "the console tools navigation menu root",
     "order": 80,
     "menu": true,
-    "jcr:title": "Tools",
     "sling:resourceType": "composum/nodes/console/tools",
     "categories": [
       "core",
       "nodes",
       "system"
     ],
-    "jcr:description": "the console tools navigation menu root",
     "cpm": {
       "jcr:primaryType": "nt:unstructured",
-      "consoleId": "tools-composum",
+      "jcr:title": "Composum",
+      "consoleId": "tools-cpm",
       "order": 700,
       "menu": true,
-      "parent": "tools",
-      "jcr:title": "Composum",
-      "description": "/libs/composum/nodes/console/tools/cpm/description",
       "sling:resourceType": "composum/nodes/console/tools/page",
       "categories": [
-        "nodes"
+        "nodes",
+        "system"
       ],
       "clientlibs": {
         "jcr:primaryType": "nt:unstructured",
+        "jcr:title": "Client Libraries",
         "consoleId": "tools-cpm-clientlibs",
         "order": 50,
-        "jcr:title": "Client Libraries",
-        "description": "/libs/composum/nodes/console/tools/cpm/clientlibs/description",
         "sling:resourceType": "composum/nodes/console/tools/page",
         "contentSrc": "/libs/composum/nodes/console/tools/cpm/clientlibs.html",
         "categories": [
-          "nodes"
+          "nodes",
+          "system"
+        ]
+      },
+      "servicegraph": {
+        "jcr:primaryType": "nt:unstructured",
+        "jcr:title": "Service Graph",
+        "consoleId": "tools-cpm-servicegraph",
+        "order": 200,
+        "sling:resourceType": "composum/nodes/console/tools/page",
+        "contentSrc": "/libs/composum/nodes/console/tools/cpm/servicegraph.html",
+        "categories": [
+          "system"
         ],
-        "precondition": "servlet:com.composum.sling.nodes.servlet.ServletResourceType:/libs/composum/nodes/console/tools/cpm/clientlibs.html"
+        "precondition": "permission:system/service/graph=read"
       }
     }
   }
