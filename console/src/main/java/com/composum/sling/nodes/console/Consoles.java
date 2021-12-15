@@ -45,6 +45,9 @@ public class Consoles implements HttpUtil.CachableInstance {
 
     public static final String PN_CONSOLE_ID = "consoleId";
     public static final String PN_PARENT_ID = "parentId";
+    public static final String PN_SLING_REDIRECT = "sling:redirect";
+    public static final String PN_DYN_REDIRECT = "dynamicRedirect";
+    public static final String PN_PATH_CONDITION = "pathCondition";
     public static final String PN_PERM_SUPPORT = "permissionsSupport";
     public static final String PN_DESCRIPTION = "description";
     public static final String PN_TARGET = "target";
@@ -124,6 +127,9 @@ public class Consoles implements HttpUtil.CachableInstance {
         private final String name;
         private final String path;
         private final String title;
+        private final String slingRedirect;
+        private final String pathCondition;
+        private final boolean dynamicRedirect;
         private final boolean permissionsSupport;
         private final String description;
         private final String target;
@@ -145,6 +151,9 @@ public class Consoles implements HttpUtil.CachableInstance {
             name = handle.getName();
             path = handle.getPath();
             title = handle.getTitle();
+            slingRedirect = handle.getProperty(PN_SLING_REDIRECT, String.class);
+            pathCondition = handle.getProperty(PN_PATH_CONDITION, String.class);
+            dynamicRedirect = handle.getProperty(PN_DYN_REDIRECT, Boolean.FALSE);
             permissionsSupport = handle.getProperty(PN_PERM_SUPPORT, Boolean.FALSE);
             description = handle.getProperty(PN_DESCRIPTION, "");
             target = handle.getProperty(PN_TARGET, "");
@@ -157,6 +166,10 @@ public class Consoles implements HttpUtil.CachableInstance {
             if (isMenu) {
                 buildMenu(filter, handle);
             }
+        }
+
+        public boolean isDynamicRedirect() {
+            return dynamicRedirect;
         }
 
         public boolean supportsPermissions() {
@@ -194,19 +207,44 @@ public class Consoles implements HttpUtil.CachableInstance {
         }
 
         @NotNull
+        protected String embedSuffix(@NotNull final SlingHttpServletRequest request, @NotNull String value) {
+            if (StringUtils.isNotBlank(value)) {
+                final String suffix = XSS.filter(request.getRequestPathInfo().getSuffix());
+                if (StringUtils.isNotBlank(suffix)) {
+                    value = StringUtils.replace(value, "${path}", suffix); // plain
+                    // placeholder ${path} is maybe URL-encoded at that place since {} aren't valid in URL.
+                    value = StringUtils.replace(value, "$%7Bpath%7D", suffix); // encoded
+                }
+            }
+            return value;
+        }
+
+        @NotNull
+        public String getRedirectUrl(@NotNull final SlingHttpServletRequest request) {
+            final String url = StringUtils.isNotBlank(slingRedirect) ? slingRedirect : getPath();
+            return isDynamicRedirect() ? url : (StringUtils.isNotBlank(url)
+                    ? embedSuffix(request, LinkUtil.getUnmappedUrl(request, url)) : "");
+        }
+
+        @NotNull
         public String getUrl(@NotNull final SlingHttpServletRequest request) {
-            final String suffix = XSS.filter(request.getRequestPathInfo().getSuffix());
-            // placeholder ${path} is already URL-encoded at that place since {} aren't valid in URL.
-            final String url = StringUtils.replace(LinkUtil.getUnmappedUrl(request, getPath()),
-                    "$%7Bpath%7D", StringUtils.isNotBlank(suffix) ? suffix : "");
+            final String url = isDynamicRedirect() ? ""
+                    : embedSuffix(request, LinkUtil.getUnmappedUrl(request, getPath()));
             return StringUtils.isNotBlank(url) ? url : "#";
         }
 
         @NotNull
-        public String getLinkAttributes() {
+        public String getLinkAttributes(@NotNull final SlingHttpServletRequest request) {
             final StringBuilder builder = new StringBuilder();
+            String value;
             if (StringUtils.isNotBlank(target)) {
                 builder.append(" target=\"").append(target).append("\"");
+            }
+            if (isDynamicRedirect() && StringUtils.isNotBlank(value = getRedirectUrl(request))) {
+                builder.append(" data-redirect=\"").append(value).append("\"");
+                if (StringUtils.isNotBlank(pathCondition)) {
+                    builder.append(" data-path-condition=\"").append(pathCondition).append("\"");
+                }
             }
             return builder.toString();
         }

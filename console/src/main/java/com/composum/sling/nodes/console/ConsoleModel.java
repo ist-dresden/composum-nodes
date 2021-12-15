@@ -89,7 +89,7 @@ public class ConsoleModel extends ConsolePage {
 
     @NotNull
     public String getLinkAttributes() {
-        return console != null ? console.getLinkAttributes() : "";
+        return console != null ? console.getLinkAttributes(context.getRequest()) : "";
     }
 
     public boolean isMenu() {
