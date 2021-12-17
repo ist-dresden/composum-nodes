@@ -72,7 +72,11 @@ body {
     margin: 8px;
 }
 
+#graph {
+    border: 1px solid #666;
+    overflow: auto;
+}
+
 svg {
-    border-style: groove;
     background-color: white;
 }

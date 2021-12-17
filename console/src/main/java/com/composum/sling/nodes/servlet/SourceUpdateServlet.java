@@ -84,7 +84,7 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet implements Restr
                           @NotNull final SlingHttpServletResponse response)
             throws IOException {
 
-        if (!restrictions.isPermissible(request, getServiceKey(), ServiceRestrictions.Permission.write)) {
+        if (restrictions.isPermissible(request, getServiceKey(), ServiceRestrictions.Permission.write)) {
 
             final RequestParameterMap parameters = request.getRequestParameterMap();
             final RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
@@ -117,4 +117,3 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet implements Restr
         }
     }
 }
-

@@ -19,4 +19,49 @@
             categories="[aem,nodes]"
             order="{Long}30"
             target="aem"/>
+    <assets
+            jcr:primaryType="nt:unstructured"
+            jcr:title="Assets"
+            sling:redirect="/assets.html${path}"
+            pathCondition="^/content/dam(/.+)?$"
+            dynamicRedirect="{Boolean}true"
+            categories="[aem,nodes]"
+            order="{Long}200"
+            target="aem"/>
+    <fragments
+            jcr:primaryType="nt:unstructured"
+            jcr:title="Fragments"
+            sling:redirect="/aem/experience-fragments.html${path}"
+            pathCondition="^/content/experience-fragments(/.+)?$"
+            dynamicRedirect="{Boolean}true"
+            categories="[aem,nodes]"
+            order="{Long}300"
+            target="aem"/>
+    <sites
+            jcr:primaryType="nt:unstructured"
+            jcr:title="Sites"
+            sling:redirect="/sites.html${path}"
+            pathCondition="^/content(?!(/(dam|experience-fragments)/)).*$"
+            dynamicRedirect="{Boolean}true"
+            categories="[aem,nodes]"
+            order="{Long}400"
+            target="aem"/>
+    <edit
+            jcr:primaryType="nt:unstructured"
+            jcr:title="Edit"
+            sling:redirect="/editor.html${path.html}"
+            pathCondition="^/content(?!(/(dam)/)).*$"
+            dynamicRedirect="{Boolean}true"
+            categories="[aem,nodes]"
+            order="{Long}500"
+            target="_blank"/>
+    <view
+            jcr:primaryType="nt:unstructured"
+            jcr:title="View"
+            sling:redirect="${path.html}"
+            pathCondition="^/content(?!(/(dam)/)).*$"
+            dynamicRedirect="{Boolean}true"
+            categories="[aem,nodes]"
+            order="{Long}500"
+            target="_blank"/>
 </jcr:root>

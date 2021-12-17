@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-package</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.0</version>
     </parent>
 
     <artifactId>composum-nodes-sling-package</artifactId>
@@ -166,6 +166,14 @@
                                 <include>.*/composum-nodes-console-.*\.jar</include>
                                 <include>.*/composum-nodes-usermgr-.*\.jar</include>
                                 <include>.*/.*\.LoginAdminWhitelist.fragment-composum_core_.*</include>
+                                <include>.*/.*\.ServletResourceType~cpm-clientlibs.*</include>
+                                <include>.*/.*\.ServletResourceType~cpm-servicegraph.*</include>
+                                <include>.*/.*\.ServletResourceType~runtime-threaddump.*</include>
+                                <include>.*/.*\.ServletResourceType~sling-adapters.*</include>
+                                <include>.*/.*\.ServletResourceType~sling-jobs.*</include>
+                                <include>.*/.*\.ServletResourceType~sling-requests.*</include>
+                                <include>.*/.*\.ServletResourceType~sling-resolver.*</include>
+                                <include>.*/.*\.ServletResourceType~sling-servlets.*</include>
                             </includes>
                         </filter>
 

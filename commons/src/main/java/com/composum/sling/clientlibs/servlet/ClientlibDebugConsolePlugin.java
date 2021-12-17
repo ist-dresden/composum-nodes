@@ -169,7 +169,6 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
         } finally {
             if (null != processor.adminResolver) processor.adminResolver.close();
             if (null != processor.impersonationResolver) processor.impersonationResolver.close();
-            writer.close();
         }
     }
 

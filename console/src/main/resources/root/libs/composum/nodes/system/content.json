@@ -3,47 +3,145 @@
   "sling:resourceType": "composum/nodes/console/page",
   "runtime": {
     "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Runtime",
     "consoleId": "tools-runtime",
     "parentId": "tools",
     "order": 300,
     "menu": true,
-    "jcr:title": "Runtime",
-    "description": "/libs/composum/nodes/system/tools/runtime/description",
     "sling:resourceType": "composum/nodes/console/tools/page",
     "categories": [
       "system"
     ],
     "files": {
       "jcr:primaryType": "nt:unstructured",
+      "jcr:title": "Files",
       "consoleId": "tools-runtime-files",
       "order": 300,
-      "jcr:title": "Files",
-      "description": "/libs/composum/nodes/system/tools/runtime/files/description",
       "sling:resourceType": "composum/nodes/system/tools/runtime/files",
       "categories": [
         "system"
       ],
       "precondition": "permission:system/runtime/files=read"
+    },
+    "threaddump": {
+      "jcr:primaryType": "nt:unstructured",
+      "jcr:title": "Thread Dump",
+      "consoleId": "tools-runtime-threaddump",
+      "order": 900,
+      "sling:resourceType": "composum/nodes/console/tools/page",
+      "contentSrc": "/libs/composum/nodes/system/tools/runtime/threaddump.html",
+      "categories": [
+        "system"
+      ],
+      "precondition": [
+        "servlet:composum/nodes/system/tools/runtime/threaddump",
+        "permission:system/runtime/threads=read"
+      ]
+    }
+  },
+  "sling": {
+    "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Sling",
+    "consoleId": "tools-sling",
+    "parentId": "tools",
+    "order": 400,
+    "menu": true,
+    "sling:resourceType": "composum/nodes/console/tools/page",
+    "categories": [
+      "system"
+    ],
+    "adapters": {
+      "jcr:primaryType": "nt:unstructured",
+      "jcr:title": "Sling Adapters",
+      "consoleId": "tools-sling-adapters",
+      "order": 100,
+      "sling:resourceType": "composum/nodes/console/tools/page",
+      "contentSrc": "/libs/composum/nodes/system/tools/sling/adapters.html",
+      "categories": [
+        "system"
+      ],
+      "precondition": [
+        "servlet:composum/nodes/system/tools/sling/adapters",
+        "permission:system/sling/adapters=read"
+      ]
+    },
+    "requests": {
+      "jcr:primaryType": "nt:unstructured",
+      "jcr:title": "Recent Requests",
+      "consoleId": "tools-sling-requests",
+      "order": 150,
+      "sling:resourceType": "composum/nodes/console/tools/page",
+      "contentSrc": "/libs/composum/nodes/system/tools/sling/requests.html",
+      "categories": [
+        "system"
+      ],
+      "precondition": [
+        "servlet:composum/nodes/system/tools/sling/requests",
+        "permission:system/sling/requests=read"
+      ]
+    },
+    "resolver": {
+      "jcr:primaryType": "nt:unstructured",
+      "jcr:title": "Resource Resolver",
+      "consoleId": "tools-sling-resolver",
+      "order": 200,
+      "sling:resourceType": "composum/nodes/console/tools/page",
+      "contentSrc": "/libs/composum/nodes/system/tools/sling/resolver.html",
+      "categories": [
+        "system"
+      ],
+      "precondition": [
+        "servlet:composum/nodes/system/tools/sling/resolver",
+        "permission:system/sling/resolver=read"
+      ]
+    },
+    "servlets": {
+      "jcr:primaryType": "nt:unstructured",
+      "jcr:title": "Servlet Resolver",
+      "consoleId": "tools-sling-servlets",
+      "order": 250,
+      "sling:resourceType": "composum/nodes/console/tools/page",
+      "contentSrc": "/libs/composum/nodes/system/tools/sling/servlets.html",
+      "categories": [
+        "system"
+      ],
+      "precondition": [
+        "servlet:composum/nodes/system/tools/sling/servlets",
+        "permission:system/sling/servlets=read"
+      ]
+    },
+    "jobs": {
+      "jcr:primaryType": "nt:unstructured",
+      "jcr:title": "Jobs / Events",
+      "consoleId": "tools-sling-jobs",
+      "order": 500,
+      "sling:resourceType": "composum/nodes/console/tools/page",
+      "contentSrc": "/libs/composum/nodes/system/tools/sling/jobs.html",
+      "categories": [
+        "system"
+      ],
+      "precondition": [
+        "servlet:composum/nodes/system/tools/sling/jobs",
+        "permission:system/sling/jobs=read"
+      ]
     }
   },
   "osgi": {
     "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "OSGi",
     "consoleId": "tools-osgi",
     "parentId": "tools",
     "order": 500,
     "menu": true,
-    "jcr:title": "OSGi",
-    "description": "/libs/composum/nodes/system/tools/osgi/description",
     "sling:resourceType": "composum/nodes/console/tools/page",
     "categories": [
       "system"
     ],
     "bundles": {
       "jcr:primaryType": "nt:unstructured",
+      "jcr:title": "Bundles",
       "consoleId": "tools-osgi-bundles",
       "order": 50,
-      "jcr:title": "Bundles",
-      "description": "/libs/composum/nodes/system/tools/osgi/bundles/description",
       "sling:resourceType": "composum/nodes/system/tools/osgi/bundles",
       "categories": [
         "system"
@@ -53,10 +151,10 @@
   },
   "webconsole": {
     "jcr:primaryType": "nt:unstructured",
+    "jcr:title": "Web Console",
     "consoleId": "tools-webconsole",
     "parentId": "tools",
     "order": 900,
-    "jcr:title": "Web Console",
     "description": "/libs/composum/nodes/system/tools/webconsole/description",
     "sling:resourceType": "composum/nodes/system/tools/webconsole",
     "categories": [

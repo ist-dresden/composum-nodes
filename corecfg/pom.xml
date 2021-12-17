@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.0</version>
     </parent>
 
     <artifactId>composum-nodes-config</artifactId>
@@ -38,7 +38,15 @@
                             {maven-resources}
                         </Include-Resource>
                         <Sling-Initial-Content>
-                            root/libs/composum/nodes/install;path:=/libs/composum/nodes/install;overwrite:=true
+                            root/libs/composum/nodes/install/org.apache.sling.jcr.base.internal.LoginAdminWhitelist.fragment-composum_core_v2.config;path:=/libs/composum/nodes/install;overwrite:=true,
+                            root/libs/composum/nodes/install/com.composum.sling.nodes.servlet.ServletResourceType~cpm-clientlibs.config;path:=/libs/composum/nodes/install;overwrite:=true,
+                            root/libs/composum/nodes/install/com.composum.sling.nodes.servlet.ServletResourceType~cpm-servicegraph.config;path:=/libs/composum/nodes/install;overwrite:=true,
+                            root/libs/composum/nodes/install/com.composum.sling.nodes.servlet.ServletResourceType~runtime-threaddump.config;path:=/libs/composum/nodes/install;overwrite:=true,
+                            root/libs/composum/nodes/install/com.composum.sling.nodes.servlet.ServletResourceType~sling-adapters.config;path:=/libs/composum/nodes/install;overwrite:=true,
+                            root/libs/composum/nodes/install/com.composum.sling.nodes.servlet.ServletResourceType~sling-jobs.config;path:=/libs/composum/nodes/install;overwrite:=true,
+                            root/libs/composum/nodes/install/com.composum.sling.nodes.servlet.ServletResourceType~sling-requests.config;path:=/libs/composum/nodes/install;overwrite:=true,
+                            root/libs/composum/nodes/install/com.composum.sling.nodes.servlet.ServletResourceType~sling-resolver.config;path:=/libs/composum/nodes/install;overwrite:=true,
+                            root/libs/composum/nodes/install/com.composum.sling.nodes.servlet.ServletResourceType~sling-servlets.config;path:=/libs/composum/nodes/install;overwrite:=true
                         </Sling-Initial-Content>
                     </instructions>
                 </configuration>

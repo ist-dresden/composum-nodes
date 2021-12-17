@@ -5,9 +5,10 @@ import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.SlingUrl;
+import com.composum.sling.nodes.service.ServletRegistry;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpHead;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -30,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.composum.sling.nodes.components.MergedModel.METADATA_MERGED;
 import static com.composum.sling.nodes.components.MergedModel.isMergedResource;
 
 public interface Condition {
@@ -154,6 +154,27 @@ public interface Condition {
     }
 
     // implementations
+
+
+    /**
+     * check the permissions of a given service key (feature)
+     */
+    class ServletPermission implements Condition {
+
+        public static final Logger LOG = LoggerFactory.getLogger(ClassAvailability.class);
+
+        protected final String servletKey;
+
+        public ServletPermission(@NotNull final String pattern) {
+            servletKey = pattern;
+        }
+
+        @Override
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
+            final ServletRegistry registry = context.getService(ServletRegistry.class);
+            return registry.getServletData(servletKey) != null;
+        }
+    }
 
     /**
      * check the permissions of a given service key (feature)
@@ -395,6 +416,8 @@ public interface Condition {
             .addFactory(KEY_JCR, (key, pattern) -> JCR_RESOURCE)
             .addFactory(KEY_PERMISSION, (key, pattern) ->
                     pattern instanceof String ? new NodesPermission((String) pattern) : null)
+            .addFactory(KEY_SERVLET, (key, pattern) ->
+                    pattern instanceof String ? new ServletPermission((String) pattern) : null)
             .addFactory(KEY_CLASS, (key, pattern) ->
                     pattern instanceof String ? new ClassAvailability((String) pattern) : null)
             .addFactory(KEY_HTTP, (key, pattern) ->

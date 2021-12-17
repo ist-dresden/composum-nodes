@@ -13,7 +13,7 @@ import java.util.Locale;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 
-public class ValueEmbeddingTest {
+public class ValueEmbeddingReaderTest {
 
     @Test
     public void testJsonScript() throws Exception {
