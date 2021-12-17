@@ -46,10 +46,19 @@
             categories="[aem,nodes]"
             order="{Long}400"
             target="aem"/>
-    <editor
+    <edit
             jcr:primaryType="nt:unstructured"
-            jcr:title="Editor"
+            jcr:title="Edit"
             sling:redirect="/editor.html${path.html}"
+            pathCondition="^/content(?!(/(dam)/)).*$"
+            dynamicRedirect="{Boolean}true"
+            categories="[aem,nodes]"
+            order="{Long}500"
+            target="_blank"/>
+    <view
+            jcr:primaryType="nt:unstructured"
+            jcr:title="View"
+            sling:redirect="${path.html}"
             pathCondition="^/content(?!(/(dam)/)).*$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"

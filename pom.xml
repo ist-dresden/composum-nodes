@@ -12,7 +12,7 @@
 
     <groupId>com.composum.nodes</groupId>
     <artifactId>composum-nodes</artifactId>
-    <version>3.2.0-SNAPSHOT</version>
+    <version>3.2.0</version>
     <packaging>pom</packaging>
 
     <name>Composum Nodes</name>
@@ -60,10 +60,62 @@
         <module>osgi</module>
         <module>setup</module>
         <module>package</module>
-
-        <!-- Test modules - no deployed code contained -->
-        <module>test</module>
     </modules>
+
+    <profiles>
+        <profile>
+            <id>test</id>
+            <modules>
+                <module>jslibs</module>
+                <module>commons</module>
+                <module>console</module>
+                <module>pckgmgr</module>
+                <module>usermgr</module>
+                <module>corecfg</module>
+                <module>osgi</module>
+                <module>setup</module>
+                <module>package</module>
+                <!-- Test modules - no deployed code contained -->
+                <module>test</module>
+            </modules>
+        </profile>
+
+        <profile>
+            <!-- install bundles via Sling installer (REST API: /system/console/install) -->
+            <id>installBundle</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>sling-maven-plugin</artifactId>
+                        <configuration>
+                            <deploymentMethod>WebConsole</deploymentMethod>
+                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
+                            <slingUrlSuffix/>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <!-- install bundles via upload (WebDAV) to 'install' path (/libs/composum/nodes/install) -->
+            <id>uploadBundle</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>sling-maven-plugin</artifactId>
+                        <configuration>
+                            <deploymentMethod>WebDAV</deploymentMethod>
+                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}</slingUrl>
+                            <slingUrlSuffix>${sling.upload.path}</slingUrlSuffix>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <build>
         <pluginManagement>
@@ -131,46 +183,6 @@
             </plugins>
         </pluginManagement>
     </build>
-
-    <profiles>
-
-        <profile>
-            <!-- install bundles via Sling installer (REST API: /system/console/install) -->
-            <id>installBundle</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.sling</groupId>
-                        <artifactId>sling-maven-plugin</artifactId>
-                        <configuration>
-                            <deploymentMethod>WebConsole</deploymentMethod>
-                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
-                            <slingUrlSuffix/>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <!-- install bundles via upload (WebDAV) to 'install' path (/libs/composum/nodes/install) -->
-            <id>uploadBundle</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.sling</groupId>
-                        <artifactId>sling-maven-plugin</artifactId>
-                        <configuration>
-                            <deploymentMethod>WebDAV</deploymentMethod>
-                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}</slingUrl>
-                            <slingUrlSuffix>${sling.upload.path}</slingUrlSuffix>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-    </profiles>
 
     <dependencyManagement>
         <dependencies>
