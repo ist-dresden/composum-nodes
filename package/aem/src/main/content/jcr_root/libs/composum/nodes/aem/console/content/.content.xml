@@ -11,7 +11,7 @@
             categories="[aem,nodes]"
             order="{Long}20"
             target="aem"
-            precondition="[permission:nodes/aem/crxde=read]"/>
+            precondition="[permission:nodes/aem/crxde=read,http:/crx/de/index.jsp]"/>
     <packmgr
             jcr:primaryType="nt:unstructured"
             jcr:title="Packages"
@@ -20,7 +20,7 @@
             categories="[aem,nodes]"
             order="{Long}30"
             target="aem"
-            precondition="[permission:nodes/aem/packmgr=read]"/>
+            precondition="[permission:nodes/aem/packmgr=read,http:/crx/packmgr/index.jsp]"/>
     <assets
             jcr:primaryType="nt:unstructured"
             jcr:title="Assets"
@@ -68,7 +68,7 @@
             pathCondition="^/content(?!(/(dam)/)).*$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
-            order="{Long}500"
+            order="{Long}550"
             target="_blank"
             precondition="[permission:nodes/aem/view=read]"/>
 </jcr:root>
