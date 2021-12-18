@@ -14,6 +14,7 @@ import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.settings.SlingSettingsService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -44,6 +45,7 @@ public interface Condition {
     String KEY_CLASS = "class";
     String KEY_SERVLET = "servlet";
     String KEY_HTTP = "http";
+    String KEY_RUNMODE = "runmode";
     String KEY_PERMISSION = "permission";
 
     /**
@@ -155,9 +157,35 @@ public interface Condition {
 
     // implementations
 
+    /**
+     * check the avaiability of a servlet registered fo a given resource type
+     */
+    class RunmodePermission implements Condition {
+
+        public static final Logger LOG = LoggerFactory.getLogger(ClassAvailability.class);
+
+        protected final List<String> alternatives;
+
+        public RunmodePermission(@NotNull final String pattern) {
+            alternatives = Arrays.asList(StringUtils.split(pattern, ","));
+        }
+
+        @Override
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
+            final SlingSettingsService settings = context.getService(SlingSettingsService.class);
+            final java.util.Set<String> runmodes = settings.getRunModes();
+            for (final String pattern : alternatives) {
+                if ((!pattern.startsWith("!") && runmodes.contains(pattern))
+                        || (pattern.startsWith("!") && !runmodes.contains(pattern.substring(1)))) {
+                    return true;
+                }
+            }
+            return alternatives.size() == 0;
+        }
+    }
 
     /**
-     * check the permissions of a given service key (feature)
+     * check the avaiability of a servlet registered fo a given resource type
      */
     class ServletPermission implements Condition {
 
@@ -416,6 +444,8 @@ public interface Condition {
             .addFactory(KEY_JCR, (key, pattern) -> JCR_RESOURCE)
             .addFactory(KEY_PERMISSION, (key, pattern) ->
                     pattern instanceof String ? new NodesPermission((String) pattern) : null)
+            .addFactory(KEY_RUNMODE, (key, pattern) ->
+                    pattern instanceof String ? new RunmodePermission((String) pattern) : null)
             .addFactory(KEY_SERVLET, (key, pattern) ->
                     pattern instanceof String ? new ServletPermission((String) pattern) : null)
             .addFactory(KEY_CLASS, (key, pattern) ->

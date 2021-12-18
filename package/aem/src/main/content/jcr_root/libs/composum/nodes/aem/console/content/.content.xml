@@ -10,7 +10,8 @@
             description="/libs/composum/nodes/aem/console/components/crxde/description"
             categories="[aem,nodes]"
             order="{Long}20"
-            target="aem"/>
+            target="aem"
+            precondition="[permission:nodes/aem/crxde=read,http:/crx/de/index.jsp]"/>
     <packmgr
             jcr:primaryType="nt:unstructured"
             jcr:title="Packages"
@@ -18,7 +19,8 @@
             description="/libs/composum/nodes/aem/console/components/packmgr/description"
             categories="[aem,nodes]"
             order="{Long}30"
-            target="aem"/>
+            target="aem"
+            precondition="[permission:nodes/aem/packmgr=read,http:/crx/packmgr/index.jsp]"/>
     <assets
             jcr:primaryType="nt:unstructured"
             jcr:title="Assets"
@@ -27,7 +29,8 @@
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
             order="{Long}200"
-            target="aem"/>
+            target="aem"
+            precondition="[permission:nodes/aem/assets=read,runmode:author]"/>
     <fragments
             jcr:primaryType="nt:unstructured"
             jcr:title="Fragments"
@@ -36,7 +39,8 @@
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
             order="{Long}300"
-            target="aem"/>
+            target="aem"
+            precondition="[permission:nodes/aem/fragments=read,runmode:author]"/>
     <sites
             jcr:primaryType="nt:unstructured"
             jcr:title="Sites"
@@ -45,7 +49,8 @@
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
             order="{Long}400"
-            target="aem"/>
+            target="aem"
+            precondition="[permission:nodes/aem/sites=read,runmode:author]"/>
     <edit
             jcr:primaryType="nt:unstructured"
             jcr:title="Edit"
@@ -54,7 +59,8 @@
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
             order="{Long}500"
-            target="_blank"/>
+            target="_blank"
+            precondition="[permission:nodes/aem/edit=read,runmode:author]"/>
     <view
             jcr:primaryType="nt:unstructured"
             jcr:title="View"
@@ -62,6 +68,7 @@
             pathCondition="^/content(?!(/(dam)/)).*$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
-            order="{Long}500"
-            target="_blank"/>
+            order="{Long}550"
+            target="_blank"
+            precondition="[permission:nodes/aem/view=read]"/>
 </jcr:root>
