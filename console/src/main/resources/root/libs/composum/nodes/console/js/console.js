@@ -166,11 +166,14 @@
                 var $link = $(event.currentTarget);
                 var redirectUrl = $link.data('redirect');
                 if (redirectUrl) {
-                    var currentPath = CPM.nodes.browser ? CPM.nodes.browser.getCurrentPath() : '';
+                    var currentPath = CPM.nodes.browser && _.isFunction(CPM.nodes.browser.getCurrentPath)
+                        ? CPM.nodes.browser.getCurrentPath() : '';
                     var pathCondition = $link.data('path-condition');
+                    var linkTarget = $link.attr('target');
                     redirectUrl = redirectUrl.replaceAll(/\${path(\..+)?}/g,
-                        (!pathCondition || new RegExp(pathCondition).exec(currentPath)) ? (currentPath + '$1') : '');
-                    window.open(redirectUrl, $link.attr('target'));
+                        (currentPath && (!pathCondition || new RegExp(pathCondition).exec(currentPath)))
+                            ? (currentPath + '$1') : '');
+                    window.open(redirectUrl, linkTarget ? linkTarget : '_self');
                     event.preventDefault();
                     return false;
                 }
