@@ -11,5 +11,5 @@
             categories="[core,nodes]"
             order="{Long}10"
             permissionsSupport="{Boolean}true"
-            precondition="permission:nodes/repository/resources=read"/>
+            precondition="restrictions:nodes/repository/resources=read"/>
 </jcr:root>

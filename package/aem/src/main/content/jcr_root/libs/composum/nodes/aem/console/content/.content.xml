@@ -11,7 +11,7 @@
             categories="[aem,nodes]"
             order="{Long}20"
             target="aem"
-            precondition="[permission:nodes/aem/crxde=read,http:/crx/de/index.jsp]"/>
+            precondition="[restrictions:nodes/aem/crxde=read,http:/crx/de/index.jsp,resource:/libs/composum/nodes/aem/console/components/crxde]"/>
     <packmgr
             jcr:primaryType="nt:unstructured"
             jcr:title="Packages"
@@ -20,7 +20,7 @@
             categories="[aem,nodes]"
             order="{Long}30"
             target="aem"
-            precondition="[permission:nodes/aem/packmgr=read,http:/crx/packmgr/index.jsp]"/>
+            precondition="[restrictions:nodes/aem/packmgr=read,http:/crx/packmgr/index.jsp,resource:/libs/composum/nodes/aem/console/components/packmgr]"/>
     <assets
             jcr:primaryType="nt:unstructured"
             jcr:title="Assets"
@@ -30,7 +30,7 @@
             categories="[aem,nodes]"
             order="{Long}200"
             target="aem"
-            precondition="[permission:nodes/aem/assets=read,runmode:author]"/>
+            precondition="[restrictions:nodes/aem/assets=read,runmode:author]"/>
     <fragments
             jcr:primaryType="nt:unstructured"
             jcr:title="Fragments"
@@ -40,7 +40,7 @@
             categories="[aem,nodes]"
             order="{Long}300"
             target="aem"
-            precondition="[permission:nodes/aem/fragments=read,runmode:author]"/>
+            precondition="[restrictions:nodes/aem/fragments=read,runmode:author]"/>
     <sites
             jcr:primaryType="nt:unstructured"
             jcr:title="Sites"
@@ -50,7 +50,7 @@
             categories="[aem,nodes]"
             order="{Long}400"
             target="aem"
-            precondition="[permission:nodes/aem/sites=read,runmode:author]"/>
+            precondition="[restrictions:nodes/aem/sites=read,runmode:author]"/>
     <edit
             jcr:primaryType="nt:unstructured"
             jcr:title="Edit"
@@ -60,7 +60,7 @@
             categories="[aem,nodes]"
             order="{Long}500"
             target="_blank"
-            precondition="[permission:nodes/aem/edit=read,runmode:author]"/>
+            precondition="[restrictions:nodes/aem/edit=read,runmode:author]"/>
     <view
             jcr:primaryType="nt:unstructured"
             jcr:title="View"
@@ -70,5 +70,5 @@
             categories="[aem,nodes]"
             order="{Long}550"
             target="_blank"
-            precondition="[permission:nodes/aem/view=read]"/>
+            precondition="[restrictions:nodes/aem/view=read]"/>
 </jcr:root>

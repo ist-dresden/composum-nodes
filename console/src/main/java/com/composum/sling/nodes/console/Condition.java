@@ -46,7 +46,8 @@ public interface Condition {
     String KEY_SERVLET = "servlet";
     String KEY_HTTP = "http";
     String KEY_RUNMODE = "runmode";
-    String KEY_PERMISSION = "permission";
+    String KEY_RESOURCE = "resource";
+    String KEY_RESTRICTIONS = "restrictions";
 
     /**
      * check the configured condition for the given resource
@@ -162,8 +163,6 @@ public interface Condition {
      */
     class RunmodePermission implements Condition {
 
-        public static final Logger LOG = LoggerFactory.getLogger(ClassAvailability.class);
-
         protected final List<String> alternatives;
 
         public RunmodePermission(@NotNull final String pattern) {
@@ -185,11 +184,9 @@ public interface Condition {
     }
 
     /**
-     * check the avaiability of a servlet registered fo a given resource type
+     * check the avaiability of a servlet registered for a given resource type
      */
     class ServletPermission implements Condition {
-
-        public static final Logger LOG = LoggerFactory.getLogger(ClassAvailability.class);
 
         protected final String servletKey;
 
@@ -207,14 +204,12 @@ public interface Condition {
     /**
      * check the permissions of a given service key (feature)
      */
-    class NodesPermission implements Condition {
-
-        public static final Logger LOG = LoggerFactory.getLogger(ClassAvailability.class);
+    class NodesRestrictions implements Condition {
 
         protected final ServiceRestrictions.Key key;
         protected final ServiceRestrictions.Permission permission;
 
-        public NodesPermission(@NotNull final String pattern) {
+        public NodesRestrictions(@NotNull final String pattern) {
             final String[] keyValue = StringUtils.split(pattern, "=", 2);
             key = new ServiceRestrictions.Key(keyValue[0]);
             ServiceRestrictions.Permission perm = null;
@@ -232,6 +227,23 @@ public interface Condition {
         public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
             final ServiceRestrictions restrictions = context.getService(ServiceRestrictions.class);
             return restrictions != null && restrictions.isPermissible(context.getRequest(), key, permission);
+        }
+    }
+
+    /**
+     * check the avaiability of a resource (readable)
+     */
+    class ResourcePermission implements Condition {
+
+        protected final String path;
+
+        public ResourcePermission(@NotNull final String pattern) {
+            path = pattern;
+        }
+
+        @Override
+        public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
+            return context.getResolver().getResource(path) != null;
         }
     }
 
@@ -266,7 +278,7 @@ public interface Condition {
      */
     class HttpStatus implements Condition {
 
-        public static final Logger LOG = LoggerFactory.getLogger(ClassAvailability.class);
+        public static final Logger LOG = LoggerFactory.getLogger(HttpStatus.class);
 
         protected final int expectedStatus;
         protected final String serviceUrl;
@@ -442,8 +454,10 @@ public interface Condition {
             .addFactory(KEY_VERSIONABLE, (key, pattern) -> VERSIONABLE)
             .addFactory(KEY_ACL, (key, pattern) -> CAN_HAVE_ACL)
             .addFactory(KEY_JCR, (key, pattern) -> JCR_RESOURCE)
-            .addFactory(KEY_PERMISSION, (key, pattern) ->
-                    pattern instanceof String ? new NodesPermission((String) pattern) : null)
+            .addFactory(KEY_RESTRICTIONS, (key, pattern) ->
+                    pattern instanceof String ? new NodesRestrictions((String) pattern) : null)
+            .addFactory(KEY_RESOURCE, (key, pattern) ->
+                    pattern instanceof String ? new ResourcePermission((String) pattern) : null)
             .addFactory(KEY_RUNMODE, (key, pattern) ->
                     pattern instanceof String ? new RunmodePermission((String) pattern) : null)
             .addFactory(KEY_SERVLET, (key, pattern) ->

@@ -15,6 +15,9 @@
     ],
     "order": 40,
     "permissionsSupport": true,
-    "precondition": "permission:nodes/users/manager=read"
+    "precondition": [
+      "restrictions:nodes/users/manager=read",
+      "resource:/libs/composum/nodes/usermgnt"
+    ]
   }
 }

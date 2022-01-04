@@ -39,7 +39,8 @@
         ],
         "precondition": [
           "servlet:composum/nodes/console/tools/cpm/clientlibs",
-          "permission:system/cpm/clientlibs=read"
+          "restrictions:system/cpm/clientlibs=read",
+          "resource:/libs/composum/nodes/console/tools/cpm/clientlibs"
         ]
       },
       "servicegraph": {
@@ -54,7 +55,8 @@
         ],
         "precondition": [
           "servlet:composum/nodes/console/tools/cpm/servicegraph",
-          "permission:system/service/graph=read"
+          "restrictions:system/service/graph=read",
+          "resource:/libs/composum/nodes/console/tools/cpm/servicegraph"
           ]
       }
     }
