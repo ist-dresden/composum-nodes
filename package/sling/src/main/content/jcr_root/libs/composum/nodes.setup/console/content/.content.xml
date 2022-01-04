@@ -26,7 +26,7 @@
                     categories="[nodes,system]"
                     sling:resourceType="composum/nodes/console/tools/page"
                     contentSrc="/libs/composum/nodes/console/tools/cpm/clientlibs.html"
-                    precondition="[servlet:composum/nodes/console/tools/cpm/clientlibs,permission:system/cpm/clientlibs=read]"/>
+                    precondition="[servlet:composum/nodes/console/tools/cpm/clientlibs,restrictions:system/cpm/clientlibs=read,resource:/libs/composum/nodes/console/tools/cpm/clientlibs]"/>
             <servicegraph jcr:primaryType="nt:unstructured"
                     jcr:title="Service Graph"
                     consoleId="tools-cpm-servicegraph"
@@ -34,7 +34,7 @@
                     categories="[nodes,system]"
                     sling:resourceType="composum/nodes/console/tools/page"
                     contentSrc="/libs/composum/nodes/console/tools/cpm/servicegraph.html"
-                    precondition="[servlet:composum/nodes/console/tools/cpm/servicegraph,permission:system/service/graph=read]"/>
+                    precondition="[servlet:composum/nodes/console/tools/cpm/servicegraph,restrictions:system/service/graph=read,resource:/libs/composum/nodes/console/tools/cpm/servicegraph]"/>
         </cpm>
     </tools>
 </jcr:root>

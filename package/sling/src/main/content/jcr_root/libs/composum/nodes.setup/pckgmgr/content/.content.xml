@@ -12,5 +12,5 @@
             categories="[core,nodes,packages]"
             order="{Long}30"
             permissionsSupport="{Boolean}true"
-            precondition="[class:org.apache.jackrabbit.vault.packaging.JcrPackageManager,permission:nodes/packages/manager=read]"/>
+            precondition="[class:org.apache.jackrabbit.vault.packaging.JcrPackageManager,restrictions:nodes/packages/manager=read,resource:/libs/composum/nodes/pckgmgr]"/>
 </jcr:root>

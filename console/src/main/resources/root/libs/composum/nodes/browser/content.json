@@ -15,6 +15,6 @@
     ],
     "order": 10,
     "permissionsSupport": true,
-    "precondition": "permission:nodes/repository/resources=read"
+    "precondition": "restrictions:nodes/repository/resources=read"
   }
 }

@@ -19,7 +19,7 @@
                 sling:resourceType="composum/nodes/system/tools/runtime/files"
                 categories="[system]"
                 order="{Long}300"
-                precondition="permission:system/runtime/files=read"/>
+                precondition="restrictions:system/runtime/files=read,resource:/libs/composum/nodes/system/tools/runtime/files"/>
         <threaddump jcr:primaryType="nt:unstructured"
                 consoleId="tools-runtime-threaddump"
                 jcr:title="Thread Dump"
@@ -27,7 +27,7 @@
                 contentSrc="/libs/composum/nodes/system/tools/runtime/threaddump.html"
                 categories="[system]"
                 order="{Long}900"
-                precondition="[servlet:composum/nodes/system/tools/runtime/threaddump,permission:system/runtime/threads=read]"/>
+                precondition="[servlet:composum/nodes/system/tools/runtime/threaddump,restrictions:system/runtime/threads=read,resource:/libs/composum/nodes/system/tools/runtime/threaddump]"/>
     </runtime>
     <sling jcr:primaryType="nt:unstructured"
             jcr:title="Sling"
@@ -44,7 +44,7 @@
                 sling:resourceType="composum/nodes/console/tools/page"
                 contentSrc="/libs/composum/nodes/system/tools/sling/adapters.html"
                 categories="[system]"
-                precondition="[servlet:composum/nodes/system/tools/sling/adapters,permission:system/sling/adapters=read]"/>
+                precondition="[servlet:composum/nodes/system/tools/sling/adapters,restrictions:system/sling/adapters=read,resource:/libs/composum/nodes/system/tools/sling/adapters]"/>
         <requests jcr:primaryType="nt:unstructured"
                 jcr:title="Recent Requests"
                 consoleId="tools-sling-requests"
@@ -52,7 +52,7 @@
                 sling:resourceType="composum/nodes/console/tools/page"
                 contentSrc="/libs/composum/nodes/system/tools/sling/requests.html"
                 categories="[system]"
-                precondition="[servlet:composum/nodes/system/tools/sling/requests,permission:system/sling/requests=read]"/>
+                precondition="[servlet:composum/nodes/system/tools/sling/requests,restrictions:system/sling/requests=read,resource:/libs/composum/nodes/system/tools/sling/requests]"/>
         <resolver jcr:primaryType="nt:unstructured"
                 jcr:title="Resource Resolver"
                 consoleId="tools-sling-resolver"
@@ -60,7 +60,7 @@
                 sling:resourceType="composum/nodes/console/tools/page"
                 contentSrc="/libs/composum/nodes/system/tools/sling/resolver.html"
                 categories="[system]"
-                precondition="[servlet:composum/nodes/system/tools/sling/resolver,permission:system/sling/resolver=read]"/>
+                precondition="[servlet:composum/nodes/system/tools/sling/resolver,restrictions:system/sling/resolver=read,resource:/libs/composum/nodes/system/tools/sling/resolver]"/>
         <servlets jcr:primaryType="nt:unstructured"
                 jcr:title="Servlet Resolver"
                 consoleId="tools-sling-servlets"
@@ -68,7 +68,7 @@
                 sling:resourceType="composum/nodes/console/tools/page"
                 contentSrc="/libs/composum/nodes/system/tools/sling/servlets.html"
                 categories="[system]"
-                precondition="[servlet:composum/nodes/system/tools/sling/servlets,permission:system/sling/servlets=read]"/>
+                precondition="[servlet:composum/nodes/system/tools/sling/servlets,restrictions:system/sling/servlets=read,resource:/libs/composum/nodes/system/tools/sling/servlets]"/>
         <jobs jcr:primaryType="nt:unstructured"
                 jcr:title="Jobs / Events"
                 consoleId="tools-sling-jobs"
@@ -76,7 +76,7 @@
                 sling:resourceType="composum/nodes/console/tools/page"
                 contentSrc="/libs/composum/nodes/system/tools/sling/jobs.html"
                 categories="[system]"
-                precondition="[servlet:composum/nodes/system/tools/sling/jobs,permission:system/sling/jobs=read]"/>
+                precondition="[servlet:composum/nodes/system/tools/sling/jobs,restrictions:system/sling/jobs=read,resource:/libs/composum/nodes/system/tools/sling/jobs]"/>
     </sling>
     <osgi jcr:primaryType="nt:unstructured"
             consoleId="tools-osgi"
@@ -94,7 +94,7 @@
                 sling:resourceType="composum/nodes/system/tools/osgi/bundles"
                 categories="[system]"
                 order="{Long}50"
-                precondition="permission:system/osgi/bundles=read"/>
+                precondition="restrictions:system/osgi/bundles=read,resource:/libs/composum/nodes/system/tools/osgi/bundles"/>
     </osgi>
     <webconsole jcr:primaryType="nt:unstructured"
             consoleId="tools-webconsole"
@@ -104,5 +104,5 @@
             sling:resourceType="composum/nodes/system/tools/webconsole"
             categories="[system]"
             order="{Long}900"
-            precondition="[permission:system/webconsole=read,http:/system/console]"/>
+            precondition="[restrictions:system/webconsole=read,http:/system/console]"/>
 </jcr:root>

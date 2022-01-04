@@ -21,7 +21,10 @@
       "categories": [
         "system"
       ],
-      "precondition": "permission:system/runtime/files=read"
+      "precondition": [
+        "restrictions:system/runtime/files=read",
+        "resource:/libs/composum/nodes/system/tools/runtime/files"
+      ]
     },
     "threaddump": {
       "jcr:primaryType": "nt:unstructured",
@@ -35,7 +38,8 @@
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/runtime/threaddump",
-        "permission:system/runtime/threads=read"
+        "restrictions:system/runtime/threads=read",
+        "resource:/libs/composum/nodes/system/tools/runtime/threaddump"
       ]
     }
   },
@@ -62,7 +66,8 @@
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/sling/adapters",
-        "permission:system/sling/adapters=read"
+        "restrictions:system/sling/adapters=read",
+        "resource:/libs/composum/nodes/system/tools/sling/adapters"
       ]
     },
     "requests": {
@@ -77,7 +82,8 @@
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/sling/requests",
-        "permission:system/sling/requests=read"
+        "restrictions:system/sling/requests=read",
+        "resource:/libs/composum/nodes/system/tools/sling/requests"
       ]
     },
     "resolver": {
@@ -92,7 +98,8 @@
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/sling/resolver",
-        "permission:system/sling/resolver=read"
+        "restrictions:system/sling/resolver=read",
+        "resource:/libs/composum/nodes/system/tools/sling/resolver"
       ]
     },
     "servlets": {
@@ -107,7 +114,8 @@
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/sling/servlets",
-        "permission:system/sling/servlets=read"
+        "restrictions:system/sling/servlets=read",
+        "resource:/libs/composum/nodes/system/tools/sling/servlets"
       ]
     },
     "jobs": {
@@ -122,7 +130,8 @@
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/sling/jobs",
-        "permission:system/sling/jobs=read"
+        "restrictions:system/sling/jobs=read",
+        "resource:/libs/composum/nodes/system/tools/sling/jobs"
       ]
     }
   },
@@ -146,7 +155,10 @@
       "categories": [
         "system"
       ],
-      "precondition": "permission:system/osgi/bundles=read"
+      "precondition": [
+        "restrictions:system/osgi/bundles=read",
+        "resource:/libs/composum/nodes/system/tools/osgi/bundles"
+      ]
     }
   },
   "webconsole": {
@@ -161,7 +173,7 @@
       "system"
     ],
     "precondition": [
-      "permission:system/webconsole=read",
+      "restrictions:system/webconsole=read",
       "http:/system/console"
     ]
   }

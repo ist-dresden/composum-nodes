@@ -46,10 +46,10 @@
         <references jcr:primaryType="nt:unstructured"
                 key="references" icon="crosshairs" group="references"
                 title="References" label="References"/>
-        <acl jcr:primaryType="nt:unstructured" condition="[permission:nodes/repository/permissions=read,acl]"
+        <acl jcr:primaryType="nt:unstructured" condition="[restrictions:nodes/repository/permissions=read,acl]"
                 key="acl" icon="key" group="acl"
                 title="Access Rules" label="ACL"/>
-        <version jcr:primaryType="nt:unstructured" condition="[permission:nodes/repository/versions=read,versionable]"
+        <version jcr:primaryType="nt:unstructured" condition="[restrictions:nodes/repository/versions=read,versionable]"
                 key="version" icon="history" group="version"
                 label="Versions" title="Versions"/>
     </tabs>

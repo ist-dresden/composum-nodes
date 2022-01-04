@@ -19,7 +19,8 @@
     "permissionsSupport": true,
     "precondition": [
       "class:org.apache.jackrabbit.vault.packaging.JcrPackageManager",
-      "permission:nodes/packages/manager=read"
+      "restrictions:nodes/packages/manager=read",
+      "resource:/libs/composum/nodes/pckgmgr"
     ]
   }
 }
