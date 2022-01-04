@@ -23,7 +23,7 @@
             },
 
             dataUrlForPath: function (path) {
-                return files.servlet + '.tree.json' + encodeURIComponent(path);
+                return files.servlet + '.tree.json' + core.encodePath(path);
             },
 
             onNodeSelected: function (path, node) {
@@ -73,7 +73,7 @@
                 this.$download.attr('href', data.uri ? data.uri : '#');
                 if (data.isText && data.path) {
                     this.$open.attr('href', core.getContextUrl(files.component + '.view.html'
-                        + encodeURIComponent(data.path)));
+                        + core.encodePath(data.path)));
                     this.$open.removeClass('disabled')
                 } else {
                     this.$open.attr('href', '#');
@@ -153,7 +153,7 @@
 
             doTail: function () {
                 if (this.tail && this.file && this.file.isLog) {
-                    var url = encodeURI(files.servlet + '.tail.txt') + encodeURIComponent(this.file.path)
+                    var url = encodeURI(files.servlet + '.tail.txt') + core.encodePath(this.file.path)
                         + '?filter=' + encodeURIComponent(this.panel.actions.getFilter());
                     core.ajaxGet(url, {}, _.bind(function (content) {
                         this.$content.addClass(this.file.type + ' text ' + (this.file.isLog ? 'log' : ''));
@@ -172,7 +172,7 @@
                         this.loading = true;
                         this.$el.addClass('loading');
                         var url = encodeURI(files.servlet + '.tail.0.' + this.panel.actions.getLimit() + '.txt')
-                            + encodeURIComponent(this.file.path)
+                            + core.encodePath(this.file.path)
                             + '?filter=' + encodeURIComponent(this.panel.actions.getFilter());
                         core.ajaxGet(url, {}, _.bind(function (content) {
                             this.$content.addClass(this.file.type + ' text ' + (this.file.isLog ? 'log' : ''));
