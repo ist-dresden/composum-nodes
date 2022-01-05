@@ -1,6 +1,7 @@
 <%@page session="false" pageEncoding="utf-8"%>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2"%>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0"%>
+<cpn:defineObjects />
 <cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
   <div id="browser-view-property-dialog" class="change property dialog modal fade"
        tabindex="-1" role="dialog" aria-hidden="true">
@@ -52,7 +53,7 @@
               <input name="name" class="widget property-name-widget form-control" type="text"
                      placeholder="property name" data-rules="mandatory">
             </div>
-            <sling:call script="/libs/composum/nodes/browser/dialogs/property-value.jsp" />
+            <sling:call script="${composumBase}composum/nodes/browser/dialogs/property-value.jsp" />
           </div>
 
           <div class="modal-footer buttons">

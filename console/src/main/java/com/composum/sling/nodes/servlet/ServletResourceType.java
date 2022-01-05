@@ -1,5 +1,6 @@
 package com.composum.sling.nodes.servlet;
 
+import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.RequestBundle;
 import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.TagFilteringWriter;
@@ -224,7 +225,7 @@ public class ServletResourceType extends GenericServlet {
 
         public static final String WEBCONSOLE_PATH = "/system/console";
 
-        public static final String PLUGIN_TOOL_PATH = "/libs/composum/nodes/system/tools/webconsole/plugin";
+        public static final String PLUGIN_TOOL_PATH = "composum/nodes/system/tools/webconsole/plugin";
 
         public final String[] CSS_FILES = new String[]{
                 "/css/reset-min.css",
@@ -346,7 +347,7 @@ public class ServletResourceType extends GenericServlet {
                     "    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>\n" +
                     "    <title>").append(title).append("</title>\n");
             for (final String cssFile : CSS_FILES) {
-                appendCssLink(request, writer, PLUGIN_TOOL_PATH, cssFile);
+                appendCssLink(request, writer, coreConfig.getComposumBase() + PLUGIN_TOOL_PATH, cssFile);
             }
             if (cssReferences != null) {
                 for (final String cssRef : cssReferences) {
@@ -387,10 +388,13 @@ public class ServletResourceType extends GenericServlet {
         protected void appendJsLink(@NotNull final HttpServletRequest request, @NotNull final PrintWriter writer,
                                     @NotNull final String path) {
             writer.append("    <script src=\"")
-                    .append(request.getContextPath()).append(PLUGIN_TOOL_PATH).append(path)
-                    .append("\" type=\"text/javascript\"></script>\n");
+                    .append(request.getContextPath()).append(coreConfig.getComposumBase())
+                    .append(PLUGIN_TOOL_PATH).append(path).append("\" type=\"text/javascript\"></script>\n");
         }
     }
+
+    @Reference
+    private CoreConfiguration coreConfig;
 
     @Reference
     private ServiceRestrictions serviceRestrictions;

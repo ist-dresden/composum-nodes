@@ -32,7 +32,7 @@
         "consoleId": "tools-cpm-clientlibs",
         "order": 50,
         "sling:resourceType": "composum/nodes/console/tools/page",
-        "contentSrc": "/libs/composum/nodes/console/tools/cpm/clientlibs.html",
+        "contentSrc": "composum/nodes/console/tools/cpm/clientlibs.html",
         "categories": [
           "nodes",
           "system"
@@ -40,7 +40,7 @@
         "precondition": [
           "servlet:composum/nodes/console/tools/cpm/clientlibs",
           "restrictions:system/cpm/clientlibs=read",
-          "resource:/libs/composum/nodes/console/tools/cpm/clientlibs"
+          "resource:composum/nodes/console/tools/cpm/clientlibs"
         ]
       },
       "servicegraph": {
@@ -49,14 +49,14 @@
         "consoleId": "tools-cpm-servicegraph",
         "order": 200,
         "sling:resourceType": "composum/nodes/console/tools/page",
-        "contentSrc": "/libs/composum/nodes/console/tools/cpm/servicegraph.html",
+        "contentSrc": "composum/nodes/console/tools/cpm/servicegraph.html",
         "categories": [
           "system"
         ],
         "precondition": [
           "servlet:composum/nodes/console/tools/cpm/servicegraph",
           "restrictions:system/service/graph=read",
-          "resource:/libs/composum/nodes/console/tools/cpm/servicegraph"
+          "resource:composum/nodes/console/tools/cpm/servicegraph"
           ]
       }
     }

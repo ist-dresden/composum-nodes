@@ -28,17 +28,17 @@
     <div class="tab-content">
         <div id="browser-props" class="tab-pane fade active in">
             <img class="img-responsive"
-                 src="${cpn:url(slingRequest,'/libs/composum/nodes/browser/description/images/browser-props.png')}"
+                 src="${cpn:url(slingRequest,cpn:cpm('composum/nodes/browser/description/images/browser-props.png'))}"
                  alt="Repository Browser and Query View"/>
         </div>
         <div id="browser-view" class="tab-pane fade">
             <img class="img-responsive"
-                 src="${cpn:url(slingRequest,'/libs/composum/nodes/browser/description/images/browser-view.png')}"
+                 src="${cpn:url(slingRequest,cpn:cpm('composum/nodes/browser/description/images/browser-view.png'))}"
                  alt="Repository Browser Render View"/>
         </div>
         <div id="browser-code" class="tab-pane fade">
             <img class="img-responsive"
-                 src="${cpn:url(slingRequest,'/libs/composum/nodes/browser/description/images/browser-code.png')}"
+                 src="${cpn:url(slingRequest,cpn:cpm('composum/nodes/browser/description/images/browser-code.png'))}"
                  alt="Repository Browser Code View"/>
         </div>
     </div>

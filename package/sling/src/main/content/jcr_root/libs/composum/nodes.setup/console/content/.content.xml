@@ -25,16 +25,16 @@
                     order="{Long}50"
                     categories="[nodes,system]"
                     sling:resourceType="composum/nodes/console/tools/page"
-                    contentSrc="/libs/composum/nodes/console/tools/cpm/clientlibs.html"
-                    precondition="[servlet:composum/nodes/console/tools/cpm/clientlibs,restrictions:system/cpm/clientlibs=read,resource:/libs/composum/nodes/console/tools/cpm/clientlibs]"/>
+                    contentSrc="composum/nodes/console/tools/cpm/clientlibs.html"
+                    precondition="[servlet:composum/nodes/console/tools/cpm/clientlibs,restrictions:system/cpm/clientlibs=read,resource:composum/nodes/console/tools/cpm/clientlibs]"/>
             <servicegraph jcr:primaryType="nt:unstructured"
                     jcr:title="Service Graph"
                     consoleId="tools-cpm-servicegraph"
                     order="{Long}200"
                     categories="[nodes,system]"
                     sling:resourceType="composum/nodes/console/tools/page"
-                    contentSrc="/libs/composum/nodes/console/tools/cpm/servicegraph.html"
-                    precondition="[servlet:composum/nodes/console/tools/cpm/servicegraph,restrictions:system/service/graph=read,resource:/libs/composum/nodes/console/tools/cpm/servicegraph]"/>
+                    contentSrc="composum/nodes/console/tools/cpm/servicegraph.html"
+                    precondition="[servlet:composum/nodes/console/tools/cpm/servicegraph,restrictions:system/service/graph=read,resource:composum/nodes/console/tools/cpm/servicegraph]"/>
         </cpm>
     </tools>
 </jcr:root>

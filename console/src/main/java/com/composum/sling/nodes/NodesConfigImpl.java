@@ -36,12 +36,6 @@ public class NodesConfigImpl implements NodesConfiguration {
     public @interface Configuration {
 
         @AttributeDefinition(
-                name = "Composum Path",
-                description = "the path to the Composum Nodes application"
-        )
-        String composum_nodes_path() default "/libs/composum/nodes";
-
-        @AttributeDefinition(
                 name = "Check Console Access",
                 description = "if 'true' (checked) the access to the console pages is checked on servlet access"
         )
@@ -152,11 +146,6 @@ public class NodesConfigImpl implements NodesConfiguration {
     @NotNull
     private Configuration getConfig() {
         return Objects.requireNonNull(config, "NodesConfigImpl is not active");
-    }
-
-    @Override
-    public String getApplicationPath() {
-        return getConfig().composum_nodes_path();
     }
 
     @Override

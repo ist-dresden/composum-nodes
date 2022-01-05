@@ -53,7 +53,7 @@
         },
 
         reload: function () {
-            var url = '/libs/composum/nodes/commons/components/security.scripts.html?_charset_=UTF-8';
+            var url = core.getComposumPath('composum/nodes/commons/components/security.scripts.html') + '?_charset_=UTF-8';
             var category = this.$category.serialize();
             if (category) {
                 url += '&' + category;

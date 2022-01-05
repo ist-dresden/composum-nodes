@@ -2,7 +2,7 @@
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<sling:defineObjects/>
+<cpn:defineObjects/>
 <cpn:component id="console" type="com.composum.sling.nodes.console.ConsoleModel">
     <header class="navbar navbar-inverse navbar-fixed-top bs-docs-nav" role="banner">
         <div class="navbar-header">
@@ -12,8 +12,8 @@
                 <span class="icon-bar"></span>
             </button>
             <div id="composum-logo" class="navbar-brand">
-                <a href="${cpn:url(slingRequest,'/libs/composum/nodes/console/content')}">
-                    <cpn:image src="/libs/composum/nodes/console/page/images/composum-nodes-logo-on-black.png" alt=""/>
+                <a href="${cpn:url(slingRequest,cpn:cpm('composum/nodes/console/content'))}">
+                    <cpn:image src="${composumBase}composum/nodes/console/page/images/composum-nodes-logo-on-black.png" alt=""/>
                 </a>
             </div>
         </div>

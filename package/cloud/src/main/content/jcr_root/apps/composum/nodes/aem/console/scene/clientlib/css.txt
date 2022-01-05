@@ -1,1 +1,0 @@
-/libs/wcm/foundation/clientlibs/grid/grid_base.less

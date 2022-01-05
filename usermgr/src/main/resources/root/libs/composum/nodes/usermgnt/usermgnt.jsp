@@ -2,14 +2,14 @@
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<sling:defineObjects/>
+<cpn:defineObjects/>
 <cpn:component var="model" type="com.composum.sling.core.usermanagement.view.View" scope="request">
     <%
         if (!model.isReadAllowed()) {
             slingResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
         } else {
     %>
-    <html data-context-path="${slingRequest.contextPath}">
+    <html data-context-path="${slingRequest.contextPath}" data-composum-base="${composumBase}">
     <sling:call script="head.jsp"/>
     <body id="usermanagement" class="console left-open top-open">
     <div id="ui">

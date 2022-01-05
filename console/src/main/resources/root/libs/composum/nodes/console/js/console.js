@@ -20,7 +20,7 @@
         console.openUserLoginDialog = function (action) {
             var loginDialog = core.getView('#user-status-dialog', console.UserLoginDialog);
             if (!loginDialog) {
-                core.getHtml('/libs/composum/nodes/console/dialogs.user-status.html',
+                core.getHtml(core.getComposumPath('composum/nodes/console/dialogs.user-status.html'),
                     _.bind(function (content) {
                         loginDialog = core.addLoadedDialog(console.UserLoginDialog, content);
                         if (loginDialog) {
@@ -207,7 +207,7 @@
 
             showStatus: function () {
                 if (this.$healthState.is('.system-health-state')) { // if status visible (accessible and loaded)...
-                    core.openFormDialog('/libs/composum/nodes/commons/components/system/dialog.html',
+                    core.openFormDialog(core.getComposumPath('composum/nodes/commons/components/system/dialog.html'),
                         CPM.nodes.system.StatusDialog);
                 }
             }

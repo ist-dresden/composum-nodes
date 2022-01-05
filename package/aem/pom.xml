@@ -70,15 +70,39 @@
                                     <fileMappers>
                                         <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
                                             <pattern>jcr_root/libs/composum/nodes.setup/</pattern>
-                                            <replacement>jcr_root/libs/composum/nodes/</replacement>
+                                            <replacement>jcr_root/apps/composum/nodes/</replacement>
                                         </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
                                         <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
-                                            <pattern>jcr_root/libs/composum/nodes/upload/</pattern>
-                                            <replacement>jcr_root/libs/composum/nodes/install/</replacement>
+                                            <pattern>jcr_root/apps/composum/nodes/upload/</pattern>
+                                            <replacement>jcr_root/apps/composum/nodes/install/</replacement>
                                         </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
                                         <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
-                                            <pattern>jcr_root/libs/composum/nodes/install/(.*\.config)</pattern>
-                                            <replacement>jcr_root/libs/composum/nodes/config/$1</replacement>
+                                            <pattern>jcr_root/apps/composum/nodes/install/(.*\.config)</pattern>
+                                            <replacement>jcr_root/apps/composum/nodes/config/$1</replacement>
+                                        </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                        <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                            <pattern>jcr_root/libs/fonts/</pattern>
+                                            <replacement>jcr_root/apps/fonts/</replacement>
+                                        </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                        <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                            <pattern>jcr_root/libs/composum/</pattern>
+                                            <replacement>jcr_root/apps/composum/</replacement>
+                                        </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                    </fileMappers>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>composum-nodes-jslibs-package</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>content-package</type>
+                                    <includes>
+                                        jcr_root/libs/**
+                                    </includes>
+                                    <fileMappers>
+                                        <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                                            <pattern>jcr_root/libs/</pattern>
+                                            <replacement>jcr_root/apps/</replacement>
                                         </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
                                     </fileMappers>
                                 </artifactItem>
@@ -106,14 +130,6 @@
                     <skipValidation>true</skipValidation>
                     <thumbnailImage>${basedir}/src/main/content/META-INF/vault/definition/thumbnail.png</thumbnailImage>
 
-                    <subPackages>
-                        <subPackage>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>composum-nodes-jslibs-package</artifactId>
-                            <filter>true</filter>
-                        </subPackage>
-                    </subPackages>
-
                     <filters>
                         <filter>
                             <root>/apps/cq/core/content/nav/tools/general/composum</root>
@@ -122,27 +138,26 @@
                             <root>/apps/cq/core/content/nav/tools/composum</root><!-- for removal -->
                         </filter>
                         <filter>
-                            <root>/libs/composum/nodes/aem/browser</root>
+                            <root>/apps/composum/nodes/aem/browser</root>
                         </filter>
                         <filter>
-                            <root>/libs/composum/nodes/aem/console</root>
+                            <root>/apps/composum/nodes/aem/console</root>
                         </filter>
 
                         <filter>
-                            <root>/libs/composum/nodes/install</root>
+                            <root>/apps/composum/nodes/install</root>
                             <includes>
                                 <include>.*/composum-nodes-commons.*\.jar</include>
                                 <include>.*/composum-nodes-console.*\.jar</include>
                                 <include>.*/composum-nodes-usermgr.*\.jar</include>
-                                <include>.*/composum-nodes-jslibs.*\.jar</include><!-- for removal -->
-                                <include>.*/composum-nodes-config.*\.jar</include><!-- for removal -->
                             </includes>
                         </filter>
 
                         <filter>
-                            <root>/libs/composum/nodes/config</root>
+                            <root>/apps/composum/nodes/config</root>
                             <includes>
-                                <include>.*/.*\.LoginAdminWhitelist.fragment-composum_core.*</include>
+                                <include>.*/.*\.CoreConfigImpl.*</include>
+                                <include>.*/.*\.LoginAdminWhitelist\.fragment-composum_core.*</include>
                                 <include>.*/.*\.ServletResourceType~cpm-clientlibs.*</include>
                                 <include>.*/.*\.ServletResourceType~cpm-servicegraph.*</include>
                                 <include>.*/.*\.ServletResourceType~runtime-threaddump.*</include>
@@ -155,23 +170,32 @@
                         </filter>
 
                         <filter>
-                            <root>/libs/composum/nodes/browser</root>
+                            <root>/apps/composum/nodes/browser</root>
                         </filter>
                         <filter>
-                            <root>/libs/composum/nodes/commons</root>
+                            <root>/apps/composum/nodes/commons</root>
                         </filter>
                         <filter>
-                            <root>/libs/composum/nodes/console</root>
+                            <root>/apps/composum/nodes/console</root>
                         </filter>
                         <filter>
-                            <root>/libs/composum/nodes/system</root>
+                            <root>/apps/composum/nodes/system</root>
                         </filter>
                         <filter>
-                            <root>/libs/composum/nodes/usermgnt</root>
+                            <root>/apps/composum/nodes/usermgnt</root>
                         </filter>
 
                         <filter>
-                            <root>/libs/fonts/composum</root>
+                            <root>/apps/fonts/composum</root>
+                        </filter>
+                        <filter>
+                            <root>/apps/fonts/awesome/4.7.0</root>
+                        </filter>
+                        <filter>
+                            <root>/apps/fonts/roboto/2014</root>
+                        </filter>
+                        <filter>
+                            <root>/apps/jslibs</root>
                         </filter>
 
                     </filters>

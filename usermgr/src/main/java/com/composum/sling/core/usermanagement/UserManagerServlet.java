@@ -1,6 +1,7 @@
 package com.composum.sling.core.usermanagement;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.Restricted;
 import com.composum.sling.core.servlet.AbstractConsoleServlet;
 import com.composum.sling.core.usermanagement.core.UserManagementServlet;
@@ -33,12 +34,15 @@ public class UserManagerServlet extends AbstractConsoleServlet {
 
     public static final String RESOURCE_TYPE = "composum/nodes/usermgnt";
 
-    public static final String CONSOLE_PATH = "/usermgnt/content/usermanagement";
+    public static final String CONSOLE_PATH = RESOURCE_TYPE + "/content/usermanagement";
 
     public static final Pattern PATH_PATTERN = Pattern.compile("^(" + SERVLET_PATH + "(\\.[^/]+)?\\.html)(/.*)?$");
 
     @Reference
-    protected NodesConfiguration config;
+    protected CoreConfiguration coreConfig;
+
+    @Reference
+    protected NodesConfiguration nodesConfig;
 
     @Override
     protected String getServletPath(BeanContext context) {
@@ -57,6 +61,6 @@ public class UserManagerServlet extends AbstractConsoleServlet {
 
     @Override
     protected String getConsolePath(BeanContext context) {
-        return config.checkConsoleAccess() ? config.getApplicationPath() + CONSOLE_PATH : null;
+        return nodesConfig.checkConsoleAccess() ? coreConfig.getComposumBase() + CONSOLE_PATH : null;
     }
 }

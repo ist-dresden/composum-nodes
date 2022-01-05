@@ -23,7 +23,7 @@
       ],
       "precondition": [
         "restrictions:system/runtime/files=read",
-        "resource:/libs/composum/nodes/system/tools/runtime/files"
+        "resource:composum/nodes/system/tools/runtime/files"
       ]
     },
     "threaddump": {
@@ -32,14 +32,14 @@
       "consoleId": "tools-runtime-threaddump",
       "order": 900,
       "sling:resourceType": "composum/nodes/console/tools/page",
-      "contentSrc": "/libs/composum/nodes/system/tools/runtime/threaddump.html",
+      "contentSrc": "composum/nodes/system/tools/runtime/threaddump.html",
       "categories": [
         "system"
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/runtime/threaddump",
         "restrictions:system/runtime/threads=read",
-        "resource:/libs/composum/nodes/system/tools/runtime/threaddump"
+        "resource:composum/nodes/system/tools/runtime/threaddump"
       ]
     }
   },
@@ -60,14 +60,14 @@
       "consoleId": "tools-sling-adapters",
       "order": 100,
       "sling:resourceType": "composum/nodes/console/tools/page",
-      "contentSrc": "/libs/composum/nodes/system/tools/sling/adapters.html",
+      "contentSrc": "composum/nodes/system/tools/sling/adapters.html",
       "categories": [
         "system"
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/sling/adapters",
         "restrictions:system/sling/adapters=read",
-        "resource:/libs/composum/nodes/system/tools/sling/adapters"
+        "resource:composum/nodes/system/tools/sling/adapters"
       ]
     },
     "requests": {
@@ -76,14 +76,14 @@
       "consoleId": "tools-sling-requests",
       "order": 150,
       "sling:resourceType": "composum/nodes/console/tools/page",
-      "contentSrc": "/libs/composum/nodes/system/tools/sling/requests.html",
+      "contentSrc": "composum/nodes/system/tools/sling/requests.html",
       "categories": [
         "system"
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/sling/requests",
         "restrictions:system/sling/requests=read",
-        "resource:/libs/composum/nodes/system/tools/sling/requests"
+        "resource:composum/nodes/system/tools/sling/requests"
       ]
     },
     "resolver": {
@@ -92,14 +92,14 @@
       "consoleId": "tools-sling-resolver",
       "order": 200,
       "sling:resourceType": "composum/nodes/console/tools/page",
-      "contentSrc": "/libs/composum/nodes/system/tools/sling/resolver.html",
+      "contentSrc": "composum/nodes/system/tools/sling/resolver.html",
       "categories": [
         "system"
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/sling/resolver",
         "restrictions:system/sling/resolver=read",
-        "resource:/libs/composum/nodes/system/tools/sling/resolver"
+        "resource:composum/nodes/system/tools/sling/resolver"
       ]
     },
     "servlets": {
@@ -108,14 +108,14 @@
       "consoleId": "tools-sling-servlets",
       "order": 250,
       "sling:resourceType": "composum/nodes/console/tools/page",
-      "contentSrc": "/libs/composum/nodes/system/tools/sling/servlets.html",
+      "contentSrc": "composum/nodes/system/tools/sling/servlets.html",
       "categories": [
         "system"
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/sling/servlets",
         "restrictions:system/sling/servlets=read",
-        "resource:/libs/composum/nodes/system/tools/sling/servlets"
+        "resource:composum/nodes/system/tools/sling/servlets"
       ]
     },
     "jobs": {
@@ -124,14 +124,14 @@
       "consoleId": "tools-sling-jobs",
       "order": 500,
       "sling:resourceType": "composum/nodes/console/tools/page",
-      "contentSrc": "/libs/composum/nodes/system/tools/sling/jobs.html",
+      "contentSrc": "composum/nodes/system/tools/sling/jobs.html",
       "categories": [
         "system"
       ],
       "precondition": [
         "servlet:composum/nodes/system/tools/sling/jobs",
         "restrictions:system/sling/jobs=read",
-        "resource:/libs/composum/nodes/system/tools/sling/jobs"
+        "resource:composum/nodes/system/tools/sling/jobs"
       ]
     }
   },
@@ -157,7 +157,7 @@
       ],
       "precondition": [
         "restrictions:system/osgi/bundles=read",
-        "resource:/libs/composum/nodes/system/tools/osgi/bundles"
+        "resource:composum/nodes/system/tools/osgi/bundles"
       ]
     }
   },
@@ -167,7 +167,7 @@
     "consoleId": "tools-webconsole",
     "parentId": "tools",
     "order": 900,
-    "description": "/libs/composum/nodes/system/tools/webconsole/description",
+    "description": "composum/nodes/system/tools/webconsole/description",
     "sling:resourceType": "composum/nodes/system/tools/webconsole",
     "categories": [
       "system"

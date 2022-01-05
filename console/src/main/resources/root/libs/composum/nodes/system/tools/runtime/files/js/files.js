@@ -6,7 +6,7 @@
 
         files.profileId = 'system-files';
         files.servlet = '/bin/cpm/system/file';
-        files.component = '/libs/composum/nodes/system/content/runtime/files';
+        files.component = core.const.composumBase + 'composum/nodes/system/content/runtime/files';
 
         files.Tree = core.components.Tree.extend({
 
