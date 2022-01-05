@@ -5,15 +5,18 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceNotFoundException;
 import org.apache.sling.servlets.post.Modification;
 import org.apache.sling.servlets.post.SlingPostProcessor;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Constants;
-import org.osgi.service.component.annotations.*;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,11 +45,10 @@ public class DenyPostServiceImpl implements SlingPostProcessor {
 
         @AttributeDefinition(name = "Denied Paths",
                 description = "Regular expressions the request path is compared to. If one of these matches the whole path, the operations called on the SlingPostServlet are rolled back.")
-                String[] deniedpaths() default {"/bin/.*"};
-
+        String[] deniedpaths() default {"/bin/.*"};
     }
 
-    @Nonnull
+    @NotNull
     protected volatile List<Pattern> deniedPathList = Collections.emptyList();
 
     /**

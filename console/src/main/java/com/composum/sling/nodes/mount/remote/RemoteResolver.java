@@ -10,11 +10,11 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.wrappers.ModifiableValueMapDecorator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -40,8 +40,8 @@ public class RemoteResolver implements ExtendedResolver {
 
     protected RemoteWriter.ChangeSet changeSet = new RemoteWriter.ChangeSet();
 
-    public RemoteResolver(@Nonnull final RemoteProvider provider,
-                          @Nonnull final ResourceResolver parentDelegate) {
+    public RemoteResolver(@NotNull final RemoteProvider provider,
+                          @NotNull final ResourceResolver parentDelegate) {
         this.provider = provider;
         this.parentDelegate = parentDelegate;
     }
@@ -68,7 +68,7 @@ public class RemoteResolver implements ExtendedResolver {
      * @return the resource, maybe a 'non existing' instance if the resource can't be read
      */
     @Nullable
-    protected Resource _resolve(@Nonnull final String path) {
+    protected Resource _resolve(@NotNull final String path) {
         if (provider.ignoreIt(path)) {
             return null;
         }
@@ -138,7 +138,7 @@ public class RemoteResolver implements ExtendedResolver {
     }
 
     @Nullable
-    protected String _parentPath(@Nonnull final String path) {
+    protected String _parentPath(@NotNull final String path) {
         if (StringUtils.isNotBlank(path)) {
             int lastSlash = path.lastIndexOf('/');
             if (lastSlash > 0) {
@@ -151,8 +151,8 @@ public class RemoteResolver implements ExtendedResolver {
         return null;
     }
 
-    @Nonnull
-    protected String _pathName(@Nonnull final String path) {
+    @NotNull
+    protected String _pathName(@NotNull final String path) {
         int lastSlash = path.lastIndexOf('/');
         if (lastSlash >= 0) {
             return path.substring(lastSlash + 1);
@@ -166,41 +166,41 @@ public class RemoteResolver implements ExtendedResolver {
         return provider.localRoot;
     }
 
-    @Nonnull
+    @NotNull
     @Override
-    public Resource resolve(@Nonnull HttpServletRequest request, @Nonnull String absPath) {
+    public Resource resolve(@NotNull HttpServletRequest request, @NotNull String absPath) {
         return resolve(absPath);
     }
 
-    @Nonnull
+    @NotNull
     @Override
-    public Resource resolve(@Nonnull String absPath) {
+    public Resource resolve(@NotNull String absPath) {
         Resource resource = _resolve(absPath);
         return resource != null ? resource
                 : new NonExistingResource(parentDelegate, provider.localPath(absPath));
     }
 
-    @Nonnull
+    @NotNull
     @Override
-    public Resource resolve(@Nonnull HttpServletRequest request) {
+    public Resource resolve(@NotNull HttpServletRequest request) {
         return resolve(request.getPathInfo());
     }
 
-    @Nonnull
+    @NotNull
     @Override
-    public String map(@Nonnull String resourcePath) {
+    public String map(@NotNull String resourcePath) {
         return provider.remoteClient.getHttpUrl(provider.remotePath(resourcePath));
     }
 
     @Nullable
     @Override
-    public String map(@Nonnull HttpServletRequest request, @Nonnull String resourcePath) {
+    public String map(@NotNull HttpServletRequest request, @NotNull String resourcePath) {
         return map(resourcePath);
     }
 
     @Nullable
     @Override
-    public Resource getResource(@Nonnull final String path) {
+    public Resource getResource(@NotNull final String path) {
         Resource resource;
         RemoteResource parent = _parent(path);
         // try to use a loaded parent to optimize caching
@@ -218,11 +218,11 @@ public class RemoteResolver implements ExtendedResolver {
 
     @Nullable
     @Override
-    public Resource getResource(Resource base, @Nonnull String path) {
+    public Resource getResource(Resource base, @NotNull String path) {
         return getResource(base.getPath() + "/" + path);
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public String[] getSearchPath() {
         return provider.searchPath;
@@ -230,41 +230,41 @@ public class RemoteResolver implements ExtendedResolver {
 
     @Nullable
     @Override
-    public Resource getParent(@Nonnull Resource child) {
+    public Resource getParent(@NotNull Resource child) {
         String parentPath = _parentPath(child.getPath());
         return parentPath != null ? getResource(parentPath) : null;
     }
 
-    @Nonnull
+    @NotNull
     @Override
-    public Iterator<Resource> listChildren(@Nonnull Resource parent) {
+    public Iterator<Resource> listChildren(@NotNull Resource parent) {
         return parent.listChildren();
     }
 
-    @Nonnull
+    @NotNull
     @Override
-    public Iterable<Resource> getChildren(@Nonnull Resource parent) {
+    public Iterable<Resource> getChildren(@NotNull Resource parent) {
         return parent.getChildren();
     }
 
-    @Nonnull
+    @NotNull
     @Override
-    public Iterator<Resource> findResources(@Nonnull String query, String language) {
+    public Iterator<Resource> findResources(@NotNull String query, String language) {
         return Collections.emptyIterator();
     }
 
-    @Nonnull
+    @NotNull
     @Override
-    public Iterator<Map<String, Object>> queryResources(@Nonnull String query, String language) {
+    public Iterator<Map<String, Object>> queryResources(@NotNull String query, String language) {
         return Collections.emptyIterator();
     }
 
     @Override
-    public boolean hasChildren(@Nonnull Resource resource) {
+    public boolean hasChildren(@NotNull Resource resource) {
         return resource.hasChildren();
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public ResourceResolver clone(Map<String, Object> authenticationInfo) throws LoginException {
         return new RemoteResolver(provider, parentDelegate);
@@ -285,7 +285,7 @@ public class RemoteResolver implements ExtendedResolver {
         return parentDelegate.getUserID();
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public Iterator<String> getAttributeNames() {
         return Collections.emptyIterator();
@@ -293,20 +293,20 @@ public class RemoteResolver implements ExtendedResolver {
 
     @Nullable
     @Override
-    public Object getAttribute(@Nonnull String name) {
+    public Object getAttribute(@NotNull String name) {
         return null;
     }
 
     @Override
-    public void delete(@Nonnull Resource resource) throws PersistenceException {
+    public void delete(@NotNull Resource resource) throws PersistenceException {
         if (resource instanceof RemoteResource) {
             changeSet.addDelete(_discard((RemoteResource) resource));
         }
     }
 
-    @Nonnull
+    @NotNull
     @Override
-    public Resource create(@Nonnull Resource parent, @Nonnull String name, Map<String, Object> properties) throws PersistenceException {
+    public Resource create(@NotNull Resource parent, @NotNull String name, Map<String, Object> properties) throws PersistenceException {
         RemoteResource resource = new RemoteResource(this, parent.getPath() + "/" + name);
         resource.children = new LinkedHashMap<>();
         resource.modifiedValues = new ModifiableValueMapDecorator(new HashMap<>(properties));
@@ -385,7 +385,7 @@ public class RemoteResolver implements ExtendedResolver {
     }
 
     @Override
-    public Resource move(@Nonnull final String srcAbsPath, @Nonnull final String destParentAbsPath,
+    public Resource move(@NotNull final String srcAbsPath, @NotNull final String destParentAbsPath,
                          @Nullable final String destChildName, @Nullable final String order)
             throws PersistenceException {
         Resource designated;
@@ -409,7 +409,7 @@ public class RemoteResolver implements ExtendedResolver {
     }
 
     @Override
-    public Resource upload(@Nonnull final String absPath, @Nonnull final InputStream content,
+    public Resource upload(@NotNull final String absPath, @NotNull final InputStream content,
                            @Nullable final String filename, @Nullable final String mimeType,
                            @Nullable final String charset)
             throws PersistenceException {
@@ -437,7 +437,7 @@ public class RemoteResolver implements ExtendedResolver {
 
     @Nullable
     @Override
-    public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
+    public <AdapterType> AdapterType adaptTo(@NotNull Class<AdapterType> type) {
         if (type == Session.class) {
             return parentDelegate.adaptTo(type);
         }

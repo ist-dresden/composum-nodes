@@ -5,9 +5,12 @@
         sling:resourceType="composum/nodes/console/page">
     <pckgmgr jcr:primaryType="nt:unstructured"
             jcr:mixinTypes="[sling:Redirect]"
+            consoleId="packages"
             jcr:title="Packages"
             description="/libs/composum/nodes/pckgmgr/description"
             sling:redirect="/bin/packages.html"
             categories="[core,nodes,packages]"
-            order="{Long}30"/>
+            order="{Long}30"
+            permissionsSupport="{Boolean}true"
+            precondition="[class:org.apache.jackrabbit.vault.packaging.JcrPackageManager,restrictions:nodes/packages/manager=read,resource:/libs/composum/nodes/pckgmgr]"/>
 </jcr:root>

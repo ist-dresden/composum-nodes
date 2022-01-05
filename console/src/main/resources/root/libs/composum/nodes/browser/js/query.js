@@ -49,6 +49,7 @@
                 var query = this.$queryInput.val();
                 core.ajaxGet('/bin/cpm/nodes/node.query.html', {
                     data: {
+                        _charset_: 'UTF-8',
                         query: this.prepareQuery(query),
                         filter: this.isFiltered() ? browser.tree.filter : ''
                     }
@@ -91,6 +92,7 @@
             showExportMenu: function () {
                 core.ajaxGet('/libs/composum/nodes/browser/query/export/set.html', {
                         data: {
+                            _charset_: 'UTF-8',
                             query: this.prepareQuery(this.$queryInput.val()),
                             filter: this.isFiltered() ? browser.tree.filter : ''
                         }

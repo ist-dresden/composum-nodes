@@ -1,6 +1,8 @@
 package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,6 +56,11 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
         return null;
     }
 
+    public ServiceRestrictions.Key getServiceKey() {
+        final Restricted restricted = getClass().getAnnotation(Restricted.class);
+        return restricted != null ? new ServiceRestrictions.Key(restricted.key()) : null;
+    }
+
     protected String getRequestPath(SlingHttpServletRequest request) {
         RequestPathInfo reqPathInfo = request.getRequestPathInfo();
         String suffix = XSS.filter(reqPathInfo.getSuffix());
@@ -69,7 +77,8 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
-        BeanContext context = createContext(request, response);
+        final HttpSession session = request.getSession(true);
+        final BeanContext context = createContext(request, response);
 
         // the pattern matching is not necessary but it prevents from errors thrown during unwanted requests
         final String pathInfo = request.getPathInfo();
@@ -123,8 +132,11 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
                 LOG.info("Access to {} denied for {}", consolePath,
                         context.getResolver().getUserID());
             }
-            return resource != null;
+            if (resource == null) {
+                return false;
+            }
         }
-        return true;
+        return context.getService(ServiceRestrictions.class)
+                .isPermissible(context.getRequest(), getServiceKey(), ServiceRestrictions.Permission.read);
     }
 }

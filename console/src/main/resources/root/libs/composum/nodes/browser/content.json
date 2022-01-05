@@ -13,6 +13,8 @@
       "core",
       "nodes"
     ],
-    "order": 10
+    "order": 10,
+    "permissionsSupport": true,
+    "precondition": "restrictions:nodes/repository/resources=read"
   }
 }

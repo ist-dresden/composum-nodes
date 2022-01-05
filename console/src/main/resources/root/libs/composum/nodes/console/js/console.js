@@ -145,6 +145,10 @@
 
             initialize: function () {
                 var consoleId = $('body').attr('id');
+                this.$('.nav-item a[data-redirect]').click(_.bind(this.dynamicRedirect, this));
+                this.$permissionStatus = this.$('.nav-permissions-status');
+                this.$permissionStatus.click(_.bind(this.togglePermission, this));
+                this.showPermission();
                 this.$('.nav-item.' + consoleId).addClass('active');
                 this.$('.nav-user-status').on('click', _.bind(function () {
                     console.openUserLoginDialog();
@@ -156,6 +160,44 @@
                     this.system = core.getWidget(this.$status, '.composum-nodes-system', CPM.nodes.system.Status);
                     $(document).on('system:health', _.bind(this.onSystemHealth, this));
                 }
+            },
+
+            dynamicRedirect: function (event) {
+                var $link = $(event.currentTarget);
+                var redirectUrl = $link.data('redirect');
+                if (redirectUrl) {
+                    var currentPath = CPM.nodes.browser && _.isFunction(CPM.nodes.browser.getCurrentPath)
+                        ? CPM.nodes.browser.getCurrentPath() : '';
+                    var pathCondition = $link.data('path-condition');
+                    var linkTarget = $link.attr('target');
+                    redirectUrl = redirectUrl.replaceAll(/\${path(\..+)?}/g,
+                        (currentPath && (!pathCondition || new RegExp(pathCondition).exec(currentPath)))
+                            ? (currentPath + '$1') : '');
+                    window.open(redirectUrl, linkTarget ? linkTarget : '_self');
+                    event.preventDefault();
+                    return false;
+                }
+                return true;
+            },
+
+            showPermission: function () {
+                var user = this.$permissionStatus.data('user');
+                var system = this.$permissionStatus.data('system');
+                var status = (user && user !== 'none' ? 'user-' + user : 'default-' + system);
+                core.removeClasses(this.$permissionStatus, /(user|default)-.+/).addClass(status);
+                this.$permissionStatus.find('i').removeClass().addClass('fa fa-' + {
+                    'default-read': 'shield',
+                    'user-read': 'shield',
+                    'default-write': 'wrench',
+                    'user-write': 'wrench',
+                }[status]);
+                this.$permissionStatus.attr('title', status.replace(/-/, ': '));
+            },
+
+            togglePermission: function () {
+                core.ajaxPost('/bin/cpm/core/restrictions.json', {}, {}, _.bind(function (result) {
+                    window.location.reload();
+                }, this));
             },
 
             onSystemHealth: function (event, status, data) {
@@ -265,7 +307,7 @@
                     this.logOffset = 0;
                     this.$logOutput.text('');
                     this.resetAuditLog();
-                    this.removeClasses(/.+-error/);
+                    core.removeClasses(this.$el, /.+-error/);
                     this.$el.addClass((operation ? operation : 'job') + '-running');
                 }
             },
@@ -275,7 +317,7 @@
                     this.logAppend(message);
                 }
                 if (this.currentJob) {
-                    this.removeClasses(/.+-running/);
+                    core.removeClasses(this.$el, /.+-running/);
                     this.currentJob = undefined;
                 }
             },
@@ -353,18 +395,6 @@
                                 callback.call(this);
                             }
                         }, this));
-                }
-            },
-
-            removeClasses: function (pattern) {
-                var classes = this.$el.attr("class");
-                if (classes) {
-                    var list = classes.toString().split(' ');
-                    for (var i = 0; i < list.length; i++) {
-                        if (pattern.exec(list[i])) {
-                            this.$el.removeClass(list[i]);
-                        }
-                    }
                 }
             },
 
@@ -590,6 +620,9 @@
                         var tabTypes = this.getTabTypes();
                         for (var i = 0; !this.viewWidget && i < tabTypes.length; i++) {
                             var type = tabTypes[i];
+                            if (_.isFunction(type)) {
+                                type = type(this.$detailContent);
+                            }
                             this.viewWidget = core.getWidget(this.$detailContent, type.selector, type.tabType);
                         }
                         if (this.viewWidget) {

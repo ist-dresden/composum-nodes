@@ -1,9 +1,8 @@
 package com.composum.sling.nodes;
 
 import com.composum.sling.core.filter.ResourceFilter;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
-import javax.servlet.Servlet;
 import java.util.Dictionary;
 
 /**
@@ -15,47 +14,47 @@ public interface NodesConfiguration {
 
     boolean checkConsoleAccess();
 
-    @Nonnull
+    @NotNull
     String[] getConsoleCategories();
 
     long getQueryResultLimit();
 
-    boolean isEnabled(Servlet servlet);
-
-    @Nonnull
+    @NotNull
     ResourceFilter getPageNodeFilter();
 
-    @Nonnull
+    @NotNull
     ResourceFilter getDefaultNodeFilter();
 
-    @Nonnull
+    @NotNull
     ResourceFilter getTreeIntermediateFilter();
 
-    @Nonnull
+    @NotNull
     ResourceFilter getReferenceableNodesFilter();
 
-    @Nonnull
+    @NotNull
     ResourceFilter getOrderableNodesFilter();
 
-    @Nonnull
+    @NotNull
     ResourceFilter getSourceNodesFilter();
 
     /** Determines for the SourceServlet whether the attributes are sorted by importance. */
     boolean isSourceAdvancedSortAttributes();
 
     /** Determines when a resource should be rendered as folder in the SourceServlet. */
+    @NotNull
     ResourceFilter getSourceFolderNodesFilter();
 
     /** Determines when a resource should be rendered as separate XML file ("vlt:FullCoverage") */
+    @NotNull
     ResourceFilter getSourceXmlNodesFilter();
 
-    @Nonnull
+    @NotNull
     String getScenesContentRoot();
 
     /**
      * The (readonly) properties useable for extensions. E.g. introduce a new property in a newer nodes version, and use
      * it if accessible already when depending on an older nodes version.
      */
-    @Nonnull
+    @NotNull
     Dictionary<String, Object> getProperties();
 }

@@ -10,8 +10,8 @@ import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
@@ -63,7 +63,7 @@ public interface ResourceFilter {
      * @param builder here the string representation is appended.
      * @see ResourceFilterMapping
      */
-    void toString(@Nonnull StringBuilder builder);
+    void toString(@NotNull StringBuilder builder);
 
     /** The predefined filter instance which accepts each resource (but fails if it's null). */
     ResourceFilter ALL = new AllFilter();
@@ -107,7 +107,7 @@ public interface ResourceFilter {
         }
 
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("All()");
         }
     }
@@ -122,7 +122,7 @@ public interface ResourceFilter {
         }
 
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("Folder()");
         }
     }
@@ -134,11 +134,11 @@ public interface ResourceFilter {
 
         private static final Logger LOG = LoggerFactory.getLogger(TypeFilter.class);
 
-        @Nonnull
+        @NotNull
         protected List<String> typeNames;
         protected boolean restriction = false;
 
-        @Nonnull
+        @NotNull
         public List<String> getTypeNames() {
             return typeNames;
         }
@@ -196,7 +196,7 @@ public interface ResourceFilter {
         }
 
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("Type(");
             typeNamesToString(builder);
             builder.append(")");
@@ -235,7 +235,7 @@ public interface ResourceFilter {
          * Returns the string representation of the used StringFilter
          */
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             filter.toString(builder);
         }
     }
@@ -270,7 +270,7 @@ public interface ResourceFilter {
          * Returns the string representation of the filter itself [Name('filter')]
          */
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("Name(");
             super.toString(builder);
             builder.append(")");
@@ -307,7 +307,7 @@ public interface ResourceFilter {
          * Returns the string representation of the filter itself [Path('filter')]
          */
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("Path(");
             super.toString(builder);
             builder.append(")");
@@ -346,7 +346,7 @@ public interface ResourceFilter {
          * Returns the string representation of the filter itself [PrimaryType('filter')]
          */
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("PrimaryType(");
             super.toString(builder);
             builder.append(")");
@@ -416,7 +416,7 @@ public interface ResourceFilter {
          * Returns the string representation of the filter itself [NodeType('filter')]
          */
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("NodeType(");
             super.toString(builder);
             builder.append(")");
@@ -467,7 +467,7 @@ public interface ResourceFilter {
          * Returns the string representation of the filter itself [ResourceType('filter')]
          */
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("ResourceType(");
             super.toString(builder);
             builder.append(")");
@@ -514,7 +514,7 @@ public interface ResourceFilter {
          * Returns the string representation of the filter itself [MimeType('filter')]
          */
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("MimeType(");
             super.toString(builder);
             builder.append(")");
@@ -776,7 +776,7 @@ public interface ResourceFilter {
          */
         @SuppressWarnings("Duplicates")
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append(rule.name());
             builder.append("{");
             for (int i = 0; i < set.size(); ) {
@@ -813,7 +813,7 @@ public interface ResourceFilter {
          * @param applicableFilter  the filter that determines to which node's content node the 'contentNodeFilter' should be applied
          * @param contentNodeFilter the filter the content nodes of the resources matching applicableFilter have to match
          */
-        public ContentNodeFilter(boolean restriction, @Nonnull ResourceFilter applicableFilter, @Nonnull ResourceFilter contentNodeFilter) {
+        public ContentNodeFilter(boolean restriction, @NotNull ResourceFilter applicableFilter, @NotNull ResourceFilter contentNodeFilter) {
             this.restriction = restriction;
             this.applicableFilter = Objects.requireNonNull(applicableFilter);
             this.contentNodeFilter = Objects.requireNonNull(contentNodeFilter);
@@ -825,7 +825,7 @@ public interface ResourceFilter {
          * @see ResourceFilterMapping#fromString(String)
          * @see #toString(StringBuilder)
          */
-        public ContentNodeFilter(@Nonnull String filterData) {
+        public ContentNodeFilter(@NotNull String filterData) {
             Matcher m = ARGUMENT_PATTERN.matcher(filterData);
             if (!m.matches()) {
                 throw new IllegalArgumentException("Cannot parse arguments from \"" + filterData + "\"");
@@ -870,7 +870,7 @@ public interface ResourceFilter {
 
         /** Generates an external representation. Caution: there is currently no way to deserialize this. */
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("ContentNode(");
             builder.append(restriction ? "-," : "+,");
             applicableFilter.toString(builder);

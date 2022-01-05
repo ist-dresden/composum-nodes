@@ -1,12 +1,14 @@
 package com.composum.sling.nodes.query;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
 import org.apache.sling.api.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Restricted(key = ConfigSet.SERVICE_KEY)
 public class ExportSet extends ConfigSet<ExportCfg> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExportSet.class);

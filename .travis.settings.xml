@@ -5,17 +5,17 @@
 
     <servers>
         <server>
-            <id>archiva</id>
+            <id>istrepo</id>
             <username>buildmgr</username>
             <password>${deploy_password}</password>
         </server>
         <server>
-            <id>archiva-internal</id>
+            <id>istrepo-internal</id>
             <username>buildmgr</username>
             <password>${deploy_password}</password>
         </server>
         <server>
-            <id>archiva-snapshots</id>
+            <id>istrepo-snapshots</id>
             <username>buildmgr</username>
             <password>${deploy_password}</password>
         </server>
@@ -24,10 +24,10 @@
     <mirrors>
         <!-- -->
         <mirror>
-            <id>archiva</id>
-            <name>archiva</name>
+            <id>istrepo</id>
+            <name>istrepo</name>
             <mirrorOf>*</mirrorOf>
-            <url>https://build.ist-software.com/nexus/repository/maven-public</url>
+            <url>https://repo.ist-software.com/repository/maven-public</url>
         </mirror>
         <!-- -->
     </mirrors>
@@ -46,8 +46,8 @@
         <profile>
             <id>develop</id>
             <properties>
-                <release.repository.id>archiva-internal</release.repository.id>
-                <release.repository.url>https://build.ist-software.com/nexus/repository/maven-releases</release.repository.url>
+                <release.repository.id>istrepo-internal</release.repository.id>
+                <release.repository.url>https://repo.ist-software.com/repository/maven-releases</release.repository.url>
                 <deploy.bundle>true</deploy.bundle>
                 <sling.scheme>https</sling.scheme>
                 <sling.secure>true</sling.secure>
@@ -80,23 +80,23 @@
          * default repository profiles
         -->
         <profile>
-            <id>archiva</id>
+            <id>istrepo</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
             <repositories>
                 <repository>
-                    <id>archiva-internal</id>
-                    <name>archiva</name>
-                    <url>https://build.ist-software.com/nexus/repository/maven-releases</url>
+                    <id>istrepo-internal</id>
+                    <name>istrepo</name>
+                    <url>https://repo.ist-software.com/repository/maven-releases</url>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
                 </repository>
                 <repository>
-                    <id>archiva-snapshots</id>
-                    <name>archiva</name>
-                    <url>https://build.ist-software.com/nexus/repository/maven-snapshots</url>
+                    <id>istrepo-snapshots</id>
+                    <name>istrepo</name>
+                    <url>https://repo.ist-software.com/repository/maven-snapshots</url>
                     <snapshots>
                         <enabled>true</enabled>
                     </snapshots>
@@ -104,17 +104,17 @@
             </repositories>
             <pluginRepositories>
                 <pluginRepository>
-                    <id>archiva-internal</id>
-                    <name>archiva</name>
-                    <url>https://build.ist-software.com/nexus/repository/maven-releases</url>
+                    <id>istrepo-internal</id>
+                    <name>istrepo</name>
+                    <url>https://repo.ist-software.com/repository/maven-releases</url>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
                 </pluginRepository>
                 <pluginRepository>
-                    <id>archiva-snapshots</id>
-                    <name>archiva</name>
-                    <url>https://build.ist-software.com/nexus/repository/maven-snapshots</url>
+                    <id>istrepo-snapshots</id>
+                    <name>istrepo</name>
+                    <url>https://repo.ist-software.com/repository/maven-snapshots</url>
                     <snapshots>
                         <enabled>true</enabled>
                     </snapshots>

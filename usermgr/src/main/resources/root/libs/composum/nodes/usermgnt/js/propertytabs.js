@@ -27,7 +27,9 @@
                 var dialog = usermanagement.getDeleteResourceDialog();
                 dialog.show(function () {
                     dialog.setPath(path);
-                }, _.bind(this.reload, this));
+                }, _.bind(function () {
+                    this.reload();
+                }, this));
             }
         });
 

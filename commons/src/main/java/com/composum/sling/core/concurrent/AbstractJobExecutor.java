@@ -18,7 +18,7 @@ import org.osgi.service.event.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
@@ -85,13 +85,13 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
         CRUD_AUDIT_FOLDER_PROPS = Collections.unmodifiableMap(map);
     }
 
-    @Nonnull
+    @NotNull
     protected abstract ResourceResolverFactory getResolverFactory();
 
-    @Nonnull
+    @NotNull
     protected abstract SequencerService<SequencerService.Token> getSequencer();
 
-    @Nonnull
+    @NotNull
     protected abstract DynamicClassLoaderManager getDynamicClassLoaderManager();
 
     protected abstract String getJobTopic();

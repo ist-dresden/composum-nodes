@@ -3,9 +3,8 @@ package com.composum.sling.nodes.service;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ComponentsService {
 
@@ -18,7 +17,7 @@ public interface ComponentsService {
      * @throws PersistenceException an error has been detected
      */
     @Nullable
-    Resource createOverlay(@Nonnull ResourceResolver resolver, @Nonnull String templateType)
+    Resource createOverlay(@NotNull ResourceResolver resolver, @NotNull String templateType)
             throws PersistenceException;
 
     /**
@@ -29,6 +28,6 @@ public interface ComponentsService {
      * @return 'true' of the deletion was succesful'
      * @throws PersistenceException an error has been detected
      */
-    boolean removeOverlay(@Nonnull ResourceResolver resolver, @Nonnull String overlayType)
+    boolean removeOverlay(@NotNull ResourceResolver resolver, @NotNull String overlayType)
             throws PersistenceException;
 }

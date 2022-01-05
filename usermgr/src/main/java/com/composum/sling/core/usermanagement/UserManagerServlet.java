@@ -1,7 +1,9 @@
 package com.composum.sling.core.usermanagement;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.servlet.AbstractConsoleServlet;
+import com.composum.sling.core.usermanagement.core.UserManagementServlet;
 import com.composum.sling.nodes.NodesConfiguration;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
@@ -24,6 +26,7 @@ import java.util.regex.Pattern;
         },
         immediate = true
 )
+@Restricted(key = UserManagementServlet.SERVICE_KEY)
 public class UserManagerServlet extends AbstractConsoleServlet {
 
     public static final String SERVLET_PATH = "/bin/users";

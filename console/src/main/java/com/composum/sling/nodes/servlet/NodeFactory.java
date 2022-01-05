@@ -48,8 +48,7 @@ public class NodeFactory {
         if (strategy == null) {
             strategy = defaultStrategy;
         }
-        Node node = strategy.createNode(request, parentNode, name, parameters);
-        return node;
+        return strategy.createNode(request, parentNode, name, parameters);
     }
 
     public interface TypeStrategy {
@@ -89,12 +88,10 @@ public class NodeFactory {
 
             RequestParameterMap parameters = request.getRequestParameterMap();
 
-            Property property = null;
-
             RequestParameter idxType = parameters.getValue("indexType");
             if (idxType != null) {
-                property = PropertyUtil.setProperty(node, "type", idxType.getString(), PropertyType.STRING);
-                property = PropertyUtil.setProperty(node, "propertyNames", new ArrayList<String>(), PropertyType.NAME);
+                PropertyUtil.setProperty(node, "type", idxType.getString(), PropertyType.STRING);
+                PropertyUtil.setProperty(node, "propertyNames", new ArrayList<String>(), PropertyType.NAME);
             }
 
             return node;

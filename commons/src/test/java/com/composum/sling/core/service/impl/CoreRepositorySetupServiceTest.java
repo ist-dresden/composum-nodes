@@ -2,11 +2,11 @@ package com.composum.sling.core.service.impl;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.Session;
 import java.io.InputStream;
@@ -29,30 +29,30 @@ public class CoreRepositorySetupServiceTest {
         public String groupPath;
 
         @Override
-        public void addAcRule(@Nonnull final Session session, @Nonnull final String path,
-                              @Nonnull final String principal, boolean allow,
-                              @Nonnull final String[] privileges,
-                              @Nonnull final Map<String, Object> restrictions) {
+        public void addAcRule(@NotNull final Session session, @NotNull final String path,
+                              @NotNull final String principal, boolean allow,
+                              @NotNull final String[] privileges,
+                              @NotNull final Map<String, Object> restrictions) {
             System.out.println("addAcl(" + path + "," + principal + ","
                     + allow + "," + Arrays.toString(privileges) + "," + restrictions + ")");
         }
 
         @Override
-        protected Node makeNodeAvailable(@Nonnull final Session session,
-                                         @Nonnull final String path, @Nonnull final String primaryType) {
+        protected Node makeNodeAvailable(@NotNull final Session session,
+                                         @NotNull final String path, @NotNull final String primaryType) {
             return null;
         }
 
         @Override
-        protected Authorizable makeGroupAvailable(@Nonnull final Session session,
-                                                  @Nonnull final String id, @Nonnull final String intermediatePath) {
+        protected Authorizable makeGroupAvailable(@NotNull final Session session,
+                                                  @NotNull final String id, @NotNull final String intermediatePath) {
             groupPath = intermediatePath;
             return null;
         }
 
         @Override
-        protected void makeMemberAvailable(@Nonnull final Session session, @Nonnull final String memberId,
-                                           @Nonnull final List<String> groupIds, @Nullable final String groupPath) {
+        protected void makeMemberAvailable(@NotNull final Session session, @NotNull final String memberId,
+                                           @NotNull final List<String> groupIds, @Nullable final String groupPath) {
             for (String groupId : groupIds) {
                 if (StringUtils.isNotBlank(groupPath)) {
                     makeGroupAvailable(session, groupId, groupPath);

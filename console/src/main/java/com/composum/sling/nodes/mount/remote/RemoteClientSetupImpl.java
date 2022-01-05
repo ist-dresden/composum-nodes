@@ -1,6 +1,7 @@
 package com.composum.sling.nodes.mount.remote;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
@@ -12,7 +13,6 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -33,8 +33,8 @@ public class RemoteClientSetupImpl implements RemoteClientSetup {
     private final Map<String, ClientBuilderSet> clientBuilders = new HashMap<>();
 
     @Override
-    @Nonnull
-    public Set<RemoteClientBuilder> getBuilders(@Nonnull final Collection<String> aspectKeys) {
+    @NotNull
+    public Set<RemoteClientBuilder> getBuilders(@NotNull final Collection<String> aspectKeys) {
         Set<RemoteClientBuilder> result = new LinkedHashSet<>();
         for (String key : aspectKeys) {
             if (StringUtils.isNotBlank(key)) {

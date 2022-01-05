@@ -1,5 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+        xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
         jcr:primaryType="sling:OrderedFolder"
         jcr:description="the console logo link target content node with the tools descriptions"
-        sling:resourceType="composum/nodes/console/page"/>
+        sling:resourceType="composum/nodes/console/page">
+    <tools jcr:primaryType="nt:unstructured"
+            consoleId="tools"
+            order="{Long}80"
+            menu="{Boolean}true"
+            jcr:title="Tools"
+            categories="[core,nodes,system]"
+            sling:resourceType="composum/nodes/console/tools"
+            jcr:description="the console tools navigation menu root">
+        <cpm jcr:primaryType="nt:unstructured"
+                jcr:title="Composum"
+                consoleId="tools-cpm"
+                order="{Long}700"
+                menu="{Boolean}true"
+                categories="[nodes,system]"
+                sling:resourceType="composum/nodes/console/tools/page">
+            <clientlibs jcr:primaryType="nt:unstructured"
+                    jcr:title="Client Libraries"
+                    consoleId="tools-cpm-clientlibs"
+                    order="{Long}50"
+                    categories="[nodes,system]"
+                    sling:resourceType="composum/nodes/console/tools/page"
+                    contentSrc="/libs/composum/nodes/console/tools/cpm/clientlibs.html"
+                    precondition="[servlet:composum/nodes/console/tools/cpm/clientlibs,restrictions:system/cpm/clientlibs=read,resource:/libs/composum/nodes/console/tools/cpm/clientlibs]"/>
+            <servicegraph jcr:primaryType="nt:unstructured"
+                    jcr:title="Service Graph"
+                    consoleId="tools-cpm-servicegraph"
+                    order="{Long}200"
+                    categories="[nodes,system]"
+                    sling:resourceType="composum/nodes/console/tools/page"
+                    contentSrc="/libs/composum/nodes/console/tools/cpm/servicegraph.html"
+                    precondition="[servlet:composum/nodes/console/tools/cpm/servicegraph,restrictions:system/service/graph=read,resource:/libs/composum/nodes/console/tools/cpm/servicegraph]"/>
+        </cpm>
+    </tools>
+</jcr:root>

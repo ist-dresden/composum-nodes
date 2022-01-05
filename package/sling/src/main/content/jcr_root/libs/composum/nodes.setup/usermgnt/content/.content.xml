@@ -5,9 +5,12 @@
         sling:resourceType="composum/nodes/console/page">
     <usermanagement jcr:primaryType="nt:unstructured"
             jcr:mixinTypes="[sling:Redirect]"
+            consoleId="users"
             jcr:title="Users"
             description="/libs/composum/nodes/usermgnt/description"
             sling:redirect="/bin/users.html"
             categories="[nodes,usermgnt]"
-            order="{Long}40"/>
+            order="{Long}40"
+            permissionsSupport="{Boolean}true"
+            precondition="restrictions:nodes/users/manager=read,resource:/libs/composum/nodes/usermgnt"/>
 </jcr:root>

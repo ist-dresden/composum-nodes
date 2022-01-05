@@ -3,7 +3,7 @@ package com.composum.sling.core.service;
 import com.google.gson.JsonElement;
 import org.apache.sling.api.SlingHttpServletRequest;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.io.Reader;
 import java.io.Writer;
 
@@ -15,18 +15,18 @@ public interface TranslationService {
     /**
      *
      */
-    @Nonnull
-    JsonElement translate(@Nonnull SlingHttpServletRequest request, @Nonnull JsonElement element);
+    @NotNull
+    JsonElement translate(@NotNull SlingHttpServletRequest request, @NotNull JsonElement element);
 
     /**
      *
      */
-    @Nonnull
-    JsonElement translate(@Nonnull SlingHttpServletRequest request, @Nonnull Reader reader);
+    @NotNull
+    JsonElement translate(@NotNull SlingHttpServletRequest request, @NotNull Reader reader);
 
     /**
      *
      */
-    void translate(@Nonnull SlingHttpServletRequest request,
-                   @Nonnull Reader reader, @Nonnull Writer writer);
+    void translate(@NotNull SlingHttpServletRequest request,
+                   @NotNull Reader reader, @NotNull Writer writer);
 }

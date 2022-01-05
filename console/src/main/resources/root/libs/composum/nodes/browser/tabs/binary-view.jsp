@@ -8,7 +8,7 @@
         <iframe src="/bin/cpm/nodes/node.download.bin${cpn:path(browser.filePath)}" width="100%" height="100%"></iframe>
     </c:if>
     <c:if test="${!browser.renderable}">
-        <a href="/bin/cpm/nodes/node.download.bin${cpn:path(browser.filePath)}"
+        <a href="/bin/cpm/nodes/node.download.attachment.bin${cpn:path(browser.filePath)}"
            class="file-download"><span class="file-symbol fa fa-${browser.fileIcon}"></span></a>
     </c:if>
 </cpn:component>

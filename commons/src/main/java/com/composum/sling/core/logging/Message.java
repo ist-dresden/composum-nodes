@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MessageFormatter;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
@@ -113,7 +113,7 @@ public class Message implements Cloneable {
      * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
      *                  transmitted with JSON!
      */
-    public Message(@Nullable Level level, @Nonnull String rawText, Object... arguments) {
+    public Message(@Nullable Level level, @NotNull String rawText, Object... arguments) {
         this.rawText = rawText;
         this.level = level;
         this.category = category;
@@ -128,8 +128,8 @@ public class Message implements Cloneable {
      * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
      *                  transmitted with JSON!
      */
-    @Nonnull
-    public static Message error(@Nonnull String text, Object... arguments) {
+    @NotNull
+    public static Message error(@NotNull String text, Object... arguments) {
         return new Message(Level.error, text, arguments);
     }
 
@@ -144,7 +144,7 @@ public class Message implements Cloneable {
      *                  transmitted with JSON!
      */
     public static Message validationError(@Nullable final String context, @Nullable final String label,
-                                          @Nonnull final String text, Object... args) {
+                                          @NotNull final String text, Object... args) {
         return error(text, args).setContext(context).setLabel(label).setLogLevel(Level.debug);
     }
 
@@ -155,8 +155,8 @@ public class Message implements Cloneable {
      * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
      *                  transmitted with JSON!
      */
-    @Nonnull
-    public static Message warn(@Nonnull String text, Object... arguments) {
+    @NotNull
+    public static Message warn(@NotNull String text, Object... arguments) {
         return new Message(Level.warn, text, arguments);
     }
 
@@ -171,7 +171,7 @@ public class Message implements Cloneable {
      *                  transmitted with JSON!
      */
     public static Message validationWarn(@Nullable final String context, @Nullable final String label,
-                                         @Nonnull final String text, Object... args) {
+                                         @NotNull final String text, Object... args) {
         return warn(text, args).setContext(context).setLabel(label).setLogLevel(Level.debug);
     }
 
@@ -182,8 +182,8 @@ public class Message implements Cloneable {
      * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
      *                  transmitted with JSON!
      */
-    @Nonnull
-    public static Message info(@Nonnull String text, Object... arguments) {
+    @NotNull
+    public static Message info(@NotNull String text, Object... arguments) {
         return new Message(Level.info, text, arguments);
     }
 
@@ -198,7 +198,7 @@ public class Message implements Cloneable {
      *                  transmitted with JSON!
      */
     public static Message validationInfo(@Nullable final String context, @Nullable final String label,
-                                         @Nonnull final String text, Object... args) {
+                                         @NotNull final String text, Object... args) {
         return info(text, args).setContext(context).setLabel(label).setLogLevel(Level.debug);
     }
 
@@ -209,8 +209,8 @@ public class Message implements Cloneable {
      * @param arguments optional arguments placed in placeholders. Caution: must be primitive types if this is to be
      *                  transmitted with JSON!
      */
-    @Nonnull
-    public static Message debug(@Nonnull String text, Object... arguments) {
+    @NotNull
+    public static Message debug(@NotNull String text, Object... arguments) {
         return new Message(Level.debug, text, arguments);
     }
 
@@ -219,8 +219,8 @@ public class Message implements Cloneable {
      *
      * @return this for builder style operation chaining.
      */
-    @Nonnull
-    public Message addDetail(@Nonnull Message detailMessage) {
+    @NotNull
+    public Message addDetail(@NotNull Message detailMessage) {
         if (details == null) {
             details = new ArrayList<>();
         }
@@ -247,7 +247,7 @@ public class Message implements Cloneable {
     /**
      * The kind of message - informational, warning, error. Default is {@link Level#info}.
      */
-    @Nonnull
+    @NotNull
     public Level getLevel() {
         return level != null ? level : Level.info;
     }
@@ -271,7 +271,7 @@ public class Message implements Cloneable {
      *
      * @return {this} for chaining calls in builder-style
      */
-    @Nonnull
+    @NotNull
     public Message setLogLevel(@Nullable Level logLevel) {
         this.logLevel = logLevel;
         return this;
@@ -281,7 +281,7 @@ public class Message implements Cloneable {
      * The raw, un-i18n-ed, human readable message text, possibly with argument placeholders {@literal {}}.
      * If i18n is wanted, this is the key for the i18n - all variable parts should be put into the arguments. Mandatory part of a message.
      */
-    @Nonnull
+    @NotNull
     public String getRawText() {
         return rawText;
     }
@@ -292,7 +292,7 @@ public class Message implements Cloneable {
      * and {@link #getArguments()}. In JSON-serializations, the {@link #getRawText()} is i18n-ed to the request when
      * {@link MessageTypeAdapterFactory} is correctly used.
      */
-    @Nonnull
+    @NotNull
     public String getText() {
         if (text != null) {
             return text;
@@ -342,7 +342,7 @@ public class Message implements Cloneable {
      *
      * @return this
      */
-    @Nonnull
+    @NotNull
     public Message setPath(@Nullable String path) {
         this.path = path;
         return this;
@@ -352,7 +352,7 @@ public class Message implements Cloneable {
      * Optional arguments used in placeholders of the {@link #getText()}. If transmission over JSON is needed,
      * these must be serializable with GSON.
      */
-    @Nonnull
+    @NotNull
     public List<Object> getArguments() {
         return arguments != null ? Arrays.asList(arguments) : Collections.emptyList();
     }
@@ -372,7 +372,7 @@ public class Message implements Cloneable {
      *
      * @return this for builder style operation chaining.
      */
-    @Nonnull
+    @NotNull
     public Message setCategory(@Nullable String category) {
         this.category = category;
         return this;
@@ -393,7 +393,7 @@ public class Message implements Cloneable {
      *
      * @return this for builder style operation chaining.
      */
-    @Nonnull
+    @NotNull
     public Message setLabel(@Nullable String label) {
         this.label = label;
         return this;
@@ -414,7 +414,7 @@ public class Message implements Cloneable {
      *
      * @return this for builder style operation chaining.
      */
-    @Nonnull
+    @NotNull
     public Message setContext(@Nullable String context) {
         this.context = context;
         return this;
@@ -425,7 +425,7 @@ public class Message implements Cloneable {
      *
      * @see #addDetail(Message)
      */
-    @Nonnull
+    @NotNull
     public List<Message> getDetails() {
         return details != null ? Collections.unmodifiableList(details) : Collections.emptyList();
     }
@@ -469,7 +469,7 @@ public class Message implements Cloneable {
      * @return this message for builder-style operation-chaining.
      * @see MessageContainer#MessageContainer(Logger)
      */
-    @Nonnull
+    @NotNull
     public Message logInto(@Nullable Logger log) {
         return logInto(log, null);
     }
@@ -483,7 +483,7 @@ public class Message implements Cloneable {
      * @param cause optionally, an exception that is logged as a cause of the message
      * @return this message for builder-style operation-chaining.
      */
-    @Nonnull
+    @NotNull
     public Message logInto(@Nullable Logger log, @Nullable Throwable cause) {
         Throwable loggedCause = cause != null ? cause : getThrowableArgument();
         Level thelevel = getLogLevel();

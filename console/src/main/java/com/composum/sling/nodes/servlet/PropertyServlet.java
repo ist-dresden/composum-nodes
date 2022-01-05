@@ -1,8 +1,10 @@
 package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.mapping.MappingRules;
+import com.composum.sling.core.service.RestrictedService;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
@@ -31,14 +33,14 @@ import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.tika.mime.MimeType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -58,12 +60,13 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
 
+import static com.composum.sling.nodes.servlet.PropertyServlet.SERVICE_KEY;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 
 /**
  * The service servlet handling one single JCR property for one resource.
  */
-@Component(service = Servlet.class,
+@Component(service = {Servlet.class, RestrictedService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Property Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + PropertyServlet.SERVLET_PATH,
@@ -74,9 +77,12 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
         },
         immediate = true
 )
+@Restricted(key = SERVICE_KEY)
 public class PropertyServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(PropertyServlet.class);
+
+    public static final String SERVICE_KEY = "nodes/repository/properties";
 
     public static final String SERVLET_PATH = "/bin/cpm/nodes/property";
     public static final StringFilter DEFAULT_PROPS_FILTER = new StringFilter.BlackList();
@@ -95,13 +101,9 @@ public class PropertyServlet extends AbstractServiceServlet {
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
+    @NotNull
     protected ServletOperationSet<Extension, Operation> getOperations() {
         return operations;
-    }
-
-    @Override
-    protected boolean isEnabled() {
-        return coreConfig.isEnabled(this);
     }
 
     /**
@@ -143,8 +145,8 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class CheckXssOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          @Nullable final ResourceHandle resource)
                 throws RepositoryException, IOException, ServletException {
             Status status = new Status(request, response);
@@ -165,8 +167,8 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class MapGetOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -208,8 +210,8 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class GetOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -241,8 +243,8 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class PutOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -327,16 +329,16 @@ public class PropertyServlet extends AbstractServiceServlet {
             public Object result;
         }
 
-        protected ResourceHandle prepare(@Nonnull final SlingHttpServletRequest request,
-                                         @Nonnull final SlingHttpServletResponse response,
+        protected ResourceHandle prepare(@NotNull final SlingHttpServletRequest request,
+                                         @NotNull final SlingHttpServletResponse response,
                                          ResourceHandle resource)
                 throws RepositoryException {
             return resource;
         }
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -370,13 +372,13 @@ public class PropertyServlet extends AbstractServiceServlet {
             }
         }
 
-        protected abstract void doIt(@Nonnull final SlingHttpServletRequest request,
-                                     @Nonnull final SlingHttpServletResponse response,
-                                     @Nonnull final ResourceHandle resource, @Nullable final Node node,
-                                     @Nonnull final BulkParameters parameters, @Nonnull final JsonWriter writer)
+        protected abstract void doIt(@NotNull final SlingHttpServletRequest request,
+                                     @NotNull final SlingHttpServletResponse response,
+                                     @NotNull final ResourceHandle resource, @Nullable final Node node,
+                                     @NotNull final BulkParameters parameters, @NotNull final JsonWriter writer)
                 throws RepositoryException, ServletException, IOException;
 
-        protected void clearProperty(@Nonnull final Node node, @Nonnull final String name)
+        protected void clearProperty(@NotNull final Node node, @NotNull final String name)
                 throws RepositoryException {
             try {
                 Property property = node.getProperty(name);
@@ -399,10 +401,10 @@ public class PropertyServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
-                         @Nonnull final ResourceHandle resource, @Nullable final Node node,
-                         @Nonnull final BulkParameters parameters, @Nonnull final JsonWriter writer)
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @NotNull final ResourceHandle resource, @Nullable final Node node,
+                         @NotNull final BulkParameters parameters, @NotNull final JsonWriter writer)
                 throws RepositoryException, ServletException, IOException {
 
             Session session = node != null ? node.getSession() : null;
@@ -436,8 +438,8 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class CopyOperation extends BulkOperation {
 
         @Override
-        protected ResourceHandle prepare(@Nonnull final SlingHttpServletRequest request,
-                                         @Nonnull final SlingHttpServletResponse response,
+        protected ResourceHandle prepare(@NotNull final SlingHttpServletRequest request,
+                                         @NotNull final SlingHttpServletResponse response,
                                          ResourceHandle resource)
                 throws RepositoryException {
 
@@ -449,10 +451,10 @@ public class PropertyServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
-                         @Nonnull final ResourceHandle resource, @Nullable final Node node,
-                         @Nonnull final BulkParameters parameters, @Nonnull final JsonWriter writer)
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @NotNull final ResourceHandle resource, @Nullable final Node node,
+                         @NotNull final BulkParameters parameters, @NotNull final JsonWriter writer)
                 throws RepositoryException, ServletException, IOException {
 
             if (parameters.path != null && parameters.names != null) {
@@ -512,8 +514,8 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class GetBinaryOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -566,7 +568,7 @@ public class PropertyServlet extends AbstractServiceServlet {
             }
         }
 
-        protected void prepareResponse(@Nonnull final SlingHttpServletResponse response,
+        protected void prepareResponse(@NotNull final SlingHttpServletResponse response,
                                        ResourceHandle resource, @Nullable final Long size) {
             MimeType mimeType = MimeTypeUtil.getMimeType(resource);
             if (mimeType != null) {
@@ -588,7 +590,7 @@ public class PropertyServlet extends AbstractServiceServlet {
             response.setStatus(SC_OK);
         }
 
-        protected void sendContent(@Nonnull final SlingHttpServletResponse response, @Nullable final InputStream input)
+        protected void sendContent(@NotNull final SlingHttpServletResponse response, @Nullable final InputStream input)
                 throws IOException {
             if (input != null) {
                 BufferedInputStream buffered = new BufferedInputStream(input);
@@ -616,8 +618,8 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class PostBinaryOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
@@ -668,8 +670,8 @@ public class PropertyServlet extends AbstractServiceServlet {
     protected class PutBinaryOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws ServletException, IOException {
 

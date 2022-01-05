@@ -15,6 +15,8 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,11 +129,13 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
-                         ResourceHandle resource)
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable  ResourceHandle resource)
                 throws ServletException, IOException {
 
-            if (!(resource = AbstractServiceServlet.tryToUseRawSuffix(request, resource)).isValid()) {
+            if (resource == null ||
+                    !(resource = AbstractServiceServlet.tryToUseRawSuffix(request, resource)).isValid()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
@@ -469,20 +473,25 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         String type = null;
         String mimeType = MimeTypeUtil.getMimeType(resource, "");
         if (StringUtils.isNotBlank(mimeType)) {
-            int delim = mimeType.indexOf('/');
-            String major = mimeType.substring(0, delim);
-            String minor = mimeType.substring(delim + 1);
-            type = major;
-            if ("text".equals(major)) {
-                type += "-" + minor;
-            } else if ("application".equals(major)) {
-                type = minor;
-            }
-            type = type.toLowerCase();
+            type = getMimeTypeKey(mimeType);
         }
         if (StringUtils.isNotBlank(type) && StringUtils.isNotBlank(prefix)) {
             type = prefix + type;
         }
         return type;
+    }
+
+    @NotNull
+    public static String getMimeTypeKey(String mimeType) {
+        int delim = mimeType.indexOf('/');
+        String major = mimeType.substring(0, delim);
+        String minor = mimeType.substring(delim + 1);
+        String type = major;
+        if ("text".equals(major)) {
+            type += "-" + minor;
+        } else if ("application".equals(major)) {
+            type = minor;
+        }
+        return type.toLowerCase();
     }
 }

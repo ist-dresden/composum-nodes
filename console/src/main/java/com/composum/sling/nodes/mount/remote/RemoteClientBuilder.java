@@ -2,8 +2,7 @@ package com.composum.sling.nodes.mount.remote;
 
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClientBuilder;
-
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * a service interface for extending the building of the remote HTTP client
@@ -17,12 +16,12 @@ public interface RemoteClientBuilder {
      *
      * @param context the context object to configure
      */
-    void configure(@Nonnull HttpClientContext context);
+    void configure(@NotNull HttpClientContext context);
 
     /**
      * Extends the configuration of the HTTP client builder for remote clients
      *
      * @param builder the builder instance to extend
      */
-    void configure(@Nonnull HttpClientBuilder builder);
+    void configure(@NotNull HttpClientBuilder builder);
 }

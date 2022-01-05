@@ -10,9 +10,12 @@
                 ]"
             embed="[
                     composum/nodes/console/components/codeeditor/clientlib,
+                    composum/nodes/browser/css/variables.css,
                     composum/nodes/browser/css/nodes.css,
                     composum/nodes/browser/css/browser.css,
                     composum/nodes/browser/css/properties.css,
+                    category:composum.nodes.console.browser.references,
+                    category:composum.nodes.console.browser.merged,
                     composum/nodes/browser/components/favorites/clientlib
                 ]"/>
     <js jcr:primaryType="sling:OrderedFolder"
@@ -34,6 +37,8 @@
                     composum/nodes/browser/js/policiesTable.js,
                     composum/nodes/browser/js/policiesTab.js,
                     composum/nodes/browser/js/version.js,
+                    category:composum.nodes.console.browser.references,
+                    category:composum.nodes.console.browser.merged,
                     composum/nodes/browser/js/nodeview.js
                 ]"/>
 </jcr:root>

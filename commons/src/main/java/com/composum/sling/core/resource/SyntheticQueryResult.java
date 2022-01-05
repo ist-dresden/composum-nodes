@@ -11,7 +11,7 @@ import org.apache.sling.api.wrappers.ModifiableValueMapDecorator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import javax.jcr.RepositoryException;
 import javax.jcr.query.QueryResult;
 import java.util.Collections;
@@ -57,7 +57,7 @@ public class SyntheticQueryResult extends SyntheticResource {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public Iterator<Resource> listChildren() {
         try {
             return new ResourceNodeIterator(getResourceResolver(), queryResult.getNodes(), filter);

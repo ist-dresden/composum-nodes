@@ -21,7 +21,7 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -142,7 +142,7 @@ public interface BeanContext extends Adaptable {
      */
     @SuppressWarnings("deprecation")
     @Override
-    <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type);
+    <AdapterType> AdapterType adaptTo(@NotNull Class<AdapterType> type);
 
     /**
      * Returns a clone of this context with the resource overridden, or <code>this</code> if it already had this
@@ -226,7 +226,7 @@ public interface BeanContext extends Adaptable {
         }
 
         @Override
-        public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
+        public <AdapterType> AdapterType adaptTo(@NotNull Class<AdapterType> type) {
             if (typeFits(type, BeanContext.class, this, BeanContext.class))
                 return type.cast(this);
             if (typeFits(type, ServletRequest.class, getRequest(), SlingHttpServletRequest.class))
@@ -605,7 +605,7 @@ public interface BeanContext extends Adaptable {
          * {@inheritDoc} Adapts to {@link PageContext} as well.
          */
         @Override
-        public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
+        public <AdapterType> AdapterType adaptTo(@NotNull Class<AdapterType> type) {
             if (typeFits(type, PageContext.class, pageContext, PageContext.class)) {
                 return type.cast(pageContext);
             }
@@ -749,7 +749,7 @@ public interface BeanContext extends Adaptable {
          * {@inheritDoc} Adapts to {@link ServletContext} and {@link BundleContext} as well.
          */
         @Override
-        public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
+        public <AdapterType> AdapterType adaptTo(@NotNull Class<AdapterType> type) {
             if (typeFits(type, ServletContext.class, servletContext, ServletContext.class))
                 return type.cast(servletContext);
             if (typeFits(type, BundleContext.class, bundleContext, BundleContext.class))
@@ -865,7 +865,7 @@ public interface BeanContext extends Adaptable {
         }
 
         @Override
-        public <AdapterType> AdapterType adaptTo(@Nonnull Class<AdapterType> type) {
+        public <AdapterType> AdapterType adaptTo(@NotNull Class<AdapterType> type) {
             return beanContext.adaptTo(type);
         }
 

@@ -8,6 +8,12 @@
 
     (function (browser, console, core) {
 
+        browser.genericTabTypes = {};
+
+        browser.registerGenericTab = function (id, type) {
+            browser.genericTabTypes[id] = type;
+        };
+
         /**
          * the abstract tab to display the current resource by their own view with
          * typical Sling URL variations specified in the views toolbar
@@ -18,13 +24,6 @@
             urlPattern: new RegExp('^(.*/[^/]+)(\\.[^.]+)$'),
 
             initialize: function (options) {
-                /* get abstract members
-                 options: {
-                 displayKey: '...',
-                 loadContent: function(url) {
-                 this.$iframe.attr('src', url);
-                 }
-                 },*/
                 this.displayKey = options.displayKey;
                 this.loadContent = options.loadContent;
                 /* general initialization */
@@ -77,7 +76,9 @@
 
             reload: function () {
                 browser.nodeView.sourceViewTabVisibility();
-                this.loadContent(this.getUrl());
+                if (_.isFunction(this.loadContent)) {
+                    this.loadContent(this.getUrl());
+                }
             },
 
             open: function (event) {
@@ -149,7 +150,7 @@
                         }
                     }
                 } else {
-                    extension = (urlMatch ? urlMatch[2] : ".html");
+                    extension = (urlMatch ? urlMatch[2] : (this.$extension.length > 0 ? '.html' : ''));
                 }
                 url += extension;
                 var suffix = this.$suffix.val();
@@ -306,7 +307,7 @@
 
             reload: function () {
                 browser.AbstractDisplayTab.prototype.reload.apply(this);
-                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.bin' + this.$el.data('file')));
+                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.attachment.bin' + this.$el.data('file')));
             },
 
             upload: function () {
@@ -340,23 +341,18 @@
         browser.ImageTab = browser.AbstractFileTab.extend({
 
             initialize: function (options) {
-                this.isAsset = !!this.$el.data('asset');
                 options = _.extend(options, {
                     displayKey: 'imageView',
                     loadContent: _.bind(function (url) {
-                        if (!this.urlHasModifiers() && !this.isAsset) {
+                        if (!this.urlHasModifiers()) {
                             url = '/bin/cpm/nodes/node.load.bin' + url;
                         }
+                        this.$image.attr('src', '');
                         this.$image.attr('src', core.getContextUrl(url));
                     }, this)
                 });
                 browser.AbstractFileTab.prototype.initialize.apply(this, [options]);
                 this.$image = this.$('.image-frame img');
-            },
-
-            getSelectors: function () {
-                var selectors = this.$selectors.val();
-                return this.isAsset ? selectors || 'asset' : selectors;
             }
         });
 
@@ -371,6 +367,7 @@
                         }
                         var mimeType = this.$el.data('type');
                         this.$source.attr('type', mimeType);
+                        this.$source.attr('src', '');
                         this.$source.attr('src', core.getContextUrl(url));
                     }, this)
                 });
@@ -386,11 +383,16 @@
                 this.editor = core.getWidget(this.$el, '.widget.code-editor-widget', core.components.CodeEditorWidget);
                 this.$('.editor-toolbar .update').click(_.bind(this.upload, this));
                 this.$download = this.$('.editor-toolbar .download');
+                this.$('.detail-toolbar .reload').click(_.bind(function () {
+                    this.editor.loadText();
+                }, this));
             },
 
             reload: function () {
-                this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.bin'
-                    + this.$('.editor-frame .code-editor').data('file')));
+                window.setTimeout(_.bind(function () {
+                    this.$download.attr('href', core.getContextUrl('/bin/cpm/nodes/node.download.attachment.bin'
+                        + this.$('.editor-frame .code-editor').data('file')));
+                }, this), 200);
             },
 
             resize: function () {
@@ -845,9 +847,7 @@
             tabSelected: function (event) {
                 browser.nodeView.tabSelected(event);
             }
-
         });
-
 
         //
         // detail view (console)
@@ -885,15 +885,25 @@
             selector: '> .xml',
             tabType: browser.XmlTab
         }, {
+            selector: '> .references',
+            tabType: browser.references.Tab
+        }, {
+            selector: '> .merged',
+            tabType: browser.merged.Tab
+        }, {
             selector: '> .acl',
             tabType: browser.PoliciesTab
         }, {
             selector: '> .versions',
             tabType: browser.VersionsTab
-        }, {
-            // the fallback to the basic implementation as a default rule
-            selector: '> div',
-            tabType: core.console.DetailTab
+        }, function ($detailContent) {
+            // the generic implementation...
+            var $content = $detailContent.find('> div');
+            var type = $content.length > 0 ? browser.genericTabTypes[$content.data('id')] : undefined;
+            return {
+                selector: '> div',
+                tabType: type ? type : core.console.DetailTab
+            };
         }];
 
         /**

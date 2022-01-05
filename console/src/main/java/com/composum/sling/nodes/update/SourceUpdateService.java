@@ -1,8 +1,8 @@
 package com.composum.sling.nodes.update;
 
 import org.apache.sling.api.resource.ResourceResolver;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
@@ -20,7 +20,7 @@ public interface SourceUpdateService {
      * @param nodePath       the path of the node we want to update
      * @throws IllegalArgumentException if something about the parameters is too fishy to go on
      */
-    void updateFromZip(@Nonnull ResourceResolver resolver, @Nonnull InputStream zipInputStream, @Nonnull String nodePath)
+    void updateFromZip(@NotNull ResourceResolver resolver, @NotNull InputStream zipInputStream, @NotNull String nodePath)
             throws IOException, RepositoryException, TransformerException, IllegalArgumentException;
 
 }

@@ -1,6 +1,8 @@
 package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.service.RestrictedService;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
@@ -14,6 +16,8 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
@@ -22,13 +26,13 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import java.io.IOException;
 
-@Component(service = Servlet.class,
+import static com.composum.sling.nodes.servlet.ComponentsServlet.SERVICE_KEY;
+
+@Component(service = {Servlet.class, RestrictedService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Components Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + ComponentsServlet.SERVLET_PATH,
@@ -36,9 +40,12 @@ import java.io.IOException;
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_POST
         }
 )
+@Restricted(key = SERVICE_KEY)
 public class ComponentsServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(ComponentsServlet.class);
+
+    public static final String SERVICE_KEY = "nodes/components/operations";
 
     public static final String SERVLET_PATH = "/bin/cpm/nodes/components";
 
@@ -64,6 +71,7 @@ public class ComponentsServlet extends AbstractServiceServlet {
     protected ServletOperationSet<ComponentsServlet.Extension, ComponentsServlet.Operation> operations =
             new ServletOperationSet<>(ComponentsServlet.Extension.json);
 
+    @NotNull
     protected ServletOperationSet<ComponentsServlet.Extension, ComponentsServlet.Operation> getOperations() {
         return operations;
     }
@@ -71,10 +79,6 @@ public class ComponentsServlet extends AbstractServiceServlet {
     @Activate
     private void activate(final BundleContext bundleContext) {
         this.bundleContext = bundleContext;
-    }
-
-    protected boolean isEnabled() {
-        return nodesConfig.isEnabled(this);
     }
 
     /**
@@ -92,7 +96,7 @@ public class ComponentsServlet extends AbstractServiceServlet {
     }
 
     @Nullable
-    protected static String getComponentType(@Nonnull final SlingHttpServletRequest request,
+    protected static String getComponentType(@NotNull final SlingHttpServletRequest request,
                                              @Nullable final ResourceHandle resource) {
         String parameter = request.getParameter(PARAM_TYPE);
         if (StringUtils.isBlank(parameter)) {
@@ -107,8 +111,8 @@ public class ComponentsServlet extends AbstractServiceServlet {
     protected class CreateOverlayOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          @Nullable final ResourceHandle resource)
                 throws IOException {
             final Status status = new Status(request, response, LOG);
@@ -131,8 +135,8 @@ public class ComponentsServlet extends AbstractServiceServlet {
     protected class RemoveOverlayOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          @Nullable final ResourceHandle resource)
                 throws IOException {
             final Status status = new Status(request, response, LOG);
