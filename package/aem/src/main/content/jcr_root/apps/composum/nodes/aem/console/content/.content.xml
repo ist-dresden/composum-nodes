@@ -24,7 +24,7 @@
     <assets
             jcr:primaryType="nt:unstructured"
             jcr:title="Assets"
-            sling:redirect="/assets.html${path}"
+            sling:redirect="/assets.html${editable}"
             pathCondition="^/content/dam(/.+)?$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
@@ -34,7 +34,7 @@
     <fragments
             jcr:primaryType="nt:unstructured"
             jcr:title="Fragments"
-            sling:redirect="/aem/experience-fragments.html${path}"
+            sling:redirect="/aem/experience-fragments.html${editable}"
             pathCondition="^/content/experience-fragments(/.+)?$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
@@ -44,7 +44,7 @@
     <sites
             jcr:primaryType="nt:unstructured"
             jcr:title="Sites"
-            sling:redirect="/sites.html${path}"
+            sling:redirect="/sites.html${editable}"
             pathCondition="^/content(?!(/(dam|experience-fragments)/)).*$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
@@ -54,7 +54,7 @@
     <edit
             jcr:primaryType="nt:unstructured"
             jcr:title="Edit"
-            sling:redirect="/editor.html${path.html}"
+            sling:redirect="/editor.html${editable.html}"
             pathCondition="^/content(?!(/(dam)/)).*$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
@@ -64,7 +64,7 @@
     <view
             jcr:primaryType="nt:unstructured"
             jcr:title="View"
-            sling:redirect="${path.html}"
+            sling:redirect="${editable.html}"
             pathCondition="^/content(?!(/(dam)/)).*$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"

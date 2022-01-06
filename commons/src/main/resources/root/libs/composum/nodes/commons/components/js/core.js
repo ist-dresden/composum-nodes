@@ -323,7 +323,7 @@
         },
 
         getComposumPath: function (uri) {
-            if (uri && core.const.composumBase && uri.indexOf(core.const.composumBase) !== 0) {
+            if (uri && uri.indexOf(core.const.composumBase) !== 0) {
                 uri = core.const.composumBase + uri;
             }
             return uri;
@@ -331,7 +331,7 @@
 
         getContextUrl: function (url) {
             if (url && !url.match(/^https?:\/\//i)) {  // ignore 'external' URLs
-                if (core.const.contextPath && url.indexOf(core.const.contextPath) !== 0) {
+                if (url.indexOf(core.const.contextPath) !== 0) {
                     url = core.const.contextPath + url;
                 }
             }
