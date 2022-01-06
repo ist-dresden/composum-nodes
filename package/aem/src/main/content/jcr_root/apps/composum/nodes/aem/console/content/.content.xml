@@ -6,8 +6,9 @@
     <crxde
             jcr:primaryType="nt:unstructured"
             jcr:title="CRXDE"
-            sling:resourceType="composum/nodes/aem/console/components/crxde"
             description="composum/nodes/aem/console/components/crxde/description"
+            sling:redirect="/crx/de/index.jsp#${path}"
+            dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
             order="{Long}20"
             target="aem"

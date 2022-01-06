@@ -8,6 +8,8 @@ import com.composum.sling.core.util.ValueEmbeddingWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestPathInfo;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolver;
@@ -244,6 +246,12 @@ public class ServletResourceType extends GenericServlet {
                 "/js/autosize.min.js",
                 "/js/support.js"
         };
+        public final String[] CSRF_OPTIONS = new String[]{
+                "/etc/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js",
+                "/etc/clientlibs/granite/jquery/granite/csrf/source/csrf.js",
+                "/libs/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js",
+                "/libs/clientlibs/granite/jquery/granite/csrf/source/csrf.js"
+        };
 
         protected final ValueMap properties;
         protected final String[] cssReferences;
@@ -363,6 +371,7 @@ public class ServletResourceType extends GenericServlet {
             for (final String jsFile : JS_FILES) {
                 appendJsLink(request, writer, jsFile);
             }
+            appendCsrfLinks(request, writer);
             writer.append("</head>\n" +
                     "<body class=\"ui-widget webconsole-plugin\">\n" +
                     "<div id=\"main\" class=\"").append(cssClass).append("\">\n");
@@ -390,6 +399,20 @@ public class ServletResourceType extends GenericServlet {
             writer.append("    <script src=\"")
                     .append(request.getContextPath()).append(coreConfig.getComposumBase())
                     .append(PLUGIN_TOOL_PATH).append(path).append("\" type=\"text/javascript\"></script>\n");
+        }
+
+        protected void appendCsrfLinks(@NotNull final HttpServletRequest request, @NotNull final PrintWriter writer) {
+            if (request instanceof SlingHttpServletRequest) {
+                final SlingHttpServletRequest slingRequest = (SlingHttpServletRequest) request;
+                final ResourceResolver resolver = slingRequest.getResourceResolver();
+                for (final String path : CSRF_OPTIONS) {
+                    final Resource resource = resolver.getResource(path);
+                    if (resource != null) {
+                        writer.append("    <script src=\"").append(request.getContextPath()).append(path)
+                                .append("\" type=\"text/javascript\"></script>\n");
+                    }
+                }
+            }
         }
     }
 

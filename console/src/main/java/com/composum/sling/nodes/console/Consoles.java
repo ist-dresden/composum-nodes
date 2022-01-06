@@ -199,12 +199,14 @@ public class Consoles implements HttpUtil.CachableInstance {
 
         @NotNull
         public String getDescription() {
-            return description.startsWith("/") ? description : coreConfig.getComposumBase() + description;
+            return StringUtils.isNotBlank(description)
+                    ? (description.startsWith("/") ? description : coreConfig.getComposumBase() + description) : "";
         }
 
         @NotNull
         public String getContentSrc() {
-            return contentSrc.startsWith("/") ? contentSrc : coreConfig.getComposumBase() + contentSrc;
+            return StringUtils.isNotBlank(contentSrc)
+                    ? (contentSrc.startsWith("/") ? contentSrc : coreConfig.getComposumBase() + contentSrc) : "";
         }
 
         @NotNull
