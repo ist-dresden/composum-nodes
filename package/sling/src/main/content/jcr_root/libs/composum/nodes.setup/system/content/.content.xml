@@ -77,6 +77,14 @@
                 contentSrc="composum/nodes/system/tools/sling/jobs.html"
                 categories="[system]"
                 precondition="[servlet:composum/nodes/system/tools/sling/jobs,restrictions:system/sling/jobs=read,resource:composum/nodes/system/tools/sling/jobs]"/>
+        <logs jcr:primaryType="nt:unstructured"
+                jcr:title="Log Support"
+                consoleId="tools-sling-logs"
+                order="{Long}600"
+                sling:resourceType="composum/nodes/console/tools/page"
+                contentSrc="composum/nodes/system/tools/sling/logs.html"
+                categories="[system]"
+                precondition="[servlet:composum/nodes/system/tools/sling/logs,restrictions:system/sling/logs=read,resource:composum/nodes/system/tools/sling/logs]"/>
     </sling>
     <osgi jcr:primaryType="nt:unstructured"
             consoleId="tools-osgi"
