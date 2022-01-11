@@ -39,6 +39,7 @@
                         </Include-Resource>
                         <Sling-Initial-Content>
                             root/libs/composum/nodes/install/org.apache.sling.jcr.base.internal.LoginAdminWhitelist.fragment-composum_core_v2.config;path:=/libs/composum/nodes/install;overwrite:=true,
+                            root/libs/composum/nodes/install/com.composum.sling.core.proxy.GenericProxyRequest~system-health.config;path:=/libs/composum/nodes/install;overwrite:=true,
                             root/libs/composum/nodes/install/com.composum.sling.nodes.servlet.ServletResourceType~cpm-clientlibs.config;path:=/libs/composum/nodes/install;overwrite:=true,
                             root/libs/composum/nodes/install/com.composum.sling.nodes.servlet.ServletResourceType~cpm-servicegraph.config;path:=/libs/composum/nodes/install;overwrite:=true,
                             root/libs/composum/nodes/install/com.composum.sling.nodes.servlet.ServletResourceType~runtime-threaddump.config;path:=/libs/composum/nodes/install;overwrite:=true,

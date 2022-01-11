@@ -22,6 +22,14 @@
             order="{Long}30"
             target="aem"
             precondition="[restrictions:nodes/aem/packmgr=read,http:/crx/packmgr/index.jsp,resource:composum/nodes/aem/console/components/packmgr]"/>
+    <aem
+            jcr:primaryType="nt:unstructured"
+            jcr:title="AEM"
+            sling:redirect="/aem/start.html"
+            categories="[aem,nodes]"
+            order="{Long}250"
+            target="aem"
+            precondition="[restrictions:nodes/aem=read,runmode:author]"/>
     <assets
             jcr:primaryType="nt:unstructured"
             jcr:title="Assets"
@@ -29,7 +37,7 @@
             pathCondition="^/content/dam(/.+)?$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
-            order="{Long}200"
+            order="{Long}300"
             target="aem"
             precondition="[restrictions:nodes/aem/assets=read,runmode:author]"/>
     <fragments
@@ -39,7 +47,7 @@
             pathCondition="^/content/experience-fragments(/.+)?$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
-            order="{Long}300"
+            order="{Long}320"
             target="aem"
             precondition="[restrictions:nodes/aem/fragments=read,runmode:author]"/>
     <sites
@@ -49,7 +57,7 @@
             pathCondition="^/content(?!(/(dam|experience-fragments)/)).*$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
-            order="{Long}400"
+            order="{Long}340"
             target="aem"
             precondition="[restrictions:nodes/aem/sites=read,runmode:author]"/>
     <edit
@@ -59,7 +67,7 @@
             pathCondition="^/content(?!(/(dam)/)).*$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
-            order="{Long}500"
+            order="{Long}360"
             target="_blank"
             precondition="[restrictions:nodes/aem/edit=read,runmode:author]"/>
     <view
@@ -69,7 +77,7 @@
             pathCondition="^/content(?!(/(dam)/)).*$"
             dynamicRedirect="{Boolean}true"
             categories="[aem,nodes]"
-            order="{Long}550"
+            order="{Long}380"
             target="_blank"
             precondition="[restrictions:nodes/aem/view=read]"/>
 </jcr:root>

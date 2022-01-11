@@ -158,6 +158,7 @@
                             <includes>
                                 <include>.*/.*\.CoreConfigImpl.*</include>
                                 <include>.*/.*\.LoginAdminWhitelist\.fragment-composum_core.*</include>
+                                <include>.*/.*\.GenericProxyRequest~system-health.*</include>
                                 <include>.*/.*\.ServletResourceType~cpm-clientlibs.*</include>
                                 <include>.*/.*\.ServletResourceType~cpm-servicegraph.*</include>
                                 <include>.*/.*\.ServletResourceType~runtime-threaddump.*</include>
