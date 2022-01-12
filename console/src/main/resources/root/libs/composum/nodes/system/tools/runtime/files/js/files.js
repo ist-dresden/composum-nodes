@@ -38,22 +38,41 @@
                 this.$scroll = this.$('.btn.scroll');
                 this.$wrap = this.$('.btn.wrap');
                 this.$limit = this.$('.limit input');
-                this.$filter = this.$('.filter input');
+                this.$filter = this.$('.filter .pattern');
+                this.$prepend = this.$('.filter .prepend');
+                this.$append = this.$('.filter .append');
                 this.$download = this.$('.btn.download');
                 this.$reload = this.$('.btn.reload');
                 this.$open = this.$('.btn.open');
                 this.$limit.val(core.console.getProfile().get(files.profileId, 'limit', undefined));
                 this.$filter.val(core.console.getProfile().get(files.profileId, 'filter', undefined));
+                this.$prepend.val(core.console.getProfile().get(files.profileId, 'prepend', undefined));
+                this.$append.val(core.console.getProfile().get(files.profileId, 'append', undefined));
                 this.$limit.on('change', _.bind(function () {
                     core.console.getProfile().set(files.profileId, 'limit', this.$limit.val());
-                    this.panel.view.reload();
+                }, this));
+                this.$('.filter .clear').click(_.bind(function () {
+                    this.$filter.val('');
+                    core.console.getProfile().set(files.profileId, 'filter', this.$filter.val());
+                }, this));
+                this.$('.filter .problems').click(_.bind(function () {
+                    this.$filter.val('(\\\\*(WARN|ERROR)\\\\*|Exception|Throwable|Error)');
+                    core.console.getProfile().set(files.profileId, 'filter', this.$filter.val());
                 }, this));
                 this.$filter.on('change', _.bind(function () {
                     core.console.getProfile().set(files.profileId, 'filter', this.$filter.val());
-                    this.panel.view.reload();
+                }, this));
+                this.$prepend.on('change', _.bind(function () {
+                    core.console.getProfile().set(files.profileId, 'prepend', this.$prepend.val());
+                }, this));
+                this.$append.on('change', _.bind(function () {
+                    core.console.getProfile().set(files.profileId, 'append', this.$append.val());
                 }, this));
                 this.$reload.click(_.bind(function () {
                     this.panel.view.reload();
+                }, this));
+                this.$download.click(_.bind(function () {
+                    this.panel.view.download();
                 }, this));
                 this.$tail.click(_.bind(function () {
                     this.panel.view.toggleTail();
@@ -70,7 +89,6 @@
             },
 
             fileSelected: function (data) {
-                this.$download.attr('href', data.uri ? data.uri : '#');
                 if (data.isText && data.path) {
                     this.$open.attr('href', core.getContextUrl(files.component + '.view.html'
                         + core.encodePath(data.path)));
@@ -100,7 +118,8 @@
             },
 
             getFilter: function () {
-                return this.$filter.val() || '';
+                return 'filter=' + encodeURIComponent(this.$filter.val() || '')
+                    + '&around=' + encodeURIComponent(this.$prepend.val() + ',' + this.$append.val());
             }
         });
 
@@ -154,7 +173,7 @@
             doTail: function () {
                 if (this.tail && this.file && this.file.isLog) {
                     var url = encodeURI(files.servlet + '.tail.txt') + core.encodePath(this.file.path)
-                        + '?filter=' + encodeURIComponent(this.panel.actions.getFilter());
+                        + '?' + this.panel.actions.getFilter();
                     core.ajaxGet(url, {}, _.bind(function (content) {
                         this.$content.addClass(this.file.type + ' text ' + (this.file.isLog ? 'log' : ''));
                         this.$content.append(content);
@@ -172,8 +191,7 @@
                         this.loading = true;
                         this.$el.addClass('loading');
                         var url = encodeURI(files.servlet + '.tail.0.' + this.panel.actions.getLimit() + '.txt')
-                            + core.encodePath(this.file.path)
-                            + '?filter=' + encodeURIComponent(this.panel.actions.getFilter());
+                            + core.encodePath(this.file.path) + '?' + this.panel.actions.getFilter();
                         core.ajaxGet(url, {}, _.bind(function (content) {
                             this.$content.addClass(this.file.type + ' text ' + (this.file.isLog ? 'log' : ''));
                             this.$content.text(content);
@@ -186,6 +204,12 @@
                         this.$content.addClass(this.file.type);
                     }
                 }
+            },
+
+            download: function () {
+                var url = encodeURI(files.servlet + '.log') + core.encodePath(this.file.path)
+                    + '?' + this.panel.actions.getFilter();
+                window.open(url, '_blank');
             }
         });
 
