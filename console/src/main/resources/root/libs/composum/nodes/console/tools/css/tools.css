@@ -8,10 +8,10 @@ body {
 
 .tools-console.console .content-wrapper {
     position: absolute;
-    top: 48px;
-    left: 7px;
-    right: 7px;
-    bottom: 7px;
+    top: 41px;
+    left: 0;
+    right: 0;
+    bottom: 0;
     overflow: auto;
 }
 

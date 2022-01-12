@@ -58,7 +58,8 @@
     <div class="row">
         <div class="col col-xs-8">
             <div class="basePath form-group">
-                <label class="control-label">${cpn:i18n(slingRequest,'Base Path')}</label>
+                <label class="control-label">${cpn:i18n(slingRequest,'Base Path')}<span
+                        class="widget-hint">${cpn:i18n(slingRequest,'a given base path will be ignored to find relative references')}</span></label>
                 <div class="input-group widget path-widget">
                     <input name="base" type="text" class="form-control"
                            placeholder="${cpn:i18n(slingRequest,'Select path...')}"/>

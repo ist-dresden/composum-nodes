@@ -8,7 +8,7 @@
     ],
     "consoleId": "packages",
     "jcr:title": "Packages",
-    "description": "/libs/composum/nodes/pckgmgr/description",
+    "description": "composum/nodes/pckgmgr/description",
     "sling:redirect": "/bin/packages.html",
     "categories": [
       "core",
@@ -20,7 +20,7 @@
     "precondition": [
       "class:org.apache.jackrabbit.vault.packaging.JcrPackageManager",
       "restrictions:nodes/packages/manager=read",
-      "resource:/libs/composum/nodes/pckgmgr"
+      "resource:composum/nodes/pckgmgr"
     ]
   }
 }

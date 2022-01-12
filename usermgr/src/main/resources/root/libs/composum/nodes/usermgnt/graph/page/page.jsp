@@ -1,12 +1,13 @@
 <%@page session="false" pageEncoding="utf-8" %>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
-<sling:defineObjects/>
-<html data-context-path="${slingRequest.contextPath}">
+<%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
+<cpn:defineObjects/>
+<html data-context-path="${slingRequest.contextPath}" data-composum-base="${composumBase}">
 <head>
     <meta name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1, user-scalable=no"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css"/>
-    <link rel="stylesheet" href="/libs/composum/nodes/usermgnt/graph/view/css/graph.css"/>
-    <link rel="stylesheet" href="/libs/composum/nodes/usermgnt/graph/page/css/graph.css"/>
+    <link rel="stylesheet" href="${cpn:cpm('composum/nodes/usermgnt/graph/view/css/graph.css')}"/>
+    <link rel="stylesheet" href="${cpn:cpm('composum/nodes/usermgnt/graph/page/css/graph.css')}"/>
 </head>
 <body class="composum-nodes-usermgr-graph_body">
 <h3 class="composum-nodes-usermgr-graph_mode">Authorizables
@@ -51,7 +52,7 @@
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
 <script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.min.js"></script>
-<script src="/libs/composum/nodes/usermgnt/graph/view/js/graph.js"></script>
+<script src="${cpn:cpm('composum/nodes/usermgnt/graph/view/js/graph.js')}"></script>
 <script>
     $(document).ready(function () {
         $('.composum-nodes-usermgr-graph_mode a').click(window.CPM.nodes.usermgr.graph.selectMode);

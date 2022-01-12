@@ -97,7 +97,7 @@
             },
 
             openOptions: function () {
-                core.openLoadedDialog('/libs/composum/nodes/browser/components/references/options.dialog.html',
+                core.openLoadedDialog(core.getComposumPath('composum/nodes/browser/components/references/options.dialog.html'),
                     references.Options, undefined, _.bind(function (dialog) {
                         var options = this.getOptions(true);
                         dialog.$('input[type="text"]').each(function () {
@@ -124,7 +124,7 @@
 
             reload: function () {
                 this.$el.addClass('loading');
-                core.ajaxGet('/libs/composum/nodes/browser/components/references.content.html'
+                core.ajaxGet(core.getComposumPath('composum/nodes/browser/components/references.content.html')
                     + browser.getCurrentPath(), {
                     data: _.extend({_charset_: 'UTF-8'}, this.getOptions(true))
                 }, _.bind(function (content) {

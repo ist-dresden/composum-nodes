@@ -20,7 +20,7 @@
         console.openUserLoginDialog = function (action) {
             var loginDialog = core.getView('#user-status-dialog', console.UserLoginDialog);
             if (!loginDialog) {
-                core.getHtml('/libs/composum/nodes/console/dialogs.user-status.html',
+                core.getHtml(core.getComposumPath('composum/nodes/console/dialogs.user-status.html'),
                     _.bind(function (content) {
                         loginDialog = core.addLoadedDialog(console.UserLoginDialog, content);
                         if (loginDialog) {
@@ -170,14 +170,20 @@
                         ? CPM.nodes.browser.getCurrentPath() : '';
                     var pathCondition = $link.data('path-condition');
                     var linkTarget = $link.attr('target');
-                    redirectUrl = redirectUrl.replaceAll(/\${path(\..+)?}/g,
-                        (currentPath && (!pathCondition || new RegExp(pathCondition).exec(currentPath)))
-                            ? (currentPath + '$1') : '');
+                    redirectUrl = this.applyPlaceholder(redirectUrl, 'path', currentPath, pathCondition);
+                    var contentPos = currentPath.indexOf('/jcr:content');
+                    redirectUrl = this.applyPlaceholder(redirectUrl, 'editable',
+                        contentPos > 0 ? currentPath.substring(0, contentPos) : currentPath, pathCondition);
                     window.open(redirectUrl, linkTarget ? linkTarget : '_self');
                     event.preventDefault();
                     return false;
                 }
                 return true;
+            },
+
+            applyPlaceholder: function (redirectUrl, key, value, condition) {
+                return redirectUrl.replaceAll(new RegExp('\\${' + key + '(\\..+)?}', 'g'),
+                    (value && (!condition || new RegExp(condition).exec(value))) ? (value + '$1') : '');
             },
 
             showPermission: function () {
@@ -207,7 +213,7 @@
 
             showStatus: function () {
                 if (this.$healthState.is('.system-health-state')) { // if status visible (accessible and loaded)...
-                    core.openFormDialog('/libs/composum/nodes/commons/components/system/dialog.html',
+                    core.openFormDialog(core.getComposumPath('composum/nodes/commons/components/system/dialog.html'),
                         CPM.nodes.system.StatusDialog);
                 }
             }

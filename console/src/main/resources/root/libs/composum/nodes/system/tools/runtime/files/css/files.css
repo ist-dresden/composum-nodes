@@ -78,9 +78,9 @@
     flex-wrap: nowrap;
     position: absolute;
     top: -31px;
+    left: 40%;
     right: 10px;
     height: 31px;
-    max-width: 440px;
     background: #e4e4e4;
 }
 
@@ -118,11 +118,18 @@
 }
 
 .tools-runtime-files_view-toolbar .input-group-addon {
-    width: 25px;
+    min-width: 25px;
+    max-width: 25px;
+}
+
+.tools-runtime-files_view-toolbar .input-group input {
+    border-left: none;
 }
 
 .tools-runtime-files_view-toolbar .input-group.filter {
     flex-grow: 1;
+    display: flex;
+    flex-wrap: nowrap;
 }
 
 .tools-runtime-files_tree {

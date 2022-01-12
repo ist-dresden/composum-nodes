@@ -69,4 +69,6 @@ public interface CoreConfiguration {
      */
     @NotNull
     Dictionary<String, Object> getProperties();
+
+    String getComposumBase();
 }

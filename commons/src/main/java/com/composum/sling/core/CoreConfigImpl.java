@@ -53,6 +53,12 @@ public class CoreConfigImpl implements CoreConfiguration {
     public @interface Configuration {
 
         @AttributeDefinition(
+                name = "Composum Base",
+                description = "the resolver root of the Composum modules (default: '/libs/')"
+        )
+        String composum_base() default "/libs/";
+
+        @AttributeDefinition(
                 name = "Errorpages",
                 description = "the path to the errorpages; e.g. 'meta/errorpages' for searching errorpages along the requested path"
         )
@@ -86,6 +92,11 @@ public class CoreConfigImpl implements CoreConfiguration {
     private volatile Configuration config;
 
     private volatile Dictionary<String, Object> properties;
+
+    @Override
+    public String getComposumBase() {
+        return getConfig().composum_base();
+    }
 
     @NotNull
     private Configuration getConfig() {

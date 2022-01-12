@@ -4,4 +4,4 @@
 <sling:defineObjects/>
 <cpn:clientlib type="link" category="composum.nodes.console.tools"/>
 <cpn:clientlib type="css" category="composum.nodes.console.tools"/>
-<link rel="stylesheet" href="${cpn:url(slingRequest,'/libs/composum/nodes/system/tools/runtime/files/css/files.css')}">
+<link rel="stylesheet" href="${cpn:url(slingRequest,cpn:cpm('composum/nodes/system/tools/runtime/files/css/files.css'))}">

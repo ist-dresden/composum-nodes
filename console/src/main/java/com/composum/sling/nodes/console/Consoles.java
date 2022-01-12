@@ -1,6 +1,7 @@
 package com.composum.sling.nodes.console;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.util.HttpUtil;
@@ -198,12 +199,14 @@ public class Consoles implements HttpUtil.CachableInstance {
 
         @NotNull
         public String getDescription() {
-            return description;
+            return StringUtils.isNotBlank(description)
+                    ? (description.startsWith("/") ? description : coreConfig.getComposumBase() + description) : "";
         }
 
         @NotNull
         public String getContentSrc() {
-            return contentSrc;
+            return StringUtils.isNotBlank(contentSrc)
+                    ? (contentSrc.startsWith("/") ? contentSrc : coreConfig.getComposumBase() + contentSrc) : "";
         }
 
         @NotNull
@@ -326,11 +329,15 @@ public class Consoles implements HttpUtil.CachableInstance {
         }
     }
 
+    private final BeanContext beanContext;
+    private final CoreConfiguration coreConfig;
     private final TreeMap<String, Console> consoleSet;
     private final Set<Console> toplevel;
     private final long created;
 
     public Consoles(@NotNull final BeanContext context) {
+        beanContext = context;
+        coreConfig = beanContext.getService(CoreConfiguration.class);
         consoleSet = new TreeMap<>();
         ResourceResolver resolver = context.getResolver();
         for (String path : resolver.getSearchPath()) {

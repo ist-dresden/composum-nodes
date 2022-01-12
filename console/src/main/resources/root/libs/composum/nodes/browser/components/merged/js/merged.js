@@ -30,7 +30,7 @@
             },
 
             reload: function () {
-                core.ajaxGet('/libs/composum/nodes/browser/components/merged.content.html'
+                core.ajaxGet(core.getComposumPath('composum/nodes/browser/components/merged.content.html')
                     + browser.getCurrentPath(), undefined,
                     _.bind(function (content) {
                         this.$content.html(content);

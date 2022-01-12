@@ -1,5 +1,6 @@
 package com.composum.sling.nodes.servlet;
 
+import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.RequestBundle;
 import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.TagFilteringWriter;
@@ -7,6 +8,8 @@ import com.composum.sling.core.util.ValueEmbeddingWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestPathInfo;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolver;
@@ -224,7 +227,7 @@ public class ServletResourceType extends GenericServlet {
 
         public static final String WEBCONSOLE_PATH = "/system/console";
 
-        public static final String PLUGIN_TOOL_PATH = "/libs/composum/nodes/system/tools/webconsole/plugin";
+        public static final String PLUGIN_TOOL_PATH = "composum/nodes/system/tools/webconsole/plugin";
 
         public final String[] CSS_FILES = new String[]{
                 "/css/reset-min.css",
@@ -242,6 +245,12 @@ public class ServletResourceType extends GenericServlet {
                 "/js/jquery.tablesorter-2.0.3.js",
                 "/js/autosize.min.js",
                 "/js/support.js"
+        };
+        public final String[] CSRF_OPTIONS = new String[]{
+                "/etc/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js",
+                "/etc/clientlibs/granite/jquery/granite/csrf/source/csrf.js",
+                "/libs/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js",
+                "/libs/clientlibs/granite/jquery/granite/csrf/source/csrf.js"
         };
 
         protected final ValueMap properties;
@@ -346,7 +355,7 @@ public class ServletResourceType extends GenericServlet {
                     "    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>\n" +
                     "    <title>").append(title).append("</title>\n");
             for (final String cssFile : CSS_FILES) {
-                appendCssLink(request, writer, PLUGIN_TOOL_PATH, cssFile);
+                appendCssLink(request, writer, coreConfig.getComposumBase() + PLUGIN_TOOL_PATH, cssFile);
             }
             if (cssReferences != null) {
                 for (final String cssRef : cssReferences) {
@@ -362,6 +371,7 @@ public class ServletResourceType extends GenericServlet {
             for (final String jsFile : JS_FILES) {
                 appendJsLink(request, writer, jsFile);
             }
+            appendCsrfLinks(request, writer);
             writer.append("</head>\n" +
                     "<body class=\"ui-widget webconsole-plugin\">\n" +
                     "<div id=\"main\" class=\"").append(cssClass).append("\">\n");
@@ -387,10 +397,27 @@ public class ServletResourceType extends GenericServlet {
         protected void appendJsLink(@NotNull final HttpServletRequest request, @NotNull final PrintWriter writer,
                                     @NotNull final String path) {
             writer.append("    <script src=\"")
-                    .append(request.getContextPath()).append(PLUGIN_TOOL_PATH).append(path)
-                    .append("\" type=\"text/javascript\"></script>\n");
+                    .append(request.getContextPath()).append(coreConfig.getComposumBase())
+                    .append(PLUGIN_TOOL_PATH).append(path).append("\" type=\"text/javascript\"></script>\n");
+        }
+
+        protected void appendCsrfLinks(@NotNull final HttpServletRequest request, @NotNull final PrintWriter writer) {
+            if (request instanceof SlingHttpServletRequest) {
+                final SlingHttpServletRequest slingRequest = (SlingHttpServletRequest) request;
+                final ResourceResolver resolver = slingRequest.getResourceResolver();
+                for (final String path : CSRF_OPTIONS) {
+                    final Resource resource = resolver.getResource(path);
+                    if (resource != null) {
+                        writer.append("    <script src=\"").append(request.getContextPath()).append(path)
+                                .append("\" type=\"text/javascript\"></script>\n");
+                    }
+                }
+            }
         }
     }
+
+    @Reference
+    private CoreConfiguration coreConfig;
 
     @Reference
     private ServiceRestrictions serviceRestrictions;
