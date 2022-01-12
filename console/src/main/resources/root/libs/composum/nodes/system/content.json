@@ -26,6 +26,20 @@
         "resource:composum/nodes/system/tools/runtime/files"
       ]
     },
+    "settings": {
+      "jcr:primaryType": "nt:unstructured",
+      "jcr:title": "Settings",
+      "consoleId": "tools-runtime-settings",
+      "order": 800,
+      "sling:resourceType": "composum/nodes/system/tools/runtime/settings",
+      "categories": [
+        "system"
+      ],
+      "precondition": [
+        "restrictions:system/runtime/settings=read",
+        "resource:composum/nodes/system/tools/runtime/settings"
+      ]
+    },
     "threaddump": {
       "jcr:primaryType": "nt:unstructured",
       "jcr:title": "Thread Dump",
