@@ -12,7 +12,7 @@
         browser.const = _.extend(browser.const || {}, {
             overlay: {
                 uri: {
-                    base: '/libs/composum/nodes/browser/components/overlay',
+                    base: core.const.composumBase + 'composum/nodes/browser/components/overlay',
                     _create: '/create.html',
                     _remove: '/remove.html'
                 }
@@ -46,7 +46,7 @@
             }
         };
 
-        browser.onPopState = function(event) {
+        browser.onPopState = function (event) {
             if (event.state) {
                 browser.setCurrentPath(event.state, false, true);
             }
@@ -249,8 +249,8 @@
                 core.openFormDialog(u.base + u._remove + path,
                     core.components.FormDialog, {}, undefined,
                     _.bind(function () {
-                        var overlayPaths = this.$relatedPaths.filter('.is-overlay').map( (e,i) => i.dataset.path);
-                        var candidatePaths = overlayPaths.filter( (i,e) => e !== path);
+                        var overlayPaths = this.$relatedPaths.filter('.is-overlay').map((e, i) => i.dataset.path);
+                        var candidatePaths = overlayPaths.filter((i, e) => e !== path);
                         if (candidatePaths.length > 0) { // select another overlay of the component
                             var newPath = candidatePaths[0];
                             $(document).trigger('path:deleted', [path, newPath]);

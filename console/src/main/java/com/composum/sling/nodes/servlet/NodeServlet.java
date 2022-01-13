@@ -1,6 +1,7 @@
 package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.clientlibs.handle.FileHandle;
+import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.Restricted;
 import com.composum.sling.core.config.FilterConfiguration;
@@ -144,6 +145,9 @@ public class NodeServlet extends NodeTreeServlet {
 
     @Reference
     private ServiceRestrictions restrictions;
+
+    @Reference
+    protected CoreConfiguration coreConfig;
 
     @Reference
     protected NodesConfiguration nodesConfig;
@@ -663,7 +667,7 @@ public class NodeServlet extends NodeTreeServlet {
 
             String rendererType = XSS.filter(request.getParameter("export"));
 
-            String syntheticPath = "/libs/composum/nodes/browser/query/export";
+            String syntheticPath = coreConfig.getComposumBase() + "composum/nodes/browser/query/export";
             SyntheticQueryResult resultResource = new SyntheticQueryResult(resolver, syntheticPath, result, filter, rendererType);
             resultResource.putValue("query", queryString);
 

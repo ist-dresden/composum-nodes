@@ -23,7 +23,7 @@
                 }
             },
             load: {
-                base: '/libs/composum/nodes/commons/components/dialogs',
+                base: core.const.composumBase + 'composum/nodes/commons/components/dialogs',
                 _path: '.path-select.html'
             }
         };

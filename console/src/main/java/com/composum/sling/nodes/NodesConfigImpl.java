@@ -2,14 +2,6 @@ package com.composum.sling.nodes;
 
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
-import com.composum.sling.nodes.servlet.ComponentsServlet;
-import com.composum.sling.nodes.servlet.NodeServlet;
-import com.composum.sling.nodes.servlet.PropertyServlet;
-import com.composum.sling.nodes.servlet.SceneServlet;
-import com.composum.sling.nodes.servlet.SecurityServlet;
-import com.composum.sling.nodes.servlet.SourceServlet;
-import com.composum.sling.nodes.servlet.SourceUpdateServlet;
-import com.composum.sling.nodes.servlet.VersionServlet;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.ComponentContext;
@@ -21,10 +13,7 @@ import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-import javax.servlet.Servlet;
 import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**

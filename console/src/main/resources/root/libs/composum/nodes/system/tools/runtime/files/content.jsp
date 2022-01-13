@@ -25,7 +25,13 @@
                 <span class="action input-group-addon fa fa-step-backward"></span>
             </div>
             <div class="input-group filter" title="${cpn:i18n(slingRequest,'Filter (regular expression)')}">
-                <input class="field form-control" type="text" placeholder="${cpn:i18n(slingRequest,'filter')}"/>
+                <span class="clear input-group-addon fa fa-times-circle"
+                      title="${cpn:i18n(slingRequest,'clear filter')}"></span>
+                <span class="problems input-group-addon fa fa-bolt"
+                      title="${cpn:i18n(slingRequest,'errors and warnings filter')}"></span>
+                <input class="pattern form-control" type="text" placeholder="${cpn:i18n(slingRequest,'filter')}"/>
+                <input class="prepend form-control input-group-addon" type="text" placeholder="3"/>
+                <input class="append form-control input-group-addon" type="text" placeholder="1"/>
                 <span class="action input-group-addon fa fa-filter"></span>
             </div>
             <div class="btn-group">
@@ -34,8 +40,8 @@
                 <sling:include replaceSelectors="${slingRequest.requestPathInfo.selectorString}open"/>
             </div>
             <div class="btn-group">
-                <a href="#" class="download fa fa-download btn btn-default"
-                   title="${cpn:i18n(slingRequest,'Download')}"></a>
+                <button class="download fa fa-download btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Download')}"></button>
             </div>
         </div>
         <div class="tools-runtime-files_view-wrapper">

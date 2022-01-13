@@ -1,0 +1,66 @@
+
+.tools-runtime-settings.tools-console.console .content-wrapper {
+    top: 41px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.tools-runtime-settings_header {
+    display: flex;
+    flex-wrap: nowrap;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 31px;
+    padding: 0 10px 0 107px;
+    background: #e4e4e4;
+}
+
+.tools-runtime-settings_header h1 {
+    margin: 0;
+    line-height: 31px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.tools-runtime-settings_tabs {
+    margin: 0 0 0 50px;
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.tools-runtime-settings_tabs .settings_tab {
+    margin: 0 0 0 1px;
+    padding: 0 15px;
+    line-height: 31px;
+    background: #bbb;
+    color: #000;
+}
+
+.tools-runtime-settings_tabs .settings_tab.active {
+    background: #666;
+    color: #fff;
+}
+
+.tools-runtime-settings .content-wrapper .fixed-table-container {
+    position: absolute;
+    top: 31px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.tools-runtime-settings .bootstrap-table .th-inner {
+    padding: 0;
+}
+
+.tools-runtime-settings .bootstrap-table th,
+.tools-runtime-settings .bootstrap-table td {
+    padding: 3px 8px !important;
+}
+
+.tools-runtime-settings .bootstrap-table th.key,
+.tools-runtime-settings .bootstrap-table td.key {
+    white-space: nowrap;
+}

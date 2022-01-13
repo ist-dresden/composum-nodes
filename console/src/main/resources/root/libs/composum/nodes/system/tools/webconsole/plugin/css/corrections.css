@@ -1,13 +1,36 @@
+html, body, #main {
+    width: 100%;
+    height: 100%;
+}
+
 body {
     margin: 0 !important;
 }
 
-#main #main {
+#main {
     margin: 0;
 }
 
 #main #title {
+    width: 100%;
     margin-block-start: 0;
+    padding: 0 10px 0 107px;
+    line-height: 31px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+    color: #333333;
+    background: #e4e4e4;
+}
+
+#content {
+    position: absolute;
+    top: 38px;
+    left: 7px;
+    right: 7px;
+    bottom: 7px;
+    overflow-x: auto;
 }
 
 #content > br:first-child {

@@ -53,7 +53,7 @@ public class GraphServlet extends SlingSafeMethodsServlet {
     public static final String BROWSER_PATH = "/bin/browser.html";
     public static final String MANAGER_PATH = "/bin/users.html";
     public static final String SERVLET_PATH = "/bin/cpm/users/graph";
-    public static final String COMPONENT_BASE = "/libs/composum/nodes/usermgnt/graph/";
+    public static final String COMPONENT_BASE = "/usermgnt/graph/";
 
     public static final URLCodec URL_CODEC = new URLCodec();
 
@@ -62,6 +62,15 @@ public class GraphServlet extends SlingSafeMethodsServlet {
 
     @Reference
     protected Authorizables authorizablesService;
+
+    @NotNull
+    protected String getComponentBase(@NotNull final ResourceResolver resolver) {
+        String applicationPath = "/libs/composum/nodes";
+        if (resolver.getResource(applicationPath) == null) {
+            applicationPath = "/apps/composum/nodes";
+        }
+        return applicationPath + COMPONENT_BASE;
+    }
 
     @Override
     protected void doGet(@NotNull final SlingHttpServletRequest request,
@@ -80,7 +89,7 @@ public class GraphServlet extends SlingSafeMethodsServlet {
                         case "graphviz":
                             try {
                                 final String context = selectors.length > 1 ? selectors[1] : "page";
-                                Resource config = resolver.getResource(COMPONENT_BASE + context + "/" + JcrConstants.JCR_CONTENT);
+                                Resource config = resolver.getResource(getComponentBase(resolver) + context + "/" + JcrConstants.JCR_CONTENT);
                                 final AuthorizablesGraph graph = getGraph(request, response);
                                 response.setContentType("text/html;charset=UTF-8");
                                 graph.toGraphviz(response.getWriter(), config,
@@ -93,7 +102,7 @@ public class GraphServlet extends SlingSafeMethodsServlet {
                         case "paths":
                             try {
                                 final String context = selectors.length > 1 ? selectors[1] : "page";
-                                Resource config = resolver.getResource(COMPONENT_BASE + context + "/" + JcrConstants.JCR_CONTENT);
+                                Resource config = resolver.getResource(getComponentBase(resolver) + context + "/" + JcrConstants.JCR_CONTENT);
                                 final AuthorizablesPaths paths = getPaths(request, response);
                                 response.setContentType("text/html;charset=UTF-8");
                                 paths.toPathsTable(resolver, response.getWriter(), config,

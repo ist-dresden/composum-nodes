@@ -155,11 +155,11 @@ public class OsgiBundlesServlet extends SlingSafeMethodsServlet implements Restr
     }
 
     protected void writeServices(@NotNull final JsonWriter writer,
-                                 @NotNull final Iterator<OsgiBundleModel.ServiceModel> iterator)
+                                 @NotNull final Iterator<OsgiServiceModel> iterator)
             throws IOException {
         writer.beginArray();
         while (iterator.hasNext()) {
-            OsgiBundleModel.ServiceModel service = iterator.next();
+            OsgiServiceModel service = iterator.next();
             writer.beginObject();
             writer.name("id").value(service.serviceId);
             if (service.description != null) {

@@ -8,7 +8,7 @@
     ],
     "consoleId": "users",
     "jcr:title": "Users",
-    "description": "/libs/composum/nodes/usermgnt/description",
+    "description": "composum/nodes/usermgnt/description",
     "sling:redirect": "/bin/users.html",
     "categories": [
       "users"
@@ -17,7 +17,7 @@
     "permissionsSupport": true,
     "precondition": [
       "restrictions:nodes/users/manager=read",
-      "resource:/libs/composum/nodes/usermgnt"
+      "resource:composum/nodes/usermgnt"
     ]
   }
 }

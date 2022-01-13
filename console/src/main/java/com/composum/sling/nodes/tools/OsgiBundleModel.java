@@ -4,7 +4,6 @@ import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.Restricted;
-import com.composum.sling.core.service.ServiceRestrictions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
@@ -169,61 +168,6 @@ public class OsgiBundleModel extends AbstractSlingBean {
         }
     }
 
-    public class ServiceModel {
-
-        protected final ServiceReference<?> service;
-        protected final Map<String, Object> properties = new TreeMap<>();
-
-        public List<String> objectClass = new ArrayList<>();
-        public int componentId;
-        public String componentName;
-        public int serviceId;
-        public String servicePid;
-        public int bundleId;
-        public String description;
-
-        public ServiceModel(@NotNull final ServiceReference<?> service) {
-            this.service = service;
-            for (final String key : service.getPropertyKeys()) {
-                final Object value = service.getProperty(key);
-                if (value != null) {
-                    switch (key) {
-                        case "objectClass":
-                            objectClass.addAll(Arrays.asList((String[]) value));
-                            break;
-                        case "component.id":
-                            componentId = Integer.parseInt(value.toString());
-                            break;
-                        case "component.name":
-                            componentName = value.toString();
-                            break;
-                        case "service.id":
-                            serviceId = Integer.parseInt(value.toString());
-                            break;
-                        case "service.pid":
-                            servicePid = value.toString();
-                            break;
-                        case "service.bundleid":
-                            bundleId = Integer.parseInt(value.toString());
-                            break;
-                        case "service.description":
-                            description = value.toString();
-                            break;
-                        case "service.scope":
-                            break;
-                        default:
-                            properties.put(key, value);
-                            break;
-                    }
-                }
-            }
-        }
-
-        public Map<String, Object> getProperties() {
-            return properties;
-        }
-    }
-
     protected Bundle bundle;
     protected Map<String, String> headers;
     protected String name;
@@ -359,11 +303,11 @@ public class OsgiBundleModel extends AbstractSlingBean {
     }
 
     @NotNull
-    public Iterator<ServiceModel> getProvidedServices() {
+    public Iterator<OsgiServiceModel> getProvidedServices() {
         ServiceReference<?>[] registered = bundle.getRegisteredServices();
         final Iterator<ServiceReference<?>> services = Stream.of(
                 registered != null ? registered : new ServiceReference<?>[0]).iterator();
-        return new Iterator<ServiceModel>() {
+        return new Iterator<OsgiServiceModel>() {
 
             @Override
             public boolean hasNext() {
@@ -371,18 +315,18 @@ public class OsgiBundleModel extends AbstractSlingBean {
             }
 
             @Override
-            public ServiceModel next() {
-                return new ServiceModel(services.next());
+            public OsgiServiceModel next() {
+                return new OsgiServiceModel(services.next());
             }
         };
     }
 
     @NotNull
-    public Iterator<ServiceModel> getUsedServices() {
+    public Iterator<OsgiServiceModel> getUsedServices() {
         ServiceReference<?>[] registered = bundle.getServicesInUse();
         final Iterator<ServiceReference<?>> services = Stream.of(
                 registered != null ? registered : new ServiceReference<?>[0]).iterator();
-        return new Iterator<ServiceModel>() {
+        return new Iterator<OsgiServiceModel>() {
 
             @Override
             public boolean hasNext() {
@@ -390,8 +334,8 @@ public class OsgiBundleModel extends AbstractSlingBean {
             }
 
             @Override
-            public ServiceModel next() {
-                return new ServiceModel(services.next());
+            public OsgiServiceModel next() {
+                return new OsgiServiceModel(services.next());
             }
         };
     }

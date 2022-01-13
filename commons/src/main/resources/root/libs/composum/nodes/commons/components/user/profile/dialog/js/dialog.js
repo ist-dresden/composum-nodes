@@ -7,7 +7,7 @@
         if (!/^.*\/profile$/.exec(userPath)) {
             userPath += '/profile';
         }
-        core.openFormDialog('/libs/composum/nodes/commons/components/user/profile/dialog.html'
+        core.openFormDialog(core.getComposumPath('composum/nodes/commons/components/user/profile/dialog.html')
             + core.encodePath(userPath), user.ProfileDialog, config, initView, callback);
     };
 

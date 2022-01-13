@@ -2,7 +2,7 @@
  *
  *
  */
-(function () {
+(function ($html) {
     'use strict';
 
     window.composum = window.CPM = window.CPM || {};
@@ -33,7 +33,9 @@
                     error: 'danger',
                     warn: 'warning'
                 }
-            }
+            },
+            contextPath: $html.data('context-path') ? $html.data('context-path') : '',
+            composumBase: $html.data('composum-base') ? $html.data('composum-base') : '/libs/'
         },
 
         log: log.getLogger('core'),
@@ -320,11 +322,17 @@
                         : (result.status + ': ' + result.statusText))));
         },
 
+        getComposumPath: function (uri) {
+            if (uri && uri.indexOf(core.const.composumBase) !== 0) {
+                uri = core.const.composumBase + uri;
+            }
+            return uri;
+        },
+
         getContextUrl: function (url) {
             if (url && !url.match(/^https?:\/\//i)) {  // ignore 'external' URLs
-                var contextPath = $('html').data('context-path');
-                if (contextPath && url.indexOf(contextPath) !== 0) {
-                    url = contextPath + url;
+                if (url.indexOf(core.const.contextPath) !== 0) {
+                    url = core.const.contextPath + url;
                 }
             }
             return url;
@@ -442,7 +450,7 @@
         openAlertDialog: function (action) {
             var alertDialog = core.getView('#alert-dialog', core.components.Dialog);
             if (!alertDialog) { // if not static included load dialog dynamically
-                core.getHtml('/libs/composum/nodes/commons/dialogs.alert.html',
+                core.getHtml(core.getComposumPath('composum/nodes/commons/dialogs.alert.html'),
                     _.bind(function (content) {
                         action(core.addLoadedDialog(core.components.Dialog, content));
                     }, this));
@@ -763,4 +771,4 @@
         }
     });
 
-})();
+})($('html'));

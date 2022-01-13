@@ -1,6 +1,7 @@
 package com.composum.sling.nodes.console;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.ResourceUtil;
@@ -243,7 +244,9 @@ public interface Condition {
 
         @Override
         public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
-            return context.getResolver().getResource(path) != null;
+            String absolutePath = path.startsWith("/") ? path
+                    : context.getService(CoreConfiguration.class).getComposumBase() + path;
+            return context.getResolver().getResource(absolutePath) != null;
         }
     }
 
