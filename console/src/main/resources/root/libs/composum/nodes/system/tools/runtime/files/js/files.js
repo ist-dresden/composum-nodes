@@ -7,6 +7,13 @@
         files.profileId = 'system-files';
         files.servlet = '/bin/cpm/system/file';
         files.component = core.const.composumBase + 'composum/nodes/system/content/runtime/files';
+        files.issueFilters = [
+            '(\\\\*(ERROR)\\\\*|Exception|Throwable)',
+            '(\\\\*(WARN|ERROR)\\\\*|Exception|Throwable)',
+            '(\\\\*(ERROR)\\\\*|Exception|Throwable|Error)',
+            '(\\\\*(WARN|ERROR)\\\\*|Exception|Throwable|Error)',
+            '(\\\\*(WARN|ERROR)\\\\*)'
+        ];
 
         files.Tree = core.components.Tree.extend({
 
@@ -56,7 +63,10 @@
                     core.console.getProfile().set(files.profileId, 'filter', this.$filter.val());
                 }, this));
                 this.$('.filter .problems').click(_.bind(function () {
-                    this.$filter.val('(\\\\*(WARN|ERROR)\\\\*|Exception|Throwable|Error)');
+                    var current = this.$filter.val();
+                    var i = 0;
+                    for (; i < files.issueFilters.length && current !== files.issueFilters[i]; i++) ;
+                    this.$filter.val(files.issueFilters[++i < files.issueFilters.length ? i : 0]);
                     core.console.getProfile().set(files.profileId, 'filter', this.$filter.val());
                 }, this));
                 this.$filter.on('change', _.bind(function () {
@@ -68,9 +78,14 @@
                 this.$append.on('change', _.bind(function () {
                     core.console.getProfile().set(files.profileId, 'append', this.$append.val());
                 }, this));
-                this.$reload.click(_.bind(function () {
-                    this.panel.view.reload();
+                this.$('input').keypress(_.bind(function (event) {
+                    if (event.which === 13) {
+                        this.panel.view.reload();
+                    }
                 }, this));
+                this.$('.limit .action').click(_.bind(this.panel.view.reload, this.panel.view));
+                this.$('.filter .action').click(_.bind(this.panel.view.reload, this.panel.view));
+                this.$reload.click(_.bind(this.panel.view.reload, this.panel.view));
                 this.$download.click(_.bind(function () {
                     this.panel.view.download();
                 }, this));

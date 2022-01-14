@@ -28,7 +28,7 @@
                 <span class="clear input-group-addon fa fa-times-circle"
                       title="${cpn:i18n(slingRequest,'clear filter')}"></span>
                 <span class="problems input-group-addon fa fa-bolt"
-                      title="${cpn:i18n(slingRequest,'errors and warnings filter')}"></span>
+                      title="${cpn:i18n(slingRequest,'errors and warnings filter... []')}"></span>
                 <input class="pattern form-control" type="text" placeholder="${cpn:i18n(slingRequest,'filter')}"/>
                 <input class="prepend form-control input-group-addon" type="text" placeholder="3"/>
                 <input class="append form-control input-group-addon" type="text" placeholder="1"/>

@@ -173,7 +173,7 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
         protected boolean checkMatch(@Nullable final String line) {
             if (line != null) {
                 Matcher matcher = pattern.matcher(line);
-                if (matcher.find() || (matched && line.matches("^\\s+.*$"))) {
+                if (matcher.find() || (matched && line.matches("^(Caused)?\\s+.*$"))) {
                     matched = true;
                     flushBuffer = true;
                     more = append;
