@@ -85,6 +85,12 @@
                 }, this));
                 this.$('.limit .action').click(_.bind(this.panel.view.reload, this.panel.view));
                 this.$('.filter .action').click(_.bind(this.panel.view.reload, this.panel.view));
+                this.$('.clearview').click(_.bind(function () {
+                    this.panel.view.clearView();
+                }, this));
+                this.$('.separator').click(_.bind(function () {
+                    this.panel.view.addSeparator();
+                }, this));
                 this.$reload.click(_.bind(this.panel.view.reload, this.panel.view));
                 this.$download.click(_.bind(function () {
                     this.panel.view.download();
@@ -141,6 +147,9 @@
         files.View = Backbone.View.extend({
 
             initialize: function (options) {
+                this.state = {
+                    separatorIndex: 0
+                };
                 this.panel = options.panel;
                 this.$content = this.$('.tools-runtime-files_view > div');
                 this.tail = (core.console.getProfile().get(files.profileId, 'tail', false));
@@ -196,6 +205,14 @@
                         window.setTimeout(_.bind(this.doTail, this), 500);
                     }, this));
                 }
+            },
+
+            clearView: function () {
+                this.$content.text('');
+            },
+
+            addSeparator: function () {
+                this.$content.append('\n######## [' + (++this.state.separatorIndex) + ']\n\n');
             },
 
             reload: function () {

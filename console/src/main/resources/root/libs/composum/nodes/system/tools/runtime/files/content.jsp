@@ -35,10 +35,14 @@
                 <span class="action input-group-addon fa fa-filter"></span>
             </div>
             <div class="btn-group">
+                <button type="button" class="clearview fa fa-trash-o btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Clear View')}"></button>
+                <button type="button" class="separator fa fa-window-minimize btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Insert Separator')}"></button>
                 <button type="button" class="reload fa fa-refresh btn btn-default"
                         title="${cpn:i18n(slingRequest,'Reload')}"></button>
-                <sling:include replaceSelectors="${slingRequest.requestPathInfo.selectorString}open"/>
             </div>
+            <sling:include replaceSelectors="${slingRequest.requestPathInfo.selectorString}open"/>
             <div class="btn-group">
                 <button class="download fa fa-download btn btn-default"
                         title="${cpn:i18n(slingRequest,'Download')}"></button>
