@@ -1,8 +1,8 @@
 package com.composum.sling.core.concurrent;
 
 import com.composum.sling.core.ResourceHandle;
-import org.apache.commons.collections.Factory;
-import org.apache.commons.collections.map.LazyMap;
+import org.apache.commons.collections4.Factory;
+import org.apache.commons.collections4.map.LazyMap;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
