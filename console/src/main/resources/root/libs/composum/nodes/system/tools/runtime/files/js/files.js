@@ -8,10 +8,10 @@
         files.servlet = '/bin/cpm/system/file';
         files.component = core.const.composumBase + 'composum/nodes/system/content/runtime/files';
         files.issueFilters = [
-            '(\\\\*(ERROR)\\\\*|Exception|Throwable)',
-            '(\\\\*(WARN|ERROR)\\\\*|Exception|Throwable)',
-            '(\\\\*(ERROR)\\\\*|Exception|Throwable|Error)',
-            '(\\\\*(WARN|ERROR)\\\\*|Exception|Throwable|Error)',
+            '(\\\\*(ERROR)\\\\*|Exception)',
+            '(\\\\*(WARN|ERROR)\\\\*|Exception)',
+            '(\\\\*(ERROR)\\\\*|Exception|Error)',
+            '(\\\\*(WARN|ERROR)\\\\*|Exception|Error)',
             '(\\\\*(WARN|ERROR)\\\\*)'
         ];
 
@@ -208,11 +208,19 @@
             },
 
             clearView: function () {
+                var scroll = this.scroll;
                 this.$content.text('');
+                window.setTimeout(_.bind(function () {
+                    this.toggleScroll(scroll);
+                }, this), 200);
             },
 
             addSeparator: function () {
+                var scroll = this.scroll;
                 this.$content.append('\n######## [' + (++this.state.separatorIndex) + ']\n\n');
+                window.setTimeout(_.bind(function () {
+                    this.toggleScroll(scroll);
+                }, this), 200);
             },
 
             reload: function () {
