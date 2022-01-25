@@ -41,7 +41,7 @@ public class LazyCreationServiceImplTest {
     protected ResourceResolverFactory resourceResolverFactory;
     protected ExecutorService executor;
     protected Random rnd;
-    protected Map<String, AtomicInteger> initCount = Collections.synchronizedMap(LazyMap.decorate(new TreeMap<>(),
+    protected Map<String, AtomicInteger> initCount = Collections.synchronizedMap(LazyMap.lazyMap(new TreeMap<>(),
             new Factory() {
                 @Override
                 public Object create() {
