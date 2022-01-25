@@ -67,11 +67,13 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
     public static final String SERVLET_LABEL = "Composum Runtime File Servlet";
     public static final String SERVLET_PATH = "/bin/cpm/system/file";
 
+    public static final Pattern IS_LOGFILE = Pattern.compile("^((/.*)?/)?.+\\.log(\\.[\\d-]+)?$");
+
     public static final String SA_SESSIONS = RuntimeFileServlet.class.getName() + "#session";
 
     public static final String RUNTIME_ROOT = new File(".").getAbsolutePath();
 
-    public static class LineFilter implements Serializable {
+    public static class LogfileFilter implements Serializable {
 
         protected final Pattern pattern;
         protected final int prepend;
@@ -84,13 +86,13 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
         protected boolean flushBuffer = false;
         protected final List<String> buffer = new ArrayList<>();
 
-        public LineFilter(@Nullable final Pattern pattern, int prepend, int append) {
+        public LogfileFilter(@Nullable final Pattern pattern, int prepend, int append) {
             this.pattern = pattern;
             this.prepend = prepend;
             this.append = append;
         }
 
-        public LineFilter(@NotNull final SlingHttpServletRequest request) {
+        public LogfileFilter(@NotNull final SlingHttpServletRequest request) {
             final String filter = request.getParameter("filter");
             final String[] around = StringUtils.split(RequestUtil.getParameter(request, "around", "3,1"), ",");
             pattern = StringUtils.isNotBlank(filter) ? Pattern.compile(filter) : null;
@@ -110,7 +112,7 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
         }
 
         @SuppressWarnings("CopyConstructorMissesField")
-        public LineFilter(@NotNull final LineFilter template) {
+        public LogfileFilter(@NotNull final RuntimeFileServlet.LogfileFilter template) {
             this(template.pattern, template.prepend, template.append);
         }
 
@@ -121,7 +123,7 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
 
         @Override
         public boolean equals(Object other) {
-            return other instanceof LineFilter && toString().equals(other.toString());
+            return other instanceof LogfileFilter && toString().equals(other.toString());
         }
 
         @Override
@@ -173,7 +175,7 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
         protected boolean checkMatch(@Nullable final String line) {
             if (line != null) {
                 Matcher matcher = pattern.matcher(line);
-                if (matcher.find() || (matched && line.matches("^\\s+.*$"))) {
+                if (matcher.find() || (matched && line.matches("^(Caused)?\\s+.*$"))) {
                     matched = true;
                     flushBuffer = true;
                     more = append;
@@ -215,7 +217,7 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
                 uri = null;
             }
             isText = mimeType != null && mimeType.toString().startsWith("text/");
-            isLog = isText && name.matches(".*\\.log(\\.[\\d-]+)?$");
+            isLog = isText && IS_LOGFILE.matcher(path).matches();
         }
 
         @NotNull
@@ -327,16 +329,16 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
     protected void downloadFile(@NotNull final SlingHttpServletRequest request,
                                 @NotNull final SlingHttpServletResponse response,
                                 @Nullable final String suffix) throws IOException {
-        RuntimeFile rfFile = getFile(request, suffix);
+        RuntimeFile rtFile = getFile(request, suffix);
         final File file;
-        if (rfFile != null && (file = rfFile.getFile()).isFile() && file.canRead()) {
-            final MimeType mimeType = rfFile.getMimeType();
+        if (rtFile != null && (file = rtFile.getFile()).isFile() && file.canRead()) {
+            final MimeType mimeType = rtFile.getMimeType();
             response.setContentType(mimeType != null ? mimeType.toString() : "text/plain");
-            response.setHeader("Content-Disposition", "attachment; filename=" + rfFile.getName());
+            response.setHeader("Content-Disposition", "attachment; filename=" + rtFile.getName());
             response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, file.lastModified());
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            final LineFilter filter = new LineFilter(request);
-            if (filter.isFilter()) {
+            final LogfileFilter filter;
+            if (rtFile.isLog && (filter = new LogfileFilter(request)).isFilter()) {
                 PrintWriter writer = response.getWriter();
                 try (final RandomAccessFile fileAccess = new RandomAccessFile(file, "r")) {
                     String line;
@@ -370,7 +372,7 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
             final String around = request.getParameter("around");
             response.setContentType("text/plain");
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            loggerSession.tail(response.getWriter(), position, limit, new LineFilter(request));
+            loggerSession.tail(response.getWriter(), position, limit, new LogfileFilter(request));
         } else {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
         }
@@ -379,20 +381,20 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
     public static class LoggerSession implements Serializable {
 
         private final RuntimeFile rtFile;
-        private LineFilter lineFilter;
+        private LogfileFilter logfileFilter;
         private long lastPosition = 0;
 
-        public LoggerSession(@NotNull final RuntimeFile rtFile, @NotNull final LineFilter filter) {
+        public LoggerSession(@NotNull final RuntimeFile rtFile, @NotNull final RuntimeFileServlet.LogfileFilter filter) {
             this.rtFile = rtFile;
-            this.lineFilter = filter;
+            this.logfileFilter = filter;
         }
 
         public synchronized void tail(@NotNull final PrintWriter writer, @Nullable Long position,
-                                      @Nullable final Long limit, @NotNull final LineFilter filter) {
-            if (position == null && lineFilter.equals(filter)) {
+                                      @Nullable final Long limit, @NotNull final RuntimeFileServlet.LogfileFilter filter) {
+            if (position == null && logfileFilter.equals(filter)) {
                 position = lastPosition;
             } else {
-                lineFilter = filter; // reset state
+                logfileFilter = filter; // reset state
                 position = 0L;
             }
             final File file = rtFile.getFile();
@@ -422,7 +424,7 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
                     }
                     fileAccess.seek(position);
                     String line;
-                    while ((line = lineFilter.readLine(fileAccess)) != null) {
+                    while ((line = logfileFilter.readLine(fileAccess)) != null) {
                         writer.println(line);
                     }
                     lastPosition = fileAccess.getFilePointer();
@@ -456,7 +458,7 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
                 final RuntimeFile rtFile = getFile(request, path);
                 final File file;
                 if (rtFile != null && (file = rtFile.getFile()).isFile() && file.canRead()) {
-                    loggerSession = new LoggerSession(rtFile, new LineFilter(request));
+                    loggerSession = new LoggerSession(rtFile, new LogfileFilter(request));
                     sessionSet.put(path, loggerSession);
                 } else {
                     LOG.error("can't read file '{}' ({})", rtFile != null ? rtFile.getPath() : "???", path);

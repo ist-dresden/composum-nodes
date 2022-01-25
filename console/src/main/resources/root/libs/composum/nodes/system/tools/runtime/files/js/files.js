@@ -7,6 +7,13 @@
         files.profileId = 'system-files';
         files.servlet = '/bin/cpm/system/file';
         files.component = core.const.composumBase + 'composum/nodes/system/content/runtime/files';
+        files.issueFilters = [
+            '(\\\\*(ERROR)\\\\*|Exception)',
+            '(\\\\*(WARN|ERROR)\\\\*|Exception)',
+            '(\\\\*(ERROR)\\\\*|Exception|Error)',
+            '(\\\\*(WARN|ERROR)\\\\*|Exception|Error)',
+            '(\\\\*(WARN|ERROR)\\\\*)'
+        ];
 
         files.Tree = core.components.Tree.extend({
 
@@ -56,7 +63,10 @@
                     core.console.getProfile().set(files.profileId, 'filter', this.$filter.val());
                 }, this));
                 this.$('.filter .problems').click(_.bind(function () {
-                    this.$filter.val('(\\\\*(WARN|ERROR)\\\\*|Exception|Throwable|Error)');
+                    var current = this.$filter.val();
+                    var i = 0;
+                    for (; i < files.issueFilters.length && current !== files.issueFilters[i]; i++) ;
+                    this.$filter.val(files.issueFilters[++i < files.issueFilters.length ? i : 0]);
                     core.console.getProfile().set(files.profileId, 'filter', this.$filter.val());
                 }, this));
                 this.$filter.on('change', _.bind(function () {
@@ -68,9 +78,20 @@
                 this.$append.on('change', _.bind(function () {
                     core.console.getProfile().set(files.profileId, 'append', this.$append.val());
                 }, this));
-                this.$reload.click(_.bind(function () {
-                    this.panel.view.reload();
+                this.$('input').keypress(_.bind(function (event) {
+                    if (event.which === 13) {
+                        this.panel.view.reload();
+                    }
                 }, this));
+                this.$('.limit .action').click(_.bind(this.panel.view.reload, this.panel.view));
+                this.$('.filter .action').click(_.bind(this.panel.view.reload, this.panel.view));
+                this.$('.clearview').click(_.bind(function () {
+                    this.panel.view.clearView();
+                }, this));
+                this.$('.separator').click(_.bind(function () {
+                    this.panel.view.addSeparator();
+                }, this));
+                this.$reload.click(_.bind(this.panel.view.reload, this.panel.view));
                 this.$download.click(_.bind(function () {
                     this.panel.view.download();
                 }, this));
@@ -126,6 +147,9 @@
         files.View = Backbone.View.extend({
 
             initialize: function (options) {
+                this.state = {
+                    separatorIndex: 0
+                };
                 this.panel = options.panel;
                 this.$content = this.$('.tools-runtime-files_view > div');
                 this.tail = (core.console.getProfile().get(files.profileId, 'tail', false));
@@ -181,6 +205,22 @@
                         window.setTimeout(_.bind(this.doTail, this), 500);
                     }, this));
                 }
+            },
+
+            clearView: function () {
+                var scroll = this.scroll;
+                this.$content.text('');
+                window.setTimeout(_.bind(function () {
+                    this.toggleScroll(scroll);
+                }, this), 200);
+            },
+
+            addSeparator: function () {
+                var scroll = this.scroll;
+                this.$content.append('\n######## [' + (++this.state.separatorIndex) + ']\n\n');
+                window.setTimeout(_.bind(function () {
+                    this.toggleScroll(scroll);
+                }, this), 200);
             },
 
             reload: function () {

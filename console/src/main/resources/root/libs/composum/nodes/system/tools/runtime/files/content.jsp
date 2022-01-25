@@ -28,17 +28,21 @@
                 <span class="clear input-group-addon fa fa-times-circle"
                       title="${cpn:i18n(slingRequest,'clear filter')}"></span>
                 <span class="problems input-group-addon fa fa-bolt"
-                      title="${cpn:i18n(slingRequest,'errors and warnings filter')}"></span>
+                      title="${cpn:i18n(slingRequest,'errors and warnings filter... []')}"></span>
                 <input class="pattern form-control" type="text" placeholder="${cpn:i18n(slingRequest,'filter')}"/>
                 <input class="prepend form-control input-group-addon" type="text" placeholder="3"/>
                 <input class="append form-control input-group-addon" type="text" placeholder="1"/>
                 <span class="action input-group-addon fa fa-filter"></span>
             </div>
             <div class="btn-group">
+                <button type="button" class="clearview fa fa-trash-o btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Clear View')}"></button>
+                <button type="button" class="separator fa fa-window-minimize btn btn-default"
+                        title="${cpn:i18n(slingRequest,'Insert Separator')}"></button>
                 <button type="button" class="reload fa fa-refresh btn btn-default"
                         title="${cpn:i18n(slingRequest,'Reload')}"></button>
-                <sling:include replaceSelectors="${slingRequest.requestPathInfo.selectorString}open"/>
             </div>
+            <sling:include replaceSelectors="${slingRequest.requestPathInfo.selectorString}open"/>
             <div class="btn-group">
                 <button class="download fa fa-download btn btn-default"
                         title="${cpn:i18n(slingRequest,'Download')}"></button>
