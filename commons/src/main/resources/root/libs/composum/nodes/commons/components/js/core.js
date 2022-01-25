@@ -2,7 +2,7 @@
  *
  *
  */
-(function () {
+(function ($html) {
     'use strict';
 
     window.composum = window.CPM = window.CPM || {};
@@ -33,10 +33,31 @@
                     error: 'danger',
                     warn: 'warning'
                 }
-            }
+            },
+            contextPath: $html.data('context-path') ? $html.data('context-path') : '',
+            composumBase: $html.data('composum-base') ? $html.data('composum-base') : '/libs/'
         },
 
         log: log.getLogger('core'),
+
+        isPermissible: function (key, permission, granted, declined) {
+            core.getJson('/bin/cpm/core/restrictions.' + permission + '.json/' + key,
+                function (json) {
+                    if (json.success && json.data.result.permissible) {
+                        if (_.isFunction(granted)) {
+                            granted();
+                        }
+                    } else {
+                        if (_.isFunction(declined)) {
+                            declined();
+                        }
+                    }
+                }, function () {
+                    if (_.isFunction(declined)) {
+                        declined();
+                    }
+                });
+        },
 
         getHtml: function (url, onSuccess, onError, onComplete) {
             core.ajaxGet(url, {dataType: 'html'}, onSuccess, onError, onComplete);
@@ -301,11 +322,17 @@
                         : (result.status + ': ' + result.statusText))));
         },
 
+        getComposumPath: function (uri) {
+            if (uri && uri.indexOf(core.const.composumBase) !== 0) {
+                uri = core.const.composumBase + uri;
+            }
+            return uri;
+        },
+
         getContextUrl: function (url) {
             if (url && !url.match(/^https?:\/\//i)) {  // ignore 'external' URLs
-                var contextPath = $('html').data('context-path');
-                if (contextPath && url.indexOf(contextPath) !== 0) {
-                    url = contextPath + url;
+                if (url.indexOf(core.const.contextPath) !== 0) {
+                    url = core.const.contextPath + url;
                 }
             }
             return url;
@@ -423,7 +450,7 @@
         openAlertDialog: function (action) {
             var alertDialog = core.getView('#alert-dialog', core.components.Dialog);
             if (!alertDialog) { // if not static included load dialog dynamically
-                core.getHtml('/libs/composum/nodes/commons/dialogs.alert.html',
+                core.getHtml(core.getComposumPath('composum/nodes/commons/dialogs.alert.html'),
                     _.bind(function (content) {
                         action(core.addLoadedDialog(core.components.Dialog, content));
                     }, this));
@@ -446,7 +473,7 @@
                 core.alert(typeOrResult.responseJSON)
             } else if (_.isObject(typeOrResult)) { // assuming a status response if 'type' is an object
                 core.messages(typeOrResult.success
-                    ? (typeOrResult.warning ? 'warn' : 'info') : 'danger',
+                        ? (typeOrResult.warning ? 'warn' : 'info') : 'danger',
                     typeOrResult.title, typeOrResult.messages)
             } else if (_.isObject(result) && result.title && _.isArray(result.messages)) { // status response
                 core.alert(result)
@@ -554,6 +581,19 @@
         },
 
         // general helpers
+
+        removeClasses: function ($el, pattern) {
+            var classes = $el.attr("class");
+            if (classes) {
+                var list = classes.toString().split(' ');
+                for (var i = 0; i < list.length; i++) {
+                    if (pattern.exec(list[i])) {
+                        $el.removeClass(list[i]);
+                    }
+                }
+            }
+            return $el;
+        },
 
         isEmptyObject: function (object) {
             var values = _.values(object);
@@ -731,4 +771,4 @@
         }
     });
 
-})();
+})($('html'));

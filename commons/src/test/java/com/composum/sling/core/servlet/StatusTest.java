@@ -8,6 +8,7 @@ import com.google.gson.stream.JsonWriter;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -16,7 +17,6 @@ import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -36,7 +36,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-/** Checks JSON serialization of {@link Status}. */
+/**
+ * Checks JSON serialization of {@link Status}.
+ */
 public class StatusTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatusTest.class);
@@ -147,7 +149,7 @@ public class StatusTest {
 
     private static class TestStatusExtension extends Status {
 
-        public TestStatusExtension(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response) {
+        public TestStatusExtension(@NotNull SlingHttpServletRequest request, @NotNull SlingHttpServletResponse response) {
             super(request, response, LOG);
         }
 

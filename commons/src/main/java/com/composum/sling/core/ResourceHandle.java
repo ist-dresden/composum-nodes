@@ -20,8 +20,8 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceWrapper;
 import org.apache.sling.api.resource.ValueMap;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
@@ -45,7 +45,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
      *                 but you need to make sure that you check {@link #isValid()} if that's possible.
      * @return the wrapped resource (may be resource itself if it is a ResourceHandle), not null
      */
-    @Nonnull
+    @NotNull
     public static ResourceHandle use(@Nullable Resource resource) {
         return resource instanceof ResourceHandle
                 ? ((ResourceHandle) resource) : new ResourceHandle(resource);
@@ -61,7 +61,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
     // initialized attributes
 
     protected final Resource resource;
-    @Nonnull
+    @NotNull
     protected final ValueMap properties;
 
     // attributes retrieved on demand
@@ -131,7 +131,7 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
         return getProperty(key, String.class);
     }
 
-    @Nonnull
+    @NotNull
     public ValueMap getProperties() {
         return properties;
     }

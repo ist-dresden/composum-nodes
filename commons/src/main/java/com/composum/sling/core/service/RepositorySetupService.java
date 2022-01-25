@@ -1,7 +1,7 @@
 package com.composum.sling.core.service;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.io.IOException;
@@ -73,22 +73,22 @@ public interface RepositorySetupService {
      * @param session      the session (not resolver to make it easy usable in install hooks)
      * @param jsonFilePath a repository path to the ACL JSON file
      */
-    void addJsonAcl(@Nonnull Session session, @Nonnull String jsonFilePath,
+    void addJsonAcl(@NotNull Session session, @NotNull String jsonFilePath,
                     @Nullable Map<String, Object> values)
             throws RepositoryException, IOException;
 
-    void addJsonAcl(@Nonnull Session session, @Nonnull Reader reader,
+    void addJsonAcl(@NotNull Session session, @NotNull Reader reader,
                     @Nullable Map<String, Object> values)
             throws RepositoryException, IOException;
 
     /**
      * revert all changes made by 'addJsonAcl'... - use the same configuration file
      */
-    void removeJsonAcl(@Nonnull Session session, @Nonnull String jsonFilePath,
+    void removeJsonAcl(@NotNull Session session, @NotNull String jsonFilePath,
                        @Nullable Map<String, Object> values)
             throws RepositoryException, IOException;
 
-    void removeJsonAcl(@Nonnull Session session, @Nonnull Reader reader,
+    void removeJsonAcl(@NotNull Session session, @NotNull Reader reader,
                        @Nullable Map<String, Object> values)
             throws RepositoryException, IOException;
 }

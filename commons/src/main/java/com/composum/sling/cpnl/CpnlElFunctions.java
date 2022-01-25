@@ -1,5 +1,6 @@
 package com.composum.sling.cpnl;
 
+import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.util.FormatterFormat;
 import com.composum.sling.core.util.I18N;
 import com.composum.sling.core.util.LinkUtil;
@@ -12,11 +13,14 @@ import org.apache.commons.lang3.text.translate.EntityArrays;
 import org.apache.commons.lang3.text.translate.LookupTranslator;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.Format;
@@ -145,6 +149,22 @@ public class CpnlElFunctions {
 
     public static String i18n(SlingHttpServletRequest request, String text) {
         return text(I18N.get(request, text));
+    }
+
+    /**
+     * Builds the URI for a relative Composum URI (prepends the Composum base).
+     *
+     * @param path the relative path (resource type)
+     * @return the URI with prepended base
+     */
+    public static String cpm(String uri) {
+        if (StringUtils.isNotBlank(uri) && !uri.startsWith("/")) {
+            final CoreConfiguration config = getService(CoreConfiguration.class);
+            if (config != null) {
+                uri = config.getComposumBase() + uri;
+            }
+        }
+        return uri;
     }
 
     /**
@@ -394,7 +414,7 @@ public class CpnlElFunctions {
      * @param type   the optional value type
      * @return the Format instance
      */
-    public static Format getFormatter(@Nonnull final Locale locale, @Nonnull final String format,
+    public static Format getFormatter(@NotNull final Locale locale, @NotNull final String format,
                                       @Nullable final Class<?>... type) {
         Format formatter = null;
         Pattern TEXT_FORMAT_STRING = Pattern.compile("^(\\{([^}]+)}(.+)|(.*\\{}.*))$");
@@ -432,5 +452,15 @@ public class CpnlElFunctions {
             }
         }
         return formatter;
+    }
+
+    protected static <T> T getService(Class<T> serviceClass) {
+        final BundleContext bundleContext = getBundelContext();
+        final ServiceReference<T> serviceReference = bundleContext.getServiceReference(serviceClass);
+        return serviceReference != null ? bundleContext.getService(serviceReference) : null;
+    }
+
+    protected static BundleContext getBundelContext() {
+        return FrameworkUtil.getBundle(CpnlElFunctions.class).getBundleContext();
     }
 }

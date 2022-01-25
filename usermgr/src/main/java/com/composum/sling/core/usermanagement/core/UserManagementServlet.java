@@ -1,6 +1,7 @@
 package com.composum.sling.core.usermanagement.core;
 
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
@@ -47,6 +48,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import static com.composum.sling.core.usermanagement.core.UserManagementServlet.SERVICE_KEY;
+
 /**
  * @author Mirko Zeibig
  * @since 26.10.2015
@@ -62,9 +65,12 @@ import java.util.Map;
                 "sling.auth.requirements=" + UserManagementServlet.SERVLET_PATH
         }
 )
+@Restricted(key = SERVICE_KEY)
 public class UserManagementServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(UserManagementServlet.class);
+
+    public static final String SERVICE_KEY = "nodes/users/manager";
 
     public static final String SERVLET_PATH = "/bin/cpm/usermanagement";
 
@@ -79,11 +85,6 @@ public class UserManagementServlet extends AbstractServiceServlet {
 
     @Reference
     protected Authorizables authorizablesService;
-
-    @Override
-    protected boolean isEnabled() {
-        return coreConfig.isEnabled(this);
-    }
 
     @Override
     public void init() throws ServletException {

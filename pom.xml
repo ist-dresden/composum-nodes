@@ -12,7 +12,7 @@
 
     <groupId>com.composum.nodes</groupId>
     <artifactId>composum-nodes</artifactId>
-    <version>2.6.6-SNAPSHOT</version>
+    <version>3.3.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Composum Nodes</name>
@@ -39,9 +39,14 @@
             <id>${release.repository.id}</id>
             <url>${release.repository.url}</url>
         </repository>
+        <!--snapshotRepository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/ist-dresden/composum-nodes</url>
+        </snapshotRepository-->
         <snapshotRepository>
-            <id>archiva</id>
-            <url>https://build.ist-software.com/nexus/repository/maven-snapshots</url>
+            <id>istrepo</id>
+            <url>https://repo.ist-software.com/repository/maven-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -55,10 +60,63 @@
         <module>osgi</module>
         <module>setup</module>
         <module>package</module>
-
-        <!-- Test modules - no deployed code contained -->
-        <module>test</module>
     </modules>
+
+    <profiles>
+        <profile>
+            <id>test</id>
+            <modules>
+                <module>jslibs</module>
+                <module>commons</module>
+                <module>console</module>
+                <module>pckgmgr</module>
+                <module>usermgr</module>
+                <module>corecfg</module>
+                <module>osgi</module>
+                <module>setup</module>
+                <module>package</module>
+                <module>xtracts/debugutil</module>
+                <!-- Test modules - no deployed code contained -->
+                <module>test</module>
+            </modules>
+        </profile>
+
+        <profile>
+            <!-- install bundles via Sling installer (REST API: /system/console/install) -->
+            <id>installBundle</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>sling-maven-plugin</artifactId>
+                        <configuration>
+                            <deploymentMethod>WebConsole</deploymentMethod>
+                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
+                            <slingUrlSuffix/>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <!-- install bundles via upload (WebDAV) to 'install' path (/libs/composum/nodes/install) -->
+            <id>uploadBundle</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>sling-maven-plugin</artifactId>
+                        <configuration>
+                            <deploymentMethod>WebDAV</deploymentMethod>
+                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}</slingUrl>
+                            <slingUrlSuffix>${sling.upload.path}</slingUrlSuffix>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <build>
         <pluginManagement>
@@ -76,7 +134,7 @@
                             <configuration>
                                 <webappSourceDir>${basedir}/src/main/resources</webappSourceDir>
                                 <webappTargetDir>${project.build.directory}/generated-sources/minify</webappTargetDir>
-                          </configuration>
+                            </configuration>
                         </execution>
                     </executions>
                 </plugin>
@@ -127,46 +185,6 @@
         </pluginManagement>
     </build>
 
-    <profiles>
-
-        <profile>
-            <!-- install bundles via Sling installer (REST API: /system/console/install) -->
-            <id>installBundle</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.sling</groupId>
-                        <artifactId>sling-maven-plugin</artifactId>
-                        <configuration>
-                            <deploymentMethod>WebConsole</deploymentMethod>
-                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
-                            <slingUrlSuffix/>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <!-- install bundles via upload (WebDAV) to 'install' path (/libs/composum/nodes/install) -->
-            <id>uploadBundle</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.sling</groupId>
-                        <artifactId>sling-maven-plugin</artifactId>
-                        <configuration>
-                            <deploymentMethod>WebDAV</deploymentMethod>
-                            <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}</slingUrl>
-                            <slingUrlSuffix>${sling.upload.path}</slingUrlSuffix>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-    </profiles>
-
     <dependencyManagement>
         <dependencies>
 
@@ -199,6 +217,29 @@
                 <groupId>com.composum.nodes</groupId>
                 <artifactId>composum-nodes-jslibs</artifactId>
                 <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- HTTP -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.1</version>
+                <optional>true</optional>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpmime</artifactId>
+                <version>4.5.2</version>
+                <optional>true</optional>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore</artifactId>
+                <version>4.4.1</version>
+                <optional>true</optional>
                 <scope>provided</scope>
             </dependency>
 

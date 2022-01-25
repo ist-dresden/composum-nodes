@@ -3,10 +3,10 @@
 <sling:defineObjects/>
 <body id="overview" class="console">
 <div id="ui">
-    <sling:include resourceType="/libs/composum/nodes/console/dialogs" replaceSelectors="minimal"/>
+    <sling:include resourceType="composum/nodes/console/dialogs" replaceSelectors="minimal"/>
     <sling:include resourceType="composum/nodes/console/components/navbar"/>
     <sling:call script="content.jsp"/>
 </div>
-<sling:call script="script.jsp"/>
+<sling:call script="body-clientlibs.jsp"/>
 <sling:include resourceType="composum/nodes/console/components/tryLogin"/>
 </body>

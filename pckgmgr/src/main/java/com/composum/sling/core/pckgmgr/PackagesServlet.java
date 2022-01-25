@@ -1,6 +1,9 @@
 package com.composum.sling.core.pckgmgr;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.CoreConfiguration;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
 import com.composum.sling.core.servlet.AbstractConsoleServlet;
 import com.composum.sling.nodes.NodesConfiguration;
 import org.apache.sling.api.servlets.HttpConstants;
@@ -24,18 +27,22 @@ import java.util.regex.Pattern;
         },
         immediate = true
 )
+@Restricted(key = PackageServlet.SERVICE_KEY)
 public class PackagesServlet extends AbstractConsoleServlet {
 
     public static final String SERVLET_PATH = "/bin/packages";
 
     public static final String RESOURCE_TYPE = "composum/nodes/pckgmgr";
 
-    public static final String CONSOLE_PATH = "/libs/composum/nodes/pckgmgr/content/pckgmgr";
+    public static final String CONSOLE_PATH = RESOURCE_TYPE + "/content/pckgmgr";
 
     public static final Pattern PATH_PATTERN = Pattern.compile("^(" + SERVLET_PATH + "(\\.[^/]+)?\\.html)(/.*)?$");
 
     @Reference
-    protected NodesConfiguration config;
+    protected CoreConfiguration coreConfig;
+
+    @Reference
+    protected NodesConfiguration nodesConfig;
 
     @Override
     protected String getServletPath(BeanContext context) {
@@ -54,6 +61,6 @@ public class PackagesServlet extends AbstractConsoleServlet {
 
     @Override
     protected String getConsolePath(BeanContext context) {
-        return config.checkConsoleAccess() ? CONSOLE_PATH : null;
+        return nodesConfig.checkConsoleAccess() ? coreConfig.getComposumBase() + CONSOLE_PATH : null;
     }
 }

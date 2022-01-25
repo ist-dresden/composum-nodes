@@ -2,6 +2,7 @@ package com.composum.sling.core.pckgmgr.jcrpckg;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.concurrent.JobFacade;
 import com.composum.sling.core.concurrent.JobMonitor;
 import com.composum.sling.core.concurrent.JobUtil;
@@ -16,6 +17,7 @@ import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryItem;
 import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryTree;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
+import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
@@ -102,7 +104,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * The servlet to provide download and upload of content packages and package definitions.
@@ -118,10 +119,13 @@ import java.util.function.Consumer;
                 "sling.auth.requirements=" + PackageServlet.SERVLET_PATH
         }
 )
+@Restricted(key = PackageServlet.SERVICE_KEY)
 @Designate(ocd = PackageServlet.Configuration.class)
 public class PackageServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageServlet.class);
+
+    public static final String SERVICE_KEY = "nodes/packages/manager";
 
     public static final String SERVLET_PATH = "/bin/cpm/package";
     public static final String PARAM_GROUP = "group";
@@ -136,6 +140,9 @@ public class PackageServlet extends AbstractServiceServlet {
     public static final boolean AUTO_SAVE = true;
 
     // service references
+
+    @Reference
+    private ServiceRestrictions restrictions;
 
     @Reference
     private NodesConfiguration nodesConfig;
@@ -171,11 +178,6 @@ public class PackageServlet extends AbstractServiceServlet {
     @Override
     protected PackageOperationSet getOperations() {
         return operations;
-    }
-
-    @Override
-    protected boolean isEnabled() {
-        return nodesConfig.isEnabled(this);
     }
 
     @Activate
@@ -767,7 +769,6 @@ public class PackageServlet extends AbstractServiceServlet {
             }
             return delivered;
         }
-
     }
 
     protected class UploadOperation implements ServletOperation {

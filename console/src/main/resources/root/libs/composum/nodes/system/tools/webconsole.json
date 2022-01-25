@@ -1,0 +1,8 @@
+{
+  "jcr:primaryType": "sling:Folder",
+  "sling:resourceType": "composum/nodes/system/tools/webconsole",
+  "sling:resourceSuperType": "composum/nodes/console/tools/page",
+  "plugin": {
+    "jcr:primaryType": "sling:Folder"
+  }
+}

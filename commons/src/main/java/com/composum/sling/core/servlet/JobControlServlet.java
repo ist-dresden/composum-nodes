@@ -2,8 +2,10 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.concurrent.JobFacade;
 import com.composum.sling.core.concurrent.JobUtil;
+import com.composum.sling.core.service.RestrictedService;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.ResponseUtil;
@@ -21,6 +23,8 @@ import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -33,13 +37,29 @@ import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Component(service = Servlet.class,
+import static com.composum.sling.core.servlet.JobControlServlet.SERVICE_KEY;
+
+@Component(service = {Servlet.class, RestrictedService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Job Control Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + JobControlServlet.SERVLET_PATH,
@@ -50,9 +70,12 @@ import java.util.regex.Pattern;
                 "sling.auth.requirements=" + JobControlServlet.SERVLET_PATH
         }
 )
+@Restricted(key = SERVICE_KEY)
 public class JobControlServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(JobControlServlet.class);
+
+    public static final String SERVICE_KEY = "core/job/execution";
 
     public static final String SERVLET_PATH = "/bin/cpm/core/jobcontrol";
 
@@ -69,12 +92,8 @@ public class JobControlServlet extends AbstractServiceServlet {
     private JobManager jobManager;
 
     @Override
-    protected boolean isEnabled() {
-        return coreConfig.isEnabled(this);
-    }
-
-    @Override
-    protected ServletOperationSet getOperations() {
+    @NotNull
+    protected ServletOperationSet<Extension, Operation> getOperations() {
         return operations;
     }
 
@@ -114,7 +133,9 @@ public class JobControlServlet extends AbstractServiceServlet {
     private class GetOutfile implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource) throws IOException {
             final String jobId = AbstractServiceServlet.getPath(request).substring(1);
             final JobFacade job = JobUtil.getJobById(jobManager, request.getResourceResolver(), jobId);
             if (job != null) {
@@ -137,9 +158,11 @@ public class JobControlServlet extends AbstractServiceServlet {
                     if (resources.hasNext()) {
                         final Resource audit = resources.next();
                         final Resource outfileResource = resolver.getResource(audit, path.substring(path.lastIndexOf(File.separator) + 1));
-                        try (final ServletOutputStream outputStream = response.getOutputStream();
-                             final InputStream inputStream = outfileResource.adaptTo(InputStream.class)) {
-                            writeStream(ranges, outputStream, inputStream);
+                        if (outfileResource != null) {
+                            try (final ServletOutputStream outputStream = response.getOutputStream();
+                                 final InputStream inputStream = outfileResource.adaptTo(InputStream.class)) {
+                                writeStream(ranges, outputStream, inputStream);
+                            }
                         }
                     }
                 }
@@ -154,8 +177,7 @@ public class JobControlServlet extends AbstractServiceServlet {
             if (!ranges.isEmpty()) {
                 final Range range1 = ranges.get(0);
                 if (range1.start != null) {
-                    inputStream.skip(range1.start);
-                    pos = range1.start;
+                    pos = inputStream.skip(range1.start);
                 }
                 if (range1.end != null) {
                     end = range1.end;
@@ -181,7 +203,7 @@ public class JobControlServlet extends AbstractServiceServlet {
                 return ranges;
             }
             String byteRangeSetRegex = "(((?<byteRangeSpec>(?<firstBytePos>\\d+)-(?<lastBytePos>\\d+)?)|(?<suffixByteRangeSpec>-(?<suffixLength>\\d+)))(,|$))";
-            String byteRangesSpecifierRegex = "bytes=(?<byteRangeSet>" + byteRangeSetRegex + "{1,})";
+            String byteRangesSpecifierRegex = "bytes=(?<byteRangeSet>" + byteRangeSetRegex + "+)";
             Pattern byteRangeSetPattern = Pattern.compile(byteRangeSetRegex);
             Pattern byteRangesSpecifierPattern = Pattern.compile(byteRangesSpecifierRegex);
             Matcher byteRangesSpecifierMatcher = byteRangesSpecifierPattern.matcher(rangeHeader);
@@ -215,31 +237,30 @@ public class JobControlServlet extends AbstractServiceServlet {
     private class GetAllJobs implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource) throws IOException {
             final String path = AbstractServiceServlet.getPath(request);
             final RequestParameter topic = request.getRequestParameter("topic");
-            JobManager.QueryType selector = RequestUtil.getSelector(request, JobManager.QueryType.ALL);
-            boolean useAudit = (selector == JobManager.QueryType.ALL || selector == JobManager.QueryType.HISTORY || selector == JobManager.QueryType.SUCCEEDED);
-            Collection<Job> jobs = jobManager.findJobs(selector, topic.getString(), 0);
-            List<JobFacade> allJobs = new ArrayList<>();
-            for (Job job : jobs) {
-                allJobs.add(new JobFacade.EventJob(job));
-            }
-            if (useAudit) {
-                final Collection<JobFacade> auditJobs = JobUtil.getAuditJobs(selector, request.getResourceResolver());
-                for (JobFacade auditJob : auditJobs) {
-                    if (!containsJob(jobs, auditJob)) {
-                        allJobs.add(auditJob);
+            final List<JobFacade> allJobs = new ArrayList<>();
+            if (topic != null) {
+                final JobManager.QueryType selector = RequestUtil.getSelector(request, JobManager.QueryType.ALL);
+                boolean useAudit = (selector == JobManager.QueryType.ALL || selector == JobManager.QueryType.HISTORY || selector == JobManager.QueryType.SUCCEEDED);
+                final Collection<Job> jobs = jobManager.findJobs(selector, topic.getString(), 0);
+                for (Job job : jobs) {
+                    allJobs.add(new JobFacade.EventJob(job));
+                }
+                if (useAudit) {
+                    final Collection<JobFacade> auditJobs = JobUtil.getAuditJobs(selector, request.getResourceResolver());
+                    for (JobFacade auditJob : auditJobs) {
+                        if (!containsJob(jobs, auditJob)) {
+                            allJobs.add(auditJob);
+                        }
                     }
                 }
             }
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {
-                Collections.sort(allJobs, new Comparator<JobFacade>() {
-                    @Override
-                    public int compare(JobFacade o1, JobFacade o2) {
-                        return o1.getCreated().compareTo(o2.getCreated());
-                    }
-                });
+                allJobs.sort(Comparator.comparing(JobFacade::getCreated));
                 jsonWriter.beginArray();
                 for (JobFacade job : allJobs) {
                     if (path.length() > 1) {
@@ -271,7 +292,9 @@ public class JobControlServlet extends AbstractServiceServlet {
     private class GetJob implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource) throws IOException {
             final String path = AbstractServiceServlet.getPath(request);
             String jobId = path.substring(1);
             JobFacade job = JobUtil.getJobById(jobManager, request.getResourceResolver(), jobId);
@@ -289,7 +312,9 @@ public class JobControlServlet extends AbstractServiceServlet {
     private class CancelJob implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource) {
             final String path = AbstractServiceServlet.getPath(request);
             String jobId = path.substring(1);
             jobManager.stopJobById(jobId);
@@ -298,8 +323,12 @@ public class JobControlServlet extends AbstractServiceServlet {
 
     private class PurgeAudit implements ServletOperation {
 
+        @SuppressWarnings("ConstantConditions")
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource)
+                throws RepositoryException, IOException, ServletException {
             try {
                 final ResourceResolver resolver = request.getResourceResolver();
                 final int keep = Integer.parseInt(request.getRequestParameter("keep").getString());
@@ -326,9 +355,9 @@ public class JobControlServlet extends AbstractServiceServlet {
                     }
 
                 }
-            } catch (Exception e) {
-                LOG.error(e.getMessage(), e);
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+            } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
             }
         }
 
@@ -340,7 +369,7 @@ public class JobControlServlet extends AbstractServiceServlet {
                 allAuditJobs.add(auditJob);
             }
             final Comparator<JobFacade> comparator = new JobUtil.JobComparator();
-            Collections.sort(allAuditJobs, comparator);
+            allAuditJobs.sort(comparator);
             int size = allAuditJobs.size();
             for (int i = 0; i < size - keep; i++) {
                 final JobFacade.AuditJob x = allAuditJobs.get(i);
@@ -356,7 +385,10 @@ public class JobControlServlet extends AbstractServiceServlet {
     private class CleanupJob implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource)
+                throws RepositoryException, IOException, ServletException {
             try {
                 final String path = AbstractServiceServlet.getPath(request);
                 final String jobId = path.substring(1);
@@ -402,12 +434,13 @@ public class JobControlServlet extends AbstractServiceServlet {
     private class CreateJob implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws IOException {
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource) throws IOException {
             final ResourceResolver resolver = request.getResourceResolver();
             final JackrabbitSession session = (JackrabbitSession) resolver.adaptTo(Session.class);
             String topic = "";
             Map<String, Object> properties = new HashMap<>();
-            @SuppressWarnings("unchecked")
             Map<String, String[]> parameters = request.getParameterMap();
             for (Map.Entry<String, String[]> parameter : parameters.entrySet()) {
                 if (parameter.getKey().equals("event.job.topic")) {
@@ -421,7 +454,9 @@ public class JobControlServlet extends AbstractServiceServlet {
                     }
                 }
             }
-            properties.put("userid", session.getUserID());
+            if (session != null) {
+                properties.put("userid", session.getUserID());
+            }
             JobUtil.buildOutfileName(properties);
             Job job = jobManager.addJob(topic, properties);
             try (final JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response)) {

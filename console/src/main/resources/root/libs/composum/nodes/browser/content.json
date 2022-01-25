@@ -7,12 +7,14 @@
       "sling:Redirect"
     ],
     "jcr:title": "Browser",
-    "description": "/libs/composum/nodes/browser/description",
+    "description": "composum/nodes/browser/description",
     "sling:redirect": "/bin/browser.html",
     "categories": [
       "core",
       "nodes"
     ],
-    "order": 10
+    "order": 10,
+    "permissionsSupport": true,
+    "precondition": "restrictions:nodes/repository/resources=read"
   }
 }

@@ -1,15 +1,16 @@
 package com.composum.sling.nodes.query;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.sling.api.resource.Resource;
-
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 import static com.composum.sling.core.util.ResourceUtil.PROP_DESCRIPTION;
 
+@Restricted(key = ConfigSet.SERVICE_KEY)
 public class ConfigItem extends ConsoleSlingBean implements Comparable<ConfigItem> {
 
     public static final String PROP_ORDER = "order";
@@ -49,7 +50,7 @@ public class ConfigItem extends ConsoleSlingBean implements Comparable<ConfigIte
     }
 
     @Override
-    public int compareTo(@Nonnull ConfigItem other) {
+    public int compareTo(@NotNull ConfigItem other) {
         CompareToBuilder builder = new CompareToBuilder();
         builder.append(getOrder(), other.getOrder());
         builder.append(getTitle(), other.getTitle());

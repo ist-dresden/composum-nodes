@@ -2,15 +2,22 @@
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<sling:defineObjects/>
+<cpn:defineObjects/>
 <cpn:component var="model" type="com.composum.sling.core.usermanagement.view.View" scope="request">
-    <html data-context-path="${slingRequest.contextPath}">
+    <%
+        if (!model.isReadAllowed()) {
+            slingResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
+        } else {
+    %>
+    <html data-context-path="${slingRequest.contextPath}" data-composum-base="${composumBase}">
     <sling:call script="head.jsp"/>
     <body id="usermanagement" class="console left-open top-open">
     <div id="ui">
         <sling:call script="dialogs.jsp"/>
         <sling:include resourceType="composum/nodes/console/components/navbar"/>
         <div id="content-wrapper">
+            <c:set var="writeAllowed" value="${model.permissible['nodes/users/manager']['write']}"/>
+            <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
             <div id="split-view-horizontal-split" class="split-pane horizontal-split fixed-left">
                 <div class="split-pane-component left-pane">
                     <div>
@@ -26,18 +33,19 @@
                                 </div>
                                 <div class="btn-group btn-group-sm" role="group">
                                     <button type="button" class="addsystemuser fa fa-stack btn btn-default"
-                                            title="Add System User">
+                                            title="Add System User"${writeDisabled}>
                                         <i class="fa fa-user-o fa-stack-1x"></i>
                                         <i class="fa fa-plus-circle fa-stack-1x"></i>
                                         <span class="label">Add System User</span>
                                     </button>
-                                    <button type="button" class="adduser fa fa-stack btn btn-default" title="Add User">
+                                    <button type="button" class="adduser fa fa-stack btn btn-default"
+                                            title="Add User"${writeDisabled}>
                                         <i class="fa fa-user fa-stack-1x"></i>
                                         <i class="fa fa-plus-circle fa-stack-1x"></i>
                                         <span class="label">Add User</span>
                                     </button>
                                     <button type="button" class="addgroup fa fa-stack btn btn-default"
-                                            title="Add Group">
+                                            title="Add Group"${writeDisabled}>
                                         <i class="fa fa-users fa-stack-1x"></i>
                                         <i class="fa fa-plus-circle fa-stack-1x"></i>
                                         <span class="label">Add Group</span>
@@ -45,7 +53,8 @@
                                 </div>
                                 <div class="btn-group btn-group-sm" role="group">
                                     <button type="button" class="deleteauthorizable fa fa-minus btn btn-default"
-                                            title="Delete Authorizable"><span class="label">Delete Authorizable</span>
+                                            title="Delete Authorizable"${writeDisabled}><span
+                                            class="label">Delete Authorizable</span>
                                     </button>
                                 </div>
                             </div>
@@ -79,10 +88,13 @@
                 <div class="open-left"><a href="#" class="fa fa-angle-double-right" title="Restore left panel"></a>
                 </div>
             </div>
+            <c:remove var="writeDisabled"/>
+            <c:remove var="writeAllowed"/>
         </div>
     </div>
     <sling:call script="script.jsp"/>
     <sling:include resourceType="composum/nodes/console/components/tryLogin"/>
     </body>
     </html>
+    <%}%>
 </cpn:component>

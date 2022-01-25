@@ -1,10 +1,15 @@
-<%@page session="false" pageEncoding="utf-8" %>
+<%@page pageEncoding="utf-8" %>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<sling:defineObjects/>
+<cpn:defineObjects/>
 <cpn:component id="browser" type="com.composum.sling.nodes.browser.Browser" scope="request">
-    <html data-context-path="${slingRequest.contextPath}">
+    <%
+        if (!browser.isReadAllowed()) {
+            slingResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
+        } else {
+    %>
+    <html data-context-path="${slingRequest.contextPath}" data-composum-base="${composumBase}">
     <sling:call script="head.jsp"/>
     <body id="browser" class="console left-open top-open">
     <div id="ui">
@@ -33,32 +38,37 @@
                                                     data-toggle="dropdown" title="More actions..."><span class="label">More...</span>
                                             </button>
                                             <ul class="dropdown-menu" role="menu">
-                                                <li><a href="#" class="checkout"
+                                                <li><a href="#" class="checkout${browser.writeAllowed?'':' disabled'}"
                                                        title="Checkout/Checkin the selected node">Checkout</a></li>
-                                                <li><a href="#" class="lock"
+                                                <li><a href="#" class="lock${browser.writeAllowed?'':' disabled'}"
                                                        title="Lock/Unlock the selected node">Lock</a></li>
-                                                <li><a href="#" class="mixins"
+                                                <li><a href="#" class="mixins${browser.writeAllowed?'':' disabled'}"
                                                        title="View/Change the nodes mixin types">Mixin Types...</a></li>
-                                                <li><a href="#" class="move" title="Move the selected node">Move
+                                                <li><a href="#" class="move${browser.writeAllowed?'':' disabled'}"
+                                                       title="Move the selected node">Move
                                                     Node</a></li>
-                                                <li><a href="#" class="rename"
+                                                <li><a href="#" class="rename${browser.writeAllowed?'':' disabled'}"
                                                        title="Rename the selected node">Rename</a></li>
                                             </ul>
                                         </div>
                                         <div class="btn-group btn-group-sm" role="group">
                                             <button type="button"
+                                                    <c:if test="${!browser.writeAllowed}">disabled="disabled"</c:if>
                                                     class="create glyphicon-plus glyphicon btn btn-default"
                                                     title="Create a new node"><span class="label">Create</span></button>
                                             <button type="button"
+                                                    <c:if test="${!browser.writeAllowed}">disabled="disabled"</c:if>
                                                     class="delete glyphicon-minus glyphicon btn btn-default"
                                                     title="Delete selected node"><span class="label">Delete</span>
                                             </button>
                                         </div>
                                         <div class="btn-group btn-group-sm" role="group">
                                             <button type="button" class="copy fa fa-copy btn btn-default"
+                                                    <c:if test="${!browser.writeAllowed}">disabled="disabled"</c:if>
                                                     title="Copy selected node to clipboard"><span
                                                     class="label">Copy</span></button>
                                             <button type="button" class="paste fa fa-paste btn btn-default"
+                                                    <c:if test="${!browser.writeAllowed}">disabled="disabled"</c:if>
                                                     title="Paste node from clipboard into the selected node"><span
                                                     class="label">Paste</span></button>
                                         </div>
@@ -122,4 +132,5 @@
     <sling:include resourceType="composum/nodes/console/components/tryLogin"/>
     </body>
     </html>
+    <%}%>
 </cpn:component>

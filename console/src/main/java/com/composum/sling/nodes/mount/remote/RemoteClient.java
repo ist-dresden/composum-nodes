@@ -16,10 +16,10 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.jackrabbit.webdav.DavConstants;
 import org.apache.jackrabbit.webdav.client.methods.HttpPropfind;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -35,9 +35,9 @@ final class RemoteClient {
     public static final Pattern REMOTE_URL_PATTERN = Pattern.compile(
             "^(?<url>(?<scheme>https?)://(?<host>[^:/]+)(:(?<port>\\d+))?(?<context>/.+)?)/?$");
 
-    @Nonnull
+    @NotNull
     protected final RemoteProvider provider;
-    @Nonnull
+    @NotNull
     protected final Collection<String> builderKeys;
     private transient Collection<RemoteClientBuilder> builders;
 
@@ -46,11 +46,11 @@ final class RemoteClient {
 
     private transient HttpClientContext clientContext;
 
-    @Nonnull
+    @NotNull
     private final List<Header> defaultHeaders;
 
-    protected RemoteClient(@Nonnull final RemoteProvider provider, @Nonnull final RemoteProvider.Config config,
-                           @Nonnull final Collection<String> builderKeys) {
+    protected RemoteClient(@NotNull final RemoteProvider provider, @NotNull final RemoteProvider.Config config,
+                           @NotNull final Collection<String> builderKeys) {
         this.provider = provider;
         this.builderKeys = builderKeys;
 
@@ -102,8 +102,8 @@ final class RemoteClient {
     /**
      * @return the URL to send a POST request to change the resource at the given path
      */
-    @Nonnull
-    public String getHttpUrl(@Nonnull final String resourcePath) {
+    @NotNull
+    public String getHttpUrl(@NotNull final String resourcePath) {
         String path = provider.remotePath(resourcePath);
         return remoteUrl + path;
     }
@@ -111,8 +111,8 @@ final class RemoteClient {
     /**
      * @return the URL to access the remote resource via HTTP
      */
-    @Nonnull
-    public String getHttpUrl(@Nonnull final RemoteResource resource) {
+    @NotNull
+    public String getHttpUrl(@NotNull final RemoteResource resource) {
         return getHttpUrl(resource.getPath());
     }
 
@@ -120,20 +120,20 @@ final class RemoteClient {
     // general method object builder methods...
     //
 
-    protected HttpHead buildHttpHead(@Nonnull final String url) {
+    protected HttpHead buildHttpHead(@NotNull final String url) {
         return new HttpHead(url);
     }
 
-    protected HttpGet buildHttpGet(@Nonnull final String url) {
+    protected HttpGet buildHttpGet(@NotNull final String url) {
         return new HttpGet(url);
     }
 
-    protected HttpPropfind buildPropfind(@Nonnull final String url)
+    protected HttpPropfind buildPropfind(@NotNull final String url)
             throws IOException {
         return new HttpPropfind(url, DavConstants.PROPFIND_ALL_PROP, DavConstants.DEPTH_1);
     }
 
-    protected HttpPost buildHttpPost(@Nonnull final String url) {
+    protected HttpPost buildHttpPost(@NotNull final String url) {
         return new HttpPost(url);
     }
 
@@ -144,14 +144,14 @@ final class RemoteClient {
     /**
      * request execution in the remote clients HTTP context
      */
-    public HttpResponse execute(@Nonnull final HttpUriRequest request) throws IOException {
+    public HttpResponse execute(@NotNull final HttpUriRequest request) throws IOException {
         return execute(buildClient(), request);
     }
 
     /**
      * request execution in the remote clients HTTP context
      */
-    public HttpResponse execute(@Nonnull final HttpClient client, @Nonnull final HttpUriRequest request)
+    public HttpResponse execute(@NotNull final HttpClient client, @NotNull final HttpUriRequest request)
             throws IOException {
         return client.execute(request, getClientContext());
     }
@@ -172,7 +172,7 @@ final class RemoteClient {
     /**
      * @return the client to load remote resources
      */
-    @Nonnull
+    @NotNull
     protected HttpClient buildClient() {
         HttpClientBuilder builder = HttpClientBuilder.create()
                 .setDefaultHeaders(defaultHeaders);

@@ -5,7 +5,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.Callable;
 
 /**

@@ -1,6 +1,6 @@
 package com.composum.sling.core.util;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.text.FieldPosition;
 import java.text.Format;
 import java.text.ParsePosition;
@@ -15,14 +15,14 @@ public class FormatterFormat extends Format {
     public final Locale locale;
     public final String format;
 
-    public FormatterFormat(@Nonnull final String format, @Nonnull final Locale locale) {
+    public FormatterFormat(@NotNull final String format, @NotNull final Locale locale) {
         this.locale = locale;
         this.format = format;
     }
 
     @Override
     public StringBuffer format(final Object obj,
-                               @Nonnull final StringBuffer toAppendTo, @Nonnull final FieldPosition pos) {
+                               @NotNull final StringBuffer toAppendTo, @NotNull final FieldPosition pos) {
         if (obj != null) {
             Formatter formatter = new Formatter(toAppendTo, locale);
             formatter.format(format, obj);
@@ -31,7 +31,7 @@ public class FormatterFormat extends Format {
     }
 
     @Override
-    public Object parseObject(final String source, @Nonnull final ParsePosition pos) {
+    public Object parseObject(final String source, @NotNull final ParsePosition pos) {
         throw new UnsupportedOperationException("output formatter only");
     }
 }

@@ -5,8 +5,8 @@ import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -33,7 +33,7 @@ public class SlingResourceUtil {
      * {@link org.apache.sling.api.resource.Resource#getChild(String)}. If node and other are the same, this is empty.
      * @throws IllegalArgumentException in those cases where there is no sensible answer: one of the paths is empty or one absolute and one relative path
      */
-    public static String relativePath(@Nonnull String node, @Nonnull String other) {
+    public static String relativePath(@NotNull String node, @NotNull String other) {
         node = ResourceUtil.normalize(node);
         other = ResourceUtil.normalize(other);
         //noinspection IfStatementWithTooManyBranches,OverlyComplexBooleanExpression
@@ -113,7 +113,7 @@ public class SlingResourceUtil {
     /**
      * Returns the list of paths of a number of resources. For use e.g. in logging statements.
      */
-    @Nonnull
+    @NotNull
     public static List<String> getPaths(@Nullable List<Resource> resources) {
         List<String> paths = new ArrayList<>();
         if (resources != null) {
@@ -129,7 +129,7 @@ public class SlingResourceUtil {
      *
      * @return true if we needed to add the mixin.
      */
-    public static boolean addMixin(@Nonnull Resource resource, @Nonnull String mixin) {
+    public static boolean addMixin(@NotNull Resource resource, @NotNull String mixin) {
         if (!ResourceUtil.isResourceType(resource, mixin)) {
             ModifiableValueMap vm = resource.adaptTo(ModifiableValueMap.class);
             String[] mixins = vm.get(ResourceUtil.PROP_MIXINTYPES, new String[0]);
@@ -147,7 +147,7 @@ public class SlingResourceUtil {
      * @param resource a resource or null
      * @return an iterable running through the resource and it's descendants, not null
      */
-    @Nonnull
+    @NotNull
     public static Iterable<Resource> descendants(@Nullable final Resource resource) {
         return () -> descendantsStream(resource).iterator();
     }
@@ -158,7 +158,7 @@ public class SlingResourceUtil {
      * @param resource a resource or null
      * @return a stream running through the resource and it's the descendants, not null
      */
-    @Nonnull
+    @NotNull
     public static Stream<Resource> descendantsStream(@Nullable Resource resource) {
         return descendantsStream(resource, null);
     }
@@ -171,7 +171,7 @@ public class SlingResourceUtil {
      * @param leafFilter if this returns true, this assumes the resource is a leaf and does not return it's descendants.
      * @return a stream running through the resource and it's the descendants, not null
      */
-    @Nonnull
+    @NotNull
     public static Stream<Resource> descendantsStream(@Nullable Resource resource,
                                                      @Nullable Function<Resource, Boolean> leafFilter) {
         if (resource == null) {
@@ -188,7 +188,7 @@ public class SlingResourceUtil {
     /**
      * Returns a stream of the resource and all its parents.
      */
-    @Nonnull
+    @NotNull
     public static Stream<Resource> selfAndAncestors(@Nullable Resource r) {
         if (r == null) {
             return Stream.empty();
@@ -307,7 +307,7 @@ public class SlingResourceUtil {
      * Sets a property on a {@link ModifiableValueMap}. This abbreviates the procedure if it's not known whether
      * the value is null - {@link ModifiableValueMap#put(Object, Object)} throws up if it is.
      */
-    public static void setProperty(@Nonnull ModifiableValueMap valueMap, @Nonnull String key, @Nullable Object value) {
+    public static void setProperty(@NotNull ModifiableValueMap valueMap, @NotNull String key, @Nullable Object value) {
         if (value == null) {
             valueMap.remove(key);
         } else {

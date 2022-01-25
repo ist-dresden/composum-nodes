@@ -3,24 +3,23 @@
  * The Sling console resets all styles, even the browser styles, so we need to do everything from scratch. :-(
  */
 
-h2 {
+h2, h3 {
     display: block;
-    font-size: 1.5em;
-    margin-block-start: 0.83em;
-    margin-block-end: 0.83em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
     font-weight: bold;
 }
 
+h2 {
+    font-size: 1.5em;
+    margin-block-start: 0.83em;
+    margin-block-end: 0.83em;
+}
+
 h3 {
-    display: block;
     font-size: 1.17em;
     margin-block-start: 1em;
     margin-block-end: 1em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px;
-    font-weight: bold;
 }
 
 ul, menu, dir {
@@ -28,8 +27,8 @@ ul, menu, dir {
     list-style-type: disc;
     margin-block-start: 1em;
     margin-block-end: 1em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
     padding-inline-start: 40px;
 }
 
@@ -45,14 +44,16 @@ a {
 form {
     margin-block-end: 1em;
     display: block;
-    margin-top: 0em;
+    margin-top: 0;
 }
 
-pre, xmp, plaintext, listing {
+pre {
     display: block;
+    width: 100%;
+    margin: 1em 0;
+    overflow-x: auto;
     font-family: monospace;
     white-space: pre;
-    margin: 1em 0px;
 }
 
 hr {

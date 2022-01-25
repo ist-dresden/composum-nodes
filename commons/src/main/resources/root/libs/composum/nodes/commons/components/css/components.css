@@ -152,6 +152,17 @@ fieldset {
     padding-left: 0;
 }
 
+.form-checkbox {
+    height: 59px;
+    padding-top: 23px;
+    margin-bottom: 5px;
+}
+
+.form-checkbox-col {
+    height: 36px;
+    margin-bottom: 5px;
+}
+
 /**
  * Radio Group
  */
@@ -450,9 +461,22 @@ fieldset {
     font-size: 100px;
 }
 
+.form-panel label {
+    width: 100%;
+}
+
 .form-panel label span {
     font-weight: normal;
     margin-left: 5px;
+}
+
+.form-panel label .widget-hint {
+    display: block;
+    margin-top: 3px;
+    text-align: right;
+    float: right;
+    font-size: 12px;
+    color: #777;
 }
 
 .modal-dialog .form-group.cl,

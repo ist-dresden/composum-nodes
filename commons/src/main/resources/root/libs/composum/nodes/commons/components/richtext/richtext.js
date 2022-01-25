@@ -191,7 +191,7 @@
                                     values.text = trumbowyg.getRangeText();
 
                                     components.trumbowyg.openModalWidgets.apply(trumbowyg, [
-                                        '/libs/composum/nodes/commons/components/richtext/link/dialog.html',
+                                        core.getComposumPath('composum/nodes/commons/components/richtext/link/dialog.html'),
                                         values,
                                         insertLinkCallback
                                     ]);

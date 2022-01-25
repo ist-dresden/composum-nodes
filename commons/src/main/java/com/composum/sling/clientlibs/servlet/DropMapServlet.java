@@ -5,10 +5,10 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletResponse;
 
@@ -26,14 +26,14 @@ public class DropMapServlet extends SlingSafeMethodsServlet {
     private static final Logger LOG = getLogger(DropMapServlet.class);
 
     @Override
-    protected void doGet(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response) {
+    protected void doGet(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response) {
         drop(request, response);
     }
 
     @Override
-    protected void doHead(@Nonnull final SlingHttpServletRequest request,
-                          @Nonnull final SlingHttpServletResponse response) {
+    protected void doHead(@NotNull final SlingHttpServletRequest request,
+                          @NotNull final SlingHttpServletResponse response) {
         drop(request, response);
     }
 

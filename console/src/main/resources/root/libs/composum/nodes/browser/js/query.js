@@ -49,6 +49,7 @@
                 var query = this.$queryInput.val();
                 core.ajaxGet('/bin/cpm/nodes/node.query.html', {
                     data: {
+                        _charset_: 'UTF-8',
                         query: this.prepareQuery(query),
                         filter: this.isFiltered() ? browser.tree.filter : ''
                     }
@@ -89,8 +90,9 @@
             },
 
             showExportMenu: function () {
-                core.ajaxGet('/libs/composum/nodes/browser/query/export/set.html', {
+                core.ajaxGet(core.getComposumPath('composum/nodes/browser/query/export/set.html'), {
                         data: {
+                            _charset_: 'UTF-8',
                             query: this.prepareQuery(this.$queryInput.val()),
                             filter: this.isFiltered() ? browser.tree.filter : ''
                         }
@@ -251,9 +253,10 @@
                 if (this.popover === 'templates') {
                     this.$povHook.popover('toggle');
                 } else {
-                    core.getHtml('/libs/composum/nodes/browser/query/templates.html', _.bind(function (data) {
-                        this.showPopover('templates', this.$templates.attr('title'), data);
-                    }, this));
+                    core.getHtml(core.getComposumPath('composum/nodes/browser/query/templates.html'),
+                        _.bind(function (data) {
+                            this.showPopover('templates', this.$templates.attr('title'), data);
+                        }, this));
                 }
                 return false;
             },

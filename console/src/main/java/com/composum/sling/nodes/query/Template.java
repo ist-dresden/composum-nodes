@@ -1,6 +1,7 @@
 package com.composum.sling.nodes.query;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.sling.api.resource.Resource;
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 
+@Restricted(key = ConfigSet.SERVICE_KEY)
 public class Template extends ConfigItem {
 
     public static final String PROP_GROUP = "group";

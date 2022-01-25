@@ -6,8 +6,10 @@
     <browser jcr:primaryType="nt:unstructured"
             jcr:mixinTypes="[sling:Redirect]"
             jcr:title="Browser"
-            description="/libs/composum/nodes/browser/description"
+            description="composum/nodes/browser/description"
             sling:redirect="/bin/browser.html"
             categories="[core,nodes]"
-            order="{Long}10"/>
+            order="{Long}10"
+            permissionsSupport="{Boolean}true"
+            precondition="restrictions:nodes/repository/resources=read"/>
 </jcr:root>

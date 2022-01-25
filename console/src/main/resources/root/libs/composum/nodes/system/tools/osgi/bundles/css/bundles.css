@@ -1,0 +1,226 @@
+
+.tools-osgi-bundles.tools-console.console .content-wrapper {
+    top: 41px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.tools-osgi-bundles_header {
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 31px;
+    padding: 0 10px 0 107px;
+    background: #e4e4e4;
+}
+
+.tools-osgi-bundles_header h1 {
+    margin: 0;
+    line-height: 31px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.tools-osgi-bundles_header h1 span {
+    margin-left: 30px;
+    font-weight: normal;
+}
+
+.tools-osgi-bundles_header h1 i {
+    margin-left: 6px;
+}
+
+.tools-osgi-bundles_header h1 .active,
+.tools-osgi-bundles_header h1 i {
+    color: #3c763d; /* success */
+}
+
+.tools-osgi-bundles_header h1.attention .active,
+.tools-osgi-bundles_header h1.attention i,
+.tools-osgi-bundles .bootstrap-table tr.attention {
+    color: #a94442; /* danger */;
+}
+
+.tools-osgi-bundles .bootstrap-table tr {
+    cursor: pointer;
+}
+
+.tools-osgi-bundles .bootstrap-table tr.attention {
+    background-color: #f2dede;
+}
+
+.tools-osgi-bundles .bootstrap-table tr.attention:nth-child(even) {
+    background-color: rgba(242, 222, 222, 0.75);
+}
+
+.tools-osgi-bundles .bootstrap-table tr.attention.state-resolved {
+    background-color: #f8efc0;
+    color: #8a6d3b;
+}
+
+.tools-osgi-bundles .bootstrap-table tr.attention.state-resolved:nth-child(even) {
+    background-color: rgba(248, 239, 192, 0.75);
+}
+
+.tools-osgi-bundles .content-wrapper .fixed-table-container {
+    position: absolute;
+    top: 31px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.tools-osgi-bundles .bootstrap-table .th-inner {
+    padding: 0;
+}
+
+.tools-osgi-bundles .bootstrap-table th,
+.tools-osgi-bundles .bootstrap-table td {
+    padding: 3px 8px !important;
+}
+
+.tools-osgi-bundles .bootstrap-table .id {
+    text-align: right;
+}
+
+.tools-osgi-bundles .bootstrap-table td.id {
+    padding-left: 12px !important;
+}
+
+.tools-osgi-bundles .bootstrap-table td.modified {
+    padding-right: 12px !important;
+}
+
+.tools-osgi-bundles .bootstrap-table .name .symbolic {
+    font-size: 13px;
+    font-style: italic;
+}
+
+.tools-osgi-bundles .bootstrap-table .version,
+.tools-osgi-bundles .bootstrap-table .modified,
+.tools-osgi-bundles .bootstrap-table .category {
+    white-space: nowrap;
+}
+
+/* details */
+
+@media (min-width: 1025px) {
+    .tools-osgi-bundle_modal.modal-lg {
+        width: 1004px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    .tools-osgi-bundle_modal.modal-lg {
+        width: auto;
+        margin: 10px;
+    }
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_modal .modal-header {
+    border-bottom: none;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_modal .modal-title span {
+    font-size: 90%;
+    font-style: italic;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_modal .modal-body {
+    padding: 0;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details .nav-tabs {
+    padding: 0 15px;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details .nav-tabs > li > a {
+    padding: 5px 10px 6px;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details .tab-content {
+    padding: 5px 15px;
+    overflow: auto;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-tab-content {
+    height: 75%;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table {
+    width: 100%;
+    border: none;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table tr.success {
+    color: #3c763d; /* success */
+    background-color: rgba(200, 229, 188, 0.75);
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table tr.success:nth-child(odd) {
+    background-color: #c8e5bc;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table tr.optional,
+.tools-osgi-bundles .tools-osgi-bundle_details-table tr.resolved {
+    color: #8a6d3b;
+    background-color: rgba(248, 239, 192, 0.75);
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table tr.optional:nth-child(odd),
+.tools-osgi-bundles .tools-osgi-bundle_details-table tr.resolved:nth-child(odd) {
+    background-color: #f8efc0;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table tr.attention {
+    color: #a94442; /* danger */;
+    background-color: rgba(242, 222, 222, 0.75);
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table tr.attention:nth-child(odd) {
+    background-color: #f2dede;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table td {
+    border-top: 1px solid #ddd;
+    padding: 2px 6px !important;
+    vertical-align: top;
+    text-align: left;
+    font-size: 13px;
+    line-height: 17px;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table tr:first-child td {
+    border-top: none;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table_name {
+    white-space: nowrap;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table_value {
+    width: 100%;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table td .classes {
+    margin: 0;
+    padding: 0 0 0 25px;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table td li {
+    font-size: 13px;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table td .description,
+.tools-osgi-bundles .tools-osgi-bundle_details-table td .property {
+    font-style: italic;
+}
+
+.tools-osgi-bundles .tools-osgi-bundle_details-table td .property {
+    padding: 0 0 0 25px;
+}

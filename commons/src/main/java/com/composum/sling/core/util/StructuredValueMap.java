@@ -3,9 +3,9 @@ package com.composum.sling.core.util;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -33,14 +33,14 @@ public class StructuredValueMap implements ValueMap {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T get(@Nonnull String name, @Nonnull Class<T> type) {
+    public <T> T get(@NotNull String name, @NotNull Class<T> type) {
         return (T) _get(name, type);
     }
 
-    @Nonnull
+    @NotNull
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T get(@Nonnull String name, @Nonnull T defaultValue) {
+    public <T> T get(@NotNull String name, @NotNull T defaultValue) {
         T value = get(name, (Class<T>) defaultValue.getClass());
         return value == null ? defaultValue : value;
     }
@@ -90,7 +90,7 @@ public class StructuredValueMap implements ValueMap {
     }
 
     @Override
-    public void putAll(@Nonnull Map<? extends String, ?> m) {
+    public void putAll(@NotNull Map<? extends String, ?> m) {
         for (String key : m.keySet()) {
             put(key, m.get(key));
         }
@@ -104,7 +104,7 @@ public class StructuredValueMap implements ValueMap {
     /**
      * @return the stripped set of keys including nested keys as paths and excluding the nested maps itself
      */
-    @Nonnull
+    @NotNull
     @Override
     public Set<String> keySet() {
         HashSet<String> result = new LinkedHashSet<>();
@@ -115,7 +115,7 @@ public class StructuredValueMap implements ValueMap {
     /**
      * @return the stripped set of values including nested values and excluding the nested maps itself
      */
-    @Nonnull
+    @NotNull
     @Override
     public Collection<Object> values() {
         Collection<Object> result = new ArrayList<>();
@@ -126,7 +126,7 @@ public class StructuredValueMap implements ValueMap {
     /**
      * @return the entry set of the base map, no nested members stripped
      */
-    @Nonnull
+    @NotNull
     @Override
     public Set<Entry<String, Object>> entrySet() {
         return this.base.entrySet();
@@ -134,14 +134,14 @@ public class StructuredValueMap implements ValueMap {
 
     // get
 
-    protected Object _get(@Nonnull final String name, @Nullable final Class<?> type) {
+    protected Object _get(@NotNull final String name, @Nullable final Class<?> type) {
         return _get(name.startsWith("/") ? name.substring(1) : name,
                 type, this.base, name.contains("/") ? "/" : ".");
     }
 
     @SuppressWarnings("unchecked")
-    protected Object _get(@Nonnull final String name, @Nullable final Class<?> type,
-                          @Nonnull final Map<String, Object> map, @Nonnull final String delimiter) {
+    protected Object _get(@NotNull final String name, @Nullable final Class<?> type,
+                          @NotNull final Map<String, Object> map, @NotNull final String delimiter) {
         Object value = _get(map, name, type);
         if (value == null) {
             String[] path = StringUtils.split(name, delimiter, 2);
@@ -155,7 +155,7 @@ public class StructuredValueMap implements ValueMap {
         return value;
     }
 
-    protected Object _get(@Nonnull final Map<String, Object> map, @Nonnull final String name, @Nullable final Class<?> type) {
+    protected Object _get(@NotNull final Map<String, Object> map, @NotNull final String name, @Nullable final Class<?> type) {
         Object value;
         if (type != null) {
             if (map instanceof ValueMap) {
@@ -171,14 +171,14 @@ public class StructuredValueMap implements ValueMap {
 
     // put
 
-    protected Object _put(@Nonnull final String name, @Nullable final Object value) {
+    protected Object _put(@NotNull final String name, @Nullable final Object value) {
         return _put(name.startsWith("/") ? name.substring(1) : name,
                 value, this.base, name.contains("/") ? "/" : ".");
     }
 
     @SuppressWarnings("unchecked")
-    protected Object _put(@Nonnull final String name, @Nullable final Object value,
-                          @Nonnull final Map<String, Object> map, @Nonnull final String delimiter) {
+    protected Object _put(@NotNull final String name, @Nullable final Object value,
+                          @NotNull final Map<String, Object> map, @NotNull final String delimiter) {
         if (!map.containsKey(name)) {
             String[] path = StringUtils.split(name, delimiter, 2);
             if (path.length > 1) {
@@ -196,14 +196,14 @@ public class StructuredValueMap implements ValueMap {
 
     // remove
 
-    protected Object _remove(@Nonnull final String name) {
+    protected Object _remove(@NotNull final String name) {
         return _remove(name.startsWith("/") ? name.substring(1) : name,
                 this.base, name.contains("/") ? "/" : ".");
     }
 
     @SuppressWarnings("unchecked")
-    protected Object _remove(@Nonnull final String name,
-                             @Nonnull final Map<String, Object> map, @Nonnull final String delimiter) {
+    protected Object _remove(@NotNull final String name,
+                             @NotNull final Map<String, Object> map, @NotNull final String delimiter) {
         if (!map.containsKey(name)) {
             String[] path = StringUtils.split(name, delimiter, 2);
             if (path.length > 1) {
@@ -254,14 +254,14 @@ public class StructuredValueMap implements ValueMap {
         return size;
     }
 
-    protected boolean _containsKey(@Nonnull final String name) {
+    protected boolean _containsKey(@NotNull final String name) {
         return _containsKey(name.startsWith("/") ? name.substring(1) : name,
                 this.base, name.contains("/") ? "/" : ".");
     }
 
     @SuppressWarnings("unchecked")
-    protected boolean _containsKey(@Nonnull final String name,
-                                   @Nonnull final Map<String, Object> map, @Nonnull final String delimiter) {
+    protected boolean _containsKey(@NotNull final String name,
+                                   @NotNull final Map<String, Object> map, @NotNull final String delimiter) {
         if (map.containsKey(name)) {
             return true;
         }
@@ -275,12 +275,12 @@ public class StructuredValueMap implements ValueMap {
         return false;
     }
 
-    protected boolean _containsValue(@Nonnull final Object value) {
+    protected boolean _containsValue(@NotNull final Object value) {
         return _containsValue(value, this.base);
     }
 
     @SuppressWarnings("unchecked")
-    protected boolean _containsValue(@Nonnull final Object value, @Nonnull final Map<String, Object> map) {
+    protected boolean _containsValue(@NotNull final Object value, @NotNull final Map<String, Object> map) {
         if (map.containsValue(value)) {
             return true;
         }

@@ -3,7 +3,7 @@ package com.composum.sling.core;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -17,7 +17,7 @@ public class RequestBundle extends ResourceBundle {
     /**
      * returns the requests instance
      */
-    public static synchronized RequestBundle get(@Nonnull SlingHttpServletRequest request) {
+    public static synchronized RequestBundle get(@NotNull SlingHttpServletRequest request) {
         RequestBundle instance = (RequestBundle) request.getAttribute(ATTRIBUTE_KEY);
         if (instance == null) {
             instance = new RequestBundle(request);
@@ -43,11 +43,11 @@ public class RequestBundle extends ResourceBundle {
         }
 
         @Override
-        protected Object handleGetObject(@Nonnull String key) {
+        protected Object handleGetObject(@NotNull String key) {
             return bundle.getObject(key);
         }
 
-        @Nonnull
+        @NotNull
         @Override
         public Enumeration<String> getKeys() {
             return bundle.getKeys();
@@ -109,11 +109,11 @@ public class RequestBundle extends ResourceBundle {
     }
 
     @Override
-    protected Object handleGetObject(@Nonnull String key) {
+    protected Object handleGetObject(@NotNull String key) {
         return bundles.get(0).bundle.getObject(key);
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public Enumeration<String> getKeys() {
         return bundles.get(0).bundle.getKeys();

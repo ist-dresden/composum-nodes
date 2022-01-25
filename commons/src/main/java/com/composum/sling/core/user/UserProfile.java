@@ -2,16 +2,26 @@ package com.composum.sling.core.user;
 
 import com.composum.sling.core.AbstractSlingBean;
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.api.wrappers.ValueMapDecorator;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+
+import static com.composum.sling.core.user.UserProfile.SERVICE_KEY;
 
 /**
  * the user profile bean derived from the AEM user profile approach
  */
+@Restricted(key = SERVICE_KEY)
 public class UserProfile extends AbstractSlingBean {
+
+    public static final String SERVICE_KEY = "nodes/users/profile";
 
     public static final String PN_GENDER = "gender";
     public static final String PN_TITLE = "title";
@@ -29,6 +39,7 @@ public class UserProfile extends AbstractSlingBean {
     public static final String NN_PROFILE = "profile";
     public static final String USERS_ROOT = "/home/";
 
+    protected boolean allowed;
     protected ValueMap values;
 
     private transient String name;
@@ -48,21 +59,27 @@ public class UserProfile extends AbstractSlingBean {
 
     @Override
     public void initialize(BeanContext context, Resource resource) {
-        String path = resource.getPath();
-        if (!path.startsWith(USERS_ROOT)) {
-            // try to use the requests suffix to determine the profile resource to edit
-            String suffix = context.getRequest().getRequestPathInfo().getSuffix();
-            if (StringUtils.isNotBlank(suffix) && suffix.startsWith(USERS_ROOT)) {
-                resource = context.getResolver().resolve(suffix);
-                path = resource.getPath();
+        allowed = context.getService(ServiceRestrictions.class).isPermissible(context.getRequest(),
+                new ServiceRestrictions.Key(SERVICE_KEY), ServiceRestrictions.Permission.read);
+        if (allowed) {
+            String path = resource.getPath();
+            if (!path.startsWith(USERS_ROOT)) {
+                // try to use the requests suffix to determine the profile resource to edit
+                String suffix = context.getRequest().getRequestPathInfo().getSuffix();
+                if (StringUtils.isNotBlank(suffix) && suffix.startsWith(USERS_ROOT)) {
+                    resource = context.getResolver().resolve(suffix);
+                    path = resource.getPath();
+                }
             }
+            if (!path.endsWith("/" + NN_PROFILE)) {
+                // use the 'profile' child of the resource if the resource seems to be the user node itself
+                resource = context.getResolver().resolve(path + "/" + NN_PROFILE);
+            }
+            super.initialize(context, resource);
+            values = resource.getValueMap();
+        } else {
+            values = new ValueMapDecorator(Collections.emptyMap());
         }
-        if (!path.endsWith("/" + NN_PROFILE)) {
-            // use the 'profile' child of the resource if the resource seems to be the user node itself
-            resource = context.getResolver().resolve(path + "/" + NN_PROFILE);
-        }
-        super.initialize(context, resource);
-        values = resource.getValueMap();
     }
 
     public @NotNull ValueMap getValues() {
@@ -70,7 +87,7 @@ public class UserProfile extends AbstractSlingBean {
     }
 
     public boolean isValid() {
-        return !ResourceUtil.isSyntheticResource(resource) && !ResourceUtil.isNonExistingResource(resource);
+        return allowed && !ResourceUtil.isSyntheticResource(resource) && !ResourceUtil.isNonExistingResource(resource);
     }
 
     public @NotNull String getName() {

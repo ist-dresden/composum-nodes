@@ -2,11 +2,13 @@ package com.composum.sling.nodes.components.codeeditor;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.util.MimeTypeUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.browser.Browser;
 import com.composum.sling.nodes.console.ConsolePage;
 import com.composum.sling.nodes.console.ConsoleServletBean;
+import com.composum.sling.nodes.servlet.SourceServlet;
 import org.apache.sling.api.resource.Resource;
 import org.apache.tika.mime.MimeType;
 import org.slf4j.Logger;
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.composum.sling.nodes.browser.Browser.EDITOR_MODES;
 
+@Restricted(key = SourceServlet.SERVICE_KEY)
 public class CodeEditor extends ConsoleServletBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConsolePage.class);

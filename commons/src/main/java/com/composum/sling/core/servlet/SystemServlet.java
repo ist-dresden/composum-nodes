@@ -2,9 +2,16 @@ package com.composum.sling.core.servlet;
 
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.filter.StringFilter;
-import com.composum.sling.core.util.*;
+import com.composum.sling.core.service.ServiceRestrictions;
+import com.composum.sling.core.service.RestrictedService;
+import com.composum.sling.core.util.JsonUtil;
+import com.composum.sling.core.util.RequestUtil;
+import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
@@ -18,13 +25,14 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.jcr.Binary;
 import javax.jcr.RepositoryException;
 import javax.servlet.Servlet;
@@ -39,10 +47,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.composum.sling.core.servlet.SystemServlet.SERVICE_KEY;
+
 /**
  * The service servlet to retrieve all general system settings.
  */
-@Component(service = Servlet.class,
+@Component(service = {Servlet.class, RestrictedService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes System Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SystemServlet.SERVLET_PATH,
@@ -51,9 +61,12 @@ import java.util.List;
                 "sling.auth.requirements=" + SystemServlet.SERVLET_PATH
         }
 )
+@Restricted(key = SERVICE_KEY)
 public class SystemServlet extends AbstractServiceServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemServlet.class);
+
+    public static final String SERVICE_KEY = "core/commons/repository";
 
     public static final String SERVLET_PATH = "/bin/cpm/core/system";
 
@@ -64,7 +77,16 @@ public class SystemServlet extends AbstractServiceServlet {
     public static final String ALL_QUERY_KEY = "-- all --";
 
     @Reference
+    private ServiceRestrictions restrictions;
+
+    @Reference
     private CoreConfiguration coreConfig;
+
+    @Override
+    @NotNull
+    public ServiceRestrictions.Key getServiceKey() {
+        return new ServiceRestrictions.Key(SERVICE_KEY);
+    }
 
     //
     // Servlet operations
@@ -77,13 +99,9 @@ public class SystemServlet extends AbstractServiceServlet {
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
 
     @Override
-    protected ServletOperationSet getOperations() {
+    @NotNull
+    protected ServletOperationSet<Extension, Operation> getOperations() {
         return operations;
-    }
-
-    @Override
-    protected boolean isEnabled() {
-        return coreConfig.isEnabled(this);
     }
 
     /**
@@ -122,7 +140,9 @@ public class SystemServlet extends AbstractServiceServlet {
     public class GetPropertyTypes implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource)
                 throws ServletException, IOException {
 
             JsonWriter jsonWriter = ResponseUtil.getJsonWriter(response);
@@ -135,7 +155,9 @@ public class SystemServlet extends AbstractServiceServlet {
     // Node types
     //
 
-    /** the general filter for mixin types */
+    /**
+     * the general filter for mixin types
+     */
     public static class MixinTypesFilter extends ResourceFilter.AbstractResourceFilter {
 
         @Override
@@ -150,12 +172,14 @@ public class SystemServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("MixinTypes");
         }
     }
 
-    /** the general filter for primary types is a inversion ot the mixin types filter */
+    /**
+     * the general filter for primary types is a inversion ot the mixin types filter
+     */
     public static class PrimaryTypesFilter extends MixinTypesFilter {
 
         @Override
@@ -164,15 +188,19 @@ public class SystemServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void toString(@Nonnull StringBuilder builder) {
+        public void toString(@NotNull StringBuilder builder) {
             builder.append("PrimaryTypes");
         }
     }
 
-    /** the general filter for primary types */
+    /**
+     * the general filter for primary types
+     */
     protected ResourceFilter PRIMARY_TYPE_FILTER = new PrimaryTypesFilter();
 
-    /** the cache for primary type queries and their results */
+    /**
+     * the cache for primary type queries and their results
+     */
     protected LRUMap PRIMARY_TYPE_CACHE = new LRUMap();
 
     /**
@@ -186,10 +214,14 @@ public class SystemServlet extends AbstractServiceServlet {
         }
     }
 
-    /** the general filter for mixin types */
+    /**
+     * the general filter for mixin types
+     */
     protected ResourceFilter MIXIN_TYPE_FILTER = new MixinTypesFilter();
 
-    /** the static cache for mixin type queries and their results */
+    /**
+     * the static cache for mixin type queries and their results
+     */
     protected LRUMap MIXIN_TYPE_CACHE = new LRUMap();
 
     /**
@@ -208,8 +240,8 @@ public class SystemServlet extends AbstractServiceServlet {
      */
     public class GetNodeTypes implements ServletOperation {
 
-        private ResourceFilter typeFilter;
-        private LRUMap queryCache;
+        private final ResourceFilter typeFilter;
+        private final LRUMap queryCache;
 
         public GetNodeTypes(ResourceFilter nameFilter, LRUMap cache) {
             this.typeFilter = nameFilter;
@@ -217,7 +249,9 @@ public class SystemServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource)
                 throws ServletException, IOException {
 
             String query = XSS.filter(request.getParameter(PARAM_QUERY));
@@ -240,11 +274,13 @@ public class SystemServlet extends AbstractServiceServlet {
 
             List<String> nodeTypes = new ArrayList<>();
             Resource typesResource = resolver.getResource(NODE_TYPES_PATH);
-            for (Resource type : typesResource.getChildren()) {
-                String name = type.getName();
-                if (this.typeFilter.accept(type) &&
-                        (query == null || name.toLowerCase().contains(query))) {
-                    nodeTypes.add(name);
+            if (typesResource != null) {
+                for (Resource type : typesResource.getChildren()) {
+                    String name = type.getName();
+                    if (this.typeFilter.accept(type) &&
+                            (query == null || name.toLowerCase().contains(query))) {
+                        nodeTypes.add(name);
+                    }
                 }
             }
             Collections.sort(nodeTypes);
@@ -259,7 +295,9 @@ public class SystemServlet extends AbstractServiceServlet {
     public class JsonTypeahead implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
+                         @Nullable final ResourceHandle resource)
                 throws ServletException, IOException {
 
             final String query = RequestUtil.getParameter(request, PARAM_QUERY, "").toLowerCase();
@@ -284,7 +322,7 @@ public class SystemServlet extends AbstractServiceServlet {
             response.setStatus(HttpServletResponse.SC_OK);
             jsonWriter.beginArray();
 
-            if (ResourceUtil.isFile(resource)) {
+            if (resource != null && ResourceUtil.isFile(resource)) {
                 try {
                     Binary binary = ResourceUtil.getBinaryData(resource);
                     InputStream stream = binary.getStream();
@@ -292,7 +330,7 @@ public class SystemServlet extends AbstractServiceServlet {
                     String value;
 
                     String ext = StringUtils.substringAfterLast(resource.getName(), ".");
-                    switch (ext != null ? ext.toLowerCase() : "") {
+                    switch (ext.toLowerCase()) {
 
                         case "json":
                             JsonReader jsonReader = new JsonReader(reader);

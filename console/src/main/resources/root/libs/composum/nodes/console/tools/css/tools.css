@@ -1,0 +1,66 @@
+/*
+ * content frame
+ */
+
+body {
+    position: relative;
+}
+
+.tools-console.console .content-wrapper {
+    position: absolute;
+    top: 41px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: auto;
+}
+
+#tools-webconsole.tools-console.console .content-wrapper {
+    left: -4%;
+    right: -4%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+/**
+ * tools table
+ */
+
+.bootstrap-table .fixed-table-toolbar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 31px;
+    padding: 0 6px 0 0;
+}
+
+.bootstrap-table .fixed-table-toolbar input {
+    height: 25px;
+}
+
+.bootstrap-table .fixed-table-toolbar .search {
+    margin: 3px 6px;
+}
+
+.bootstrap-table table,
+.bootstrap-table table tr,
+.bootstrap-table table th,
+.bootstrap-table table td {
+    border: none;
+}
+
+.bootstrap-table table th,
+.bootstrap-table table td {
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 25px;
+    padding: 2px 5px !important;
+}
+
+.bootstrap-table thead tr {
+    border-bottom: 1px solid #aaa;
+}
+
+.bootstrap-table table th {
+    background-color: #fff;
+}

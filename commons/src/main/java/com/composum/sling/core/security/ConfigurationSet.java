@@ -7,7 +7,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import javax.jcr.query.Query;
 import javax.servlet.http.HttpSession;
 import java.io.Serializable;
@@ -45,7 +45,7 @@ public class ConfigurationSet implements Serializable {
         private final String scriptPath;
         private final Long rank;
 
-        public ConfigScript(@Nonnull final Configuration configuration, @Nonnull final ResourceHandle handle) {
+        public ConfigScript(@NotNull final Configuration configuration, @NotNull final ResourceHandle handle) {
             this.configuration = configuration;
             category = Arrays.asList(handle.getProperty("category", new String[0]));
             label = handle.getTitle();
@@ -57,12 +57,12 @@ public class ConfigurationSet implements Serializable {
             rank = handle.getProperty(PN_RANK, Long.class);
         }
 
-        @Nonnull
+        @NotNull
         public Configuration getConfiguration() {
             return configuration;
         }
 
-        public boolean matches(@Nonnull final Collection<String> category) {
+        public boolean matches(@NotNull final Collection<String> category) {
             for (String ownCategory : getCategory()) {
                 if (category.contains(ownCategory)) {
                     return true;
@@ -71,12 +71,12 @@ public class ConfigurationSet implements Serializable {
             return false;
         }
 
-        @Nonnull
+        @NotNull
         public List<String> getCategory() {
             return category;
         }
 
-        @Nonnull
+        @NotNull
         public String getCategories() {
             return StringUtils.join(getCategory(), ",");
         }
@@ -85,22 +85,22 @@ public class ConfigurationSet implements Serializable {
             return rank != null ? Long.toString(rank) : null;
         }
 
-        @Nonnull
+        @NotNull
         public String getLabel() {
             return label;
         }
 
-        @Nonnull
+        @NotNull
         public String getName() {
             return name;
         }
 
-        @Nonnull
+        @NotNull
         public String getPath() {
             return path;
         }
 
-        @Nonnull
+        @NotNull
         public String getDescription() {
             return description;
         }
@@ -109,7 +109,7 @@ public class ConfigurationSet implements Serializable {
             return autoSetup;
         }
 
-        @Nonnull
+        @NotNull
         public String getScriptPath() {
             return scriptPath;
         }
@@ -133,7 +133,7 @@ public class ConfigurationSet implements Serializable {
         private final Map<String, ConfigScript> scripts = new TreeMap<>();
         private final Long rank;
 
-        public Configuration(@Nonnull final ResourceHandle handle) {
+        public Configuration(@NotNull final ResourceHandle handle) {
             category = Arrays.asList(handle.getProperty("category", new String[0]));
             label = handle.getTitle();
             name = handle.getName();
@@ -145,7 +145,7 @@ public class ConfigurationSet implements Serializable {
             }
         }
 
-        public boolean matches(@Nonnull final Collection<String> category) {
+        public boolean matches(@NotNull final Collection<String> category) {
             for (String ownCategory : getCategory()) {
                 if (category.contains(ownCategory)) {
                     return true;
@@ -154,12 +154,12 @@ public class ConfigurationSet implements Serializable {
             return false;
         }
 
-        @Nonnull
+        @NotNull
         public List<String> getCategory() {
             return category;
         }
 
-        @Nonnull
+        @NotNull
         public String getCategories() {
             return StringUtils.join(getCategory(), ",");
         }
@@ -168,32 +168,32 @@ public class ConfigurationSet implements Serializable {
             return rank != null ? Long.toString(rank) : null;
         }
 
-        @Nonnull
+        @NotNull
         public String getLabel() {
             return label;
         }
 
-        @Nonnull
+        @NotNull
         public String getName() {
             return name;
         }
 
-        @Nonnull
+        @NotNull
         public String getPath() {
             return path;
         }
 
-        @Nonnull
+        @NotNull
         public String getDescription() {
             return description;
         }
 
-        @Nonnull
+        @NotNull
         public Map<String, ConfigScript> getScripts() {
             return scripts;
         }
 
-        public void addScript(@Nonnull final ConfigScript script) {
+        public void addScript(@NotNull final ConfigScript script) {
             scripts.put(script.getLabel(), script);
             for (final String category : getCategory()) {
                 final List<ConfigScript> categoryScripts = scriptCategories.computeIfAbsent(category, k -> new ArrayList<>());
@@ -230,7 +230,7 @@ public class ConfigurationSet implements Serializable {
     protected final Map<String, List<ConfigScript>> scriptCategories = new TreeMap<>();
 
     @SuppressWarnings("deprecation")
-    public ConfigurationSet(@Nonnull final ResourceResolver resolver) {
+    public ConfigurationSet(@NotNull final ResourceResolver resolver) {
         final Iterator<Resource> configIterator = resolver.findResources(QUERY, Query.XPATH);
         while (configIterator.hasNext()) {
             addConfiguration(new Configuration(ResourceHandle.use(configIterator.next())));
@@ -249,7 +249,7 @@ public class ConfigurationSet implements Serializable {
         return configurations;
     }
 
-    public void addConfiguration(@Nonnull final Configuration configuration) {
+    public void addConfiguration(@NotNull final Configuration configuration) {
         configurations.put(configuration.getLabel(), configuration);
         for (final String category : configuration.getCategory()) {
             final List<Configuration> categoryConfigurations = configCategories.computeIfAbsent(category, k -> new ArrayList<>());
@@ -260,8 +260,8 @@ public class ConfigurationSet implements Serializable {
         }
     }
 
-    @Nonnull
-    public static ConfigurationSet instance(@Nonnull final SlingHttpServletRequest request) {
+    @NotNull
+    public static ConfigurationSet instance(@NotNull final SlingHttpServletRequest request) {
         ConfigurationSet instance = null;
         final HttpSession session = request.getSession(false);
         if (session != null) {
@@ -279,7 +279,7 @@ public class ConfigurationSet implements Serializable {
         return instance;
     }
 
-    public static void clear(@Nonnull final SlingHttpServletRequest request) {
+    public static void clear(@NotNull final SlingHttpServletRequest request) {
         ConfigurationSet instance = null;
         final HttpSession session = request.getSession(false);
         if (session != null) {

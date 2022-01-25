@@ -4,37 +4,43 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean" scope="request">
+    <c:set var="writeAllowed" value="${pckg.permissible['nodes/packages/manager']['write']}"/>
+    <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
     <div class="detail-panel package ${pckg.cssClasses}">
         <div class="display-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <button class="edit fa fa-pencil btn btn-default" title="Edit package properties"><span class="label">Edit</span>
+                <button class="edit fa fa-pencil btn btn-default" title="Edit package properties"${writeDisabled}><span
+                        class="label">Edit</span>
                 </button>
                 <a type="button" class="download fa fa-download btn btn-default" href="${pckg.downloadUrl}"
                    title="Download this package"><span class="label">Download</span></a>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button class="install btn btn-default btn-stack" title="(Re)Install this package"><span
+                <button class="install btn btn-default btn-stack" title="(Re)Install this package"${writeDisabled}><span
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                         class="symbol fa fa-sign-in fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
                         class="label">Install</span></button>
-                <button class="assemble btn btn-default btn-stack" title="(Re)Build this package"><span
+                <button class="assemble btn btn-default btn-stack" title="(Re)Build this package"${writeDisabled}><span
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                         class="symbol fa fa-archive fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
                         class="label">Assemble</span></button>
-                <button class="uninstall btn btn-default btn-stack" title="Uninstall this package"><span
+                <button class="uninstall btn btn-default btn-stack" title="Uninstall this package"${writeDisabled}><span
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                         class="symbol fa fa-history fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
                         class="label">Rewrap</span></button>
-                <button class="delete fa fa-trash btn btn-default" title="Delete this package"><span class="label">Delete</span>
+                <button class="delete fa fa-trash btn btn-default" title="Delete this package"${writeDisabled}><span
+                        class="label">Delete</span>
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button class="create fa fa-plus btn btn-default" title="Create a new package"><span class="label">Create</span>
+                <button class="create fa fa-plus btn btn-default" title="Create a new package"${writeDisabled}><span
+                        class="label">Create</span>
                 </button>
-                <button class="upload fa fa-upload btn btn-default" title="Upload a new package"><span class="label">Upload</span>
+                <button class="upload fa fa-upload btn btn-default" title="Upload a new package"${writeDisabled}><span
+                        class="label">Upload</span>
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
@@ -74,7 +80,7 @@
                                         title="Refresh Audit Log"><span
                                         class="label">Refresh</span></button>
                                 <button type="button" class="purge fa fa-trash-o btn btn-default"
-                                        title="Purge Audit Log"><span
+                                        title="Purge Audit Log"${writeDisabled}><span
                                         class="label">Purge</span></button>
                             </div>
                         </div>
@@ -85,4 +91,6 @@
             </div>
         </div>
     </div>
+    <c:remove var="writeDisabled"/>
+    <c:remove var="writeAllowed"/>
 </cpn:component>

@@ -21,6 +21,12 @@
     text-align: right;
 }
 
+.composum-nodes-system-felix .composum-nodes-system-felix_tags label {
+    width: auto;
+    line-height: 33px;
+    margin: 0 5px 0 0;
+}
+
 .composum-nodes-system-felix .composum-nodes-system-felix_tags .input-group {
     display: inline-table;
     vertical-align: middle;

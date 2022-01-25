@@ -12,11 +12,11 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
@@ -47,28 +47,32 @@ public class ClientlibServlet extends AbstractClientlibServlet {
     @Reference
     protected ClientlibConfiguration configuration;
 
+    @Override
+    @NotNull
     protected ClientlibService getClientlibService() {
         return service;
     }
 
+    @Override
+    @NotNull
     protected ClientlibConfiguration.Config getConfig() {
         return configuration.getConfig();
     }
 
     @Override
-    protected void doGet(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response)
+    protected void doGet(@NotNull final SlingHttpServletRequest request, @NotNull final SlingHttpServletResponse response)
             throws ServletException, IOException {
         serve(true, request, response);
     }
 
     @Override
-    protected void doHead(@Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response)
+    protected void doHead(@NotNull final SlingHttpServletRequest request, @NotNull final SlingHttpServletResponse response)
             throws ServletException, IOException {
         serve(false, request, response);
     }
 
     private void serve(boolean get,
-                       @Nonnull final SlingHttpServletRequest request, @Nonnull final SlingHttpServletResponse response)
+                       @NotNull final SlingHttpServletRequest request, @NotNull final SlingHttpServletResponse response)
             throws IOException, ServletException {
         if (usefulRequest(request, response)) {
             try {
@@ -95,7 +99,9 @@ public class ClientlibServlet extends AbstractClientlibServlet {
         }
     }
 
-    /** Creates an path that is rendered by this servlet containing the given parameters. */
+    /**
+     * Creates an path that is rendered by this servlet containing the given parameters.
+     */
     public static String makePath(String path, Clientlib.Type type, boolean minified, String hash) {
         StringBuilder builder = new StringBuilder(path);
         if (minified) builder.append(".min");

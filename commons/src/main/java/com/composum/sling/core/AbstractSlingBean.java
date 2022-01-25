@@ -1,6 +1,9 @@
 package com.composum.sling.core;
 
+import com.composum.sling.core.bean.RestrictedBean;
 import com.composum.sling.core.request.DomIdentifiers;
+import com.composum.sling.core.service.ServiceRestrictions;
+import com.composum.sling.core.util.CollectingMap;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -9,10 +12,11 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.scripting.SlingScriptHelper;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -24,23 +28,34 @@ import java.lang.reflect.Constructor;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The abstract base class for 'Beans' to implement a Model based on e JCR resource without a mapping framework.
  * Such a 'bean' can be declared as variable in aJSP context using the 'component' tag of the Composum 'nodes'
  * tag library (cpnl).
  */
-public abstract class AbstractSlingBean implements SlingBean {
+public abstract class AbstractSlingBean implements SlingBean, RestrictedBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractSlingBean.class);
 
     // pre filled attributes (filled during initialization)
 
-    /** the instance of the scripting context for the bean (initialized) */
+    /**
+     * the instance of the scripting context for the bean (initialized)
+     */
     protected BeanContext context;
 
-    /** the resource represented by this bean (initialized) */
+    /**
+     * the resource represented by this bean (initialized)
+     */
     protected ResourceHandle resource;
+
+    /**
+     * restrictions
+     */
+    private transient Boolean readAllowed;
+    private transient Boolean writeAllowed;
 
     // all transient attributes are not pre filled during initialization
     // - a getter must be used to access to this members.
@@ -110,6 +125,48 @@ public abstract class AbstractSlingBean implements SlingBean {
         this.resource = ResourceHandle.use(resource);
     }
 
+    // restrictions
+
+    public @Nullable ServiceRestrictions.Key getServiceKey() {
+        Restricted restricted = getClass().getAnnotation(Restricted.class);
+        return restricted != null ? new ServiceRestrictions.Key(restricted.key()) : null;
+    }
+
+    @Override
+    public boolean isReadAllowed() {
+        if (readAllowed == null) {
+            readAllowed = isPermissible(getServiceKey(), ServiceRestrictions.Permission.read);
+        }
+        return readAllowed;
+    }
+
+    @Override
+    public boolean isWriteAllowed() {
+        if (writeAllowed == null) {
+            writeAllowed = isPermissible(getServiceKey(), ServiceRestrictions.Permission.write);
+        }
+        return writeAllowed;
+    }
+
+    public Map<String, Map<String, Boolean>> getPermissible() {
+        return new CollectingMap<>(key -> new CollectingMap<>(perm -> {
+            ServiceRestrictions.Permission permission;
+            try {
+                permission = ServiceRestrictions.Permission.valueOf(perm);
+            } catch (IllegalArgumentException ex) {
+                LOG.warn(ex.toString());
+                permission = ServiceRestrictions.Permission.write;
+            }
+            return isPermissible(new ServiceRestrictions.Key(key), permission);
+        }));
+    }
+
+    protected boolean isPermissible(ServiceRestrictions.Key key, ServiceRestrictions.Permission permission) {
+        return context.getService(ServiceRestrictions.class).isPermissible(getRequest(), key, permission);
+    }
+
+    // Sling API
+
     /**
      * Returns the handle to the 'Sling world' and all available services.
      */
@@ -123,7 +180,7 @@ public abstract class AbstractSlingBean implements SlingBean {
     /**
      * Returns the resolver using the resource of this bean (resource.getResolver()).
      */
-    @Nonnull
+    @NotNull
     public ResourceResolver getResolver() {
         if (resolver == null) {
             resolver = getResource().getResourceResolver();
@@ -134,7 +191,7 @@ public abstract class AbstractSlingBean implements SlingBean {
     /**
      * the getter for the resource which defines this bean instance.
      */
-    @Nonnull
+    @NotNull
     public ResourceHandle getResource() {
         return resource;
     }
@@ -270,7 +327,7 @@ public abstract class AbstractSlingBean implements SlingBean {
     public RequestHandle getRequest() {
         if (request == null) {
             SlingHttpServletRequest req = context.getRequest();
-            if (req != null){
+            if (req != null) {
                 request = RequestHandle.use(req);
             }
         }

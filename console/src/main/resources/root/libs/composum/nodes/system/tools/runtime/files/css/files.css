@@ -1,0 +1,186 @@
+
+.tools-runtime-files.console .content-wrapper {
+    top: 41px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    font-family: sans-serif;
+    font-size: 14px;
+}
+
+.tools-runtime-files.console.standalone .content-wrapper {
+    top: 0;
+}
+
+.tools-runtime-files_header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 31px;
+    padding: 0 10px 0 107px;
+    background: #e4e4e4;
+}
+
+.tools-runtime-files.console.standalone .tools-runtime-files_header {
+    padding-left: 80px;
+}
+
+.tools-runtime-files_header .tools-runtime-files_view-logo {
+    position: absolute;
+    left: 15px;
+}
+
+.tools-runtime-files_header .tools-runtime-files_view-logo img {
+    height: 32px;
+    margin-top: 3px;
+}
+
+.tools-runtime-files_header h1 {
+    margin: 0;
+    line-height: 31px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.tools-runtime-files_panel {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    position: absolute;
+    top: 31px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: visible;
+}
+
+.tools-runtime-files_tree-wrapper,
+.tools-runtime-files_view-wrapper {
+    flex-grow: 1;
+    overflow: auto;
+}
+
+.tools-runtime-files_tree-wrapper {
+    min-width: 250px;
+    max-width: 400px;
+    padding: 2px 10px 2px 5px;
+}
+
+.tools-runtime-files_view-wrapper {
+    width: 70%;
+    position: relative;
+    padding: 2px 0 2px 5px;
+}
+
+.tools-runtime-files_view-toolbar {
+    display: flex;
+    flex-wrap: nowrap;
+    position: absolute;
+    top: -31px;
+    left: 40%;
+    right: 10px;
+    height: 31px;
+    background: #e4e4e4;
+}
+
+.tools-runtime-files_view-toolbar .btn-group {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.tools-runtime-files_view-toolbar .btn-group,
+.tools-runtime-files_view-toolbar .input-group {
+    margin: 3px 0 2px 5px;
+}
+
+.tools-runtime-files_view-toolbar .btn,
+.tools-runtime-files_view-toolbar .input-group,
+.tools-runtime-files_view-toolbar .input-group-addon,
+.tools-runtime-files_view-toolbar input {
+    height: 24px;
+    line-height: 22px;
+}
+
+.tools-runtime-files_view-toolbar input {
+    padding: 0 8px;
+    font-size: 13px;
+}
+
+.tools-runtime-files_view-toolbar .btn,
+.tools-runtime-files_view-toolbar .input-group-addon {
+    padding: 0;
+    text-align: center;
+}
+
+.tools-runtime-files_view-toolbar .btn {
+    width: 30px;
+}
+
+.tools-runtime-files_view-toolbar .input-group-addon {
+    min-width: 25px;
+    max-width: 25px;
+}
+
+.tools-runtime-files_view-toolbar .input-group input {
+    border-left: none;
+}
+
+.tools-runtime-files_view-toolbar .input-group.filter {
+    flex-grow: 1;
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.tools-runtime-files_tree {
+    padding-bottom: 5px;
+}
+
+.tools-runtime-files_view {
+    display: inline-block;
+    padding: 5px 10px 10px 5px;
+}
+
+.tools-runtime-files_view-lock {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.5);
+    z-index: 1060;
+}
+
+.tools-runtime-files_view-lock > div {
+    position: absolute;
+    top: 35%;
+    left: 15%;
+    right: 0;
+    text-align: center;
+}
+
+.tools-runtime-files.console.standalone .tools-runtime-files_view-lock > div {
+    left: 5%;
+}
+
+.tools-runtime-files_view-lock i {
+    font-size: 96px;
+}
+
+.tools-runtime-files_view-wrapper.loading .tools-runtime-files_view-lock {
+    display: block;
+    pointer-events: all;
+    overflow: hidden;
+}
+
+.tools-runtime-files_view > div.text {
+    white-space: pre;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.tools-runtime-files.linewrap .tools-runtime-files_view > div.text {
+    white-space: pre-wrap;
+}

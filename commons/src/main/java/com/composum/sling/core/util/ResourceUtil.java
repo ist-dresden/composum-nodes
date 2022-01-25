@@ -10,8 +10,8 @@ import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.jcr.base.util.AccessControlUtil;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
@@ -374,8 +374,8 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
      * The parent of a toplevel node like "/var" is returned as "/".
      * If it doesn't contain a / , the result has null in the first place.
      */
-    @Nonnull
-    public static String[] splitPathAndName(@Nonnull String path) {
+    @NotNull
+    public static String[] splitPathAndName(@NotNull String path) {
         String[] result = new String[2];
         int nameSeparator = path.lastIndexOf('/');
         if (nameSeparator >= 0) {
@@ -556,7 +556,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
      * Finds a mix:referenceable by its jcr:uuid.
      */
     @Nullable
-    public static Resource getByUuid(@Nonnull ResourceResolver resolver, @Nullable String uuid) throws RepositoryException {
+    public static Resource getByUuid(@NotNull ResourceResolver resolver, @Nullable String uuid) throws RepositoryException {
         if (StringUtils.isBlank(uuid)) return null;
         Resource result = null;
         Session session = resolver.adaptTo(Session.class);

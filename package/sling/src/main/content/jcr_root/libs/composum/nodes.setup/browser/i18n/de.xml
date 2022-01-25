@@ -30,4 +30,31 @@
 
     </components>
 
+    <references jcr:primaryType="sling:Folder">
+
+        <Search_Options jcr:primaryType="sling:MessageEntry"
+                sling:key="Search Options" sling:message="Suchoptionen"/>
+        <References_Options jcr:primaryType="sling:MessageEntry"
+                sling:key="References Options" sling:message="Referenz-Optionen"/>
+        <Apply jcr:primaryType="sling:MessageEntry"
+                sling:key="Apply" sling:message="Anwenden"/>
+        <Base_Path jcr:primaryType="sling:MessageEntry"
+                sling:key="Base Path" sling:message="Basis-Pfad"/>
+        <absolute_paths jcr:primaryType="sling:MessageEntry"
+                sling:key="absolute paths" sling:message="absolute Pfade"/>
+        <relative_paths jcr:primaryType="sling:MessageEntry"
+                sling:key="relative paths" sling:message="relative Pfade"/>
+        <include_children jcr:primaryType="sling:MessageEntry"
+                sling:key="include children" sling:message="Subknoten einschließen"/>
+        <children_only jcr:primaryType="sling:MessageEntry"
+                sling:key="children only" sling:message="nur Subknoten"/>
+        <use_text_search jcr:primaryType="sling:MessageEntry"
+                sling:key="use text search" sling:message="die Textsuche verwenden"/>
+        <find_rich_text jcr:primaryType="sling:MessageEntry"
+                sling:key="search in rich text" sling:message="in 'rich text' suchen"/>
+        <no_references jcr:primaryType="sling:MessageEntry"
+                sling:key="no references found" sling:message="keine Referenzen gefunden"/>
+
+    </references>
+
 </jcr:root>

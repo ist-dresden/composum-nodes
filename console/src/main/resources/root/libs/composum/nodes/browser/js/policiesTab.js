@@ -11,7 +11,7 @@
         browser.PoliciesTab = core.console.DetailTab.extend({
 
             initialize: function (options) {
-                this.setupPath = '/libs/composum/nodes/commons/components/security/page';
+                this.setupPath = core.getComposumPath('composum/nodes/commons/components/security/page');
                 this.$setupWrapper = this.$('.setup-wrapper');
                 this.$setupFrame = this.$('.setup-frame');
                 this.$runButton = this.$('.acl-toolbar .run');

@@ -12,6 +12,16 @@
 
     <tag>
         <description>
+            the extended define objects tag
+        </description>
+        <name>defineObjects</name>
+        <tag-class>com.composum.sling.cpnl.DefineObjectsTag</tag-class>
+        <tei-class>com.composum.sling.cpnl.DefineObjectsTagTEI</tei-class>
+        <body-content>empty</body-content>
+    </tag>
+
+    <tag>
+        <description>
             the tag to declare a resource bundle (I18N)
         </description>
         <name>bundle</name>
@@ -599,6 +609,13 @@
         <name>context</name>
         <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
         <function-signature>java.lang.String context(java.lang.String,java.lang.String)</function-signature>
+    </function>
+
+    <function>
+        <description>builds the URI for a relative Composum URI (prepends the Composum base)</description>
+        <name>cpm</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.String cpm(java.lang.String)</function-signature>
     </function>
 
     <function>

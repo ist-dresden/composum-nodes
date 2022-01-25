@@ -6,7 +6,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 import java.util.MissingResourceException;
 
 /**
@@ -16,7 +16,7 @@ public class I18N {
 
     private static final Logger LOG = LoggerFactory.getLogger(I18N.class);
 
-    public static String get(@Nonnull SlingHttpServletRequest request, String text) {
+    public static String get(@NotNull SlingHttpServletRequest request, String text) {
         String translated = null;
         try {
             translated = RequestBundle.get(request).getString(text);

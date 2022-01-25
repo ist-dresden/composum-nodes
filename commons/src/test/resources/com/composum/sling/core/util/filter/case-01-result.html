@@ -1,0 +1,45 @@
+<div><h1>System Health</h1>
+<p><span class="statusWARN" style="padding:4px"><strong>Overall Result: WARN</strong></span></p>
+<table id="healthCheckResults" cellspacing="0">
+    <thead><tr><th>Health Check <span style='color:gray'>(tags)</span></th><th>Status</th><th>Log</th><th>Finished At</th><th>Time</th></tr></thead>
+    <tr class="statusWARN"><td><p title="Disk Space">Disk Space<br/><span style='color:gray'>status, general</span>
+    </p></td>
+        <td style='font-weight:bold;'>WARN</td>
+        <td>
+            Disk Usage /Users/rw/Projekte/Composum/runtime/cpm/.: 84,2% of 1,8TB used / 294,8GB free
+        </td>
+        <td>16:13:41.407</td>
+        <td>0ms</td>
+    </tr>
+    <tr class="statusOK"><td><p title="CPU">CPU<br/><span style='color:gray'>status, overview</span>
+    </p></td>
+        <td style='font-weight:bold;'>OK</td>
+        <td>
+            Process CPU Usage: 2,8%
+        </td>
+        <td>16:13:41.407</td>
+        <td>0ms</td>
+    </tr>
+    <tr class="statusOK"><td><p title="Memory">Memory</p></td>
+        <td style='font-weight:bold;'>OK</td>
+        <td>
+            Memory Usage: 2,5% of 8,0GB maximal heap used
+        </td>
+        <td>16:13:42.733</td>
+        <td>0ms</td>
+    </tr>
+    <tr class="statusOK"><td><p title="OSGi Framework Ready Check">OSGi Framework Ready Check<br/><span style='color:gray'>systemalive</span>
+    </p></td>
+        <td style='font-weight:bold;'>OK</td>
+        <td>
+            Framework started (state: ACTIVE) Current Start Level: 30 (Target: 20; Beginning: 30)
+        </td>
+        <td>16:13:42.733</td>
+        <td>0ms</td>
+    </tr>
+</table>
+<div class='helpText'>
+    <h3>Supported URL parameters</h3>
+    <b>tags</b>:Comma-separated list of health checks tags to select - can also be specified via path, e.g. /system/health/tag1,tag2.json. Exclusions can be done by prepending '-' to the tag name<br/><b>names</b>:Comma-separated list of health check names to select. Exclusions can be done by prepending '-' to the health check name<br/><b>format</b>:Output format, html|json|jsonp|txt - an extension in the URL overrides this<br/><b>httpStatus</b>:Specify HTTP result code, for example CRITICAL:503 (status 503 if result &gt;= CRITICAL) or CRITICAL:503,HEALTH_CHECK_ERROR:500,OK:418 for more specific HTTP status<br/><b>combineTagsWithOr</b>:Combine tags with OR, active by default. Set to false to combine with AND<br/><b>forceInstantExecution</b>:If true, forces instant execution by executing async health checks directly, circumventing the cache (2sec by default) of the HealthCheckExecutor<br/><b>timeout</b>:(msec) a timeout status is returned for any health check still running after this period. Overrides the default HealthCheckExecutor timeout<br/><b>hcDebug</b>:Include the DEBUG output of the Health Checks<br/><b>callback</b>:name of the JSONP callback function to use, defaults to processHealthCheckResults<br/>
+</div>
+</div>

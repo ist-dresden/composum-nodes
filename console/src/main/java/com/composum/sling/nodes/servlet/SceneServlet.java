@@ -2,6 +2,9 @@ package com.composum.sling.nodes.servlet;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.service.RestrictedService;
+import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
@@ -19,20 +22,22 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceUtil;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.RepositoryException;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import java.io.IOException;
 
-@Component(service = Servlet.class,
+import static com.composum.sling.nodes.servlet.SceneServlet.SERVICE_KEY;
+
+@Component(service = {Servlet.class, RestrictedService.class},
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Scene Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + SceneServlet.SERVLET_PATH,
@@ -41,11 +46,17 @@ import java.io.IOException;
                 "sling.auth.requirements=" + SceneServlet.SERVLET_PATH
         }
 )
+@Restricted(key = SERVICE_KEY)
 public class SceneServlet extends AbstractServiceServlet {
 
     public static final String SERVLET_PATH = "/bin/cpm/nodes/scene";
 
+    public static final String SERVICE_KEY = "nodes/components/scenes";
+
     public static final String PARAM_SCENE = "scene";
+
+    @Reference
+    private ServiceRestrictions restrictions;
 
     @Reference
     protected NodesConfiguration nodesConfig;
@@ -62,6 +73,7 @@ public class SceneServlet extends AbstractServiceServlet {
 
     protected ServletOperationSet<SceneServlet.Extension, SceneServlet.Operation> operations = new ServletOperationSet<>(SceneServlet.Extension.json);
 
+    @NotNull
     protected ServletOperationSet<SceneServlet.Extension, SceneServlet.Operation> getOperations() {
         return operations;
     }
@@ -69,10 +81,6 @@ public class SceneServlet extends AbstractServiceServlet {
     @Activate
     private void activate(final BundleContext bundleContext) {
         this.bundleContext = bundleContext;
-    }
-
-    protected boolean isEnabled() {
-        return nodesConfig.isEnabled(this);
     }
 
     /**
@@ -96,8 +104,8 @@ public class SceneServlet extends AbstractServiceServlet {
     protected abstract class SceneOperation implements ServletOperation {
 
         @Override
-        public void doIt(@Nonnull final SlingHttpServletRequest request,
-                         @Nonnull final SlingHttpServletResponse response,
+        public void doIt(@NotNull final SlingHttpServletRequest request,
+                         @NotNull final SlingHttpServletResponse response,
                          @Nullable final ResourceHandle resource)
                 throws RepositoryException, IOException, ServletException {
             final Status status = new Status(request, response);
@@ -126,12 +134,12 @@ public class SceneServlet extends AbstractServiceServlet {
             status.sendJson();
         }
 
-        protected abstract void applyScene(@Nonnull Status status, @Nonnull BeanContext context,
-                                           @Nonnull Scene scene, @Nonnull String toolId)
+        protected abstract void applyScene(@NotNull Status status, @NotNull BeanContext context,
+                                           @NotNull Scene scene, @NotNull String toolId)
                 throws IOException;
 
-        protected void answer(@Nonnull final Status status,
-                              @Nonnull final Scene scene, @Nonnull final String toolId) {
+        protected void answer(@NotNull final Status status,
+                              @NotNull final Scene scene, @NotNull final String toolId) {
             Config config = scene.getConfig();
             Config.Tool tool = config.getTool(toolId);
             status.data("tool").put("name", toolId);
@@ -151,8 +159,8 @@ public class SceneServlet extends AbstractServiceServlet {
     protected class SceneDataOperation extends SceneOperation {
 
         @Override
-        protected void applyScene(@Nonnull final Status status, @Nonnull final BeanContext context,
-                                  @Nonnull final Scene scene, @Nonnull final String toolId) {
+        protected void applyScene(@NotNull final Status status, @NotNull final BeanContext context,
+                                  @NotNull final Scene scene, @NotNull final String toolId) {
             answer(status, scene, toolId);
         }
     }
@@ -160,8 +168,8 @@ public class SceneServlet extends AbstractServiceServlet {
     protected class PrepareSceneOperation extends SceneOperation {
 
         @Override
-        protected void applyScene(@Nonnull final Status status, @Nonnull final BeanContext context,
-                                  @Nonnull final Scene scene, @Nonnull final String toolId)
+        protected void applyScene(@NotNull final Status status, @NotNull final BeanContext context,
+                                  @NotNull final Scene scene, @NotNull final String toolId)
                 throws IOException {
             final SlingHttpServletRequest request = context.getRequest();
             final boolean reset = RequestUtil.getParameter(request, "reset", Boolean.FALSE);
@@ -178,8 +186,8 @@ public class SceneServlet extends AbstractServiceServlet {
     protected class RemoveSceneOperation extends SceneOperation {
 
         @Override
-        protected void applyScene(@Nonnull final Status status, @Nonnull final BeanContext context,
-                                  @Nonnull final Scene scene, @Nonnull final String toolId)
+        protected void applyScene(@NotNull final Status status, @NotNull final BeanContext context,
+                                  @NotNull final Scene scene, @NotNull final String toolId)
                 throws IOException {
             final Resource sceneResource = scene.getContentResource();
             if (!ResourceUtil.isNonExistingResource(sceneResource)) {

@@ -3,8 +3,8 @@ package com.composum.sling.clientlibs.handle;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -75,12 +75,12 @@ public class ClientlibResourceFolder implements ClientlibElement {
         return optional;
     }
 
-    @Nonnull
+    @NotNull
     public List<ClientlibRef> getDependencies() {
         return getClientlib2Refs(PROP_DEPENDS);
     }
 
-    @Nonnull
+    @NotNull
     public List<ClientlibRef> getEmbedded() {
         return getClientlib2Refs(PROP_EMBED);
     }
@@ -90,7 +90,7 @@ public class ClientlibResourceFolder implements ClientlibElement {
         return type;
     }
 
-    @Nonnull
+    @NotNull
     protected List<ClientlibRef> getClientlib2Refs(String property) {
         List<ClientlibRef> res = new ArrayList<>();
         for (String rule : resource.getProperty(property, new String[0])) {

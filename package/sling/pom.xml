@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-package</artifactId>
-        <version>2.6.6-SNAPSHOT</version>
+        <version>3.3.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>composum-nodes-sling-package</artifactId>
@@ -165,7 +165,16 @@
                                 <include>.*/composum-nodes-commons-.*\.jar</include>
                                 <include>.*/composum-nodes-console-.*\.jar</include>
                                 <include>.*/composum-nodes-usermgr-.*\.jar</include>
-                                <include>.*/.*\.LoginAdminWhitelist.fragment-composum_core_.*</include>
+                                <include>.*/.*\.LoginAdminWhitelist\.fragment-composum_core.*</include>
+                                <include>.*/.*\.GenericProxyRequest~system-health.*</include>
+                                <include>.*/.*\.ServletResourceType~cpm-clientlibs.*</include>
+                                <include>.*/.*\.ServletResourceType~cpm-servicegraph.*</include>
+                                <include>.*/.*\.ServletResourceType~runtime-threaddump.*</include>
+                                <include>.*/.*\.ServletResourceType~sling-adapters.*</include>
+                                <include>.*/.*\.ServletResourceType~sling-jobs.*</include>
+                                <include>.*/.*\.ServletResourceType~sling-requests.*</include>
+                                <include>.*/.*\.ServletResourceType~sling-resolver.*</include>
+                                <include>.*/.*\.ServletResourceType~sling-servlets.*</include>
                             </includes>
                         </filter>
 
@@ -251,4 +260,34 @@
         </dependency>
 
     </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installNodesPackage</id>
+            <activation>
+                <property>
+                    <name>deploy.package</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.day.jcr.vault</groupId>
+                        <artifactId>content-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-content-package</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
 </project>

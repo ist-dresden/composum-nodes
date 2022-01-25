@@ -22,6 +22,8 @@ public abstract class ConfigSet<Item extends ConfigItem> extends ConsoleSlingBea
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigSet.class);
 
+    public static final String SERVICE_KEY = "nodes/query/configuration";
+
     public static final String PROP_GROUP = "group";
     public static final String DEFAULT_GROUP = "General";
 

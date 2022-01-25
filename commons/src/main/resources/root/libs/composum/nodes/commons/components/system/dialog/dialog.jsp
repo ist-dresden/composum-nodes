@@ -18,7 +18,6 @@
                         <div class="panel-body hidden"></div>
                     </div>
                 </div>
-                <input name="_charset_" type="hidden" value="UTF-8"/>
                 <div class="composum-nodes-system-dialog_content">
                     <sling:call script="content.jsp"/>
                 </div>

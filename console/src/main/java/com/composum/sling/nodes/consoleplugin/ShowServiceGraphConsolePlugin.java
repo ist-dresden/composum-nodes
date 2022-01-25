@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
                 "felix.webconsole.category=Composum",
                 "felix.webconsole.label=servicegraph",
                 "felix.webconsole.title=Service Graph",
-                "felix.webconsole.css=clientlibs/" + ShowServiceGraphConsolePlugin.LOC_CSS
+                "felix.webconsole.css=servicegraph/" + ShowServiceGraphConsolePlugin.LOC_CSS
         })
 public class ShowServiceGraphConsolePlugin extends HttpServlet {
 

@@ -6,8 +6,9 @@
     "jcr:mixinTypes": [
       "sling:Redirect"
     ],
+    "consoleId": "packages",
     "jcr:title": "Packages",
-    "description": "/libs/composum/nodes/pckgmgr/description",
+    "description": "composum/nodes/pckgmgr/description",
     "sling:redirect": "/bin/packages.html",
     "categories": [
       "core",
@@ -15,6 +16,11 @@
       "packages"
     ],
     "order": 30,
-    "precondition": "class:org.apache.jackrabbit.vault.packaging.JcrPackageManager"
+    "permissionsSupport": true,
+    "precondition": [
+      "class:org.apache.jackrabbit.vault.packaging.JcrPackageManager",
+      "restrictions:nodes/packages/manager=read",
+      "resource:composum/nodes/pckgmgr"
+    ]
   }
 }

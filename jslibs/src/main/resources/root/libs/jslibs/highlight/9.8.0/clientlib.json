@@ -1,13 +1,14 @@
 {
+  "jcr:primaryType": "sling:Folder",
   "sling:resourceType": "composum/nodes/commons/clientlib",
   "css": {
-    "jcr:primaryType": "nt:unstructured",
+    "jcr:primaryType": "sling:OrderedFolder",
     "embed": [
       "jslibs/highlight/9.8.0/styles/tomorrow.css"
     ]
   },
   "js": {
-    "jcr:primaryType": "nt:unstructured",
+    "jcr:primaryType": "sling:OrderedFolder",
     "embed": [
       "jslibs/highlight/9.8.0/highlight.min.js"
     ]

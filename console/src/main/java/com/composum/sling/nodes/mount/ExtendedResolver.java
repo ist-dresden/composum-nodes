@@ -3,9 +3,9 @@ package com.composum.sling.nodes.mount;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.InputStream;
 
 public interface ExtendedResolver extends ResourceResolver {
@@ -24,7 +24,7 @@ public interface ExtendedResolver extends ResourceResolver {
      * @param destChildName     the designated name of the new resource
      * @param order             an ordering rule as described for the SlingPostServlet
      */
-    Resource move(@Nonnull String srcAbsPath, @Nonnull String destParentAbsPath,
+    Resource move(@NotNull String srcAbsPath, @NotNull String destParentAbsPath,
                   @Nullable String destChildName, @Nullable String order)
             throws PersistenceException;
 
@@ -37,7 +37,7 @@ public interface ExtendedResolver extends ResourceResolver {
      * @param mimeType the mime type of the content if known
      * @param charset  the charset of the content
      */
-    Resource upload(@Nonnull final String absPath, @Nonnull final InputStream content,
+    Resource upload(@NotNull final String absPath, @NotNull final InputStream content,
                     @Nullable final String filename, @Nullable final String mimeType,
                     @Nullable final String charset)
             throws PersistenceException;

@@ -3,11 +3,11 @@ package com.composum.sling.core.util;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -17,6 +17,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Formatter;
 import java.util.Locale;
 import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
 /**
  * replace all '${key}' elements in the stream by their values from the value map;
@@ -43,8 +45,10 @@ public class ValueEmbeddingReader extends Reader {
         public String type = null;
         public final String name;
         public final String format;
+        public final String pattern;
 
         public Key(String key) {
+            pattern = key;
             int typeSep = key.indexOf(TYPE_SEPARATOR);
             if (typeSep > 0) {
                 int pathSep = key.indexOf(PATH_SEPARATOR);
@@ -65,12 +69,19 @@ public class ValueEmbeddingReader extends Reader {
                 format = null;
             }
         }
+
+        @Override
+        public String toString() {
+            return pattern;
+        }
     }
 
     protected final Reader reader;
     protected final ValueMap values;
     protected final Locale locale;
     protected final Class<?> resourceContext;
+    protected final ResourceBundle resourceBundle;
+    protected boolean keepUnresolvable = false;
 
     protected boolean eof = false;
     protected char[] buf = new char[BUFSIZE * 2]; // reserve place for values (max length:  BUFSIZE)
@@ -83,8 +94,8 @@ public class ValueEmbeddingReader extends Reader {
      * @param reader the text to read - probably with embedded value placeholders
      * @param values the set of available placeholders
      */
-    public ValueEmbeddingReader(@Nonnull Reader reader, @Nonnull Map<String, Object> values) {
-        this(reader, new ValueMapDecorator(values), null, null);
+    public ValueEmbeddingReader(@NotNull Reader reader, @NotNull Map<String, Object> values) {
+        this(reader, values, null, null, null);
     }
 
     /**
@@ -93,17 +104,9 @@ public class ValueEmbeddingReader extends Reader {
      * @param locale          the locale to use for value formatting
      * @param resourceContext the context class for resource loading
      */
-    public ValueEmbeddingReader(@Nonnull Reader reader, @Nonnull Map<String, Object> values,
+    public ValueEmbeddingReader(@NotNull Reader reader, @NotNull Map<String, Object> values,
                                 @Nullable Locale locale, @Nullable Class<?> resourceContext) {
-        this(reader, new ValueMapDecorator(values), locale, resourceContext);
-    }
-
-    /**
-     * @param reader the text to read - probably with embedded value placeholders
-     * @param values the set of available placeholders
-     */
-    public ValueEmbeddingReader(@Nonnull Reader reader, @Nonnull ValueMap values) {
-        this(reader, values, null, null);
+        this(reader, values, locale, resourceContext, null);
     }
 
     /**
@@ -111,13 +114,24 @@ public class ValueEmbeddingReader extends Reader {
      * @param values          the set of available placeholders
      * @param locale          the locale to use for value formatting
      * @param resourceContext the context class for resource loading
+     * @param resourceBundle  the translations bundle (switches translation on)
      */
-    public ValueEmbeddingReader(@Nonnull Reader reader, @Nonnull ValueMap values,
-                                @Nullable Locale locale, @Nullable Class<?> resourceContext) {
+    public ValueEmbeddingReader(@NotNull Reader reader, @NotNull Map<String, Object> values,
+                                @Nullable Locale locale, @Nullable Class<?> resourceContext,
+                                @Nullable ResourceBundle resourceBundle) {
         this.reader = reader;
-        this.values = values;
+        this.values = values instanceof ValueMap ? ((ValueMap) values) : new ValueMapDecorator(values);
         this.locale = locale != null ? locale : Locale.getDefault();
         this.resourceContext = resourceContext != null ? resourceContext : values.getClass();
+        this.resourceBundle = resourceBundle;
+    }
+
+    public boolean isKeepUnresolvable(final boolean... decision) {
+        return decision.length > 0 ? (keepUnresolvable = decision[0]) : keepUnresolvable;
+    }
+
+    protected void embedKey(Key key) {
+        embed = new StringReader(keepUnresolvable ? ("${" + key + "}") : "");
     }
 
     @Override
@@ -126,7 +140,7 @@ public class ValueEmbeddingReader extends Reader {
     }
 
     @Override
-    public int read(@Nonnull char[] cbuf, int off, int len) throws IOException {
+    public int read(char[] cbuf, int off, int len) throws IOException {
         if (embed != null) {
             if (this.len > 0) { // flush buffer before embedding a reader
                 return copy(cbuf, off, len);
@@ -147,7 +161,7 @@ public class ValueEmbeddingReader extends Reader {
         return copy(cbuf, off, len);
     }
 
-    protected int copy(@Nonnull char[] cbuf, int off, int len) {
+    protected int copy(char[] cbuf, int off, int len) {
         int count = Math.min(this.len, len);
         if (count > 0) {
             System.arraycopy(this.buf, this.off, cbuf, off, count);
@@ -200,18 +214,28 @@ public class ValueEmbeddingReader extends Reader {
                                     if (stream != null) {
                                         // recursive embedding of a resource file with the given value set
                                         embed = new ValueEmbeddingReader(
-                                                new InputStreamReader(stream, StandardCharsets.UTF_8), values);
+                                                new InputStreamReader(stream, StandardCharsets.UTF_8),
+                                                values, locale, resourceContext, resourceBundle);
+                                        return; // stop buffering up to the end of the embedded reader
                                     } else {
                                         LOG.warn("resource '{}' not available; probably invalid context ({})", key.name, resourceContext.getName());
-                                        embed = new StringReader("");
                                     }
-                                    return; // stop buffering up to the end of the embedded reader
                                 }
+                                embedKey(key);
+                                return; // stop buffering up to the end of the embedded reader
                             } else {
                                 Object value = values.get(key.name);
+                                if (value == null && resourceBundle != null) {
+                                    try {
+                                        value = resourceBundle.getString(key.name);
+                                    } catch (MissingResourceException mrex) {
+                                        value = key.name;
+                                    }
+                                }
                                 if (value instanceof Reader) {
                                     // recursive embedding of a reader object with the given value set
-                                    embed = new ValueEmbeddingReader((Reader) value, values);
+                                    embed = new ValueEmbeddingReader((Reader) value, values,
+                                            locale, resourceContext, resourceBundle);
                                     return; // stop buffering up to the end of the embedded reader
                                 } else if (value != null) {
                                     String string;
@@ -225,6 +249,9 @@ public class ValueEmbeddingReader extends Reader {
                                     }
                                     string.getChars(0, string.length(), buf, len);
                                     len += string.length();
+                                } else {
+                                    embedKey(key);
+                                    return; // stop buffering up to the end of the embedded reader
                                 }
                             }
                         } else {

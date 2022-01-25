@@ -2,14 +2,7 @@ package com.composum.sling.nodes;
 
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
-import com.composum.sling.nodes.servlet.ComponentsServlet;
-import com.composum.sling.nodes.servlet.NodeServlet;
-import com.composum.sling.nodes.servlet.PropertyServlet;
-import com.composum.sling.nodes.servlet.SceneServlet;
-import com.composum.sling.nodes.servlet.SecurityServlet;
-import com.composum.sling.nodes.servlet.SourceServlet;
-import com.composum.sling.nodes.servlet.SourceUpdateServlet;
-import com.composum.sling.nodes.servlet.VersionServlet;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -20,11 +13,7 @@ import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-import javax.annotation.Nonnull;
-import javax.servlet.Servlet;
 import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -56,7 +45,7 @@ public class NodesConfigImpl implements NodesConfiguration {
                 name = "Console Categories",
                 description = "the list of categories to determine the views in the core console"
         )
-        String[] console_categories() default {"core", "nodes"};
+        String[] console_categories() default {"core", "system", "nodes", "users"};
 
         @AttributeDefinition(
                 name = "Query Result Limit",
@@ -132,67 +121,6 @@ public class NodesConfigImpl implements NodesConfiguration {
                 description = "the root path of the scenes content nodes"
         )
         String scene_content_root() default "/var/composum/nodes/scenes";
-
-        @AttributeDefinition(
-                name = "Package Servlet",
-                description = "the general on/off switch for the services of the Package Servlet"
-        )
-        boolean package_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "Security Servlet",
-                description = "the general on/off switch for the services of the Security Servlet"
-        )
-        boolean security_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "Node Servlet",
-                description = "the general on/off switch for the services of the Node Servlet"
-        )
-        boolean node_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "Property Servlet",
-                description = "the general on/off switch for the services of the Property Servlet"
-        )
-        boolean property_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "Version Servlet",
-                description = "the general on/off switch for the services of the Version Servlet"
-        )
-        boolean version_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "Scene Servlet",
-                description = "the general on/off switch for the services of the Scene Servlet"
-        )
-        boolean scene_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "Components Servlet",
-                description = "the general on/off switch for the services of the Components Servlet"
-        )
-        boolean components_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "Source Servlet",
-                description = "the general on/off switch for the services of the Source Servlet"
-        )
-        boolean source_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "Source Update Servlet",
-                description = "the general on/off switch for the services of the Source Update Servlet"
-        )
-        boolean sourceupdate_servlet_enabled() default true;
-
-        @AttributeDefinition(
-                name = "User Management Servlet",
-                description = "the general on/off switch for the services of the User Management Servlet"
-        )
-        boolean usermanagement_servlet_enabled() default true;
-
     }
 
     private volatile Configuration config;
@@ -215,16 +143,9 @@ public class NodesConfigImpl implements NodesConfiguration {
 
     private volatile boolean sourceAdvancedSortAttributes;
 
-    private volatile Map<String, Boolean> enabledServlets;
-
-    @Nonnull
+    @NotNull
     private Configuration getConfig() {
         return Objects.requireNonNull(config, "NodesConfigImpl is not active");
-    }
-
-    @Override
-    public boolean isEnabled(Servlet servlet) {
-        return enabledServlets != null && Boolean.TRUE.equals(enabledServlets.get(servlet.getClass().getSimpleName()));
     }
 
     @Override
@@ -233,6 +154,7 @@ public class NodesConfigImpl implements NodesConfiguration {
     }
 
     @Override
+    @NotNull
     public String[] getConsoleCategories() {
         return getConfig().console_categories();
     }
@@ -243,41 +165,49 @@ public class NodesConfigImpl implements NodesConfiguration {
     }
 
     @Override
+    @NotNull
     public ResourceFilter getPageNodeFilter() {
         return pageNodeFilter;
     }
 
     @Override
+    @NotNull
     public ResourceFilter getDefaultNodeFilter() {
         return defaultNodeFilter;
     }
 
     @Override
+    @NotNull
     public ResourceFilter getTreeIntermediateFilter() {
         return treeIntermediateFilter;
     }
 
     @Override
+    @NotNull
     public ResourceFilter getReferenceableNodesFilter() {
         return referenceableNodesFilter;
     }
 
     @Override
+    @NotNull
     public ResourceFilter getOrderableNodesFilter() {
         return orderableNodesFilter;
     }
 
     @Override
+    @NotNull
     public ResourceFilter getSourceNodesFilter() {
         return sourceNodesFilter;
     }
 
     @Override
+    @NotNull
     public ResourceFilter getSourceFolderNodesFilter(){
         return sourceFolderFilter;
     }
 
     @Override
+    @NotNull
     public ResourceFilter getSourceXmlNodesFilter() {
         return sourceXmlFilter;
     }
@@ -288,12 +218,13 @@ public class NodesConfigImpl implements NodesConfiguration {
     }
 
     @Override
-    @Nonnull
+    @NotNull
     public String getScenesContentRoot() {
         return getConfig().scene_content_root();
     }
 
     @Override
+    @NotNull
     public Dictionary<String, Object> getProperties() {
         return properties;
     }
@@ -314,25 +245,12 @@ public class NodesConfigImpl implements NodesConfiguration {
         sourceFolderFilter = ResourceFilterMapping.fromString(configuration.node_source_folder_filter());
         sourceXmlFilter = ResourceFilterMapping.fromString(configuration.node_source_xml_filter());
         sourceAdvancedSortAttributes = configuration.node_source_advanced_attributesort();
-        Map<String, Boolean> theEnabledServlets = new HashMap<>();
-        theEnabledServlets.put("PackageServlet", configuration.package_servlet_enabled());
-        theEnabledServlets.put(SecurityServlet.class.getSimpleName(), configuration.security_servlet_enabled());
-        theEnabledServlets.put(NodeServlet.class.getSimpleName(), configuration.node_servlet_enabled());
-        theEnabledServlets.put(PropertyServlet.class.getSimpleName(), configuration.property_servlet_enabled());
-        theEnabledServlets.put(VersionServlet.class.getSimpleName(), configuration.version_servlet_enabled());
-        theEnabledServlets.put(SceneServlet.class.getSimpleName(), configuration.scene_servlet_enabled());
-        theEnabledServlets.put(ComponentsServlet.class.getSimpleName(), configuration.components_servlet_enabled());
-        theEnabledServlets.put(SourceServlet.class.getSimpleName(), configuration.source_servlet_enabled());
-        theEnabledServlets.put(SourceUpdateServlet.class.getSimpleName(), configuration.sourceupdate_servlet_enabled());
-        theEnabledServlets.put("UserManagementServlet", configuration.usermanagement_servlet_enabled());
-        this.enabledServlets = theEnabledServlets;
     }
 
     @Deactivate
     protected void deactivate() {
         properties = null;
         config = null;
-        enabledServlets = null;
         pageNodeFilter = null;
         defaultNodeFilter = null;
         treeIntermediateFilter = null;

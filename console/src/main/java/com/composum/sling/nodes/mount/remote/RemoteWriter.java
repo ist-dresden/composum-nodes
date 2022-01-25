@@ -17,11 +17,11 @@ import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.servlets.post.SlingPostConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.jcr.PropertyType;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +50,7 @@ public class RemoteWriter {
             this.resource = resource;
         }
 
-        @Nonnull
+        @NotNull
         public abstract ChangeType getChangeType();
 
         protected abstract boolean commit(RemoteWriter writer) throws IOException;
@@ -58,7 +58,7 @@ public class RemoteWriter {
 
     public static class ChangeSet extends LinkedHashMap<String, ResourceChange> {
 
-        public void addModify(@Nonnull final RemoteResource resource) {
+        public void addModify(@NotNull final RemoteResource resource) {
             String path = resource.getPath();
             ResourceChange change = get(path);
             if (change == null) {
@@ -68,30 +68,30 @@ public class RemoteWriter {
             }
         }
 
-        public void addCreate(@Nonnull final RemoteResource resource) {
+        public void addCreate(@NotNull final RemoteResource resource) {
             put(resource.getPath(), new ResourceCreate(resource));
         }
 
-        public void addUpload(@Nonnull final RemoteResource resource, @Nonnull final InputStream content,
+        public void addUpload(@NotNull final RemoteResource resource, @NotNull final InputStream content,
                               @Nullable final String filename, @Nullable final String mimeType,
                               @Nullable final String charset) {
             put(resource.getPath(), new ResourceUpload(resource, content, filename, mimeType, charset));
         }
 
-        public void addDelete(@Nonnull final RemoteResource resource) {
+        public void addDelete(@NotNull final RemoteResource resource) {
             put(resource.getPath(), new ResourceDelete(resource));
         }
 
-        public void addCopy(@Nonnull final RemoteResource designated, @Nonnull final Resource source) {
+        public void addCopy(@NotNull final RemoteResource designated, @NotNull final Resource source) {
             put(designated.getPath(), new ResourceCopy(designated, source));
         }
 
-        public void addMove(@Nonnull final RemoteResource designated, @Nonnull final Resource source,
+        public void addMove(@NotNull final RemoteResource designated, @NotNull final Resource source,
                             @Nullable final String order) {
             put(designated.getPath(), new ResourceMove(designated, source, order));
         }
 
-        public boolean commit(@Nonnull final RemoteWriter writer) throws IOException {
+        public boolean commit(@NotNull final RemoteWriter writer) throws IOException {
             boolean changesMade = false;
             if (LOG.isDebugEnabled()) {
                 LOG.debug("commit({})...", size());
@@ -119,11 +119,11 @@ public class RemoteWriter {
 
     protected final RemoteProvider provider;
 
-    public RemoteWriter(@Nonnull final RemoteProvider provider) {
+    public RemoteWriter(@NotNull final RemoteProvider provider) {
         this.provider = provider;
     }
 
-    public boolean commitChanges(@Nonnull final ChangeSet changeSet) throws IOException {
+    public boolean commitChanges(@NotNull final ChangeSet changeSet) throws IOException {
         return changeSet.commit(this);
     }
 
@@ -135,7 +135,7 @@ public class RemoteWriter {
 
         protected final Resource source;
 
-        public ResourceCopy(@Nonnull final RemoteResource resource, @Nonnull final Resource source) {
+        public ResourceCopy(@NotNull final RemoteResource resource, @NotNull final Resource source) {
             super(resource);
             this.source = source;
             if (LOG.isDebugEnabled()) {
@@ -143,7 +143,7 @@ public class RemoteWriter {
             }
         }
 
-        @Nonnull
+        @NotNull
         public ChangeType getChangeType() {
             return ChangeType.copy;
         }
@@ -164,7 +164,7 @@ public class RemoteWriter {
         protected final Resource source;
         protected final String order;
 
-        public ResourceMove(@Nonnull final RemoteResource resource, @Nonnull final Resource source,
+        public ResourceMove(@NotNull final RemoteResource resource, @NotNull final Resource source,
                             @Nullable final String order) {
             super(resource);
             this.source = source;
@@ -174,7 +174,7 @@ public class RemoteWriter {
             }
         }
 
-        @Nonnull
+        @NotNull
         public ChangeType getChangeType() {
             return ChangeType.copy;
         }
@@ -202,14 +202,14 @@ public class RemoteWriter {
 
     public static class ResourceDelete extends ResourceChange {
 
-        public ResourceDelete(@Nonnull final RemoteResource resource) {
+        public ResourceDelete(@NotNull final RemoteResource resource) {
             super(resource);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("delete({})...", resource.getPath());
             }
         }
 
-        @Nonnull
+        @NotNull
         public ChangeType getChangeType() {
             return ChangeType.delete;
         }
@@ -236,7 +236,7 @@ public class RemoteWriter {
         protected final String mimeType;
         protected final String charset;
 
-        public ResourceUpload(@Nonnull final RemoteResource resource, @Nonnull final InputStream content,
+        public ResourceUpload(@NotNull final RemoteResource resource, @NotNull final InputStream content,
                               @Nullable final String filename, @Nullable final String mimeType,
                               @Nullable final String charset) {
             super(resource);
@@ -250,13 +250,13 @@ public class RemoteWriter {
         }
 
         @Override
-        @Nonnull
+        @NotNull
         public ChangeType getChangeType() {
             return ChangeType.upload;
         }
 
         @Override
-        protected boolean commit(@Nonnull final RemoteWriter writer) throws IOException {
+        protected boolean commit(@NotNull final RemoteWriter writer) throws IOException {
             String parentPath = StringUtils.substringBeforeLast(resource.getPath(), "/");
             Map<String, ContentBody> parts = new LinkedHashMap<>();
             Parameters parameters = new Parameters();
@@ -272,7 +272,7 @@ public class RemoteWriter {
 
     public static class ResourceCreate extends ResourceModify {
 
-        public ResourceCreate(@Nonnull final RemoteResource resource) {
+        public ResourceCreate(@NotNull final RemoteResource resource) {
             super(resource);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("create({})...", resource.getPath());
@@ -280,7 +280,7 @@ public class RemoteWriter {
         }
 
         @Override
-        @Nonnull
+        @NotNull
         public ChangeType getChangeType() {
             return ChangeType.create;
         }
@@ -288,7 +288,7 @@ public class RemoteWriter {
 
     public static class ResourceModify extends ResourceChange {
 
-        public ResourceModify(@Nonnull final RemoteResource resource) {
+        public ResourceModify(@NotNull final RemoteResource resource) {
             super(resource);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("modify({})...", resource.getPath());
@@ -296,13 +296,13 @@ public class RemoteWriter {
         }
 
         @Override
-        @Nonnull
+        @NotNull
         public ChangeType getChangeType() {
             return ChangeType.modify;
         }
 
         @Override
-        protected boolean commit(@Nonnull final RemoteWriter writer) throws IOException {
+        protected boolean commit(@NotNull final RemoteWriter writer) throws IOException {
             return commit(writer, new Parameters());
         }
 
@@ -329,8 +329,8 @@ public class RemoteWriter {
     // HTTP transfer...
     //
 
-    public boolean postForm(@Nonnull final ResourceChange change, @Nullable final String path,
-                            @Nonnull final Parameters parameters) {
+    public boolean postForm(@NotNull final ResourceChange change, @Nullable final String path,
+                            @NotNull final Parameters parameters) {
         boolean changesMade = false;
         if (parameters.size() > 0) {
             EntityBuilder entityBuilder = EntityBuilder.create();
@@ -342,8 +342,8 @@ public class RemoteWriter {
         return changesMade;
     }
 
-    public boolean postMultipart(@Nonnull final ResourceChange change, @Nullable final String path,
-                                 @Nonnull final Map<String, ContentBody> parts, @Nonnull final Parameters parameters) {
+    public boolean postMultipart(@NotNull final ResourceChange change, @Nullable final String path,
+                                 @NotNull final Map<String, ContentBody> parts, @NotNull final Parameters parameters) {
         boolean changesMade = false;
         if (parts.size() > 0 || parameters.size() > 0) {
             MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
@@ -360,8 +360,8 @@ public class RemoteWriter {
         return changesMade;
     }
 
-    public void postEntity(@Nonnull final ResourceChange change, @Nullable final String path,
-                           @Nonnull final HttpEntity httpEntity) {
+    public void postEntity(@NotNull final ResourceChange change, @Nullable final String path,
+                           @NotNull final HttpEntity httpEntity) {
         try {
             String url = provider.remoteClient.getHttpUrl(path != null ? path : change.resource.path);
             HttpPost httpPost = provider.remoteClient.buildHttpPost(url);
@@ -391,8 +391,8 @@ public class RemoteWriter {
             PropertyType.TYPENAME_LONG
     ));
 
-    protected void buildForm(@Nonnull final RemoteResource resource,
-                             @Nonnull final Map<String, ContentBody> parts, @Nonnull final Parameters parameters) {
+    protected void buildForm(@NotNull final RemoteResource resource,
+                             @NotNull final Map<String, ContentBody> parts, @NotNull final Parameters parameters) {
         ModifiableValueMap modified = resource.modifiedValues;
         if (modified != null) {
             Set<String> scanned = new HashSet<>();
@@ -421,8 +421,8 @@ public class RemoteWriter {
         }
     }
 
-    protected void addFormValue(@Nonnull final Map<String, ContentBody> parts, @Nonnull final Parameters parameters,
-                                @Nonnull final String name, @Nonnull Object value) {
+    protected void addFormValue(@NotNull final Map<String, ContentBody> parts, @NotNull final Parameters parameters,
+                                @NotNull final String name, @NotNull Object value) {
         if (value instanceof InputStream) {
             if (!(value instanceof RemoteReader.RemoteBinary)) {
                 parts.put(name, new InputStreamBody((InputStream) value, name));

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.nodes</groupId>
+        <artifactId>composum-nodes-package</artifactId>
+        <version>3.3.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>composum-nodes-cleanup-package</artifactId>
+    <packaging>content-package</packaging>
+
+    <name>Composum Nodes Cleanup Package</name>
+    <description>Composum Nodes Cleanup - removes Composum Nodes via empty package filte r rules</description>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>filevault-package-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+
+                    <group>${package.group}</group>
+                    <properties>
+                        <createdBy>${package.company}</createdBy>
+                    </properties>
+
+                    <jcrRootSourceDirectory>${project.build.directory}/content/jcr_root</jcrRootSourceDirectory>
+                    <skipValidation>true</skipValidation>
+                    <thumbnailImage>${basedir}/src/main/content/META-INF/vault/definition/thumbnail.png</thumbnailImage>
+
+                    <filters>
+                        <filter>
+                            <root>/apps/cq/core/content/nav/tools/general/composum</root>
+                        </filter>
+                        <filter>
+                            <root>/apps/cq/core/content/nav/tools/composum</root>
+                        </filter>
+                        <filter>
+                            <root>/apps/composum</root>
+                        </filter>
+                        <filter>
+                            <root>/apps/fonts</root>
+                        </filter>
+                        <filter>
+                            <root>/apps/jslibs</root>
+                        </filter>
+
+                        <filter>
+                            <root>/libs/composum</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/fonts</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/jslibs</root>
+                        </filter>
+
+                        <filter>
+                            <root>/var/composum</root>
+                        </filter>
+                        <filter>
+                            <root>/var/audit/jobs</root>
+                        </filter>
+
+                        <filter>
+                            <root>/tmp/composum</root>
+                        </filter>
+
+                    </filters>
+
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+</project>

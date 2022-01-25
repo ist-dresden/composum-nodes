@@ -10,7 +10,7 @@
                         class="label">Copy</span></button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <a href="" class="download fa fa-download btn btn-default" title="Download as XML file" target="_blank"><span
+                <a href="" class="download fa fa-download btn btn-default" title="Download as XML file"><span
                         class="label">Download</span></a>
                 <a href="" class="zip fa fa-file-archive-o btn btn-default" title="Download whole tree as ZIP file"
                    target="_blank"><span class="label">Zip</span></a>
