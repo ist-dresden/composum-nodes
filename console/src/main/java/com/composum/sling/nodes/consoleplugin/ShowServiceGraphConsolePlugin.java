@@ -1,7 +1,6 @@
 package com.composum.sling.nodes.consoleplugin;
 
 import com.composum.sling.core.util.XSS;
-import org.apache.commons.collections.ComparatorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
@@ -22,16 +21,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -131,7 +121,7 @@ public class ShowServiceGraphConsolePlugin extends HttpServlet {
         try {
             ServiceReference<?>[] refs = bundleContext.getAllServiceReferences(null, null);
             //noinspection unchecked
-            Arrays.sort(refs, (o1, o2) -> ComparatorUtils.naturalComparator().compare(o1.toString(), o2.toString()));
+            Arrays.sort(refs, Comparator.naturalOrder());
             for (ServiceReference<?> ref : refs) {
                 Object service = null;
                 Class<?> clazz;

@@ -3,7 +3,7 @@ package com.composum.sling.nodes.servlet;
 import com.composum.sling.core.Restricted;
 import com.composum.sling.core.service.RestrictedService;
 import com.composum.sling.core.service.ServiceRestrictions;
-import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.commons.cnd.CompactNodeTypeDefWriter;
 import org.apache.sling.api.SlingHttpServletRequest;

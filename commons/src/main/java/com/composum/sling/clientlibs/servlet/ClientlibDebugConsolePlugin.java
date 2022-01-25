@@ -13,7 +13,7 @@ import com.composum.sling.clientlibs.handle.ClientlibVisitor;
 import com.composum.sling.clientlibs.processor.AbstractClientlibVisitor;
 import com.composum.sling.clientlibs.service.ClientlibService;
 import com.composum.sling.core.util.XSS;
-import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
