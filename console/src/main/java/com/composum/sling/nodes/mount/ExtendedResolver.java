@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 
-public interface ExtendedResolver extends ResourceResolver {
+public interface ExtendedResolver {
 
     /**
      * @return the local root path of the resolver (mount point) if useful
