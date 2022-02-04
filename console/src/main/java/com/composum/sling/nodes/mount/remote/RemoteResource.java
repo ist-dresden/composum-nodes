@@ -15,7 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class RemoteResource extends ResourceWrapper {
+public class RemoteResource extends SyntheticResource {
 
     public static class NonExisting extends RemoteResource {
 
@@ -44,7 +44,7 @@ public class RemoteResource extends ResourceWrapper {
 
     public RemoteResource(@NotNull final RemoteResolver resolver, @NotNull String path) {
         // We set a synthetic resource as super, to not implement Resource directly, which is a ProviderType and should not be implemented by custom code
-        super(new SyntheticResource(resolver, path, "remote:Resource"));
+        super(resolver, path, "remote:Resource");
         this.resolver = resolver;
         if (StringUtils.isBlank(path) || !path.startsWith("/")) {
             throw new IllegalArgumentException("an absolute path is required (" + path + ")");
