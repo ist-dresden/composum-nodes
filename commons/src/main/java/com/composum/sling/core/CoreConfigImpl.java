@@ -41,8 +41,7 @@ public class CoreConfigImpl implements CoreConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoreConfigImpl.class);
 
-    protected static final String DEFAULT_LOGOUTURL = "/system/sling/logout.html?logout=true&GLO=true";
-    protected static final String DEFAULT_LOGGEDOUTURL = "/system/sling/form/login.html";
+    protected static final String DEFAULT_LOGOUTURL = "/system/sling/logout";
     protected static final String DEFAULT_LOGINURL = "/system/sling/form/login.html";
 
 
@@ -80,7 +79,7 @@ public class CoreConfigImpl implements CoreConfiguration {
                 name = "Logged out URL",
                 description = "URL for the system to redirect to when the user was logged out"
         )
-        String loggedouturl() default DEFAULT_LOGGEDOUTURL;
+        String loggedouturl();
 
         @AttributeDefinition(
                 name = "Login URL",
@@ -207,9 +206,9 @@ public class CoreConfigImpl implements CoreConfiguration {
     }
 
     @Override
-    @NotNull
+    @Nullable
     public String getLoggedoutUrl() {
-        return StringUtils.defaultIfBlank(getConfig().loggedouturl(), DEFAULT_LOGGEDOUTURL);
+        return getConfig().loggedouturl();
     }
 
     @Activate

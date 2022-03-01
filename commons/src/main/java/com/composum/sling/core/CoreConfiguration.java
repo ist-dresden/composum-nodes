@@ -30,10 +30,9 @@ public interface CoreConfiguration {
             throws IOException, ServletException;
 
     /**
-     * The (relative) logout URL (including parameters) to use instead of the default /system/sling/logout
-     * .html?logout=true&GLO=true (The GLO=true parameter is relevant for singlesignon logout if Keycloak
-     * authentication is installed). A parameter {@link #RESOURCE_PARAMETER} - the targetUri - can be appended
-     * if after user logout in the user should redirect to rendering that resource.
+     * The (relative) logout URL (including parameters) to use instead of the default /system/sling/logout.
+     * A parameter {@link #RESOURCE_PARAMETER} - the targetUri - can be appended if after user logout
+     * the user should be redirected to that target.
      */
     @NotNull
     String getLogoutUrl(@Nullable String targetUri);
@@ -47,7 +46,7 @@ public interface CoreConfiguration {
     /**
      * The URL to redirect to after the user was logged out successfully.
      */
-    @NotNull
+    @Nullable
     String getLoggedoutUrl();
 
     /**
