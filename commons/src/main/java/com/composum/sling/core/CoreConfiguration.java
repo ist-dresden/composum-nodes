@@ -18,7 +18,7 @@ public interface CoreConfiguration {
     String ERRORPAGE_STATUS = "errorpage.status";
 
     /**
-     * Parameter that can be appended to {@link #getLoginUrl()} to save the current rendered resource, to allow
+     * Parameter that can be appended to {@link #getLogoutUrl()} to save the current rendered resource, to allow
      * re-rendering it after the user logged in.
      */
     String RESOURCE_PARAMETER = "resource";
@@ -53,6 +53,7 @@ public interface CoreConfiguration {
      * The URL to redirect to when the user should login. A parameter {@link #RESOURCE_PARAMETER} - the targetUri -
      * can be appended if after user login in the user should redirect to rendering that resource.
      */
+    @Deprecated
     @NotNull
     String getLoginUrl(@Nullable String targetUri);
 
