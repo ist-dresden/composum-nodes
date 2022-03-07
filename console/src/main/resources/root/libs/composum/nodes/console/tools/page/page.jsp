@@ -15,7 +15,6 @@
     <sling:call script="content.jsp"/>
 </div>
 <sling:call script="body-clientlibs.jsp"/>
-<sling:include resourceType="composum/nodes/console/components/tryLogin"/>
 </body>
 </html>
 </cpn:component>
