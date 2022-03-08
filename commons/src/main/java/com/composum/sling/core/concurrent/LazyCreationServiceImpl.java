@@ -3,18 +3,27 @@ package com.composum.sling.core.concurrent;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.Validate;
-import org.apache.sling.api.SlingException;
-import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.resource.*;
+import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Constants;
-import org.osgi.service.component.annotations.*;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 
-import org.jetbrains.annotations.NotNull;
-import javax.jcr.*;
+import javax.jcr.ItemExistsException;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.lock.Lock;
 import javax.jcr.lock.LockException;
 import javax.jcr.lock.LockManager;
@@ -22,7 +31,10 @@ import java.util.Calendar;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.composum.sling.core.util.ResourceUtil.*;
+import static com.composum.sling.core.util.ResourceUtil.PROP_LAST_MODIFIED;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_CREATED;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_LAST_MODIFIED;
+import static com.composum.sling.core.util.ResourceUtil.TYPE_LOCKABLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -97,7 +109,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
             // check nobody created it during acquiring lock:
             if (null != (result = getter.get(resolver, path))) return result;
 
-            serviceResolver = createServiceResolver();
+            serviceResolver = resolver; // FIXME createServiceResolver();
             Resource parentResource = serviceResolver.getResource(parentPath);
             if (null == parentResource) {
                 sequencer.release(token); // release lock temporarily to prevent deadlocks
@@ -166,7 +178,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
             // check that nobody created it during acquiring lock
             if (resourceIsInitialized(resolver, path)) return getter.get(resolver, path);
 
-            serviceResolver = createServiceResolver();
+            serviceResolver = resolver; // FIXME createServiceResolver();
             Resource parentResource = serviceResolver.getResource(parentPath);
             if (null == parentResource) {
                 parentResource = safeCreateParent(serviceResolver, parentPath, 1, parentCreationStrategy);
@@ -465,7 +477,8 @@ public class LazyCreationServiceImpl implements LazyCreationService {
 
     /**
      * Makes a service resolver with the necessary permissions to create stuff. Remember to close it!
-     */
+     *//*
+    @Deprecated  // FIXME don't use a separate resolver
     protected ResourceResolver createServiceResolver() {
         // used for maximum backwards compatibility; TODO recheck and decide from time to time
         try {
@@ -473,7 +486,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         } catch (LoginException e) {
             throw new SlingException("Configuration problem: we cannot get a service resolver ", e);
         }
-    }
+    }*/
 
     @Activate @Modified
     protected void activate(Configuration config) {
