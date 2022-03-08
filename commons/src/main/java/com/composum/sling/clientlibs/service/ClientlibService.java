@@ -27,6 +27,11 @@ public interface ClientlibService {
     String ENCODING_GZIP = "gzip";
 
     /**
+     * the subservice user id.
+     */
+    String CLIENTLIB_SERVICE = "ClientlibService";
+
+    /**
      * Resolves the element corresponding to the ref.
      *
      * @return the corresponding element or null if we can't find it.
