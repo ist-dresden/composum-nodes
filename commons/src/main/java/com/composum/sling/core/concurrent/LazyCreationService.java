@@ -15,15 +15,15 @@ import java.util.Map;
  * create it at the same time, only one of them will succeed. This should, however, not cause the other
  * requests to fail.</li>
  * <li>The user needs the right to read the resource, but shouldn't neccesarily have the right to create or modify
- * the resource. Thus, the creation is done with an admin resolver, but the result is returned with the user's
+ * the resource. Thus, the creation is done with a service resolver, but the result is returned with the user's
  * resolver.</li>
  * </ul>
- * An admin resolver is only created when needed.
+ * A service resolver is only created when needed.
  */
 public interface LazyCreationService {
 
     /**
-     * Retrieves a resource or applies a creation strategy to be carried out with an admin resolver to create it.
+     * Retrieves a resource or applies a creation strategy to be carried out with a service resolver to create it.
      * <p>
      * It is an error if getter still returns null after creator is executed.
      * </p>
@@ -47,7 +47,7 @@ public interface LazyCreationService {
             throws RepositoryException;
 
     /**
-     * Retrieves a resource or applies a creation strategy to be carried out with an admin resolver to create it.
+     * Retrieves a resource or applies a creation strategy to be carried out with a service resolver to create it.
      * <p>
      * It is an error if getter still returns null after creator is executed.
      * </p>
@@ -70,7 +70,7 @@ public interface LazyCreationService {
             throws RepositoryException;
 
     /**
-     * Retrieves a resource or applies a creation and initialization strategy to be carried out with an admin resolver
+     * Retrieves a resource or applies a creation and initialization strategy to be carried out with a service resolver
      * to create it, for resource intensive initialization processes that should not performed twice in the cluster. The
      * resource is locked for the cluster with {@link javax.jcr.lock.LockManager} during that time. <p> It is an error
      * if getter still returns null after creator is executed. </p>
@@ -96,7 +96,7 @@ public interface LazyCreationService {
                       Map<String, Object> parentProperties) throws RepositoryException, PersistenceException;
 
     /**
-     * Retrieves a resource or applies a creation and initialization strategy to be carried out with an admin resolver
+     * Retrieves a resource or applies a creation and initialization strategy to be carried out with a serice resolver
      * to create it, for resource intensive initialization processes that should not performed twice in the cluster. The
      * resource is locked for the cluster with {@link javax.jcr.lock.LockManager} during that time.
      * <p>
@@ -157,10 +157,10 @@ public interface LazyCreationService {
     /** Strategy to create the resource itself. */
     interface CreationStrategy {
         /**
-         * Create the resource with the given administrative resolver. A {@link ResourceResolver#commit()} is
+         * Create the resource with the given service resolver. A {@link ResourceResolver#commit()} is
          * not necessary - that's performed in the LazyCreationService.
          *
-         * @param resolver an administrative resolver
+         * @param resolver a service resolver
          * @param parent   the parent of the resource at which to attach the resource
          * @param name     the name of the resource to create.
          * @return the created resource, which must be the child with the given name of the given parent.
@@ -178,7 +178,7 @@ public interface LazyCreationService {
          * Initializes the resource. A {@link ResourceResolver#commit()} should not be done - that's done by the {@link
          * LazyCreationService}.
          *
-         * @param resolver the admin-resolver - can be used if child resources need to be created etc.
+         * @param resolver the service resolver - can be used if child resources need to be created etc.
          * @param resource the resource to initialize
          */
         void initialize(ResourceResolver resolver, Resource resource) throws RepositoryException, PersistenceException;
@@ -187,10 +187,10 @@ public interface LazyCreationService {
     /** Strategy to create the parents of the retrieved resource. */
     interface ParentCreationStrategy {
         /**
-         * Create the resource with the given administrative resolver. A {@link ResourceResolver#commit()} is
+         * Create the resource with the given service resolver. A {@link ResourceResolver#commit()} is
          * not necessary - that's performed in the LazyCreationService.
          *
-         * @param resolver      an administrative resolver
+         * @param resolver      a service resolver
          * @param parentsParent the parent of the parent resource at which to attach the new parent
          * @param parentName    the name of the parent resource to create.
          * @param level         informative, the level of the parent: 1 is the immediate parent of the resource, 2 the

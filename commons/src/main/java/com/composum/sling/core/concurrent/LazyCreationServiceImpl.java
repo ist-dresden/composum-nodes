@@ -90,19 +90,19 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         if (null != result) return result;
 
         String parentPath = ResourceUtil.getParent(path);
-        ResourceResolver adminResolver = null;
+        ResourceResolver serviceResolver = null;
         SequencerService.Token token = sequencer.acquire(path);
         try {
             refreshSession(resolver, true);
             // check nobody created it during acquiring lock:
             if (null != (result = getter.get(resolver, path))) return result;
 
-            adminResolver = createAdministrativeResolver();
-            Resource parentResource = adminResolver.getResource(parentPath);
+            serviceResolver = createServiceResolver();
+            Resource parentResource = serviceResolver.getResource(parentPath);
             if (null == parentResource) {
                 sequencer.release(token); // release lock temporarily to prevent deadlocks
                 token = null;
-                parentResource = safeCreateParent(adminResolver, parentPath, 1, parentCreationStrategy);
+                parentResource = safeCreateParent(serviceResolver, parentPath, 1, parentCreationStrategy);
                 Validate.notNull(parentResource, "Parent creator didn't create " + parentPath);
                 token = sequencer.acquire(path);
 
@@ -112,12 +112,12 @@ public class LazyCreationServiceImpl implements LazyCreationService {
             }
 
             try {
-                refreshSession(adminResolver, false);
-                creator.create(adminResolver, parentResource, ResourceUtil.getName(path));
-                adminResolver.commit();
+                refreshSession(serviceResolver, false);
+                creator.create(serviceResolver, parentResource, ResourceUtil.getName(path));
+                serviceResolver.commit();
 
-                Resource resourceAsAdmin = adminResolver.getResource(path);
-                Validate.notNull(resourceAsAdmin, "Bug: could not find %s even after calling creator", path);
+                Resource resourceAsService = serviceResolver.getResource(path);
+                Validate.notNull(resourceAsService, "Bug: could not find %s even after calling creator", path);
                 LOG.debug("Created {}", path);
             } catch (ItemExistsException | PersistenceException e) { // ignore
                 LOG.info("Creation of {} aborted - probably parallel creation {}", path, e.toString()
@@ -130,7 +130,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
             result = getter.get(resolver, path);
         } finally {
             if (null != token) sequencer.release(token);
-            if (null != adminResolver) adminResolver.close();
+            if (null != serviceResolver) serviceResolver.close();
         }
         if (null == result) LOG.warn("Still not present after trying to create it: {}", path);
         return result;
@@ -159,32 +159,32 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         LOG.debug("Going to create and init {}", path);
 
         String parentPath = ResourceUtil.getParent(path);
-        ResourceResolver adminResolver = null;
+        ResourceResolver serviceResolver = null;
         Lock lock = null;
         try {
             refreshSession(resolver, true);
             // check that nobody created it during acquiring lock
             if (resourceIsInitialized(resolver, path)) return getter.get(resolver, path);
 
-            adminResolver = createAdministrativeResolver();
-            Resource parentResource = adminResolver.getResource(parentPath);
+            serviceResolver = createServiceResolver();
+            Resource parentResource = serviceResolver.getResource(parentPath);
             if (null == parentResource) {
-                parentResource = safeCreateParent(adminResolver, parentPath, 1, parentCreationStrategy);
+                parentResource = safeCreateParent(serviceResolver, parentPath, 1, parentCreationStrategy);
                 Validate.notNull(parentResource, "Parent creator didn't create " + parentPath);
             }
 
-            refreshSession(adminResolver, false);
-            Resource resource = adminResolver.getResource(path);
+            refreshSession(serviceResolver, false);
+            Resource resource = serviceResolver.getResource(path);
 
             if (null == resource) {
-                resource = createUninitializedResource(adminResolver, parentResource, path, creator);
+                resource = createUninitializedResource(serviceResolver, parentResource, path, creator);
             }
 
-            LockManager lockManager = adminResolver.adaptTo(Session.class).getWorkspace().getLockManager();
-            lock = tryToLockResource(path, adminResolver);
+            LockManager lockManager = serviceResolver.adaptTo(Session.class).getWorkspace().getLockManager();
+            lock = tryToLockResource(path, serviceResolver);
 
             if (null != lock) {
-                initializeResource(adminResolver, path, initializer, lockManager);
+                initializeResource(serviceResolver, path, initializer, lockManager);
             }
 
             refreshSession(resolver, true);
@@ -193,25 +193,25 @@ public class LazyCreationServiceImpl implements LazyCreationService {
                 LOG.warn("Still not present after trying to create it: {}", path);
             return result;
         } finally {
-            if (null != adminResolver) adminResolver.close();
+            if (null != serviceResolver) serviceResolver.close();
         }
     }
 
-    protected Resource createUninitializedResource(ResourceResolver adminResolver, Resource parentResource, String path,
-                                                   CreationStrategy creator) {
+    protected Resource createUninitializedResource(ResourceResolver serviceResolver, Resource parentResource,
+                                                   String path, CreationStrategy creator) {
         SequencerService.Token token = sequencer.acquire(path);
         try {
-            refreshSession(adminResolver, false);
-            Resource resource = adminResolver.getResource(path);
+            refreshSession(serviceResolver, false);
+            Resource resource = serviceResolver.getResource(path);
             if (null == resource) {
                 try {
-                    resource = creator.create(adminResolver, parentResource, ResourceUtil.getName(path));
+                    resource = creator.create(serviceResolver, parentResource, ResourceUtil.getName(path));
                     Node node = resource.adaptTo(Node.class);
                     node.addMixin(TYPE_CREATED);
                     node.addMixin(TYPE_LAST_MODIFIED);
                     node.addMixin(TYPE_LOCKABLE);
                     node.setProperty(PROP_LAST_MODIFIED, (Value) null); // marker that is not initialized yet
-                    adminResolver.commit();
+                    serviceResolver.commit();
                     LOG.debug("Created uninitialized {}", path);
                 } catch (ItemExistsException | PersistenceException e) { // ignore
                     LOG.info("Creation of uninitialized {} aborted - probably parallel creation: {}", path, e
@@ -219,7 +219,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
                 } catch (RepositoryException e) { // others seem strange, though, but might be OK.
                     LOG.warn("Creation error for uninitialized {}: {}", path, e);
                 }
-                resource = adminResolver.getResource(path);
+                resource = serviceResolver.getResource(path);
                 Validate.notNull(resource, "Bug: could not find %s after trying to create it: %s", path);
             }
             return resource;
@@ -234,10 +234,10 @@ public class LazyCreationServiceImpl implements LazyCreationService {
      * @return the lock it is locked, null if it is already initialized by someone else
      * @throws javax.jcr.lock.LockException if we couldn't get a lock
      */
-    protected Lock tryToLockResource(String path, ResourceResolver adminResolver)
+    protected Lock tryToLockResource(String path, ResourceResolver serviceResolver)
             throws RepositoryException, PersistenceException {
-        LockManager lockManager = adminResolver.adaptTo(Session.class).getWorkspace().getLockManager();
-        Calendar resourceLockTime = ResourceHandle.use(adminResolver.getResource(path))
+        LockManager lockManager = serviceResolver.adaptTo(Session.class).getWorkspace().getLockManager();
+        Calendar resourceLockTime = ResourceHandle.use(serviceResolver.getResource(path))
                 .getProperty(PROP_LAST_MODIFIED, Calendar.getInstance());
         long lockTime = Math.max(resourceLockTime.getTimeInMillis(), System.currentTimeMillis());
         final long stopPollingTime = lockTime + getConfiguration().lazycreation_maximumlockwait() * 1000;
@@ -252,15 +252,15 @@ public class LazyCreationServiceImpl implements LazyCreationService {
             // We need sequencer because the JCR locking doesn't seem to distinguish between sessions on one instance, or something. Hard to test.
             SequencerService.Token token = sequencer.acquire(path);
             try {
-                refreshSession(adminResolver, false);
-                if (resourceIsInitialized(adminResolver, path)) return null;
+                refreshSession(serviceResolver, false);
+                if (resourceIsInitialized(serviceResolver, path)) return null;
                 boolean locked = lockManager.holdsLock(path);
                 LOG.debug("Path {} is locked={}", path, locked);
                 if (!locked) try {
                     Lock lock = lockManager.lock(path, true, false, Long.MAX_VALUE, null);
-                    ResourceHandle.use(adminResolver.getResource(path)).setProperty(PROP_LAST_MODIFIED, Calendar
+                    ResourceHandle.use(serviceResolver.getResource(path)).setProperty(PROP_LAST_MODIFIED, Calendar
                             .getInstance());
-                    adminResolver.commit();
+                    serviceResolver.commit();
                     LOG.debug("Got lock on {} token {}", path, lock.getLockToken());
                     return lock;
                 } catch (LockException | PersistenceException ex) {
@@ -278,35 +278,35 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         // we take over the lock from whoever locked it.
         SequencerService.Token token = sequencer.acquire(path);
         try {
-            refreshSession(adminResolver, false);
+            refreshSession(serviceResolver, false);
             Lock lock;
             try {
                 lock = lockManager.getLock(path);
             } catch (LockException le) { // node not locked anymode - race condition?
-                refreshSession(adminResolver, false);
-                if (resourceIsInitialized(adminResolver, path)) return null;
+                refreshSession(serviceResolver, false);
+                if (resourceIsInitialized(serviceResolver, path)) return null;
                 LOG.error("Bug: could not lock " + path + " but is now unlocked but not ready: ", lastFail);
                 throw new LockException("Could not lock " + path + " but is unlocked but not ready", lastFail);
             }
             try {
-                ResourceHandle.use(adminResolver.getResource(path)).setProperty(PROP_LAST_MODIFIED, (Calendar) null);
+                ResourceHandle.use(serviceResolver.getResource(path)).setProperty(PROP_LAST_MODIFIED, (Calendar) null);
                 Validate.isTrue(path.equals(lock.getNode().getPath()), "Unexpected lock path %s instead of %s", path,
                         lock.getNode().getPath());
-                adminResolver.commit();
-                refreshSession(adminResolver, false);
+                serviceResolver.commit();
+                refreshSession(serviceResolver, false);
                 lockManager.addLockToken(lock.getLockToken());
                 lockManager.unlock(path);
                 lock = lockManager.lock(path, true, false, Long.MAX_VALUE, null);
-                adminResolver.commit();
+                serviceResolver.commit();
 
-                ResourceHandle.use(adminResolver.getResource(path)).setProperty(PROP_LAST_MODIFIED, Calendar
+                ResourceHandle.use(serviceResolver.getResource(path)).setProperty(PROP_LAST_MODIFIED, Calendar
                         .getInstance());
-                adminResolver.commit();
+                serviceResolver.commit();
                 LOG.info("Took over obsolete lock on {}", path);
                 return lock;
             } catch (LockException le) { // node not locked anymode - race condition?
-                refreshSession(adminResolver, false);
-                if (resourceIsInitialized(adminResolver, path)) return null;
+                refreshSession(serviceResolver, false);
+                if (resourceIsInitialized(serviceResolver, path)) return null;
                 LOG.warn("Taking over lock on " + path + " failed; giving up since timeout");
                 throw le;
             }
@@ -315,30 +315,30 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         }
     }
 
-    protected void initializeResource(ResourceResolver adminResolver, String path, InitializationStrategy
+    protected void initializeResource(ResourceResolver serviceResolver, String path, InitializationStrategy
             initializer, LockManager lockManager) {
         SequencerService.Token token = sequencer.acquire(path);
         try {
             Resource resource;
             try {
-                refreshSession(adminResolver, false);
-                resource = adminResolver.getResource(path);
-                if (!resourceIsInitialized(adminResolver, path)) {
-                    initializer.initialize(adminResolver, resource);
+                refreshSession(serviceResolver, false);
+                resource = serviceResolver.getResource(path);
+                if (!resourceIsInitialized(serviceResolver, path)) {
+                    initializer.initialize(serviceResolver, resource);
                     ResourceHandle.use(resource).setProperty(PROP_LAST_MODIFIED, Calendar.getInstance());
-                    adminResolver.commit();
+                    serviceResolver.commit();
                 }
 
                 // we deliberately do only unlock when the initialization is successful, since otherwise the
                 // entity would be treated as "initialized." Another request will take over after timeout.
                 LOG.info("Initialized {}", path);
-                refreshSession(adminResolver, false);
+                refreshSession(serviceResolver, false);
                 if (lockManager.holdsLock(path)) {
                     lockManager.addLockToken(lockManager.getLock(path).getLockToken());
                     lockManager.unlock(path);
                     LOG.debug("Unlocking {}", path);
                 }
-                adminResolver.commit();
+                serviceResolver.commit();
             } catch (ItemExistsException | PersistenceException e) { // ignore
                 LOG.info("Initialization of {} aborted - probably parallel initialization: {}", path, e.toString()
                         + "/" + String.valueOf(e.getCause()));
@@ -407,38 +407,38 @@ public class LazyCreationServiceImpl implements LazyCreationService {
      * Tries to create the parent while catching exceptions that could be triggered by someone having created it in
      * parallel in the meantime. Includes commit and locks path on this node.
      */
-    protected Resource safeCreateParent(ResourceResolver adminResolver, String path, int level,
+    protected Resource safeCreateParent(ResourceResolver serviceResolver, String path, int level,
                                         ParentCreationStrategy parentCreationStrategy) throws RepositoryException {
         if ("/".equals(path))
-            return adminResolver.getResource("/");
+            return serviceResolver.getResource("/");
 
         String[] separated = com.composum.sling.core.util.ResourceUtil.splitPathAndName(path);
         String parentPath = separated[0];
         SequencerService.Token token = sequencer.acquire(path);
         try {
-            refreshSession(adminResolver, false);
-            Resource resource = adminResolver.getResource(path);
+            refreshSession(serviceResolver, false);
+            Resource resource = serviceResolver.getResource(path);
             if (resource == null) {
-                Resource parent = adminResolver.getResource(parentPath);
+                Resource parent = serviceResolver.getResource(parentPath);
                 if (parent == null) {
                     sequencer.release(token); // avoid any deadlock conditions by freeing lock temporarily
                     token = null;
-                    parent = safeCreateParent(adminResolver, parentPath, level + 1, parentCreationStrategy);
+                    parent = safeCreateParent(serviceResolver, parentPath, level + 1, parentCreationStrategy);
                     token = sequencer.acquire(path);
-                    refreshSession(adminResolver, false);
-                    resource = adminResolver.getResource(path); // could have been created when re-locking
+                    refreshSession(serviceResolver, false);
+                    resource = serviceResolver.getResource(path); // could have been created when re-locking
                 }
                 if (null == resource) {
                     try {
-                        resource = parentCreationStrategy.createParent(adminResolver, parent, separated[1], level);
+                        resource = parentCreationStrategy.createParent(serviceResolver, parent, separated[1], level);
                         Validate.notNull(resource, "Parent creator didn't create " + path);
-                        adminResolver.commit();
+                        serviceResolver.commit();
                         LOG.debug("Created parent {}", path);
                     } catch (PersistenceException e) { // ignore
                         LOG.info("Creation of parent {} aborted - probably parallel creation {}", path, e.toString()
                                 + "/" + String.valueOf(e.getCause()));
-                        refreshSession(adminResolver, false);
-                        resource = adminResolver.getResource(path);
+                        refreshSession(serviceResolver, false);
+                        resource = serviceResolver.getResource(path);
                         if (null == resource) {
                             LOG.error("Bug: creation aborted *and* resource is not there!", e);
                         }
@@ -464,14 +464,14 @@ public class LazyCreationServiceImpl implements LazyCreationService {
     }
 
     /**
-     * Make administrative resolver with the necessary permissions to create stuff. Remember to close it!
+     * Makes a service resolver with the necessary permissions to create stuff. Remember to close it!
      */
-    protected ResourceResolver createAdministrativeResolver() {
+    protected ResourceResolver createServiceResolver() {
         // used for maximum backwards compatibility; TODO recheck and decide from time to time
         try {
             return resolverFactory.getAdministrativeResourceResolver(null);
         } catch (LoginException e) {
-            throw new SlingException("Configuration problem: we cannot get an administrative resolver ", e);
+            throw new SlingException("Configuration problem: we cannot get a service resolver ", e);
         }
     }
 

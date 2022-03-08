@@ -11,14 +11,12 @@ import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.consumer.JobExecutionContext;
 import org.apache.sling.event.jobs.consumer.JobExecutionResult;
 import org.apache.sling.event.jobs.consumer.JobExecutor;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.jetbrains.annotations.NotNull;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
@@ -32,7 +30,6 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Dictionary;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -105,7 +102,7 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
      */
     protected abstract Callable<Result> createCallable(final Job job,
                                                        final JobExecutionContext context,
-                                                       final ResourceResolver adminResolver,
+                                                       final ResourceResolver jobResolver,
                                                        final PrintWriter out)
             throws Exception;
 
@@ -148,10 +145,10 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
         String outfile = job.getProperty(JOB_OUTFILE_PROPERTY, String.class);
         final String auditPath = buildAuditPath(job);
 
-        ResourceResolver adminResolver;
+        ResourceResolver jobResolver;
         File tempFile = new File(outfile);
         try {
-            adminResolver = getResolverFactory().getAdministrativeResourceResolver(null);
+            jobResolver = getResolverFactory().getAdministrativeResourceResolver(null);
         } catch (LoginException e) {
             return context.result().message(e.getMessage()).cancelled();
         }
@@ -160,12 +157,12 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
         lock.lock();
         try {
             try {
-                adminResolver.adaptTo(Session.class).refresh(true);
-                auditResource = giveParent(adminResolver, auditPath);
-                adminResolver.commit();
+                jobResolver.adaptTo(Session.class).refresh(true);
+                auditResource = giveParent(jobResolver, auditPath);
+                jobResolver.commit();
             } catch (PersistenceException|RepositoryException e) {
                 LOG.error("Error creating audit of Job.", e);
-                adminResolver.close();
+                jobResolver.close();
                 return context.result().message(e.getMessage()).cancelled();
             }
         } finally {
@@ -178,7 +175,7 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
                 final ExecutorService executorService = Executors.newSingleThreadExecutor();
                 try {
                     final Future<Result> submit = executorService.submit(
-                            createCallable(job, context, adminResolver, out));
+                            createCallable(job, context, jobResolver, out));
                     while (!submit.isDone()) {
                         Thread.yield();
                         out.flush();
@@ -208,11 +205,11 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
             return context.result().message(e.toString()).cancelled();
         } finally {
             try {
-                Resource logFileResource = adminResolver.create(auditResource, outfile.substring(outfile.lastIndexOf(File.separator) + 1), new HashMap<String, Object>() {{
+                Resource logFileResource = jobResolver.create(auditResource, outfile.substring(outfile.lastIndexOf(File.separator) + 1), new HashMap<String, Object>() {{
                     put(PROP_PRIMARY_TYPE, TYPE_FILE);
                 }});
                 try (final InputStream inputStream = new FileInputStream(tempFile)) {
-                    adminResolver.create(logFileResource, CONTENT_NODE, new HashMap<String, Object>() {{
+                    jobResolver.create(logFileResource, CONTENT_NODE, new HashMap<String, Object>() {{
                         put(PROP_PRIMARY_TYPE, TYPE_RESOURCE);
                         put(PROP_MIME_TYPE, "text/plain");
                         put(PROP_DATA, inputStream);
@@ -228,12 +225,12 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
                     }
                 }
                 map.put(PROP_RESOURCE_TYPE, "composum/nodes/jobcontrol/audit");
-                adminResolver.commit();
+                jobResolver.commit();
                 jobExecutionFinished(job, context, auditResource);
             } catch (Exception e) {
                 LOG.error("Error writing audit of job:" + reference, e);
             }
-            adminResolver.close();
+            jobResolver.close();
         }
     }
 
@@ -291,10 +288,10 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
                 final String script = (String) event.getProperty(JOB_REFRENCE_PROPERTY);
                 final Calendar eventJobStartedTime = (Calendar) event.getProperty(PROPERTY_JOB_STARTED_TIME);
                 final String auditPath = buildAuditPathIntern(script, eventJobStartedTime);
-                ResourceResolver adminResolver = null;
+                ResourceResolver jobResolver = null;
                 try {
-                    adminResolver = getResolverFactory().getAdministrativeResourceResolver(null);
-                    final Resource auditResource = adminResolver.getResource(auditPath);
+                    jobResolver = getResolverFactory().getAdministrativeResourceResolver(null);
+                    final Resource auditResource = jobResolver.getResource(auditPath);
                     final ModifiableValueMap map = auditResource.adaptTo(ModifiableValueMap.class);
                     if (event.containsProperty(PROPERTY_RESULT_MESSAGE)) {
                         map.put(PROPERTY_RESULT_MESSAGE, event.getProperty(PROPERTY_RESULT_MESSAGE));
@@ -331,12 +328,12 @@ public abstract class AbstractJobExecutor<Result> implements JobExecutor, EventH
                                 break;
                         }
                     }
-                    adminResolver.commit();
+                    jobResolver.commit();
                 } catch (LoginException | PersistenceException e) {
                     LOG.error("Error extending audit log of job execution", e);
                 } finally {
-                    if (adminResolver != null) {
-                        adminResolver.close();
+                    if (jobResolver != null) {
+                        jobResolver.close();
                     }
                 }
             }
