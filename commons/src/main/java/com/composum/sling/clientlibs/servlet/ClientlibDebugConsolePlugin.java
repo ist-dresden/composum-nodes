@@ -49,6 +49,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
+import static com.composum.sling.clientlibs.service.ClientlibService.CLIENTLIB_SERVICE;
 
 /**
  * Prints a rough overview over the structure of the client library, incl. dependent or embedded client libraries.
@@ -125,9 +126,9 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             initResolvers(processor, impersonation);
 
             if (StringUtils.isNotBlank(XSS.filter(request.getParameter(REQUEST_PARAM_CLEAR_CACHE)))) {
-                clientlibService.clearCache(processor.adminResolver);
+                clientlibService.clearCache(processor.serviceResolver);
                 String location = request.getRequestURI() + "?" + request.getQueryString().replaceAll(REQUEST_PARAM_CLEAR_CACHE, REQUEST_PARAM_CLEAR_CACHE + "Done");
-                processor.adminResolver.commit();
+                processor.serviceResolver.commit();
                 response.sendRedirect(location);
                 return;
             }
@@ -167,7 +168,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
 
             writer.println("<hr/></body></html>");
         } finally {
-            if (null != processor.adminResolver) processor.adminResolver.close();
+            if (null != processor.serviceResolver) processor.serviceResolver.close();
             if (null != processor.impersonationResolver) processor.impersonationResolver.close();
         }
     }
@@ -175,10 +176,11 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
     protected void initResolvers(Processor processor, String impersonation) throws ServletException {
         try {
             //noinspection deprecation
-            processor.adminResolver = resolverFactory.getAdministrativeResourceResolver(null);
+            processor.serviceResolver = resolverFactory.getServiceResourceResolver(
+                    Collections.singletonMap(ResourceResolverFactory.SUBSERVICE, CLIENTLIB_SERVICE));
         } catch (LoginException e) {
-            processor.writer.println("Cannot get administrative resolver");
-            throw new ServletException("Cannot get administrative resolver");
+            processor.writer.println("Cannot get service resolver");
+            throw new ServletException("Cannot get service resolver");
         }
         if (StringUtils.isBlank(impersonation)) {
             try {
@@ -194,7 +196,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
                         new HashMap(Collections.singletonMap(ResourceResolverFactory.USER_IMPERSONATION, impersonation))
                         : null;
                 //noinspection deprecation,unchecked
-                processor.impersonationResolver = resolverFactory.getAdministrativeResourceResolver(authenticationInfo);
+                processor.impersonationResolver = resolverFactory.getResourceResolver(authenticationInfo);
             } catch (LoginException e) {
                 processor.writer.println("Could not login as " + impersonation);
                 throw new ServletException("Could not login as " + impersonation);
@@ -223,7 +225,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
         Type type;
         HttpServletRequest request;
         PrintWriter writer;
-        ResourceResolver adminResolver;
+        ResourceResolver serviceResolver;
         ResourceResolver impersonationResolver;
         String impersonation;
         String impersonationParam;
@@ -294,12 +296,12 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
          */
         protected void printAllLibs() throws ServletException, IOException {
             try {
-                QueryManager querymanager = Objects.requireNonNull(adminResolver.adaptTo(Session.class)).getWorkspace()
+                QueryManager querymanager = Objects.requireNonNull(serviceResolver.adaptTo(Session.class)).getWorkspace()
                         .getQueryManager();
                 String statement = "//element(*)[sling:resourceType='composum/nodes/commons/clientlib']/" + type.name() +
                         "/..  order by path";
                 @SuppressWarnings({"unchecked", "deprecation"})
-                List<Resource> clientlibs = IteratorUtils.toList(adminResolver.findResources(statement, Query.XPATH));
+                List<Resource> clientlibs = IteratorUtils.toList(serviceResolver.findResources(statement, Query.XPATH));
                 for (Resource clientlibResource : clientlibs) {
                     if (impersonationResolver.getResource(clientlibResource.getPath()) != null)
                         displayClientlibStructure(new Clientlib(type, clientlibResource).getRef());
@@ -310,10 +312,10 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
         }
 
         /**
-         * Displays the structure of one clientlib as seen from the adminResolver - it's rendered like that, anyway.
+         * Displays the structure of one clientlib as seen from the serviceResolver - it's rendered like that, anyway.
          */
         protected void displayClientlibStructure(ClientlibRef ref) throws IOException, ServletException {
-            ClientlibElement clientlib = clientlibService.resolve(ref, adminResolver);
+            ClientlibElement clientlib = clientlibService.resolve(ref, serviceResolver);
             String normalizedPath = normalizePath(ref, clientlib);
             StringBuilder categories = new StringBuilder();
             String requestUrl = request.getRequestURL().toString();
@@ -341,7 +343,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             writer.println("<code>&lt;cpn:clientlib type=\"" + ref.type.name() + "\" path=\"" + normalizedPath +
                     "\"/&gt;</code><br/><hr/><pre>");
             try {
-                new DebugVisitor(clientlib, clientlibService, adminResolver, writer).execute();
+                new DebugVisitor(clientlib, clientlibService, serviceResolver, writer).execute();
             } catch (RepositoryException e) {
                 throw new ServletException(e);
             }
@@ -356,12 +358,12 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
                 return "category:" + ref.category;
             if (!ref.path.startsWith("/"))
                 return ref.path;
-            for (String pathelement : adminResolver.getSearchPath()) {
+            for (String pathelement : serviceResolver.getSearchPath()) {
                 if (ref.path.startsWith(pathelement)) {
                     String normalizedPath = ref.path.substring(pathelement.length());
                     // check whether clientlib is shadowed by other lib in other segments of the search path
                     ClientlibElement lib2 = clientlibService.resolve(new ClientlibRef(ref.type, normalizedPath, ref
-                            .optional, ref.properties), adminResolver);
+                            .optional, ref.properties), serviceResolver);
                     if (lib2 instanceof Clientlib) {
                         Clientlib reresolvedLib = (Clientlib) lib2;
                         if (reresolvedLib.getRef().path.equals(clientlib.getRef().path))

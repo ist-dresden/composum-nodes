@@ -327,7 +327,7 @@ public class DefaultClientlibService implements ClientlibService {
 
     /**
      * Retrieves the Clientlib-resources for a category. Uses the {@link #categoryToPathCache} for caching the paths
-     * to avoid executing a query each time. We retrieve the paths with an {@link #createAdministrativeResolver()}
+     * to avoid executing a query each time. We retrieve the paths with an {@link #createServiceResolver()}
      * to find everything independent of the users rights, and re-retrieve the resources with the users resolver
      * afterwards, filtering out inaccessible things.
      */
@@ -346,10 +346,9 @@ public class DefaultClientlibService implements ClientlibService {
 
         if (null == paths) {
             paths = new ArrayList<>();
-            try (ResourceResolver administrativeResolver = createAdministrativeResolver()) {
-                List<Resource> resourcesForAdmin = retrieveResourcesForCategoryUncached(category,
-                        administrativeResolver);
-                for (Resource resource : resourcesForAdmin) paths.add(resource.getPath());
+            try (ResourceResolver serviceResolver = createServiceResolver()) {
+                List<Resource> resourcesForService = retrieveResourcesForCategoryUncached(category, serviceResolver);
+                for (Resource resource : resourcesForService) paths.add(resource.getPath());
             }
 
             synchronized (categoryToPathCache) {
@@ -428,12 +427,13 @@ public class DefaultClientlibService implements ClientlibService {
     };
 
     @SuppressWarnings("deprecation")
-    protected ResourceResolver createAdministrativeResolver() {
+    protected ResourceResolver createServiceResolver() {
         // used for maximum backwards compatibility; TODO recheck and decide from time to time
         try {
-            return resolverFactory.getAdministrativeResourceResolver(null);
+            return resolverFactory.getServiceResourceResolver(
+                    Collections.singletonMap(ResourceResolverFactory.SUBSERVICE, CLIENTLIB_SERVICE));
         } catch (LoginException e) {
-            throw new SlingException("Configuration problem: we cannot get an administrative resolver ", e);
+            throw new SlingException("Configuration problem: we cannot get an service resolver ", e);
         }
     }
 
@@ -486,10 +486,10 @@ public class DefaultClientlibService implements ClientlibService {
         boolean refreshForced = forceRefreshCache || null == fileHints || (null == cacheFile.getLastModified());
 
         if (refreshForced || !cacheAssumedRecent) {
-            try (ResourceResolver adminResolver = createAdministrativeResolver()) {
-                // recheck since the admin resolver could change things, and when acquiring the lock the
+            try (ResourceResolver serviceResolver = createServiceResolver()) {
+                // recheck since the service resolver could change things, and when acquiring the lock the
                 // cache file might have been recreated.
-                cacheFile = new FileHandle(adminResolver.getResource(cachePath));
+                cacheFile = new FileHandle(serviceResolver.getResource(cachePath));
                 if (cacheFile.isValid() && null == request.getResourceResolver().getResource(cachePath)) {
                     refreshSession(request.getResourceResolver(), true);
                     if (null == request.getResourceResolver().getResource(cachePath)) { // shouldn't happen
@@ -497,9 +497,9 @@ public class DefaultClientlibService implements ClientlibService {
                         return null;
                     }
                 }
-                element = resolve(clientlibRef, adminResolver);
+                element = resolve(clientlibRef, serviceResolver);
 
-                UpdateTimeVisitor updateTimeVisitor = new UpdateTimeVisitor(element, this, adminResolver);
+                UpdateTimeVisitor updateTimeVisitor = new UpdateTimeVisitor(element, this, serviceResolver);
                 updateTimeVisitor.execute();
                 final String hash = updateTimeVisitor.getHash();
                 String cacheFileHash = cacheFile.getContent().getProperty(PROP_HASH);
@@ -509,7 +509,7 @@ public class DefaultClientlibService implements ClientlibService {
                     UpdateTimeVisitor updateTimeVisitorAsUser = new UpdateTimeVisitor(element, this, request.getResourceResolver());
                     updateTimeVisitorAsUser.execute();
                     if (!StringUtils.equals(hash, updateTimeVisitorAsUser.getHash())) {
-                        LOG.error("Clientlib hash for {} as {} and admin disagree - " +
+                        LOG.error("Clientlib hash for {} as {} and service disagree - " +
                                         "likely a permission problem that results in performance problems",
                                 request.getUserPrincipal(), clientlibRef);
                     }
@@ -524,14 +524,14 @@ public class DefaultClientlibService implements ClientlibService {
                 if (refreshNeeded) {
                     LOG.info("prepare ''{}''...", clientlibRef);
 
-                    Resource cacheEntry = adminResolver.getResource(cachePath);
+                    Resource cacheEntry = serviceResolver.getResource(cachePath);
                     if (cacheEntry != null) {
                         LOG.info("deleting to be refreshed ''{}''...", cacheEntry);
-                        adminResolver.delete(cacheEntry);
-                        adminResolver.commit();
+                        serviceResolver.delete(cacheEntry);
+                        serviceResolver.commit();
                     }
 
-                    final ProcessorContext context = new ProcessorContext(request, adminResolver, executorService,
+                    final ProcessorContext context = new ProcessorContext(request, serviceResolver, executorService,
                             getClientlibConfig().clientlibs_url_map(), minified &&
                             getClientlibConfig().clientlibs_minified_use() && !getClientlibConfig().debug());
 
@@ -552,9 +552,9 @@ public class DefaultClientlibService implements ClientlibService {
     }
 
     protected LazyCreationService.CreationStrategy creationStrategy() {
-        return (adminResolver, parent, name) -> {
-            Resource cacheEntry = adminResolver.create(parent, name, FileHandle.CRUD_FILE_PROPS);
-            Objects.requireNonNull(adminResolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS)
+        return (serviceResolver, parent, name) -> {
+            Resource cacheEntry = serviceResolver.create(parent, name, FileHandle.CRUD_FILE_PROPS);
+            Objects.requireNonNull(serviceResolver.create(cacheEntry, ResourceUtil.CONTENT_NODE, FileHandle.CRUD_CONTENT_PROPS)
                     .adaptTo(Node.class)).addMixin(ResourceUtil.TYPE_TITLE);
             FileHandle cacheFile = new FileHandle(cacheEntry);
             cacheFile.storeContent(new ByteArrayInputStream("".getBytes())); // mandatory node jcr:data
@@ -564,7 +564,7 @@ public class DefaultClientlibService implements ClientlibService {
 
     protected LazyCreationService.InitializationStrategy initializationStrategy(
             final ClientlibRef clientlibRef, final String encoding, final String hash, final ProcessorContext context) {
-        return (adminResolver, cacheEntry) -> {
+        return (serviceResolver, cacheEntry) -> {
             try {
                 FileHandle cacheFile = new FileHandle(cacheEntry);
                 if (cacheFile.isValid()) {
@@ -586,7 +586,7 @@ public class DefaultClientlibService implements ClientlibService {
                     contentValues.putAll(context.getHints());
                     contentValues.put(PROP_HASH, hash);
 
-                    adminResolver.commit();
+                    serviceResolver.commit();
                     result.get(); // transport any exceptions here
 
                     LOG.info("clientlib cache content ''{}'' created", cacheFile.getResource().getPath());
@@ -595,8 +595,8 @@ public class DefaultClientlibService implements ClientlibService {
                 }
             } catch (Exception e) {
                 LOG.error("Error when initializing content in " + cacheEntry + "; deleting the file", e);
-                refreshSession(adminResolver, false);
-                adminResolver.delete(cacheEntry);
+                refreshSession(serviceResolver, false);
+                serviceResolver.delete(cacheEntry);
                 throw new PersistenceException("" + e, e);
             }
         };
@@ -610,10 +610,10 @@ public class DefaultClientlibService implements ClientlibService {
         final ClientlibProcessor processor = processorMap.get(clientlibRef.type);
 
         return context.submit(() -> {
-            try (ResourceResolver processingAdminResolver = createAdministrativeResolver()) {
+            try (ResourceResolver processingServiceResolver = createServiceResolver()) {
                 // retrieve clientlibs again since we need another resolver (not threadsafe)
-                ClientlibElement adminElement = resolve(clientlibRef, processingAdminResolver);
-                ProcessingVisitor visitor = new ProcessingVisitor(adminElement, DefaultClientlibService.this,
+                ClientlibElement serviceElement = resolve(clientlibRef, processingServiceResolver);
+                ProcessingVisitor visitor = new ProcessingVisitor(serviceElement, DefaultClientlibService.this,
                         outputStream, processor, context);
                 visitor.execute();
             } finally {
@@ -715,14 +715,14 @@ public class DefaultClientlibService implements ClientlibService {
 
         StringBuilder buf = new StringBuilder();
         ResourceResolver impersonationResolver = userResolver;
-        ResourceResolver administrativeResolver = null;
+        ResourceResolver serviceResolver = null;
         try {
             if (impersonationResolver == null)
                 impersonationResolver = resolverFactory.getResourceResolver(null);
-            administrativeResolver = createAdministrativeResolver();
+            serviceResolver = createServiceResolver();
             List<String> unreachablePaths = new ArrayList<>();
             @SuppressWarnings("deprecation")
-            Iterator<Resource> it = administrativeResolver.findResources(QUERY_CLIENTLIBS + onlyClientlibQuerySuffix + " order by path", Query.XPATH);
+            Iterator<Resource> it = serviceResolver.findResources(QUERY_CLIENTLIBS + onlyClientlibQuerySuffix + " order by path", Query.XPATH);
 
             // Check clientlibraries themselves and their categories
             Set<String> categoriesWithReachableClientlibs = new HashSet<>();
@@ -745,7 +745,7 @@ public class DefaultClientlibService implements ClientlibService {
 
             // look for unreadable elements of readable client libraries -> error
             //noinspection deprecation
-            it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + " order by path", Query.XPATH);
+            it = serviceResolver.findResources(QUERY_CLIENTLIBS + querySuffix + " order by path", Query.XPATH);
             while (it.hasNext()) {
                 Resource clientlibElement = it.next();
                 if (impersonationResolver.getResource(clientlibElement.getPath()) == null) {
@@ -763,7 +763,7 @@ public class DefaultClientlibService implements ClientlibService {
 
             // look for unreadable references of readable elements
             //noinspection deprecation
-            it = administrativeResolver.findResources(QUERY_CLIENTLIBS + querySuffix + QUERY_SUFFIX_REFERENCERS + " order by path", Query.XPATH);
+            it = serviceResolver.findResources(QUERY_CLIENTLIBS + querySuffix + QUERY_SUFFIX_REFERENCERS + " order by path", Query.XPATH);
             while (it.hasNext()) {
                 Resource clientlibElement = it.next();
                 if (isReachableFrom(unreachablePaths, clientlibElement.getPath()))
@@ -781,20 +781,20 @@ public class DefaultClientlibService implements ClientlibService {
                 if (type != null) {
                     ClientlibResourceFolder resourceFolder = new ClientlibResourceFolder(type, clientlibElement);
                     for (ClientlibRef ref : resourceFolder.getDependencies()) {
-                        verifyRef(resourceFolder, ref, administrativeResolver, impersonationResolver, allCategories, buf);
+                        verifyRef(resourceFolder, ref, serviceResolver, impersonationResolver, allCategories, buf);
                     }
                     for (ClientlibRef ref : resourceFolder.getEmbedded()) {
-                        verifyRef(resourceFolder, ref, administrativeResolver, impersonationResolver, allCategories, buf);
+                        verifyRef(resourceFolder, ref, serviceResolver, impersonationResolver, allCategories, buf);
                     }
                 }
             }
         } catch (LoginException e) {
-            buf.append("Cannot create anonymous or administrative resolver - ").append(e);
-            LOG.error("Cannot create anonymous or administrative resolver - " + e, e);
+            buf.append("Cannot create anonymous or service resolver - ").append(e);
+            LOG.error("Cannot create anonymous or service resolver - " + e, e);
         } catch (Exception e) {
             LOG.error("Error checking clientlibs", e);
         } finally {
-            if (null != administrativeResolver) administrativeResolver.close();
+            if (null != serviceResolver) serviceResolver.close();
             if (userResolver == null && null != impersonationResolver)
                 impersonationResolver.close(); // else it's just resolver coming from outside
         }
@@ -849,7 +849,8 @@ public class DefaultClientlibService implements ClientlibService {
         );
     }
 
-    private void verifyRef(ClientlibResourceFolder resourceFolder, ClientlibRef ref, ResourceResolver administrativeResolver, ResourceResolver userResolver, Set<String> allCategories, StringBuilder buf) {
+    private void verifyRef(ClientlibResourceFolder resourceFolder, ClientlibRef ref, ResourceResolver serviceResolver,
+                           ResourceResolver userResolver, Set<String> allCategories, StringBuilder buf) {
         if (ref.isExternalUri()) return;
         if (ref.isCategory()) {
             if (!allCategories.contains(ref.category)) {
@@ -860,21 +861,21 @@ public class DefaultClientlibService implements ClientlibService {
             }
             return;
         }
-        Resource resourceAsAdmin = retrieveResource(ref.path, administrativeResolver);
-        if (resourceAsAdmin != null) {
+        Resource resourceAsService = retrieveResource(ref.path, serviceResolver);
+        if (resourceAsService != null) {
             Resource resourceAsUser = retrieveResource(ref.path, userResolver);
             if (resourceAsUser == null) {
-                buf.append("ERROR: unreadable reference ").append(resourceAsAdmin.getPath())
+                buf.append("ERROR: unreadable reference ").append(resourceAsService.getPath())
                         .append(" of readable client library resource folder ").append(resourceFolder.resource.getPath())
                         .append("\n");
-            } else if (!resourceAsAdmin.getPath().equals(resourceAsUser.getPath())) {
-                buf.append("ERROR: Permission problem: resource different for admin and anonymous for ")
+            } else if (!resourceAsService.getPath().equals(resourceAsUser.getPath())) {
+                buf.append("ERROR: Permission problem: resource different for service and anonymous for ")
                         .append(ref.toString())
-                        .append(" : ").append(resourceAsAdmin.getPath())
+                        .append(" : ").append(resourceAsService.getPath())
                         .append(" vs. ").append(resourceAsUser.getPath())
                         .append("\n");
-            } else if (new FileHandle(resourceAsAdmin).isValid() && !new FileHandle(resourceAsUser).isValid()) {
-                buf.append("ERROR: Content resource not readable: ").append(resourceAsAdmin.getPath()).append("\n");
+            } else if (new FileHandle(resourceAsService).isValid() && !new FileHandle(resourceAsUser).isValid()) {
+                buf.append("ERROR: Content resource not readable: ").append(resourceAsService.getPath()).append("\n");
             }
         } else if (!resourceFolder.getOptional()) {
             buf.append("ERROR: can't find element ").append(ref.path)
