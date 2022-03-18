@@ -3,8 +3,10 @@ package com.composum.sling.nodes.console;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.Restricted;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +22,37 @@ public class ConsoleModel extends ConsolePage {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConsoleModel.class);
 
+    public class LinkModel {
+
+        private final Consoles.Console.Link link;
+
+        public LinkModel(@Nullable final Consoles.Console.Link link) {
+            this.link = link;
+        }
+
+        public boolean isValid() {
+            return link != null && StringUtils.isNotBlank(getUrl());
+        }
+
+        public String getIcon() {
+            return link != null ? link.getIcon() : "";
+        }
+
+        public String getTitle() {
+            return link != null ? link.getTitle() : "";
+        }
+
+        public String getUrl() {
+            return link != null ? link.getUrl(context.getRequest()) : "";
+        }
+
+        public String getTarget() {
+            return link != null ? link.getTarget() : "";
+        }
+    }
+
     protected Consoles.Console console;
+    private transient LinkModel link;
 
     public ConsoleModel(BeanContext context, Consoles.Console console) {
         this.console = console;
@@ -85,6 +117,19 @@ public class ConsoleModel extends ConsolePage {
     @NotNull
     public String getUrl() {
         return console != null ? console.getUrl(context.getRequest()) : "#";
+    }
+
+    @NotNull
+    public String getStaticUrl() {
+        return console != null ? console.getStaticUrl(context.getRequest()) : "#";
+    }
+
+    @NotNull
+    public LinkModel getLink() {
+        if (link == null) {
+            link = new LinkModel(console != null ? console.getLink() : null);
+        }
+        return link;
     }
 
     @NotNull

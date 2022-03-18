@@ -129,7 +129,6 @@
         </div>
     </div>
     <sling:call script="script.jsp"/>
-    <sling:include resourceType="composum/nodes/console/components/tryLogin"/>
     </body>
     </html>
     <%}%>

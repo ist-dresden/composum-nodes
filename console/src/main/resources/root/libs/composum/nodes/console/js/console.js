@@ -59,10 +59,8 @@
                 this.$content = this.$('.modal-content');
                 this.$form = this.$('form');
                 this.$login = this.$('button.login');
-                this.$logout = this.$('button.logout');
                 this.$form.on('submit', _.bind(this.login, this));
                 this.$login.click(_.bind(this.login, this));
-                this.$logout.click(_.bind(this.logout, this));
                 this.$el.on('shown.bs.modal', _.bind(this.onShown, this));
                 this.callsToRetry = [];
                 this.showing = false;
@@ -105,18 +103,6 @@
              */
             onShown: function () {
                 this.$('input[name="j_username"]').focus();
-            },
-
-            logout: function (event) {
-                event.preventDefault();
-                var url = this.$logout.data('url');
-                if (!url) {
-                    url = '/system/sling/logout.html?logout=true&GLO=true';
-                }
-                core.getHtml(url, undefined, undefined, _.bind(function (data) {
-                    this.hide();
-                    core.initPermissions();
-                }, this));
             },
 
             login: function (event) {

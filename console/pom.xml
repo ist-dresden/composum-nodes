@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>4.0.2-SNAPSHOT</version>
+        <version>4.1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>composum-nodes-console</artifactId>
@@ -278,8 +278,8 @@
 
         <!-- Apache Commons -->
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-collections4</artifactId>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

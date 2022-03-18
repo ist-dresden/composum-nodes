@@ -205,6 +205,12 @@
     "precondition": [
       "restrictions:system/webconsole=read",
       "http:/system/console"
-    ]
+    ],
+    "link": {
+      "jcr:primaryType": "nt:unstructured",
+      "jcr:title": "Open Console",
+      "icon": "external-link",
+      "url": "/system/console"
+    }
   }
 }
