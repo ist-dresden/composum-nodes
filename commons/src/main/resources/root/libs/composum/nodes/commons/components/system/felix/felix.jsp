@@ -6,7 +6,7 @@
     <div class="composum-nodes-system-felix_tags widget text-field-widget form-group">
         <label>${cpn:i18n(slingRequest,'Tags')}</label>
         <div class="input-group">
-            <input type="text" class="form-control" placeholder="e.g. status,general">
+            <input type="text" class="form-control" placeholder="e.g. cpu,systemalive,system-resources">
             <span class="input-group-btn"><button
                     type="button" class="composum-nodes-system-felix_refresh btn btn-default fa fa-refresh"
                     title="${cpn:i18n(slingRequest,'Refresh status')}"></button></span>

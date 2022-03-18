@@ -115,5 +115,10 @@
             sling:resourceType="composum/nodes/system/tools/webconsole"
             categories="[system]"
             order="{Long}900"
-            precondition="[restrictions:system/webconsole=read,http:/system/console]"/>
+            precondition="[restrictions:system/webconsole=read,http:/system/console]">
+        <link jcr:primaryType="nt:unstructured"
+                jcr:title="Open Console"
+                icon="external-link"
+                url="/system/console"/>>
+    </webconsole>
 </jcr:root>
