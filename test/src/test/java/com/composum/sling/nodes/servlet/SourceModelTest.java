@@ -12,8 +12,11 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
-import org.hamcrest.Matchers;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
@@ -24,7 +27,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -196,7 +203,7 @@ public class SourceModelTest {
                 "subfolder/_jcr_content/assets/withadditionaldata.jpg : 76910 | 2714537933\n" +
                 "subfolder/_jcr_content/assets/withadditionaldata.jpg.dir/.content.xml : 1098 | 3497581146\n" +
                 "subfolder/__folder_wi%5cth weird %22char's/.content.xml : 200 | 2815730915\n" +
-                "subfolder/401.jsp : 650 | 442210237\n"));
+                "subfolder/401.jsp : 416 | 3998517894\n"));
     }
 
     @Nonnull

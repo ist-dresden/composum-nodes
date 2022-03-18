@@ -1,3 +1,11 @@
+@media (min-width: 768px) {
+
+    .composum-nodes-system-dialog .modal-dialog.modal-lg {
+        width: auto;
+        min-width: 600px;
+        max-width: 90%;
+    }
+}
 
 .composum-nodes-system-dialog .composum-nodes-system-dialog_form {
     margin: 0;
@@ -50,6 +58,8 @@
 
 .composum-nodes-system-felix_content > div {
     width: 100%;
+    max-height: 65%;
+    margin-top: 15px;
     overflow: auto;
 }
 
@@ -68,7 +78,7 @@
 
 .composum-nodes-system-felix_content table {
     width: 100%;
-    margin: 15px 0 0;
+    margin: 0;
 }
 
 .composum-nodes-system-felix_content table th,

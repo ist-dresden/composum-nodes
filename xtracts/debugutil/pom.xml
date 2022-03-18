@@ -7,6 +7,7 @@
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
         <version>3.3.2-SNAPSHOT</version>
+        <relativePath>../..</relativePath>
     </parent>
 
     <artifactId>composum-nodes-debugutil-bundle</artifactId>
