@@ -32,7 +32,7 @@
           </div>
 
           <div class="modal-footer buttons">
-            <button type="button" class="btn btn-warning logout" data-url="${status.logoutUrl}">Logout</button>
+            <a class="btn btn-warning logout" href="${status.logoutUrl}">Logout</a>
             <button type="button" class="btn btn-default cancel" data-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-primary login">Login</button>
           </div>

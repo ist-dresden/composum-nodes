@@ -51,8 +51,10 @@ public class Consoles implements HttpUtil.CachableInstance {
     public static final String PN_PATH_CONDITION = "pathCondition";
     public static final String PN_PERM_SUPPORT = "permissionsSupport";
     public static final String PN_DESCRIPTION = "description";
-    public static final String PN_TARGET = "target";
     public static final String PN_MENU = "menu";
+    public static final String PN_ICON = "icon";
+    public static final String PN_URL = "url";
+    public static final String PN_TARGET = "target";
     public static final String PN_PRECONDITION = "precondition";
     public static final String PN_CONTENT_SRC = "contentSrc";
 
@@ -124,6 +126,37 @@ public class Consoles implements HttpUtil.CachableInstance {
 
     public class Console implements Comparable<Console>, Serializable {
 
+        public class Link {
+
+            private final String icon;
+            private final String title;
+            private final String url;
+            private final String target;
+
+            public Link(@NotNull final ResourceHandle handle) {
+                title = handle.getTitle();
+                icon = handle.getProperty(PN_ICON, "external-link");
+                url = handle.getProperty(PN_URL, "");
+                target = handle.getProperty(PN_TARGET, "_self");
+            }
+
+            public String getIcon() {
+                return icon;
+            }
+
+            public String getTitle() {
+                return title;
+            }
+
+            public String getUrl(@NotNull final SlingHttpServletRequest request) {
+                return url;
+            }
+
+            public String getTarget() {
+                return target;
+            }
+        }
+
         private final String id;
         private final String name;
         private final String path;
@@ -136,6 +169,7 @@ public class Consoles implements HttpUtil.CachableInstance {
         private final String target;
         private final String contentSrc;
         private final int order;
+        private final Link link;
 
         private Console parent = null;
         private final String parentId;
@@ -167,6 +201,8 @@ public class Consoles implements HttpUtil.CachableInstance {
             if (isMenu) {
                 buildMenu(filter, handle);
             }
+            final Resource child = handle.getChild("link");
+            link = child != null ? new Link(ResourceHandle.use(child)) : null;
         }
 
         public boolean isDynamicRedirect() {
@@ -236,6 +272,11 @@ public class Consoles implements HttpUtil.CachableInstance {
             return StringUtils.isNotBlank(url) ? url : "#";
         }
 
+        public String getStaticUrl(@NotNull final SlingHttpServletRequest request) {
+            final String url = StringUtils.isNotBlank(slingRedirect) ? slingRedirect : getPath();
+            return url.replaceAll("\\$\\{.+}", "");
+        }
+
         @NotNull
         public String getLinkAttributes(@NotNull final SlingHttpServletRequest request) {
             final StringBuilder builder = new StringBuilder();
@@ -250,6 +291,11 @@ public class Consoles implements HttpUtil.CachableInstance {
                 }
             }
             return builder.toString();
+        }
+
+        @Nullable
+        public Link getLink() {
+            return link;
         }
 
         @Override

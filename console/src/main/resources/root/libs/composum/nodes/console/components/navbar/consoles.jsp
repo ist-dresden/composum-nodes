@@ -8,16 +8,18 @@
         <c:forEach items="${status.consoles}" var="console">
             <c:choose>
                 <c:when test="${console.menu}">
-                    <li class="nav-item ${console.name} dropdown"><a
-                            href="${console.url}"${console.linkAttributes}>${console.label}</a><a
-                            href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
-                            aria-expanded="false"><span class="caret"></span></a>
-                        <ul class="dropdown-menu">
-                            <c:set var="consoleMenu" value="${console}" scope="request"/>
-                            <sling:call script="menu.jsp"/>
-                            <c:remove var="consoleMenu"/>
-                        </ul>
-                    </li>
+                    <c:if test="${console.validMenu}">
+                        <li class="nav-item ${console.name} dropdown"><a
+                                href="${console.url}"${console.linkAttributes}>${console.label}</a><a
+                                href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                                aria-haspopup="true" aria-expanded="false"><span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <c:set var="consoleMenu" value="${console}" scope="request"/>
+                                <sling:call script="menu.jsp"/>
+                                <c:remove var="consoleMenu"/>
+                            </ul>
+                        </li>
+                    </c:if>
                 </c:when>
                 <c:otherwise>
                     <li class="nav-item ${console.name} link"><a
