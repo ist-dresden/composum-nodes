@@ -275,6 +275,9 @@
                     <plugin>
                         <groupId>com.day.jcr.vault</groupId>
                         <artifactId>content-package-maven-plugin</artifactId>
+                        <configuration>
+                            <group>${package.group}</group>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>install-content-package</id>
