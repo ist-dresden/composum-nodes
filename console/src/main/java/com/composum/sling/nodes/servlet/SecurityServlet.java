@@ -13,6 +13,7 @@ import com.composum.sling.core.util.ResponseUtil;
 import com.composum.sling.cpnl.CpnlElFunctions;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonWriter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
@@ -403,11 +404,23 @@ public class SecurityServlet extends AbstractServiceServlet {
                 //noinspection SwitchStatementWithTooFewBranches
                 switch (scope) {
                     case effective:
+                        final List<AccessControlPolicy> effective = new ArrayList<>();
                         policies = acManager.getEffectivePolicies(path);
                         // two equal sets from the ac manager on root...
                         if ("/".equals(path) && policies.length == 2 && seemsTheSame(policies[0], policies[1])) {
-                            policies = new AccessControlPolicy[]{policies[0]};
+                            effective.add(policies[0]);
+                        } else {
+                            for (final AccessControlPolicy policy : policies) {
+                                if (policy instanceof JackrabbitAccessControlList) {
+                                    final JackrabbitAccessControlList acl = (JackrabbitAccessControlList) policy;
+                                    final String aclPath = acl.getPath();
+                                    if (StringUtils.isNotBlank(aclPath) && path.startsWith(aclPath)) {
+                                        effective.add(policy);
+                                    }
+                                }
+                            }
                         }
+                        policies = effective.toArray(new AccessControlPolicy[0]);
                         break;
                     default:
                         policies = acManager.getPolicies(path);

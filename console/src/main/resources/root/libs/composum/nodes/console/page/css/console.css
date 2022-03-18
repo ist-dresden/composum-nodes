@@ -544,7 +544,19 @@ body.top-open #split-view-vertical-split > .bottom-pane {
 /* tools menu */
 
 .navbar .nav-item .dropdown-menu {
-   min-width: 200px;
+    min-width: 200px;
+}
+
+.navbar .nav-item .dropdown-menu li.link {
+    position: relative;
+    padding-right: 35px;
+}
+
+.navbar .nav-item .dropdown-menu li a.link {
+    position: absolute;
+    top: 0;
+    right: 10px;
+    padding: 3px 10px;
 }
 
 .navbar .nav-item.dropdown > a {
@@ -581,7 +593,7 @@ body.top-open #split-view-vertical-split > .bottom-pane {
     display: none;
 }
 
-#user-status-dialog button.logout {
+#user-status-dialog a.logout {
     float: left;
 }
 

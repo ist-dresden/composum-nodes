@@ -7,6 +7,7 @@ import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceMetadata;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.SyntheticResource;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.wrappers.ModifiableValueMapDecorator;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
@@ -19,7 +20,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class RemoteResource implements Resource {
+public class RemoteResource extends SyntheticResource {
+
+    public static final String REMOTE_TYPE = "composum/nodes/mount/remote";
 
     public static class NonExisting extends RemoteResource {
 
@@ -47,6 +50,8 @@ public class RemoteResource implements Resource {
     protected ResourceMetadata metadata = new ResourceMetadata();
 
     public RemoteResource(@NotNull final RemoteResolver resolver, @NotNull String path) {
+        // We set a synthetic resource as super, to not implement Resource directly, which is a ProviderType and should not be implemented by custom code
+        super(resolver, path, REMOTE_TYPE);
         this.resolver = resolver;
         if (StringUtils.isBlank(path) || !path.startsWith("/")) {
             throw new IllegalArgumentException("an absolute path is required (" + path + ")");

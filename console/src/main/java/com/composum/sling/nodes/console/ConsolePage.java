@@ -70,7 +70,7 @@ public class ConsolePage extends ConsoleSlingBean {
 
     public String getLogoutUrl() {
         CoreConfiguration service = this.context.getService(CoreConfiguration.class);
-        return service != null ? service.getLogoutUrl() : null;
+        return service != null ? service.getLogoutUrl(service.getLoggedoutUrl()) : null;
     }
 
     @NotNull

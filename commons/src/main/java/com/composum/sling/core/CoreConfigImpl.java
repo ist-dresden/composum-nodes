@@ -41,9 +41,7 @@ public class CoreConfigImpl implements CoreConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoreConfigImpl.class);
 
-    protected static final String DEFAULT_LOGOUTURL = "/system/sling/logout.html?logout=true&GLO=true";
-    protected static final String DEFAULT_LOGGEDOUTURL = "/system/sling/form/login.html";
-    protected static final String DEFAULT_LOGINURL = "/system/sling/form/login.html";
+    protected static final String DEFAULT_LOGOUTURL = "/system/sling/logout";
 
 
     /**
@@ -80,13 +78,7 @@ public class CoreConfigImpl implements CoreConfiguration {
                 name = "Logged out URL",
                 description = "URL for the system to redirect to when the user was logged out"
         )
-        String loggedouturl() default DEFAULT_LOGGEDOUTURL;
-
-        @AttributeDefinition(
-                name = "Login URL",
-                description = "URL for the system to redirect / link to when the user should be logged in"
-        )
-        String loginurl() default DEFAULT_LOGINURL;
+        String loggedouturl();
     }
 
     private volatile Configuration config;
@@ -187,13 +179,10 @@ public class CoreConfigImpl implements CoreConfiguration {
     }
 
     @Override
+    @Deprecated
     @NotNull
     public String getLoginUrl(@Nullable final String targetUri) {
-        String loginUrl = StringUtils.defaultIfBlank(getConfig().loginurl(), DEFAULT_LOGINURL);
-        if (StringUtils.isNotBlank(targetUri)) {
-            loginUrl += (loginUrl.indexOf('?') < 0 ? '?' : '&') + RESOURCE_PARAMETER + "=" + targetUri;
-        }
-        return loginUrl;
+        return "";
     }
 
     @Override
@@ -207,9 +196,9 @@ public class CoreConfigImpl implements CoreConfiguration {
     }
 
     @Override
-    @NotNull
+    @Nullable
     public String getLoggedoutUrl() {
-        return StringUtils.defaultIfBlank(getConfig().loggedouturl(), DEFAULT_LOGGEDOUTURL);
+        return getConfig().loggedouturl();
     }
 
     @Activate

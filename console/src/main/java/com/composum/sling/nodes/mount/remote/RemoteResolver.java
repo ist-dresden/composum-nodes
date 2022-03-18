@@ -10,6 +10,7 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.wrappers.ModifiableValueMapDecorator;
+import org.apache.sling.api.wrappers.ResourceResolverWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ import java.util.Map;
  * the resolver of the remote Sling instance resources mounted by the resource provider;
  * supports extended CRUD operations for resource ordering and file uploads (updates)
  */
-public class RemoteResolver implements ExtendedResolver {
+public class RemoteResolver extends ResourceResolverWrapper implements ExtendedResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteResolver.class);
 
@@ -42,6 +43,7 @@ public class RemoteResolver implements ExtendedResolver {
 
     public RemoteResolver(@NotNull final RemoteProvider provider,
                           @NotNull final ResourceResolver parentDelegate) {
+        super(parentDelegate);
         this.provider = provider;
         this.parentDelegate = parentDelegate;
     }

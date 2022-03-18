@@ -45,6 +45,11 @@
                 this.$suffix.on('change.display', _.bind(this.onSuffixChange, this));
                 this.$parameters.val(core.console.getProfile().get(this.displayKey, 'parameters'));
                 this.$parameters.on('change.display', _.bind(this.onParametersChange, this));
+                this.$('.detail-toolbar input').keypress(_.bind(function (event) {
+                    if (event.which === 13) {
+                        this.reload();
+                    }
+                }, this));
                 this.$mappedButton.on('click.display', _.bind(this.toggleMapped, this));
                 this.$mappedButton.addClass(core.console.getProfile().get(this.displayKey, 'mapped', true) ? 'on' : 'off');
             },

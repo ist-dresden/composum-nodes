@@ -248,7 +248,7 @@ public class OsgiBundleModel extends AbstractSlingBean {
 
     @NotNull
     public String getName() {
-        return name;
+        return name != null ? name : getSymbolicName();
     }
 
     @NotNull
