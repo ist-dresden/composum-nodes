@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>4.1.0-SNAPSHOT</version>
+        <version>4.1.0</version>
     </parent>
 
     <artifactId>composum-nodes-xtracts</artifactId>
@@ -15,7 +15,7 @@
     <name>Composum Nodes Feature Extracts</name>
 
     <properties>
-        <composum.nodes.version>4.1.0-SNAPSHOT</composum.nodes.version>
+        <composum.nodes.version>4.1.0</composum.nodes.version>
     </properties>
 
     <modules>
