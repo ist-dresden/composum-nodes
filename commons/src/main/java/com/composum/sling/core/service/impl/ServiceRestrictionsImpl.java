@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.jetbrains.annotations.NotNull;
@@ -210,5 +211,35 @@ public class ServiceRestrictionsImpl implements ServiceRestrictions {
             }
         }
         return null;
+    }
+
+    public boolean checkAuthorizables(@NotNull final SlingHttpServletRequest request,
+                                      @Nullable String restrictions) {
+        if (StringUtils.isNotBlank(restrictions) && restrictions.startsWith(AUTHORIZABLE_RESTRICTION_PREFIX)) {
+            Authorizable authorizable = getAuthorizable(request);
+            if (authorizable instanceof User) {
+                try {
+                    final String name = authorizable.getID();
+                    for (String id : StringUtils.split(restrictions
+                            .substring(AUTHORIZABLE_RESTRICTION_PREFIX.length()), ",")) {
+                        if (authorizable.getID().equals(id)) {
+                            return true;
+                        }
+                        final Iterator<Group> groups;
+                        if ((groups = authorizable.memberOf()) != null) {
+                            while (groups.hasNext()) {
+                                if (groups.next().getID().equals(id)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                } catch (RepositoryException ex) {
+                    LOG.error(ex.getMessage(), ex);
+                }
+            }
+            return false;
+        }
+        return true;
     }
 }

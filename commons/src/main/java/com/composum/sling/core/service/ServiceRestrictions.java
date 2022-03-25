@@ -13,6 +13,8 @@ import java.util.List;
 @ProviderType
 public interface ServiceRestrictions {
 
+    String AUTHORIZABLE_RESTRICTION_PREFIX = "authorizable:";
+
     String SA_PERMISSION = ServiceRestrictions.class.getName() + "#permission";
 
     enum Permission {
@@ -101,4 +103,13 @@ public interface ServiceRestrictions {
 
     @Nullable
     String getRestrictions(@Nullable Key key);
+
+    /**
+     * Checks the restrictions for matching authorizable of the request id the restictions are 'authorizable' restrictions.
+     * @param request the current request to retrieve the current authorizable (user)
+     * @param restrictions the restrictions pattern string to check
+     * @return
+     */
+    boolean checkAuthorizables(@NotNull final SlingHttpServletRequest request,
+                               @Nullable final String restrictions);
 }
