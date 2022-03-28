@@ -39,6 +39,8 @@ import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a servlet that enables to download a package of a JCR subtree without
@@ -50,17 +52,18 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
  * CAUTION: not suitable for production, only for internal testing systems!
  * <p>
  * Usage with curl e.g.
- * curl -s -S -o tmp.zip -u admin:admin http://localhost:6502/bin/cpm/nodes/debug/downloadjcr.html/{path to download}
+ * curl -s -S -o tmp.zip -u admin:admin http://localhost:6502/somepath.html/{path to download} <br>
+ * where somepath is a path to a resource with sling:resourceType cpm/nodes/debug/downloadjcr .
  * <p>
  * Example Creates a package of /some/path:
- * http://localhost:6502/bin/cpm/nodes/debug/downloadjcr.html/some/path
+ * http://localhost:6502/somepath.html/some/path
  * <p>
  * Fragment of a bash script to download a path from another AEM system and install it locally on AEM:
  * path=$1
  * TMPFIL=`mktemp -u`.zip
  * trap "{ rm -f $TMPFIL; }" EXIT
  * PKG=$(basename $TMPFIL)
- * curl -S -o $TMPFIL -u ${OTHER_USER}:${OTHER_PWD} http://${OTHERIP}:4502/bin/cpm/nodes/debug/downloadjcr.html${path}?packageName=$PKG
+ * curl -S -o $TMPFIL -u ${OTHER_USER}:${OTHER_PWD} http://${OTHERIP}:4502/somepath.html${path}?packageName=$PKG
  * curl -u admin:admin -F file=@"$TMPFIL" -F name="tmp $path" -F force=true -F install=true http://localhost:6502/crx/packmgr/service.jsp
  * curl -u admin:admin -F cmd=delete http://localhost:6502/crx/packmgr/service/.json/etc/packages/my_packages/${PKG%%.zip}-1.zip
  * <p>
@@ -70,13 +73,15 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 @Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Debugutil Download Jcr Tree Servlet",
-                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cpm/nodes/debug/downloadjcr",
+                ServletResolverConstants.SLING_SERVLET_RESOURCE_TYPES + "=cpm/nodes/debug/downloadjcr",
                 ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
         },
         configurationPolicy = ConfigurationPolicy.REQUIRE
 )
 @Designate(ocd = DownloadJcrTreeAsPackageServlet.Configuration.class)
 public class DownloadJcrTreeAsPackageServlet extends SlingSafeMethodsServlet {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DownloadJcrTreeAsPackageServlet.class);
 
     /**
      * Parameter that specifies the name of the package; default is automatically generated from the path.
@@ -93,12 +98,14 @@ public class DownloadJcrTreeAsPackageServlet extends SlingSafeMethodsServlet {
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
+        LOG.info("Called on {}", request.getResource().getPath());
         if (config == null || !config.enabled()) {
             super.doGet(request, response);
             return;
         }
 
-        String userID = request.getResourceResolver().getUserID();
+        String userID = StringUtils.defaultIfBlank(request.getResourceResolver().getUserID(), "anonymous");
+        LOG.debug("Called with user {} , allowed {}", userID, config.allowedUserRegex());
         if (userID == null || !Pattern.compile(config.allowedUserRegex()).matcher(userID).matches()) {
             throw new IllegalArgumentException("Not allowed for user " + userID);
         }
@@ -110,11 +117,8 @@ public class DownloadJcrTreeAsPackageServlet extends SlingSafeMethodsServlet {
         if (resource == null) {
             throw new IllegalArgumentException("Not found: " + resourcePath);
         }
-        if (!resource.getPath().matches("/.*/.*/.*")) {
+        if (!resource.getPath().matches("/.*/.*")) {
             throw new IllegalArgumentException("Path too short - package would probably be too large");
-        }
-        if (!"admin".equals(request.getResourceResolver().getUserID())) {
-            throw new IllegalArgumentException("For security reasons only allowed for admin");
         }
         resourcePath = resource.getPath();
 
@@ -171,6 +175,7 @@ public class DownloadJcrTreeAsPackageServlet extends SlingSafeMethodsServlet {
     @Activate
     @Modified
     protected void activate(Configuration config) {
+        LOG.info("Activated: {}", config.enabled());
         this.config = config;
     }
 
@@ -190,7 +195,8 @@ public class DownloadJcrTreeAsPackageServlet extends SlingSafeMethodsServlet {
                     " CAUTION: not suitable for production, only for internal testing systems!\n" +
                     " \n" +
                     " Usage with curl e.g.\n" +
-                    " curl -s -S -o tmp.zip -u admin:admin http://localhost:6502/bin/cpm/nodes/debug/downloadjcr.html/{path to download}\n"
+                    " curl -s -S -o tmp.zip -u admin:admin http://localhost:6502/somepath.html/{path to download}\n" +
+                    " where somepath is a path to a resource of sling:resourceType cpm/nodes/debug/downloadjcr"
     )
     public @interface Configuration {
         @AttributeDefinition(
