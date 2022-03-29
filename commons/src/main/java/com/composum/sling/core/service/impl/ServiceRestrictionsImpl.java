@@ -8,11 +8,14 @@ import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
@@ -22,24 +25,45 @@ import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
+import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
+
+/**
+ * The service to restict the service operations and the Sling POST requests.
+ */
 @Component(
-        service = ServiceRestrictions.class
+        service = {ServiceRestrictions.class, Filter.class},
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Service Restrictions",
+                "sling.filter.scope=REQUEST"
+        },
+        configurationPolicy = ConfigurationPolicy.REQUIRE,
+        immediate = true
 )
 @Designate(ocd = ServiceRestrictionsImpl.Config.class)
-public class ServiceRestrictionsImpl implements ServiceRestrictions {
+public class ServiceRestrictionsImpl implements ServiceRestrictions, Filter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServiceRestrictionsImpl.class);
 
     @ObjectClassDefinition(
-            name = "Composum Service Restrictions"
+            name = "Composum Service Restrictions Configuration"
     )
     public @interface Config {
 
@@ -62,15 +86,29 @@ public class ServiceRestrictionsImpl implements ServiceRestrictions {
                 description = "the set of service restrictions"
         )
         String[] restrictions();
+
+        @AttributeDefinition(
+                name = "Path Restrictions",
+                description = "the mapping of repository path patterns to service keys (e.g. '^/content(/.*)?$=pages/content/edit')"
+        )
+        String[] restictedPaths();
+
+        @AttributeDefinition(
+                name = "Service Ranking",
+                description = "the ranking of the service to place the servlet filter at the right place in the filter chain"
+        )
+        int service_ranking() default 6500;
     }
 
     private final Map<Key, Restriction> restrictions = Collections.synchronizedMap(new HashMap<>());
 
     private final Map<Permission, Set<String>> userOptions = Collections.synchronizedMap(new HashMap<>());
 
+    private BundleContext bundleContext;
+
     private Config config;
 
-    private BundleContext bundleContext;
+    private final Map<Pattern, ServiceRestrictions.Key> restrictedPaths = new LinkedHashMap<>();
 
     @Activate
     @Modified
@@ -90,6 +128,13 @@ public class ServiceRestrictionsImpl implements ServiceRestrictions {
                 authorizables.add(permAuth.length > 1 ? permAuth[1] : "");
             } catch (IllegalArgumentException ex) {
                 LOG.error(ex.toString());
+            }
+        }
+        this.restrictedPaths.clear();
+        for (final String rule : config.restictedPaths()) {
+            final String[] keyVal = StringUtils.split(rule, "=", 2);
+            if (keyVal.length == 2 && StringUtils.isNotBlank(keyVal[0]) && StringUtils.isNotBlank(keyVal[1])) {
+                restrictedPaths.put(Pattern.compile(keyVal[0]), new ServiceRestrictions.Key(keyVal[1]));
             }
         }
     }
@@ -241,5 +286,37 @@ public class ServiceRestrictionsImpl implements ServiceRestrictions {
             return false;
         }
         return true;
+    }
+
+    // POST servlet filter
+
+    @Override
+    public void doFilter(final ServletRequest servletRequest, final ServletResponse servletResponse,
+                         final FilterChain chain)
+            throws IOException, ServletException {
+        if (config.enabled() && this.restrictedPaths.size() > 0
+                && servletRequest instanceof SlingHttpServletRequest) {
+            final SlingHttpServletRequest request = (SlingHttpServletRequest) servletRequest;
+            if (METHOD_POST.equals(request.getMethod())) {
+                final String path = request.getResource().getPath();
+                for (Map.Entry<Pattern, ServiceRestrictions.Key> entry : this.restrictedPaths.entrySet()) {
+                    if (entry.getKey().matcher(path).matches()
+                            && !isPermissible(request, entry.getValue(), ServiceRestrictions.Permission.write)) {
+                        final SlingHttpServletResponse response = (SlingHttpServletResponse) servletResponse;
+                        response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                        return;
+                    }
+                }
+            }
+        }
+        chain.doFilter(servletRequest, servletResponse);
+    }
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+    }
+
+    @Override
+    public void destroy() {
     }
 }
