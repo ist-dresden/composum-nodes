@@ -64,7 +64,7 @@ public class PostServletRestrictionsFilter implements Filter {
                 name = "Service Ranking",
                 description = "the ranking of the service to place the servlet filter at the right place in the filter chain"
         )
-        int service_ranking() default 6500;
+        int service_ranking() default 2600;
     }
 
     @Reference
