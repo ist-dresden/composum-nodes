@@ -143,6 +143,10 @@
             alert: function (type, message, result) {
                 if (message) {
                     type = components.const.dialog.alert.type[type] || type;
+                    if (core.isRestricted(result)) {
+                        message = core.getRestrictedMessage();
+                        result = undefined;
+                    }
                     if (this.$messageBody.length === 1) {
                         this.$messageHead.html(result ? core.resultMessage(result, message) : message);
                         this.$messageHead.removeClass('hidden');

@@ -227,7 +227,8 @@ public interface Condition {
         @Override
         public boolean accept(@NotNull final BeanContext context, @NotNull final Resource resource) {
             final ServiceRestrictions restrictions = context.getService(ServiceRestrictions.class);
-            return restrictions != null && restrictions.isPermissible(context.getRequest(), key, permission);
+            return restrictions != null && restrictions.isPermissible(context.getRequest(), key, permission)
+                    && restrictions.checkAuthorizables(context.getRequest(), restrictions.getRestrictions(key));
         }
     }
 
