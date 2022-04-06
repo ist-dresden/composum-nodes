@@ -64,7 +64,7 @@
         <save jcr:primaryType="sling:MessageEntry"
                 sling:key="Save" sling:message="Speichern"/>
         <select jcr:primaryType="sling:MessageEntry"
-                sling:key="Create" sling:message="Auswählen"/>
+                sling:key="Select" sling:message="Auswählen"/>
         <selected-in-tree jcr:primaryType="sling:MessageEntry"
                 sling:key="Select in Tree" sling:message="Im Baum Auswählen"/>
         <selected-path jcr:primaryType="sling:MessageEntry"
@@ -123,6 +123,9 @@
         <item-exists jcr:primaryType="sling:MessageEntry"
                 sling:key="An element with the same name exists already - use a different name!"
                 sling:message="Ein Element mit demselben Namen existiert bereits - verwenden Sie einen anderen Namen!"/>
+        <restricted jcr:primaryType="sling:MessageEntry"
+                sling:key="Access seems to be restricted, the operation is not allowed, check your system configuration."
+                sling:message="Der Zugriff scheint eingeschränkt zu sein, die Operation ist nicht erlaubt, überprüfen Sie Ihre Systemkonfiguration."/>
 
     </message>
 
