@@ -64,6 +64,8 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
 
     public static final String SERVICE_KEY = "system/runtime/files";
 
+    public static final String PATH_RESTRICTION_PREFIX = "path:";
+
     public static final String SERVLET_LABEL = "Composum Runtime File Servlet";
     public static final String SERVLET_PATH = "/bin/cpm/system/file";
 
@@ -266,7 +268,10 @@ public class RuntimeFileServlet extends SlingSafeMethodsServlet implements Restr
         serviceKey = new ServiceRestrictions.Key(SERVICE_KEY);
         permission = restrictions.getPermission(serviceKey);
         enabled = permission != ServiceRestrictions.Permission.none;
-        final String pattern = restrictions.getRestrictions(serviceKey);
+        String pattern = restrictions.getRestrictions(serviceKey);
+        if (StringUtils.isNotBlank(pattern) && pattern.startsWith(PATH_RESTRICTION_PREFIX)) {
+            pattern = pattern.substring(PATH_RESTRICTION_PREFIX.length());
+        }
         fileRestrictions = StringUtils.isNotBlank(pattern) ? Pattern.compile(pattern) : null;
     }
 

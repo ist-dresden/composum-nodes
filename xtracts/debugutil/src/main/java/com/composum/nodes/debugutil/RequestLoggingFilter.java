@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -46,6 +47,13 @@ import org.slf4j.LoggerFactory;
 /**
  * Debugging filter: if configured, logs request and response of (preferably non-binary ;-) requests.
  * Useful e.g. to get some examples for documentation.
+ * <p>
+ * If the configuration is not present, it's inactive (configuration required). Thus it's
+ * easy to make this completely inactive on e.g. production servers.
+ * <p>
+ * Since it is in some settings difficult to change configurations, this uses a special parameter {@value #PARAM_CONFIGURE_SERVLET}
+ * to change the logged url.
+ * https://publish-p49802-e271952.adobeaemcloud.com/content/eriks-uk/en.html?DebugRequestLoggingFilter-set-urlpattern=.*pdf.*
  */
 @Component(
         service = Filter.class,
@@ -62,27 +70,35 @@ public class RequestLoggingFilter implements Filter {
     private static final Logger LOG = LoggerFactory.getLogger(RequestLoggingFilter.class);
 
     protected Config config;
-    protected Pattern urlpattern;
+    protected volatile Pattern urlpattern;
+
+    public static final String PARAM_CONFIGURE_SERVLET="DebugRequestLoggingFilter-set-urlpattern";
 
     @Override
     public void doFilter(ServletRequest rawRequest, ServletResponse rawResponse, FilterChain chain) throws IOException, ServletException {
-        if (urlpattern == null || config == null || StringUtils.isBlank(config.regex())
-                || !(rawRequest instanceof SlingHttpServletRequest) || !(rawResponse instanceof SlingHttpServletResponse)) {
+        if (config == null || (!config.logRequestContent() && !config.logResponseContent()) || !(rawRequest instanceof SlingHttpServletRequest) || !(rawResponse instanceof SlingHttpServletResponse)) {
             chain.doFilter(rawRequest, rawResponse);
             return;
         }
 
         SlingHttpServletRequest request = (SlingHttpServletRequest) rawRequest;
         SlingHttpServletResponse response = (SlingHttpServletResponse) rawResponse;
+
+        String configureParameter = request.getParameter(PARAM_CONFIGURE_SERVLET);
+        if (StringUtils.isNotBlank(configureParameter)) {
+            LOG.info("Configuring to pattern {}", configureParameter);
+            urlpattern = Pattern.compile(configureParameter);
+        }
+
         String uri = request.getRequestURI();
-        if (!urlpattern.matcher(uri).matches()) {
+        if (urlpattern == null || !urlpattern.matcher(uri).matches()) {
             chain.doFilter(rawRequest, rawResponse);
             return;
         }
 
         List<Closeable> closeables = new ArrayList<>();
         try {
-            logRequestParameters(request);
+            logRequestParametersAndHeaders(request);
 
             SlingHttpServletRequestWrapper wrappedRequest = new SlingHttpServletRequestWrapper(request) {
                 @Override
@@ -113,17 +129,34 @@ public class RequestLoggingFilter implements Filter {
                 }
             };
             chain.doFilter(
-                    config.requestContent() ? wrappedRequest : request,
-                    config.responseContent() ? wrappedResponse : response);
+                    config.logRequestContent() ? wrappedRequest : request,
+                    config.logResponseContent() ? wrappedResponse : response);
         } catch (RuntimeException | IOException | ServletException e) {
             LOG.error(uri, e);
             throw e;
         } finally {
             closeables.forEach(IOUtils::closeQuietly);
+            if (config.logResponseContent()) {
+                writeResponseHeaders(request, response);
+            }
         }
     }
 
-    protected void logRequestParameters(SlingHttpServletRequest request) {
+    private void writeResponseHeaders(SlingHttpServletRequest request, SlingHttpServletResponse response) {
+        try {
+            StringBuilder buf = new StringBuilder("Response headers ");
+            buf.append("(status ").append(response.getStatus()).append(") ");
+            buf.append("for ").append(request.getRequestURL());
+            for (String headername : response.getHeaderNames()) {
+                buf.append("\n").append(headername).append(" : ").append(response.getHeader(headername));
+            }
+            LOG.info("{}", buf);
+        } catch (Exception e) { // this is a debugging utility and should never throw.
+            LOG.warn("Trouble reading response headers: ", e);
+        }
+    }
+
+    protected void logRequestParametersAndHeaders(SlingHttpServletRequest request) {
         StringBuilder buf = new StringBuilder("URL= ").append(request.getRequestURL());
         buf.append("\nuri=").append(request.getRequestURI());
         buf.append("\ninfo=").append(request.getRequestPathInfo());
@@ -139,6 +172,10 @@ public class RequestLoggingFilter implements Filter {
         }
         String nex = ResourceUtil.isNonExistingResource(resource) ? "NE" : "EX";
         buf.append("\nRMAP: ").append(request.getRequestURI()).append(" => (" + nex + ") ").append(resource.getPath());
+        for (Enumeration<String> en = request.getHeaderNames(); en.hasMoreElements(); ) {
+            String headername = en.nextElement();
+            buf.append("\nHeader ").append(headername).append(" : ").append(request.getHeader(headername));
+        }
         LOG.info("{}", buf);
     }
 
@@ -148,9 +185,13 @@ public class RequestLoggingFilter implements Filter {
     @Modified
     public void activate(final Config config) {
         this.config = config;
-        if (StringUtils.isNotBlank(config.regex())) {
+        setUrlPattern(config.urlPattern());
+    }
+
+    public void setUrlPattern(String urlPattern) {
+        if (StringUtils.isNotBlank(urlPattern)) {
             urlpattern = null;
-            urlpattern = Pattern.compile(config.regex());
+            urlpattern = Pattern.compile(urlPattern);
         } else {
             urlpattern = null;
         }
@@ -183,17 +224,17 @@ public class RequestLoggingFilter implements Filter {
                 name = "URL regex",
                 description = "Regular expression that has to match the request's URL. If empty, this filter is inactive."
         )
-        String regex();
+        String urlPattern();
 
         @AttributeDefinition(
                 name = "Log request content"
         )
-        boolean requestContent() default false;
+        boolean logRequestContent() default false;
 
         @AttributeDefinition(
                 name = "Log response content"
         )
-        boolean responseContent() default false;
+        boolean logResponseContent() default false;
 
     }
 
@@ -227,7 +268,7 @@ public class RequestLoggingFilter implements Filter {
         @Override
         public void close() throws IOException {
             if (buf.length() > 0) {
-                LOG.info("Request for {}:\n{}\n\n", uri, buf.toString());
+                LOG.info("Request for {}:\n{}\n\n", uri, buf);
             }
             buf.setLength(0);
             super.close();
@@ -246,7 +287,7 @@ public class RequestLoggingFilter implements Filter {
         @Override
         public void close() throws IOException {
             if (buf.length() > 0) {
-                LOG.info("Response for {}:\n{}\n\n", uri, buf.toString());
+                LOG.info("Response for {}:\n{}\n\n", uri, buf);
             }
             buf.setLength(0);
             super.close();
@@ -259,7 +300,7 @@ public class RequestLoggingFilter implements Filter {
         }
 
         @Override
-        public void write(char cbuf[], int off, int len) throws IOException {
+        public void write(char[] cbuf, int off, int len) throws IOException {
             buf.append(cbuf, off, len);
             out.write(cbuf, off, len);
         }

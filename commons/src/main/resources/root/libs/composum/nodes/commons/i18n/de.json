@@ -243,6 +243,11 @@
       "jcr:primaryType": "sling:MessageEntry",
       "sling:key": "An element with the same name exists already - use a different name!",
       "sling:message": "Ein Element mit demselben Namen existiert bereits - verwenden Sie einen anderen Namen!"
+    },
+    "restricted": {
+      "jcr:primaryType": "sling:MessageEntry",
+      "sling:key": "Access seems to be restricted, the operation is not allowed, check your system configuration.",
+      "sling:message": "Der Zugriff scheint eingeschränkt zu sein, die Operation ist nicht erlaubt, überprüfen Sie Ihre Systemkonfiguration."
     }
   },
   "user": {

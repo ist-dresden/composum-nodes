@@ -35,8 +35,8 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Translation Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + TranslationServlet.SERVLET_PATH,
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT,
-                "sling.auth.requirements=" + TranslationServlet.SERVLET_PATH
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=json",
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_PUT
         }
 )
 @Restricted(key = SERVICE_KEY)

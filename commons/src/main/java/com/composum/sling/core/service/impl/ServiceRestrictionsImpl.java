@@ -5,11 +5,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
@@ -25,12 +27,22 @@ import javax.servlet.http.HttpSession;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
+/**
+ * The service to restict the service operations and the Sling POST requests.
+ */
 @Component(
-        service = ServiceRestrictions.class
+        service = {ServiceRestrictions.class},
+        property = {
+                Constants.SERVICE_DESCRIPTION + "=Composum Service Restrictions",
+                "sling.filter.scope=REQUEST"
+        },
+        immediate = true
 )
 @Designate(ocd = ServiceRestrictionsImpl.Config.class)
 public class ServiceRestrictionsImpl implements ServiceRestrictions {
@@ -38,7 +50,7 @@ public class ServiceRestrictionsImpl implements ServiceRestrictions {
     private static final Logger LOG = LoggerFactory.getLogger(ServiceRestrictionsImpl.class);
 
     @ObjectClassDefinition(
-            name = "Composum Service Restrictions"
+            name = "Composum Service Restrictions Configuration"
     )
     public @interface Config {
 
@@ -67,9 +79,11 @@ public class ServiceRestrictionsImpl implements ServiceRestrictions {
 
     private final Map<Permission, Set<String>> userOptions = Collections.synchronizedMap(new HashMap<>());
 
+    private BundleContext bundleContext;
+
     private Config config;
 
-    private BundleContext bundleContext;
+    private final Map<Pattern, ServiceRestrictions.Key> restrictedPaths = new LinkedHashMap<>();
 
     @Activate
     @Modified
@@ -210,5 +224,35 @@ public class ServiceRestrictionsImpl implements ServiceRestrictions {
             }
         }
         return null;
+    }
+
+    public boolean checkAuthorizables(@NotNull final SlingHttpServletRequest request,
+                                      @Nullable String restrictions) {
+        if (StringUtils.isNotBlank(restrictions) && restrictions.startsWith(AUTHORIZABLE_RESTRICTION_PREFIX)) {
+            Authorizable authorizable = getAuthorizable(request);
+            if (authorizable instanceof User) {
+                try {
+                    final String name = authorizable.getID();
+                    for (String id : StringUtils.split(restrictions
+                            .substring(AUTHORIZABLE_RESTRICTION_PREFIX.length()), ",")) {
+                        if (authorizable.getID().equals(id)) {
+                            return true;
+                        }
+                        final Iterator<Group> groups;
+                        if ((groups = authorizable.memberOf()) != null) {
+                            while (groups.hasNext()) {
+                                if (groups.next().getID().equals(id)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                } catch (RepositoryException ex) {
+                    LOG.error(ex.getMessage(), ex);
+                }
+            }
+            return false;
+        }
+        return true;
     }
 }

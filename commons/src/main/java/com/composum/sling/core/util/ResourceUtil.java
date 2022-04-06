@@ -17,6 +17,7 @@ import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
+import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
@@ -553,7 +554,7 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
     }
 
     /**
-     * Finds a mix:referenceable by its jcr:uuid.
+     * Finds a mix:referenceable by its jcr:uuid. This works only for JCR resources.
      */
     @Nullable
     public static Resource getByUuid(@NotNull ResourceResolver resolver, @Nullable String uuid) throws RepositoryException {
@@ -582,6 +583,17 @@ public class ResourceUtil extends org.apache.sling.api.resource.ResourceUtil imp
         Property property = propertyResource.adaptTo(Property.class);
         Node node = property != null ? property.getNode() : null;
         String path = node != null ? node.getPath() : null;
-        return path != null ? propertyResource.getResourceResolver().getResource(path) : null;
+        Resource referredResource = path != null ? propertyResource.getResourceResolver().getResource(path) : null;
+        if (referredResource == null) {
+            if (property == null) { // strange!
+                LOG.debug("Could not get Property for {}", propertyResource.getPath());
+            } else if (StringUtils.isNotEmpty( property.getString())) {
+                if (property.getDefinition() != null && PropertyType.REFERENCE == property.getDefinition().getRequiredType()) {
+                    LOG.warn("Inconsistent JCR: could not find referred resource for strong reference at {}", propertyResource.getPath());
+                }
+            }
+        }
+        return referredResource;
     }
+
 }

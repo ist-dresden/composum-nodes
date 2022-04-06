@@ -34,6 +34,9 @@
                     warn: 'warning'
                 }
             },
+            message: {
+                restricted: 'Access seems to be restricted, the operation is not allowed, check your system configuration.'
+            },
             contextPath: $html.data('context-path') ? $html.data('context-path') : '',
             composumBase: $html.data('composum-base') ? $html.data('composum-base') : '/libs/'
         },
@@ -311,6 +314,14 @@
 
         isNotAuthorized: function (result) {
             return result.status === 401 || result.status === 403;
+        },
+
+        isRestricted: function (result) {
+            return result.status === 405;
+        },
+
+        getRestrictedMessage: function (callback) {
+            return core.i18n ? core.i18n.get(core.const.message.restricted, callback) : core.const.message.restricted;
         },
 
         resultMessage: function (result, message) {
