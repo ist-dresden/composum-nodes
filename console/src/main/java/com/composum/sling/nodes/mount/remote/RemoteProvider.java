@@ -50,13 +50,14 @@ public class RemoteProvider extends ResourceProvider<Object> {
 
         @AttributeDefinition(
                 name = "Provider Root",
-                description = "the mount point of the remote tree in the local resource hierarchy"
+                description = "The mount point of the remote tree in the local resource hierarchy, e.g. /remote/somesystem . Using something below /mnt may or may not work."
+                // Choosing /mnt/something has been working for hps with no problems, but Ralf had trouble, so we rather don't officially recommend that.
         )
         String provider_root();
 
         @AttributeDefinition(
                 name = "Resolver Search Path",
-                description = "the resolver search path used by the remote system mapped to the local tree; use ${root} as placeholder for the provider root path"
+                description = "The resolver search path used by the remote system mapped to the local tree; use ${root} as placeholder for the provider root path."
         )
         String[] resolver_search_path() default {
                 "${root}/apps/",
@@ -65,7 +66,8 @@ public class RemoteProvider extends ResourceProvider<Object> {
 
         @AttributeDefinition(
                 name = "Ignored Path Patterns",
-                description = "the set of path patterns in the local tree which should be ignored by this provider"
+                description = "The set of path patterns in the local tree which should be ignored by this provider. ${root} is a placeholder for the provider root path. " +
+                        "Please take care that this does not match the provider root itself, or it will be inactive."
         )
         String[] ignored_patterns() default {
                 "^/mnt(/.*)?$",
@@ -77,7 +79,7 @@ public class RemoteProvider extends ResourceProvider<Object> {
 
         @AttributeDefinition(
                 name = "Remote HTTP URL",
-                description = "the URL to access the remote system (the HTTP URL of the remote repository root)"
+                description = "The URL to access the remote system (the HTTP URL of the remote repository root), e.g. https://somesystem/."
         )
         String remote_url();
 
