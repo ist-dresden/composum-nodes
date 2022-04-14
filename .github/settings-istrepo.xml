@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd"
+        xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <!-- Settings to build with IST repository and deploy to IST repository. -->
+
+    <servers>
+        <server>
+            <id>istrepo</id>
+            <username>${env.NEXUS_BUILD_USER}</username>
+            <password>${env.NEXUS_BUILD_PASSWD}</password>
+        </server>
+        <server>
+            <id>istrepo-internal</id>
+            <username>${env.NEXUS_BUILD_USER}</username>
+            <password>${env.NEXUS_BUILD_PASSWD}</password>
+        </server>
+        <server>
+            <id>istrepo-snapshots</id>
+            <username>${env.NEXUS_BUILD_USER}</username>
+            <password>${env.NEXUS_BUILD_PASSWD}</password>
+        </server>
+    </servers>
+
+    <mirrors>
+        <!-- -->
+        <mirror>
+            <id>istrepo</id>
+            <name>istrepo</name>
+            <mirrorOf>*</mirrorOf>
+            <url>https://repo.ist-software.com/repository/maven-public</url>
+        </mirror>
+        <!-- -->
+    </mirrors>
+
+    <profiles>
+
+        <!--
+         * deployment profiles for each branch
+         * starts the deployment for a branch if deployment configuration is present
+         * only one branch should have a working deployment configuration for one target
+        -->
+        <profile>
+            <id>master</id>
+        </profile>
+
+        <profile>
+            <id>develop</id>
+            <properties>
+                <deploy.package>true</deploy.package>
+                <sling.scheme>https</sling.scheme>
+                <sling.secure>true</sling.secure>
+                <sling.host>test.composum.com</sling.host>
+                <sling.port>443</sling.port>
+                <sling.context></sling.context>
+                <sling.password>${env.NEXUS_BUILD_PASSWD}</sling.password>
+            </properties>
+        </profile>
+
+        <!--
+         * default repository profiles
+        -->
+        <profile>
+            <id>istrepo</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>istrepo-internal</id>
+                    <name>istrepo</name>
+                    <url>https://repo.ist-software.com/repository/maven-releases</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+                <repository>
+                    <id>istrepo-snapshots</id>
+                    <name>istrepo</name>
+                    <url>https://repo.ist-software.com/repository/maven-snapshots</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>istrepo-internal</id>
+                    <name>istrepo</name>
+                    <url>https://repo.ist-software.com/repository/maven-releases</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </pluginRepository>
+                <pluginRepository>
+                    <id>istrepo-snapshots</id>
+                    <name>istrepo</name>
+                    <url>https://repo.ist-software.com/repository/maven-snapshots</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+
+    </profiles>
+</settings>
