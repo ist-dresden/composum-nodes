@@ -15,6 +15,6 @@
             </c:forEach>
         </div>
     </div>
-    <div class="node-view-content detail-content">
+    <div class="node-view-content detail-content generic-${genericView.viewType} ${genericView.fileType}">
     </div>
 </cpn:component>

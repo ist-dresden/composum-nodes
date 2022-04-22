@@ -66,27 +66,74 @@ public class Browser extends ConsoleServletBean {
 
     static {
         EDITOR_MODES = new HashMap<>();
-        EDITOR_MODES.put("config", "text");
+        EDITOR_MODES.put("c", "c_cpp");
+        EDITOR_MODES.put("cc", "c_cpp");
+        EDITOR_MODES.put("cpp", "c_cpp");
+        EDITOR_MODES.put("h", "c_cpp");
+        EDITOR_MODES.put("hh", "c_cpp");
+        EDITOR_MODES.put("cs", "csharp");
+        EDITOR_MODES.put("clj", "clojure");
         EDITOR_MODES.put("css", "css");
+        EDITOR_MODES.put("conf", "apache_conf");
+        EDITOR_MODES.put("config", "text");
+        EDITOR_MODES.put("csv", "text");
+        EDITOR_MODES.put("tsv", "text");
+        EDITOR_MODES.put("d", "d");
         EDITOR_MODES.put("dart", "dart");
+        EDITOR_MODES.put("diff", "diff");
+        EDITOR_MODES.put("patch", "diff");
+        EDITOR_MODES.put("e", "eiffel");
         EDITOR_MODES.put("ecma", "javascript");
         EDITOR_MODES.put("esp", "jsp");
+        EDITOR_MODES.put("ftl", "ftl");
         EDITOR_MODES.put("groovy", "groovy");
+        EDITOR_MODES.put("gvy", "groovy");
+        EDITOR_MODES.put("handlebars", "handlebars");
+        EDITOR_MODES.put("hbs", "handlebars");
+        EDITOR_MODES.put("htm", HTML);
         EDITOR_MODES.put(HTML, HTML);
+        EDITOR_MODES.put("xhtml", HTML);
         EDITOR_MODES.put("java", "java");
         EDITOR_MODES.put("javascript", "javascript");
         EDITOR_MODES.put("js", "javascript");
         EDITOR_MODES.put("json", "json");
         EDITOR_MODES.put(JSP, JSP);
+        EDITOR_MODES.put("jspf", JSP);
+        EDITOR_MODES.put("jspx", JSP);
+        EDITOR_MODES.put("kt", "kotlin");
         EDITOR_MODES.put("less", "less");
         EDITOR_MODES.put("markdown", "markdown");
         EDITOR_MODES.put("md", "markdown");
+        EDITOR_MODES.put("m", "objectivec");
+        EDITOR_MODES.put("mm", "objectivec");
+        EDITOR_MODES.put("php", "php");
+        EDITOR_MODES.put("pl", "perl");
+        EDITOR_MODES.put("properties", "properties");
+        EDITOR_MODES.put("py", "python");
+        EDITOR_MODES.put("rb", "ruby");
+        EDITOR_MODES.put("ru", "ruby");
+        EDITOR_MODES.put("ruby", "ruby");
+        EDITOR_MODES.put("rs", "rust");
         EDITOR_MODES.put("scala", "scala");
+        EDITOR_MODES.put("sass", "sass");
+        EDITOR_MODES.put("scss", "scss");
+        EDITOR_MODES.put("sh", "sh");
+        EDITOR_MODES.put("sql", "sql");
+        EDITOR_MODES.put("svg", "svg");
+        EDITOR_MODES.put("svg+xml", "svg");
+        EDITOR_MODES.put("swift", "swift");
+        EDITOR_MODES.put("tcl", "tcl");
+        EDITOR_MODES.put("tex", "tex");
         EDITOR_MODES.put("text", "text");
+        EDITOR_MODES.put("textile", "textile");
         EDITOR_MODES.put("txt", "text");
         EDITOR_MODES.put("xml", "xml");
         EDITOR_MODES.put("xslt", "xml");
         EDITOR_MODES.put("xslt+xml", "xml");
+        EDITOR_MODES.put("xquery", "xquery");
+        EDITOR_MODES.put("xql", "xquery");
+        EDITOR_MODES.put("yaml", "yaml");
+        EDITOR_MODES.put("yml", "yaml");
     }
 
     public static final Map<String, String> FILE_ICONS;
@@ -112,6 +159,10 @@ public class Browser extends ConsoleServletBean {
         FILE_ICONS.put("ram", "audio");
         FILE_ICONS.put("ra", "audio");
         FILE_ICONS.put("mp2", "audio");
+        FILE_ICONS.put("m4a", "audio");
+        FILE_ICONS.put("m4v", "video");
+        FILE_ICONS.put("mp4", "video");
+        FILE_ICONS.put("mov", "video");
         FILE_ICONS.put("msword", "word");
         FILE_ICONS.put("doc", "word");
         FILE_ICONS.put("docx", "word");
@@ -285,23 +336,10 @@ public class Browser extends ConsoleServletBean {
     /**
      * the content resource type (sling:resourceType) declared for the current resource
      */
-    @NotNull
-    public String getResourceType() {
+    public @NotNull String getResourceType() {
         if (resourceType == null) {
             resourceType = "";
-            String type = resource.getResourceType();
-            if (StringUtils.isBlank(type) || getPrimaryType().equals(type)) {
-                Resource contentResource = getContentResource();
-                if (contentResource != null) {
-                    type = contentResource.getResourceType();
-                    if (StringUtils.isNotBlank(type)) {
-                        ResourceHandle handle = ResourceHandle.use(contentResource);
-                        if (type.equals(handle.getPrimaryType())) {
-                            type = null;
-                        }
-                    }
-                }
-            }
+            String type = getResourceType(getResource());
             if (StringUtils.isNotBlank(type)) {
                 // check for a real existing resource type
                 if (!Resource.RESOURCE_TYPE_NON_EXISTING.equals(type)
@@ -311,6 +349,24 @@ public class Browser extends ConsoleServletBean {
             }
         }
         return resourceType;
+    }
+
+    public static @Nullable String getResourceType(@NotNull final ResourceHandle resource) {
+        String result = resource.getResourceType();
+        if (StringUtils.isBlank(result) || resource.getValueMap()
+                .get(JcrConstants.JCR_PRIMARYTYPE, "{no node}").equals(result)) {
+            Resource contentResource = resource.getContentResource();
+            if (contentResource != null) {
+                result = contentResource.getResourceType();
+                if (StringUtils.isNotBlank(result)) {
+                    ResourceHandle handle = ResourceHandle.use(contentResource);
+                    if (result.equals(handle.getPrimaryType())) {
+                        result = null;
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -564,40 +620,46 @@ public class Browser extends ConsoleServletBean {
 
     public boolean isRenderable() {
         if (isRenderable == null) {
-            String extension = getNameExtension();
-            isRenderable = isTyped()
-                    || (isText() && (HTML.equals(extension) /*|| JSP.equals(extension)*/))
-                    || (isFile() && (PDF.equals(extension)));
+            isRenderable = isRenderable(getResource(), getNameExtension());
         }
         return isRenderable;
     }
 
+    public static boolean isRenderable(@NotNull final ResourceHandle resource, @Nullable final String extension) {
+        return StringUtils.isNotBlank(getResourceType(resource))
+                || (isText(resource) && (HTML.equals(extension) /*|| JSP.equals(extension)*/))
+                || (isFile(resource) && (PDF.equals(extension)));
+    }
+
     public boolean isFile() {
         if (isFile == null) {
-            isFile = false;
-            ResourceHandle contentResource = getContentResource();
-            if (contentResource == null) {
-                contentResource = resource; // use node itself if no content present (only in the Browser!)
-            }
-            if (contentResource != null) {
-                ValueMap values = contentResource.getValueMap();
-                String typeName = values.get(JcrConstants.JCR_PRIMARYTYPE, "");
-                if (TYPE_RESOURCE.equals(typeName)
-                        || OAK_RESOURCE.equals(typeName)
-                        || TYPE_FILE.equals(typeName)
-                        || TYPE_UNSTRUCTURED.equals(typeName)) {
-                    if (values.containsKey(JcrConstants.JCR_DATA)) {
-                        isFile = true;
-                    } else {
-                        mimeType = contentResource.getProperty(PROP_MIME_TYPE);
-                        if (StringUtils.isNotBlank(mimeType)) {
-                            isFile = true;
-                        }
-                    }
+            isFile = isFile(getResource());
+        }
+        return isFile;
+    }
+
+    public static boolean isFile(@NotNull final ResourceHandle resource) {
+        boolean result = false;
+        ResourceHandle contentResource = resource.getContentResource();
+        if (contentResource == null) {
+            contentResource = resource; // use node itself if no content present (only in the Browser!)
+        }
+        final ValueMap values = contentResource.getValueMap();
+        final String typeName = values.get(JcrConstants.JCR_PRIMARYTYPE, "");
+        if (TYPE_RESOURCE.equals(typeName)
+                || OAK_RESOURCE.equals(typeName)
+                || TYPE_FILE.equals(typeName)
+                || TYPE_UNSTRUCTURED.equals(typeName)) {
+            if (values.containsKey(JcrConstants.JCR_DATA)) {
+                result = true;
+            } else {
+                String mimeType = contentResource.getValueMap().get(PROP_MIME_TYPE, String.class);
+                if (StringUtils.isNotBlank(mimeType)) {
+                    result = true;
                 }
             }
         }
-        return isFile;
+        return result;
     }
 
     @NotNull
@@ -614,27 +676,28 @@ public class Browser extends ConsoleServletBean {
         return "";
     }
 
-    @NotNull
-    public String getFileIcon() {
+    public @NotNull String getFileIcon() {
         if (fileIcon == null) {
-            String mimeType = getMimeType();
-            String extension = getNameExtension();
-            String icon = getFileType(FILE_ICONS, mimeType, extension);
-            fileIcon = StringUtils.isNotBlank(icon) ? "file-" + icon + "-o" : "file-o";
+            fileIcon = getFileIcon(getResource());
         }
         return fileIcon;
+    }
+
+    public static @NotNull String getFileIcon(@NotNull final ResourceHandle resource) {
+        final String mimeType = MimeTypeUtil.getMimeType(resource, DEFAULT_MIME_TYPE);
+        final String extension = ResourceUtil.getNameExtension(resource);
+        final String icon = getFileType(FILE_ICONS, mimeType, extension);
+        return StringUtils.isNotBlank(icon) ? "file-" + icon + "-o" : "file-o";
     }
 
     public InputStream openFile() {
         if (isFile()) {
             ResourceHandle contentResource = getContentResource();
             if (contentResource == null) {
-                contentResource = resource; // use node itself if no content present
+                contentResource = getResource(); // use node itself if no content present
             }
-            if (contentResource != null) {
-                ValueMap values = contentResource.getValueMap();
-                return values.get(JcrConstants.JCR_DATA, InputStream.class);
-            }
+            ValueMap values = contentResource.getValueMap();
+            return values.get(JcrConstants.JCR_DATA, InputStream.class);
         }
         return null;
     }
@@ -667,9 +730,13 @@ public class Browser extends ConsoleServletBean {
 
     public boolean isText() {
         if (isText == null) {
-            isText = isFile() && StringUtils.isNotBlank(getTextType());
+            isText = isText(getResource());
         }
         return isText;
+    }
+
+    public static boolean isText(@NotNull final ResourceHandle resource) {
+        return isFile(resource) && StringUtils.isNotBlank(getTextType(resource));
     }
 
     public boolean isMergedResource() {
@@ -736,7 +803,7 @@ public class Browser extends ConsoleServletBean {
         return textSnippet;
     }
 
-    public String getNameExtension() {
+    public @NotNull String getNameExtension() {
         if (nameExtension == null) {
             nameExtension = ResourceUtil.getNameExtension(getResource());
         }
@@ -746,21 +813,26 @@ public class Browser extends ConsoleServletBean {
     /**
      * Determines the text type for the current node using the mimeType (if present) and the extension.
      */
-    public String getTextType() {
+    public @NotNull String getTextType() {
         if (textType == null) {
-            String mimeType = getMimeType();
-            String extension = getNameExtension();
-            textType = getFileType(EDITOR_MODES, mimeType, extension);
+            textType = getTextType(getResource());
         }
         return textType;
     }
+
+    public static @NotNull String getTextType(@NotNull final ResourceHandle resource) {
+        final String mimeType = MimeTypeUtil.getMimeType(resource, DEFAULT_MIME_TYPE);
+        final String extension = ResourceUtil.getNameExtension(resource);
+        return getFileType(EDITOR_MODES, mimeType, extension);
+    }
+
 
     /**
      * Determines the text type for the current node using the mimeType (if present) and the extension.
      *
      * @return the type of the text file (script language) or ""
      */
-    public static String getFileType(Map<String, String> typeMap, String mimeType, String extension) {
+    public static @NotNull String getFileType(Map<String, String> typeMap, String mimeType, String extension) {
         String textType = null;
         if (StringUtils.isNotBlank(mimeType)) {
             textType = typeMap.get(mimeType);

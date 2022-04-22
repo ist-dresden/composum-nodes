@@ -654,6 +654,7 @@
 }
 
 .detail-view .detail-content,
+.detail-view .generic-detail-content,
 .detail-view .full-table-view .fixed-table-container {
     position: absolute;
     top: 34px;
