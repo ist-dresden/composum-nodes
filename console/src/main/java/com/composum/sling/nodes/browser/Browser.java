@@ -627,8 +627,8 @@ public class Browser extends ConsoleServletBean {
 
     public static boolean isRenderable(@NotNull final ResourceHandle resource, @Nullable final String extension) {
         return StringUtils.isNotBlank(getResourceType(resource))
-                || (isText(resource) && (HTML.equals(extension) /*|| JSP.equals(extension)*/))
-                || (isFile(resource) && (PDF.equals(extension)));
+                || (isText(resource) && (HTML.equalsIgnoreCase(extension) || getMimeType(resource).endsWith("/html")))
+                || (isFile(resource) && (PDF.equalsIgnoreCase(extension) || getMimeType(resource).endsWith("/pdf")));
     }
 
     public boolean isFile() {
@@ -662,9 +662,12 @@ public class Browser extends ConsoleServletBean {
         return result;
     }
 
-    @NotNull
-    public String getFilePath() {
-        if (isFile()) {
+    public @NotNull String getFilePath() {
+        return getFilePath(getResource());
+    }
+
+    public static @NotNull String getFilePath(@NotNull final ResourceHandle resource) {
+        if (isFile(resource)) {
             ResourceHandle fileRes = resource;
             if (JcrConstants.JCR_CONTENT.equals(resource.getName())) {
                 fileRes = resource.getParent();
@@ -1055,6 +1058,10 @@ public class Browser extends ConsoleServletBean {
      */
     public String getMimeType() {
         return getCurrent().getMimeType();
+    }
+
+    public static @NotNull String getMimeType(@NotNull final Resource resource) {
+        return MimeTypeUtil.getMimeType(resource, "");
     }
 
     public NodeHandle getParent() {

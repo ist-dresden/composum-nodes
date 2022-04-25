@@ -25,12 +25,10 @@
         <c:otherwise>
             <c:choose>
                 <c:when test="${genericView.renderable}">
-                    <iframe class="file-frame"
-                            src="/bin/cpm/nodes/node.download.bin${cpn:path(genericView.fileResource.path)}"
-                            width="100%" height="100%"></iframe>
+                    <iframe class="file-frame" src="" width="100%" height="100%"></iframe>
                 </c:when>
                 <c:otherwise>
-                    <a href="/bin/cpm/nodes/node.download.attachment.bin${cpn:path(genericView.fileResource.path)}"
+                    <a href="/bin/cpm/nodes/node.download.attachment.bin${cpn:path(genericView.filePath)}"
                        class="file-download" download="${cpn:text(genericView.name)}"><span
                             class="file-symbol fa fa-${genericView.fileIcon}"></span></a>
                 </c:otherwise>

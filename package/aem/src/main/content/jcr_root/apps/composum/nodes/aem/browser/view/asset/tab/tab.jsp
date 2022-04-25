@@ -4,9 +4,9 @@
 <sling:defineObjects/>
 <cpn:component id="genericView" type="com.composum.sling.nodes.browser.GenericView" scope="request">
     <div class="${genericView.id}-detail detail-panel" data-id="${genericView.id}"
-         data-type="${genericView.viewType}" data-file="${genericView.fileResource.path}"
-         data-path="${cpn:unmappedUrl(slingRequest,genericView.fileResource.path)}"
-         data-mapped="${cpn:mappedUrl(slingRequest,genericView.fileResource.path)}">
+         data-type="${genericView.viewType}" data-file="${genericView.filePath}"
+         data-path="${cpn:unmappedUrl(slingRequest,genericView.filePath)}"
+         data-mapped="${cpn:mappedUrl(slingRequest,genericView.filePath)}">
         <sling:call script="body.jsp"/>
     </div>
 </cpn:component>

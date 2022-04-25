@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -113,7 +114,7 @@ public class GenericView extends ConsoleServletBean {
 
     public @NotNull String getViewType() {
         if (viewType == null) {
-            viewType = isImage() ? "image" : isVideo() ? "video" : Browser.isFile(getResource()) ? "file" : "something";
+            viewType = isImage() ? "image" : isVideo() ? "video" : Browser.isFile(getFileResource()) ? "file" : "something";
         }
         return viewType;
     }
@@ -121,7 +122,7 @@ public class GenericView extends ConsoleServletBean {
     public @NotNull String getFileType() {
         if (fileType == null) {
             StringBuilder type = new StringBuilder();
-            if (Browser.isFile(getResource())) {
+            if (Browser.isFile(getFileResource())) {
                 type.append("file-").append(StringUtils.substringBefore(getMimeType(), "/"));
                 final String extension = ResourceUtil.getNameExtension(getResource());
                 if (StringUtils.isNotBlank(extension)) {
@@ -133,9 +134,16 @@ public class GenericView extends ConsoleServletBean {
         return fileType;
     }
 
+    public @NotNull String getFilePath() {
+        return getFileResource().getPath();
+    }
+
     public @NotNull ResourceHandle getFileResource() {
         if (fileResource == null) {
             ResourceHandle resource = getResource();
+            if (JcrConstants.JCR_CONTENT.equals(resource.getName())) {
+                resource = Objects.requireNonNull(resource.getParent());
+            }
             Resource original = resource.getChild(JcrConstants.JCR_CONTENT + "/renditions/original");
             fileResource = original != null ? ResourceHandle.use(original) : resource;
         }

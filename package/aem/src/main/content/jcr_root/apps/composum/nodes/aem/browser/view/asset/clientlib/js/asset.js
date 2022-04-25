@@ -19,7 +19,7 @@
                                 this.$video.attr('src', core.getContextUrl(url));
                                 break;
                             case 'file':
-                                this.$frame.attr('src', core.getContextUrl(url));
+                                this.$frame.attr('src', core.getContextUrl('/bin/cpm/nodes/node.download.bin' + url));
                                 break;
                             default:
                                 break;
