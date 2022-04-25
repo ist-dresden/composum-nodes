@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="genericView" type="com.composum.sling.nodes.browser.GenericView" scope="request">
-    <div class="detail-content">
+    <div class="generic-detail-content">
         <sling:include resourceType="${genericView.content.resourceType}"/>
     </div>
 </cpn:component>

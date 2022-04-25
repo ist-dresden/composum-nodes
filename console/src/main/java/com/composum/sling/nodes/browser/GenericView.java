@@ -2,19 +2,23 @@ package com.composum.sling.nodes.browser;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.RequestHandle;
+import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.Restricted;
 import com.composum.sling.core.util.LinkMapper;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.MimeTypeUtil;
+import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.console.ConsoleServletBean;
 import com.composum.sling.nodes.servlet.NodeServlet;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.Resource;
 import org.apache.tika.mime.MimeType;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -31,6 +35,12 @@ public class GenericView extends ConsoleServletBean {
 
     private transient String mappedUrl;
     private transient String unmappedUrl;
+
+    private transient String viewType;
+    private transient String fileType;
+    private transient String mimeType;
+    private transient Boolean isRenderable;
+    private transient ResourceHandle fileResource;
 
     public GenericView(BeanContext context, Resource resource) {
         super(context, resource);
@@ -51,12 +61,11 @@ public class GenericView extends ConsoleServletBean {
     }
 
     @Override
-    @NotNull
-    public String getId() {
+    public @NotNull String getId() {
         return browserView.getId();
     }
 
-    public String getMappedUrl() {
+    public @NotNull String getMappedUrl() {
         if (mappedUrl == null) {
             RequestHandle request = getRequest();
             mappedUrl = LinkUtil.getUrl(request, getPath(), null, "", LinkMapper.RESOLVER);
@@ -65,7 +74,7 @@ public class GenericView extends ConsoleServletBean {
 
     }
 
-    public String getUnmappedUrl() {
+    public @NotNull String getUnmappedUrl() {
         if (unmappedUrl == null) {
             RequestHandle request = getRequest();
             unmappedUrl = LinkUtil.getUrl(request, getPath(), null, "", LinkMapper.CONTEXT);
@@ -73,43 +82,86 @@ public class GenericView extends ConsoleServletBean {
         return unmappedUrl;
     }
 
-    @NotNull
-    public String getViewResourceType() {
+    public @NotNull String getViewResourceType() {
         final String resourceType = browserView.getViewResourceType();
         return StringUtils.isNotBlank(resourceType) ? resourceType : "composum/nodes/browser/view/generic";
     }
 
-    @NotNull
-    public String getTabResourceType() {
+    public @NotNull String getTabResourceType() {
         return browserView.getTabResourceType();
     }
 
-    @NotNull
-    public List<BrowserViews.View.Tab> getViewTabs() {
+    public @NotNull List<BrowserViews.View.Tab> getViewTabs() {
         if (viewTabs == null) {
             viewTabs = browserView.getTabs(context, getResource());
         }
         return viewTabs;
     }
 
-    @NotNull
-    public BrowserViews.View.Toolbar getToolbar() {
+    public @NotNull BrowserViews.View.Toolbar getToolbar() {
         if (viewToolbar == null) {
             viewToolbar = browserView.getToolbar(context, getResource());
         }
         return viewToolbar;
     }
 
-    @NotNull
-    public BrowserViews.View.Content getContent() {
+    public @NotNull BrowserViews.View.Content getContent() {
         if (viewContent == null) {
             viewContent = browserView.getContent(context, getResource());
         }
         return viewContent;
     }
 
-    @NotNull
-    public String getMimeTypeCss() {
+    public @NotNull String getViewType() {
+        if (viewType == null) {
+            viewType = isImage() ? "image" : isVideo() ? "video" : Browser.isFile(getFileResource()) ? "file" : "something";
+        }
+        return viewType;
+    }
+
+    public @NotNull String getFileType() {
+        if (fileType == null) {
+            StringBuilder type = new StringBuilder();
+            if (Browser.isFile(getFileResource())) {
+                type.append("file-").append(StringUtils.substringBefore(getMimeType(), "/"));
+                final String extension = ResourceUtil.getNameExtension(getResource());
+                if (StringUtils.isNotBlank(extension)) {
+                    type.append("-").append(extension);
+                }
+            }
+            fileType = type.toString();
+        }
+        return fileType;
+    }
+
+    public @NotNull String getFilePath() {
+        return getFileResource().getPath();
+    }
+
+    public @NotNull ResourceHandle getFileResource() {
+        if (fileResource == null) {
+            ResourceHandle resource = getResource();
+            if (JcrConstants.JCR_CONTENT.equals(resource.getName())) {
+                resource = Objects.requireNonNull(resource.getParent());
+            }
+            Resource original = resource.getChild(JcrConstants.JCR_CONTENT + "/renditions/original");
+            fileResource = original != null ? ResourceHandle.use(original) : resource;
+        }
+        return fileResource;
+    }
+
+    public boolean isRenderable() {
+        if (isRenderable == null) {
+            isRenderable = Browser.isRenderable(getFileResource(), ResourceUtil.getNameExtension(getResource()));
+        }
+        return isRenderable;
+    }
+
+    public @NotNull String getFileIcon() {
+        return Browser.getFileIcon(getFileResource());
+    }
+
+    public @NotNull String getMimeTypeCss() {
         final String mimeType = getMimeType();
         return StringUtils.isNotBlank(mimeType)
                 ? mimeType.substring(mimeType.indexOf('/') + 1).replaceAll("[+]", " ")
@@ -119,8 +171,25 @@ public class GenericView extends ConsoleServletBean {
     /**
      * the content mime type declared for the current resource
      */
-    public String getMimeType() {
-        MimeType mimeType = MimeTypeUtil.getMimeType(getResource());
-        return mimeType != null ? mimeType.toString() : "";
+    public @NotNull String getMimeType() {
+        if (mimeType == null) {
+            MimeType mType = MimeTypeUtil.getMimeType(getFileResource());
+            mimeType = mType != null ? mType.toString() : "";
+        }
+        return mimeType;
+    }
+
+    /**
+     * 'true' if the mimetype is of type image
+     */
+    public boolean isImage() {
+        return getMimeType().startsWith("image/");
+    }
+
+    /**
+     * 'true' if the mimetype is of type video
+     */
+    public boolean isVideo() {
+        return getMimeType().startsWith("video/");
     }
 }

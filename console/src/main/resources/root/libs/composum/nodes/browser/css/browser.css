@@ -654,12 +654,13 @@
 }
 
 .detail-view .detail-content,
+.detail-view .generic-detail-content,
 .detail-view .full-table-view .fixed-table-container {
     position: absolute;
     top: 34px;
     left: 0;
     right: 0;
-    bottom: 42px;
+    bottom: 41px;
     overflow: auto;
 }
 
