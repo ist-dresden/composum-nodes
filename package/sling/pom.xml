@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-package</artifactId>
-        <version>4.1.2</version>
+        <version>4.1.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>composum-nodes-sling-package</artifactId>
