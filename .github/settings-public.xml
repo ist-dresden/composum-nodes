@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd"
+        xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <!-- Try building with only the public repositories -->
+
+    <profiles>
+
+        <!-- https://repo.adobe.com/index.html
+        According to https://experienceleaguecommunities.adobe.com/t5/adobe-experience-manager/not-able-to-access-repo-adobe-com/td-p/386197
+        the adobe public repo is to be migrated to maven central, but as of 20/04/11 at least the
+        com.day.jcr.vault:content-package-maven-plugin-parent:pom:0.0.24 is missing for the
+        com.day.jcr.vault:content-package-maven-plugin:jar:0.0.24 .
+        TODO: remove this ASAP and just use normal settings provided by Github Actions.
+          -->
+        <profile>
+            <id>adobe-public</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <pluginRepositories>
+                <pluginRepository>
+                    <!-- prefer maven central plugin repo -->
+                    <id>central</id>
+                    <name>Central Repository</name>
+                    <releases>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <url>https://repo.maven.apache.org/maven2</url>
+                </pluginRepository>
+
+                <pluginRepository>
+                    <!-- But fall back to adobe repo for the missing things. :-( -->
+                    <id>adobe-public-releases</id>
+                    <name>Adobe Public Repository</name>
+                    <url>https://repo.adobe.com/nexus/content/groups/public</url>
+                    <releases>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+
+    </profiles>
+</settings>
