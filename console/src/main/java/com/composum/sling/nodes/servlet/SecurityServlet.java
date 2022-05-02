@@ -13,6 +13,7 @@ import com.composum.sling.core.util.ResponseUtil;
 import com.composum.sling.cpnl.CpnlElFunctions;
 import com.composum.sling.nodes.NodesConfiguration;
 import com.google.gson.stream.JsonWriter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
@@ -409,10 +410,11 @@ public class SecurityServlet extends AbstractServiceServlet {
                         if ("/".equals(path) && policies.length == 2 && seemsTheSame(policies[0], policies[1])) {
                             effective.add(policies[0]);
                         } else {
-                            for (AccessControlPolicy policy : policies) {
+                            for (final AccessControlPolicy policy : policies) {
                                 if (policy instanceof JackrabbitAccessControlList) {
-                                    JackrabbitAccessControlList acl = (JackrabbitAccessControlList) policy;
-                                    if (path.equals(acl.getPath())) {
+                                    final JackrabbitAccessControlList acl = (JackrabbitAccessControlList) policy;
+                                    final String aclPath = acl.getPath();
+                                    if (StringUtils.isNotBlank(aclPath) && path.startsWith(aclPath)) {
                                         effective.add(policy);
                                     }
                                 }

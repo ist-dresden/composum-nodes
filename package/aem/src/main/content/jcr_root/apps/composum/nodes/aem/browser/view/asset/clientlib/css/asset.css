@@ -1,18 +1,46 @@
-.aem-asset .detail-content .image-frame {
+.aem-asset .generic-detail-content .image-frame {
     display: table;
     margin: auto;
     border: 1px solid #ccc;
     padding: 5px;
 }
 
-.aem-asset .detail-content .image-frame .image-background {
+.aem-asset .generic-detail-content .image-frame .image-background {
     display: inline-block;
 }
 
-.aem-asset .detail-content .image-frame img {
+.aem-asset .generic-detail-content .image-frame img {
     width: 100%;
 }
 
-.aem-asset .detail-content .image-frame.svg img {
+.aem-asset .generic-detail-content .image-frame.svg img {
     min-width: 100px;
+}
+
+.aem-asset .generic-video .generic-detail-content {
+    background-color: #666;
+}
+
+.aem-asset .generic-detail-content .video-frame {
+    display: table;
+    margin: auto;
+    padding: 6px;
+}
+
+.aem-asset .generic-detail-content .video-frame .video-background {
+    background-color: #444;
+}
+
+.aem-asset .generic-detail-content .video-frame video {
+    width: 100%;
+}
+
+.aem-asset .generic-detail-content .file-download {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 150px;
+    opacity: .4;
+    color: inherit;
 }
