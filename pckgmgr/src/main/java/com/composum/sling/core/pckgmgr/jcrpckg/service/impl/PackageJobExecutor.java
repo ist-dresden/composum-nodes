@@ -251,8 +251,9 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
 
         protected class RegistryOperation extends AbstractPackageOperation {
 
-            private final String reference;
-            private final PackageTask.Type type;
+            protected final String reference;
+            protected final PackageTask.Type type;
+            protected ExecutionPlan plan;
 
             public RegistryOperation(String reference, String operation) throws IllegalArgumentException {
                 super(false);
@@ -285,7 +286,13 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
                         .with(this.tracker)
                         .addTask().with(pckgid.getRight()).with(type);
                 builder.validate();
-                ExecutionPlan plan = builder.execute();
+                // TODO(hps,10.05.22) handle DependencyException more sensibly. Add them automatically?
+                // registry.analyzeDependencies(pckgid.getRight(), false)? How to handle transitive?
+                plan = builder.execute();
+            }
+
+            protected boolean isDone() {
+                return (plan != null && plan.isExecuted()) || super.isDone();
             }
         }
 
@@ -320,7 +327,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             protected abstract void doIt() throws PackageException, IOException, RepositoryException;
 
             protected void track() {
-                while (hasFinishLogMessage && !tracker.isOperationDone()) {
+                while (!isDone()) {
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException iex) {
@@ -329,21 +336,20 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
                 }
             }
 
+            protected boolean isDone() {
+                return !hasFinishLogMessage || tracker.isOperationDone();
+            }
+
             protected String done() throws IOException {
                 return "done.";
             }
 
             @Override
-            public String call() throws IOException, RepositoryException {
+            public String call() throws IOException, RepositoryException, PackageException {
                 tracker.writePrologue();
-                try {
-                    doIt();
-                    track();
-                    return done();
-                } catch (PackageException pex) {
-                    LOG.error(pex.getMessage(), pex);
-                    throw new RepositoryException(pex);
-                }
+                doIt();
+                track();
+                return done();
             }
 
         }
