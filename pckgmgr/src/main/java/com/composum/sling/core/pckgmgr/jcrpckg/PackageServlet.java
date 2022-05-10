@@ -344,6 +344,7 @@ public class PackageServlet extends AbstractServiceServlet {
         }
     }
 
+    /** Yields information about the existing {@link PackageRegistries} and the registered packages. */
     protected class RegistriesOperation implements ServletOperation {
 
         @Override

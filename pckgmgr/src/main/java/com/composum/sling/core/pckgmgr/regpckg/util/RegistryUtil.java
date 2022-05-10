@@ -61,6 +61,11 @@ public interface RegistryUtil {
         return matcher.matches() ? matcher.group("ns") : null;
     }
 
+    /** Returns true if this is a path going to a registry - that is /@{registryname}>/path */
+    static boolean isRegistryBasedPath(String path) {
+        return StringUtils.isNotBlank(path) && StringUtils.isNotBlank(namespace(path));
+    }
+
     @Nullable
     static String pathWithoutNamespace(@Nullable String fullPath) {
         String path = null;
@@ -222,7 +227,7 @@ public interface RegistryUtil {
      * Tries to correct for a weird format com.day.jcr.vault:content-package-maven-plugin produces but that cannot be parsed by {@link ISO8601#parse(String)}, for example 2021-05-26T15:12:21.673+0200 instead of 2021-05-26T15:12:21.673+02:00 .
      * Usage e.g. {code}format(packageProps.getLastModified(), packageProps.getProperty(PackageProperties.NAME_LAST_MODIFIED)){code}
      */
-    static Calendar readPackagePropertyDate(Calendar rawDate, @Nonnull String dateRep) {
+    static Calendar readPackagePropertyDate(Calendar rawDate, String dateRep) {
         Calendar date = rawDate;
         if (date == null && StringUtils.isNotBlank(dateRep)) {
             Matcher brokenFmt = BROKEN_DATEFMT_PATTERN.matcher(dateRep);
