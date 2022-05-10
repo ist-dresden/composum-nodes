@@ -166,11 +166,11 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             }
         }
 
-        protected class InstallOperation extends TrackedOperation {
+        protected class InstallOperation extends Operation {
 
             public InstallOperation(JcrPackageManager manager, JcrPackage jcrPckg)
                     throws IOException {
-                super(manager, jcrPckg);
+                super(manager, jcrPckg, true);
             }
 
             @Override
@@ -191,7 +191,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
 
             public AssembleOperation(JcrPackageManager manager, JcrPackage jcrPckg)
                     throws IOException {
-                super(manager, jcrPckg);
+                super(manager, jcrPckg, false);
             }
 
             @Override
@@ -205,11 +205,11 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             }
         }
 
-        protected class UninstallOperation extends TrackedOperation {
+        protected class UninstallOperation extends Operation {
 
             public UninstallOperation(JcrPackageManager manager, JcrPackage jcrPckg)
                     throws IOException {
-                super(manager, jcrPckg);
+                super(manager, jcrPckg, true);
             }
 
             @Override
@@ -250,25 +250,28 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             return jcrPackage;
         }
 
-        protected abstract class Operation implements Callable<String> {
+        protected abstract class AbstractPackageOperation implements Callable<String> {
 
-            public final JcrPackageManager manager;
-            public final JcrPackage jcrPckg;
-            public final ImportOptions options;
-            public final OperationDoneTracker tracker;
+            protected final OperationDoneTracker tracker;
 
-            public Operation(JcrPackageManager manager, JcrPackage jcrPckg)
-                    throws IOException {
-                this.manager = manager;
-                this.jcrPckg = jcrPckg;
+            /** Should be true when the operation is sensibly tracked so that we can determine when it's finished. */
+            protected final boolean hasFinishLogMessage;
+
+            public AbstractPackageOperation(boolean hasFinishLogMessage) {
                 tracker = new OperationDoneTracker(out, IMPORT_DONE);
-                options = createImportOptions();
-                options.setListener(tracker);
+                this.hasFinishLogMessage = hasFinishLogMessage;
             }
 
             protected abstract void doIt() throws PackageException, IOException, RepositoryException;
 
             protected void track() {
+                while (hasFinishLogMessage && !tracker.isOperationDone()) {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException iex) {
+                        LOG.info("Operation track interrupted: " + iex.getMessage());
+                    }
+                }
             }
 
             protected String done() throws IOException {
@@ -287,25 +290,24 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
                     throw new RepositoryException(pex);
                 }
             }
+
         }
 
-        protected abstract class TrackedOperation extends Operation {
+        protected abstract class Operation extends AbstractPackageOperation {
 
-            public TrackedOperation(JcrPackageManager manager, JcrPackage jcrPckg)
+            public final JcrPackageManager manager;
+            public final JcrPackage jcrPckg;
+            public final ImportOptions options;
+
+            public Operation(JcrPackageManager manager, JcrPackage jcrPckg, boolean isTracked)
                     throws IOException {
-                super(manager, jcrPckg);
+                super(isTracked);
+                this.manager = manager;
+                this.jcrPckg = jcrPckg;
+                options = createImportOptions();
+                options.setListener(tracker);
             }
 
-            @Override
-            protected void track() {
-                while (!tracker.isOperationDone()) {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException iex) {
-                        LOG.info("Operation track interrupted: " + iex.getMessage());
-                    }
-                }
-            }
         }
 
         protected class OperationDoneTracker extends PackageProgressTracker.TextWriterTracking {
