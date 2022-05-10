@@ -4,14 +4,22 @@ import com.composum.sling.core.concurrent.AbstractJobExecutor;
 import com.composum.sling.core.concurrent.JobFailureException;
 import com.composum.sling.core.concurrent.SequencerService;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageProgressTracker;
-import org.apache.commons.lang3.StringUtils;
+import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
+import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
+
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.io.ImportOptions;
 import org.apache.jackrabbit.vault.packaging.DependencyHandling;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.PackageException;
+import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.Packaging;
+import org.apache.jackrabbit.vault.packaging.registry.ExecutionPlan;
+import org.apache.jackrabbit.vault.packaging.registry.ExecutionPlanBuilder;
+import org.apache.jackrabbit.vault.packaging.registry.PackageRegistry;
+import org.apache.jackrabbit.vault.packaging.registry.PackageTask;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
@@ -32,14 +40,18 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 import static com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil.IMPORT_DONE;
+import static java.util.Objects.requireNonNull;
 
 @Component(
         service = {JobExecutor.class, EventHandler.class},
@@ -67,6 +79,9 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
 
     @Reference
     private Packaging packaging;
+
+    @Reference
+    private PackageRegistries packageRegistries;
 
     @Reference
     private ResourceResolverFactory resolverFactory;
@@ -139,10 +154,13 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
         public String call() throws Exception {
             lock.lock();
             try {
-                JcrPackageManager manager = packaging.getPackageManager(session);
-                JcrPackage jcrPckg = getJcrPackage(job, manager);
-                String operation = (String) job.getProperty("operation");
-                if (StringUtils.isNotBlank(operation)) {
+                String reference = (String) job.getProperty(JOB_REFRENCE_PROPERTY);
+                String operation = requireNonNull((String) job.getProperty("operation"), "No operation requested!");
+                if (RegistryUtil.isRegistryBasedPath(reference)) {
+                    return new RegistryOperation(reference, operation).call();
+                } else {
+                    JcrPackageManager manager = packaging.getPackageManager(session);
+                    JcrPackage jcrPckg = getJcrPackage(manager, reference);
                     switch (operation.toLowerCase()) {
                         case "install":
                             final String name = jcrPckg.getPackage().getId().getName();
@@ -157,8 +175,6 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
                         default:
                             throw new Exception("Unsupported operation: " + operation);
                     }
-                } else {
-                    throw new Exception("No operation requested!");
                 }
             } finally {
                 lock.unlock();
@@ -166,7 +182,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             }
         }
 
-        protected class InstallOperation extends Operation {
+        protected class InstallOperation extends JcrPackageOperation {
 
             public InstallOperation(JcrPackageManager manager, JcrPackage jcrPckg)
                     throws IOException {
@@ -187,7 +203,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             }
         }
 
-        protected class AssembleOperation extends Operation {
+        protected class AssembleOperation extends JcrPackageOperation {
 
             public AssembleOperation(JcrPackageManager manager, JcrPackage jcrPckg)
                     throws IOException {
@@ -205,7 +221,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             }
         }
 
-        protected class UninstallOperation extends Operation {
+        protected class UninstallOperation extends JcrPackageOperation {
 
             public UninstallOperation(JcrPackageManager manager, JcrPackage jcrPckg)
                     throws IOException {
@@ -233,12 +249,51 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             return options;
         }
 
-        protected JcrPackage getJcrPackage(Job job, JcrPackageManager manager)
+        protected class RegistryOperation extends AbstractPackageOperation {
+
+            private final String reference;
+            private final PackageTask.Type type;
+
+            public RegistryOperation(String reference, String operation) throws IllegalArgumentException {
+                super(false);
+                this.reference = reference;
+                this.type = convertOperation(operation);
+            }
+
+            protected PackageTask.Type convertOperation(String operation) {
+                switch (operation.toLowerCase()) {
+                    case "install":
+                        return PackageTask.Type.INSTALL;
+                    case "uninstall":
+                        return PackageTask.Type.UNINSTALL;
+                    case "extract":
+                        return PackageTask.Type.EXTRACT;
+                    case "remove":
+                        return PackageTask.Type.REMOVE;
+                    default:
+                        throw new IllegalArgumentException("Unsupported operation: " + operation);
+                }
+            }
+
+            @Override
+            protected void doIt() throws PackageException, IOException, RepositoryException {
+                PackageRegistries.Registries registries = packageRegistries.getRegistries(serviceResolver);
+                Pair<String, PackageId> pckgid = requireNonNull(registries.resolve(reference), "Can't find package " + reference);
+                PackageRegistry registry = registries.getRegistry(pckgid.getLeft());
+                ExecutionPlanBuilder builder = registry.createExecutionPlan()
+                        .with(session)
+                        .with(this.tracker)
+                        .addTask().with(pckgid.getRight()).with(type);
+                builder.validate();
+                ExecutionPlan plan = builder.execute();
+            }
+        }
+
+        protected JcrPackage getJcrPackage(JcrPackageManager manager, String reference)
                 throws RepositoryException {
             JcrPackage jcrPackage = null;
             Node pckgRoot = manager.getPackageRoot();
             if (pckgRoot != null) {
-                String reference = (String) job.getProperty(JOB_REFRENCE_PROPERTY);
                 while (reference.startsWith("/")) {
                     reference = reference.substring(1);
                 }
@@ -293,13 +348,13 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
 
         }
 
-        protected abstract class Operation extends AbstractPackageOperation {
+        protected abstract class JcrPackageOperation extends AbstractPackageOperation {
 
             public final JcrPackageManager manager;
             public final JcrPackage jcrPckg;
             public final ImportOptions options;
 
-            public Operation(JcrPackageManager manager, JcrPackage jcrPckg, boolean isTracked)
+            public JcrPackageOperation(JcrPackageManager manager, JcrPackage jcrPckg, boolean isTracked)
                     throws IOException {
                 super(isTracked);
                 this.manager = manager;
