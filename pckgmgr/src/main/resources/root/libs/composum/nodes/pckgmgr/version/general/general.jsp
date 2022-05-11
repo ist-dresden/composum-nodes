@@ -18,6 +18,11 @@ p/version/general/general.jsp
                         class="symbol fa fa-sign-in fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
                         class="label">Install</span></button>
+                <button class="uninstall btn btn-default btn-stack" title="Uninstall this package"><span
+                        class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
+                        class="symbol fa fa-history fa-stack-1x"></i><i
+                        class="error fa fa-stack-2x">!</i></span><span
+                        class="label">Uninstall</span></button>
                 <button class="delete fa fa-trash btn btn-default" title="Delete this package"><span class="label">Delete</span>
                 </button>
             </div>
