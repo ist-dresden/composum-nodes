@@ -9,6 +9,7 @@ import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
+import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.ImportOptions;
 import org.apache.jackrabbit.vault.packaging.DependencyHandling;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
@@ -20,6 +21,8 @@ import org.apache.jackrabbit.vault.packaging.registry.ExecutionPlan;
 import org.apache.jackrabbit.vault.packaging.registry.ExecutionPlanBuilder;
 import org.apache.jackrabbit.vault.packaging.registry.PackageRegistry;
 import org.apache.jackrabbit.vault.packaging.registry.PackageTask;
+import org.apache.jackrabbit.vault.packaging.registry.RegisteredPackage;
+import org.apache.jackrabbit.vault.packaging.registry.impl.FSPackageRegistry;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
@@ -40,11 +43,9 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -281,18 +282,63 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
                 PackageRegistries.Registries registries = packageRegistries.getRegistries(serviceResolver);
                 Pair<String, PackageId> pckgid = requireNonNull(registries.resolve(reference), "Can't find package " + reference);
                 PackageRegistry registry = registries.getRegistry(pckgid.getLeft());
+                PackageTask.Type taskType = fixTaskType(pckgid, registry, type);
+                taskType = fixTaskType(pckgid, registry, taskType);
                 ExecutionPlanBuilder builder = registry.createExecutionPlan()
                         .with(session)
                         .with(this.tracker)
-                        .addTask().with(pckgid.getRight()).with(type);
+                        .addTask().with(pckgid.getRight()).with(taskType);
                 builder.validate();
-                // TODO(hps,10.05.22) handle DependencyException more sensibly. Add them automatically?
+                // TODO(hps,10.05.22) possibly handle DependencyException thrown in validate more sensibly. Add them automatically?
                 // registry.analyzeDependencies(pckgid.getRight(), false)? How to handle transitive?
                 plan = builder.execute();
+                evaluatePlan(plan);
             }
 
+            /** On a FSPackageRegistry "INSTALL" isn't available. But it seems really hard to recognize it. */
+            private PackageTask.Type fixTaskType(Pair<String, PackageId> pckgid, PackageRegistry registry, PackageTask.Type taskType) throws IOException {
+                if (this.type == PackageTask.Type.INSTALL) {
+                    RegisteredPackage regpckg = registry.open(pckgid.getRight());
+                    if (regpckg != null && regpckg.getPackage() != null && regpckg.getPackage().getFile() != null) {
+                        LOG.info("We are assuming this is a FSPackageRegistry and that supports EXTRACT but not INSTALL for {}", pckgid);
+                        taskType = PackageTask.Type.EXTRACT;
+                    }
+                }
+                return taskType;
+            }
+
+            protected void evaluatePlan(ExecutionPlan plan) throws PackageException, IOException, RepositoryException {
+                if (plan.isExecuted()) {
+                    String msg = plan.hasErrors() ? "with errors" : "without errors";
+                    tracker.onMessage(ProgressTrackerListener.Mode.TEXT, plan.getId(), "Plan was executed " + msg);
+                }
+
+                Throwable throwable = null;
+                if (plan.hasErrors()) {
+                    for (PackageTask task : plan.getTasks()) {
+                        if (task.getError() != null) {
+                            tracker.onError(ProgressTrackerListener.Mode.TEXT, task.getError().getMessage(), (Exception) task.getError());
+                            if (throwable == null) {
+                                throwable = task.getError();
+                            }
+                        }
+                    }
+                }
+
+                if (throwable instanceof PackageException) {
+                    throw (PackageException) throwable;
+                } else if (throwable instanceof IOException) {
+                    throw (IOException) throwable;
+                } else if (throwable instanceof RepositoryException) {
+                    throw (RepositoryException) throwable;
+                } else if (throwable != null) {
+                    throw new PackageException(throwable);
+                }
+            }
+
+            @Override
             protected boolean isDone() {
-                return (plan != null && plan.isExecuted()) || super.isDone();
+                return (plan != null && plan.isExecuted() && !plan.hasErrors()) || super.isDone();
             }
         }
 
@@ -319,7 +365,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             /** Should be true when the operation is sensibly tracked so that we can determine when it's finished. */
             protected final boolean hasFinishLogMessage;
 
-            public AbstractPackageOperation(boolean hasFinishLogMessage) {
+            protected AbstractPackageOperation(boolean hasFinishLogMessage) {
                 tracker = new OperationDoneTracker(out, IMPORT_DONE);
                 this.hasFinishLogMessage = hasFinishLogMessage;
             }
@@ -331,7 +377,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException iex) {
-                        LOG.info("Operation track interrupted: " + iex.getMessage());
+                        LOG.info("Operation track interrupted: {}", iex.getMessage());
                     }
                 }
             }
@@ -360,8 +406,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
             public final JcrPackage jcrPckg;
             public final ImportOptions options;
 
-            public JcrPackageOperation(JcrPackageManager manager, JcrPackage jcrPckg, boolean isTracked)
-                    throws IOException {
+            protected JcrPackageOperation(JcrPackageManager manager, JcrPackage jcrPckg, boolean isTracked) {
                 super(isTracked);
                 this.manager = manager;
                 this.jcrPckg = jcrPckg;

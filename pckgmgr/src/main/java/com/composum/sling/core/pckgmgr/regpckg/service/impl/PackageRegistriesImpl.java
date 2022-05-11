@@ -101,25 +101,25 @@ public class PackageRegistriesImpl implements PackageRegistries {
             if (StringUtils.startsWith(rawPath, "/")) {
                 Matcher matcher = REGISTRY_BASED_PATH.matcher(rawPath);
                 String path = rawPath;
-                List<PackageRegistry> searchRegistries = new ArrayList<>();
+                List<Pair<String, PackageRegistry>> searchRegistries = new ArrayList<>();
                 if (matcher.matches()) {
                     String namespace = matcher.group("ns");
                     path = matcher.group("path");
                     if (getRegistry(namespace) != null) {
-                        searchRegistries.add(getRegistry(namespace));
+                        searchRegistries.add(Pair.of(namespace, getRegistry(namespace)));
                     }
                 } else {
-                    searchRegistries.addAll(iterable());
+                    registries.entrySet().forEach(e -> searchRegistries.add(Pair.of(e.getKey(), e.getValue())));
                 }
 
                 // now try to find a package / package version matching the path
-                for (Map.Entry<String, PackageRegistry> entry : registries.entrySet()) {
-                    for (PackageId id : entry.getValue().packages()) {
+                for (Pair<String, PackageRegistry> registryEntry : searchRegistries) {
+                    for (PackageId id : registryEntry.getValue().packages()) {
                         if (path.equals(RegistryUtil.toPath((String) null, id))) {
-                            result = Pair.of(entry.getKey(), id);
+                            result = Pair.of(registryEntry.getKey(), id);
                         } else if (path.equals(RegistryUtil.toPackagePath(null, id))) {
                             if (result == null || new VersionComparator().compare(result.getRight().getVersionString(), id.getVersionString()) < 0) {
-                                result = Pair.of(entry.getKey(), id);
+                                result = Pair.of(registryEntry.getKey(), id);
                             }
                         }
                     }
