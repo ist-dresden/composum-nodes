@@ -248,6 +248,8 @@ public class LazyCreationServiceImpl implements LazyCreationService {
             try {
                 Thread.sleep(waitStep);
             } catch (InterruptedException e) {
+                // someone interrupted us; we better give up completely.
+                throw new RepositoryException("Locking was interrupted.", e);
             }
             // We need sequencer because the JCR locking doesn't seem to distinguish between sessions on one instance, or something. Hard to test.
             SequencerService.Token token = sequencer.acquire(path);
@@ -388,6 +390,8 @@ public class LazyCreationServiceImpl implements LazyCreationService {
             try {
                 Thread.sleep(waitStep);
             } catch (InterruptedException e) {
+                // Somebody interrupted us, better give up and don't wait anymore.
+                throw new RepositoryException("Interrupted", e);
             }
             refreshSession(resolver, true);
             resource = resolver.getResource(path);
