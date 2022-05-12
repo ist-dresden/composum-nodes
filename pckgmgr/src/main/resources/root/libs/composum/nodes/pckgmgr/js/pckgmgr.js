@@ -89,7 +89,7 @@
                                     + core.encodePath(path)),
                                 nodeUrl: core.getContextUrl('/bin/packages.html'
                                     + core.encodePath(path)),
-                                downloadUrl: pathMatch
+                                downloadUrl: pathMatch || result.responseJSON.packageid
                                     ? core.getContextUrl('/bin/cpm/package.download.zip' + core.encodePath(path))
                                     : ''
                             };
