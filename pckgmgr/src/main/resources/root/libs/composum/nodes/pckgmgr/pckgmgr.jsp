@@ -32,29 +32,6 @@
                         <div class="nodes-pckgmgr-tree-tabs_body">
                             <sling:include resourceType="composum/nodes/pckgmgr/regpckg/tree"/>
                         </div>
-                        <div class="tree-actions action-bar btn-toolbar" role="toolbar">
-                            <div class="align-left">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button type="button" class="refresh glyphicon-refresh glyphicon btn btn-default"
-                                            title="Refresh tree view"><span class="label">Refresh</span></button>
-                                </div>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button type="button" class="create fa fa-plus btn btn-default"
-                                            title="Create a new package"${writeDisabled}><span
-                                            class="label">Create</span></button>
-                                    <button type="button" class="delete fa fa-minus btn btn-default"
-                                            title="Delete selected package"${writeDisabled}><span
-                                            class="label">Delete</span></button>
-                                </div>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button type="button" class="upload fa fa-upload btn btn-default"
-                                            title="Upload a new package"${writeDisabled}><span
-                                            class="label">Upload</span></button>
-                                    <a type="button" class="download fa fa-download btn btn-default"
-                                       title="Download selected package"><span class="label">Download</span></a>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
                 <div class="split-pane-divider"></div>

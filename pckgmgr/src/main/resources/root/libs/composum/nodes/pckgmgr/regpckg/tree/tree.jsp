@@ -16,9 +16,6 @@
                             class="label">${cpn:i18n(slingRequest,'Refresh')}</span></button>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="create fa fa-plus btn btn-default"
-                            title="${cpn:i18n(slingRequest,'Create a new package')}"><span
-                            class="label">${cpn:i18n(slingRequest,'Create')}</span></button>
                     <button type="button" class="delete fa fa-minus btn btn-default"
                             title="${cpn:i18n(slingRequest,'Delete selected package')}"><span
                             class="label">${cpn:i18n(slingRequest,'Delete')}</span></button>

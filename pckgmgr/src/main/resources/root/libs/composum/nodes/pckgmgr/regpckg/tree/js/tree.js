@@ -33,7 +33,6 @@
         initialize: function (options) {
             this.tree = options.tree;
             this.$('button.refresh').on('click', _.bind(this.refreshTree, this));
-            this.$('button.create').on('click', _.bind(this.createPackage, this));
             this.$('button.delete').on('click', _.bind(this.deletePackage, this));
             this.$('button.upload').on('click', _.bind(this.uploadPackage, this));
             this.$download = this.$('a.download');
@@ -57,20 +56,6 @@
             } else {
                 this.$download.attr('href', '');
             }
-        },
-
-        createPackage: function (event) {
-            var dialog = pckgmgr.getCreatePackageDialog();
-            dialog.show(_.bind(function () {
-                var parentNode = this.tree.current();
-                var parentPath = parentNode.path;
-                if (parentNode.type === 'package') {
-                    parentPath = core.getParentPath(parentPath);
-                }
-                if (parentNode) {
-                    dialog.initGroup(parentPath.substring(1));
-                }
-            }, this));
         },
 
         deletePackage: function (event) {
