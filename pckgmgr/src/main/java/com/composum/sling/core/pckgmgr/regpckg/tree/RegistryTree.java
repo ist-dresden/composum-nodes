@@ -2,6 +2,7 @@ package com.composum.sling.core.pckgmgr.regpckg.tree;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
+import com.composum.sling.core.util.ResourceUtil;
 import com.google.gson.stream.JsonWriter;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.registry.PackageRegistry;
@@ -50,6 +51,11 @@ public class RegistryTree extends AbstractNode {
                     item.load(context);
                 }
                 item = item.getItem(segments[i]);
+            }
+            if (item == null) {
+                // Accesses to parts of the tree that do not exist (anymore) occur after deletions.
+                // We return an empty folder there to not break the tree in the FE.
+                item = new GroupNode(null, ResourceUtil.getParent(path), ResourceUtil.getName(path));
             }
         }
         return item;

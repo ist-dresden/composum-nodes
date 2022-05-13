@@ -338,8 +338,10 @@ public class PackageServlet extends AbstractServiceServlet {
                     treeItem.load(context);
                 }
                 treeItem.toTree(writer, true, true);
-            } else {
-                new Status(request, response).setStatus(HttpServletResponse.SC_NOT_FOUND);
+            } else { // that's not the way status is intended to be used, but that'd not be compatible with treeItem.toTree .
+                Status status = new Status(request, response);
+                status.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                status.sendJson();
             }
         }
     }
