@@ -7,9 +7,9 @@ import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryTree;
 import com.composum.sling.core.pckgmgr.regpckg.tree.VersionNode;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
+
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.SyntheticResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,4 +130,13 @@ public class PackageBean extends ConsoleSlingBean implements PackageView, Compar
     public int compareTo(PackageBean other) {
         return getName().compareTo(other.getName());
     }
+
+    public String getCssClasses() {
+        return currentVersion != null ? currentVersion.getCssClasses() : "";
+    }
+
+    public String getDownloadUrl() {
+        return currentVersion != null ? currentVersion.getDownloadUrl() : "";
+    }
+
 }

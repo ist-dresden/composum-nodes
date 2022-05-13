@@ -3,8 +3,10 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
+<%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean"--%>
+<%--
+FIXME deactivate this until fully implemented.
 <cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean" scope="request">
-    <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean"--%>
     <div class="detail-panel package ${pckg.cssClasses}">
         <div class="display-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
@@ -19,11 +21,6 @@
                         class="symbol fa fa-sign-in fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
                         class="label">Install</span></button>
-                <button class="assemble btn btn-default btn-stack" title="(Re)Build this package"><span
-                        class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
-                        class="symbol fa fa-archive fa-stack-1x"></i><i
-                        class="error fa fa-stack-2x">!</i></span><span
-                        class="label">Assemble</span></button>
                 <button class="uninstall btn btn-default btn-stack" title="Uninstall this package"><span
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                         class="symbol fa fa-history fa-stack-1x"></i><i
@@ -87,3 +84,4 @@
         </div>
     </div>
 </cpn:component>
+ --%>

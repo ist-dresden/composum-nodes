@@ -81,7 +81,9 @@
                 this.$('.display-toolbar .assemble').click(_.bind(this.assemblePackage, this));
                 this.$('.display-toolbar .uninstall').click(_.bind(this.uninstallPackage, this));
                 this.$('.display-toolbar .upload').click(_.bind(pckgmgr[pckgmgr.mode.current].tree.actions.uploadPackage, pckgmgr[pckgmgr.mode.current].tree.actions));
-                this.$('.display-toolbar .create').click(_.bind(pckgmgr[pckgmgr.mode.current].tree.actions.createPackage, pckgmgr[pckgmgr.mode.current].tree.actions));
+                if (pckgmgr[pckgmgr.mode.current].tree.actions.createPackage) {
+                    this.$('.display-toolbar .create').click(_.bind(pckgmgr[pckgmgr.mode.current].tree.actions.createPackage, pckgmgr[pckgmgr.mode.current].tree.actions));
+                }
                 this.$('.display-toolbar .delete').click(_.bind(pckgmgr[pckgmgr.mode.current].tree.actions.deletePackage, pckgmgr[pckgmgr.mode.current].tree.actions));
                 this.$('.display-toolbar .refresh').click(_.bind(this.refresh, this));
                 this.$feedback.find('.close').click(_.bind(this.closeFeedback, this));
