@@ -23,9 +23,9 @@
             <input name="_charset_" type="hidden" value="UTF-8" />
 
             <c:if test="${not empty pckgmgr.registries}">
-              <div class="form-group registry">
+              <div class="form-group registry pckg-regpckg-mode-only">
                 <label class="control-label" for="pckg-upload-registry">Registry</label>
-                <select name="registry" class="widget select-widget form-control" id="pckg-upload-registry">
+                <select name="registry" class="widget select-widget form-control pckg-regpckg-mode-mandatory" id="pckg-upload-registry" data-rules="mandatory">
                   <option value="" selected></option>
                   <c:forEach items="${pckgmgr.registries}" var="registry">
                     <option value="${registry.key}">${cpn:text(registry.value)}</option>

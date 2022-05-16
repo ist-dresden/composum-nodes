@@ -143,9 +143,27 @@
                                     this.$treeBody.html(html);
                                     pckgmgr[mode].mode.tree.setup();
                                     core.console.getProfile().set('pckgmgr', 'mode', mode);
+                                    this.switchUpload(mode)
                                 }, this));
                         }, this));
                 }
+            },
+
+            /** Switches the registry input in the package upload dialog on or off, according to the mode. */
+            switchUpload: function(mode) {
+                let registrySelector = this.$('.pckg-regpckg-mode-mandatory');
+                if (mode != 'regpckg') {
+                    this.$('.pckg-regpckg-mode-only').addClass('hidden');
+                    registrySelector.attr('disabled', 'disabled');
+                    registrySelector.removeAttr('data-rules');
+                    registrySelector.removeClass('widget');
+                } else {
+                    this.$('.pckg-regpckg-mode-only').removeClass('hidden');
+                    registrySelector.removeAttr('disabled');
+                    registrySelector.attr('data-rules', 'mandatory');
+                    registrySelector.addClass('widget');
+                }
+                registrySelector.val('');
             },
 
             onPathSelect: function (event, path) {
