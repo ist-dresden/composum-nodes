@@ -45,7 +45,7 @@
                         <div class="form-group">
                             <label class="control-label" for="pck-delete-version">Version</label>
                             <input name="version" class="widget text-field-widget form-control" type="text" id="pck-delete-version"
-                                   placeholder="enter version key (number)" data-rules="mandatory"/>
+                                   placeholder="enter version key (number)"/>
                         </div>
                     </div>
 

@@ -245,7 +245,7 @@ public class PackageUtil {
                 if (pckgDef != null) {
                     filename.append(pckgDef.get(JcrPackageDefinition.PN_NAME));
                     String version = pckgDef.get(JcrPackageDefinition.PN_VERSION);
-                    if (version != null) {
+                    if (StringUtils.isNotBlank(version)) {
                         filename.append('-').append(version);
                     }
                     filename.append(".zip");
@@ -509,7 +509,7 @@ public class PackageUtil {
         writer.beginObject();
         writer.name(JcrPackageDefinition.PN_GROUP).value(definition.get(JcrPackageDefinition.PN_GROUP));
         writer.name(JcrPackageDefinition.PN_NAME).value(definition.get(JcrPackageDefinition.PN_NAME));
-        if (version != null) {
+        if (StringUtils.isNotBlank(version)) {
             writer.name(JcrPackageDefinition.PN_VERSION).value(version);
         }
         if (description != null) {

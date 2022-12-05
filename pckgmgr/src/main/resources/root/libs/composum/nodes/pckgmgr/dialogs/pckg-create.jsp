@@ -35,7 +35,7 @@
                         <div class="form-group">
                             <label class="control-label" for="pckg-create-version">Version</label>
                             <input name="version" class="widget text-field-widget form-control" type="text" id="pckg-create-version"
-                                   placeholder="enter version key (number)" data-rules="mandatory"/>
+                                   placeholder="enter version key (number)"/>
                         </div>
                     </div>
 
