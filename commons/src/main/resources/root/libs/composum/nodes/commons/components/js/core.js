@@ -313,11 +313,11 @@
         },
 
         isNotAuthorized: function (result) {
-            return result.status === 401 || result.status === 403;
+            return result && (result.status === 401 || result.status === 403);
         },
 
         isRestricted: function (result) {
-            return result.status === 405;
+            return result && result.status === 405;
         },
 
         getRestrictedMessage: function (callback) {
