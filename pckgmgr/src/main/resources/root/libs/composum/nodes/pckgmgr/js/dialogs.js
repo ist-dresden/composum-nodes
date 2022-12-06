@@ -101,7 +101,7 @@
                 var registry = this.$registry.val();
                 var path;
                 if (registry) {
-                    path = '/@' + registry + '/' + (group ? (group + '/') : '') + name + (version ? ('/' + version) : '');
+                    path = '/@' + registry + '/' + (group ? (group + '/') : '') + name + (version ? ('/' + version) : '/-');
                 } else {
                     path = '/' + (group ? (group + '/') : '') + name + (version ? ('-' + version) : '') + '.zip';
                 }
