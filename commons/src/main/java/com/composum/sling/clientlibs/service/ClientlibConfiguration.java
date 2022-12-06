@@ -74,7 +74,7 @@ public interface ClientlibConfiguration {
 
         @AttributeDefinition(
                 name = "Cache root",
-                description = "the root folder for the Javascript clientlib cache"
+                description = "the JCR root folder for the Javascript clientlib cache"
         )
         String clientlibs_cache_root() default "/var/composum/clientlibs";
 

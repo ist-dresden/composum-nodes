@@ -40,7 +40,7 @@ public interface RegistryUtil {
 
     String NO_REGISTRY = "other";
     String NO_GROUP = "nogroup";
-    String NO_VERSION = Version.EMPTY.toString();
+    String NO_VERSION = "-";
 
     Pattern REGISTRY_CLASS_NS = Pattern.compile("^.*\\.(.+)PackageRegistry$");
 
