@@ -470,9 +470,34 @@
             onPathInserted: function (event, parentPath, nodeName) {
                 var nodeId = this.nodeId(parentPath);
                 if (this.log.getLevel() <= log.levels.DEBUG) {
-                    this.log.debug(this.nodeIdPrefix + 'tree.onPathInserted(' + parentPath + ',' + nodeName + '):' + nodeId);
+                    this.log.debug(this.nodeIdPrefix + 'tree.onPathInserted(' + parentPath + ',' + nodeName + ')>>>:' + nodeId);
                 }
-                this.refreshNodeById(nodeId);
+                this.ensureNodeExists(parentPath, _.bind(function () {
+                    this.refreshNodeById(nodeId,  _.bind(function () {
+                        if (this.log.getLevel() <= this.log.levels.DEBUG) {
+                            this.log.debug(this.nodeIdPrefix + 'tree.onPathInserted(' + parentPath + ',' + nodeName + ').exit.');
+                        }
+                    }, this));
+                }, this));
+            },
+
+            /** Makes sure the (new) node at path exists in the tree by calling
+             * jstree.load_node on the parents of nodes that weren't reflected in the tree yet.
+             * callbackWhenDone is called once loading is finished or immediately, if there wasn't anything to load. */
+            ensureNodeExists: function(path, callbackWhenDone) {
+                var callbackQueued = false
+                if (path && !this.getTreeNode(path)) {
+                    var parentPath = core.getParentPath(path)
+                    if (parentPath && parentPath !== path) {
+                        this.ensureNodeExists(parentPath,
+                            _.bind(function () {
+                                this.jstree.load_node(this.nodeId(parentPath), callbackWhenDone);
+                            }, this));
+                        callbackQueued = true;
+                    }
+
+                }
+                if (!callbackQueued) callbackWhenDone();
             },
 
             onPathChanged: function (event, path) {
