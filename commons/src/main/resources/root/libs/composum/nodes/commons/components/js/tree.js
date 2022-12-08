@@ -472,11 +472,13 @@
                 if (this.log.getLevel() <= log.levels.DEBUG) {
                     this.log.debug(this.nodeIdPrefix + 'tree.onPathInserted(' + parentPath + ',' + nodeName + ')>>>:' + nodeId);
                 }
+                this.preventFromSelect = true; // nodes have to be loaded before being selected
                 this.ensureNodeExists(parentPath, _.bind(function () {
                     this.refreshNodeById(nodeId,  _.bind(function () {
                         if (this.log.getLevel() <= this.log.levels.DEBUG) {
                             this.log.debug(this.nodeIdPrefix + 'tree.onPathInserted(' + parentPath + ',' + nodeName + ').exit.');
                         }
+                        this.preventFromSelect = false;
                     }, this));
                 }, this));
             },
