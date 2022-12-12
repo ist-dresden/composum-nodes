@@ -146,7 +146,11 @@
                         $(document).trigger("path:select", [path]);
                     });
                 } else {
-                    this.alert('danger', 'a file must be specified');
+                    if (this.form.getValues().registry != null) {
+                        this.alert('danger', 'a file and a registry must be specified');
+                    } else {
+                        this.alert('danger', 'a file must be specified');
+                    }
                 }
                 return false;
             },
