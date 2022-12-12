@@ -96,7 +96,7 @@ public class AccessedResourcesLoggerFilter implements Filter {
                 : null;
     }
 
-    protected void switchResolver(SlingHttpServletRequest slingRequestImpl, ResourceResolver stagingResourceResolver) throws ServletException {
+    protected void switchResolver(SlingHttpServletRequest slingRequestImpl, ResourceResolver resourceResolver) throws ServletException {
         try {
             // if we try to cache this method object, we had to synchronize it - so leave it for now
             // org.apache.sling.engine.impl.SlingHttpServletRequestImpl.getRequestData()
@@ -107,7 +107,7 @@ public class AccessedResourcesLoggerFilter implements Filter {
             // org.apache.sling.engine.impl.request.RequestData.initResource(ResourceResolver resourceResolver)
             final Method initResource = requestData.getClass()
                     .getMethod("initResource", ResourceResolver.class);
-            final Object resource = initResource.invoke(requestData, stagingResourceResolver);
+            final Object resource = initResource.invoke(requestData, resourceResolver);
 
             // if we try to cache this method object, we had to synchronize it - so leave it for now
             // org.apache.sling.engine.impl.request.RequestData.initServlet(Resource resource, ServletResolver sr)
@@ -132,7 +132,7 @@ public class AccessedResourcesLoggerFilter implements Filter {
 
     @ObjectClassDefinition(
             name = "Composum Nodes Debugutil Resource Access Logging Filter",
-            description = "Tries to log most resources that are accessed during a request. This is logged at INFO level for com.composum.nodes.debugutil.AccessedResourcesLoggerFilter ."
+            description = "Tries to log most resources that are accessed during a request. This is logged at INFO level for com.composum.nodes.debugutil.AccessedResourcesLoggerFilter . We log only the leaves - accesses to parent resources are omitted to reduce the amount of logging. (They are implicitly accessed, anyway.)"
     )
     public @interface Configuration {
         @AttributeDefinition(
