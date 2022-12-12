@@ -37,7 +37,7 @@
             <div class="form-group">
               <label class="control-label" for="pckg-upload-file">Package File</label>
               <input name="file" class="widget file-upload-widget form-control" type="file" id="pckg-upload-file"
-                     data-options="hidePreview"/>
+                     data-options="hidePreview" data-rules="required"/>
             </div>
             <div class="form-group">
               <label class="control-label" for="pckg-upload-force">Force Upload</label>

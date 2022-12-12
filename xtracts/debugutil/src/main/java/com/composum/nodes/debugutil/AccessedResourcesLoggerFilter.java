@@ -61,7 +61,7 @@ public class AccessedResourcesLoggerFilter implements Filter {
 
     private static final Logger LOG = LoggerFactory.getLogger(AccessedResourcesLoggerFilter.class);
 
-    protected static final Pattern INTERESTING_PATHS = Pattern.compile("^/(libs|apps|content|conf|var|public|preview).*");
+    protected static final Pattern INTERESTING_PATHS = Pattern.compile("^/(libs|apps|content|conf|var|public|preview|bin|etc).*");
 
     @Reference
     private ServletResolver servletResolver;
@@ -169,10 +169,19 @@ public class AccessedResourcesLoggerFilter implements Filter {
         }
 
         protected Resource log(Resource resource) {
-            if (resource != null && INTERESTING_PATHS.matcher(resource.getPath()).matches()) {
-                paths.add(resource.getPath());
+            if (resource != null) {
+                log(resource.getPath());
             }
             return resource;
+        }
+
+        protected String log(String path) {
+            if (path != null && INTERESTING_PATHS.matcher(path).matches()) {
+                paths.add(path);
+            } else if (path != null && LOG.isTraceEnabled()) {
+                LOG.trace("Ignoring uninteresting path {}", path);
+            }
+            return path;
         }
 
         protected Iterator<Resource> log(Iterator<Resource> listChildren) {
@@ -184,17 +193,33 @@ public class AccessedResourcesLoggerFilter implements Filter {
 
         @Override
         public Resource resolve(HttpServletRequest request, String absPath) {
+            LOG.trace("Resolve {}", absPath);
             return log(super.resolve(request, absPath));
         }
 
         @Override
         public Resource resolve(String absPath) {
+            LOG.trace("Resolve {}", absPath);
             return log(super.resolve(absPath));
         }
 
         @Override
         public Resource resolve(HttpServletRequest request) {
             return log(super.resolve(request));
+        }
+
+        @Override
+        public String map(String resourcePath) {
+            String result = log(super.map(log(resourcePath)));
+            LOG.trace("Map: {} -> {}", resourcePath, result);
+            return result;
+        }
+
+        @Override
+        public String map(HttpServletRequest request, String resourcePath) {
+            String result = log(super.map(request, log(resourcePath)));
+            LOG.trace("Map: {} -> {}", resourcePath, result);
+            return result;
         }
 
         @Override
@@ -214,12 +239,12 @@ public class AccessedResourcesLoggerFilter implements Filter {
 
         @Override
         public Resource getParent(Resource child) {
-            return log(super.getParent(child));
+           return log(super.getParent(log(child)));
         }
 
         @Override
         public Iterable<Resource> getChildren(Resource parent) {
-            return IterableUtils.transformedIterable(super.getChildren(parent), this::log);
+            return IterableUtils.transformedIterable(super.getChildren(log(parent)), this::log);
         }
 
         @Override
@@ -245,8 +270,14 @@ public class AccessedResourcesLoggerFilter implements Filter {
         }
 
         @Override
+        public Resource copy(String srcAbsPath, String destAbsPath) throws PersistenceException {
+            LOG.info("Copied: {} -> {}", log(srcAbsPath), log(destAbsPath));
+            return super.copy(srcAbsPath, destAbsPath);
+        }
+
+        @Override
         public Resource move(String srcAbsPath, String destAbsPath) throws PersistenceException {
-            LOG.info("Moved: {} -> {}", srcAbsPath, destAbsPath);
+            LOG.info("Moved: {} -> {}", log(srcAbsPath), log(destAbsPath));
             return log(super.move(srcAbsPath, destAbsPath));
         }
 

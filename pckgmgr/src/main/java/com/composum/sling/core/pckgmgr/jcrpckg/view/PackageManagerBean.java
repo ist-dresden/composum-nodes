@@ -36,10 +36,12 @@ public class PackageManagerBean extends ConsoleSlingBean {
         return path;
     }
 
+    /** The mode {@link Mode} - {@value Mode#jcrpckg} or {@value Mode#regpckg}. */
     public Mode getMode() {
         return Packages.getMode(getRequest());
     }
 
+    /** The kind of view - {@link com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil.ViewType}. */
     public String getViewType() {
         if (type == null) {
             type = PackageUtil.getViewType(context, getRequest(), getPath());
