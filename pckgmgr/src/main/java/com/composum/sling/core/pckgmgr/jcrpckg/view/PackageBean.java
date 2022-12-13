@@ -1,10 +1,11 @@
-package com.composum.sling.core.pckgmgr.view;
+package com.composum.sling.core.pckgmgr.jcrpckg.view;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.Restricted;
-import com.composum.sling.core.pckgmgr.PackageJobExecutor;
-import com.composum.sling.core.pckgmgr.PackageServlet;
-import com.composum.sling.core.pckgmgr.util.PackageUtil;
+import com.composum.sling.core.pckgmgr.PackagesServlet;
+import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
+import com.composum.sling.core.pckgmgr.jcrpckg.service.impl.PackageJobExecutor;
+import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.lang3.StringUtils;
@@ -28,7 +29,7 @@ import java.util.List;
 import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
 
 @Restricted(key = PackageServlet.SERVICE_KEY)
-public class PackageBean extends ConsoleSlingBean {
+public class PackageBean extends ConsoleSlingBean implements AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageBean.class);
 
@@ -337,5 +338,12 @@ public class PackageBean extends ConsoleSlingBean {
 
     public String[] getReplaces() {
         return PackageUtil.getMultiProperty(pckgDef, PackageUtil.DEF_REPLACES);
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (pckg != null) {
+            pckg.close();
+        }
     }
 }

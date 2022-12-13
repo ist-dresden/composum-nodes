@@ -1,6 +1,11 @@
-package com.composum.sling.core.pckgmgr.util;
+package com.composum.sling.core.pckgmgr.jcrpckg.util;
 
+import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.pckgmgr.Packages;
+import com.composum.sling.core.pckgmgr.jcrpckg.tree.TreeNode;
+import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
+import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.XSS;
@@ -8,6 +13,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
@@ -15,6 +21,7 @@ import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.jackrabbit.vault.util.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -26,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.el.PropertyNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -39,15 +47,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static com.composum.sling.core.pckgmgr.util.PackageUtil.TreeType.group;
+import static com.composum.sling.core.pckgmgr.Packages.REGISTRY_PATH;
 
 /**
  * Helper methods for Package handling (VLT Package Manager)
@@ -75,8 +80,8 @@ public class PackageUtil {
 
     public static final Pattern IMPORT_DONE = Pattern.compile("^Package imported\\.$");
 
-    public enum TreeType {
-        group, jcrpckg
+    public enum ViewType {
+        packages, registry, group, jcrpckg, regpckg, version
     }
 
     /**
@@ -161,33 +166,57 @@ public class PackageUtil {
         return path;
     }
 
-    public static TreeType getTreeType(JcrPackageManager manager, SlingHttpServletRequest request, String path) {
-        TreeType type = group;
+    public static ViewType getViewType(BeanContext context, SlingHttpServletRequest request, String path) {
+        if ("/".equals(path)){
+            return ViewType.packages;
+        }
+        if (StringUtils.isNotBlank(path) && REGISTRY_PATH.matcher(path).matches()){
+            return ViewType.registry;
+        }
+        ViewType type = ViewType.group;
         try {
+            JcrPackageManager manager = PackageUtil.getPackageManager(context.getService(Packaging.class), request);
             Resource resource = getResource(manager, request, path);
             JcrPackage jcrPackage = getJcrPackage(manager, resource);
             if (jcrPackage != null) {
-                type = TreeType.jcrpckg;
+                type = ViewType.valueOf(Packages.getMode(request).name());
             } else {
-                // probably an invalid package - should shown as a package
-                String lowercase = path.toLowerCase();
-                if (lowercase.endsWith(".zip") || lowercase.endsWith(".jar")) {
-                    type = TreeType.jcrpckg;
+                PackageRegistries.Registries registries = context.getService(PackageRegistries.class).getRegistries(request.getResourceResolver());
+                Pair<String, PackageId> found = registries.resolve(path);
+                if (found != null) {
+                    if (path.equals(RegistryUtil.toPath("", found.getRight()))
+                            || path.equals(RegistryUtil.toPath(found.getLeft(), found.getRight()))) {
+                        type = ViewType.version;
+                    } else if (path.equals(RegistryUtil.toPackagePath("", found.getRight()))
+                            || path.equals(RegistryUtil.toPackagePath(found.getLeft(), found.getRight()))) {
+                        type = ViewType.regpckg;
+                    }
+                } else {
+                    // probably an invalid package - should shown as a package
+                    String lowercase = path.toLowerCase();
+                    if (lowercase.endsWith(".zip") || lowercase.endsWith(".jar")) {
+                        type = ViewType.valueOf(Packages.getMode(request).name());
+                    }
                 }
             }
-        } catch (RepositoryException rex) {
-            LOG.error(rex.toString());
+        } catch (RepositoryException | IOException | RuntimeException ex) {
+            LOG.error("Error accessing {}", path, ex);
         }
         return type;
     }
 
-    public static String getGroupPath(JcrPackage pckg) throws RepositoryException {
+    @Nullable
+    public static String getGroupPath(@Nullable JcrPackage pckg) throws RepositoryException {
         return getGroupPath(pckg.getDefinition());
     }
 
-    public static String getGroupPath(JcrPackageDefinition pckgDef) {
-        String group = pckgDef.get(JcrPackageDefinition.PN_GROUP);
-        group = StringUtils.isNotBlank(group) ? ("/" + group + "/") : "/";
+    @Nullable
+    public static String getGroupPath(@Nullable JcrPackageDefinition pckgDef) {
+        String group = null;
+        if (pckgDef != null) {
+            group = pckgDef.get(JcrPackageDefinition.PN_GROUP);
+            group = StringUtils.isNotBlank(group) ? ("/" + group + "/") : "/";
+        }
         return group;
     }
 
@@ -434,7 +463,7 @@ public class PackageUtil {
         String path = PackageUtil.getPath(request);
         List<JcrPackage> jcrPackages = manager.listPackages();
 
-        PackageUtil.TreeNode treeNode = new PackageUtil.TreeNode(path);
+        TreeNode treeNode = new TreeNode(path);
         for (JcrPackage jcrPackage : jcrPackages) {
             if (treeNode.addPackage(jcrPackage)) {
                 break;
@@ -444,232 +473,28 @@ public class PackageUtil {
         return treeNode;
     }
 
-    public interface TreeItem {
-
-        String getName();
-
-        String getPath();
-
-        void toJson(JsonWriter writer) throws RepositoryException, IOException;
-    }
-
-    public static class FolderItem extends LinkedHashMap<String, Object> implements TreeItem {
-
-        public FolderItem(String path, String name) {
-            put("id", path);
-            put("path", path);
-            put("name", name);
-            put("text", name);
-            put("type", "/".equals(path) ? "root" : "folder");
-            Map<String, Object> treeState = new LinkedHashMap<>();
-            treeState.put("loaded", Boolean.FALSE);
-            put("state", treeState);
-        }
-
-        @Override
-        public String getName() {
-            return (String) get("text");
-        }
-
-        @Override
-        public String getPath() {
-            return (String) get("path");
-        }
-
-        @Override
-        public void toJson(JsonWriter writer) throws IOException {
-            JsonUtil.jsonMap(writer, this);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other instanceof TreeItem && getName().equals(((TreeItem) other).getName());
-        }
-
-        @Override
-        public int hashCode() {
-            return getName().hashCode();
-        }
-    }
-
-    public static class PackageItem implements TreeItem {
-
-        private final JcrPackage jcrPackage;
-        private final JcrPackageDefinition definition;
-
-        public PackageItem(JcrPackage jcrPackage) throws RepositoryException {
-            this.jcrPackage = jcrPackage;
-            definition = jcrPackage.getDefinition();
-        }
-
-        @Override
-        public String getName() {
-            return definition.get(JcrPackageDefinition.PN_NAME);
-        }
-
-        @Override
-        public String getPath() {
-            try {
-                String name = getFilename();
-                String groupPath = PackageUtil.getGroupPath(jcrPackage);
-                String path = groupPath + name;
-                return path;
-            } catch (RepositoryException rex) {
-                LOG.error(rex.getMessage(), rex);
-            }
-            return "";
-        }
-
-        public JcrPackageDefinition getDefinition() {
-            return definition;
-        }
-
-        @Override
-        public void toJson(JsonWriter writer) throws RepositoryException, IOException {
-            String name = getFilename();
-            String path = getPath();
-            Map<String, Object> treeState = new LinkedHashMap<>();
-            treeState.put("loaded", Boolean.TRUE);
-            Map<String, Object> additionalAttributes = new LinkedHashMap<>();
-            additionalAttributes.put("id", path);
-            additionalAttributes.put("path", path);
-            additionalAttributes.put("name", name);
-            additionalAttributes.put("text", name);
-            additionalAttributes.put("type", "package");
-            additionalAttributes.put("state", treeState);
-            additionalAttributes.put("file", getFilename());
-            PackageUtil.toJson(writer, jcrPackage, additionalAttributes);
-        }
-
-        public String getFilename() {
-            return PackageUtil.getFilename(jcrPackage);
-        }
-
-        public Calendar getLastModified() {
-            Calendar lastModified = PackageUtil.getLastModified(jcrPackage);
-            if (lastModified != null) {
-                return lastModified;
-            }
-            return PackageUtil.getCreated(jcrPackage);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other instanceof PackageItem &&
-                    getName().equals(((PackageItem) other).getName()) &&
-                    definition.get(JcrPackageDefinition.PN_VERSION).equals(((PackageItem) other).definition.get(JcrPackageDefinition.PN_VERSION));
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * getName().hashCode() + definition.get(JcrPackageDefinition.PN_VERSION).hashCode();
-        }
-
-    }
-
-    /** the tree node implementation for the requested path (folder or package) */
-    public static class TreeNode extends ArrayList<TreeItem> {
-
-        private final String path;
-        private boolean isLeaf;
-
-        public TreeNode(String path) {
-            this.path = path;
-        }
-
-        /**
-         * adds a package or the appropriate folder to the nodes children if it is a child of this node
-         *
-         * @param jcrPackage the current package in the iteration
-         * @return true, if this package is the nodes target and a leaf - iteration can be stopped
-         * @throws RepositoryException
-         */
-        public boolean addPackage(JcrPackage jcrPackage) throws RepositoryException {
-            String groupUri = path.endsWith("/") ? path : path + "/";
-            String groupPath = PackageUtil.getGroupPath(jcrPackage);
-            if (groupPath.startsWith(groupUri)) {
-                TreeItem item;
-                if (groupPath.equals(groupUri)) {
-                    // this node is the packages parent - use the package as node child
-                    item = new PackageItem(jcrPackage);
-                } else {
-                    // this node is a group parent - insert a folder for the subgroup
-                    String name = groupPath.substring(path.length());
-                    if (name.startsWith("/")) {
-                        name = name.substring(1);
-                    }
-                    int nextDelimiter = name.indexOf("/");
-                    if (nextDelimiter > 0) {
-                        name = name.substring(0, nextDelimiter);
-                    }
-                    item = new FolderItem(groupUri + name, name);
-                }
-                if (!contains(item)) {
-                    add(item);
-                }
-                return false;
-            } else {
-                PackageItem item = new PackageItem(jcrPackage);
-                if (path.equals(groupPath + item.getFilename())) {
-                    // this node (teh path) represents the package itself and is a leaf
-                    isLeaf = true;
-                    add(item);
-                    // we can stop the iteration
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        public boolean isLeaf() {
-            return isLeaf;
-        }
-
-        public void sort() {
-            Collections.sort(this, new Comparator<TreeItem>() {
-
-                @Override
-                public int compare(TreeItem o1, TreeItem o2) {
-                    return o1.getName().compareToIgnoreCase(o2.getName());
-                }
-            });
-        }
-
-        public void toJson(JsonWriter writer) throws IOException, RepositoryException {
-            if (isLeaf()) {
-                get(0).toJson(writer);
-            } else {
-                int lastPathSegment = path.lastIndexOf("/");
-                String name = path.substring(lastPathSegment + 1);
-                if (StringUtils.isBlank(name)) {
-                    name = "packages ";
-                }
-                FolderItem myself = new FolderItem(path, name);
-
-                writer.beginObject();
-                JsonUtil.jsonMapEntries(writer, myself);
-                writer.name("children");
-                writer.beginArray();
-                for (TreeItem item : this) {
-                    item.toJson(writer);
-                }
-                writer.endArray();
-                writer.endObject();
-            }
-        }
-    }
-
     //
     // JSON mapping helpers
     //
 
-    public static void toJson(JsonWriter writer, JcrPackage jcrPackage,
-                              Map<String, Object> additionalAttributes)
+    public static void toJson(@Nonnull JsonWriter writer, @Nonnull JcrPackage jcrPackage,
+                              @Nullable Map<String, Object> additionalAttributes)
             throws RepositoryException, IOException {
         writer.beginObject();
         writer.name("definition");
-        toJson(writer, jcrPackage.getDefinition());
+        JcrPackageDefinition definition = jcrPackage.getDefinition();
+        toJson(writer, definition);
         JsonUtil.jsonMapEntries(writer, additionalAttributes);
+        writer.name("packageid");
+        writer.beginObject();
+        writer.name("name").value(definition.get("name"));
+        writer.name("group").value(definition.get("group"));
+        writer.name("version").value(definition.get("version"));
+        if (additionalAttributes != null) {
+            writer.name("downloadName").value((String) additionalAttributes.get("name"));
+        }
+        // no "registry" here.
+        writer.endObject();
         writer.endObject();
     }
 

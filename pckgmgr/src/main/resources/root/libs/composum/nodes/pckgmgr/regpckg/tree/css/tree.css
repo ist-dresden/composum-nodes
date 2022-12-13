@@ -1,0 +1,11 @@
+.nodes-pckgmgr-regpckg-tree .tree-actions_checkbox label {
+    position: relative;
+    margin: 2px 4px;
+    padding: 0 0 0 18px;
+}
+
+.nodes-pckgmgr-regpckg-tree .tree-actions_checkbox input {
+    position: absolute;
+    top: 5px;
+    left: 0;
+}

@@ -3,7 +3,8 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
-<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.view.PackageBean" scope="request">
+<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean" scope="request">
+    <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean"--%>
     <div class="advanced-view">
         <div class="ac-handling select-option option-field">
             <div class="name-line"><i class="option-icon fa fa-key"></i><span class="name">AC handling</span><span
@@ -21,18 +22,16 @@
                     data-value="${pckg.requiresRestart}">requires restart</span></div>
         </div>
         <div class="provider-name text-option option-field">
-            <div class="name-line label">Provider Name</div>
-            <div class="value-line value-text">${cpn:text(pckg.providerName)}</div>
+            <div class="name-line">Provider Name</div>
+            <div class="value-line">${cpn:text(pckg.providerName)}</div>
         </div>
         <div class="provider-url link-option option-field">
             <div class="name-line">Provider URL</div>
-            <div class="value-line"><a href="${cpn:url(slingRequest,pckg.providerUrl)}"
-                                       class="link value-text">${cpn:text(pckg.providerUrl)}</a></div>
+            <div class="value-line"><a href="${cpn:url(slingRequest,pckg.providerUrl)}" class="link value-text">${cpn:text(pckg.providerUrl)}</a></div>
         </div>
         <div class="provider-link link-option option-field">
             <div class="name-line">Provider Link</div>
-            <div class="value-line"><a href="${cpn:url(slingRequest,pckg.providerLink)}"
-                                       class="link value-text">${cpn:text(pckg.providerLink)}</a></div>
+            <div class="value-line"><a href="${cpn:url(slingRequest,pckg.providerLink)}" class="link value-text">${cpn:text(pckg.providerLink)}</a></div>
         </div>
     </div>
     <div class="relations-view">

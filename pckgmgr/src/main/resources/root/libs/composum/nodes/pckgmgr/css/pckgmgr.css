@@ -1,3 +1,43 @@
 #pckgmgr-view {
     min-width: 570px;
 }
+
+.nodes-pckgmgr-tree-tabs_body .tree-panel {
+    top: 33px;
+}
+
+.nodes-pckgmgr-tree-tabs_head {
+    display: flex;
+}
+
+.nodes-pckgmgr-tree-tabs_head-tab {
+    flex-basis: 50%;
+    border: 1px solid #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+}
+
+.nodes-pckgmgr-tree-tabs_head-tab.active {
+    flex-basis: 50%;
+    border-color: #f0f0f0;
+    cursor: default;
+}
+
+.nodes-pckgmgr-tree-tabs_head-label {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #fff;
+    border-bottom-color: #f0f0f0;
+    background: #fff;
+    color: #aaa;
+    text-align: center;
+    line-height: 26px;
+    white-space: nowrap;
+}
+
+.nodes-pckgmgr-tree-tabs_head-tab.active .nodes-pckgmgr-tree-tabs_head-label {
+    border-color: #f0f0f0;
+    background: #f0f0f0;
+    color: #000;
+}

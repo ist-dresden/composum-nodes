@@ -3,7 +3,7 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
-<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.view.PackageBean" scope="request">
+<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean" scope="request">
     <c:set var="writeAllowed" value="${pckg.permissible['nodes/packages/manager']['write']}"/>
     <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
     <div class="detail-view options ${pckg.cssClasses}">

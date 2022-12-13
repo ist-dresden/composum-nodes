@@ -1,9 +1,9 @@
-package com.composum.sling.core.pckgmgr.view;
+package com.composum.sling.core.pckgmgr;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.CoreConfiguration;
 import com.composum.sling.core.Restricted;
-import com.composum.sling.core.pckgmgr.PackageServlet;
+import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
 import com.composum.sling.core.servlet.AbstractConsoleServlet;
 import com.composum.sling.nodes.NodesConfiguration;
 import org.apache.sling.api.servlets.HttpConstants;
