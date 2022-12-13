@@ -26,6 +26,10 @@
     line-height: 1.4em;
 }
 
+.detail-panel.filters .filters-table.readonly td.bs-checkbox input {
+    display:none;
+}
+
 .detail-panel.filters .filters-table .filter-rules .type,
 .detail-panel.filters .filters-table .filter-rules .pattern {
     display: inline-block;

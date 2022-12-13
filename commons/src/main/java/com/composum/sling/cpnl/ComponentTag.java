@@ -29,15 +29,17 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(ComponentTag.class);
 
-    protected String var;
+    protected String variable;
     protected String type;
     protected Integer varScope;
     protected Boolean replace;
+    protected Boolean close;
 
     protected String attrPath;
     protected Resource attrResource;
 
-    protected SlingBean component;
+    protected transient SlingBean component;
+    protected transient boolean componentWasClosed;
     private transient Class<? extends SlingBean> componentType;
     private static final Map<Class<? extends SlingBean>, Field[]> fieldCache = new ConcurrentHashMap<>();
 
@@ -52,15 +54,18 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     @Override
     protected void clear() {
+        closeComponent(); // call it again - doEndTag can be omitted in some cases, but perhaps this is called much later.
         attrResource = null;
         attrPath = null;
-        var = null;
+        variable = null;
         type = null;
         varScope = null;
         replace = null;
         component = null;
+        componentWasClosed = false;
         replacedAttributes = null;
         componentType = null;
+        close = null;
         super.clear();
     }
 
@@ -71,6 +76,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
             try {
                 if (available() == null || getReplace()) {
                     component = createComponent();
+                    componentWasClosed = false;
                     setAttribute(getVar(), component, getVarScope());
                 }
             } catch (ClassNotFoundException ex) {
@@ -89,9 +95,25 @@ public class ComponentTag extends CpnlBodyTagSupport {
     @Override
     public int doEndTag() throws JspException {
         restoreAttributes();
+        closeComponent();
         clear();
         super.doEndTag();
         return EVAL_PAGE;
+    }
+
+    /**
+     * If necessary, call close on the component, if required. We try to make sure it's called exactly once, since
+     * {@link AutoCloseable#close()} doesn't guarantee that's idempotent.
+     */
+    protected void closeComponent() {
+        if (!componentWasClosed && !Boolean.FALSE.equals(getClose()) && component instanceof AutoCloseable) {
+            try {
+                componentWasClosed = true;
+                ((AutoCloseable) component).close();
+            } catch (Exception e) {
+                LOG.error("Problem closing component of type {}", getType(), e);
+            }
+        }
     }
 
     /**
@@ -106,11 +128,11 @@ public class ComponentTag extends CpnlBodyTagSupport {
      * Configure an var / variable name to store the component in the context
      */
     public void setVar(String id) {
-        this.var = id;
+        this.variable = id;
     }
 
     public String getVar() {
-        return this.var;
+        return this.variable;
     }
 
     /**
@@ -125,7 +147,7 @@ public class ComponentTag extends CpnlBodyTagSupport {
     }
 
     /**
-     * Determine the varScope (<code>page</code>, <code>request</code> or <code>session</code>)
+     * Determine the varScope ({@code page}, {@code request} or {@code session})
      * for the component instance attribute
      */
     public void setScope(String key) {
@@ -149,8 +171,8 @@ public class ComponentTag extends CpnlBodyTagSupport {
     /**
      * Determine the reuse policy if an appropriate instance is already existing.
      *
-     * @param flag <code>false</code> - (re)use an appropriate available instance;
-     *             <code>true</code> - replace each potentially existing instance
+     * @param flag {@code false} - (re)use an appropriate available instance;
+     *             {@code true} - replace each potentially existing instance
      *             (default in 'page' context).
      */
     public void setReplace(Boolean flag) {
@@ -167,6 +189,17 @@ public class ComponentTag extends CpnlBodyTagSupport {
 
     public void setResource(Resource resource) {
         this.attrResource = resource;
+    }
+
+    /**
+     * Determines whether {@link AutoCloseable} models are closed when the tag ends - default true.
+     */
+    public void setClose(Boolean close) {
+        this.close = close;
+    }
+
+    public Boolean getClose() {
+        return close;
     }
 
     /**

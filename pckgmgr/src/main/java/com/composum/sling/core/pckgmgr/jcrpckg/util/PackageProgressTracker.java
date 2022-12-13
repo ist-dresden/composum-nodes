@@ -1,4 +1,4 @@
-package com.composum.sling.core.pckgmgr.util;
+package com.composum.sling.core.pckgmgr.jcrpckg.util;
 
 import com.composum.sling.core.util.ResponseUtil;
 import com.google.gson.stream.JsonWriter;

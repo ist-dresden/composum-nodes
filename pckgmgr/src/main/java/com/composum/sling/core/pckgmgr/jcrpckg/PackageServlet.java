@@ -1,18 +1,28 @@
-package com.composum.sling.core.pckgmgr;
+package com.composum.sling.core.pckgmgr.jcrpckg;
 
+import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.Restricted;
 import com.composum.sling.core.concurrent.JobFacade;
 import com.composum.sling.core.concurrent.JobMonitor;
 import com.composum.sling.core.concurrent.JobUtil;
-import com.composum.sling.core.pckgmgr.util.PackageProgressTracker;
-import com.composum.sling.core.pckgmgr.util.PackageUtil;
-import com.composum.sling.core.pckgmgr.util.PackageUtil.PackageItem;
+import com.composum.sling.core.pckgmgr.Packages;
+import com.composum.sling.core.pckgmgr.Packages.Mode;
+import com.composum.sling.core.pckgmgr.jcrpckg.service.impl.PackageJobExecutor;
+import com.composum.sling.core.pckgmgr.jcrpckg.tree.JcrPackageItem;
+import com.composum.sling.core.pckgmgr.jcrpckg.tree.TreeNode;
+import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageProgressTracker;
+import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
+import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
+import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryItem;
+import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryTree;
+import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.core.service.ServiceRestrictions;
-import com.composum.sling.core.service.RestrictedService;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
+import com.composum.sling.core.servlet.Status;
+import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.core.util.RequestUtil;
 import com.composum.sling.core.util.ResponseUtil;
 import com.composum.sling.core.util.XSS;
@@ -22,6 +32,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.vault.fs.api.FilterSet;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.api.PathFilter;
@@ -33,18 +44,27 @@ import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
+import org.apache.jackrabbit.vault.packaging.NoSuchPackageException;
 import org.apache.jackrabbit.vault.packaging.PackageException;
+import org.apache.jackrabbit.vault.packaging.PackageExistsException;
+import org.apache.jackrabbit.vault.packaging.PackageId;
+import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.apache.jackrabbit.vault.packaging.Packaging;
+import org.apache.jackrabbit.vault.packaging.VaultPackage;
+import org.apache.jackrabbit.vault.packaging.registry.PackageRegistry;
+import org.apache.jackrabbit.vault.packaging.registry.RegisteredPackage;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
+import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -56,7 +76,9 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.jcr.Binary;
+import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -64,6 +86,9 @@ import javax.jcr.query.Query;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -74,6 +99,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -82,7 +108,7 @@ import java.util.Map;
 /**
  * The servlet to provide download and upload of content packages and package definitions.
  */
-@Component(service = {Servlet.class, RestrictedService.class},
+@Component(service = Servlet.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Package Servlet",
                 ServletResolverConstants.SLING_SERVLET_PATHS + "=" + PackageServlet.SERVLET_PATH,
@@ -104,6 +130,8 @@ public class PackageServlet extends AbstractServiceServlet {
     public static final String SERVLET_PATH = "/bin/cpm/package";
     public static final String PARAM_GROUP = "group";
     public static final String PARAM_FORCE = "force";
+    /** The key (namespace) of the PackageRegistry, {@link PackageRegistries.Registries#getNamespaces()}.  */
+    public static final String PARAM_REGISTRY = "registry";
 
     private volatile long jobIdleTimeout;
 
@@ -125,11 +153,10 @@ public class PackageServlet extends AbstractServiceServlet {
     @Reference
     private Packaging packaging;
 
-    @Activate
-    @Modified
-    protected void activate(Configuration configuration) {
-        jobIdleTimeout = configuration.package_job_timeout();
-    }
+    @Reference
+    private PackageRegistries packageRegistries;
+
+    private BundleContext bundleContext;
 
     //
     // Servlet operations
@@ -142,14 +169,22 @@ public class PackageServlet extends AbstractServiceServlet {
     public enum Operation {
         create, update, delete, download, upload, install, uninstall, deploy, service, list, tree, view, query,
         coverage, filterList, filterChange, filterAdd, filterRemove, filterMoveUp, filterMoveDown,
-        cleanup
+        cleanup,
+        mode, registryTree, registries, registriesTree
     }
 
     protected PackageOperationSet operations = new PackageOperationSet();
 
     @Override
-    protected ServletOperationSet getOperations() {
+    protected PackageOperationSet getOperations() {
         return operations;
+    }
+
+    @Activate
+    @Modified
+    protected void activate(BundleContext bundleContext, Configuration configuration) {
+        this.bundleContext = bundleContext;
+        jobIdleTimeout = configuration.package_job_timeout();
     }
 
     /**
@@ -177,6 +212,16 @@ public class PackageServlet extends AbstractServiceServlet {
 
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.cleanup, new CleanupOperation());
+
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.mode, new PackageManagerModeOperation());
+
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.registryTree, new RegistryTreeOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.registries, new RegistriesOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.registriesTree, new RegistriesTreeOperation());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
@@ -235,6 +280,126 @@ public class PackageServlet extends AbstractServiceServlet {
         }
     }
 
+    protected class PackageManagerModeOperation implements ServletOperation {
+
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+            Status status = new Status(request, response);
+            Mode mode = Mode.jcrpckg;
+            try {
+                mode = Mode.valueOf(request.getParameter("mode"));
+            } catch (Exception ex) {
+                if (RequestUtil.checkSelector(request, Mode.regpckg.name())) {
+                    mode = Mode.regpckg;
+                } else if (!RequestUtil.checkSelector(request, Mode.jcrpckg.name())) {
+                    RequestPathInfo pathInfo = request.getRequestPathInfo();
+                    String suffix = pathInfo.getSuffix();
+                    if (StringUtils.isNotBlank(suffix)) {
+                        if (suffix.startsWith("/")) {
+                            suffix = suffix.substring(1);
+                            try {
+                                mode = Mode.valueOf(suffix);
+                            } catch (Exception ignore) {
+                            }
+                        }
+                    }
+                }
+            }
+            HttpSession session = request.getSession(true);
+            session.setAttribute(Packages.SA_PCKGMGR_MODE, mode.name());
+            status.data("pckgmgr").put("mode", mode.name());
+            status.sendJson();
+        }
+    }
+
+    //
+    // registry operation implementations
+    //
+
+    protected class RegistryTreeOperation implements ServletOperation {
+
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+            BeanContext context = new BeanContext.Servlet(getServletContext(), bundleContext, request, response);
+            String path = PackageUtil.getPath(request);
+            boolean merged = RequestUtil.checkSelector(request, "merged")
+                    || !Packages.REGISTRY_BASED_PATH.matcher(path).matches() && !"/".equals(path);
+            RegistryTree tree = new RegistryTree(merged);
+            RegistryItem treeItem = tree.getItem(context, path);
+            if (treeItem != null) {
+                JsonWriter writer = ResponseUtil.getJsonWriter(response);
+                if (!treeItem.isLoaded()) {
+                    treeItem.load(context);
+                }
+                treeItem.toTree(writer, true, true);
+            } else { // that's not the way status is intended to be used, but that'd not be compatible with treeItem.toTree .
+                Status status = new Status(request, response);
+                status.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                status.sendJson();
+            }
+        }
+    }
+
+    /** Yields information about the existing {@link PackageRegistries} and the registered packages. */
+    protected class RegistriesOperation implements ServletOperation {
+
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+            PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            writer.beginArray();
+            for (PackageRegistry registry : registries.iterable()) {
+                writer.beginObject();
+                writer.name("type").value(registry.getClass().getSimpleName());
+                writer.name("packages").beginArray();
+                for (PackageId pckgId : registry.packages()) {
+                    writer.beginObject();
+                    writer.name("id").value(pckgId.toString());
+                    writer.name("filename").value(RegistryUtil.getFilename(pckgId));
+                    writer.endObject();
+                }
+                writer.endArray();
+                writer.endObject();
+            }
+            writer.endArray();
+        }
+    }
+
+    protected class RegistriesTreeOperation implements ServletOperation {
+
+        @Override
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
+                         ResourceHandle resource)
+                throws RepositoryException, IOException {
+            BeanContext context = new BeanContext.Servlet(getServletContext(), bundleContext, request, response);
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            RegistryTree tree = new RegistryTree(false);
+            toJson(writer, context, tree);
+        }
+
+        protected void toJson(JsonWriter writer, BeanContext context, RegistryItem item) throws IOException {
+            item.load(context);
+            writer.beginObject();
+            JsonUtil.jsonMapEntries(writer, item);
+            writer.name("items").beginArray();
+            for (RegistryItem child : item.getItems()) {
+                toJson(writer, context, child);
+            }
+            writer.endArray();
+            writer.endObject();
+        }
+    }
+
     //
     // operation implementations
     //
@@ -242,7 +407,8 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class ListOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
@@ -250,7 +416,7 @@ public class PackageServlet extends AbstractServiceServlet {
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             writer.beginArray();
             for (JcrPackage jcrPackage : jcrPackages) {
-                new PackageItem(jcrPackage).toJson(writer);
+                new JcrPackageItem(jcrPackage).toJson(writer);
             }
             writer.endArray();
         }
@@ -259,12 +425,13 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class TreeOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
-            PackageUtil.TreeNode treeNode = PackageUtil.getTreeNode(manager, request);
+            TreeNode treeNode = PackageUtil.getTreeNode(manager, request);
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             treeNode.sort();
@@ -275,7 +442,8 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class QueryOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -306,21 +474,27 @@ public class PackageServlet extends AbstractServiceServlet {
                     if (jcrPckg != null) {
 
                         JcrPackageDefinition pckgDef = jcrPckg.getDefinition();
-                        String group = pckgDef.get(JcrPackageDefinition.PN_GROUP);
-                        if (!group.endsWith("/.snapshot")) {
+                        if (pckgDef != null) {
+                            String group = pckgDef.get(JcrPackageDefinition.PN_GROUP);
+                            if (group != null && !group.endsWith("/.snapshot")) {
+                                String name = pckgDef.get(JcrPackageDefinition.PN_NAME);
+                                String version = pckgDef.get(JcrPackageDefinition.PN_VERSION);
 
-                            writer.beginObject();
-                            writer.name("state").beginObject();
-                            writer.name("installed").value(jcrPckg.isInstalled() ? "on" : "off");
-                            writer.name("sealed").value(jcrPckg.isSealed() ? "on" : "off");
-                            writer.name("valid").value(jcrPckg.isValid() ? "on" : "off");
-                            writer.endObject();
-                            writer.name("group").value(group);
-                            writer.name("name").value(pckgDef.get(JcrPackageDefinition.PN_NAME));
-                            writer.name("version").value(pckgDef.get(JcrPackageDefinition.PN_VERSION));
-                            writer.name("lastModified").value(dateFormat.format(PackageUtil.getLastModified(jcrPckg).getTime()));
-                            writer.name("path").value(PackageUtil.getPackagePath(manager, jcrPckg));
-                            writer.endObject();
+                                writer.beginObject();
+                                writer.name("state").beginObject();
+                                writer.name("installed").value(jcrPckg.isInstalled() ? "on" : "off");
+                                writer.name("sealed").value(jcrPckg.isSealed() ? "on" : "off");
+                                writer.name("valid").value(jcrPckg.isValid() ? "on" : "off");
+                                writer.endObject();
+                                writer.name("group").value(group);
+                                writer.name("name").value(name);
+                                writer.name("version").value(version);
+                                writer.name("lastModified").value(dateFormat.format(PackageUtil.getLastModified(jcrPckg).getTime()));
+                                writer.name("path").value(Packages.getMode(request) == Mode.jcrpckg
+                                        ? PackageUtil.getPackagePath(manager, jcrPckg)
+                                        : RegistryUtil.toPath((String) null, new PackageId(group, name, version)));
+                                writer.endObject();
+                            }
                         }
                     }
                 }
@@ -332,7 +506,8 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class CreateOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -374,7 +549,8 @@ public class PackageServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -400,7 +576,7 @@ public class PackageServlet extends AbstractServiceServlet {
                     parameters.put("includeVersions", parameters.containsKey("includeVersions"));
                     for (Map.Entry<String, Object> parameter : parameters.entrySet()) {
                         String key = parameter.getKey();
-                        PackageUtil.DefinitionSetter setter = PackageUtil.DEFINITION_SETTERS.get(key);
+                        PackageUtil.DefinitionSetter<?> setter = PackageUtil.DEFINITION_SETTERS.get(key);
                         if (setter != null) {
                             Object value = parameter.getValue();
                             try {
@@ -435,7 +611,7 @@ public class PackageServlet extends AbstractServiceServlet {
             reader.beginObject();
             while (reader.peek() != JsonToken.END_OBJECT) {
                 String key = reader.nextName();
-                PackageUtil.DefinitionSetter setter = PackageUtil.DEFINITION_SETTERS.get(key);
+                PackageUtil.DefinitionSetter<?> setter = PackageUtil.DEFINITION_SETTERS.get(key);
                 if (setter != null) {
                     result.put(key, setter.get(reader));
                 } else {
@@ -451,15 +627,37 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class DeleteOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
+            String deletedPath = request.getRequestPathInfo().getSuffix();
+            String namespace = RegistryUtil.namespace(deletedPath);
+            if (StringUtils.isBlank(namespace)) {
+                deleteJcrPackage(request, response, resource);
+            } else {
+                PackageId packageId = RegistryUtil.fromPath(deletedPath);
+                PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                PackageRegistry registry = registries.getRegistry(namespace);
+                JsonWriter writer = ResponseUtil.getJsonWriter(response);
+                try {
+                    registry.remove(packageId);
+                    jsonAnswer(writer, "delete", "successful", namespace, packageId);
+                } catch (NoSuchPackageException | ClassCastException e) {
+                    // (probably bug in FileVault: if package deletion requested in JCR but is in FS -> ClassCastException.
+                    LOG.warn("Registry {} : could not find requested package {}", namespace, packageId, e);
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                            packageId + " can not be found in the registry " + namespace);
+                }
 
+            }
+        }
+
+        private void deleteJcrPackage(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException {
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
             if (jcrPackage != null) {
-
                 manager.remove(jcrPackage);
 
                 JsonWriter writer = ResponseUtil.getJsonWriter(response);
@@ -468,26 +666,47 @@ public class PackageServlet extends AbstractServiceServlet {
         }
     }
 
+    /**
+     * Enables downloading packages. If the path is a JCR path to a package, we deliver it from there, otherwise we try to
+     * find it in the PackageRegistries.
+     */
     protected class DownloadOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
 
+            boolean delivered;
             if (jcrPackage != null) {
+                delivered = deliverJcrPackage(response, jcrPackage);
+            } else {
+                delivered = deliverRegistryPackage(request, response, manager);
+            }
 
-                Property data;
-                Binary binary;
-                InputStream stream;
+            if (!delivered) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                        PackageUtil.getPath(request) + " can not be found in the repository");
+            }
+
+        }
+
+        protected boolean deliverJcrPackage(@Nonnull SlingHttpServletResponse response, @Nonnull JcrPackage jcrPackage) throws RepositoryException, IOException {
+            Property data;
+            Binary binary = null;
+            InputStream stream = null;
+            boolean delivered = false;
+
+            try {
                 if ((data = jcrPackage.getData()) != null &&
                         (binary = data.getBinary()) != null &&
                         (stream = binary.getStream()) != null) {
 
-                    PackageUtil.PackageItem item = new PackageUtil.PackageItem(jcrPackage);
+                    JcrPackageItem item = new JcrPackageItem(jcrPackage);
 
                     response.setHeader("Content-Disposition", "inline; filename=" + item.getFilename());
                     Calendar lastModified = item.getLastModified();
@@ -496,44 +715,100 @@ public class PackageServlet extends AbstractServiceServlet {
                     }
 
                     response.setContentType(ZIP_CONTENT_TYPE);
+                    if (jcrPackage.getSize() > 0) {
+                        response.setContentLength((int) jcrPackage.getSize());
+                    }
                     OutputStream output = response.getOutputStream();
                     IOUtils.copy(stream, output);
-
-                } else {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            PackageUtil.getPath(request) + " is not a package or has no content");
+                    delivered = true;
                 }
-
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        PackageUtil.getPath(request) + " can not be found in the repository");
+            } finally {
+                if (stream != null) stream.close();
+                if (binary != null) binary.dispose();
+                jcrPackage.close();
             }
+
+            return delivered;
+        }
+
+        protected boolean deliverRegistryPackage(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response, @Nonnull JcrPackageManager manager) throws IOException, RepositoryException {
+            boolean delivered;
+            PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+            String path = RegistryUtil.requestPath(request);
+            Pair<String, PackageId> location = registries.resolve(path);
+            Pair<String, RegisteredPackage> pckgEntry = location != null ? registries.open(location.getRight()) : null;
+            try (RegisteredPackage pckg = pckgEntry != null ? pckgEntry.getRight() : null;
+                 VaultPackage vaultPckg = pckg != null ? pckg.getPackage() : null) {
+
+                if (vaultPckg != null && vaultPckg.getFile() != null && vaultPckg.getFile().canRead()) {
+                    File file = vaultPckg.getFile();
+
+                    response.setHeader("Content-Disposition", "inline; filename=" + RegistryUtil.getFilename(location.getRight()));
+                    response.setContentType(ZIP_CONTENT_TYPE);
+                    Calendar lastModified = RegistryUtil.readPackagePropertyDate(vaultPckg.getProperties().getLastModified(), vaultPckg.getProperties().getProperty(PackageProperties.NAME_LAST_MODIFIED));
+                    if (lastModified == null) {
+                        lastModified = RegistryUtil.readPackagePropertyDate(vaultPckg.getProperties().getCreated(), vaultPckg.getProperties().getProperty(PackageProperties.NAME_CREATED));
+                    }
+                    if (lastModified != null) {
+                        response.setDateHeader(HttpConstants.HEADER_LAST_MODIFIED, lastModified.getTimeInMillis());
+                    }
+                    response.setContentLength((int) file.length());
+                    OutputStream output = response.getOutputStream();
+                    try (FileInputStream stream = new FileInputStream(file)) {
+                        IOUtils.copy(stream, output);
+                    }
+                    delivered = true;
+
+                } else { // no file -> probably a Jcr package
+                    String pathNoNs = RegistryUtil.pathWithoutNamespace(path);
+                    JcrPackage jcrPackage = manager.open(pckg.getId());
+                    if (jcrPackage != null) {
+                        delivered = deliverJcrPackage(response, jcrPackage);
+                    } else { // shouln't happen - unknown registry type? No idea what to do here.
+                        LOG.warn("Bug: Could not download package at {}", path);
+                        delivered = false;
+                    }
+                }
+            }
+            return delivered;
         }
     }
 
     protected class UploadOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            RequestParameterMap parameters = request.getRequestParameterMap();
+            boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
+            String namespace = request.getParameter(PARAM_REGISTRY);
+            RequestParameter file = request.getRequestParameter(AbstractServiceServlet.PARAM_FILE);
+            JsonWriter writer = ResponseUtil.getJsonWriter(response);
+            try (InputStream input = file != null ? file.getInputStream() : null) {
+                if (input != null) {
+                    if (StringUtils.isBlank(namespace)) {
+                        JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
+                        JcrPackage jcrPackage = manager.upload(input, force);
 
-            RequestParameter file = parameters.getValue(AbstractServiceServlet.PARAM_FILE);
-            if (file != null) {
-                InputStream input = file.getInputStream();
-                boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
-
-                JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
-                JcrPackage jcrPackage = manager.upload(input, force);
-
-                JsonWriter writer = ResponseUtil.getJsonWriter(response);
-                jsonAnswer(writer, "upload", "successful", manager, jcrPackage);
-
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                        "no package file accessible");
+                        jsonAnswer(writer, "upload", "successful", manager, jcrPackage);
+                    } else {
+                        PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                        PackageRegistry registry = registries.getRegistry(namespace);
+                        if (registry != null) {
+                            PackageId packageId = registry.register(input, force);
+                            jsonAnswer(writer, "upload", "successful", namespace, packageId);
+                        } else {
+                            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "unknown registry " + registry);
+                        }
+                    }
+                } else {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                            "no package file accessible");
+                }
+            } catch (PackageExistsException e) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "package exists already: " + e.getId());
             }
         }
     }
@@ -544,7 +819,8 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class CleanupOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -553,10 +829,12 @@ public class PackageServlet extends AbstractServiceServlet {
             writer.beginObject();
 
             writer.name("removedJobs").beginArray();
+            //noinspection unchecked
             for (Job job : jobManager.findJobs(JobManager.QueryType.ALL, PackageJobExecutor.TOPIC, 0)) {
                 String created = new SimpleDateFormat(DATE_FORMAT).format(job.getCreated().getTime());
-                LOG.warn("package service cleanup: remove job: {}, {}, {}, '{}', {}, {}", new Object[]{
-                        job.getId(), job.getTopic(), created, job.getResultMessage(), job.getRetryCount(), job.getQueueName()});
+                LOG.warn("package service cleanup: remove job: {}, {}, {}, '{}', {}, {}",
+                        job.getId(), job.getTopic(), created, job.getResultMessage(),
+                        job.getRetryCount(), job.getQueueName());
                 writer.beginObject();
                 writer.name("id").value(job.getId());
                 writer.name("topic").value(job.getTopic());
@@ -576,7 +854,8 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class InstallOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -593,7 +872,10 @@ public class PackageServlet extends AbstractServiceServlet {
 
             ResourceResolver resolver = request.getResourceResolver();
             Session session = resolver.adaptTo(Session.class);
-            String path = jcrPackage.getNode().getPath();
+            Node node = jcrPackage.getNode();
+            String path = node != null
+                    ? jcrPackage.getNode().getPath()
+                    : PackageUtil.getPackagePath(manager, jcrPackage);
             String root = manager.getPackageRoot().getPath();
             if (path.startsWith(root)) {
                 path = path.substring(root.length());
@@ -602,7 +884,9 @@ public class PackageServlet extends AbstractServiceServlet {
             Map<String, Object> jobProperties = new HashMap<>();
             jobProperties.put("reference", path);
             jobProperties.put("operation", "install");
-            jobProperties.put("userid", session.getUserID());
+            if (session != null) {
+                jobProperties.put("userid", session.getUserID());
+            }
             JobUtil.buildOutfileName(jobProperties);
 
             Job job = jobManager.addJob(PackageJobExecutor.TOPIC, jobProperties);
@@ -630,7 +914,8 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class UninstallOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -647,7 +932,10 @@ public class PackageServlet extends AbstractServiceServlet {
 
             ResourceResolver resolver = request.getResourceResolver();
             Session session = resolver.adaptTo(Session.class);
-            String path = jcrPackage.getNode().getPath();
+            Node node = jcrPackage.getNode();
+            String path = node != null
+                    ? jcrPackage.getNode().getPath()
+                    : PackageUtil.getPackagePath(manager, jcrPackage);
             String root = manager.getPackageRoot().getPath();
             if (path.startsWith(root)) {
                 path = path.substring(root.length());
@@ -656,7 +944,9 @@ public class PackageServlet extends AbstractServiceServlet {
             Map<String, Object> jobProperties = new HashMap<>();
             jobProperties.put("reference", path);
             jobProperties.put("operation", "uninstall");
-            jobProperties.put("userid", session.getUserID());
+            if (session != null) {
+                jobProperties.put("userid", session.getUserID());
+            }
             JobUtil.buildOutfileName(jobProperties);
 
             Job job = jobManager.addJob(PackageJobExecutor.TOPIC, jobProperties);
@@ -789,7 +1079,10 @@ public class PackageServlet extends AbstractServiceServlet {
                 JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
                 final JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, group, name);
                 if (jcrPackage != null) {
-                    String path = jcrPackage.getNode().getPath();
+                    Node node = jcrPackage.getNode();
+                    String path = node != null
+                            ? jcrPackage.getNode().getPath()
+                            : PackageUtil.getPackagePath(manager, jcrPackage);
                     String root = manager.getPackageRoot().getPath();
                     if (path.startsWith(root)) {
                         path = path.substring(root.length());
@@ -798,7 +1091,9 @@ public class PackageServlet extends AbstractServiceServlet {
                     Map<String, Object> jobProperties = new HashMap<>();
                     jobProperties.put("reference", path);
                     jobProperties.put("operation", getOperation());
-                    jobProperties.put("userid", session.getUserID());
+                    if (session != null) {
+                        jobProperties.put("userid", session.getUserID());
+                    }
                     JobUtil.buildOutfileName(jobProperties);
                     Job job = jobManager.addJob(PackageJobExecutor.TOPIC, jobProperties);
                     final JobMonitor.IsDone isDone = new JobMonitor.IsDone(jobManager, resolver, job.getId(), jobIdleTimeout);
@@ -863,7 +1158,9 @@ public class PackageServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
+                         ResourceHandle resource)
                 throws RepositoryException, IOException {
 
             RequestParameterMap parameters = request.getRequestParameterMap();
@@ -904,7 +1201,8 @@ public class PackageServlet extends AbstractServiceServlet {
         }
 
         @Override
-        protected void installationDone(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        protected void installationDone(@Nonnull final SlingHttpServletRequest request,
+                                        @Nonnull final SlingHttpServletResponse response,
                                         JcrPackageManager manager, JcrPackage jcrPackage, JobMonitor jobMonitor)
                 throws RepositoryException, IOException {
             response.setStatus(HttpServletResponse.SC_OK);
@@ -957,7 +1255,8 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class CoverageOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -975,18 +1274,30 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class ListFiltersOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
+            List<PathFilterSet> filters;
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
-            Session session = RequestUtil.getSession(request);
+            if (jcrPackage != null) {
+                filters = PackageUtil.getFilterList(jcrPackage.getDefinition());
+                jcrPackage.close();
+            } else { // try to find it in the registries
+                PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                String path = RegistryUtil.requestPath(request);
+                Pair<String, PackageId> location = registries.resolve(path);
+                Pair<String, RegisteredPackage> pckgEntry = location != null ? registries.open(location.getRight()) : null;
+                try (RegisteredPackage pckg = pckgEntry != null ? pckgEntry.getRight() : null) {
+                    filters = pckg != null ? pckg.getWorkspaceFilter().getFilterSets() : Collections.emptyList();
+                }
+            }
 
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             writer.beginArray();
 
-            List<PathFilterSet> filters = PackageUtil.getFilterList(jcrPackage.getDefinition());
             for (PathFilterSet filter : filters) {
                 writer.beginObject();
                 writer.name("root").value(filter.getRoot());
@@ -1057,15 +1368,19 @@ public class PackageServlet extends AbstractServiceServlet {
 
                 if (ruleTypes != null && ruleExpressions != null && ruleTypes.length == ruleExpressions.length) {
                     for (int i = 0; i < ruleTypes.length; i++) {
-                        if (StringUtils.isNotBlank(ruleExpressions[i])) {
-                            switch (ruleTypes[i]) {
-                                case "include":
-                                    filter.addInclude(new DefaultPathFilter(ruleExpressions[i]));
-                                    break;
-                                case "exclude":
-                                    filter.addExclude(new DefaultPathFilter(ruleExpressions[i]));
-                                    break;
+                        try {
+                            if (StringUtils.isNotBlank(ruleExpressions[i])) {
+                                switch (ruleTypes[i]) {
+                                    case "include":
+                                        filter.addInclude(new DefaultPathFilter(ruleExpressions[i]));
+                                        break;
+                                    case "exclude":
+                                        filter.addExclude(new DefaultPathFilter(ruleExpressions[i]));
+                                        break;
+                                }
                             }
+                        } catch (Exception ex) { // ConfigurationException
+                            LOG.error(ex.getMessage(), ex);
                         }
                     }
                 }
@@ -1078,7 +1393,8 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class ChangeFilterOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -1103,7 +1419,8 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class AddFilterOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -1127,7 +1444,8 @@ public class PackageServlet extends AbstractServiceServlet {
     protected class RemoveFilterOperation implements ServletOperation {
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -1155,7 +1473,8 @@ public class PackageServlet extends AbstractServiceServlet {
         }
 
         @Override
-        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response,
+        public void doIt(@Nonnull final SlingHttpServletRequest request,
+                         @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
@@ -1199,6 +1518,18 @@ public class PackageServlet extends AbstractServiceServlet {
         writer.name("path").value(PackageUtil.getPackagePath(pckgMgr, jcrPackage));
         writer.name("package");
         PackageUtil.toJson(writer, jcrPackage, null);
+        writer.endObject();
+    }
+
+    protected static void jsonAnswer(JsonWriter writer,
+                                     String operation, String status, String namespace, PackageId packageId)
+            throws IOException, RepositoryException {
+        writer.beginObject();
+        writer.name("operation").value(operation);
+        writer.name("status").value(status);
+        writer.name("path").value(RegistryUtil.toPath(namespace, packageId));
+        writer.name("package");
+        RegistryUtil.toJson(writer, namespace, packageId);
         writer.endObject();
     }
 

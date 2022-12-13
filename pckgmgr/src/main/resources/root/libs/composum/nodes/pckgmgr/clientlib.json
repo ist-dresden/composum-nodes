@@ -23,6 +23,11 @@
         "composum/nodes/pckgmgr/jcrpckg/options/clientlib"
       ]
     },
+    "regpckg": {
+      "embed": [
+        "composum/nodes/pckgmgr/regpckg/tree/css/tree.css"
+      ]
+    },
     "embed": [
       "composum/nodes/pckgmgr/css/query.css",
       "composum/nodes/pckgmgr/css/pckgmgr.css"
@@ -53,7 +58,10 @@
     },
     "pckgmgr": {
       "embed": [
+        "composum/nodes/pckgmgr/js/actions.js",
         "composum/nodes/pckgmgr/js/query.js",
+        "composum/nodes/pckgmgr/jcrpckg/tree/js/tree.js",
+        "composum/nodes/pckgmgr/regpckg/tree/js/tree.js",
         "composum/nodes/pckgmgr/js/pckgmgr.js"
       ]
     }

@@ -132,7 +132,8 @@ public class PackageTransformer implements ResourceTransformer, InstallTaskFacto
                     try {
                         Thread.sleep(5000L);
                     } catch (InterruptedException e) {
-                        // ignore
+                        // someone tried to stop us. Better give up.
+                        throw new RuntimeException(e);
                     }
                 } else if (waits >= 60) {
                     logger.error("unable to get ServiceReference of {} - giving up", clazz.getName());

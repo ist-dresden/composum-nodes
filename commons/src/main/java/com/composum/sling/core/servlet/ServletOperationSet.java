@@ -3,6 +3,8 @@ package com.composum.sling.core.servlet;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.util.RequestUtil;
+import com.composum.sling.core.util.SlingResourceUtil;
+
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestPathInfo;
@@ -127,6 +129,8 @@ public class ServletOperationSet<E extends Enum<?>, O extends Enum<?>> {
             try {
 
                 ResourceHandle resource = getResource(request);
+                LOG.debug("Calling GET {} for {} with {}", operation.getClass().getSimpleName(),
+                        SlingResourceUtil.getPath(resource));
                 operation.doIt(request, response, resource);
 
             } catch (RepositoryException ex) {
@@ -155,6 +159,8 @@ public class ServletOperationSet<E extends Enum<?>, O extends Enum<?>> {
             try {
 
                 ResourceHandle resource = getResource(request);
+                LOG.debug("Calling POST {} with {}", operation.getClass().getSimpleName(),
+                        SlingResourceUtil.getPath(resource));
                 operation.doIt(request, response, resource);
 
             } catch (RepositoryException ex) {
@@ -183,6 +189,8 @@ public class ServletOperationSet<E extends Enum<?>, O extends Enum<?>> {
             try {
 
                 ResourceHandle resource = getResource(request);
+                LOG.debug("Calling PUT {} with {}", operation.getClass().getSimpleName(),
+                        SlingResourceUtil.getPath(resource));
                 operation.doIt(request, response, resource);
 
             } catch (RepositoryException ex) {
@@ -211,6 +219,8 @@ public class ServletOperationSet<E extends Enum<?>, O extends Enum<?>> {
             try {
 
                 ResourceHandle resource = getResource(request);
+                LOG.debug("Calling DELETE {} with {}", operation.getClass().getSimpleName(),
+                        SlingResourceUtil.getPath(resource));
                 operation.doIt(request, response, resource);
 
             } catch (RepositoryException ex) {

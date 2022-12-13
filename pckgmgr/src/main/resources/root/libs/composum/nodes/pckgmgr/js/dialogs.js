@@ -61,7 +61,9 @@
                 this.$group = this.$('input[name="group"]');
                 this.$name = this.$('input[name="name"]');
                 this.$version = this.$('input[name="version"]');
+                this.$registry = this.$('select[name="registry"]');
                 this.$('button.delete').click(_.bind(this.deletePackage, this));
+                this.$registry.parent().hide();
             },
 
             setPackage: function (pckg) {
@@ -69,10 +71,25 @@
                     this.$group.val(pckg.group);
                     this.$name.val(pckg.name);
                     this.$version.val(pckg.version);
+                    this.$registry.val(pckg.registry);
+                    this.registryVisible(pckg.registry);
                 } else {
                     this.$group.val(undefined);
                     this.$name.val(undefined);
                     this.$version.val(undefined);
+                    this.$registry.val(undefined);
+                    this.registryVisible(false);
+                }
+            },
+
+            /** Sets visibility of dialog part for choosing the registry of the package. */
+            registryVisible: function (visible) {
+                if (visible) {
+                    this.$registry.closest("div.form-group").show();
+                    this.$registry.removeAttr('disabled');
+                } else {
+                    this.$registry.closest("div.form-group").hide();
+                    this.$registry.attr('disabled','disabled');
                 }
             },
 
@@ -81,7 +98,13 @@
                 var group = this.$group.val();
                 var name = this.$name.val();
                 var version = this.$version.val();
-                var path = '/' + (group ? (group + '/') : '') + name + (version ? ('-' + version) : '') + '.zip';
+                var registry = this.$registry.val();
+                var path;
+                if (registry) {
+                    path = '/@' + registry + '/' + (group ? (group + '/') : '') + name + (version ? ('/' + version) : '/-');
+                } else {
+                    path = '/' + (group ? (group + '/') : '') + name + (version ? ('-' + version) : '') + '.zip';
+                }
                 if (this.form.isValid()) {
                     core.ajaxDelete("/bin/cpm/package.json" + core.encodePath(path), {},
                         _.bind(function (result) {
@@ -123,7 +146,11 @@
                         $(document).trigger("path:select", [path]);
                     });
                 } else {
-                    this.alert('danger', 'a file must be specified');
+                    if (this.form.getValues().registry != null) {
+                        this.alert('danger', 'a file and a registry must be specified');
+                    } else {
+                        this.alert('danger', 'a file must be specified');
+                    }
                 }
                 return false;
             },
