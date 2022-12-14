@@ -43,7 +43,7 @@ public class VersionComparatorTest {
         compare("6.1.58-FP3", "6.1.58.FP4", -1);
         compare("6.1.58.FP3", "6.1.58-FP4", -1);
         compare("6.1.58.FP3", "6.1.58.FP4", -1);
-        compare("6.1.0", "6.1-FP3", -1);
+        compare("6.1.0", "6.1-FP3", 1); // original -1 , doubtful
         compare("6.1", "6.1-FP3", 1); // original -1
     }
 
@@ -51,5 +51,6 @@ public class VersionComparatorTest {
         int ret = comparator.compare(v1, v2);
         ec.checkThat(v1 + " compare to " + v2 + " must return " + comp, Math.signum(ret), CoreMatchers.is((float) comp));
     }
+
 
 }
