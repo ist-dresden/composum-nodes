@@ -1,9 +1,13 @@
 package com.composum.sling.core.pckgmgr.regpckg.util;
 
 import java.util.Locale;
+import java.util.Objects;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ErrorCollector;
 
 
 /**
@@ -14,31 +18,54 @@ import org.junit.Test;
 @SuppressWarnings("unchecked")
 public class ComparableVersionTest {
 
-    // adapters for other JUnit version
+    @Rule
+    public final ErrorCollector ec = new ErrorCollector();
+
+    // adapters for other JUnit version in original test
 
     private void assertTrue(boolean condition, String message) {
-        Assert.assertTrue(message, condition);
+        ec.checkThat(message, condition, CoreMatchers.is(true));
     }
 
     private <T> void assertEquals(T o1, T o2, String message) {
-        Assert.assertEquals(message, o1, o2);
+        ec.checkThat(message, o1, CoreMatchers.is(o2));
+    }
+
+    /** Avoid using ComparableVersion, as original test does, so we can check other algorithm. */
+    private static class CompareableByVersionComparator implements Comparable<CompareableByVersionComparator> {
+        private final String version;
+
+        public CompareableByVersionComparator(String version) {
+            this.version = version;
+        }
+
+        @Override
+        public int compareTo(CompareableByVersionComparator o) {
+            return new VersionComparator().compare(this.version, o.version);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(version);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return compareTo((CompareableByVersionComparator) obj) == 0;
+        }
+
+        @Override
+        public String toString() {
+            return version;
+        }
+    }
+
+    /** Adapter to use the ComparableVersion test code without referencing ComparableVersion itself. */
+    private Comparable newComparable(String version) {
+        return new CompareableByVersionComparator(version);
     }
 
     // now the original test code
-
-    private Comparable newComparable(String version) {
-        ComparableVersion ret = new ComparableVersion(version);
-        String canonical = ret.getCanonical();
-        String parsedCanonical = new ComparableVersion(canonical).getCanonical();
-
-        System.out.println("canonical( " + version + " ) = " + canonical);
-        assertEquals(
-                canonical,
-                parsedCanonical,
-                "canonical( " + version + " ) = " + canonical + " -> canonical: " + parsedCanonical);
-
-        return ret;
-    }
 
     private static final String[] VERSIONS_QUALIFIER = {
             "1-abc",
@@ -91,7 +118,7 @@ public class ComparableVersionTest {
         Comparable c2 = newComparable(v2);
         assertTrue(c1.compareTo(c2) == 0, "expected " + v1 + " == " + v2);
         assertTrue(c2.compareTo(c1) == 0, "expected " + v2 + " == " + v1);
-        assertTrue(c1.hashCode() == c2.hashCode(), "expected same hashcode for " + v1 + " and " + v2);
+        // not relevant: assertTrue(c1.hashCode() == c2.hashCode(), "expected same hashcode for " + v1 + " and " + v2);
         assertTrue(c1.equals(c2), "expected " + v1 + ".equals( " + v2 + " )");
         assertTrue(c2.equals(c1), "expected " + v2 + ".equals( " + v1 + " )");
     }
@@ -326,16 +353,6 @@ public class ComparableVersionTest {
         } finally {
             Locale.setDefault(orig);
         }
-    }
-
-    @Test
-    public void testReuse() {
-        ComparableVersion c1 = new ComparableVersion("1");
-        c1.parseVersion("2");
-
-        Comparable c2 = newComparable("2");
-
-        assertEquals(c1, c2, "reused instance should be equivalent to new instance");
     }
 
     /**
