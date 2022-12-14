@@ -225,6 +225,12 @@
             <artifactId>jsr305</artifactId>
         </dependency>
 
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+
     </dependencies>
     <profiles>
 
