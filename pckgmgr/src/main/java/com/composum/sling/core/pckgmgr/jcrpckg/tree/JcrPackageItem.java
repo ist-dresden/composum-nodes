@@ -1,9 +1,13 @@
 package com.composum.sling.core.pckgmgr.jcrpckg.tree;
 
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
+import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
 import com.google.gson.stream.JsonWriter;
+
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
+import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +90,21 @@ public class JcrPackageItem implements TreeItem {
     @Override
     public int hashCode() {
         return 31 * getName().hashCode() + definition.get(JcrPackageDefinition.PN_VERSION).hashCode();
+    }
+
+    public int compareTo(JcrPackageItem o) {
+        PackageId id1 = definition != null ? definition.getId() : null;
+        PackageId id2 = o.getDefinition() != null ? o.getDefinition().getId() : null;
+        CompareToBuilder builder = new CompareToBuilder();
+        builder.append( id1 != null ? id1.getGroup() : id1, id2 != null ? id2.getGroup() : id2);
+        builder.append( id1 != null ? id1.getName() : id1, id2 != null ? id2.getName() : id2);
+        // Until file-vault 3.6.6 the version comparison is wrong, so use our own comparator. JCRVLT-672
+        // also we want the newest version first
+        builder.append(id1 != null ? String.valueOf(id1.getVersion()) : "",
+                id2 != null ? String.valueOf(id2.getVersion()) : "", new VersionComparator.Inverted());
+        builder.append(this.getName(), o.getName());
+        builder.append(this.getPath(), o.getPath());
+        return builder.toComparison();
     }
 
 }

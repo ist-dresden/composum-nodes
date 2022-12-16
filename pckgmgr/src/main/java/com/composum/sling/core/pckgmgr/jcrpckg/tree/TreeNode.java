@@ -73,13 +73,7 @@ public class TreeNode extends ArrayList<TreeItem> {
     }
 
     public void sort() {
-        Collections.sort(this, new Comparator<TreeItem>() {
-
-            @Override
-            public int compare(TreeItem o1, TreeItem o2) {
-                return o1.getName().compareToIgnoreCase(o2.getName());
-            }
-        });
+        Collections.sort(this, new TreeItemComparator());
     }
 
     public void toJson(JsonWriter writer) throws IOException, RepositoryException {
@@ -103,5 +97,17 @@ public class TreeNode extends ArrayList<TreeItem> {
             writer.endArray();
             writer.endObject();
         }
+    }
+
+    public static class TreeItemComparator implements Comparator<TreeItem> {
+
+        @Override
+        public int compare(TreeItem o1, TreeItem o2) {
+            if ( o1 instanceof JcrPackageItem && o2 instanceof JcrPackageItem) {
+                return ((JcrPackageItem) o1).compareTo((JcrPackageItem) o2);
+            }
+            return o1.getName().compareToIgnoreCase(o2.getName());
+        }
+
     }
 }
