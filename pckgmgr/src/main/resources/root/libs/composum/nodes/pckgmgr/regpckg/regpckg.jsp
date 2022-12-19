@@ -7,10 +7,7 @@
     <div class="detail-panel jcrpckg">
         <div class="detail-tabs action-bar btn-toolbar" role="toolbar">
             <div class="btn-group btn-group-sm" role="group">
-                <a class="package fa fa-suitcase btn btn-default" href="#general" data-group="general" title="Package"><span class="label">Package</span></a>
-                <a class="filter fa fa-filter btn btn-default" href="#filter" data-group="filter" title="Filter"><span class="label">Filter</span></a>
-                <a class="coverage fa fa-list btn btn-default" href="#coverage" data-group="content" title="Coverage"><span class="label">Coverage</span></a>
-                <a class="options fa fa-tags btn btn-default" href="#options" data-group="options" title="Options"><span class="label">Options</span></a>
+                <a class="general" href="#general" data-group="general" title="Group"><div class="title">${pckgmgr.path}</div></a>
             </div>
         </div>
         <div class="detail-content">
