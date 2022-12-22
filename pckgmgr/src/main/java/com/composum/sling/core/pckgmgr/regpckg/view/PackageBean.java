@@ -1,11 +1,16 @@
 package com.composum.sling.core.pckgmgr.regpckg.view;
 
+import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
+
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.pckgmgr.PackagesServlet;
 import com.composum.sling.core.pckgmgr.regpckg.tree.PackageNode;
 import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryItem;
 import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryTree;
 import com.composum.sling.core.pckgmgr.regpckg.tree.VersionNode;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
+import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
+import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 
 import org.apache.jackrabbit.vault.packaging.PackageId;
@@ -15,8 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class PackageBean extends ConsoleSlingBean implements PackageView, Comparable<PackageBean>, AutoCloseable {
 
@@ -25,7 +33,7 @@ public class PackageBean extends ConsoleSlingBean implements PackageView, Compar
     public static final String RESOURCE_TYPE = "";
 
     protected VersionBean currentVersion;
-    protected final Map<String, VersionBean> versionSet = new LinkedHashMap<>();
+    protected final Map<String, VersionBean> versionSet = new TreeMap<>(new VersionComparator().reversed());
 
     @Override
     public void initialize(BeanContext context) {
@@ -137,6 +145,23 @@ public class PackageBean extends ConsoleSlingBean implements PackageView, Compar
 
     public String getDownloadUrl() {
         return currentVersion != null ? currentVersion.getDownloadUrl() : "";
+    }
+
+    @Override
+    public String getUrl() {
+        return LinkUtil.getUrl(getRequest(), PackagesServlet.SERVLET_PATH + EXT_HTML + getPath());
+    }
+
+    /**
+     * All versions of the package that are currently in the registry.
+     */
+    public Collection<VersionBean> getAllVersions() {
+        return versionSet.values();
+    }
+
+    /** True iff there is more than one version of the package present. */
+    public boolean isHasAlternativeVersions() {
+        return versionSet.size() > 1;
     }
 
 }

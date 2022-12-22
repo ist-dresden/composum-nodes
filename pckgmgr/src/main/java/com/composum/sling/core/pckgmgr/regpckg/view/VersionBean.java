@@ -1,6 +1,9 @@
 package com.composum.sling.core.pckgmgr.regpckg.view;
 
+import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
+
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.pckgmgr.PackagesServlet;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
@@ -32,7 +35,7 @@ import java.util.List;
 
 public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCloseable {
 
-    public static final String RESOURCE_TYPE = "";
+    public static final String RESOURCE_TYPE = "composum/nodes/pckgmgr/version";
 
     private static final Logger LOG = LoggerFactory.getLogger(VersionBean.class);
 
@@ -69,7 +72,7 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     @Override
     public void initialize(BeanContext context, Resource resource) {
         SlingHttpServletRequest request = context.getRequest();
-        String path = RegistryUtil.requestPath(request);
+        String path = resource.isResourceType(RESOURCE_TYPE) ? resource.getPath() : RegistryUtil.requestPath(request);
         this.namespace = RegistryUtil.namespace(path);
         this.packageId = RegistryUtil.fromPath(path);
         super.initialize(context, new SyntheticResource(context.getResolver(), path, RESOURCE_TYPE));
@@ -315,6 +318,11 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     protected String format(Calendar rawDate, String dateRep) {
         Calendar date = RegistryUtil.readPackagePropertyDate(rawDate, dateRep);
         return date != null ? new SimpleDateFormat(DATE_FORMAT).format(date.getTime()) : "";
+    }
+
+    @Override
+    public String getUrl() {
+        return LinkUtil.getUrl(getRequest(), PackagesServlet.SERVLET_PATH + EXT_HTML + getPath());
     }
 
 }
