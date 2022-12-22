@@ -5,6 +5,7 @@
 <sling:defineObjects/>
 <cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean" scope="request">
     <div class="detail-view">
+        <!-- FIXME VIEW VIEW_TYPE=${pckgmgr.viewType} MODE=${pckgmgr.mode} -->
         <sling:include resourceType="composum/nodes/pckgmgr/${pckgmgr.viewType}"
                        replaceSelectors="${pckgmgr.mode}"/>
     </div>
