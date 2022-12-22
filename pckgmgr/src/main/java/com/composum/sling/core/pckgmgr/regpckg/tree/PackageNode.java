@@ -15,6 +15,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -23,7 +24,7 @@ public class PackageNode extends AbstractNode implements PackageView {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageNode.class);
 
-    public static final VersionComparator COMPARATOR = new VersionComparator.Inverted();
+    public static final Comparator<String> COMPARATOR = new VersionComparator().reversed();
 
     protected final String namespace;
     protected final GroupNode group;

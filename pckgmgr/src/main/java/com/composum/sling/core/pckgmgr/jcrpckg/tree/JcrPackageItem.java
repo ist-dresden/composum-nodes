@@ -101,7 +101,7 @@ public class JcrPackageItem implements TreeItem {
         // Until file-vault 3.6.6 the version comparison is wrong, so use our own comparator. JCRVLT-672
         // also we want the newest version first
         builder.append(id1 != null ? String.valueOf(id1.getVersion()) : "",
-                id2 != null ? String.valueOf(id2.getVersion()) : "", new VersionComparator.Inverted());
+                id2 != null ? String.valueOf(id2.getVersion()) : "", new VersionComparator().reversed());
         builder.append(this.getName(), o.getName());
         builder.append(this.getPath(), o.getPath());
         return builder.toComparison();

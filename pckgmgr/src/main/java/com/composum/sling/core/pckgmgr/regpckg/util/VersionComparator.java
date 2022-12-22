@@ -1,5 +1,7 @@
 package com.composum.sling.core.pckgmgr.regpckg.util;
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.Version;
 
 import java.util.Comparator;
@@ -52,19 +54,51 @@ import java.util.Comparator;
  */
 public class VersionComparator implements Comparator<String> {
 
-    public static class Inverted extends VersionComparator {
-
-        @Override
-        public int compare(String o1, String o2) {
-            return super.compare(o2, o1);
-        }
-    }
-
     @Override
     public int compare(String o1, String o2) {
         ComparableVersion v1 = new ComparableVersion(o1);
         ComparableVersion v2 = new ComparableVersion(o2);
         return v1.compareTo(v2);
+    }
+
+    /**
+     * Comparator that uses {@link VersionComparator#compare(String, String)} with PackageIds,
+     * since {@link org.apache.jackrabbit.vault.packaging.PackageId#compareTo(PackageId)}
+     * uses (as of filevault-3.6.6) the wrt. maven ignorant version comparison.
+     */
+    public static class PackageIdComparator implements Comparator<PackageId> {
+
+        protected final Comparator<String> myVersionComparator;
+
+        public PackageIdComparator(boolean reverseVersionComparison) {
+            if (reverseVersionComparison) {
+                myVersionComparator = new VersionComparator().reversed();
+            } else {
+                myVersionComparator = new VersionComparator();
+            }
+        }
+
+        @Override
+        public int compare(PackageId o1, PackageId o2) {
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(o1.getGroup(), o2.getGroup());
+            builder.append(o1.getName(), o2.getName());
+            builder.appendSuper(myVersionComparator.compare(o1.getVersionString(), o2.getVersionString()));
+            return builder.toComparison();
+        }
+    }
+
+    /**
+     * Compares {@link PackageId} by group and name only, ignoring the version.
+     */
+    public static class PackageIdByGroupAndNameComparator implements Comparator<PackageId> {
+        @Override
+        public int compare(PackageId o1, PackageId o2) {
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(o1.getGroup(), o2.getGroup());
+            builder.append(o1.getName(), o2.getName());
+            return builder.toComparison();
+        }
     }
 
 }
