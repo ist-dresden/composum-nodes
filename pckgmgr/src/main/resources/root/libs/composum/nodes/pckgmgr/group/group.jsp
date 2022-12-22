@@ -10,6 +10,12 @@
                 <a class="general" href="#general" data-group="general" title="Group"><div class="title">${pckgmgr.path}</div></a>
             </div>
         </div>
+<%--        <div class="display-toolbar detail-toolbar">--%>
+<%--            <div class="btn-group btn-group-sm" role="group">--%>
+<%--                <button class="cleanup fa fa-recycle btn btn-default" title="Cleanup"><span class="label">Cleanup</span>--%>
+<%--                </button>--%>
+<%--            </div>--%>
+<%--        </div>--%>
         <div class="detail-content">
         </div>
     </div>

@@ -2,7 +2,7 @@
 
 Some notes that may or may not help a developer when improving the package manager. :-)
 
-### Requests for a package manager view
+### Requests for a package manager view, example and rendering structure
 - /bin/cpm/package/registryTree.json/path  -> Update the tree
 
 - /bin/packages.view.html/path : right frame, div.detail-content = replaced with Ajax later  
@@ -34,9 +34,6 @@ Some notes that may or may not help a developer when improving the package manag
 /bin/packages.tab.general.html/path : the actual list of packages.
   group/general.jcrpckg = group/general/general.jsp -> explicitly calls jcrpckg/general.listitem . includes status.jsp
 
-### New: version list for regpckg
-regpckg/general/general.jsp : 
-
 ## Component structure of the package manager
 
 Base path: /libs/composum/nodes/pckgmgr/ = base component with selectors for the basic areas of the component:
@@ -51,11 +48,27 @@ Basic components for ${pckgmgr.viewType} : packages, registry, group, jcrpckg, r
 subcomponents with ${pckgmgr.tabType} : general, filter, content, options
 /bin/packages.view.html/path : selector ${pckgmgr.mode} : jcrpckg, regpckg
 
-
-
+## Models
 com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean
 vs.
 com.composum.sling.core.pckgmgr.regpckg.view.PackageBean
 
 ## Icons
 find them in https://fontawesome.com/v4/icons/
+cleanup of old versions: eraser? recycle?
+
+## CSS Struktur der views:
+### JCR Package Manager Detailviews 
+div.pckgmgr-view div.detail-view ... 
+#### Gruppe:
+div.detail-panel.group div.detail-content div.detail-panel.group div.group-detail 
+  e.g. div.pckg-list-item.panel.panel-default ...
+#### Package:
+div.detail-panel.jcrpckg div.detail-content div.detail-panel.package div.package-detail
+### Registry Package Manager: div.pckgmgr-view div.detail-view ...
+#### Gruppe:
+div.detail-panel.group div.detail-content div.detail-panel.group div.group-detail
+#### Package: FIXME: jcrpckg ? + regmode?
+div.detail-panel.jcrpckg div.detail-content div.detail-panel.package div.package-detail
+#### Version: FIXME: jcrpckg ? + regmode?
+div.detail-panel.jcrpckg div.detail-content div.detail-panel.package div.package-detail

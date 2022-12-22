@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <sling:defineObjects />
 <cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.regpckg.view.VersionBean" scope="request">
-    <div class="detail-panel jcrpckg">
+    <div class="detail-panel jcrpckg regmode">
         <div class="detail-tabs action-bar btn-toolbar" role="toolbar">
             <div class="btn-group btn-group-sm" role="group">
                 <a class="package fa fa-suitcase btn btn-default" href="#general" data-group="general" title="Package"><span class="label">Package</span></a>

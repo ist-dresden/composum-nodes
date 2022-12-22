@@ -1,3 +1,7 @@
 .detail-panel.package .pckg-list-item .identifiers {
     flex-grow: 1;
 }
+
+.detail-panel.package .package-detail .pckg-list-item {
+    margin: 10px 0;
+}
