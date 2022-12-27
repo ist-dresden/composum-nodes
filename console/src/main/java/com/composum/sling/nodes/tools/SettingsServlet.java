@@ -31,7 +31,8 @@ import java.util.TreeMap;
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Tools Bundles Servlet",
                 ServletResolverConstants.SLING_SERVLET_RESOURCE_TYPES + "=" + SettingsServlet.RESOURCE_TYPE,
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=json"
         }
 )
 public class SettingsServlet extends SlingSafeMethodsServlet implements RestrictedService {

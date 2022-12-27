@@ -51,7 +51,7 @@
             },
 
             loadContent: function () {
-                core.getJson(core.getComposumPath('composum/nodes/system/tools/runtime/settings.' + (this.currentTab) + '.json'),
+                core.getJson(core.getComposumPath('composum/nodes/system/content/runtime/settings.' + (this.currentTab) + '.json'),
                     _.bind(function (result) {
                         this.$table.bootstrapTable('load', result);
                     }, this), _.bind(function (result) {
