@@ -20,6 +20,7 @@
             this.$('button.create').on('click', _.bind(this.createPackage, this));
             this.$('button.delete').on('click', _.bind(this.deletePackage, this));
             this.$('button.upload').on('click', _.bind(this.uploadPackage, this));
+            this.$('button.cleanup').on('click', _.bind(this.cleanupVersions, this));
             this.$download = this.$('a.download');
         },
 
@@ -65,6 +66,10 @@
 
         refreshTree: function (event) {
             this.tree.refresh();
+        },
+
+        cleanupVersions: function (event) {
+            alert('FIXME: implement cleanup');
         }
     });
 

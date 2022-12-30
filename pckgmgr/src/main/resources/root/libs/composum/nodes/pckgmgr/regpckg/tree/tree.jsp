@@ -28,6 +28,10 @@
                        title="${cpn:i18n(slingRequest,'Download selected package')}"><span
                             class="label">${cpn:i18n(slingRequest,'Download')}</span></a>
                 </div>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="cleanup fa fa-recycle btn btn-default"
+                            title="Cleanup obsolete package versions"><span class="label">Cleanup</span></button>
+                </div>
             </div>
             <div class="align-right">
                 <div class="regpckg-mode-merged tree-actions_checkbox">

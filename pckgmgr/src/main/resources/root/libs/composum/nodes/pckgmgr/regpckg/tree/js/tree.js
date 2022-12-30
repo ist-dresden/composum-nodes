@@ -35,6 +35,7 @@
             this.$('button.refresh').on('click', _.bind(this.refreshTree, this));
             this.$('button.delete').on('click', _.bind(this.deletePackage, this));
             this.$('button.upload').on('click', _.bind(this.uploadPackage, this));
+            this.$('button.cleanup').on('click', _.bind(this.cleanupVersions, this));
             this.$download = this.$('a.download');
             var merged = !!core.console.getProfile().get('regpckg', 'merged', false);
             this.$merged = this.$('.regpckg-mode-merged input');
@@ -78,6 +79,10 @@
 
         refreshTree: function (event) {
             this.tree.refresh();
+        },
+
+        cleanupVersions: function (event) {
+            alert('FIXME: implement cleanup');
         }
     });
 
