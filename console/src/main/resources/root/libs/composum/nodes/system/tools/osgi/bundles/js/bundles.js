@@ -80,7 +80,7 @@
             },
 
             loadContent: function () {
-                core.getJson(core.getComposumPath('composum/nodes/system/tools/osgi/bundles.json'),
+                core.getJson(core.getComposumPath('composum/nodes/system/content/osgi/bundles.json'),
                     _.bind(function (result) {
                         this.$table.bootstrapTable('load', result.bundles);
                         this.$total.text('total: ' + result.total);
@@ -102,7 +102,7 @@
             },
 
             openDetails: function (bundleId) {
-                core.getJson(core.getComposumPath('composum/nodes/system/tools/osgi/bundles.json/') + bundleId,
+                core.getJson(core.getComposumPath('composum/nodes/system/content/osgi/bundles.json/') + bundleId,
                     _.bind(function (bundle) {
                         core.showLoadedDialog(core.components.Dialog,
                             this.renderDialog(bundle, this.renderDetails(bundle)));

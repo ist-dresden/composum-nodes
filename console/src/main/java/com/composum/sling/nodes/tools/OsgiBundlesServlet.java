@@ -31,7 +31,8 @@ import java.util.Map;
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Tools Bundles Servlet",
                 ServletResolverConstants.SLING_SERVLET_RESOURCE_TYPES + "=" + OsgiBundlesServlet.RESOURCE_TYPE,
-                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET,
+                ServletResolverConstants.SLING_SERVLET_EXTENSIONS + "=json"
         }
 )
 public class OsgiBundlesServlet extends SlingSafeMethodsServlet implements RestrictedService {
