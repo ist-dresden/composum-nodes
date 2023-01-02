@@ -21,6 +21,10 @@
             return core.getView('#pckg-upload-dialog', pckgmgr.UploadPackageDialog);
         };
 
+        pckgmgr.getCleanupPackagesDialog = function () {
+            return core.getView('#pckg-cleanup-dialog', pckgmgr.CleanupPackagesDialog);
+        };
+
         pckgmgr.CreatePackageDialog = core.components.Dialog.extend({
 
             initialize: function (options) {
@@ -156,6 +160,65 @@
             },
 
             fileChanged: function () {
+            }
+        });
+
+        pckgmgr.CleanupPackagesDialog = core.components.Dialog.extend({
+
+            initialize: function (options) {
+                core.components.Dialog.prototype.initialize.apply(this, [options]);
+                this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
+                this.$group = this.$('input[name="group"]');
+                this.$name = this.$('input[name="name"]');
+                this.$registry = this.$('select[name="registry"]');
+                this.$('button.cleanup').click(_.bind(this.cleanupPackages, this));
+                this.$registry.parent().hide();
+            },
+
+            setPackage: function (pckg) {
+                if (pckg) {
+                    this.$group.val(pckg.group);
+                    this.$name.val(pckg.name);
+                    this.$registry.val(pckg.registry);
+                    this.registryVisible(pckg.registry);
+                } else {
+                    this.$group.val(undefined);
+                    this.$name.val(undefined);
+                    this.$registry.val(undefined);
+                    this.registryVisible(false);
+                }
+            },
+
+            /** Sets visibility of dialog part for choosing the registry of the package. */
+            registryVisible: function (visible) {
+                if (visible) {
+                    this.$registry.closest("div.form-group").show();
+                    this.$registry.removeAttr('disabled');
+                } else {
+                    this.$registry.closest("div.form-group").hide();
+                    this.$registry.attr('disabled','disabled');
+                }
+            },
+
+            cleanupPackages: function (event) {
+                event.preventDefault();
+                var group = this.$group.val();
+                var name = this.$name.val();
+                var version = this.$version.val();
+                var registry = this.$registry.val();
+                var path;
+                if (registry) {
+                    path = '/@' + registry + '/' + (group ? (group + '/') : '') + name + (version ? ('/' + version) : '/-');
+                } else {
+                    path = '/' + (group ? (group + '/') : '') + name + (version ? ('-' + version) : '') + '.zip';
+                }
+                alert('FIXME HPS cleanupPackages at ' + path);
+                if (this.form.isValid()) {
+                    alert('FIXME HPS execution missing');
+                } else {
+                    this.alert('danger', 'a valid Package must be specified');
+                }
+                return false;
             }
         });
 
