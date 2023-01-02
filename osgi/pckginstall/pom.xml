@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes.osgi</groupId>
         <artifactId>composum-nodes-osgi</artifactId>
-        <version>4.1.3</version>
+        <version>4.1.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>composum-nodes-osgi-package-installer</artifactId>
