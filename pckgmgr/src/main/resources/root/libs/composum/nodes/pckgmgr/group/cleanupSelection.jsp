@@ -8,4 +8,10 @@ OPTIONS Group ${slingRequest.pathInfo}
     <%--@elvariable id="bean" type="com.composum.sling.core.pckgmgr.regpckg.view.GroupBean"--%>
     GROUP ${bean}
     LIST ${bean.multiVersionPackagePaths}
+    <div class="package-list">
+        <c:forEach items="${bean.multiVersionPackagePaths}" var="pckgpath">
+            <sling:include replaceSuffix="${pckgpath}" replaceSelectors="cleanupSelection"
+                           resourceType="composum/nodes/pckgmgr/regpckg"/>
+        </c:forEach>
+    </div>
 </cpn:component>

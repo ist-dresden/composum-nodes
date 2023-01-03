@@ -6,7 +6,8 @@
 <cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean" scope="request">
     <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean"--%>
     <div class="pckg-list-item ${pckg.cssClasses} panel panel-default">
-        <div class="panel-heading header">
+        PCKG: ${pckg.path} ${pckg.packageId}
+        <div class="header">
             <div class="identifiers">
                 <a href="${pckg.url}" data-path="${pckg.path}">
                     <h3>${cpn:text(pckg.group)}&nbsp;</h3>
@@ -27,7 +28,6 @@
                     </div>
                 </c:if>
             </div>
-            <sling:include replaceSelectors="status" />
         </div>
     </div>
 </cpn:component>

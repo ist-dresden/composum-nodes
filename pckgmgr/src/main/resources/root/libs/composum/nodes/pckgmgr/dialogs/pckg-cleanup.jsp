@@ -17,36 +17,18 @@
                     </div>
                     <div class="modal-body">
                         <div class="messages">
+                            <div class="loading-message">Checking for obsolete versions...</div>
                             <div class="alert"></div>
                         </div>
-
                         <input name="_charset_" type="hidden" value="UTF-8"/>
-                        <c:if test="${not empty pckgmgr.registries}">
-                            <div class="form-group registry">
-                                <label class="control-label" for="pckg-delete-registry">Registry</label>
-                                <select name="registry" class="widget select-widget form-control" id="pckg-delete-registry">
-                                    <option value="" selected></option>
-                                    <c:forEach items="${pckgmgr.registries}" var="registry">
-                                        <option value="${registry.key}">${cpn:text(registry.value)}</option>
-                                    </c:forEach>
-                                </select>
-                            </div>
-                        </c:if>
+
                         <div class="form-group">
-                            <label class="control-label" for="pckg-cleanup-group">Group</label>
-                            <input name="group" class="widget primary-type-widget form-control" type="text" id="pckg-cleanup-group"
-                                   placeholder="enter group name (path)" autofocus/>
+                            <label class="control-label">${cpn:i18n(slingRequest,'Path')}</label>
+                            <input name="path" type="text" disabled="disabled" class="widget text-field-widget form-control"/>
                         </div>
-                        <div class="form-group">
-                            <label class="control-label" for="pckg-cleanup-name">Package Name</label>
-                            <input name="name" class="widget text-field-widget form-control" type="text" id="pckg-cleanup-name"
-                                   placeholder="enter package name" data-rules="mandatory"/>
+
+                        <div class="versioncheckboxes">
                         </div>
-<%--                        <div class="form-group">--%>
-<%--                            <label class="control-label" for="pck-delete-version">Version</label>--%>
-<%--                            <input name="version" class="widget text-field-widget form-control" type="text" id="pck-delete-version"--%>
-<%--                                   placeholder="enter version key (number)"/>--%>
-<%--                        </div>--%>
                     </div>
 
                     <div class="modal-footer buttons">

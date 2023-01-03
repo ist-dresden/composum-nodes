@@ -105,7 +105,8 @@ public class PackageBean extends ConsoleSlingBean implements PackageView, Compar
     }
 
     public void load(BeanContext context) throws IOException {
-        RegistryTree tree = new RegistryTree(false);
+        boolean merged = RegistryUtil.namespace(getPath()) == null;
+        RegistryTree tree = new RegistryTree(merged);
         RegistryItem treeItem = tree.getItem(context, getPath());
         if (treeItem instanceof VersionNode) {
             treeItem = ((VersionNode) treeItem).getPackageNode();

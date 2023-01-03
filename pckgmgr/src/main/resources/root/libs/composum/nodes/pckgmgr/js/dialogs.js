@@ -168,36 +168,31 @@
             initialize: function (options) {
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
-                this.$group = this.$('input[name="group"]');
-                this.$name = this.$('input[name="name"]');
-                this.$registry = this.$('select[name="registry"]');
+                this.$path = this.$('input[name="path"]');
+                this.$options = this.$('div.versioncheckboxes');
+                this.$loadingmessage = this.$('div.loading-message');
                 this.$('button.cleanup').click(_.bind(this.cleanupPackages, this));
-                this.$registry.parent().hide();
+                this.$options.empty();
             },
 
             setPackage: function (pckg) {
+                this.$options.empty();
                 if (pckg) {
-                    this.$group.val(pckg.group);
-                    this.$name.val(pckg.name);
-                    this.$registry.val(pckg.registry);
-                    this.registryVisible(pckg.registry);
+                    this.$path.val(pckg.path);
+                    this.loadOptions(pckg.path);
                 } else {
-                    this.$group.val(undefined);
-                    this.$name.val(undefined);
-                    this.$registry.val(undefined);
-                    this.registryVisible(false);
+                    this.$path.val(undefined);
                 }
             },
 
-            /** Sets visibility of dialog part for choosing the registry of the package. */
-            registryVisible: function (visible) {
-                if (visible) {
-                    this.$registry.closest("div.form-group").show();
-                    this.$registry.removeAttr('disabled');
-                } else {
-                    this.$registry.closest("div.form-group").hide();
-                    this.$registry.attr('disabled','disabled');
-                }
+            loadOptions: function(path) {
+                this.$loadingmessage.show();
+                core.getHtml(
+                    core.getContextUrl('/bin/packages.cleanupPackageOptions.html' + core.encodePath(path)),
+                    _.bind(function (data) {
+                        this.$options.html(data);
+                        this.$loadingmessage.hide();
+                    }, this));
             },
 
             cleanupPackages: function (event) {
