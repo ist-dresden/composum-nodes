@@ -84,7 +84,6 @@
         cleanupVersions: function (event) {
             var dialog = pckgmgr.getCleanupPackagesDialog();
             dialog.show(_.bind(function () {
-                alert('FIXME HPS cleanupVersions reg: ' + JSON.stringify(pckgmgr.current));
                 dialog.setPackage(pckgmgr.current);
             }, this));
         }

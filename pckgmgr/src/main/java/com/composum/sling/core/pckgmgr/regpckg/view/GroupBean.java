@@ -5,11 +5,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,7 +25,6 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
-import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.SlingResourceUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 
@@ -41,7 +38,8 @@ public class GroupBean extends ConsoleSlingBean {
     protected transient PackageRegistries.Registries registries;
 
     protected String namespace;
-    protected List<String> packages = new ArrayList<>();
+    protected List<String> packages = Collections.emptyList();
+    private List<String> multiVersionPackages = Collections.emptyList();
 
 
     @Override
@@ -74,7 +72,15 @@ public class GroupBean extends ConsoleSlingBean {
         Map<Pair<String, String>, List<PackageId>> grouped = registeredpackages.stream()
                 .collect(Collectors.groupingBy(pkg -> Pair.of(pkg.getGroup(), pkg.getName())));
         Comparator<PackageId> comparator = new VersionComparator.PackageIdComparator(false);
-        packages = grouped.entrySet().stream()
+        packages = pathsToHighestVersion(singleRegistry, comparator, grouped.entrySet().stream());
+        multiVersionPackages = pathsToHighestVersion(singleRegistry, comparator,
+                grouped.entrySet().stream()
+                        .filter(e -> e.getValue().size() > 1)
+        );
+    }
+
+    protected List<String> pathsToHighestVersion(PackageRegistry singleRegistry, Comparator<PackageId> comparator, Stream<Map.Entry<Pair<String, String>, List<PackageId>>> versionsPackageGrouped) {
+        return versionsPackageGrouped
                 .map(entry -> entry.getValue().stream().max(comparator))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -84,8 +90,14 @@ public class GroupBean extends ConsoleSlingBean {
                 .collect(Collectors.toList());
     }
 
-    /** Sorted collection of paths to the packages (without version) contained below this path. */
+    /** Sorted collection of paths to the highest version of packages contained below this path. */
     public List<String> getPackagePaths() {
         return packages;
     }
+
+    /** Sorted collection of paths to the highest version of packages contained below this path which have several versions.  */
+    public List<String> getMultiVersionPackagePaths() {
+        return multiVersionPackages;
+    }
+
 }

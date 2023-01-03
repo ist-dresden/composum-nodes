@@ -1,8 +1,8 @@
-## Implementation details
+# Some implementation details
 
 Some notes that may or may not help a developer when improving the package manager. :-)
 
-### Requests for a package manager view, example and rendering structure
+## Requests for a package manager view, example and rendering structure
 - /bin/cpm/package/registryTree.json/path  -> Update the tree
 
 - /bin/packages.view.html/path : right frame, div.detail-content = replaced with Ajax later  
@@ -22,14 +22,14 @@ Some notes that may or may not help a developer when improving the package manag
     - type=composum/nodes/pckgmgr/version/general /libs/composum/nodes/pckgmgr/version/general/summary.jsp
     - type=composum/nodes/pckgmgr/version/general /libs/composum/nodes/pckgmgr/version/general/status.jsp
 
-### 
+## divs structure for the general package manager view structure
 - div.detail-tabs.action-bar : tabs
 - div.display-toolbar.detail-toolbar : actions on displayed node
 - div.package-detail : detail pane
   - div.header-view : general information
   - div.detail-view : detailed information
 
-### Example: package list at jcrpckg
+## Example: package list at jcrpckg
 /bin/packages.view.html/path : frame with detail-view > detail-panel group > (detail-tabs + detail-content (leer))
 /bin/packages.tab.general.html/path : the actual list of packages.
   group/general.jcrpckg = group/general/general.jsp -> explicitly calls jcrpckg/general.listitem . includes status.jsp
@@ -54,7 +54,8 @@ vs.
 com.composum.sling.core.pckgmgr.regpckg.view.PackageBean
 
 ## Icons
-find them in https://fontawesome.com/v4/icons/
+find them in https://fontawesome.com/v4/icons/ or https://glyphicons.bootstrapcheatsheets.com/ .
+
 cleanup of old versions: eraser? recycle?
 
 ## CSS Struktur der views:
@@ -72,3 +73,18 @@ div.detail-panel.group div.detail-content div.detail-panel.group div.group-detai
 div.detail-panel.jcrpckg div.detail-content div.detail-panel.package div.package-detail
 #### Version: FIXME: jcrpckg ? + regmode?
 div.detail-panel.jcrpckg div.detail-content div.detail-panel.package div.package-detail
+
+## Package cleanup implementation plan
+Triggered at tree: a dialog presents all probably obsolete package versions as checkbox list, pre-selected.
+(Buttons for selecting all and deselecting all versions are present).
+AJAX Request to /bin/packages.cleanupoptions.html gives selectable options for packages.
+
+Request deleting the versions: POST request to /bin/cpm/package.json, parameter path=/@jcr/hpsgroup/hpsx/1.4asdf 
+for all versions. Problem: the list of versions can be very long, and 
+https://www.mscharhag.com/api-design/rest-deleting-resources recommends not using a body... Unclear yet. POST?
+
+## Tips and tricks
+To let IntelliJ know what type a JSP variable is (since it can't tell from the Composum tags), you can add a comment 
+e.g. like this:
+<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean" scope="request">
+    <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean"--%>

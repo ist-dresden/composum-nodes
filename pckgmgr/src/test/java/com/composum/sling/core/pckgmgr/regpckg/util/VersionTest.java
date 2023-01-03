@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.jackrabbit.vault.packaging.Version;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -43,6 +44,7 @@ public class VersionTest {
     }
 
     @Test
+    @Ignore("Not an actual test - exploratory code")
     public void sortComparableVersion() {
         List<String> versions = new ArrayList<>();
         for (String s : Arrays.asList("a", "alpha", "ap", "bi", "b", "beta", "bf", "a-1", "a1", "a.1",
