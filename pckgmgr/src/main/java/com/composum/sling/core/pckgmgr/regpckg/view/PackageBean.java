@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class PackageBean extends ConsoleSlingBean implements PackageView, Comparable<PackageBean>, AutoCloseable {
 
@@ -158,6 +159,13 @@ public class PackageBean extends ConsoleSlingBean implements PackageView, Compar
      */
     public Collection<VersionBean> getAllVersions() {
         return versionSet.values();
+    }
+
+    /** A list of package versions that are obsolete because older than the current version. */
+    public Collection<VersionBean> getObsoleteVersions() {
+        return versionSet.values().stream()
+                .filter(v -> currentVersion.obsoletes(v))
+                .collect(Collectors.toList());
     }
 
     /** True iff there is more than one version of the package present. */

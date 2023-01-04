@@ -73,6 +73,8 @@ public class GroupBean extends ConsoleSlingBean {
                 .collect(Collectors.groupingBy(pkg -> Pair.of(pkg.getGroup(), pkg.getName())));
         Comparator<PackageId> comparator = new VersionComparator.PackageIdComparator(false);
         packages = pathsToHighestVersion(singleRegistry, comparator, grouped.entrySet().stream());
+        // FIXME(hps,04.01.23) This is inconsistent to VersionBean.obsoletes since the highest version might be not installed
+        // and thus not be the current version. It's not clear what to do in that case, though...
         multiVersionPackages = pathsToHighestVersion(singleRegistry, comparator,
                 grouped.entrySet().stream()
                         .filter(e -> e.getValue().size() > 1)

@@ -8,6 +8,7 @@ import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
+import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +33,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.List;
 
 public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCloseable {
@@ -41,6 +43,11 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     private static final Logger LOG = LoggerFactory.getLogger(VersionBean.class);
 
     public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+    protected static final Comparator<PackageId> BY_GROUP_AND_NAME_COMPARATOR
+            = new VersionComparator.PackageIdByGroupAndNameComparator();
+    protected static final Comparator<PackageId> PACKAGE_ID_COMPARATOR
+            = new VersionComparator.PackageIdComparator(false);
 
     protected String namespace;
     protected PackageId packageId;
@@ -323,6 +330,12 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     @Override
     public String getUrl() {
         return LinkUtil.getUrl(getRequest(), PackagesServlet.SERVLET_PATH + EXT_HTML + getPath());
+    }
+
+    /** True if this obsoletes the other version - that is, it has same group and name but a newer version. */
+    public boolean obsoletes(VersionBean other) {
+        return BY_GROUP_AND_NAME_COMPARATOR.compare(this.getPackageId(), other.getPackageId()) == 0 &&
+                PACKAGE_ID_COMPARATOR.compare(this.getPackageId(), other.getPackageId()) > 0;
     }
 
 }
