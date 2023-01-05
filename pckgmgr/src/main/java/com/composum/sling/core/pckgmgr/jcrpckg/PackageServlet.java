@@ -59,6 +59,7 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.request.RequestPathInfo;
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
@@ -78,6 +79,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -99,6 +101,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -170,7 +173,7 @@ public class PackageServlet extends AbstractServiceServlet {
     public enum Operation {
         create, update, delete, download, upload, install, uninstall, deploy, service, list, tree, view, query,
         coverage, filterList, filterChange, filterAdd, filterRemove, filterMoveUp, filterMoveDown,
-        cleanup,
+        cleanup, cleanupObsoleteVersions,
         mode, registryTree, registries, registriesTree
     }
 
@@ -240,6 +243,8 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.uninstall, new UninstallOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.deploy, new ServiceOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
+                Operation.cleanupObsoleteVersions, new CleanupObsoleteVersionsOperation());
 
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
                 Operation.filterChange, new ChangeFilterOperation());
@@ -259,6 +264,34 @@ public class PackageServlet extends AbstractServiceServlet {
         // DELETE
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json,
                 Operation.delete, new DeleteOperation());
+    }
+
+    protected String getGroup(RequestParameterMap parameters) throws UnsupportedEncodingException {
+        return getStringParameter(parameters, "group");
+    }
+
+    protected String getName(RequestParameterMap parameters) throws UnsupportedEncodingException {
+        return getStringParameter(parameters, "name");
+    }
+
+    protected String getStringParameter(RequestParameterMap parameters, String parameterName) throws UnsupportedEncodingException {
+        final RequestParameter parameter = parameters.getValue(parameterName);
+        String value = "";
+        if (parameter != null) {
+            value = parameter.getString("UTF-8");
+        }
+        return value;
+    }
+
+    protected @Nonnull List<String> getArrayParameter(RequestParameterMap parameters, String parameterName) throws UnsupportedEncodingException {
+        RequestParameter[] parameterValues = parameters.getValues(parameterName);
+        List<String> values = new ArrayList<>();
+        if (parameterValues != null && parameterValues.length > 0) {
+            for (RequestParameter parameterValue : parameterValues) {
+                values.add(parameterValue.getString("UTF-8"));
+            }
+        }
+        return values;
     }
 
     public class PackageOperationSet extends ServletOperationSet<Extension, Operation> {
@@ -969,6 +1002,32 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
     /**
+     * Deletes the given obsolete package versions. As safety checks, we check that neither of the
+     * packages is in installed state and for all of them there is a newer version present. If that's the case for
+     * all packageIds, we {@link PackageRegistry#remove(PackageId)} them.
+     * <dl>
+     *     <dt>path</dt><dd>Path below which we delete package versions, registry path or not</dd>
+     *     <dt>packlageId</dt><dd>One or more packageIds {@link PackageId#toString()}</dd>
+     * </dl>
+     */
+    protected class CleanupObsoleteVersionsOperation implements ServletOperation {
+
+        @Override
+        public void doIt(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response, @Nullable ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            final Status status = new Status(request, response, LOG);
+            String path = getPath(request);
+            List<String> packageIds = getArrayParameter(request.getRequestParameterMap(), "packageId");
+            if (StringUtils.isNotBlank(path) && packageIds != null && !packageIds.isEmpty()) {
+                status.error("Not implemented yet.");
+            } else {
+                status.error("path and packageId(s) expected");
+            }
+            status.sendJson();
+
+        }
+    }
+
+    /**
      * The 'service' implementation based on the behaviour of the 'service' servlet provided by the CRX Package Manager.
      * <dl>
      * <dt>targetURL</dt>
@@ -980,24 +1039,6 @@ public class PackageServlet extends AbstractServiceServlet {
         abstract class ServiceCommand {
 
             abstract void doCommand(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException;
-
-            String getGroup(RequestParameterMap parameters) throws UnsupportedEncodingException {
-                final RequestParameter groupParameter = parameters.getValue("group");
-                String group = null;
-                if (groupParameter != null) {
-                    group = groupParameter.getString("UTF-8");
-                }
-                return group;
-            }
-
-            String getName(RequestParameterMap parameters) throws UnsupportedEncodingException {
-                final RequestParameter nameParameter = parameters.getValue("name");
-                String name = "";
-                if (nameParameter != null) {
-                    name = nameParameter.getString("UTF-8");
-                }
-                return name;
-            }
 
         }
 

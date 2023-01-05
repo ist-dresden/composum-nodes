@@ -169,6 +169,7 @@
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$path = this.$('input[name="path"]');
+                this.$displaypath = this.$('input[name="displaypath"]');
                 this.$options = this.$('div.versioncheckboxes');
                 this.$loadingmessage = this.$('div.loading-message');
                 this.$('button.cleanup').click(_.bind(this.cleanupPackages, this));
@@ -179,6 +180,7 @@
                 this.$options.empty();
                 if (pckg) {
                     this.$path.val(pckg.path);
+                    this.$displaypath.val(pckg.path);
                     this.loadOptions(pckg.path);
                 } else {
                     this.$path.val(undefined);
@@ -197,21 +199,14 @@
 
             cleanupPackages: function (event) {
                 event.preventDefault();
-                var group = this.$group.val();
-                var name = this.$name.val();
-                var version = this.$version.val();
-                var registry = this.$registry.val();
-                var path;
-                if (registry) {
-                    path = '/@' + registry + '/' + (group ? (group + '/') : '') + name + (version ? ('/' + version) : '/-');
-                } else {
-                    path = '/' + (group ? (group + '/') : '') + name + (version ? ('-' + version) : '') + '.zip';
-                }
-                alert('FIXME HPS cleanupPackages at ' + path);
                 if (this.form.isValid()) {
-                    alert('FIXME HPS execution missing');
+                    this.submitForm(function (result) {
+                        alert(JSON.stringify(result));
+                        var path = result.path;
+                        $(document).trigger("path:changed", [path]);
+                    });
                 } else {
-                    this.alert('danger', 'a valid Package must be specified');
+                    this.alert('danger', 'BUG: invalid form'); // FIXME(hps,05.01.23) can't happen, but check for now
                 }
                 return false;
             }

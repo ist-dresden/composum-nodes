@@ -8,8 +8,7 @@
     <div id="pckg-cleanup-dialog" class="dialog modal fade" role="dialog" aria-hidden="true">
         <div class="modal-dialog form-panel">
             <div class="modal-content">
-                <form class="widget-form">
-
+                <cpn:form classes="widget-form" action="/bin/cpm/package.cleanupObsoleteVersions.json">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                                 aria-hidden="true">&times;</span></button>
@@ -21,10 +20,11 @@
                             <div class="alert"></div>
                         </div>
                         <input name="_charset_" type="hidden" value="UTF-8"/>
+                        <input name="path" type="hidden"/>
 
                         <div class="form-group">
                             <label class="control-label">${cpn:i18n(slingRequest,'Path')}</label>
-                            <input name="path" type="text" disabled="disabled" class="widget text-field-widget form-control"/>
+                            <input name="displaypath" type="text" disabled="disabled" class="widget text-field-widget form-control"/>
                         </div>
 
                         <div class="versioncheckboxes">
@@ -35,7 +35,7 @@
                         <button type="button" class="btn btn-default cancel" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-danger cleanup">Cleanup</button>
                     </div>
-                </form>
+                </cpn:form>
             </div>
         </div>
     </div>
