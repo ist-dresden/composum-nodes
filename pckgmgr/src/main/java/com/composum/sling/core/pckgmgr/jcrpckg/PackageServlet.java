@@ -17,6 +17,7 @@ import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryItem;
 import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryTree;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
+import com.composum.sling.core.pckgmgr.regpckg.view.PackageBean;
 import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
@@ -1016,9 +1017,28 @@ public class PackageServlet extends AbstractServiceServlet {
         public void doIt(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response, @Nullable ResourceHandle resource) throws RepositoryException, IOException, ServletException {
             final Status status = new Status(request, response, LOG);
             String path = getPath(request);
-            List<String> packageIds = getArrayParameter(request.getRequestParameterMap(), "packageId");
-            if (StringUtils.isNotBlank(path) && packageIds != null && !packageIds.isEmpty()) {
-                status.error("Not implemented yet.");
+            List<String> cleanupVersions = getArrayParameter(request.getRequestParameterMap(), "cleanupVersion");
+            if (StringUtils.isNotBlank(path) && cleanupVersions != null && !cleanupVersions.isEmpty()) {
+                String currentPath = null;
+                try {
+                    PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                    Map<String, Object> data = status.data("result");
+                    data.put("path", path);
+                    List<String> deletedPaths = new ArrayList<>();
+                    data.put("deletedPaths", deletedPaths);
+                    for (String cleanupVersion : cleanupVersions) {
+                        currentPath = cleanupVersion; // for error logging
+                        Pair<String, PackageId> resolved = registries.resolve(cleanupVersion);
+                        if (resolved != null) {
+                            registries.getRegistry(resolved.getKey()).remove(resolved.getValue());
+                            deletedPaths.add(cleanupVersion);
+                        } else {
+                            status.error("Could not find package {}", cleanupVersion);
+                        }
+                    }
+                } catch (Exception e) {
+                    status.error("Problem deleting obsolete versions; currentPath=" + currentPath, e);
+                }
             } else {
                 status.error("path and packageId(s) expected");
             }

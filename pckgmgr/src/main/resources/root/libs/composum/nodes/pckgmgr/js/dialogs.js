@@ -201,9 +201,15 @@
                 event.preventDefault();
                 if (this.form.isValid()) {
                     this.submitForm(function (result) {
-                        alert(JSON.stringify(result));
                         var path = result.path;
                         $(document).trigger("path:changed", [path]);
+                        if (result.data && result.data.result && result.data.result.deletedPaths) {
+                            result.data.result.deletedPaths.forEach(
+                                delpath => $(document).trigger("path:deleted", delpath)
+                            );
+                        } else {
+                            this.alert('danger', 'BUG: no deleted paths?')
+                        }
                     });
                 } else {
                     this.alert('danger', 'BUG: invalid form'); // FIXME(hps,05.01.23) can't happen, but check for now
