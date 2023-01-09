@@ -60,6 +60,7 @@
         <module>osgi</module>
         <module>setup</module>
         <module>package</module>
+        <module>test</module>
     </modules>
 
     <profiles>
