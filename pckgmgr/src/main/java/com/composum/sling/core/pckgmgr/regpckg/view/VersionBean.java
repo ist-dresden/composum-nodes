@@ -5,6 +5,7 @@ import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.PackagesServlet;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
+import com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.core.util.LinkUtil;
@@ -196,8 +197,7 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     }
 
     public String getAuditLogUrl() {
-        return "auditlog-invalid-yet";
-        // FIXME(hps,27.05.21) implement, compare com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean
+        return LinkUtil.getUrl(getRequest(), PackageBean.AUDIT_LOG_BASE + getPath());
     }
 
     public String getInstallationTime() {
