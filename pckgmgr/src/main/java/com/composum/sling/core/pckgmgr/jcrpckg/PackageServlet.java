@@ -37,6 +37,7 @@ import org.apache.jackrabbit.vault.fs.api.FilterSet;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.api.PathFilter;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
+import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.MetaInf;
@@ -1263,10 +1264,25 @@ public class PackageServlet extends AbstractServiceServlet {
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
             Session session = RequestUtil.getSession(request);
-
             PackageProgressTracker tracker = new PackageProgressTracker.JsonTracking(response, null);
             tracker.writePrologue();
-            PackageUtil.getCoverage(jcrPackage.getDefinition(), session, tracker);
+            if (jcrPackage != null) {
+                PackageUtil.getCoverage(jcrPackage.getDefinition(), session, tracker);
+            } else {
+                PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                String path = RegistryUtil.requestPath(request);
+                Pair<String, PackageId> location = registries.resolve(path);
+                Pair<String, RegisteredPackage> pckgEntry = location != null ? registries.open(location.getRight()) : null;
+                if (pckgEntry != null) {
+                    WorkspaceFilter filter = pckgEntry.getRight().getWorkspaceFilter();
+                    try {
+                        filter.dumpCoverage(session, tracker, false);
+                    } catch (RepositoryException rex) {
+                        LOG.error(rex.getMessage(), rex);
+                        tracker.onError(ProgressTrackerListener.Mode.TEXT, "exception thrown", rex);
+                    }
+                }
+            }
             tracker.writeEpilogue();
         }
     }
