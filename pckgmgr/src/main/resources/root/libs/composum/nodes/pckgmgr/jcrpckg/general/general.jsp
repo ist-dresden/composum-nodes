@@ -47,7 +47,11 @@
                 <button class="refresh fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
                 </button>
             </div>
-        </div>
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="cleanup fa fa-recycle btn btn-default"
+                        title="Cleanup obsolete package versions"><span class="label">Cleanup</span></button>
+            </div>
+         </div>
         <div class="package-detail">
             <div class="header-view panel panel-default">
                 <sling:include replaceSelectors="header"/>
