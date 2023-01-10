@@ -6,9 +6,16 @@
 <cpn:component id="bean" type="com.composum.sling.core.pckgmgr.regpckg.view.GroupBean" scope="request">
     <%--@elvariable id="bean" type="com.composum.sling.core.pckgmgr.regpckg.view.GroupBean"--%>
     <div class="package-list">
-        <c:forEach items="${bean.multiVersionPackagePaths}" var="pckgpath">
-            <sling:include replaceSuffix="${pckgpath}" replaceSelectors="cleanupSelection"
-                           resourceType="composum/nodes/pckgmgr/regpckg"/>
-        </c:forEach>
+        <c:choose>
+            <c:when test="${empty bean.multiVersionPackagePaths}">
+                No obsolete versions to remove below this path.
+            </c:when>
+            <c:otherwise>
+                <c:forEach items="${bean.multiVersionPackagePaths}" var="pckgpath">
+                    <sling:include replaceSuffix="${pckgpath}" replaceSelectors="cleanupSelection"
+                                   resourceType="composum/nodes/pckgmgr/regpckg"/>
+                </c:forEach>
+            </c:otherwise>
+        </c:choose>
     </div>
 </cpn:component>
