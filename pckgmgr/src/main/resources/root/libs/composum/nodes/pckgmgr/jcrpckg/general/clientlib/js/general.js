@@ -86,6 +86,7 @@
                 }
                 this.$('.display-toolbar .delete').click(_.bind(pckgmgr[pckgmgr.mode.current].tree.actions.deletePackage, pckgmgr[pckgmgr.mode.current].tree.actions));
                 this.$('.display-toolbar .refresh').click(_.bind(this.refresh, this));
+                this.$('.display-toolbar .cleanup').click(_.bind(pckgmgr[pckgmgr.mode.current].tree.actions.cleanupVersions, pckgmgr[pckgmgr.mode.current].tree.actions));
                 this.$feedback.find('.close').click(_.bind(this.closeFeedback, this));
                 this.$logOutput = this.$feedback.find('.feedback-display .log-output');
                 this.$auditLog = this.$('.audit-log');
