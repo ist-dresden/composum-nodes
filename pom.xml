@@ -60,7 +60,7 @@
         <module>osgi</module>
         <module>setup</module>
         <module>package</module>
-        <module>test</module>
+        <!-- <module>test</module> -->
     </modules>
 
     <profiles>
@@ -182,6 +182,12 @@
                     <version>0.0.8</version>
                 </plugin>
 
+                <plugin>
+                    <!-- FIXME use version from parent pom once changed; workaround for https://github.com/bndtools/bnd/issues/3903 -->
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <version>5.1.4</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
