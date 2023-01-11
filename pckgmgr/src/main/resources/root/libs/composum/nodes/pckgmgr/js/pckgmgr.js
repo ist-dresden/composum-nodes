@@ -106,6 +106,11 @@
             }
         };
 
+        /** Triggers refreshing the view etc. */
+        pckgmgr.refresh = function () {
+            $(document).trigger("path:selected", [pckgmgr.getCurrentPath()]);
+        }
+
         pckgmgr.Pckgmgr = console.components.SplitView.extend({
 
             initialize: function (options) {

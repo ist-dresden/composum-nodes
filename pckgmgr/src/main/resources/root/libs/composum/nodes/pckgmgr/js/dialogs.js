@@ -203,6 +203,7 @@
                     this.submitForm(function (result) {
                         var path = result.path;
                         $(document).trigger("path:changed", [path]);
+                        pckgmgr.refresh();
                         if (result.data && result.data.result && result.data.result.deletedPaths) {
                             result.data.result.deletedPaths.forEach(
                                 delpath => $(document).trigger("path:deleted", delpath)
