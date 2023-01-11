@@ -343,6 +343,7 @@ public class LazyCreationServiceImplTest {
         }
         assertEquals(TYPE_UNSTRUCTURED, result.getPrimaryType());
         assertEquals(TYPE_SLING_FOLDER, result.getParent().getPrimaryType());
+        context.resourceResolver().refresh();
         LockManager lockManager = context.resourceResolver().adaptTo(Session.class).getWorkspace().getLockManager();
         assertFalse("Initialized=" + initialized + " but still locked: " + result.getPath(), lockManager.holdsLock
                 (result.getPath()));

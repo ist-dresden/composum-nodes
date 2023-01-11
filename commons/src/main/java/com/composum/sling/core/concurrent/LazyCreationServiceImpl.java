@@ -365,6 +365,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         if (handle.getProperty(PROP_LAST_MODIFIED) == null) {
             return false;
         }
+        refreshSession(handle.getResourceResolver(), true);
         LockManager lockManager = handle.getResourceResolver().adaptTo(Session.class).getWorkspace().getLockManager();
         boolean locked = lockManager.holdsLock(handle.getPath());
         return !locked;
@@ -460,6 +461,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
      */
     protected void refreshSession(ResourceResolver resolver, boolean keepChanges) {
         try {
+            resolver.refresh();
             Session session = resolver.adaptTo(Session.class);
             session.refresh(keepChanges);
         } catch (RepositoryException rex) {

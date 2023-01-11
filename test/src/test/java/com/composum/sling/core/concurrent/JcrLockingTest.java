@@ -153,7 +153,8 @@ public class JcrLockingTest {
         assertNull(resolver.getResource(path));
 
         assertTrue(lockManager.holdsLock(freshPath));
-        // assertTrue(lockManager2.holdsLock(freshPath)); // strangely, PathNotFoundException.
+        resolver2.refresh();
+        assertTrue(lockManager2.holdsLock(freshPath)); // strangely, PathNotFoundException.
 
         try {
             lockManager.unlock(path);
