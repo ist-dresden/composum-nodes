@@ -8,9 +8,14 @@
     <div class="package-list">
         <c:choose>
             <c:when test="${empty bean.multiVersionPackagePaths}">
-                No obsolete versions to remove below this path.
+                <div class="form-group">
+                    <cpn:text class="text" i18n="true">No obsolete versions to remove below this path.</cpn:text>
+                </div>
             </c:when>
             <c:otherwise>
+                <div class="form-group">
+                    <cpn:text class="text" i18n="true">Please select the obsolete versions to remove.</cpn:text>
+                </div>
                 <c:forEach items="${bean.multiVersionPackagePaths}" var="pckgpath">
                     <sling:include replaceSuffix="${pckgpath}" replaceSelectors="cleanupSelection"
                                    resourceType="composum/nodes/pckgmgr/regpckg"/>

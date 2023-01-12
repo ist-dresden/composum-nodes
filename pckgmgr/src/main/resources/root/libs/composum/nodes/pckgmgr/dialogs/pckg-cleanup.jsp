@@ -20,11 +20,10 @@
                             <div class="alert"></div>
                         </div>
                         <input name="_charset_" type="hidden" value="UTF-8"/>
-                        <input name="path" type="hidden"/>
 
                         <div class="form-group">
                             <label class="control-label">${cpn:i18n(slingRequest,'Path')}</label>
-                            <input name="displaypath" type="text" disabled="disabled" class="widget text-field-widget form-control"/>
+                            <input name="path" type="text" readonly="readonly" class="widget text-field-widget form-control"/>
                         </div>
 
                         <div class="versioncheckboxes">

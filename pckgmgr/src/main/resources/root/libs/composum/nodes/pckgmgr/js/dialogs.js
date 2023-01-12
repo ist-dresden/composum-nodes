@@ -169,7 +169,6 @@
                 core.components.Dialog.prototype.initialize.apply(this, [options]);
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$path = this.$('input[name="path"]');
-                this.$displaypath = this.$('input[name="displaypath"]');
                 this.$options = this.$('div.versioncheckboxes');
                 this.$loadingmessage = this.$('div.loading-message');
                 this.$('button.cleanup').click(_.bind(this.cleanupPackages, this));
@@ -180,7 +179,6 @@
                 this.$options.empty();
                 if (pckg) {
                     this.$path.val(pckg.path);
-                    this.$displaypath.val(pckg.path);
                     this.loadOptions(pckg.path);
                 } else {
                     this.$path.val(undefined);
