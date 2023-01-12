@@ -21,7 +21,7 @@
                 <c:forEach items="${pckg.obsoleteVersions}" var="version">
                     <%--@elvariable id="version" type="com.composum.sling.core.pckgmgr.regpckg.view.VersionBean"--%>
                     <label class="checkbox-control">
-                        <input name="cleanupVersion" value="${version.path}" class="checkbox-field" type="checkbox"
+                        <input name="cleanupVersion" value="${version.path}" class="checkbox-field cleanup-version" type="checkbox"
                                checked="checked"/>
                         <span class="checkbox-label">${cpn:text(version.version)}</span>
                     </label>

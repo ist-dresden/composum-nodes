@@ -12,18 +12,27 @@
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                                 aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title">Cleanup Obsolete Package Versions</h4>
+                        <cpn:text tagName="h4" class="modal-title text"
+                                  i18n="true">Cleanup Obsolete Package Versions</cpn:text>
+                        <cpn:text class="text" i18n="true">Caution: this cannot be undone.</cpn:text>
                     </div>
                     <div class="modal-body">
                         <div class="messages">
-                            <div class="loading-message">Checking for obsolete versions...</div>
-                            <div class="alert"></div>
+                            <div class="loading-message"><cpn:text class="text"
+                                                                   i18n="true">Checking for obsolete versions...</cpn:text></div>
+                            <div class="messages">
+                                <div class="hidden">
+                                    <div class="panel-heading"></div>
+                                    <div class="panel-body"></div>
+                                </div>
+                            </div>
                         </div>
                         <input name="_charset_" type="hidden" value="UTF-8"/>
 
                         <div class="form-group">
                             <label class="control-label">${cpn:i18n(slingRequest,'Path')}</label>
-                            <input name="path" type="text" readonly="readonly" class="widget text-field-widget form-control"/>
+                            <input name="path" type="text" readonly="readonly"
+                                   class="widget text-field-widget form-control"/>
                         </div>
 
                         <div class="versioncheckboxes">

@@ -171,7 +171,9 @@
                 this.$path = this.$('input[name="path"]');
                 this.$options = this.$('div.versioncheckboxes');
                 this.$loadingmessage = this.$('div.loading-message');
-                this.$('button.cleanup').click(_.bind(this.cleanupPackages, this));
+                this.$cleanupbutton = this.$('button.cleanup');
+                this.$cleanupbutton.click(_.bind(this.cleanupPackages, this));
+                this.$cleanupbutton.prop('disabled', true);
                 this.$options.empty();
             },
 
@@ -180,6 +182,7 @@
                 if (pckg) {
                     this.$path.val(pckg.path);
                     this.loadOptions(pckg.path);
+                    this.adjustSubmitButtonState();
                 } else {
                     this.$path.val(undefined);
                 }
@@ -192,16 +195,23 @@
                     _.bind(function (data) {
                         this.$options.html(data);
                         this.$loadingmessage.hide();
+                        this.$checkboxes = this.$options.find('input.cleanup-version[type=checkbox]');
+                        this.$checkboxes.click(_.bind(this.adjustSubmitButtonState, this));
+                        this.adjustSubmitButtonState();
                     }, this));
+            },
+
+            /** The submit button shall only be active if at least one version is selected. */
+            adjustSubmitButtonState: function() {
+                this.$cleanupbutton.prop('disabled', !(this.$checkboxes && this.$checkboxes.is(':checked')));
             },
 
             cleanupPackages: function (event) {
                 event.preventDefault();
                 if (this.form.isValid()) {
-                    this.submitForm(function (result) {
+                    this.submitForm(_.bind(function (result) {
                         var path = result.path;
                         $(document).trigger("path:changed", [path]);
-                        pckgmgr.refresh();
                         if (result.data && result.data.result && result.data.result.deletedPaths) {
                             result.data.result.deletedPaths.forEach(
                                 delpath => $(document).trigger("path:deleted", delpath)
@@ -209,7 +219,8 @@
                         } else {
                             this.alert('danger', 'BUG: no deleted paths?')
                         }
-                    });
+                        pckgmgr.refresh();
+                    }, this), _.bind(this.onError, this));
                 } else {
                     this.alert('danger', 'BUG: invalid form'); // FIXME(hps,05.01.23) can't happen, but check for now
                 }
