@@ -4,6 +4,5 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean" scope="request">
-    <!-- FIXME HEADER VIEW_TYPE=${pckgmgr.viewType} MODE=${pckgmgr.mode} -->
     <sling:include resourceType="composum/nodes/pckgmgr/${pckgmgr.viewType}/general" replaceSelectors="header"/>
 </cpn:component>
