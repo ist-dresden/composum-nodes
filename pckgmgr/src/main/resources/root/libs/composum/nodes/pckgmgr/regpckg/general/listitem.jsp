@@ -18,6 +18,9 @@
                     <h1>${cpn:text(pckg.name)}</h1>
                     <h2>${cpn:text(pckg.version)}&nbsp;</h2>
                 </a>
+                <c:if test="${pckg.currentVersion.installed}">
+                    <div>installed: ${pckg.currentVersion.installationTime}</div>
+                </c:if>
                 <c:if test="${pckg.hasAlternativeVersions}">
                     <div class="active-versions">
                         alternative versions present:

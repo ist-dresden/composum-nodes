@@ -18,6 +18,9 @@
                     <h1>${cpn:text(pckg.name)}</h1>
                     <h2>${cpn:text(pckg.version)}&nbsp;</h2>
                 </a>
+                <c:if test="${pckg.installed}">
+                    <div>installed: ${pckg.installationTime}</div>
+                </c:if>
             </div>
             <sling:include replaceSelectors="status" />
         </div>
