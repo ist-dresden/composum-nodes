@@ -69,9 +69,9 @@ div.detail-panel.jcrpckg div.detail-content div.detail-panel.package div.package
 ### Registry Package Manager: div.pckgmgr-view div.detail-view ...
 #### Gruppe:
 div.detail-panel.group div.detail-content div.detail-panel.group div.group-detail
-#### Package: FIXME: jcrpckg ? + regmode?
+#### Package:
 div.detail-panel.jcrpckg div.detail-content div.detail-panel.package div.package-detail
-#### Version: FIXME: jcrpckg ? + regmode?
+#### Version:
 div.detail-panel.jcrpckg div.detail-content div.detail-panel.package div.package-detail
 
 ## Package cleanup implementation plan

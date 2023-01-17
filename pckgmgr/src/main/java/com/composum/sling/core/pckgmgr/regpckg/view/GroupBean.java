@@ -70,11 +70,10 @@ public class GroupBean extends ConsoleSlingBean {
             registeredpackages.addAll(reg.packages());
         }
         Map<Pair<String, String>, List<PackageId>> grouped = registeredpackages.stream()
+                .distinct() // packages might be in several registries
                 .collect(Collectors.groupingBy(pkg -> Pair.of(pkg.getGroup(), pkg.getName())));
         Comparator<PackageId> comparator = new VersionComparator.PackageIdComparator(false);
         packages = pathsToHighestVersion(singleRegistry, comparator, grouped.entrySet().stream());
-        // FIXME(hps,04.01.23) This is inconsistent to VersionBean.obsoletes since the highest version might be not installed
-        // and thus not be the current version. It's not clear what to do in that case, though...
         multiVersionPackages = pathsToHighestVersion(singleRegistry, comparator,
                 grouped.entrySet().stream()
                         .filter(e -> e.getValue().size() > 1)
@@ -86,7 +85,7 @@ public class GroupBean extends ConsoleSlingBean {
                 .map(entry -> entry.getValue().stream().max(comparator))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                // link without the version if merged mode <-> singleRegistry
+                // link without the version if merged mode <-> singleRegistry == null
                 .map(pkg -> RegistryUtil.toPath(singleRegistry, pkg))
                 .filter(pkgpath -> SlingResourceUtil.isSameOrDescendant(getPath(), pkgpath))
                 .collect(Collectors.toList());

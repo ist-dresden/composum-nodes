@@ -222,7 +222,7 @@
                         pckgmgr.refresh();
                     }, this), _.bind(this.onError, this));
                 } else {
-                    this.alert('danger', 'BUG: invalid form'); // FIXME(hps,05.01.23) can't happen, but check for now
+                    this.alert('danger', 'BUG: invalid form');
                 }
                 return false;
             }
