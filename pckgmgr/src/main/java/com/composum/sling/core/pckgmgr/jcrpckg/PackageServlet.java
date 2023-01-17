@@ -17,7 +17,6 @@ import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryItem;
 import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryTree;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
-import com.composum.sling.core.pckgmgr.regpckg.view.PackageBean;
 import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
@@ -43,6 +42,7 @@ import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
+import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
@@ -60,7 +60,6 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.request.RequestParameterMap;
 import org.apache.sling.api.request.RequestPathInfo;
-import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
@@ -175,7 +174,7 @@ public class PackageServlet extends AbstractServiceServlet {
         create, update, delete, download, upload, install, uninstall, deploy, service, list, tree, view, query,
         coverage, filterList, filterChange, filterAdd, filterRemove, filterMoveUp, filterMoveDown,
         cleanup, cleanupObsoleteVersions,
-        mode, registryTree, registries, registriesTree
+        mode, registryTree, registries, registriesTree, thumbnail
     }
 
     protected PackageOperationSet operations = new PackageOperationSet();
@@ -227,6 +226,8 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.registries, new RegistriesOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.registriesTree, new RegistriesTreeOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.thumbnail, new ThumbnailOperation());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
@@ -1581,6 +1582,29 @@ public class PackageServlet extends AbstractServiceServlet {
         }
     }
 
+    /** Provides thumbnail for registry packages. */
+    private class ThumbnailOperation implements ServletOperation {
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+            String path = RegistryUtil.requestPath(request);
+            Pair<String, PackageId> location = registries.resolve(path);
+            Pair<String, RegisteredPackage> pckgEntry = location != null ? registries.open(location.getRight()) : null;
+            if (pckgEntry != null) {
+                RegisteredPackage pckg = pckgEntry.getRight();
+                Archive archive = pckg.getPackage().getArchive();
+                Archive.Entry thumbnailEntry = archive.getEntry("META-INF/vault/definition/thumbnail.png");
+                if (thumbnailEntry != null) {
+                    InputStream stream = archive.openInputStream(thumbnailEntry);
+                    response.setContentType("image/png");
+                    IOUtils.copy(stream, response.getOutputStream());
+                    return;
+                }
+            }
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Thumbnail not found for " + PackageUtil.getPath(request));
+        }
+    }
+
     //
     // JSON mapping helpers
     //
@@ -1666,5 +1690,4 @@ public class PackageServlet extends AbstractServiceServlet {
         long package_job_timeout() default 60L * 1000L;
 
     }
-
 }

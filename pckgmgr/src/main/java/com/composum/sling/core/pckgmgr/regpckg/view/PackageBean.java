@@ -53,7 +53,7 @@ public class PackageBean extends ConsoleSlingBean implements PackageView, Compar
         if (currentVersion != null) {
             currentVersion.close();
         }
-        versionSet.values().stream().forEach(VersionBean::close);
+        versionSet.values().stream().filter(v -> v != currentVersion).forEach(VersionBean::close);
     }
 
     public PackageBean() {
@@ -87,6 +87,10 @@ public class PackageBean extends ConsoleSlingBean implements PackageView, Compar
 
     public String getVersion() {
         return currentVersion.getVersion();
+    }
+
+    public VersionBean getCurrentVersion() {
+        return currentVersion;
     }
 
     public boolean isValid() {

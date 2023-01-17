@@ -1,9 +1,11 @@
 package com.composum.sling.core.pckgmgr.regpckg.view;
 
+import static com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil.THUMBNAIL_PNG;
 import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.PackagesServlet;
+import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
@@ -16,12 +18,14 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.io.AccessControlHandling;
+import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.packaging.NoSuchPackageException;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.apache.jackrabbit.vault.packaging.VaultPackage;
 import org.apache.jackrabbit.vault.packaging.registry.DependencyReport;
 import org.apache.jackrabbit.vault.packaging.registry.RegisteredPackage;
+import org.apache.jackrabbit.vault.packaging.registry.impl.JcrRegisteredPackage;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.SyntheticResource;
@@ -35,6 +39,9 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.List;
+
+import javax.annotation.Nullable;
+import javax.jcr.RepositoryException;
 
 public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCloseable {
 
@@ -114,15 +121,15 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     @Override
     public void close() {
         try {
-            if (vltPckg != null) {
-                vltPckg.close();
+            if (regPckg != null) {
+                regPckg.close();
             }
         } catch (Exception e) {
             LOG.error("Error closing {}", getPath(), e);
         } finally {
             try {
-                if (regPckg != null) {
-                    regPckg.close();
+                if (vltPckg != null && (regPckg == null || vltPckg != regPckg.getPackage())) {
+                    vltPckg.close();
                 }
             } catch (Exception e) {
                 LOG.error("Error closing {}", getPath(), e);
@@ -336,6 +343,17 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     public boolean obsoletes(VersionBean other) {
         return BY_GROUP_AND_NAME_COMPARATOR.compare(this.getPackageId(), other.getPackageId()) == 0 &&
                 PACKAGE_ID_COMPARATOR.compare(this.getPackageId(), other.getPackageId()) > 0;
+    }
+
+    /** Thumbnail works only for JCR packages. */
+    @Nullable
+    public String getThumbnailUrl() throws IOException {
+        Archive.Entry thumbnailEntry = vltPckg.getArchive().getEntry("META-INF/vault/definition/thumbnail.png");
+        String thumbnailUrl = null;
+        if (thumbnailEntry != null) {
+            thumbnailUrl = PackageServlet.SERVLET_PATH + "." + PackageServlet.Operation.thumbnail + ".png" + RegistryUtil.toPath(registryNamespace, packageId);
+        }
+        return thumbnailUrl;
     }
 
 }

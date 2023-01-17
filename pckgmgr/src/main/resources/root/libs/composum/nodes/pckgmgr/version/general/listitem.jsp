@@ -7,6 +7,11 @@
     <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.VersionBean"--%>
     <div class="pckg-list-item ${pckg.cssClasses} panel panel-default">
         <div class="panel-heading header">
+            <div class="thumbnail">
+                <div class="image-wrapper">
+                    <img src="${pckg.thumbnailUrl}"/>
+                </div>
+            </div>
             <div class="identifiers">
                 <a href="${pckg.url}" data-path="${pckg.path}">
                     <h3>${cpn:text(pckg.group)}&nbsp;</h3>
