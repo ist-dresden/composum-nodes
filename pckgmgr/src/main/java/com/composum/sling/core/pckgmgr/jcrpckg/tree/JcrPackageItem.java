@@ -62,7 +62,7 @@ public class JcrPackageItem implements TreeItem {
         additionalAttributes.put("path", path);
         additionalAttributes.put("name", name);
         additionalAttributes.put("text", name);
-        additionalAttributes.put("type", "package");
+        additionalAttributes.put("type", "version");
         additionalAttributes.put("state", treeState);
         additionalAttributes.put("file", getFilename());
         PackageUtil.toJson(writer, jcrPackage, additionalAttributes);
