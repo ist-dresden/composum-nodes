@@ -5,6 +5,7 @@ import com.composum.sling.core.util.JsonUtil;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
+import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 
 import javax.jcr.RepositoryException;
 import java.io.IOException;
@@ -31,14 +32,23 @@ public class TreeNode extends ArrayList<TreeItem> {
      * @return true, if this package is the nodes target and a leaf - iteration can be stopped
      * @throws RepositoryException
      */
+    /* Cases:
+     * 1. / , /group/ , /group/parts as superpaths for packages
+     * 2. /the/group/package for an overview of all package versions
+     * 3. /the/group/package-version.zip the actual package
+     * Each of the cases has the next case as children. */
     public boolean addPackage(JcrPackage jcrPackage) throws RepositoryException {
         String groupUri = path.endsWith("/") ? path : path + "/";
         String groupPath = PackageUtil.getGroupPath(jcrPackage);
-        if (groupPath.startsWith(groupUri)) {
+        String packageName = jcrPackage.getDefinition().get(JcrPackageDefinition.PN_NAME);
+        String packagePath = groupPath + packageName + "/"; // case 3
+        if (packagePath.startsWith(groupUri)) {
             TreeItem item;
-            if (groupPath.equals(groupUri)) {
-                // this node is the packages parent - use the package as node child
+            if (packagePath.equals(groupUri)) {
+                // This node is the packages parent - use the package as node child. Case 3.
                 item = new JcrPackageItem(jcrPackage);
+            } else if (groupPath.equals(groupUri)) {
+                item = new FolderItem(StringUtils.removeEnd(packagePath, "/"), packageName);
             } else {
                 // this node is a group parent - insert a folder for the subgroup
                 String name = groupPath.substring(path.length());

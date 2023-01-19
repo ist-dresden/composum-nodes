@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -46,48 +47,79 @@ public class TreeItemTest extends TestCase {
     }
 
     @Test
-    public void testTreeNode() throws Exception {
+    public void testInnerTreeNode() throws Exception {
         TreeNode item = new TreeNode("/my/group");
         item.addPackage(makeJcrPackage("my/group", "pckg", "1.2"));
         item.addPackage(makeJcrPackage("is/ignored", "pckgign", "17"));
         String json = toJson(item::toJson);
         System.out.println(json);
-//        assertEquals("{\n" +
-//                "  \"id\": \"/my/group\",\n" +
-//                "  \"path\": \"/my/group\",\n" +
-//                "  \"name\": \"group\",\n" +
-//                "  \"text\": \"group\",\n" +
-//                "  \"type\": \"folder\",\n" +
-//                "  \"state\": {\n" +
-//                "    \"loaded\": false\n" +
-//                "  },\n" +
-//                "  \"children\": [\n" +
-//                "    {\n" +
-//                "      \"definition\": {\n" +
-//                "        \"group\": \"my/group\",\n" +
-//                "        \"name\": \"pckg\",\n" +
-//                "        \"version\": \"1.2\",\n" +
-//                "        \"jcr:description\": \"descr pckg\",\n" +
-//                "        \"includeVersions\": false\n" +
-//                "      },\n" +
-//                "      \"id\": \"/my/group/pckg-1.2.zip\",\n" +
-//                "      \"path\": \"/my/group/pckg-1.2.zip\",\n" +
-//                "      \"name\": \"pckg-1.2.zip\",\n" +
-//                "      \"text\": \"pckg-1.2.zip\",\n" +
-//                "      \"type\": \"version\",\n" +
-//                "      \"state\": {\n" +
-//                "        \"loaded\": true\n" +
-//                "      },\n" +
-//                "      \"file\": \"pckg-1.2.zip\",\n" +
-//                "      \"packageid\": {\n" +
-//                "        \"name\": \"pckg\",\n" +
-//                "        \"group\": \"my/group\",\n" +
-//                "        \"version\": \"1.2\",\n" +
-//                "        \"downloadName\": \"pckg-1.2.zip\"\n" +
-//                "      }\n" +
-//                "    }\n" +
-//                "  ]\n" +
-//                "}".trim(), json.trim());
+        assertEquals("{\n" +
+                "  \"id\": \"/my/group\",\n" +
+                "  \"path\": \"/my/group\",\n" +
+                "  \"name\": \"group\",\n" +
+                "  \"text\": \"group\",\n" +
+                "  \"type\": \"folder\",\n" +
+                "  \"state\": {\n" +
+                "    \"loaded\": false\n" +
+                "  },\n" +
+                "  \"children\": [\n" +
+                "    {\n" +
+                "      \"id\": \"/my/group/pckg\",\n" +
+                "      \"path\": \"/my/group/pckg\",\n" +
+                "      \"name\": \"pckg\",\n" +
+                "      \"text\": \"pckg\",\n" +
+                "      \"type\": \"folder\",\n" +
+                "      \"state\": {\n" +
+                "        \"loaded\": false\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}\n".trim(), json.trim());
+    }
+
+    @Test
+    public void testPackageNode() throws Exception {
+        TreeNode item = new TreeNode("/my/group/pckg");
+        item.addPackage(makeJcrPackage("my/group", "pckg", "1.2"));
+        item.addPackage(makeJcrPackage("is/ignored", "pckgign", "17"));
+        String json = toJson(item::toJson);
+        System.out.println(json);
+        assertEquals("{\n" +
+                "  \"id\": \"/my/group/pckg\",\n" +
+                "  \"path\": \"/my/group/pckg\",\n" +
+                "  \"name\": \"pckg\",\n" +
+                "  \"text\": \"pckg\",\n" +
+                "  \"type\": \"folder\",\n" +
+                "  \"state\": {\n" +
+                "    \"loaded\": false\n" +
+                "  },\n" +
+                "  \"children\": [\n" +
+                "    {\n" +
+                "      \"definition\": {\n" +
+                "        \"group\": \"my/group\",\n" +
+                "        \"name\": \"pckg\",\n" +
+                "        \"version\": \"1.2\",\n" +
+                "        \"jcr:description\": \"descr pckg\",\n" +
+                "        \"includeVersions\": false\n" +
+                "      },\n" +
+                "      \"id\": \"/my/group/pckg-1.2.zip\",\n" +
+                "      \"path\": \"/my/group/pckg-1.2.zip\",\n" +
+                "      \"name\": \"pckg-1.2.zip\",\n" +
+                "      \"text\": \"pckg-1.2.zip\",\n" +
+                "      \"type\": \"version\",\n" +
+                "      \"state\": {\n" +
+                "        \"loaded\": true\n" +
+                "      },\n" +
+                "      \"file\": \"pckg-1.2.zip\",\n" +
+                "      \"packageid\": {\n" +
+                "        \"name\": \"pckg\",\n" +
+                "        \"group\": \"my/group\",\n" +
+                "        \"version\": \"1.2\",\n" +
+                "        \"downloadName\": \"pckg-1.2.zip\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}\n".trim(), json.trim());
     }
 
     /**
@@ -96,7 +128,7 @@ public class TreeItemTest extends TestCase {
     @Test(timeout = 100)
     public void testBuildTree() throws Exception {
         JcrPackage pckg = makeJcrPackage("my/group", "pckg", "1.2");
-        String path = "/";
+        String path = "/"; // "/my/group/pckg";
         while (true) {
             TreeNode item = new TreeNode(path);
             item.addPackage(pckg);
@@ -112,6 +144,7 @@ public class TreeItemTest extends TestCase {
             assertEquals(1, children.size());
             Map child = children.get(0);
             path = (String) child.get("id");
+            System.out.println("path=" + path);
         }
     }
 
