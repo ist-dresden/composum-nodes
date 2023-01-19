@@ -106,7 +106,7 @@ public class TreeItemTest extends TestCase {
                 "      \"path\": \"/my/group/pckg-1.2.zip\",\n" +
                 "      \"name\": \"pckg-1.2.zip\",\n" +
                 "      \"text\": \"pckg-1.2.zip\",\n" +
-                "      \"type\": \"version\",\n" +
+                "      \"type\": \"package\",\n" +
                 "      \"state\": {\n" +
                 "        \"loaded\": true\n" +
                 "      },\n" +

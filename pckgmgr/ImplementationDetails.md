@@ -88,3 +88,7 @@ To let IntelliJ know what type a JSP variable is (since it can't tell from the C
 e.g. like this:
 <cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean" scope="request">
     <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean"--%>
+
+To find out easier what JSPs were used for the rendering, these settings might be useful:
+Composum Nodes Clientlib Configuration: debug; minimize css off
+Composum Nodes Debugutil Renderinfo Comment Logging Filter: url regex .*packa.* , extension regex htm.* (from nodes/xtracts/debugutil)
