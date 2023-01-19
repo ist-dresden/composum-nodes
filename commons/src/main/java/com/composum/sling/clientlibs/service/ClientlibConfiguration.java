@@ -110,7 +110,7 @@ public interface ClientlibConfiguration {
 
         @AttributeDefinition(
                 name = "Rerender On Nocache",
-                description = "Renders clientlib again if a no-cache header is received - mainly debugg the clientlib mechanism itself. Changes in the JS / CSS files automatically lead to re-rendering the clientlib."
+                description = "Renders clientlib again if a no-cache header is received - mainly for debugging the clientlib mechanism itself, as this created a denial of service attack vector. Changes in the JS / CSS files automatically lead to re-rendering the clientlib, anyway."
         )
         boolean rerender_on_nocache() default false;
 
