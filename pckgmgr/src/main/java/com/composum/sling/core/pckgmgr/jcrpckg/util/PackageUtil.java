@@ -178,8 +178,9 @@ public class PackageUtil {
             JcrPackageManager manager = PackageUtil.getPackageManager(context.getService(Packaging.class), request);
             Resource resource = getResource(manager, request, path);
             JcrPackage jcrPackage = getJcrPackage(manager, resource);
+            Packages.Mode mode = Packages.getMode(request);
             if (jcrPackage != null) {
-                type = ViewType.valueOf(Packages.getMode(request).name());
+                type = ViewType.valueOf(mode.name());
             } else {
                 PackageRegistries.Registries registries = context.getService(PackageRegistries.class).getRegistries(request.getResourceResolver());
                 Pair<String, PackageId> found = registries.resolve(path);
@@ -189,13 +190,13 @@ public class PackageUtil {
                         type = ViewType.version;
                     } else if (path.equals(RegistryUtil.toPackagePath("", found.getRight()))
                             || path.equals(RegistryUtil.toPackagePath(found.getLeft(), found.getRight()))) {
-                        type = ViewType.regpckg;
+                        type = mode == Packages.Mode.jcrpckg ? ViewType.group : ViewType.regpckg;
                     }
                 } else {
                     // probably an invalid package - should shown as a package
                     String lowercase = path.toLowerCase();
                     if (lowercase.endsWith(".zip") || lowercase.endsWith(".jar")) {
-                        type = ViewType.valueOf(Packages.getMode(request).name());
+                        type = ViewType.valueOf(mode.name());
                     }
                 }
             }

@@ -24,9 +24,16 @@ public class JcrPackageItem implements TreeItem {
     private final JcrPackage jcrPackage;
     private final JcrPackageDefinition definition;
 
+    private boolean versionAsName;
+
     public JcrPackageItem(JcrPackage jcrPackage) throws RepositoryException {
         this.jcrPackage = jcrPackage;
         definition = jcrPackage.getDefinition();
+    }
+
+    public JcrPackageItem versionAsName(boolean versionAsName) {
+        this.versionAsName = versionAsName;
+        return this;
     }
 
     @Override
@@ -61,7 +68,7 @@ public class JcrPackageItem implements TreeItem {
         additionalAttributes.put("id", path);
         additionalAttributes.put("path", path);
         additionalAttributes.put("name", name);
-        additionalAttributes.put("text", name);
+        additionalAttributes.put("text", versionAsName ? definition.get(JcrPackageDefinition.PN_VERSION) :  name);
         additionalAttributes.put("type", "package");
         additionalAttributes.put("state", treeState);
         additionalAttributes.put("file", getFilename());

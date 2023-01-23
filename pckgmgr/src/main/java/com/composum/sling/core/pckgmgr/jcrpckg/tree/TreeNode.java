@@ -46,7 +46,7 @@ public class TreeNode extends ArrayList<TreeItem> {
             TreeItem item;
             if (packagePath.equals(groupUri)) {
                 // This node is the packages parent - use the package as node child. Case 3.
-                item = new JcrPackageItem(jcrPackage);
+                item = new JcrPackageItem(jcrPackage).versionAsName(true);
             } else if (groupPath.equals(groupUri)) {
                 item = new FolderItem(StringUtils.removeEnd(packagePath, "/"), packageName);
             } else {

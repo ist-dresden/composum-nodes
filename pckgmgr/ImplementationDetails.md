@@ -84,7 +84,7 @@ for all versions. Problem: the list of versions can be very long, and
 https://www.mscharhag.com/api-design/rest-deleting-resources recommends not using a body... Unclear yet. POST?
 
 ## Tips and tricks
-To let IntelliJ know what type a JSP variable is (since it can't tell from the Composum tags), you can add a comment 
+To let IntelliJ know what type a JSP variable is (since it currently can't tell from the Composum tags), you can add a comment 
 e.g. like this:
 <cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean" scope="request">
     <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean"--%>
@@ -92,3 +92,8 @@ e.g. like this:
 To find out easier what JSPs were used for the rendering, these settings might be useful:
 Composum Nodes Clientlib Configuration: debug; minimize css off
 Composum Nodes Debugutil Renderinfo Comment Logging Filter: url regex .*packa.* , extension regex htm.* (from nodes/xtracts/debugutil)
+
+### Javascript debugging
+Interesting breakpoints:
+core.js:ajaxCall for most JSON ajax calls
+loading of the detail content is done with $detailContent.load in console.js

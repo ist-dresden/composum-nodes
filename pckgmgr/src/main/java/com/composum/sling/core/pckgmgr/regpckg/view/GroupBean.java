@@ -88,6 +88,7 @@ public class GroupBean extends ConsoleSlingBean {
                 // link without the version if merged mode <-> singleRegistry == null
                 .map(pkg -> RegistryUtil.toPath(singleRegistry, pkg))
                 .filter(pkgpath -> SlingResourceUtil.isSameOrDescendant(getPath(), pkgpath))
+                .sorted()
                 .collect(Collectors.toList());
     }
 
