@@ -124,7 +124,7 @@
                 $(document).on('path:select', _.bind(this.onPathSelect, this));
                 $(document).on('path:selected', _.bind(this.onPathSelected, this));
                 core.unauthorizedDelegate = core.console.authorize;
-                this.selectMode(core.console.getProfile().get('pckgmgr', 'mode', 'jcrpckg'));
+                this.selectMode(core.console.getProfile().get('pckgmgr', 'mode', 'jcrpckg'), true);
             },
 
             selectJcrpckgTab: function () {
@@ -135,12 +135,18 @@
                 this.selectMode('regpckg');
             },
 
-            selectMode: function (mode) {
+            /** Sets the mode of the tree (jcrpckg / regpckg); if pathFromPage is given (during initialization)
+             * we try to retrieve the path from the data-selected attribute, which contains the initial path from the URL.  */
+            selectMode: function (mode, pathFromPage) {
                 if (pckgmgr.mode.current !== mode) {
+                    var pathSuffix = '';
+                    if (pathFromPage) {
+                        pathSuffix = this.$el.find('.tree-panel [data-selected]').attr('data-selected') || '';
+                    }
                     pckgmgr.mode.current = mode;
                     core.ajaxGet(pckgmgr.const.uri.exec('mode.' + mode), {}, undefined, undefined,
                         _.bind(function () {
-                            core.getHtml(pckgmgr.const.uri.base + '/' + mode + '/tree.html',
+                            core.getHtml(pckgmgr.const.uri.base + '/' + mode + '/tree.html' + pathSuffix,
                                 _.bind(function (html) {
                                     var t = pckgmgr.const.css.tree.tabs;
                                     this.$treeTabs.find('.' + t.base + t._tab).removeClass('active');
