@@ -187,6 +187,28 @@
                 this.jstree.refresh(true, true);
             },
 
+            /** Helper for selectNode: returns all the parent paths and the path itself of a path, excl. parents of the rootPath. */
+            parentPathsOfPath: function (path, rootPath) {
+                rootPath = rootPath || '/';
+                if (path.indexOf(rootPath) === 0) {
+                    var names = path.split('/');
+                    var parentPath = ''
+                    var result = path !== '/' ? ['/'] : []
+                    for (var index = 1; index < names.length - 1; index++) {
+                        parentPath = parentPath + '/' + names[index];
+                        result.push(parentPath)
+                    }
+                    if (rootPath !== '/') {
+                        var rootNames = rootPath.split('/');
+                        result = result.slice(rootNames.length-1);
+                    }
+                    return result;
+                } else {
+                    this.log.warn(this.nodeIdPrefix + 'tree.prefixPathsOfPath(' + path + ') not matching to root: ' + rootPath);
+                    return undefined;
+                }
+            },
+
             /**
              * selects the node specified by its node path if the node is accepted by the filter
              * opens all nodes up to the target node automatically
@@ -207,14 +229,10 @@
                             this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ')>>>');
                         }
                         var tree = this;
-                        var names = $.isArray(path) ? path : path.split('/');
-                        var index = 1;
                         var rootPath = this.getRootPath();
+                        var parentPaths = this.parentPathsOfPath(path, rootPath);
+                        var index = 0;
                         if (path.indexOf(rootPath) === 0) {
-                            if (rootPath !== '/') {
-                                var rootNames = rootPath.split('/');
-                                index = rootNames.length;
-                            }
                             var $node;
                             var exit = _.bind(function () {
                                 tree.undelegate('after_open.jstree');
@@ -228,8 +246,8 @@
                             }, this);
                             var drilldown = function () {
                                 var id;
-                                if (index < names.length - 1) {
-                                    id = tree.nodeId(_.first(names, index + 1));
+                                if (index < parentPaths.length) {
+                                    id = tree.nodeId(parentPaths[index]);
                                     $node = tree.$('#' + id);
                                     index++;
                                     if ($node && $node.length > 0) {
@@ -250,7 +268,7 @@
                                         exit();
                                     }
                                 } else {
-                                    id = tree.nodeId(_.first(names, names.length));
+                                    id = tree.nodeId(path);
                                     $node = tree.$('#' + id);
                                     if ($node && $node.length > 0) {
                                         tree.jstree.select_node($node, suppressEvent);
