@@ -187,8 +187,9 @@
                 this.jstree.refresh(true, true);
             },
 
-            /** Helper for selectNode: returns all the parent paths and the path itself of a path, excl. parents of the rootPath. */
-            parentPathsOfPath: function (path, rootPath) {
+            /** Helper for selectNode: calculates all the parent paths of a path, excl. parents of the rootPath,
+             * and gives that to resultCallback. (Callback because that can need an AJAX call.)  */
+            parentPathsOfPath: function (path, rootPath, resultCallback) {
                 rootPath = rootPath || '/';
                 if (path.indexOf(rootPath) === 0) {
                     var names = path.split('/');
@@ -202,10 +203,10 @@
                         var rootNames = rootPath.split('/');
                         result = result.slice(rootNames.length-1);
                     }
-                    return result;
+                    resultCallback(result);
                 } else {
                     this.log.warn(this.nodeIdPrefix + 'tree.prefixPathsOfPath(' + path + ') not matching to root: ' + rootPath);
-                    return undefined;
+                    resultCallback([]);
                 }
             },
 
@@ -230,7 +231,10 @@
                         }
                         var tree = this;
                         var rootPath = this.getRootPath();
-                        var parentPaths = this.parentPathsOfPath(path, rootPath);
+                        var parentPaths = undefined;
+                        this.parentPathsOfPath(path, rootPath, function (result) {
+                            parentPaths = result;
+                        });
                         var index = 0;
                         if (path.indexOf(rootPath) === 0) {
                             var $node;
@@ -246,7 +250,10 @@
                             }, this);
                             var drilldown = function () {
                                 var id;
-                                if (index < parentPaths.length) {
+                                if (parentPaths == undefined) {
+                                    this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').parentPathsDelay...');
+                                    window.setTimeout(_.bind(drilldown, this), 100);
+                                } else if (index < parentPaths.length) {
                                     id = tree.nodeId(parentPaths[index]);
                                     $node = tree.$('#' + id);
                                     index++;
