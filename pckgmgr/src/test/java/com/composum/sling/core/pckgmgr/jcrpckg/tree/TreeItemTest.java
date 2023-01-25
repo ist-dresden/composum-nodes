@@ -104,6 +104,7 @@ public class TreeItemTest extends TestCase {
                 "      },\n" +
                 "      \"id\": \"/my/group/pckg-1.2.zip\",\n" +
                 "      \"path\": \"/my/group/pckg-1.2.zip\",\n" +
+                "      \"parent\": \"/my/group/pckg\",\n" +
                 "      \"name\": \"pckg-1.2.zip\",\n" +
                 "      \"text\": \"1.2\",\n" +
                 "      \"type\": \"package\",\n" +

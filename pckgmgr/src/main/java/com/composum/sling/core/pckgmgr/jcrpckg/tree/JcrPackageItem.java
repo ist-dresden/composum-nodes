@@ -1,9 +1,12 @@
 package com.composum.sling.core.pckgmgr.jcrpckg.tree;
 
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
+import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
+import com.composum.sling.core.util.ResourceUtil;
 import com.google.gson.stream.JsonWriter;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
@@ -67,8 +70,11 @@ public class JcrPackageItem implements TreeItem {
         Map<String, Object> additionalAttributes = new LinkedHashMap<>();
         additionalAttributes.put("id", path);
         additionalAttributes.put("path", path);
+        additionalAttributes.put("parent", ResourceUtil.getParent(path) + '/' + definition.get(JcrPackageDefinition.PN_NAME));
         additionalAttributes.put("name", name);
-        additionalAttributes.put("text", versionAsName ? definition.get(JcrPackageDefinition.PN_VERSION) :  name);
+        additionalAttributes.put("text", versionAsName ?
+                StringUtils.defaultString(definition.get(JcrPackageDefinition.PN_VERSION), RegistryUtil.NO_VERSION)
+                :  name);
         additionalAttributes.put("type", "package");
         additionalAttributes.put("state", treeState);
         additionalAttributes.put("file", getFilename());
