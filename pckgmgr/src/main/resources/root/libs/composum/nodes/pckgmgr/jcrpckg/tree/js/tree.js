@@ -96,6 +96,27 @@
             return jcrpckg.mode.tree.uri() + path;
         },
 
+        /** We cannot determine the package name uniquely from the path of the package, so we need to make a call. */
+        parentPathsOfPath: function (path, rootPath, resultCallback) {
+            var superMethod = core.components.Tree.prototype.parentPathsOfPath;
+            if (path.indexOf('.') < 0) { // not a package, just use normal logic.
+                superMethod.apply(this, [path, rootPath, resultCallback]);
+            } else {
+                this.nodeData({original: {path: path}}, function(result) {
+                    if (result.parent) {
+                        var parentPaths;
+                        superMethod.apply(this, [result.parent, rootPath, function (parentResult) {
+                            parentPaths = parentResult;
+                        }]);
+                        parentPaths.push(result.parent);
+                        resultCallback(parentPaths);
+                    } else { // not a package, normal logic
+                        superMethod.apply(this, [path, rootPath, resultCallback]);
+                    }
+                });
+            }
+        },
+
         onNodeSelected: function (path, node) {
             $(document).trigger("path:select", [path]);
         }
