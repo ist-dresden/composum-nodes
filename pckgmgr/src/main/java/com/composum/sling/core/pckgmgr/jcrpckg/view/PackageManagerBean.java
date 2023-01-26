@@ -3,23 +3,27 @@ package com.composum.sling.core.pckgmgr.jcrpckg.view;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.pckgmgr.Packages;
 import com.composum.sling.core.pckgmgr.Packages.Mode;
-import com.composum.sling.core.pckgmgr.jcrpckg.tree.JcrPackageItem;
-import com.composum.sling.core.pckgmgr.jcrpckg.tree.TreeItem;
-import com.composum.sling.core.pckgmgr.jcrpckg.tree.TreeNode;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
+import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
+
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
-import java.util.ArrayList;
+
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class PackageManagerBean extends ConsoleSlingBean {
 
@@ -54,18 +58,28 @@ public class PackageManagerBean extends ConsoleSlingBean {
         return StringUtils.isNotBlank(selector) ? selector.substring(1) : "general";
     }
 
-    public List<JcrPackageItem> getCurrentGroupPackages() {
-        List<JcrPackageItem> items = new ArrayList<>();
+    public List<String> getPathsToHighestVersionOfEachPackage() {
+        List<String> items = Collections.emptyList();
         try {
             JcrPackageManager manager = PackageUtil.getPackageManager(context.getService(Packaging.class), getRequest());
-            TreeNode treeNode = PackageUtil.getTreeNode(manager, getRequest());
-            for (TreeItem item : treeNode) {
-                if (item instanceof JcrPackageItem) {
-                    if (((JcrPackageItem) item).getDefinition() != null) {
-                        items.add((JcrPackageItem) item);
-                    }
-                }
-            }
+            Map<Pair<String, String>, List<JcrPackage>> packageGrouped = manager.listPackages().stream()
+                    .filter(p -> PackageUtil.getPackagePath(manager, p).startsWith(getPath()))
+                    .collect(Collectors.groupingBy(
+                            pckg -> Pair.of(PackageUtil.getPackageId(pckg).getGroup(), PackageUtil.getPackageId(pckg).getName())
+                    ));
+            List<List<JcrPackage>> packageGroupList = packageGrouped.entrySet().stream()
+                    .sorted(Comparator.comparing(Map.Entry::getKey))
+                    .map(Map.Entry::getValue)
+                    .map(l -> l.stream()
+                            .filter(p -> PackageUtil.getPackageId(p) != null)
+                            .sorted(
+                                    Comparator.comparing(PackageUtil::getPackageId, new VersionComparator.PackageIdComparator(true))
+                            ).collect(Collectors.toList()))
+                    .collect(Collectors.toList());
+            items = packageGroupList.stream()
+                    .map(l -> l.get(0))
+                    .map(p -> PackageUtil.getPackagePath(manager, p))
+                    .collect(Collectors.toList());
         } catch (RepositoryException ex) {
             LOG.error(ex.getMessage(), ex);
         }

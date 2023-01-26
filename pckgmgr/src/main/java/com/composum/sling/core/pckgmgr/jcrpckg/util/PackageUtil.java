@@ -166,6 +166,16 @@ public class PackageUtil {
         return path;
     }
 
+    /** Returns the {@link PackageId}; null in case of errors. */
+    public static @Nullable PackageId getPackageId(@Nullable JcrPackage pckg) {
+        try {
+            return pckg.getDefinition().getId();
+        } catch (RepositoryException e) {
+            LOG.error("Trouble getting package Id for " + pckg, e);
+            return null;
+        }
+    }
+
     public static ViewType getViewType(BeanContext context, SlingHttpServletRequest request, String path) {
         if ("/".equals(path)){
             return ViewType.packages;

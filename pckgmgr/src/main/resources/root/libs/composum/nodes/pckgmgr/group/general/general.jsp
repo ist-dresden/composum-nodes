@@ -18,8 +18,8 @@
         </div>
 
         <div class="group-detail">
-            <c:forEach items="${pckgmgr.currentGroupPackages}" var="pckg">
-                <sling:include replaceSuffix="${pckg.path}" replaceSelectors="listitem"
+            <c:forEach items="${pckgmgr.pathsToHighestVersionOfEachPackage}" var="pckgpath">
+                <sling:include replaceSuffix="${pckgpath}" replaceSelectors="listitem"
                                resourceType="composum/nodes/pckgmgr/jcrpckg/general"/>
             </c:forEach>
         </div>
