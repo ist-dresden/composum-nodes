@@ -47,8 +47,8 @@ public class TreeNode extends ArrayList<TreeItem> {
             if (packagePath.equals(groupUri)) {
                 // This node is the packages parent - use the package as node child. Case 3.
                 item = new JcrPackageItem(jcrPackage).versionAsName(true);
-            } else if (groupPath.equals(groupUri)) {
-                item = new FolderItem(StringUtils.removeEnd(packagePath, "/"), packageName);
+            } else if (groupPath.equals(groupUri)) { // subfolder that represents all versions of a package
+                item = new FolderItem(StringUtils.removeEnd(packagePath, "/"), packageName, "package");
             } else {
                 // this node is a group parent - insert a folder for the subgroup
                 String name = groupPath.substring(path.length());
@@ -95,7 +95,9 @@ public class TreeNode extends ArrayList<TreeItem> {
             if (StringUtils.isBlank(name)) {
                 name = "Packages ";
             }
-            FolderItem myself = new FolderItem(path, name);
+            boolean containsVersions = stream().anyMatch(i -> i instanceof JcrPackageItem);
+            String type = containsVersions ? "package" : "folder";
+            FolderItem myself = new FolderItem(path, name, type);
 
             writer.beginObject();
             JsonUtil.jsonMapEntries(writer, myself);

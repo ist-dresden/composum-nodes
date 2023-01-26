@@ -74,7 +74,7 @@ div.detail-panel.jcrpckg div.detail-content div.detail-panel.package div.package
 #### Version:
 div.detail-panel.jcrpckg div.detail-content div.detail-panel.package div.package-detail
 
-## Package cleanup implementation plan
+## Package cleanup implementation
 Triggered at tree: a dialog presents all probably obsolete package versions as checkbox list, pre-selected.
 (Buttons for selecting all and deselecting all versions are present).
 AJAX Request to /bin/packages.cleanupoptions.html gives selectable options for packages.
@@ -82,6 +82,9 @@ AJAX Request to /bin/packages.cleanupoptions.html gives selectable options for p
 Request deleting the versions: POST request to /bin/cpm/package.json, parameter path=/@jcr/hpsgroup/hpsx/1.4asdf 
 for all versions. Problem: the list of versions can be very long, and 
 https://www.mscharhag.com/api-design/rest-deleting-resources recommends not using a body... Unclear yet. POST?
+
+## Tree JSON
+Types: / = type "root" , then type "folder" , type "package", type "version"
 
 ## Tips and tricks
 To let IntelliJ know what type a JSP variable is (since it currently can't tell from the Composum tags), you can add a comment 

@@ -75,7 +75,7 @@ public class JcrPackageItem implements TreeItem {
         additionalAttributes.put("text", versionAsName ?
                 StringUtils.defaultString(definition.get(JcrPackageDefinition.PN_VERSION), RegistryUtil.NO_VERSION)
                 :  name);
-        additionalAttributes.put("type", "package");
+        additionalAttributes.put("type", versionAsName ? "version" : "package");
         additionalAttributes.put("state", treeState);
         additionalAttributes.put("file", getFilename());
         PackageUtil.toJson(writer, jcrPackage, additionalAttributes);
