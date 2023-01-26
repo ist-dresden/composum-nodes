@@ -19,16 +19,14 @@
                             title="Create a new package"><span class="label">Create</span></button>
                     <button type="button" class="delete fa fa-minus btn btn-default"
                             title="Delete selected package"><span class="label">Delete</span></button>
+                    <button type="button" class="cleanup fa fa-recycle btn btn-default"
+                            title="Cleanup obsolete package versions"><span class="label">Cleanup</span></button>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button" class="upload fa fa-upload btn btn-default"
                             title="Upload a new package"><span class="label">Upload</span></button>
                     <a type="button" class="download fa fa-download btn btn-default"
                        title="Download selected package"><span class="label">Download</span></a>
-                </div>
-                <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="cleanup fa fa-recycle btn btn-default"
-                            title="Cleanup obsolete package versions"><span class="label">Cleanup</span></button>
                 </div>
             </div>
         </div>

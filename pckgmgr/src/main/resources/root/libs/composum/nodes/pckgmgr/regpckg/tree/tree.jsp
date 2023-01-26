@@ -19,6 +19,8 @@
                     <button type="button" class="delete fa fa-minus btn btn-default"
                             title="${cpn:i18n(slingRequest,'Delete selected package')}"><span
                             class="label">${cpn:i18n(slingRequest,'Delete')}</span></button>
+                    <button type="button" class="cleanup fa fa-recycle btn btn-default"
+                            title="Cleanup obsolete package versions"><span class="label">Cleanup</span></button>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button" class="upload fa fa-upload btn btn-default"
@@ -27,10 +29,6 @@
                     <a type="button" class="download fa fa-download btn btn-default"
                        title="${cpn:i18n(slingRequest,'Download selected package')}"><span
                             class="label">${cpn:i18n(slingRequest,'Download')}</span></a>
-                </div>
-                <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="cleanup fa fa-recycle btn btn-default"
-                            title="Cleanup obsolete package versions"><span class="label">Cleanup</span></button>
                 </div>
             </div>
             <div class="align-right">
