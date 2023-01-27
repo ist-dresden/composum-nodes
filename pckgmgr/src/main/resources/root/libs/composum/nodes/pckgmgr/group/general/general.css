@@ -14,7 +14,7 @@
 
 .detail-panel.group .panel-heading.header {
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
 }
 
 .detail-panel.group .panel-heading.header .identifiers {

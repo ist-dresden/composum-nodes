@@ -6,8 +6,8 @@
 <sling:defineObjects/>
 <cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean" scope="request">
     <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.PackageBean"--%>
-    <div class="pckg-list-item ${pckg.cssClasses} panel panel-default">
-        <div class="panel-heading jcrpckg detail-panel">
+    <div class="pckg-list-item detail-panel group ${pckg.cssClasses} panel panel-default">
+        <div class="panel-heading header jcrpckg detail-panel">
             <div class="thumbnail">
                 <div class="image-wrapper">
                     <img src="${pckg.currentVersion.thumbnailUrl}"/>
