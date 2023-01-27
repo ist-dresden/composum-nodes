@@ -6,6 +6,8 @@ import com.composum.sling.core.pckgmgr.PackagesServlet;
 import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
 import com.composum.sling.core.pckgmgr.jcrpckg.service.impl.PackageJobExecutor;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
+import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
+import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +19,7 @@ import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.SyntheticResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,12 +27,16 @@ import javax.jcr.RepositoryException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
 
 @Restricted(key = PackageServlet.SERVICE_KEY)
 public class PackageBean extends ConsoleSlingBean implements AutoCloseable {
+
+    public static final String RESOURCE_TYPE = "composum/nodes/pckgmgr/jcrpckg";
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageBean.class);
 
@@ -66,10 +73,12 @@ public class PackageBean extends ConsoleSlingBean implements AutoCloseable {
 
     private transient String thumbnailUrl;
 
+    private transient List<PackageBean> allVersions;
+
     @Override
     public void initialize(BeanContext context, Resource resource) {
         SlingHttpServletRequest request = context.getRequest();
-        path = PackageUtil.getPath(request);
+        path = resource.isResourceType(RESOURCE_TYPE) ? resource.getPath() : RegistryUtil.requestPath(request);
         try {
             pckgMgr = PackageUtil.getPackageManager(context.getService(Packaging.class), request);
             resource = PackageUtil.getResource(pckgMgr, request, path);
@@ -345,5 +354,41 @@ public class PackageBean extends ConsoleSlingBean implements AutoCloseable {
         if (pckg != null) {
             pckg.close();
         }
+    }
+
+    public boolean isInstalled() {
+        try {
+            return pckg.isInstalled();
+        } catch (RepositoryException rex) {
+            LOG.error(rex.getMessage(), rex);
+        }
+        return false;
+    }
+
+    public boolean isHasAlternativeVersions() {
+        return getAllVersions() != null && getAllVersions().size() > 1;
+    }
+
+    /** All versions of this package. */
+    public List<PackageBean> getAllVersions() {
+        if (allVersions == null) {
+            allVersions = new ArrayList<>();
+            try {
+                List<JcrPackage> jcrPackages = pckgMgr.listPackages(getGroup(), false);
+                jcrPackages.sort(Comparator.comparing(PackageUtil::getPackageId, new VersionComparator.PackageIdComparator(true)));
+                for (JcrPackage otherPckg : jcrPackages) {
+                    if (StringUtils.equals(getName(), PackageUtil.getDefAttr(otherPckg.getDefinition(), JcrPackageDefinition.PN_NAME, ""))) {
+                        String otherPath = PackageUtil.getPackagePath(pckgMgr, otherPckg);
+                        PackageBean otherBean = new PackageBean();
+                        Resource otherResource = new SyntheticResource(context.getResolver(), otherPath, RESOURCE_TYPE);
+                        otherBean.initialize(context, otherResource);
+                        allVersions.add(otherBean);
+                    }
+                }
+            } catch (RepositoryException rex) {
+                LOG.error(rex.getMessage(), rex);
+            }
+        }
+        return allVersions;
     }
 }

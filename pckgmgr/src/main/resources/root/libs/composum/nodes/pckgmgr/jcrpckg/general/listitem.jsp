@@ -17,7 +17,24 @@
                     <h1>${cpn:text(pckg.name)}</h1>
                     <h2>${cpn:text(pckg.version)}&nbsp;</h2>
                     <div>last modified: ${pckg.lastModified} by ${pckg.lastModifiedBy}</div>
+                    <c:if test="${pckg.installed}">
+                        <div><span class="name">last unpacked: </span><span
+                                        class="date">${pckg.lastUnpacked}</span> by ${pckg.lastUnpackedBy}</div>
+                    </c:if>
                 </a>
+                <c:if test="${pckg.hasAlternativeVersions && cpn:contains(slingRequest.requestPathInfo.selectors, 'listalternativeversions')}">
+                    <div class="active-versions">
+                        alternative versions present:
+                        <c:forEach items="${pckg.allVersions}" var="version">
+                            <%--@elvariable id="version" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean"--%>
+                            <span class="indicator-block ${version.cssClasses}" title="${version.installed ? 'installed' : 'not installed'}">
+                                <a href="${version.url}" class="status-indicator install-status">
+                                        ${cpn:text(version.version)}
+                                </a>
+                            </span>
+                        </c:forEach>
+                    </div>
+                </c:if>
             </div>
             <sling:include replaceSelectors="status" />
         </div>

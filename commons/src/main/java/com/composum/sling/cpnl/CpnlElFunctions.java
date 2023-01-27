@@ -27,7 +27,9 @@ import java.text.Format;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -404,6 +406,22 @@ public class CpnlElFunctions {
      */
     public static String cdata(String value) {
         return value != null ? "<![CDATA[" + value + "]]>" : null;
+    }
+
+    /**
+     * Checks whether an array of objects or a collection contains another object.
+     *
+     * @param collection an array of objects or collection
+     * @param object the object to check for
+     * @return true if
+     */
+    public static Boolean contains(java.lang.Object collection, java.lang.Object object) {
+        if (collection instanceof Collection) {
+            return ((Collection) collection).contains(object);
+        } else if (collection instanceof Object[]) {
+            return Arrays.asList( (Object[]) collection).contains(object);
+        }
+        return false;
     }
 
     /**
