@@ -6,6 +6,7 @@ import com.composum.sling.core.pckgmgr.Packages.Mode;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
+import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +32,10 @@ public class PackageManagerBean extends ConsoleSlingBean {
 
     private transient String path;
     private transient PackageUtil.ViewType type;
+
+    private transient List<String> pathsToVersionsOfThisPackage;
+
+    private transient List<String> pathsToHighestVersionOfEachPackage;
 
     @Override
     public String getPath() {
@@ -58,32 +63,53 @@ public class PackageManagerBean extends ConsoleSlingBean {
         return StringUtils.isNotBlank(selector) ? selector.substring(1) : "general";
     }
 
-    public List<String> getPathsToHighestVersionOfEachPackage() {
-        List<String> items = Collections.emptyList();
-        try {
-            JcrPackageManager manager = PackageUtil.getPackageManager(context.getService(Packaging.class), getRequest());
-            Map<Pair<String, String>, List<JcrPackage>> packageGrouped = manager.listPackages().stream()
-                    .filter(p -> PackageUtil.getPackagePath(manager, p).startsWith(getPath()))
-                    .collect(Collectors.groupingBy(
-                            pckg -> Pair.of(PackageUtil.getPackageId(pckg).getGroup(), PackageUtil.getPackageId(pckg).getName())
-                    ));
-            List<List<JcrPackage>> packageGroupList = packageGrouped.entrySet().stream()
-                    .sorted(Comparator.comparing(Map.Entry::getKey))
-                    .map(Map.Entry::getValue)
-                    .map(l -> l.stream()
-                            .filter(p -> PackageUtil.getPackageId(p) != null)
-                            .sorted(
-                                    Comparator.comparing(PackageUtil::getPackageId, new VersionComparator.PackageIdComparator(true))
-                            ).collect(Collectors.toList()))
-                    .collect(Collectors.toList());
-            items = packageGroupList.stream()
-                    .map(l -> l.get(0))
-                    .map(p -> PackageUtil.getPackagePath(manager, p))
-                    .collect(Collectors.toList());
-        } catch (RepositoryException ex) {
-            LOG.error(ex.getMessage(), ex);
+
+    /** If this is the pseudo-resource denominating a package (without version, /groupname/packagename), this
+     * gives the package versions corresponding to it. */
+    public List<String> getPathsToVersionsOfThisPackage() {
+        if (pathsToVersionsOfThisPackage == null) {
+            try {
+                JcrPackageManager manager = PackageUtil.getPackageManager(context.getService(Packaging.class), getRequest());
+                String group = StringUtils.removeStart(ResourceUtil.getParent(getPath()), "/");
+                String name = ResourceUtil.getName(getPath());
+                pathsToVersionsOfThisPackage = manager.listPackages(group, false).stream()
+                        .filter(p -> name.equals(PackageUtil.getPackageId(p).getName()))
+                        .map(p -> PackageUtil.getPackagePath(manager, p))
+                        .collect(Collectors.toList());
+            } catch (RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+            }
         }
-        return items;
+        return pathsToVersionsOfThisPackage;
+    }
+
+    public List<String> getPathsToHighestVersionOfEachPackage() {
+        if (pathsToHighestVersionOfEachPackage == null) {
+            try {
+                JcrPackageManager manager = PackageUtil.getPackageManager(context.getService(Packaging.class), getRequest());
+                Map<Pair<String, String>, List<JcrPackage>> packageGrouped = manager.listPackages().stream()
+                        .filter(p -> PackageUtil.getPackagePath(manager, p).startsWith(getPath() + "/"))
+                        .collect(Collectors.groupingBy(
+                                pckg -> Pair.of(PackageUtil.getPackageId(pckg).getGroup(), PackageUtil.getPackageId(pckg).getName())
+                        ));
+                List<List<JcrPackage>> packageGroupList = packageGrouped.entrySet().stream()
+                        .sorted(Comparator.comparing(Map.Entry::getKey))
+                        .map(Map.Entry::getValue)
+                        .map(l -> l.stream()
+                                .filter(p -> PackageUtil.getPackageId(p) != null)
+                                .sorted(
+                                        Comparator.comparing(PackageUtil::getPackageId, new VersionComparator.PackageIdComparator(true))
+                                ).collect(Collectors.toList()))
+                        .collect(Collectors.toList());
+                pathsToHighestVersionOfEachPackage = packageGroupList.stream()
+                        .map(l -> l.get(0))
+                        .map(p -> PackageUtil.getPackagePath(manager, p))
+                        .collect(Collectors.toList());
+            } catch (RepositoryException ex) {
+                LOG.error(ex.getMessage(), ex);
+            }
+        }
+        return pathsToHighestVersionOfEachPackage;
     }
 
     /** Returns the list of package registry keys to their names if there are registries; empty if that service isn't available. */

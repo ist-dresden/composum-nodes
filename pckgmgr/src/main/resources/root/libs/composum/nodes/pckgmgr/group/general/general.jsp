@@ -17,11 +17,30 @@
             </div>
         </div>
 
-        <div class="group-detail">
-            <c:forEach items="${pckgmgr.pathsToHighestVersionOfEachPackage}" var="pckgpath">
-                <sling:include replaceSuffix="${pckgpath}" replaceSelectors="listitem"
-                               resourceType="composum/nodes/pckgmgr/jcrpckg/general"/>
-            </c:forEach>
+        <div class="group-detail panel panel-default">
+
+            <c:if test="${not empty pckgmgr.pathsToVersionsOfThisPackage}">
+                <div class="panel-heading">
+                    <cpn:text class="text" i18n="true">Package Versions:</cpn:text>
+                </div>
+
+                <c:forEach items="${pckgmgr.pathsToVersionsOfThisPackage}" var="pckgpath">
+                    <sling:include replaceSuffix="${pckgpath}" replaceSelectors="listitem"
+                                   resourceType="composum/nodes/pckgmgr/jcrpckg/general"/>
+                </c:forEach>
+            </c:if>
+
+            <c:if test="${not empty pckgmgr.pathsToHighestVersionOfEachPackage}">
+                <div class="panel-heading">
+                    <cpn:text class="text" i18n="true">Packages of this group and subgroups:</cpn:text>
+                </div>
+
+                <c:forEach items="${pckgmgr.pathsToHighestVersionOfEachPackage}" var="pckgpath">
+                    <sling:include replaceSuffix="${pckgpath}" replaceSelectors="listitem.listalternativeversions"
+                                   resourceType="composum/nodes/pckgmgr/jcrpckg/general"/>
+                </c:forEach>
+            </c:if>
+
         </div>
     </div>
 </cpn:component>
