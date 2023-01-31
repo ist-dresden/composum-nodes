@@ -87,14 +87,7 @@ public class RegistryTree extends AbstractNode {
         if (showRoot) {
             super.toTree(writer, children, true);
         } else {
-            writer.beginArray();
-            Map<String, RegistryItem> items = getItemsMap();
-            if (items != null) {
-                for (RegistryItem item : items.values()) {
-                    item.toTree(writer, false, true);
-                }
-            }
-            writer.endArray();
+            toTreeChildren(writer);
         }
     }
 }

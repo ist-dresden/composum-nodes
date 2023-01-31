@@ -3,6 +3,8 @@ package com.composum.sling.core.pckgmgr.regpckg.tree;
 import com.composum.sling.core.pckgmgr.jcrpckg.tree.TreeItem;
 import com.composum.sling.core.util.JsonUtil;
 import com.google.gson.stream.JsonWriter;
+
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,9 +12,16 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.jcr.RepositoryException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class AbstractNode extends LinkedHashMap<String, Object> implements RegistryItem {
 
@@ -98,6 +107,7 @@ public abstract class AbstractNode extends LinkedHashMap<String, Object> impleme
     protected void toTreeChildren(@Nonnull final JsonWriter writer) throws IOException {
         writer.beginArray();
         Map<String, RegistryItem> items = getItemsMap();
+        cleanupChildren(items);
         if (items != null) {
             for (RegistryItem item : items.values()) {
                 item.toTree(writer, false, true);
@@ -122,6 +132,7 @@ public abstract class AbstractNode extends LinkedHashMap<String, Object> impleme
         writer.beginObject();
         JsonUtil.jsonMapEntries(writer, this);
         Map<String, RegistryItem> items = getItemsMap();
+        cleanupChildren(items);
         if (items != null) {
             writer.name("children").beginArray();
             for (RegistryItem item : items.values()) {
@@ -135,6 +146,51 @@ public abstract class AbstractNode extends LinkedHashMap<String, Object> impleme
         }
         writer.endArray();
         writer.endObject();
+    }
+
+    /**
+     * We clear up the rare case that there are two items with the same {@link TreeItem#getName()}
+     * (can happen if there is, e.g., a group that has the same name as a package),
+     * which would lead to trouble with tree display since the same id was used twice.
+     * We take what's more specific (that is, not GroupNode) and add the children there.
+     */
+    protected void cleanupChildren(Map<String, RegistryItem> children) {
+        Map<String, String> nameToKey = new HashMap<>();
+        List<String> keysToRemove = new ArrayList<>();
+        for(Iterator<Map.Entry<String, RegistryItem>> it = children.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<String, RegistryItem> entry = it.next();
+            String name = entry.getValue().getName();
+            String otherEntryKey = nameToKey.get(name);
+            if (otherEntryKey != null) {
+                RegistryItem other = children.get(otherEntryKey);
+                if (entry.getValue() instanceof AbstractNode && other instanceof AbstractNode) {
+                    AbstractNode entryNode = (AbstractNode) entry.getValue();
+                    AbstractNode otherNode = (AbstractNode) other;
+                    if (entryNode instanceof GroupNode) {
+                        otherNode.combineChildren((GroupNode) entryNode);
+                        it.remove();
+                    } else if (otherNode instanceof GroupNode) {
+                        entryNode.combineChildren((GroupNode) otherNode);
+                        keysToRemove.add(otherEntryKey);
+                    } else {
+                        LOG.warn("Found two not combineable items with the same name: {} and {}", entry.getValue(), other);
+                    }
+                }
+            }
+            nameToKey.put(name, entry.getKey());
+        }
+        keysToRemove.forEach(children::remove); // were combined into other nodes
+    }
+
+    /** Within {@link #cleanupChildren(Map)}: we add the children of the otherNode (which has the same name) to our children,
+     * so that the otherNode can be removed. */
+    protected void combineChildren(GroupNode otherNode) {
+        Collection duplicatedKeys = CollectionUtils.intersection(getItemsMap().keySet(), otherNode.getItemsMap().keySet());
+        if (!duplicatedKeys.isEmpty()) { // shouldn't happen since the children's names correspond to the path.
+            // we'd be lost if it somehow happens anyway, so we just log it.
+            LOG.error("Found duplicated keys in children of {}: {}", getPath(), duplicatedKeys);
+        }
+        getItemsMap().putAll(otherNode.getItemsMap());
     }
 
     @Override

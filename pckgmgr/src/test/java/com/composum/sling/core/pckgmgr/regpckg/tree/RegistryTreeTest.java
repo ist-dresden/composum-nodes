@@ -182,7 +182,7 @@ public class RegistryTreeTest {
 
     /**
      * Tests the obnoxious case that the URL of a package is also a group containing more packages.
-     * Currently, that contains the same path (pkg) twice in two functions!
+     * The children of that group will be appended to the package.
      */
     @Test
     public void testPackageAndGroup() throws IOException {
@@ -201,15 +201,6 @@ public class RegistryTreeTest {
                 "    \"loaded\": true\n" +
                 "  },\n" +
                 "  \"children\": [\n" +
-                "    {\n" +
-                "      \"name\": \"pkg\",\n" +
-                "      \"path\": \"/@jcr/grp/pkg\",\n" +
-                "      \"text\": \"pkg\",\n" +
-                "      \"type\": \"folder\",\n" +
-                "      \"state\": {\n" +
-                "        \"loaded\": false\n" +
-                "      }\n" +
-                "    },\n" +
                 "    {\n" +
                 "      \"name\": \"pkg\",\n" +
                 "      \"path\": \"/@jcr/grp/pkg\",\n" +
@@ -248,6 +239,15 @@ public class RegistryTreeTest {
                 "        \"loaded\": true,\n" +
                 "        \"installed\": false,\n" +
                 "        \"current\": false\n" +
+                "      }\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"pkg2\",\n" +
+                "      \"path\": \"/@jcr/grp/pkg/pkg2\",\n" +
+                "      \"text\": \"pkg2\",\n" +
+                "      \"type\": \"package\",\n" +
+                "      \"state\": {\n" +
+                "        \"loaded\": false\n" +
                 "      }\n" +
                 "    }\n" +
                 "  ]\n" +

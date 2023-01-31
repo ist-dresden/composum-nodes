@@ -2,6 +2,10 @@
 
 Some notes that may or may not help a developer when improving the package manager. :-)
 
+## Test platforms
+We do support running Nodes on Sling Starter 11 and 12; the AEM package is deployable on various versions of AEM, too, 
+but doesn't contain the package manager anyway.
+
 ## Requests for a package manager view, example and rendering structure
 - /bin/cpm/package/registryTree.json/path  -> Update the tree
 
