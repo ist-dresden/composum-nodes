@@ -75,6 +75,7 @@ public class PackageManagerBean extends ConsoleSlingBean {
                 pathsToVersionsOfThisPackage = manager.listPackages(group, false).stream()
                         .filter(p -> name.equals(PackageUtil.getPackageId(p).getName()))
                         .map(p -> PackageUtil.getPackagePath(manager, p))
+                        .sorted(Comparator.<String>naturalOrder().reversed())
                         .collect(Collectors.toList());
             } catch (RepositoryException ex) {
                 LOG.error(ex.getMessage(), ex);
