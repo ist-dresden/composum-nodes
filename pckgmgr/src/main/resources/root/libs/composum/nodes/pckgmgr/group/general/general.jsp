@@ -30,16 +30,18 @@
                 </c:forEach>
             </c:if>
 
-            <c:if test="${not empty pckgmgr.pathsToHighestVersionOfEachPackage}">
-                <div class="panel-heading">
-                    <cpn:text class="text" i18n="true">Packages of this group and subgroups:</cpn:text>
-                </div>
+            <div class="subgroups">
+                <c:if test="${not empty pckgmgr.pathsToHighestVersionOfEachPackage}">
+                    <div class="panel-heading">
+                        <cpn:text class="text" i18n="true">Packages of this group and subgroups:</cpn:text>
+                    </div>
 
-                <c:forEach items="${pckgmgr.pathsToHighestVersionOfEachPackage}" var="pckgpath">
-                    <sling:include replaceSuffix="${pckgpath}" replaceSelectors="listitem.listalternativeversions"
-                                   resourceType="composum/nodes/pckgmgr/jcrpckg/general"/>
-                </c:forEach>
-            </c:if>
+                    <c:forEach items="${pckgmgr.pathsToHighestVersionOfEachPackage}" var="pckgpath">
+                        <sling:include replaceSuffix="${pckgpath}" replaceSelectors="listitem.listalternativeversions"
+                                       resourceType="composum/nodes/pckgmgr/jcrpckg/general"/>
+                    </c:forEach>
+                </c:if>
+            </div>
 
         </div>
     </div>

@@ -44,6 +44,10 @@
     display: none;
 }
 
+.detail-panel.group .subgroups .identifiers h3 {
+    display: block;
+}
+
 .detail-panel.group .identifiers h1 {
     font-size: 1.5em;
     line-height: 1.2em;
