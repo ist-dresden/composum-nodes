@@ -24,6 +24,11 @@
                         composum/nodes/pckgmgr/jcrpckg/coverage/clientlib,
                         composum/nodes/pckgmgr/jcrpckg/options/clientlib
                     ]"/>
+        <regpckg jcr:primaryType="nt:unstructured"
+                embed="[
+                        composum/nodes/pckgmgr/regpckg/tree/css/tree.css,
+                        composum/nodes/pckgmgr/regpckg/general/general.css
+                    ]"/>
     </css>
     <js jcr:primaryType="sling:OrderedFolder"
             depends="[
@@ -46,7 +51,10 @@
                     ]"/>
         <pckgmgr jcr:primaryType="nt:unstructured"
                 embed="[
+                        composum/nodes/pckgmgr/js/actions.js,
                         composum/nodes/pckgmgr/js/query.js,
+                        composum/nodes/pckgmgr/jcrpckg/tree/js/tree.js,
+                        composum/nodes/pckgmgr/regpckg/tree/js/tree.js,
                         composum/nodes/pckgmgr/js/pckgmgr.js
                     ]"/>
     </js>
