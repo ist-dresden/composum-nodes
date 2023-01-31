@@ -72,6 +72,7 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -157,7 +158,7 @@ public class PackageServlet extends AbstractServiceServlet {
     @Reference
     private Packaging packaging;
 
-    @Reference
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
     private PackageRegistries packageRegistries;
 
     private BundleContext bundleContext;
@@ -390,21 +391,23 @@ public class PackageServlet extends AbstractServiceServlet {
                          @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
-            PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             writer.beginArray();
-            for (PackageRegistry registry : registries.iterable()) {
-                writer.beginObject();
-                writer.name("type").value(registry.getClass().getSimpleName());
-                writer.name("packages").beginArray();
-                for (PackageId pckgId : registry.packages()) {
+            if (packageRegistries != null) {
+                PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                for (PackageRegistry registry : registries.iterable()) {
                     writer.beginObject();
-                    writer.name("id").value(pckgId.toString());
-                    writer.name("filename").value(RegistryUtil.getFilename(pckgId));
+                    writer.name("type").value(registry.getClass().getSimpleName());
+                    writer.name("packages").beginArray();
+                    for (PackageId pckgId : registry.packages()) {
+                        writer.beginObject();
+                        writer.name("id").value(pckgId.toString());
+                        writer.name("filename").value(RegistryUtil.getFilename(pckgId));
+                        writer.endObject();
+                    }
+                    writer.endArray();
                     writer.endObject();
                 }
-                writer.endArray();
-                writer.endObject();
             }
             writer.endArray();
         }
