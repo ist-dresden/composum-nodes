@@ -118,6 +118,10 @@ public class PackageManagerBean extends ConsoleSlingBean {
         return pathsToHighestVersionOfEachPackage;
     }
 
+    public boolean isRegistriesAvailable() {
+        return getRegistries().size() > 0;
+    }
+
     /**
      * Returns the list of package registry keys to their names if there are registries; empty if that service isn't available.
      */
