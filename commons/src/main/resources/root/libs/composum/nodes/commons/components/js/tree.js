@@ -215,19 +215,21 @@
              * opens all nodes up to the target node automatically
              */
             selectNode: function (path, callback, suppressEvent) {
+                var callId = " callId=" + Math.random();
+                console.trace("trace for " + callId);
                 this.resetSelection();
                 if (path) {
                     if (this.preventFromSelect) {
                         window.setTimeout(_.bind(function () {
                             if (this.log.getLevel() <= log.levels.DEBUG) {
-                                this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').delay...');
+                                this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').delay...' + callId);
                             }
                             this.selectNode(path, callback, suppressEvent);
                         }, this), 100);
                     } else {
                         this.preventFromSelect = true;
                         if (this.log.getLevel() <= log.levels.DEBUG) {
-                            this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ')>>>');
+                            this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ')>>>' + callId);
                         }
                         var tree = this;
                         var rootPath = this.getRootPath();
@@ -245,13 +247,13 @@
                                     callback(path);
                                 }
                                 if (this.log.getLevel() <= log.levels.DEBUG) {
-                                    this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').exit.');
+                                    this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').exit.' + callId);
                                 }
                             }, this);
                             var drilldown = function () {
                                 var id;
                                 if (parentPaths == undefined) {
-                                    this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').parentPathsDelay...');
+                                    this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').parentPathsDelay...' + callId);
                                     window.setTimeout(_.bind(drilldown, this), 100);
                                 } else if (index < parentPaths.length) {
                                     id = tree.nodeId(parentPaths[index]);
