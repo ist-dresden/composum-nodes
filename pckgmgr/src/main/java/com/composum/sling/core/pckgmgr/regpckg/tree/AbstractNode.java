@@ -155,6 +155,9 @@ public abstract class AbstractNode extends LinkedHashMap<String, Object> impleme
      * We take what's more specific (that is, not GroupNode) and add the children there.
      */
     protected void cleanupChildren(Map<String, RegistryItem> children) {
+        if (children == null) {
+            return;
+        }
         Map<String, String> nameToKey = new HashMap<>();
         List<String> keysToRemove = new ArrayList<>();
         for(Iterator<Map.Entry<String, RegistryItem>> it = children.entrySet().iterator(); it.hasNext(); ) {

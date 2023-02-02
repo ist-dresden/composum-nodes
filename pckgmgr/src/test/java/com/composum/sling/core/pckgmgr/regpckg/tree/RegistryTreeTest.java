@@ -26,6 +26,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
+import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.google.gson.stream.JsonWriter;
 
 public class RegistryTreeTest {
@@ -66,6 +67,8 @@ public class RegistryTreeTest {
         }
         treeItem.toTree(writer, true, true);
         String normalizedResult = out.toString().replaceAll("PackageRegistry.MockitoMock.[0-9]+", "JcrPackageRegistry");
+        System.out.println();
+        System.out.println("####### " + treeItem.getPath() + " #######");
         System.out.println(normalizedResult);
         return normalizedResult;
     }
@@ -77,8 +80,7 @@ public class RegistryTreeTest {
                 new PackageId("grp", "pkg2", "1.0")
         )));
         RegistryTree tree = new RegistryTree(false);
-        tree.load(context);
-        assertThat(toJson(tree, context), is("{\n" +
+        ec.checkThat(toJson(tree, context), is("{\n" +
                 "  \"name\": \"/\",\n" +
                 "  \"path\": \"/\",\n" +
                 "  \"text\": \"Packages\",\n" +
@@ -98,7 +100,7 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
-        assertThat(toJson(tree.getItem(context, "/@jcr"), context), is("{\n" +
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr"), context), is("{\n" +
                 "  \"name\": \"jcr\",\n" +
                 "  \"path\": \"/@jcr\",\n" +
                 "  \"text\": \"JcrPackageRegistry\",\n" +
@@ -118,7 +120,7 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
-        assertThat(toJson(tree.getItem(context, "/@jcr/grp"), context), is("{\n" +
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp"), context), is("{\n" +
                 "  \"name\": \"grp\",\n" +
                 "  \"path\": \"/@jcr/grp\",\n" +
                 "  \"text\": \"grp\",\n" +
@@ -147,7 +149,7 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
-        assertThat(toJson(tree.getItem(context, "/@jcr/grp/pkg1"), context), is("{\n" +
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg1"), context), is("{\n" +
                 "  \"name\": \"pkg1\",\n" +
                 "  \"path\": \"/@jcr/grp/pkg1\",\n" +
                 "  \"text\": \"pkg1\",\n" +
@@ -180,6 +182,89 @@ public class RegistryTreeTest {
                 "}"));
     }
 
+    @Test
+    public void testMergedTree() throws IOException {
+        when(registry.packages()).thenReturn(new HashSet<>(asList(
+                new PackageId("grp", "pkg1", "1.0"),
+                new PackageId("grp", "pkg2", "1.0")
+        )));
+        RegistryTree tree = new RegistryTree(true);
+        ec.checkThat(toJson(tree, context), is("{\n" +
+                "  \"name\": \"/\",\n" +
+                "  \"path\": \"/\",\n" +
+                "  \"text\": \"Packages\",\n" +
+                "  \"type\": \"root\",\n" +
+                "  \"state\": {\n" +
+                "    \"loaded\": true\n" +
+                "  },\n" +
+                "  \"children\": [\n" +
+                "    {\n" +
+                "      \"name\": \"grp\",\n" +
+                "      \"path\": \"/grp\",\n" +
+                "      \"text\": \"grp\",\n" +
+                "      \"type\": \"folder\",\n" +
+                "      \"state\": {\n" +
+                "        \"loaded\": false\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}"));
+        ec.checkThat(toJson(tree.getItem(context, "/grp/pkg1"), context), is("{\n" +
+                "  \"name\": \"pkg1\",\n" +
+                "  \"path\": \"/grp/pkg1\",\n" +
+                "  \"text\": \"pkg1\",\n" +
+                "  \"type\": \"package\",\n" +
+                "  \"state\": {\n" +
+                "    \"loaded\": true\n" +
+                "  },\n" +
+                "  \"children\": [\n" +
+                "    {\n" +
+                "      \"name\": \"1.0\",\n" +
+                "      \"path\": \"/grp/pkg1/1.0\",\n" +
+                "      \"text\": \"1.0\",\n" +
+                "      \"type\": \"version\",\n" +
+                "      \"namespace\": \"jcr\",\n" +
+                "      \"namespacedPath\": \"/@jcr/grp/pkg1/1.0\",\n" +
+                "      \"packageid\": {\n" +
+                "        \"name\": \"pkg1\",\n" +
+                "        \"group\": \"grp\",\n" +
+                "        \"version\": \"1.0\",\n" +
+                "        \"downloadName\": \"pkg1-1.0.zip\",\n" +
+                "        \"registry\": \"jcr\"\n" +
+                "      },\n" +
+                "      \"state\": {\n" +
+                "        \"loaded\": true,\n" +
+                "        \"installed\": false,\n" +
+                "        \"current\": false\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}"));
+        ec.checkThat(toJson(tree.getItem(context, "/grp/pkg1/1.0"), context), is("{\n" +
+                "  \"name\": \"1.0\",\n" +
+                "  \"path\": \"/grp/pkg1/1.0\",\n" +
+                "  \"text\": \"1.0\",\n" +
+                "  \"type\": \"version\",\n" +
+                "  \"namespace\": \"jcr\",\n" +
+                "  \"namespacedPath\": \"/@jcr/grp/pkg1/1.0\",\n" +
+                "  \"packageid\": {\n" +
+                "    \"name\": \"pkg1\",\n" +
+                "    \"group\": \"grp\",\n" +
+                "    \"version\": \"1.0\",\n" +
+                "    \"downloadName\": \"pkg1-1.0.zip\",\n" +
+                "    \"registry\": \"jcr\"\n" +
+                "  },\n" +
+                "  \"state\": {\n" +
+                "    \"loaded\": true,\n" +
+                "    \"installed\": false,\n" +
+                "    \"current\": false\n" +
+                "  },\n" +
+                "  \"children\": []\n" +
+                "}"));
+        // ec.checkThat(toJson(tree.getItem(context, "/grp/pkg2"), context), is(""));
+        // ec.checkThat(toJson(tree.getItem(context, "/grp/pkg2/1.0"), context), is(""));
+    }
+
     /**
      * Tests the obnoxious case that the URL of a package is also a group containing more packages.
      * The children of that group will be appended to the package.
@@ -191,8 +276,7 @@ public class RegistryTreeTest {
                 new PackageId("grp/pkg", "pkg2", "2.0")
         )));
         RegistryTree tree = new RegistryTree(false);
-        tree.load(context);
-        assertThat(toJson(tree.getItem(context, "/@jcr/grp"), context), is("{\n" +
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp"), context), is("{\n" +
                 "  \"name\": \"grp\",\n" +
                 "  \"path\": \"/@jcr/grp\",\n" +
                 "  \"text\": \"grp\",\n" +
@@ -212,7 +296,7 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
-        assertThat(toJson(tree.getItem(context, "/@jcr/grp/pkg"), context), is("{\n" +
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg"), context), is("{\n" +
                 "  \"name\": \"pkg\",\n" +
                 "  \"path\": \"/@jcr/grp/pkg\",\n" +
                 "  \"text\": \"pkg\",\n" +
@@ -252,6 +336,47 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/1.0"), context), is("{\n" +
+                "  \"name\": \"1.0\",\n" +
+                "  \"path\": \"/@jcr/grp/pkg/1.0\",\n" +
+                "  \"text\": \"1.0\",\n" +
+                "  \"type\": \"version\",\n" +
+                "  \"namespace\": \"jcr\",\n" +
+                "  \"namespacedPath\": \"/@jcr/grp/pkg/1.0\",\n" +
+                "  \"packageid\": {\n" +
+                "    \"name\": \"pkg\",\n" +
+                "    \"group\": \"grp\",\n" +
+                "    \"version\": \"1.0\",\n" +
+                "    \"downloadName\": \"pkg-1.0.zip\",\n" +
+                "    \"registry\": \"jcr\"\n" +
+                "  },\n" +
+                "  \"state\": {\n" +
+                "    \"loaded\": true,\n" +
+                "    \"installed\": false,\n" +
+                "    \"current\": false\n" +
+                "  },\n" +
+                "  \"children\": []\n" +
+                "}"));
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/pkg2/2.0"), context), is(""));
+    }
+
+    /**
+     * Tests the obnoxious case that the URL of a package is also a group containing more packages.
+     * The children of that group will be appended to the package.
+     */
+    @Test
+    public void testPackageAndGroup2() throws IOException {
+        when(registry.packages()).thenReturn(new HashSet<>(asList(
+                new PackageId("grp", "pkg", "1.0"),
+                new PackageId("grp/pkg/sub", "pkg2", "2.0")
+        )));
+        RegistryTree tree = new RegistryTree(false);
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp"), context), is(""));
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg"), context), is(""));
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/1.0"), context), is(""));
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/sub"), context), is(""));
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/sub/pkg2"), context), is(""));
+        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/sub/pkg2/2.0"), context), is(""));
     }
 
 }
