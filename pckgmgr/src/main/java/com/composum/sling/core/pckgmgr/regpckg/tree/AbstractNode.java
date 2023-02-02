@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public abstract class AbstractNode extends LinkedHashMap<String, Object> implements RegistryItem {
 
@@ -34,6 +35,18 @@ public abstract class AbstractNode extends LinkedHashMap<String, Object> impleme
     public static final String KEY_ITEMS = "items";
 
     private boolean loaded = false;
+
+    private final RegistryItem parent;
+
+    protected AbstractNode(RegistryItem parent) {
+        this.parent = parent;
+    }
+
+    @Nullable
+    @Override
+    public RegistryItem getParent() {
+        return parent;
+    }
 
     @Override
     public boolean isLoaded() {
@@ -193,6 +206,17 @@ public abstract class AbstractNode extends LinkedHashMap<String, Object> impleme
             LOG.error("Found duplicated keys in children of {}: {}", getPath(), duplicatedKeys);
         }
         getItemsMap().putAll(otherNode.getItemsMap());
+    }
+
+    @Override
+    public RegistryItem compactTree() {
+        if (parent != null) {
+            parent.compactSubTree();
+            return Objects.requireNonNull(parent.getItem(getName()));
+        } else {
+            compactSubTree();
+            return this;
+        }
     }
 
     @Override

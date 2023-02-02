@@ -67,6 +67,7 @@ public class RegistryTreeTest {
         if (context != null && !treeItem.isLoaded()) {
             treeItem.load(context);
         }
+        treeItem = treeItem.compactTree();
         treeItem.toTree(writer, true, true);
         String normalizedResult = out.toString().replaceAll("PackageRegistry.MockitoMock.[0-9]+", "JcrPackageRegistry");
         System.out.println();
@@ -380,6 +381,7 @@ public class RegistryTreeTest {
                 "  },\n" +
                 "  \"children\": []\n" +
                 "}"));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/pkg2"),  is(""));
         ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/pkg2/2.0"),  is(""));
     }
 

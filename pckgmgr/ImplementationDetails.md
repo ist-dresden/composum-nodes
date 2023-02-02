@@ -100,7 +100,9 @@ Solution variants:
   - Change the sorting? Items map is just name to node, but we need to replace a GroupNode if it was created before a package with same name. 
 2. compact tree after the (old) initialization. Problem: that needs to be done on the parent node, as that 
    could have a group and a package with the same name. But the parent node is not known by a node. 
-   Solution: add a "parent" property to the tree node, and use that to compact the tree after initialization.
+   Solution: add a "parent" property to the tree node, and use that to compact the tree after initialization. 
+   Problem with that: RegistryTree.getItem doesn't find the right parent if there are two - when drilling down the tree, it's not clear
+   which one is the right one if there are a group node and a package node with the same name.
 
 ## Tips and tricks
 To let IntelliJ know what type a JSP variable is (since it currently can't tell from the Composum tags), you can add a comment 

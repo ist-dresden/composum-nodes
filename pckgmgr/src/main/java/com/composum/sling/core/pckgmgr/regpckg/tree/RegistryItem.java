@@ -12,13 +12,15 @@ import java.util.Map;
 
 public interface RegistryItem extends Map<String, Object>, Serializable {
 
-    String getName();
+    @Nonnull String getName();
 
-    String getPath();
+    @Nonnull String getPath();
 
-    String getText();
+    @Nonnull String getText();
 
-    String getType();
+    @Nonnull String getType();
+
+    @Nullable RegistryItem getParent();
 
     /** Loads all details of this node from the package(s) and makes sure all children ({@link #getItems()}) are present,
      * though not necessarily loaded. */
@@ -36,7 +38,16 @@ public interface RegistryItem extends Map<String, Object>, Serializable {
 
     void toJson(@Nonnull JsonWriter writer) throws RepositoryException, IOException;
 
-    /** In some cases the tree can contain e.g. a group and a package with the same name. This compacts it and it's subnodes. */
+    /**
+     * In some cases the tree can contain e.g. a group and a package with the same name. This compacts it and it's subnodes.
+     */
     void compactSubTree();
+
+    /**
+     * Calls {@link #compactSubTree()} (see there for the why) on the {@link #getParent()}, since the compaction might
+     * join same named siblings and replace this node for it to have all children.
+     * @return the new node to use instead of this one (might or might not be the same instance)
+     */
+    RegistryItem compactTree();
 
 }

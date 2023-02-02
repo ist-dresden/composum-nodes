@@ -19,6 +19,7 @@ public class RegistryTree extends AbstractNode {
     protected final boolean merged;
 
     public RegistryTree(boolean merged) {
+        super(null);
         this.merged = merged;
         put(KEY_PATH, "/");
         put(KEY_NAME, "/");
@@ -71,7 +72,7 @@ public class RegistryTree extends AbstractNode {
             PackageRegistry registry = Objects.requireNonNull(registries.getRegistry(namespace));
             if (merged) {
                 for (PackageId pckgId : registry.packages()) {
-                    GroupNode group = RegistryNode.getGroup(this, "", pckgId.getGroup());
+                    GroupNode group = RegistryNode.getGroup(this, pckgId.getGroup());
                     group.addPackage(namespace, pckgId);
                 }
             } else {

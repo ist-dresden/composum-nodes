@@ -45,6 +45,7 @@ public class VersionNode extends AbstractNode implements PackageView {
     private transient Calendar installTime;
 
     public VersionNode(@Nonnull PackageNode pckg, @Nonnull String registryNamespace, @Nonnull PackageId packageId, @Nonnull String version) {
+        super(pckg);
         String path = pckg.getPath() + "/" + version;
         this.pckg = pckg;
         this.namespace = RegistryUtil.namespace(path);

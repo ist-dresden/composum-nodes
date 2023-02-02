@@ -32,7 +32,8 @@ public class PackageNode extends AbstractNode implements PackageView {
 
     private transient VersionNode currentInstalled;
 
-    public PackageNode(GroupNode group, PackageId packageId) {
+    public PackageNode(@Nonnull GroupNode group, PackageId packageId) {
+        super(group);
         String path = group.getPath() + "/" + packageId.getName();
         this.namespace = RegistryUtil.namespace(path);
         this.group = group;
