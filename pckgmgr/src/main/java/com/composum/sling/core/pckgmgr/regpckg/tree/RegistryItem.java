@@ -20,6 +20,8 @@ public interface RegistryItem extends Map<String, Object>, Serializable {
 
     String getType();
 
+    /** Loads all details of this node from the package(s) and makes sure all children ({@link #getItems()}) are present,
+     * though not necessarily loaded. */
     void load(@Nonnull BeanContext context) throws IOException;
 
     boolean isLoaded();
@@ -33,4 +35,8 @@ public interface RegistryItem extends Map<String, Object>, Serializable {
     void toTree(@Nonnull final JsonWriter writer, boolean children, boolean showRoot) throws IOException;
 
     void toJson(@Nonnull JsonWriter writer) throws RepositoryException, IOException;
+
+    /** In some cases the tree can contain e.g. a group and a package with the same name. This compacts it and it's subnodes. */
+    void compactSubTree();
+
 }

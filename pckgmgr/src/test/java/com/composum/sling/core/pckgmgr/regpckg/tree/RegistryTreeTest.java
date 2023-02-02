@@ -182,6 +182,27 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg1/1.0"),  is("{\n" +
+                "  \"name\": \"1.0\",\n" +
+                "  \"path\": \"/@jcr/grp/pkg1/1.0\",\n" +
+                "  \"text\": \"1.0\",\n" +
+                "  \"type\": \"version\",\n" +
+                "  \"namespace\": \"jcr\",\n" +
+                "  \"namespacedPath\": \"/@jcr/grp/pkg1/1.0\",\n" +
+                "  \"packageid\": {\n" +
+                "    \"name\": \"pkg1\",\n" +
+                "    \"group\": \"grp\",\n" +
+                "    \"version\": \"1.0\",\n" +
+                "    \"downloadName\": \"pkg1-1.0.zip\",\n" +
+                "    \"registry\": \"jcr\"\n" +
+                "  },\n" +
+                "  \"state\": {\n" +
+                "    \"loaded\": true,\n" +
+                "    \"installed\": false,\n" +
+                "    \"current\": false\n" +
+                "  },\n" +
+                "  \"children\": []\n" +
+                "}"));
     }
 
     @Test

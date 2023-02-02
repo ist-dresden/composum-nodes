@@ -90,6 +90,18 @@ https://www.mscharhag.com/api-design/rest-deleting-resources recommends not usin
 ## Tree JSON
 Types: / = type "root" , then type "folder" , type "package", type "version"
 
+### Problem with package (and version?) nodes that are also groups
+Original state: node was doubled in tree, once as package, once as group, but with the same path -> malfunction of the tree.
+Unfortunately the data model was not designed such that a package node or version node can contain groups or packages nodes.
+Solution variants:
+1. change initialization so that all nodes can get arbitrary subnodes as well. Needs quite a revamp of initialization process and the data model.
+   Main problem: the subnodes of GroupNode are saved in the map with keys like 0_something if it's a group and 1_something if it's a package.
+   But that is not done for other nodes.
+  - Change the sorting? Items map is just name to node, but we need to replace a GroupNode if it was created before a package with same name. 
+2. compact tree after the (old) initialization. Problem: that needs to be done on the parent node, as that 
+   could have a group and a package with the same name. But the parent node is not known by a node. 
+   Solution: add a "parent" property to the tree node, and use that to compact the tree after initialization.
+
 ## Tips and tricks
 To let IntelliJ know what type a JSP variable is (since it currently can't tell from the Composum tags), you can add a comment 
 e.g. like this:
