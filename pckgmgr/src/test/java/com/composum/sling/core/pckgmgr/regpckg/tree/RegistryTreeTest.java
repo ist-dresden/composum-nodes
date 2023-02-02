@@ -57,7 +57,9 @@ public class RegistryTreeTest {
         when(script.getService(PackageRegistries.class)).thenReturn(registriesService);
     }
 
-    String toJson(RegistryItem treeItem, BeanContext context) throws IOException {
+    String toJson(boolean merged, BeanContext context, String path) throws IOException {
+        RegistryTree tree = new RegistryTree(merged);
+        RegistryItem treeItem = path != null ? tree.getItem(context, path) : tree;
         StringWriter out = new StringWriter();
         JsonWriter writer = new JsonWriter(out);
         writer.setIndent("  ");
@@ -79,8 +81,8 @@ public class RegistryTreeTest {
                 new PackageId("grp", "pkg1", "1.0"),
                 new PackageId("grp", "pkg2", "1.0")
         )));
-        RegistryTree tree = new RegistryTree(false);
-        ec.checkThat(toJson(tree, context), is("{\n" +
+        boolean merged = false;
+        ec.checkThat(toJson(merged, context, null), is("{\n" +
                 "  \"name\": \"/\",\n" +
                 "  \"path\": \"/\",\n" +
                 "  \"text\": \"Packages\",\n" +
@@ -100,7 +102,7 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr"), context), is("{\n" +
+        ec.checkThat(toJson(merged, context, "/@jcr"), is("{\n" +
                 "  \"name\": \"jcr\",\n" +
                 "  \"path\": \"/@jcr\",\n" +
                 "  \"text\": \"JcrPackageRegistry\",\n" +
@@ -120,7 +122,7 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp"), context), is("{\n" +
+        ec.checkThat(toJson(merged, context, "/@jcr/grp"),  is("{\n" +
                 "  \"name\": \"grp\",\n" +
                 "  \"path\": \"/@jcr/grp\",\n" +
                 "  \"text\": \"grp\",\n" +
@@ -149,7 +151,7 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg1"), context), is("{\n" +
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg1"),  is("{\n" +
                 "  \"name\": \"pkg1\",\n" +
                 "  \"path\": \"/@jcr/grp/pkg1\",\n" +
                 "  \"text\": \"pkg1\",\n" +
@@ -188,8 +190,8 @@ public class RegistryTreeTest {
                 new PackageId("grp", "pkg1", "1.0"),
                 new PackageId("grp", "pkg2", "1.0")
         )));
-        RegistryTree tree = new RegistryTree(true);
-        ec.checkThat(toJson(tree, context), is("{\n" +
+        boolean merged = true;
+        ec.checkThat(toJson(merged, context, null), is("{\n" +
                 "  \"name\": \"/\",\n" +
                 "  \"path\": \"/\",\n" +
                 "  \"text\": \"Packages\",\n" +
@@ -209,7 +211,7 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
-        ec.checkThat(toJson(tree.getItem(context, "/grp/pkg1"), context), is("{\n" +
+        ec.checkThat(toJson(merged, context, "/grp/pkg1"),  is("{\n" +
                 "  \"name\": \"pkg1\",\n" +
                 "  \"path\": \"/grp/pkg1\",\n" +
                 "  \"text\": \"pkg1\",\n" +
@@ -240,7 +242,7 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
-        ec.checkThat(toJson(tree.getItem(context, "/grp/pkg1/1.0"), context), is("{\n" +
+        ec.checkThat(toJson(merged, context, "/grp/pkg1/1.0"),  is("{\n" +
                 "  \"name\": \"1.0\",\n" +
                 "  \"path\": \"/grp/pkg1/1.0\",\n" +
                 "  \"text\": \"1.0\",\n" +
@@ -261,8 +263,8 @@ public class RegistryTreeTest {
                 "  },\n" +
                 "  \"children\": []\n" +
                 "}"));
-        // ec.checkThat(toJson(tree.getItem(context, "/grp/pkg2"), context), is(""));
-        // ec.checkThat(toJson(tree.getItem(context, "/grp/pkg2/1.0"), context), is(""));
+        // ec.checkThat(toJson(merged, context, "/grp/pkg2"),  is(""));
+        // ec.checkThat(toJson(merged, context, "/grp/pkg2/1.0"),  is(""));
     }
 
     /**
@@ -275,8 +277,8 @@ public class RegistryTreeTest {
                 new PackageId("grp", "pkg", "1.0"),
                 new PackageId("grp/pkg", "pkg2", "2.0")
         )));
-        RegistryTree tree = new RegistryTree(false);
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp"), context), is("{\n" +
+        boolean merged = false;
+        ec.checkThat(toJson(merged, context, "/@jcr/grp"),  is("{\n" +
                 "  \"name\": \"grp\",\n" +
                 "  \"path\": \"/@jcr/grp\",\n" +
                 "  \"text\": \"grp\",\n" +
@@ -296,7 +298,7 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg"), context), is("{\n" +
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg"),  is("{\n" +
                 "  \"name\": \"pkg\",\n" +
                 "  \"path\": \"/@jcr/grp/pkg\",\n" +
                 "  \"text\": \"pkg\",\n" +
@@ -336,7 +338,7 @@ public class RegistryTreeTest {
                 "    }\n" +
                 "  ]\n" +
                 "}"));
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/1.0"), context), is("{\n" +
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/1.0"),  is("{\n" +
                 "  \"name\": \"1.0\",\n" +
                 "  \"path\": \"/@jcr/grp/pkg/1.0\",\n" +
                 "  \"text\": \"1.0\",\n" +
@@ -357,7 +359,7 @@ public class RegistryTreeTest {
                 "  },\n" +
                 "  \"children\": []\n" +
                 "}"));
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/pkg2/2.0"), context), is(""));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/pkg2/2.0"),  is(""));
     }
 
     /**
@@ -370,13 +372,13 @@ public class RegistryTreeTest {
                 new PackageId("grp", "pkg", "1.0"),
                 new PackageId("grp/pkg/sub", "pkg2", "2.0")
         )));
-        RegistryTree tree = new RegistryTree(false);
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp"), context), is(""));
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg"), context), is(""));
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/1.0"), context), is(""));
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/sub"), context), is(""));
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/sub/pkg2"), context), is(""));
-        ec.checkThat(toJson(tree.getItem(context, "/@jcr/grp/pkg/sub/pkg2/2.0"), context), is(""));
+        boolean merged = false;
+        ec.checkThat(toJson(merged, context, "/@jcr/grp"),  is(""));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg"),  is(""));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/1.0"),  is(""));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/sub"),  is(""));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/sub/pkg2"),  is(""));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/sub/pkg2/2.0"),  is(""));
     }
 
 }
