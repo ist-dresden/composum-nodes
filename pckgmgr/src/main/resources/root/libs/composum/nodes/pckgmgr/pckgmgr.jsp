@@ -20,7 +20,7 @@
             <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
             <div id="split-view-horizontal-split" class="split-pane horizontal-split fixed-left">
                 <div class="split-pane-component left-pane">
-                    <div class="nodes-pckgmgr-tree-tabs">
+                    <cpn:div test="${pckgmgr.registriesAvailable}" class="nodes-pckgmgr-tree-tabs">
                         <div class="nodes-pckgmgr-tree-tabs_head">
                             <div class="nodes-pckgmgr-tree-tabs_head-tab jcrpckg"><span
                                     class="nodes-pckgmgr-tree-tabs_head-label">${cpn:i18n(slingRequest,'Manager')}</span>
@@ -32,7 +32,10 @@
                         <div class="nodes-pckgmgr-tree-tabs_body">
                             <sling:include resourceType="composum/nodes/pckgmgr/regpckg/tree"/>
                         </div>
-                    </div>
+                    </cpn:div>
+                    <cpn:div test="${!pckgmgr.registriesAvailable}">
+                        <sling:include resourceType="composum/nodes/pckgmgr/jcrpckg/tree"/>
+                    </cpn:div>
                 </div>
                 <div class="split-pane-divider"></div>
                 <div class="split-pane-component right-pane">

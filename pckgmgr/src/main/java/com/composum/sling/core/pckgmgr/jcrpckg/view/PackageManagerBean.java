@@ -8,18 +8,16 @@ import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
 import org.apache.jackrabbit.vault.packaging.Packaging;
+import org.apache.jackrabbit.vault.packaging.registry.PackageRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
-
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +35,8 @@ public class PackageManagerBean extends ConsoleSlingBean {
 
     private transient List<String> pathsToHighestVersionOfEachPackage;
 
+    private transient Map<String, String> registriesMap;
+
     @Override
     public String getPath() {
         if (path == null) {
@@ -45,12 +45,16 @@ public class PackageManagerBean extends ConsoleSlingBean {
         return path;
     }
 
-    /** The mode {@link Mode} - {@value Mode#jcrpckg} or {@value Mode#regpckg}. */
+    /**
+     * The mode {@link Mode} - {@value Mode#jcrpckg} or {@value Mode#regpckg}.
+     */
     public Mode getMode() {
         return Packages.getMode(getRequest());
     }
 
-    /** The kind of view - {@link com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil.ViewType}. */
+    /**
+     * The kind of view - {@link com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil.ViewType}.
+     */
     public String getViewType() {
         if (type == null) {
             type = PackageUtil.getViewType(context, getRequest(), getPath());
@@ -64,8 +68,10 @@ public class PackageManagerBean extends ConsoleSlingBean {
     }
 
 
-    /** If this is the pseudo-resource denominating a package (without version, /groupname/packagename), this
-     * gives the package versions corresponding to it. */
+    /**
+     * If this is the pseudo-resource denominating a package (without version, /groupname/packagename), this
+     * gives the package versions corresponding to it.
+     */
     public List<String> getPathsToVersionsOfThisPackage() {
         if (pathsToVersionsOfThisPackage == null) {
             try {
@@ -113,14 +119,27 @@ public class PackageManagerBean extends ConsoleSlingBean {
         return pathsToHighestVersionOfEachPackage;
     }
 
-    /** Returns the list of package registry keys to their names if there are registries; empty if that service isn't available. */
+    public boolean isRegistriesAvailable() {
+        return getRegistries().size() > 0;
+    }
+
+    /**
+     * Returns the list of package registry keys to their names if there are registries; empty if that service isn't available.
+     */
     public Map<String, String> getRegistries() {
-        PackageRegistries packageRegistries = context.getService(PackageRegistries.class);
-        PackageRegistries.Registries registries = packageRegistries.getRegistries(getResolver());
-        Map<String, String> result = new TreeMap<>();
-        for (String namespace : registries.getNamespaces()) {
-            result.put(namespace, registries.getRegistry(namespace).getClass().getSimpleName());
+        if (registriesMap == null) {
+            registriesMap = new TreeMap<>();
+            final PackageRegistries packageRegistries = context.getService(PackageRegistries.class);
+            if (packageRegistries != null) {
+                final PackageRegistries.Registries registries = packageRegistries.getRegistries(getResolver());
+                for (final String namespace : registries.getNamespaces()) {
+                    final PackageRegistry registry = registries.getRegistry(namespace);
+                    if (registry != null) {
+                        registriesMap.put(namespace, registry.getClass().getSimpleName());
+                    }
+                }
+            }
         }
-        return result;
+        return registriesMap;
     }
 }
