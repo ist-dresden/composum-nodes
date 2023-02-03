@@ -9,6 +9,12 @@
     (function (components, core) {
 
         /**
+         * Limit time for delaying events to 10 seconds - that should be enough time to sort things out but prevent
+         * occasional endless loops due to weird race conditions.
+         */
+        var preventFromSelectTime = 10*1000*1000;
+
+        /**
          * the node type declarations for the tree (defines the icon classes of the nodes)
          */
         components.treeTypes = {
@@ -169,10 +175,10 @@
                 if (this.log.getLevel() <= log.levels.DEBUG) {
                     this.log.debug(this.nodeIdPrefix + 'tree.refresh(' + currentPath + ')>>>');
                 }
-                this.preventFromSelect = true;
+                this.preventFromSelect = Date.now() + preventFromSelectTime;
                 this.delegate('refresh.jstree', _.bind(function () {
                     this.undelegate('refresh.jstree');
-                    this.preventFromSelect = false;
+                    this.preventFromSelect = 0;
                     if (this.log.getLevel() <= log.levels.DEBUG) {
                         this.log.debug(this.nodeIdPrefix + 'tree.refresh(' + currentPath + ').ends.');
                     }
@@ -215,21 +221,19 @@
              * opens all nodes up to the target node automatically
              */
             selectNode: function (path, callback, suppressEvent) {
-                var callId = " callId=" + Math.random();
-                console.trace("trace for " + callId);
                 if (path) {
-                    if (this.preventFromSelect) {
+                    if (this.preventFromSelect > Date.now()) {
                         window.setTimeout(_.bind(function () {
                             if (this.log.getLevel() <= log.levels.DEBUG) {
-                                this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').delay...' + callId);
+                                this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').delay...');
                             }
                             this.selectNode(path, callback, suppressEvent);
                         }, this), 100);
                     } else {
-                        this.preventFromSelect = true;
+                        this.preventFromSelect = Date.now() + preventFromSelectTime;
                         this.resetSelection(suppressEvent);
                         if (this.log.getLevel() <= log.levels.DEBUG) {
-                            this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ')>>>' + callId);
+                            this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ')>>>');
                         }
                         var tree = this;
                         var rootPath = this.getRootPath();
@@ -242,18 +246,18 @@
                             var $node;
                             var exit = _.bind(function () {
                                 tree.undelegate('after_open.jstree');
-                                this.preventFromSelect = false;
+                                this.preventFromSelect = 0;
                                 if (_.isFunction(callback)) {
                                     callback(path);
                                 }
                                 if (this.log.getLevel() <= log.levels.DEBUG) {
-                                    this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').exit.' + callId);
+                                    this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').exit.');
                                 }
                             }, this);
                             var drilldown = function () {
                                 var id;
                                 if (parentPaths == undefined) {
-                                    this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').parentPathsDelay...' + callId);
+                                    this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').parentPathsDelay...');
                                     window.setTimeout(_.bind(drilldown, this), 100);
                                 } else if (index < parentPaths.length) {
                                     id = tree.nodeId(parentPaths[index]);
@@ -349,7 +353,7 @@
              * sets the root path for the tree
              */
             setRootPath: function (rootPath, refresh) {
-                if (this.preventFromSelect) {
+                if (this.preventFromSelect > Date.now()) {
                     window.setTimeout(_.bind(function () {
                         this.setRootPath(rootPath, refresh);
                     }, this), 100);
@@ -501,13 +505,13 @@
                 if (this.log.getLevel() <= log.levels.DEBUG) {
                     this.log.debug(this.nodeIdPrefix + 'tree.onPathInserted(' + parentPath + ',' + nodeName + ')>>>:' + nodeId);
                 }
-                this.preventFromSelect = true; // nodes have to be loaded before being selected
+                this.preventFromSelect = Date.now() + preventFromSelectTime; // nodes have to be loaded before being selected
                 this.ensureNodeExists(parentPath, _.bind(function () {
                     this.refreshNodeById(nodeId,  _.bind(function () {
                         if (this.log.getLevel() <= this.log.levels.DEBUG) {
                             this.log.debug(this.nodeIdPrefix + 'tree.onPathInserted(' + parentPath + ',' + nodeName + ').exit.');
                         }
-                        this.preventFromSelect = false;
+                        this.preventFromSelect = 0;
                     }, this));
                 }, this));
             },
