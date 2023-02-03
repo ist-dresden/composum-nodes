@@ -81,7 +81,7 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
     @Reference
     private Packaging packaging;
 
-    @Reference
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
     private PackageRegistries packageRegistries;
 
     @Reference
