@@ -18,6 +18,7 @@ import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -492,6 +493,22 @@ public class RegistryTreeTest {
                 "  },\n" +
                 "  \"children\": []\n" +
                 "}"));
+    }
+
+
+    @Ignore
+    @Test
+    public void testPackageAndGroup3() throws IOException {
+        when(registry.packages()).thenReturn(new HashSet<>(asList(
+                new PackageId("grp", "pkg", "1.0"),
+                new PackageId("grp/pkg", "pkg2", "2.0")
+        )));
+        boolean merged = true;
+        ec.checkThat(toJson(merged, context, "/grp"),  is(""));
+        ec.checkThat(toJson(merged, context, "/grp/pkg"),  is(""));
+        ec.checkThat(toJson(merged, context, "/grp/pkg/1.0"),  is(""));
+        ec.checkThat(toJson(merged, context, "/grp/pkg/pkg2"),  is(""));
+        ec.checkThat(toJson(merged, context, "/grp/pkg/pkg2/2.0"),  is(""));
     }
 
 }

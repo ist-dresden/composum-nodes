@@ -10,6 +10,10 @@ import org.apache.jackrabbit.vault.packaging.registry.PackageRegistry;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -105,4 +109,24 @@ public class RegistryTree extends AbstractNode {
             toTreeChildren(writer);
         }
     }
+
+    @Override
+    public void compactSubTree() {
+        getItemsMap().values().forEach(RegistryItem::compactSubTree);
+    }
+
+    @Override
+    @Nullable
+    public RegistryItem getItem(@Nonnull final String name) {
+        Map<String, RegistryItem> items = Objects.requireNonNull(getItemsMap());
+        RegistryItem result = items.get(name);
+        if (result == null) {
+            result = items.get("1_" + name);
+        }
+        if (result == null) {
+            result = items.get("0_" + name);
+        }
+        return result;
+    }
+
 }
