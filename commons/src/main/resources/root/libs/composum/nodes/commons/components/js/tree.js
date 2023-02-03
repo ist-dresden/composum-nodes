@@ -217,7 +217,6 @@
             selectNode: function (path, callback, suppressEvent) {
                 var callId = " callId=" + Math.random();
                 console.trace("trace for " + callId);
-                this.resetSelection();
                 if (path) {
                     if (this.preventFromSelect) {
                         window.setTimeout(_.bind(function () {
@@ -228,6 +227,7 @@
                         }, this), 100);
                     } else {
                         this.preventFromSelect = true;
+                        this.resetSelection(suppressEvent);
                         if (this.log.getLevel() <= log.levels.DEBUG) {
                             this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ')>>>' + callId);
                         }
@@ -309,12 +309,14 @@
                             this.log.warn(this.nodeIdPrefix + 'tree.selectNode(' + path + ') not matching to root: ' + rootPath);
                         }
                     }
+                } else {
+                    this.resetSelection(suppressEvent);
                 }
             },
 
-            resetSelection: function () {
+            resetSelection: function (suppressEvent) {
                 if (this.getSelectedTreeNode()) {
-                    this.jstree.deselect_all();
+                    this.jstree.deselect_all(suppressEvent);
                 }
             },
 
