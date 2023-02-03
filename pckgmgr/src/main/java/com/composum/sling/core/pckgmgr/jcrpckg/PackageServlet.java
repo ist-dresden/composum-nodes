@@ -73,6 +73,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -158,8 +159,8 @@ public class PackageServlet extends AbstractServiceServlet {
     @Reference
     private Packaging packaging;
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
-    private PackageRegistries packageRegistries;
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
+    private volatile PackageRegistries packageRegistries;
 
     private BundleContext bundleContext;
 
