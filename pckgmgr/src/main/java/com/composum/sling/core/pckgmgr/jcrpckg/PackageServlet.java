@@ -373,6 +373,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 if (!treeItem.isLoaded()) {
                     treeItem.load(context);
                 }
+                treeItem = treeItem.compactTree();
                 treeItem.toTree(writer, true, true);
             } else { // that's not the way status is intended to be used, but that'd not be compatible with treeItem.toTree .
                 Status status = new Status(request, response);
@@ -420,6 +421,7 @@ public class PackageServlet extends AbstractServiceServlet {
             BeanContext context = new BeanContext.Servlet(getServletContext(), bundleContext, request, response);
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             RegistryTree tree = new RegistryTree(false);
+            tree.compactTree();
             toJson(writer, context, tree);
         }
 

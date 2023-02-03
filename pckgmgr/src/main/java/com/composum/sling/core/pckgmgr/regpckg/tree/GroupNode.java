@@ -60,4 +60,10 @@ public class GroupNode extends AbstractNode {
         pckg.addVersion(registryNamespace, id);
         return pckg;
     }
+
+    /** This shouldn't be called, but we make sure it isn't, because the super implementation is wrong here. */
+    @Override
+    protected void combineChildren(GroupNode otherNode) {
+        throw new UnsupportedOperationException("BUG: this shouldn't be called.");
+    }
 }

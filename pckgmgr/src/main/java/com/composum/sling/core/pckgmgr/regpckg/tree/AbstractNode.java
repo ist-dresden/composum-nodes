@@ -21,6 +21,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public abstract class AbstractNode extends LinkedHashMap<String, Object> implements RegistryItem {
 
@@ -197,15 +199,20 @@ public abstract class AbstractNode extends LinkedHashMap<String, Object> impleme
         keysToRemove.forEach(children::remove); // were combined into other nodes
     }
 
-    /** Within {@link #compactSubTree()}: we add the children of the otherNode (which has the same name) to our children,
-     * so that the otherNode can be removed. */
+    /**
+     * Within {@link #compactSubTree()}: we add the children of the otherNode (which has the same name) to our children,
+     * so that the otherNode can be removed.
+     */
     protected void combineChildren(GroupNode otherNode) {
-        Collection duplicatedKeys = CollectionUtils.intersection(getItemsMap().keySet(), otherNode.getItemsMap().keySet());
+        Collection duplicatedKeys = CollectionUtils.intersection(
+                getItemsMap().values().stream().map(RegistryItem::getName).collect(Collectors.toSet()),
+                otherNode.getItemsMap().values().stream().map(RegistryItem::getName).collect(Collectors.toSet()));
         if (!duplicatedKeys.isEmpty()) { // shouldn't happen since the children's names correspond to the path.
             // we'd be lost if it somehow happens anyway, so we just log it.
             LOG.error("Found duplicated keys in children of {}: {}", getPath(), duplicatedKeys);
         }
-        getItemsMap().putAll(otherNode.getItemsMap());
+        getItemsMap().putAll(otherNode.getItemsMap().values().stream()
+                .collect(Collectors.toMap(RegistryItem::getName, Function.identity())));
     }
 
     @Override

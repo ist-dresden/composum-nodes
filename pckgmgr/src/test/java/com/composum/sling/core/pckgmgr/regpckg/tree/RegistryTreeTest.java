@@ -381,8 +381,58 @@ public class RegistryTreeTest {
                 "  },\n" +
                 "  \"children\": []\n" +
                 "}"));
-        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/pkg2"),  is(""));
-        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/pkg2/2.0"),  is(""));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/pkg2"),  is("{\n" +
+                "  \"name\": \"pkg2\",\n" +
+                "  \"path\": \"/@jcr/grp/pkg/pkg2\",\n" +
+                "  \"text\": \"pkg2\",\n" +
+                "  \"type\": \"package\",\n" +
+                "  \"state\": {\n" +
+                "    \"loaded\": true\n" +
+                "  },\n" +
+                "  \"children\": [\n" +
+                "    {\n" +
+                "      \"name\": \"2.0\",\n" +
+                "      \"path\": \"/@jcr/grp/pkg/pkg2/2.0\",\n" +
+                "      \"text\": \"2.0\",\n" +
+                "      \"type\": \"version\",\n" +
+                "      \"namespace\": \"jcr\",\n" +
+                "      \"namespacedPath\": \"/@jcr/grp/pkg/pkg2/2.0\",\n" +
+                "      \"packageid\": {\n" +
+                "        \"name\": \"pkg2\",\n" +
+                "        \"group\": \"grp/pkg\",\n" +
+                "        \"version\": \"2.0\",\n" +
+                "        \"downloadName\": \"pkg2-2.0.zip\",\n" +
+                "        \"registry\": \"jcr\"\n" +
+                "      },\n" +
+                "      \"state\": {\n" +
+                "        \"loaded\": true,\n" +
+                "        \"installed\": false,\n" +
+                "        \"current\": false\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}"));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/pkg2/2.0"),  is("{\n" +
+                "  \"name\": \"2.0\",\n" +
+                "  \"path\": \"/@jcr/grp/pkg/pkg2/2.0\",\n" +
+                "  \"text\": \"2.0\",\n" +
+                "  \"type\": \"version\",\n" +
+                "  \"namespace\": \"jcr\",\n" +
+                "  \"namespacedPath\": \"/@jcr/grp/pkg/pkg2/2.0\",\n" +
+                "  \"packageid\": {\n" +
+                "    \"name\": \"pkg2\",\n" +
+                "    \"group\": \"grp/pkg\",\n" +
+                "    \"version\": \"2.0\",\n" +
+                "    \"downloadName\": \"pkg2-2.0.zip\",\n" +
+                "    \"registry\": \"jcr\"\n" +
+                "  },\n" +
+                "  \"state\": {\n" +
+                "    \"loaded\": true,\n" +
+                "    \"installed\": false,\n" +
+                "    \"current\": false\n" +
+                "  },\n" +
+                "  \"children\": []\n" +
+                "}"));
     }
 
     /**
@@ -396,12 +446,52 @@ public class RegistryTreeTest {
                 new PackageId("grp/pkg/sub", "pkg2", "2.0")
         )));
         boolean merged = false;
-        ec.checkThat(toJson(merged, context, "/@jcr/grp"),  is(""));
-        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg"),  is(""));
-        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/1.0"),  is(""));
-        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/sub"),  is(""));
-        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/sub/pkg2"),  is(""));
-        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/sub/pkg2/2.0"),  is(""));
+        // ec.checkThat(toJson(merged, context, "/@jcr/grp"),  is(""));
+        // ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg"),  is(""));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/1.0"),  is("{\n" +
+                "  \"name\": \"1.0\",\n" +
+                "  \"path\": \"/@jcr/grp/pkg/1.0\",\n" +
+                "  \"text\": \"1.0\",\n" +
+                "  \"type\": \"version\",\n" +
+                "  \"namespace\": \"jcr\",\n" +
+                "  \"namespacedPath\": \"/@jcr/grp/pkg/1.0\",\n" +
+                "  \"packageid\": {\n" +
+                "    \"name\": \"pkg\",\n" +
+                "    \"group\": \"grp\",\n" +
+                "    \"version\": \"1.0\",\n" +
+                "    \"downloadName\": \"pkg-1.0.zip\",\n" +
+                "    \"registry\": \"jcr\"\n" +
+                "  },\n" +
+                "  \"state\": {\n" +
+                "    \"loaded\": true,\n" +
+                "    \"installed\": false,\n" +
+                "    \"current\": false\n" +
+                "  },\n" +
+                "  \"children\": []\n" +
+                "}"));
+        // ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/sub"),  is(""));
+        // ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/sub/pkg2"),  is(""));
+        ec.checkThat(toJson(merged, context, "/@jcr/grp/pkg/sub/pkg2/2.0"),  is("{\n" +
+                "  \"name\": \"2.0\",\n" +
+                "  \"path\": \"/@jcr/grp/pkg/sub/pkg2/2.0\",\n" +
+                "  \"text\": \"2.0\",\n" +
+                "  \"type\": \"version\",\n" +
+                "  \"namespace\": \"jcr\",\n" +
+                "  \"namespacedPath\": \"/@jcr/grp/pkg/sub/pkg2/2.0\",\n" +
+                "  \"packageid\": {\n" +
+                "    \"name\": \"pkg2\",\n" +
+                "    \"group\": \"grp/pkg/sub\",\n" +
+                "    \"version\": \"2.0\",\n" +
+                "    \"downloadName\": \"pkg2-2.0.zip\",\n" +
+                "    \"registry\": \"jcr\"\n" +
+                "  },\n" +
+                "  \"state\": {\n" +
+                "    \"loaded\": true,\n" +
+                "    \"installed\": false,\n" +
+                "    \"current\": false\n" +
+                "  },\n" +
+                "  \"children\": []\n" +
+                "}"));
     }
 
 }

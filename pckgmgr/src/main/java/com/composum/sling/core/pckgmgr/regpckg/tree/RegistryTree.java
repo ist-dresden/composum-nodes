@@ -30,6 +30,22 @@ public class RegistryTree extends AbstractNode {
     @Nullable
     public RegistryItem getItem(@Nonnull final BeanContext context, @Nonnull final String path)
             throws IOException {
+        RegistryItem item = getItemInternal(context, path);
+        if (item == null) {
+            compactTree();
+            item = getItemInternal(context, path);
+        }
+        if (item == null) {
+            // Accesses to parts of the tree that do not exist (anymore) occur after deletions.
+            // We return an empty folder there to not break the tree in the FE.
+            item = new GroupNode(null, ResourceUtil.getParent(path), ResourceUtil.getName(path));
+        }
+        return item;
+    }
+
+    @Nullable
+    protected RegistryItem getItemInternal(@Nonnull final BeanContext context, @Nonnull final String path)
+            throws IOException {
         RegistryItem item = this;
         if (!"/".equals(path)) {
             String[] segments = (path.startsWith("/") ? path.substring(1) : path).split("/");
@@ -53,14 +69,10 @@ public class RegistryTree extends AbstractNode {
                 }
                 item = item.getItem(segments[i]);
             }
-            if (item == null) {
-                // Accesses to parts of the tree that do not exist (anymore) occur after deletions.
-                // We return an empty folder there to not break the tree in the FE.
-                item = new GroupNode(null, ResourceUtil.getParent(path), ResourceUtil.getName(path));
-            }
         }
         return item;
     }
+
 
     @Override
     public void load(@Nonnull BeanContext context) throws IOException {
