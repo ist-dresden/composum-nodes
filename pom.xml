@@ -251,6 +251,12 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
+                <!-- AEM 6.5.0 compatibility -->
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>4.1</version>
+            </dependency>
+            <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
                 <version>1.10</version>
