@@ -18,15 +18,28 @@
                 }
                 if (!$(event.currentTarget).hasClass('disabled')) {
                     var node = this.tree.current()
-                    core.ajaxPost('/bin/replicate.json',
-                        {
-                            'path' : node.path,
-                            'cmd':'activate'
-                        }, {}, _.bind(function (result) {
-                        }, this), _.bind(function (result) {
-                            core.alert('danger', 'Error', 'Error on activate', result);
-                        }, this));
+                    this.performReplicationCommand('activate', node.path, 'Activated');
                 }
+            },
+
+            performReplicationCommand: function(cmd, path, title) {
+                core.ajaxPost('/bin/replicate.json',
+                    {
+                        'path' : path,
+                        'cmd': cmd
+                    }, {}, _.bind(function (result) {
+                        // result is HTML - does anybody know whether it's possible to get JSON from /bin/replicate.json?
+                        var $result = $($.parseHTML(result));
+                        var status = $result.find('#Status').text();
+                        var message = $result.find('#Message').text();
+                        if (status == '200' && message) {
+                            core.alert('success', title, message);
+                        } else {
+                            core.alert('danger', 'Error ' + status, message ? message : 'Unparseable response on ' + cmd);
+                        }
+                    }, this), _.bind(function (result) {
+                        core.alert('danger', 'Error', 'Error on ' + cmd);
+                    }, this));
             },
 
             deactivateNode: function (event) {
@@ -35,17 +48,9 @@
                 }
                 if (!$(event.currentTarget).hasClass('disabled')) {
                    var node = this.tree.current()
-                   core.ajaxPost('/bin/replicate.json',
-                       {
-                           'path' : node.path,
-                           'cmd':'deactivate'
-                       }, {}, _.bind(function (result) {
-                       }, this), _.bind(function (result) {
-                           core.alert('danger', 'Error', 'Error on deactivate', result);
-                       }, this));
+                    this.performReplicationCommand('deactivate', node.path, 'Deactivated');
                 }
             }
-
 
         });
 
