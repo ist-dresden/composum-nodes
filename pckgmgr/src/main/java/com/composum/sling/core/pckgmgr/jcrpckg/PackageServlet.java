@@ -1,5 +1,7 @@
 package com.composum.sling.core.pckgmgr.jcrpckg;
 
+import static java.util.Collections.emptyList;
+
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.Restricted;
@@ -1363,19 +1365,29 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            List<PathFilterSet> filters;
+            List<PathFilterSet> filters = emptyList();
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
             if (jcrPackage != null) {
-                filters = PackageUtil.getFilterList(jcrPackage.getDefinition());
-                jcrPackage.close();
+                try {
+                    filters = PackageUtil.getFilterList(jcrPackage.getDefinition());
+                } finally {
+                    jcrPackage.close();
+                }
             } else { // try to find it in the registries
                 PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
                 String path = RegistryUtil.requestPath(request);
                 Pair<String, PackageId> location = registries.resolve(path);
                 Pair<String, RegisteredPackage> pckgEntry = location != null ? registries.open(location.getRight()) : null;
                 try (RegisteredPackage pckg = pckgEntry != null ? pckgEntry.getRight() : null) {
-                    filters = pckg != null ? pckg.getWorkspaceFilter().getFilterSets() : Collections.emptyList();
+                    if (pckg != null) {
+                        WorkspaceFilter workspaceFilter = pckg.getWorkspaceFilter();
+                        if (workspaceFilter != null) {
+                            filters = workspaceFilter.getFilterSets();
+                        } else {
+                            LOG.error("BUG: WorkspaceFilter is null but promised to be not null for package {}.", pckgEntry.getLeft());
+                        }
+                    }
                 }
             }
 
