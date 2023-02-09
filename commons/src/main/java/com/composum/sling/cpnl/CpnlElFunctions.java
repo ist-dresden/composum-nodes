@@ -403,7 +403,15 @@ public class CpnlElFunctions {
      * @return the string with &lt;![CDATA[ ... ]]&gt; around
      */
     public static String cdata(String value) {
-        return value != null ? "<![CDATA[" + value + "]]>" : null;
+        String result = null;
+        if (value != null) {
+            if (value.contains("]]>")) {
+                result = "<![CDATA[" + value.replaceAll("]]>", "]]]]><![CDATA[>") + "]]>";
+            } else {
+                result = "<![CDATA[" + value + "]]>";
+            }
+        }
+        return result;
     }
 
     /**
