@@ -116,8 +116,8 @@
             return regpckg.mode.tree.uri() + path;
         },
 
-        onNodeSelected: function (path, node) {
-            $(document).trigger('path:select', [path]);
+        onNodeSelected: function (path, node, event) {
+            $(document).trigger(core.makeEvent('path:select', undefined, event), [path]);
         }
     });
 

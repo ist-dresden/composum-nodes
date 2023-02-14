@@ -97,11 +97,11 @@
                             if (history.replaceState) {
                                 history.replaceState(pckgmgr.current.path, name, pckgmgr.current.nodeUrl);
                             }
-                            $(document).trigger("path:selected", [path]);
+                            $(document).trigger(core.makeEvent("path:selected", 'pkgmr.setCurrentPath'), [path]);
                         }, this));
                 } else {
                     pckgmgr.current = undefined;
-                    $(document).trigger("path:selected", [path]);
+                    $(document).trigger(core.makeEvent("path:selected", 'pkgmr.setCurrentPath'), [path]);
                 }
             }
         };
@@ -178,6 +178,14 @@
             },
 
             onPathSelect: function (event, path) {
+                if (event.eventorigin == 'pkgmr.setCurrentPath') {
+                    // The event was triggered by the setCurrentPath method, stop to prevent event loops, since
+                    // the pckgmgr.current.path !== path condition can be wrong infinitely in case of simultaneous events loops
+                    if (pckgmgr.log.getLevel() <= log.levels.DEBUG) {
+                        pckgmgr.log.debug('onPathSelect(' + path + '): event loop prevented');
+                    }
+                    return;
+                }
                 if (!path) {
                     path = event.data.path;
                 }
@@ -187,7 +195,7 @@
             onPathSelected: function (event, path) {
                 pckgmgr[pckgmgr.mode.current].tree.selectNode(path, _.bind(function (path) {
                     pckgmgr[pckgmgr.mode.current].tree.actions.refreshNodeState();
-                }, this));
+                }, this), false, event);
             }
         });
 

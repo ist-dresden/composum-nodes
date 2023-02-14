@@ -220,14 +220,14 @@
              * selects the node specified by its node path if the node is accepted by the filter
              * opens all nodes up to the target node automatically
              */
-            selectNode: function (path, callback, suppressEvent) {
+            selectNode: function (path, callback, suppressEvent, event) {
                 if (path) {
                     if (this.preventFromSelect > Date.now()) {
                         window.setTimeout(_.bind(function () {
                             if (this.log.getLevel() <= log.levels.DEBUG) {
                                 this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').delay...');
                             }
-                            this.selectNode(path, callback, suppressEvent);
+                            this.selectNode(path, callback, suppressEvent, event);
                         }, this), 100);
                     } else {
                         this.preventFromSelect = Date.now() + preventFromSelectTime;
@@ -284,7 +284,7 @@
                                     id = tree.nodeId(path);
                                     $node = tree.$('#' + id);
                                     if ($node && $node.length > 0) {
-                                        tree.jstree.select_node($node, suppressEvent);
+                                        tree.jstree.select_node($node, suppressEvent, false, event);
                                         this.scrollIntoView($node);
                                     }
                                     exit();
@@ -795,7 +795,7 @@
             },
 
             /**
-             * 'jstree' eventhandler for 'selected'
+             * 'jstree' eventhandler for 'selected' ('select_node.jstree')
              * the node selected event handler opens the selected node and
              * calls the 'onNodeSelected' function if declared
              */
@@ -804,16 +804,17 @@
                 var path = data.node.original.path;
                 var $node = this.$('#' + (id ? id : this.nodeId(path)));
                 this.jstree.open_node($node);
-                this.onNodeSelected(path, data.node);
+                this.onNodeSelected(path, data.node, data && data.event || event);
             },
 
             /**
              * triggers a 'node:selected(path,node)' event to adjust the view to the new selected path
              * @param path
              * @param node
+             * @param event the event that triggered this call (mostly to find event loops)
              */
-            onNodeSelected: function (path, node) {
-                this.$el.trigger("node:selected", [path, node]);
+            onNodeSelected: function (path, node, event) {
+                this.$el.trigger(core.makeEvent("node:selected", undefined, event), [path, node]);
             },
 
             /**
