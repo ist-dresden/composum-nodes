@@ -118,7 +118,7 @@
         },
 
         onNodeSelected: function (path, node, event) {
-            $(document).trigger(core.makeEvent("path:select", undefined, event), [path]);
+            $(document).trigger(core.makeEvent("path:select", undefined, event), [path])
         }
     });
 

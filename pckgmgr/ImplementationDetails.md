@@ -103,6 +103,7 @@ Solution variants:
    Solution: add a "parent" property to the tree node, and use that to compact the tree after initialization. 
    Problem with that: RegistryTree.getItem doesn't find the right parent if there are two - when drilling down the tree, it's not clear
    which one is the right one if there are a group node and a package node with the same name.
+-> Variant 2 was implemented, since that was less effort.
 
 ## Tips and tricks
 To let IntelliJ know what type a JSP variable is (since it currently can't tell from the Composum tags), you can add a comment 

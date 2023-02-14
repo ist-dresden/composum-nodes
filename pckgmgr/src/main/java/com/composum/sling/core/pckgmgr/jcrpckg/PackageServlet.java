@@ -706,6 +706,10 @@ public class PackageServlet extends AbstractServiceServlet {
 
                 JsonWriter writer = ResponseUtil.getJsonWriter(response);
                 jsonAnswer(writer, "delete", "successful", manager, jcrPackage);
+            } else {
+                LOG.warn("Package not found: {}", PackageUtil.getPath(request));
+                response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                        "Package not found: " + PackageUtil.getPath(request));
             }
         }
     }

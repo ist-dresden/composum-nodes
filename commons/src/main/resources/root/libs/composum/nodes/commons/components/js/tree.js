@@ -12,7 +12,7 @@
          * Limit time for delaying events to 10 seconds - that should be enough time to sort things out but prevent
          * occasional endless loops due to weird race conditions.
          */
-        var preventFromSelectTime = 10*1000*1000;
+        var preventFromSelectTime = 20*1000;
 
         /**
          * the node type declarations for the tree (defines the icon classes of the nodes)
@@ -203,7 +203,7 @@
                     var result = path !== '/' ? ['/'] : []
                     for (var index = 1; index < names.length - 1; index++) {
                         parentPath = parentPath + '/' + names[index];
-                        result.push(parentPath)
+                        result.push(parentPath);
                     }
                     if (rootPath !== '/') {
                         var rootNames = rootPath.split('/');
@@ -526,7 +526,20 @@
                     if (parentPath && parentPath !== path) {
                         this.ensureNodeExists(parentPath,
                             _.bind(function () {
-                                this.jstree.load_node(this.nodeId(parentPath), callbackWhenDone);
+                                try { // TODO; interim 'fix' for an unexpected exception from 'jstree' during initialization
+                                    this.jstree.load_node(this.nodeId(parentPath), callbackWhenDone);
+                                } catch (err1) {
+                                    this.log.warn('First failure on loading ' + parentPath + ' : ' + err1.message);
+                                    try {
+                                        this.jstree.load_node(this.nodeId(parentPath), callbackWhenDone);
+                                    } catch (err) {
+                                        this.log.warn('Second failure on loading ' + parentPath + ' : ' + err1.message);
+                                        this.log.warn(err.message);
+                                        if (_.isFunction(callbackWhenDone)) { // important because it resets a lock sometimes
+                                            callbackWhenDone();
+                                        }
+                                    }
+                                }
                             }, this));
                         callbackQueued = true;
                     }

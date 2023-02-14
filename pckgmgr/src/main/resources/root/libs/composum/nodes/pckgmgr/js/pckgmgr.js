@@ -8,6 +8,8 @@
 
     (function (pckgmgr, console, core) {
 
+        pckgmgr.log = log.getLogger('pckgmgr') ;
+
         pckgmgr.const = {
             mode: {
                 jcrpckg: 'jcrpckg',
@@ -162,7 +164,7 @@
 
             /** Switches the registry input in the package upload dialog on or off, according to the mode. */
             switchUpload: function(mode) {
-                let registrySelector = this.$('.pckg-regpckg-mode-mandatory');
+                var registrySelector = this.$('.pckg-regpckg-mode-mandatory');
                 if (mode != 'regpckg') {
                     this.$('.pckg-regpckg-mode-only').addClass('hidden');
                     registrySelector.attr('disabled', 'disabled');
