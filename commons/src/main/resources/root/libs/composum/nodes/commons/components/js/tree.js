@@ -526,26 +526,31 @@
                     if (parentPath && parentPath !== path) {
                         this.ensureNodeExists(parentPath,
                             _.bind(function () {
-                                try { // TODO; interim 'fix' for an unexpected exception from 'jstree' during initialization
-                                    this.jstree.load_node(this.nodeId(parentPath), callbackWhenDone);
-                                } catch (err1) {
-                                    this.log.warn('First failure on loading ' + parentPath + ' : ' + err1.message);
-                                    try {
-                                        this.jstree.load_node(this.nodeId(parentPath), callbackWhenDone);
-                                    } catch (err) {
-                                        this.log.warn('Second failure on loading ' + parentPath + ' : ' + err1.message);
-                                        this.log.warn(err.message);
-                                        if (_.isFunction(callbackWhenDone)) { // important because it resets a lock sometimes
-                                            callbackWhenDone();
-                                        }
-                                    }
-                                }
+                                this.load_node_with_retry(this.nodeId(parentPath), callbackWhenDone);
                             }, this));
                         callbackQueued = true;
                     }
 
                 }
                 if (!callbackQueued) callbackWhenDone();
+            },
+
+            /** jstree.load_node seems to throw quite often a "TypeError: Cannot read properties of undefined (reading 'state')" for an unknown reason.
+             * As a workaround we retry, which seems to work. TODO find a better solution */
+            load_node_with_retry: function (node, callback) {
+                try {
+                    this.jstree.load_node(node, callback);
+                } catch (err1) {
+                    this.log.info('First failure on loading ' + node + ' : ' + err1.message);
+                    try {
+                        this.jstree.load_node(node, callback);
+                    } catch (err2) {
+                        this.log.warn('Second failure on loading ' + node + ' : ' + err2.message);
+                        if (_.isFunction(callbackWhenDone)) {
+                            callbackWhenDone(); // give up, but call callback because it resets a lock sometimes
+                        }
+                    }
+                }
             },
 
             onPathChanged: function (event, path) {
@@ -882,7 +887,7 @@
                 }
                 if (id) {
                     selected = this.jstree.get_selected();
-                    this.jstree.load_node(id, _.bind(function () {
+                    this.load_node_with_retry(id, _.bind(function () {
                         this.jstree.open_node(id, _.bind(function () {
                             if (selected && this.jstree.get_node(selected)) {
                                 this.jstree.select_node(selected, true);
