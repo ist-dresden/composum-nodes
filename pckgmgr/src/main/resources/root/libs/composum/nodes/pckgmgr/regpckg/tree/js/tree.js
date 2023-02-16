@@ -4,6 +4,9 @@
     regpckg.const = {
         uri: {
             tree: '/bin/cpm/package.registryTree.json'
+        },
+        mode: {
+            merged: 'merged'
         }
     };
 

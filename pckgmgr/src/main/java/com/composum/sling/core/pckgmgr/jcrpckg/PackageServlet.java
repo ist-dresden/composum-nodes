@@ -677,23 +677,30 @@ public class PackageServlet extends AbstractServiceServlet {
                 throws RepositoryException, IOException {
             String deletedPath = request.getRequestPathInfo().getSuffix();
             String namespace = RegistryUtil.namespace(deletedPath);
-            if (StringUtils.isBlank(namespace)) {
+            if (StringUtils.isBlank(namespace) && Packages.getMode(request) != Mode.regpckg) {
                 deleteJcrPackage(request, response, resource);
             } else {
-                PackageId packageId = RegistryUtil.fromPath(deletedPath);
                 PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
-                PackageRegistry registry = registries.getRegistry(namespace);
-                JsonWriter writer = ResponseUtil.getJsonWriter(response);
-                try {
-                    registry.remove(packageId);
-                    jsonAnswer(writer, "delete", "successful", namespace, packageId);
-                } catch (NoSuchPackageException | ClassCastException e) {
-                    // (probably bug in FileVault: if package deletion requested in JCR but is in FS -> ClassCastException.
-                    LOG.warn("Registry {} : could not find requested package {}", namespace, packageId, e);
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            packageId + " can not be found in the registry " + namespace);
+                Pair<String, PackageId> location = registries.resolve(deletedPath);
+                boolean removed = false;
+                if (location != null) {
+                    PackageRegistry registry = registries.getRegistry(location.getLeft());
+                    JsonWriter writer = ResponseUtil.getJsonWriter(response);
+                    try {
+                        registry.remove(location.getRight());
+                        jsonAnswer(writer, "delete", "successful", namespace, location.getRight());
+                        removed = true;
+                    } catch (NoSuchPackageException | ClassCastException e) {
+                        // (possibly bug in FileVault: if package deletion requested in JCR but is in FS -> ClassCastException.
+                        LOG.error("Error deleting {}", deletedPath, e);
+                    }
+                } else {
+                    LOG.warn("Registry {} : could not find requested package {}", namespace, deletedPath);
                 }
-
+                if (!removed) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                            deletedPath + " can not be found or deleted in the registries.");
+                }
             }
         }
 

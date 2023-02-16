@@ -68,14 +68,16 @@
                 this.$registry = this.$('select[name="registry"]');
                 this.$('button.delete').click(_.bind(this.deletePackage, this));
                 this.$registry.parent().hide();
+                this.isRegistryMode = undefined;
             },
 
             setPackage: function (pckg) {
                 if (pckg) {
+                    this.isRegistryMode = pckgmgr.mode.current == pckgmgr.const.mode.regpckg;
                     this.$group.val(pckg.group);
                     this.$name.val(pckg.name);
                     this.$version.val(pckg.version);
-                    this.$registry.val(pckg.registry);
+                    this.$registry.val(pckg.registry); // only falsy if in merged mode
                     this.registryVisible(pckg.registry);
                 } else {
                     this.$group.val(undefined);
@@ -83,6 +85,7 @@
                     this.$version.val(undefined);
                     this.$registry.val(undefined);
                     this.registryVisible(false);
+                    this.isRegistryMode = undefined;
                 }
             },
 
@@ -104,8 +107,8 @@
                 var version = this.$version.val();
                 var registry = this.$registry.val();
                 var path;
-                if (registry) {
-                    path = '/@' + registry + '/' + (group ? (group + '/') : '') + name + (version ? ('/' + version) : '/-');
+                if (this.isRegistryMode) {
+                    path = (registry ? '/@' + registry : '') + '/' + (group ? (group + '/') : '') + name + (version ? ('/' + version) : '/-');
                 } else {
                     path = '/' + (group ? (group + '/') : '') + name + (version ? ('-' + version) : '') + '.zip';
                 }
