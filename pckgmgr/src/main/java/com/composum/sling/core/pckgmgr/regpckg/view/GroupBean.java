@@ -25,6 +25,7 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
+import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.SlingResourceUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 
@@ -73,21 +74,35 @@ public class GroupBean extends ConsoleSlingBean {
                 .distinct() // packages might be in several registries
                 .collect(Collectors.groupingBy(pkg -> Pair.of(pkg.getGroup(), pkg.getName())));
         Comparator<PackageId> comparator = new VersionComparator.PackageIdComparator(false);
-        packages = pathsToHighestVersion(singleRegistry, comparator, grouped.entrySet().stream());
-        multiVersionPackages = pathsToHighestVersion(singleRegistry, comparator,
+        packages = pathsToHighestVersion(getPath(), singleRegistry, comparator, grouped.entrySet().stream());
+        String multiVersionSearchPath = getPackagePathIfVersion(getPath(), registeredpackages, singleRegistry);
+        multiVersionPackages = pathsToHighestVersion(multiVersionSearchPath, singleRegistry, comparator,
                 grouped.entrySet().stream()
                         .filter(e -> e.getValue().size() > 1)
         );
     }
 
-    protected List<String> pathsToHighestVersion(PackageRegistry singleRegistry, Comparator<PackageId> comparator, Stream<Map.Entry<Pair<String, String>, List<PackageId>>> versionsPackageGrouped) {
+    /**
+     * If a version is selected for cleanup, we want to find the versions of it's package.
+     */
+    protected String getPackagePathIfVersion(final String path, List<PackageId> registeredpackage, PackageRegistry singleRegistry) {
+        Optional<PackageId> correspondingVersion = registeredpackage.stream()
+                .filter(pkg -> RegistryUtil.toPath(singleRegistry, pkg).equals(path) ||
+                        RegistryUtil.toPath((String) null, pkg).equals(path))
+                .findFirst();
+        return correspondingVersion.isPresent()
+                ? ResourceUtil.getParent(RegistryUtil.toPath(singleRegistry, correspondingVersion.get()))
+                : path;
+    }
+
+    protected List<String> pathsToHighestVersion(String path, PackageRegistry singleRegistry, Comparator<PackageId> comparator, Stream<Map.Entry<Pair<String, String>, List<PackageId>>> versionsPackageGrouped) {
         return versionsPackageGrouped
                 .map(entry -> entry.getValue().stream().max(comparator))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 // link without the version if merged mode <-> singleRegistry == null
                 .map(pkg -> RegistryUtil.toPath(singleRegistry, pkg))
-                .filter(pkgpath -> SlingResourceUtil.isSameOrDescendant(getPath(), pkgpath))
+                .filter(pkgpath -> SlingResourceUtil.isSameOrDescendant(path, pkgpath))
                 .sorted()
                 .collect(Collectors.toList());
     }
