@@ -141,6 +141,9 @@ public class PackageServlet extends AbstractServiceServlet {
     /** The key (namespace) of the PackageRegistry, {@link PackageRegistries.Registries#getNamespaces()}.  */
     public static final String PARAM_REGISTRY = "registry";
 
+    /** Has value "merged" in some cases if it's important whether we are in registry merged mode or not. */
+    public static final String PARAM_MERGED = "merged";
+
     private volatile long jobIdleTimeout;
 
     public static final String ZIP_CONTENT_TYPE = "application/zip";
@@ -839,6 +842,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
             boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
             String namespace = request.getParameter(PARAM_REGISTRY);
+            boolean merged = "merged".equals(request.getParameter(PARAM_MERGED));
             RequestParameter file = request.getRequestParameter(AbstractServiceServlet.PARAM_FILE);
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             try (InputStream input = file != null ? file.getInputStream() : null) {
@@ -853,7 +857,7 @@ public class PackageServlet extends AbstractServiceServlet {
                         PackageRegistry registry = registries.getRegistry(namespace);
                         if (registry != null) {
                             PackageId packageId = registry.register(input, force);
-                            jsonAnswer(writer, "upload", "successful", namespace, packageId);
+                            jsonAnswer(writer, "upload", "successful", (merged ? null : namespace), packageId);
                         } else {
                             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "unknown registry " + registry);
                         }

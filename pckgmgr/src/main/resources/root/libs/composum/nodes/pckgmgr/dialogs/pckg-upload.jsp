@@ -22,6 +22,7 @@
               <div class="alert"></div>
             </div>
             <input name="_charset_" type="hidden" value="UTF-8" />
+            <input name="merged" type="hidden" value="" />
 
             <c:if test="${not empty pckgmgr.registries}">
               <c:choose>

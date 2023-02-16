@@ -136,10 +136,12 @@
                 this.form = core.getWidget(this.el, 'form.widget-form', core.components.FormWidget);
                 this.$file = this.$('input[name="file"]');
                 this.$file.on('change.file', _.bind(this.fileChanged, this));
+                this.$merged = this.$('input[name="merged"]');
                 this.$('button.upload').click(_.bind(this.uploadPackage, this));
             },
 
-            initDialog: function (path, name) {
+            initDialog: function (path, merged) {
+                this.$merged.val(merged);
             },
 
             uploadPackage: function (event) {
