@@ -5,3 +5,7 @@
 .detail-panel.package .package-detail .pckg-list-item {
     margin: 10px 0;
 }
+
+.pckg-list-item .detail-panel .status-block .fa {
+    width: 20px;
+}
