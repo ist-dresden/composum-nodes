@@ -77,7 +77,7 @@
                     this.$group.val(pckg.group);
                     this.$name.val(pckg.name);
                     this.$version.val(pckg.version);
-                    this.$registry.val(pckg.registry); // only falsy if in merged mode
+                    this.$registry.val(pckg.registry); // also falsy if in merged registry mode
                     this.registryVisible(pckg.registry);
                 } else {
                     this.$group.val(undefined);
@@ -137,11 +137,14 @@
                 this.$file = this.$('input[name="file"]');
                 this.$file.on('change.file', _.bind(this.fileChanged, this));
                 this.$merged = this.$('input[name="merged"]');
+                this.$registry = this.$('input[name="registry"]');
                 this.$('button.upload').click(_.bind(this.uploadPackage, this));
             },
 
             initDialog: function (path, merged) {
+                this.isRegistryMode = pckgmgr.mode.current == pckgmgr.const.mode.regpckg;
                 this.$merged.val(merged);
+                this.$registry.prop("disabled", !this.isRegistryMode);
             },
 
             uploadPackage: function (event) {
