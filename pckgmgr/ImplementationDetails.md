@@ -119,3 +119,4 @@ Composum Nodes Debugutil Renderinfo Comment Logging Filter: url regex .*packa.* 
 Interesting breakpoints:
 core.js:ajaxCall for most JSON ajax calls
 loading of the detail content is done with $detailContent.load in console.js
+https://github.com/pimterry/loglevel : log.enableAll()  ; log.resetAll()

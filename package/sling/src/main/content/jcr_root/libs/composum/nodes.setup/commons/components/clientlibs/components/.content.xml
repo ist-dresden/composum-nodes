@@ -24,7 +24,7 @@
             depends="[
                     jslibs/jquery/([2-3].*:3.6.0)/jquery.js,
                     jslibs/js-base64/2.5.2/base64.js,
-                    jslibs/loglevel/(1.*:1.6.1)/loglevel.js,
+                    jslibs/loglevel/(1.*:1.8.1)/loglevel.js,
                     jslibs/underscore/(1.*:1.9.1)/underscore.js,
                     jslibs/moment/(2.*:2.24.0)/moment-with-locales.js,
                     jslibs/backbone/(1.*:1.4.0)/backbone.js,
