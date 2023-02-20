@@ -8,6 +8,7 @@ import com.composum.sling.test.util.JcrTestUtils;
 import com.google.common.base.Defaults;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.testing.mock.sling.ResourceResolverType;
@@ -36,6 +37,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -148,33 +151,33 @@ public class SourceModelTest {
         model.writePackage(out, "thegroup", "thename", "1.0");
         String zipContents = getZipContentOverview(out, false, false);
         System.out.println(zipContents);
-        assertThat(zipContents, is("META-INF/vault/properties.xml\n" +
-                "META-INF/vault/filter.xml\n" +
+        assertThat(zipContents, is("META-INF/vault/filter.xml\n" +
+                "META-INF/vault/properties.xml\n" +
                 "jcr_root/content/.content.xml\n" +
                 "jcr_root/content/composum/.content.xml\n" +
                 "jcr_root/content/composum/nodes/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/.content.xml\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/_nt_resourcewithoutfile\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/_nt_resourcewithoutfile.dir/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/plain.jpg\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/plain.jpg.dir/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/withadditionaldata.jpg\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/withadditionaldata.jpg.dir/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/_nt_resourcewithoutfile\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/assetsfolder/_nt_resourcewithoutfile.dir/.content.xml\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/.content.xml\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/i18n/de.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/folderbinprop.binary\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/_jcr_content/binprop.binary\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/ntunstructuredwithjcrcontent/folderbinprop.binary\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary.binary\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary with-weird na_me.binary\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/401.jsp\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/__folder_wi%5cth weird %22char's/.content.xml\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/assets/withadditionaldata.jpg\n" +
                 "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/assets/withadditionaldata.jpg.dir/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/__folder_wi%5cth weird %22char's/.content.xml\n" +
-                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/401.jsp\n"));
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary with-weird na_me.binary\n" +
+                "jcr_root/content/composum/nodes/console/test/sourcemodel/subfolder/_jcr_content/propertytest/binary.binary"));
     }
 
     @Test
@@ -185,29 +188,30 @@ public class SourceModelTest {
         String zipContents = getZipContentOverview(out, true, true);
         System.out.println(zipContents);
         assertThat(zipContents, is(".content.xml : 292 | 504953282\n" +
-                "i18n/.content.xml : 253 | 2815201407\n" +
-                "i18n/de.xml : 1071 | 1733391945\n" +
                 "assetsfolder/.content.xml : 200 | 2815730915\n" +
+                "assetsfolder/_nt_resourcewithoutfile : 83358 | 2844564088\n" +
+                "assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 221 | 1068843391\n" +
                 "assetsfolder/plain.jpg : 76910 | 2714537933\n" +
                 "assetsfolder/plain.jpg.dir/.content.xml : 340 | 1433276223\n" +
                 "assetsfolder/withadditionaldata.jpg : 76910 | 2714537933\n" +
                 "assetsfolder/withadditionaldata.jpg.dir/.content.xml : 1098 | 3497581146\n" +
-                "assetsfolder/_nt_resourcewithoutfile : 83358 | 2844564088\n" +
-                "assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 221 | 1068843391\n" +
+                "i18n/.content.xml : 253 | 2815201407\n" +
+                "i18n/de.xml : 1071 | 1733391945\n" +
                 "ntunstructuredwithjcrcontent/.content.xml : 822 | 2340931679\n" +
-                "ntunstructuredwithjcrcontent/folderbinprop.binary : 20 | 2592797726\n" +
                 "ntunstructuredwithjcrcontent/_jcr_content/binprop.binary : 20 | 2592797726\n" +
+                "ntunstructuredwithjcrcontent/folderbinprop.binary : 20 | 2592797726\n" +
                 "subfolder/.content.xml : 3917 | 3270208475\n" +
-                "subfolder/_jcr_content/propertytest/binary.binary : 86 | 1434328335\n" +
-                "subfolder/_jcr_content/propertytest/binary with-weird na_me.binary : 86 | 1434328335\n" +
+                "subfolder/401.jsp : 416 | 3998517894\n" +
+                "subfolder/__folder_wi%5cth weird %22char's/.content.xml : 200 | 2815730915\n" +
                 "subfolder/_jcr_content/assets/withadditionaldata.jpg : 76910 | 2714537933\n" +
                 "subfolder/_jcr_content/assets/withadditionaldata.jpg.dir/.content.xml : 1098 | 3497581146\n" +
-                "subfolder/__folder_wi%5cth weird %22char's/.content.xml : 200 | 2815730915\n" +
-                "subfolder/401.jsp : 416 | 3998517894\n"));
+                "subfolder/_jcr_content/propertytest/binary with-weird na_me.binary : 86 | 1434328335\n" +
+                "subfolder/_jcr_content/propertytest/binary.binary : 86 | 1434328335"));
     }
 
     @Nonnull
     protected String getZipContentOverview(ByteArrayOutputStream out, boolean details, boolean unpack) throws IOException {
+        List<String> resultLines = new ArrayList<>();
         File basedir = new File("target").getAbsoluteFile();
         if (!basedir.exists() || !basedir.getAbsolutePath().endsWith("nodes/test/target")) {
             unpack = false;
@@ -216,17 +220,15 @@ public class SourceModelTest {
         if (unpack && basedir.exists()) {
             FileUtils.deleteDirectory(basedir);
         }
-        StringBuilder buf = new StringBuilder();
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))) {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
                 byte[] bytes = IOUtils.toByteArray(zip);
+                StringBuilder buf = new StringBuilder();
                 buf.append(entry.getName());
                 if (details) {
-                    System.out.println("ÄöÜ");
                     buf.append(" : ").append(bytes.length).append(" | ").append(entry.getCrc());
                 }
-                buf.append("\n");
                 if (unpack) {
                     File file = basedir.toPath().resolve(entry.getName()).toFile();
                     file.getParentFile().mkdirs();
@@ -235,9 +237,13 @@ public class SourceModelTest {
                     }
                 }
                 zip.closeEntry();
+                if (buf.length() > 0) {
+                    resultLines.add(buf.toString());
+                }
             }
         }
-        return buf.toString();
+        Collections.sort(resultLines);
+        return StringUtils.join(resultLines, "\n");
     }
 
     /**
