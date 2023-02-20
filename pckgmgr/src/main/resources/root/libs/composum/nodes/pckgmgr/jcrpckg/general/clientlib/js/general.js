@@ -118,8 +118,10 @@
             },
 
             startPackageOperation: function (event, title, operation) {
+                var path = this.getCurrentPath();
                 if (event) {
                     event.preventDefault();
+                    path = $(event.currentTarget).data('path') || path;
                 }
                 var dialog = core.console.getApprovalDialog();
                 dialog.show(
@@ -127,12 +129,13 @@
                         dialog.initDialog(
                             title,
                             '<div class="">'
-                            + this.getCurrentPath()
+                            + path
                             + '</div>'
                         )
                     }, this), _.bind(function () {
                         this.startJob({
-                            operation: operation
+                            operation: operation,
+                            overridePath: path
                         });
                     }, this));
             },

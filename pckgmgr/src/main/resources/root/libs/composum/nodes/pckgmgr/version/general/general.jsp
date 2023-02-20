@@ -12,12 +12,12 @@
                    title="Download this package"><span class="label">Download</span></a>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button class="install btn btn-default btn-stack" title="(Re)Install this package"><span
+                <button class="install btn btn-default btn-stack" title="(Re)Install this package" data-path="${pckg.pathWithRegistry}"><span
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                         class="symbol fa fa-sign-in fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
                         class="label">Install</span></button>
-                <button class="uninstall btn btn-default btn-stack" title="Uninstall this package"><span
+                <button class="uninstall btn btn-default btn-stack" title="Uninstall this package" data-path="${pckg.pathWithRegistry}"><span
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                         class="symbol fa fa-history fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span

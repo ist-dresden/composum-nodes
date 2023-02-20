@@ -118,6 +118,11 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
         loaded = true;
     }
 
+    /** Returns a path containing the registry namespace even in merged mode. */
+    public String getPathWithRegistry() {
+        return RegistryUtil.toPath(registryNamespace, getPackageId());
+    }
+
     @Override
     public void close() {
         try {
