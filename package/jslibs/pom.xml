@@ -165,7 +165,7 @@
                             <root>/libs/jslibs/js-base64/2.5.2</root>
                         </filter>
                         <filter>
-                            <root>/libs/jslibs/jstree/3.3.8</root>
+                            <root>/libs/jslibs/jstree/3.3.15</root>
                         </filter>
                         <filter>
                             <root>/libs/jslibs/loglevel/1.6.1</root>

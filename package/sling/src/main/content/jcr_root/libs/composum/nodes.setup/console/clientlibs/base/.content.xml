@@ -63,7 +63,7 @@
                         jslibs/bootstrap-colorpicker/3.1.2/js/bootstrap-colorpicker.js,
                         jslibs/bootstrap-fileinput/4.3.6/js/fileinput.js,
                         jslibs/split-pane/1.0.0/split-pane.js,
-                        jslibs/jstree/3.3.8/jstree.js
+                        jslibs/jstree/3.3.15/jstree.js
                     ]"/>
         <components jcr:primaryType="nt:unstructured"
                 embed="[
