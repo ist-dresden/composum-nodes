@@ -13,7 +13,7 @@
                       jslibs/bootstrap-slider/(9.*|10.*:10.6.1)/css/bootstrap-slider.css,
                       jslibs/bootstrap-colorpicker/([2-3].*:3.1.2)/css/bootstrap-colorpicker.css,
                       jslibs/bootstrap-fileinput/([4-5].*:4.3.6)/css/fileinput.css,
-                      jslibs/jstree/3.3.15/themes/proton/style.css,
+                      jslibs/jstree/3.3.15/themes/default/style.css,
                       jslibs/trumbowyg/(2.*:2.3.0)/ui/trumbowyg.css
                 ]"
             embed="[

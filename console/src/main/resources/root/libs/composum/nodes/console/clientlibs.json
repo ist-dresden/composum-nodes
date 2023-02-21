@@ -52,7 +52,7 @@
         "fonts/awesome/4.7.0/css/font-awesome.css",
         "jslibs/bootstrap/3.4.1/css/bootstrap.css",
         "jslibs/x-editable/1.5.3/bootstrap3-editable/css/bootstrap-editable.css",
-        "jslibs/jstree/3.3.15/themes/proton/style.css",
+        "jslibs/jstree/3.3.15/themes/default/style.css",
         "jslibs/trumbowyg/2.3.0/ui/trumbowyg.css"
       ],
       "embed": [
