@@ -16,12 +16,12 @@
                     <h3>${cpn:text(pckg.group)}&nbsp;</h3>
                     <h1>${cpn:text(pckg.name)}</h1>
                     <h2>${cpn:text(pckg.version)}&nbsp;</h2>
-                    <div>last modified: ${pckg.lastModified} by ${cpn:text(pckg.lastModifiedBy)}</div>
-                    <c:if test="${pckg.installed}">
-                        <div><span class="name">last unpacked: </span><span
-                                        class="date">${pckg.lastUnpacked}</span> by ${cpn:text(pckg.lastUnpackedBy)}</div>
-                    </c:if>
                 </a>
+                <div>last modified: ${pckg.lastModified} by ${cpn:text(pckg.lastModifiedBy)}</div>
+                <c:if test="${pckg.installed}">
+                    <div><span class="name">last unpacked: </span><span
+                                    class="date">${pckg.lastUnpacked}</span> by ${cpn:text(pckg.lastUnpackedBy)}</div>
+                </c:if>
                 <c:if test="${pckg.hasAlternativeVersions && cpn:contains(slingRequest.requestPathInfo.selectors, 'listalternativeversions')}">
                     <div class="active-versions">
                         alternative versions present:

@@ -22,10 +22,10 @@
                 <div class="split-pane-component left-pane">
                     <cpn:div test="${pckgmgr.registriesAvailable}" class="nodes-pckgmgr-tree-tabs">
                         <div class="nodes-pckgmgr-tree-tabs_head">
-                            <div class="nodes-pckgmgr-tree-tabs_head-tab jcrpckg"><span
+                            <div class="nodes-pckgmgr-tree-tabs_head-tab jcrpckg" title="${cpn:i18n(slingRequest,'Old JCR Package Manager based interface allowing creation and modification of packages')}"><span
                                     class="nodes-pckgmgr-tree-tabs_head-label">${cpn:i18n(slingRequest,'Manager')}</span>
                             </div>
-                            <div class="nodes-pckgmgr-tree-tabs_head-tab regpckg active"><span
+                            <div class="nodes-pckgmgr-tree-tabs_head-tab regpckg active" title="${cpn:i18n(slingRequest,'New Package Registry based interface, supporting multiple package registries, but no package modification support')}"><span
                                     class="nodes-pckgmgr-tree-tabs_head-label">${cpn:i18n(slingRequest,'Registry')}</span>
                             </div>
                         </div>

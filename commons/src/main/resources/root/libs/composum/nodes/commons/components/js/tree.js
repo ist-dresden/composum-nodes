@@ -988,7 +988,7 @@
                 lock: function(lockmsg, force) {
                     if (!force && this.isLocked()) throw new Error('tree.preventFromSelectLock already locked for ' + this.lockmsg);
                     if (force) {
-                        this.log.warn('tree.preventFromSelectLock is now locked with force unlock for ', lockmsg, ' (was locked for ', this.lockmsg, ')');
+                        this.log.info('tree.preventFromSelectLock is now locked with force unlock for ', lockmsg, ' (was locked for ', this.lockmsg, ')');
                     } else {
                         this.log.debug('tree.preventFromSelectLock is now locked for ', lockmsg);
                     }
@@ -998,7 +998,7 @@
 
                 unlock: function(unlockmsg) {
                     if (unlockmsg && this.lockmsg !== unlockmsg) {
-                        this.log.warn('tree.preventFromSelectLock unlocks now for ', this.lockmsg, ' (but was locked for ', unlockmsg, ')');
+                        this.log.info('tree.preventFromSelectLock unlocks now for ', this.lockmsg, ' (but was locked for ', unlockmsg, ')');
                     } else {
                         this.log.debug('tree.preventFromSelectLock unlocks now for ', this.lockmsg);
                     }
