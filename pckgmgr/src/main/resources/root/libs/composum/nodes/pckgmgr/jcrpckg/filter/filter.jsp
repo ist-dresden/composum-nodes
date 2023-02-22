@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean" scope="request">
-    <c:set var="writeAllowed" value="${pckg.permissible['nodes/packages/manager']['write']}"/>
+    <c:set var="writeAllowed" value="${pckg.writeAllowed}"/>
     <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
    <div class="detail-panel filters ${pckg.cssClasses} full-table-view">
         <div class="table-toolbar">

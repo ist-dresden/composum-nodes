@@ -5,6 +5,8 @@
 <sling:defineObjects/>
 <cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean" scope="request">
     <%--@elvariable id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean"--%>
+    <c:set var="writeAllowed" value="${pckgmgr.writeAllowed}"/>
+    <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
     <div class="detail-panel group">
         <div class="display-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
@@ -12,7 +14,7 @@
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="cleanup fa fa-recycle btn btn-default"
+                <button type="button" class="cleanup fa fa-recycle btn btn-default"${writeDisabled}
                         title="Cleanup obsolete package versions"><span class="label">Cleanup</span></button>
             </div>
             <sling:include resourceType="composum/nodes/pckgmgr" replaceSelectors="helpbutton"/>
@@ -46,4 +48,6 @@
 
         </div>
     </div>
+    <c:remove var="writeDisabled"/>
+    <c:remove var="writeAllowed"/>
 </cpn:component>

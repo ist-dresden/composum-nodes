@@ -4,6 +4,7 @@ import static com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil.THUMBNAIL
 import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.pckgmgr.PackagesServlet;
 import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
@@ -43,6 +44,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import javax.jcr.RepositoryException;
 
+@Restricted(key = PackageServlet.SERVICE_KEY)
 public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCloseable {
 
     public static final String RESOURCE_TYPE = "composum/nodes/pckgmgr/version";

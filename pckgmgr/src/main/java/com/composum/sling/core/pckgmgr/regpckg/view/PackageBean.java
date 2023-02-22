@@ -3,7 +3,9 @@ package com.composum.sling.core.pckgmgr.regpckg.view;
 import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.pckgmgr.PackagesServlet;
+import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
 import com.composum.sling.core.pckgmgr.regpckg.tree.PackageNode;
 import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryItem;
 import com.composum.sling.core.pckgmgr.regpckg.tree.RegistryTree;
@@ -27,6 +29,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+@Restricted(key = PackageServlet.SERVICE_KEY)
 public class PackageBean extends ConsoleSlingBean implements PackageView, Comparable<PackageBean>, AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageBean.class);

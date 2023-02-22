@@ -22,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
@@ -32,6 +34,7 @@ import com.composum.sling.nodes.console.ConsoleSlingBean;
 /**
  * Model for a group of packages - packages below a path.
  */
+@Restricted(key = PackageServlet.SERVICE_KEY)
 public class GroupBean extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(GroupBean.class);

@@ -1,8 +1,10 @@
 package com.composum.sling.core.pckgmgr.jcrpckg.view;
 
+import com.composum.sling.core.Restricted;
 import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.pckgmgr.Packages;
 import com.composum.sling.core.pckgmgr.Packages.Mode;
+import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
@@ -24,6 +26,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+@Restricted(key = PackageServlet.SERVICE_KEY)
 public class PackageManagerBean extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(PackageManagerBean.class);

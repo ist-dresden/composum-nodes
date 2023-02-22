@@ -5,6 +5,8 @@
 <sling:defineObjects/>
 <cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.VersionBean" scope="request">
     <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.VersionBean"--%>
+    <c:set var="writeAllowed" value="${pckg.writeAllowed}"/>
+    <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
     <div class="detail-panel package ${pckg.cssClasses}">
         <div class="display-toolbar detail-toolbar">
             <div class="btn-group btn-group-sm" role="group">
@@ -12,21 +14,21 @@
                    title="Download this package"><span class="label">Download</span></a>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button class="install btn btn-default btn-stack" title="(Re)Install this package" data-path="${pckg.pathWithRegistry}"><span
+                <button class="install btn btn-default btn-stack" title="(Re)Install this package" data-path="${pckg.pathWithRegistry}"${writeDisabled}><span
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                         class="symbol fa fa-sign-in fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
                         class="label">Install</span></button>
-                <button class="uninstall btn btn-default btn-stack" title="Uninstall this package" data-path="${pckg.pathWithRegistry}"><span
+                <button class="uninstall btn btn-default btn-stack" title="Uninstall this package" data-path="${pckg.pathWithRegistry}"${writeDisabled}><span
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                         class="symbol fa fa-history fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
                         class="label">Uninstall</span></button>
-                <button class="delete fa fa-trash btn btn-default" title="Delete this package"><span class="label">Delete</span>
+                <button class="delete fa fa-trash btn btn-default" title="Delete this package"${writeDisabled}><span class="label">Delete</span>
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button class="upload fa fa-upload btn btn-default" title="Upload a new package"><span class="label">Upload</span>
+                <button class="upload fa fa-upload btn btn-default" title="Upload a new package"${writeDisabled}><span class="label">Upload</span>
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
@@ -34,7 +36,7 @@
                 </button>
             </div>
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="cleanup fa fa-recycle btn btn-default"
+                <button type="button" class="cleanup fa fa-recycle btn btn-default"${writeDisabled}
                         title="Cleanup obsolete package versions"><span class="label">Cleanup</span></button>
             </div>
             <sling:include resourceType="composum/nodes/pckgmgr" replaceSelectors="helpbutton"/>
@@ -82,4 +84,6 @@
             </div>
         </div>
     </div>
+    <c:remove var="writeDisabled"/>
+    <c:remove var="writeAllowed"/>
 </cpn:component>
