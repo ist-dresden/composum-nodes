@@ -35,7 +35,7 @@
                     <label class="checkbox-control">
                         <input name="cleanupVersion" value="${version.path}" class="checkbox-field cleanup-version" type="checkbox"
                                checked="checked"/>
-                        <span class="checkbox-label">${cpn:text(version.version)}</span>
+                        <a href="${version.url}"><span class="checkbox-label">${cpn:text(version.version)}</span></a>
                         <div class="status-block edit-state">
                             <span class="fa fa-star-o"></span><span class="name">created: </span><span
                                     class="date">${version.created}</span>
