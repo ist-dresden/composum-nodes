@@ -15,6 +15,7 @@
                 <button type="button" class="cleanup fa fa-recycle btn btn-default"
                         title="Cleanup obsolete package versions"><span class="label">Cleanup</span></button>
             </div>
+            <sling:include resourceType="composum/nodes/pckgmgr" replaceSelectors="helpbutton"/>
         </div>
 
         <div class="group-detail">
