@@ -684,9 +684,9 @@ public class PackageServlet extends AbstractServiceServlet {
                 deleteJcrPackage(request, response, resource);
             } else {
                 PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
-                Pair<String, PackageId> location = registries.resolve(deletedPath);
                 boolean removed = false;
-                if (location != null) {
+                Pair<String, PackageId> location;
+                while (null != (location = registries.resolve(deletedPath))) {
                     PackageRegistry registry = registries.getRegistry(location.getLeft());
                     JsonWriter writer = ResponseUtil.getJsonWriter(response);
                     try {
@@ -697,10 +697,9 @@ public class PackageServlet extends AbstractServiceServlet {
                         // (possibly bug in FileVault: if package deletion requested in JCR but is in FS -> ClassCastException.
                         LOG.error("Error deleting {}", deletedPath, e);
                     }
-                } else {
-                    LOG.warn("Registry {} : could not find requested package {}", namespace, deletedPath);
                 }
                 if (!removed) {
+                    LOG.warn("Registry {} : could not find requested package {}", namespace, deletedPath);
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST,
                             deletedPath + " can not be found or deleted in the registries.");
                 }
