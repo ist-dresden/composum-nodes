@@ -1052,11 +1052,14 @@ public class PackageServlet extends AbstractServiceServlet {
                     data.put("deletedPaths", deletedPaths);
                     for (String cleanupVersion : cleanupVersions) {
                         currentPath = cleanupVersion; // for error logging
-                        Pair<String, PackageId> resolved = registries.resolve(cleanupVersion);
-                        if (resolved != null) {
+                        Pair<String, PackageId> resolved;
+                        boolean found = false;
+                        while (null != (resolved = registries.resolve(cleanupVersion))) {
                             registries.getRegistry(resolved.getKey()).remove(resolved.getValue());
                             deletedPaths.add(cleanupVersion);
-                        } else {
+                            found = true;
+                        }
+                        if (!found) {
                             status.error("Could not find package {}", cleanupVersion);
                         }
                     }
