@@ -137,7 +137,7 @@
                 this.$file = this.$('input[name="file"]');
                 this.$file.on('change.file', _.bind(this.fileChanged, this));
                 this.$merged = this.$('input[name="merged"]');
-                this.$registry = this.$('input[name="registry"]');
+                this.$registry = this.$('select[name="registry"]');
                 this.$('button.upload').click(_.bind(this.uploadPackage, this));
             },
 
@@ -145,6 +145,12 @@
                 this.isRegistryMode = pckgmgr.mode.current == pckgmgr.const.mode.regpckg;
                 this.$merged.val(merged);
                 this.$registry.prop("disabled", !this.isRegistryMode);
+                if (this.isRegistryMode) {
+                    var namespace = pckgmgr.util.namespace(path);
+                    if (namespace) {
+                        this.$registry.val(namespace.namespace);
+                    }
+                }
             },
 
             uploadPackage: function (event) {
