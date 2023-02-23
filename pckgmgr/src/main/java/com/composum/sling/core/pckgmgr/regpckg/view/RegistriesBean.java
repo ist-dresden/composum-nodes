@@ -1,5 +1,7 @@
 package com.composum.sling.core.pckgmgr.regpckg.view;
 
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries.Registries;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
@@ -8,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+@Restricted(key = PackageServlet.SERVICE_KEY)
 public class RegistriesBean extends ConsoleSlingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(RegistriesBean.class);

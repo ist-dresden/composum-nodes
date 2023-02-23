@@ -1,9 +1,16 @@
 package com.composum.sling.core.pckgmgr.jcrpckg.tree;
 
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
+import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
+import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
+import com.composum.sling.core.util.ResourceUtil;
 import com.google.gson.stream.JsonWriter;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
+import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +27,16 @@ public class JcrPackageItem implements TreeItem {
     private final JcrPackage jcrPackage;
     private final JcrPackageDefinition definition;
 
+    private boolean versionAsName;
+
     public JcrPackageItem(JcrPackage jcrPackage) throws RepositoryException {
         this.jcrPackage = jcrPackage;
         definition = jcrPackage.getDefinition();
+    }
+
+    public JcrPackageItem versionAsName(boolean versionAsName) {
+        this.versionAsName = versionAsName;
+        return this;
     }
 
     @Override
@@ -56,9 +70,12 @@ public class JcrPackageItem implements TreeItem {
         Map<String, Object> additionalAttributes = new LinkedHashMap<>();
         additionalAttributes.put("id", path);
         additionalAttributes.put("path", path);
+        additionalAttributes.put("parent", ResourceUtil.getParent(path) + '/' + definition.get(JcrPackageDefinition.PN_NAME));
         additionalAttributes.put("name", name);
-        additionalAttributes.put("text", name);
-        additionalAttributes.put("type", "package");
+        additionalAttributes.put("text", versionAsName ?
+                StringUtils.defaultIfBlank(definition.get(JcrPackageDefinition.PN_VERSION), RegistryUtil.NO_VERSION)
+                :  name);
+        additionalAttributes.put("type", versionAsName ? "version" : "package");
         additionalAttributes.put("state", treeState);
         additionalAttributes.put("file", getFilename());
         PackageUtil.toJson(writer, jcrPackage, additionalAttributes);
@@ -86,6 +103,21 @@ public class JcrPackageItem implements TreeItem {
     @Override
     public int hashCode() {
         return 31 * getName().hashCode() + definition.get(JcrPackageDefinition.PN_VERSION).hashCode();
+    }
+
+    public int compareTo(JcrPackageItem o) {
+        PackageId id1 = definition != null ? definition.getId() : null;
+        PackageId id2 = o.getDefinition() != null ? o.getDefinition().getId() : null;
+        CompareToBuilder builder = new CompareToBuilder();
+        builder.append( id1 != null ? id1.getGroup() : id1, id2 != null ? id2.getGroup() : id2);
+        builder.append( id1 != null ? id1.getName() : id1, id2 != null ? id2.getName() : id2);
+        // Until file-vault 3.6.6 the version comparison is wrong, so use our own comparator. JCRVLT-672
+        // also we want the newest version first
+        builder.append(id1 != null ? String.valueOf(id1.getVersion()) : "",
+                id2 != null ? String.valueOf(id2.getVersion()) : "", new VersionComparator().reversed());
+        builder.append(this.getName(), o.getName());
+        builder.append(this.getPath(), o.getPath());
+        return builder.toComparison();
     }
 
 }

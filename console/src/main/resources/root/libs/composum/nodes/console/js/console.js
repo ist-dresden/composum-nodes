@@ -244,7 +244,7 @@
 
             startJob: function (properties) {
                 if (!this.currentJob) {
-                    var path = this.getCurrentPath();
+                    var path = properties.overridePath || this.getCurrentPath();
                     this.delay(); // cancel all open timeouts
                     this.logOffset = 0;
                     core.ajaxPost('/bin/cpm/core/jobcontrol.job.json', _.extend({

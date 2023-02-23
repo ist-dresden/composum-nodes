@@ -17,6 +17,7 @@ import java.util.TreeMap;
 public class RegistryNode extends AbstractNode {
 
     public RegistryNode(String namespace, PackageRegistry registry) {
+        super(null);
         String name = registry.getClass().getSimpleName();
         put(KEY_PATH, "/@" + namespace);
         put(KEY_NAME, namespace);
@@ -40,15 +41,15 @@ public class RegistryNode extends AbstractNode {
         put(KEY_ITEMS, items);
         if (registry != null) {
             for (PackageId pckgId : registry.packages()) {
-                GroupNode group = getGroup(this, getPath(), pckgId.getGroup());
+                GroupNode group = getGroup(this, pckgId.getGroup());
                 group.addPackage(getName(), pckgId);
             }
         }
         setLoaded(true);
     }
 
-    protected static GroupNode getGroup(AbstractNode holder, String parentPath, String name) {
-        Map<String, RegistryItem> items = Objects.requireNonNull(holder.getItemsMap());
+    protected static GroupNode getGroup(@Nonnull AbstractNode parent, String name) {
+        Map<String, RegistryItem> items = Objects.requireNonNull(parent.getItemsMap());
         String[] groupPath;
         String groupName;
         String groupKey;
@@ -64,7 +65,7 @@ public class RegistryNode extends AbstractNode {
         }
         GroupNode group = (GroupNode) items.get(groupKey);
         if (group == null) {
-            group = new GroupNode(holder, parentPath, groupName);
+            group = new GroupNode(parent, null, groupName);
             items.put(groupKey, group);
         }
         for (int i = 1; i < groupPath.length; i++) {

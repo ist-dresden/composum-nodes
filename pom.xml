@@ -60,6 +60,7 @@
         <module>osgi</module>
         <module>setup</module>
         <module>package</module>
+        <module>test</module>
     </modules>
 
     <profiles>
@@ -273,6 +274,12 @@
                 <artifactId>geronimo-atinject_1.0_spec</artifactId>
                 <version>1.0</version>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <!-- Compatibility with AEM 6.5.0 -->
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>4.1</version>
             </dependency>
 
             <!-- Groovy -->

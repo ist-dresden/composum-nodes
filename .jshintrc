@@ -1,0 +1,8 @@
+{
+  "globals": {
+    "CPM": false,
+    "$": false,
+    "_": false,
+    "document": false
+  }
+}

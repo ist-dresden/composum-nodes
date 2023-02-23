@@ -4,6 +4,9 @@
     regpckg.const = {
         uri: {
             tree: '/bin/cpm/package.registryTree.json'
+        },
+        mode: {
+            merged: 'merged'
         }
     };
 
@@ -35,6 +38,7 @@
             this.$('button.refresh').on('click', _.bind(this.refreshTree, this));
             this.$('button.delete').on('click', _.bind(this.deletePackage, this));
             this.$('button.upload').on('click', _.bind(this.uploadPackage, this));
+            this.$('button.cleanup').on('click', _.bind(this.cleanupVersions, this));
             this.$download = this.$('a.download');
             var merged = !!core.console.getProfile().get('regpckg', 'merged', false);
             this.$merged = this.$('.regpckg-mode-merged input');
@@ -70,6 +74,7 @@
         uploadPackage: function (event) {
             var dialog = pckgmgr.getUploadPackageDialog();
             dialog.show(_.bind(function () {
+                dialog.initDialog(pckgmgr.current.path, regpckg.mode.current);
             }, this));
         },
 
@@ -78,6 +83,13 @@
 
         refreshTree: function (event) {
             this.tree.refresh();
+        },
+
+        cleanupVersions: function (event) {
+            var dialog = pckgmgr.getCleanupPackagesDialog();
+            dialog.show(_.bind(function () {
+                dialog.setPackage(pckgmgr.current);
+            }, this));
         }
     });
 
@@ -108,8 +120,8 @@
             return regpckg.mode.tree.uri() + path;
         },
 
-        onNodeSelected: function (path, node) {
-            $(document).trigger('path:select', [path]);
+        onNodeSelected: function (path, node, event) {
+            $(document).trigger(core.makeEvent('path:select', undefined, event), [path]);
         }
     });
 

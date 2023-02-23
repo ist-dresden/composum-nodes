@@ -25,7 +25,8 @@
     },
     "regpckg": {
       "embed": [
-        "composum/nodes/pckgmgr/regpckg/tree/css/tree.css"
+        "composum/nodes/pckgmgr/regpckg/tree/css/tree.css",
+        "composum/nodes/pckgmgr/regpckg/general/general.css"
       ]
     },
     "embed": [

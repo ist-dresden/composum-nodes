@@ -8,6 +8,8 @@
 
     (function (pckgmgr, console, core) {
 
+        pckgmgr.log = log.getLogger('pckgmgr') ;
+
         pckgmgr.const = {
             mode: {
                 jcrpckg: 'jcrpckg',
@@ -97,14 +99,19 @@
                             if (history.replaceState) {
                                 history.replaceState(pckgmgr.current.path, name, pckgmgr.current.nodeUrl);
                             }
-                            $(document).trigger("path:selected", [path]);
+                            $(document).trigger(core.makeEvent("path:selected", 'pkgmr.setCurrentPath'), [path]);
                         }, this));
                 } else {
                     pckgmgr.current = undefined;
-                    $(document).trigger("path:selected", [path]);
+                    $(document).trigger(core.makeEvent("path:selected", 'pkgmr.setCurrentPath'), [path]);
                 }
             }
         };
+
+        /** Triggers refreshing the view etc. */
+        pckgmgr.refresh = function () {
+            $(document).trigger("path:selected", [pckgmgr.getCurrentPath()]);
+        }
 
         pckgmgr.Pckgmgr = console.components.SplitView.extend({
 
@@ -119,7 +126,7 @@
                 $(document).on('path:select', _.bind(this.onPathSelect, this));
                 $(document).on('path:selected', _.bind(this.onPathSelected, this));
                 core.unauthorizedDelegate = core.console.authorize;
-                this.selectMode(core.console.getProfile().get('pckgmgr', 'mode', 'jcrpckg'));
+                this.selectMode(core.console.getProfile().get('pckgmgr', 'mode', 'jcrpckg'), true);
             },
 
             selectJcrpckgTab: function () {
@@ -130,12 +137,18 @@
                 this.selectMode('regpckg');
             },
 
-            selectMode: function (mode) {
+            /** Sets the mode of the tree (jcrpckg / regpckg); if pathFromPage is given (during initialization)
+             * we try to retrieve the path from the data-selected attribute, which contains the initial path from the URL.  */
+            selectMode: function (mode, pathFromPage) {
                 if (pckgmgr.mode.current !== mode) {
+                    var pathSuffix = '';
+                    if (pathFromPage) {
+                        pathSuffix = this.$el.find('.tree-panel [data-selected]').attr('data-selected') || '';
+                    }
                     pckgmgr.mode.current = mode;
                     core.ajaxGet(pckgmgr.const.uri.exec('mode.' + mode), {}, undefined, undefined,
                         _.bind(function () {
-                            core.getHtml(pckgmgr.const.uri.base + '/' + mode + '/tree.html',
+                            core.getHtml(pckgmgr.const.uri.base + '/' + mode + '/tree.html' + pathSuffix,
                                 _.bind(function (html) {
                                     var t = pckgmgr.const.css.tree.tabs;
                                     this.$treeTabs.find('.' + t.base + t._tab).removeClass('active');
@@ -151,7 +164,7 @@
 
             /** Switches the registry input in the package upload dialog on or off, according to the mode. */
             switchUpload: function(mode) {
-                let registrySelector = this.$('.pckg-regpckg-mode-mandatory');
+                var registrySelector = this.$('.pckg-regpckg-mode-mandatory');
                 if (mode != 'regpckg') {
                     this.$('.pckg-regpckg-mode-only').addClass('hidden');
                     registrySelector.attr('disabled', 'disabled');
@@ -167,6 +180,14 @@
             },
 
             onPathSelect: function (event, path) {
+                if (event.eventorigin == 'pkgmr.setCurrentPath') {
+                    // The event was triggered by the setCurrentPath method, stop to prevent event loops, since
+                    // the pckgmgr.current.path !== path condition can be wrong infinitely in case of simultaneous events loops
+                    if (pckgmgr.log.getLevel() <= log.levels.DEBUG) {
+                        pckgmgr.log.debug('onPathSelect(' + path + '): event loop prevented');
+                    }
+                    return;
+                }
                 if (!path) {
                     path = event.data.path;
                 }
@@ -176,7 +197,7 @@
             onPathSelected: function (event, path) {
                 pckgmgr[pckgmgr.mode.current].tree.selectNode(path, _.bind(function (path) {
                     pckgmgr[pckgmgr.mode.current].tree.actions.refreshNodeState();
-                }, this));
+                }, this), false, event);
             }
         });
 

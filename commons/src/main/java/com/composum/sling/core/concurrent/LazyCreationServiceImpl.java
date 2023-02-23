@@ -259,6 +259,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
                 boolean locked = lockManager.holdsLock(path);
                 LOG.debug("Path {} is locked={}", path, locked);
                 if (!locked) try {
+                    refreshSession(adminResolver, false);
                     Lock lock = lockManager.lock(path, true, false, Long.MAX_VALUE, null);
                     ResourceHandle.use(adminResolver.getResource(path)).setProperty(PROP_LAST_MODIFIED, Calendar
                             .getInstance());
@@ -298,6 +299,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
                 refreshSession(adminResolver, false);
                 lockManager.addLockToken(lock.getLockToken());
                 lockManager.unlock(path);
+                refreshSession(adminResolver, false);
                 lock = lockManager.lock(path, true, false, Long.MAX_VALUE, null);
                 adminResolver.commit();
 
@@ -365,6 +367,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
         if (handle.getProperty(PROP_LAST_MODIFIED) == null) {
             return false;
         }
+        refreshSession(handle.getResourceResolver(), true);
         LockManager lockManager = handle.getResourceResolver().adaptTo(Session.class).getWorkspace().getLockManager();
         boolean locked = lockManager.holdsLock(handle.getPath());
         return !locked;
@@ -460,6 +463,7 @@ public class LazyCreationServiceImpl implements LazyCreationService {
      */
     protected void refreshSession(ResourceResolver resolver, boolean keepChanges) {
         try {
+            resolver.refresh();
             Session session = resolver.adaptTo(Session.class);
             session.refresh(keepChanges);
         } catch (RepositoryException rex) {

@@ -2,6 +2,8 @@ package com.composum.nodes.debugutil;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import javax.servlet.Filter;
@@ -90,37 +92,36 @@ public class RenderInfoLoggingFilter implements Filter {
         }
         msgBuf.append(resource.getPath());
         String msg = msgBuf.toString();
-        PrintWriter[] writerCapture = new PrintWriter[1];
-        boolean[] closeWritten = new boolean[1];
-        closeWritten[0] = false;
+        AtomicReference<PrintWriter> writerCapture = new AtomicReference<>();
+        AtomicBoolean closeWritten = new AtomicBoolean(false);
 
         SlingHttpServletResponseWrapper wrappedResponse = new SlingHttpServletResponseWrapper(response) {
 
             @Override
             public PrintWriter getWriter() throws IOException {
-                if (writerCapture[0] == null) {
-                    writerCapture[0] = new PrintWriter(getResponse().getWriter()) {
+                if (writerCapture.get() == null) {
+                    writerCapture.set(new PrintWriter(getResponse().getWriter()) {
                         @Override
                         public void close() {
                             LOG.debug("RenderInfo End: {}", msg);
                             write("<!-- END RENDERINFO: " + msg + " -->\n");
-                            closeWritten[0] = true;
+                            closeWritten.set(true);
                             super.close();
                         }
-                    };
+                    });
                     LOG.debug("RenderInfo Start: {}", msg);
-                    writerCapture[0].write("<!-- START RENDERINFO: " + msg + " -->\n");
+                    writerCapture.get().write("<!-- START RENDERINFO: " + msg + " -->\n");
                 }
-                return writerCapture[0];
+                return writerCapture.get();
             }
         };
 
         chain.doFilter(request, wrappedResponse);
 
-        if (!closeWritten[0]) {
+        if (!closeWritten.get() && writerCapture.get() != null) {
             LOG.debug("RenderInfo End: {}", msg);
-            writerCapture[0].write("<!-- END RENDERINFO: " + msg + " -->");
-            writerCapture[0].flush();
+            writerCapture.get().write("<!-- END RENDERINFO: " + msg + " -->");
+            writerCapture.get().flush();
         }
     }
 

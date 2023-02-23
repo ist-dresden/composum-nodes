@@ -2,6 +2,7 @@
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2"%>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <sling:defineObjects/>
 <cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean" scope="request">
   <%--@elvariable id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean"--%>
@@ -21,17 +22,27 @@
               <div class="alert"></div>
             </div>
             <input name="_charset_" type="hidden" value="UTF-8" />
+            <input name="merged" type="hidden" value="" />
 
             <c:if test="${not empty pckgmgr.registries}">
-              <div class="form-group registry pckg-regpckg-mode-only">
-                <label class="control-label" for="pckg-upload-registry">Registry</label>
-                <select name="registry" class="widget select-widget form-control pckg-regpckg-mode-mandatory" id="pckg-upload-registry" data-rules="mandatory">
+              <c:choose>
+                <c:when test="${fn:length(pckgmgr.registries) == 1}">
+                  <c:forEach items="${pckgmgr.registries}" var="registry">
+                    <input name="registry" type="hidden" value="${registry.key}"/>
+                  </c:forEach>
+                </c:when>
+                <c:otherwise>
+                  <div class="form-group registry pckg-regpckg-mode-only">
+                    <label class="control-label" for="pckg-upload-registry">Registry</label>
+                    <select name="registry" class="widget select-widget form-control pckg-regpckg-mode-mandatory" id="pckg-upload-registry" data-rules="mandatory">
                   <option value="" selected></option>
                   <c:forEach items="${pckgmgr.registries}" var="registry">
                     <option value="${registry.key}">${cpn:text(registry.value)}</option>
                   </c:forEach>
-                </select>
-              </div>
+                    </select>
+                  </div>
+                </c:otherwise>
+              </c:choose>
             </c:if>
 
             <div class="form-group">

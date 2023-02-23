@@ -1,9 +1,17 @@
 package com.composum.sling.core.pckgmgr.regpckg.view;
 
+import static com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil.THUMBNAIL_PNG;
+import static com.composum.sling.core.util.LinkUtil.EXT_HTML;
+
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.pckgmgr.PackagesServlet;
+import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
 import com.composum.sling.core.pckgmgr.jcrpckg.util.PackageUtil;
+import com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
+import com.composum.sling.core.pckgmgr.regpckg.util.VersionComparator;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
 import org.apache.commons.lang3.StringUtils;
@@ -11,12 +19,14 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.io.AccessControlHandling;
+import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.packaging.NoSuchPackageException;
 import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.apache.jackrabbit.vault.packaging.VaultPackage;
 import org.apache.jackrabbit.vault.packaging.registry.DependencyReport;
 import org.apache.jackrabbit.vault.packaging.registry.RegisteredPackage;
+import org.apache.jackrabbit.vault.packaging.registry.impl.JcrRegisteredPackage;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.SyntheticResource;
@@ -28,15 +38,25 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.List;
 
+import javax.annotation.Nullable;
+import javax.jcr.RepositoryException;
+
+@Restricted(key = PackageServlet.SERVICE_KEY)
 public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCloseable {
 
-    public static final String RESOURCE_TYPE = "";
+    public static final String RESOURCE_TYPE = "composum/nodes/pckgmgr/version";
 
     private static final Logger LOG = LoggerFactory.getLogger(VersionBean.class);
 
     public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+    protected static final Comparator<PackageId> BY_GROUP_AND_NAME_COMPARATOR
+            = new VersionComparator.PackageIdByGroupAndNameComparator();
+    protected static final Comparator<PackageId> PACKAGE_ID_COMPARATOR
+            = new VersionComparator.PackageIdComparator(false);
 
     protected String namespace;
     protected PackageId packageId;
@@ -69,7 +89,7 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     @Override
     public void initialize(BeanContext context, Resource resource) {
         SlingHttpServletRequest request = context.getRequest();
-        String path = RegistryUtil.requestPath(request);
+        String path = resource.isResourceType(RESOURCE_TYPE) ? resource.getPath() : RegistryUtil.requestPath(request);
         this.namespace = RegistryUtil.namespace(path);
         this.packageId = RegistryUtil.fromPath(path);
         super.initialize(context, new SyntheticResource(context.getResolver(), path, RESOURCE_TYPE));
@@ -100,18 +120,23 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
         loaded = true;
     }
 
+    /** Returns a path containing the registry namespace even in merged mode. */
+    public String getPathWithRegistry() {
+        return RegistryUtil.toPath(registryNamespace, getPackageId());
+    }
+
     @Override
     public void close() {
         try {
-            if (vltPckg != null) {
-                vltPckg.close();
+            if (regPckg != null) {
+                regPckg.close();
             }
         } catch (Exception e) {
             LOG.error("Error closing {}", getPath(), e);
         } finally {
             try {
-                if (regPckg != null) {
-                    regPckg.close();
+                if (vltPckg != null && (regPckg == null || vltPckg != regPckg.getPackage())) {
+                    vltPckg.close();
                 }
             } catch (Exception e) {
                 LOG.error("Error closing {}", getPath(), e);
@@ -193,8 +218,7 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     }
 
     public String getAuditLogUrl() {
-        return "auditlog-invalid-yet";
-        // FIXME(hps,27.05.21) implement, compare com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean
+        return LinkUtil.getUrl(getRequest(), PackageBean.AUDIT_LOG_BASE + getPath());
     }
 
     public String getInstallationTime() {
@@ -315,6 +339,28 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     protected String format(Calendar rawDate, String dateRep) {
         Calendar date = RegistryUtil.readPackagePropertyDate(rawDate, dateRep);
         return date != null ? new SimpleDateFormat(DATE_FORMAT).format(date.getTime()) : "";
+    }
+
+    @Override
+    public String getUrl() {
+        return LinkUtil.getUrl(getRequest(), PackagesServlet.SERVLET_PATH + EXT_HTML + getPath());
+    }
+
+    /** True if this obsoletes the other version - that is, it has same group and name but a newer version. */
+    public boolean obsoletes(VersionBean other) {
+        return BY_GROUP_AND_NAME_COMPARATOR.compare(this.getPackageId(), other.getPackageId()) == 0 &&
+                PACKAGE_ID_COMPARATOR.compare(this.getPackageId(), other.getPackageId()) > 0;
+    }
+
+    /** Thumbnail works only for JCR packages. */
+    @Nullable
+    public String getThumbnailUrl() throws IOException {
+        Archive.Entry thumbnailEntry = vltPckg.getArchive().getEntry("META-INF/vault/definition/thumbnail.png");
+        String thumbnailUrl = null;
+        if (thumbnailEntry != null) {
+            thumbnailUrl = PackageServlet.SERVLET_PATH + "." + PackageServlet.Operation.thumbnail + ".png" + RegistryUtil.toPath(registryNamespace, packageId);
+        }
+        return thumbnailUrl;
     }
 
 }

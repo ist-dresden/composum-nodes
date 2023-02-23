@@ -1,6 +1,8 @@
 package com.composum.sling.core.pckgmgr.regpckg.tree;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.util.SlingResourceUtil;
+
 import org.apache.jackrabbit.vault.packaging.PackageId;
 
 import javax.annotation.Nonnull;
@@ -11,12 +13,11 @@ import java.util.TreeMap;
 
 public class GroupNode extends AbstractNode {
 
-    public final RegistryItem parent;
 
-    public GroupNode(@Nullable final RegistryItem parent,
-                     @Nonnull final String parentPath, @Nonnull final String name) {
-        this.parent = parent;
-        String path = parentPath + "/" + name;
+    public GroupNode(@Nullable final RegistryItem parent, @Nullable String parentPath, @Nonnull final String name) {
+        super(parent);
+        parentPath = parentPath != null ? parentPath : parent.getPath();
+        String path = SlingResourceUtil.appendPaths(parentPath, name);
         put(KEY_PATH, path);
         put(KEY_NAME, name);
         put(KEY_TEXT, name);
@@ -43,7 +44,7 @@ public class GroupNode extends AbstractNode {
         Map<String, RegistryItem> items = Objects.requireNonNull(getItemsMap());
         GroupNode group = (GroupNode) items.get("0_" + name);
         if (group == null) {
-            group = new GroupNode(this, this.getPath(), name);
+            group = new GroupNode(this, null, name);
             items.put("0_" + group.getName(), group);
         }
         return group;
@@ -58,5 +59,11 @@ public class GroupNode extends AbstractNode {
         }
         pckg.addVersion(registryNamespace, id);
         return pckg;
+    }
+
+    /** This shouldn't be called, but we make sure it isn't, because the super implementation is wrong here. */
+    @Override
+    protected void combineChildren(GroupNode otherNode) {
+        throw new UnsupportedOperationException("BUG: this shouldn't be called.");
     }
 }
