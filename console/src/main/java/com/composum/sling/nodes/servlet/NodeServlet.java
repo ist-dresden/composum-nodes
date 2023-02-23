@@ -420,7 +420,9 @@ public class NodeServlet extends NodeTreeServlet {
                          ResourceHandle resource)
                 throws ServletException, IOException {
 
-            String queryString = RequestUtil.getParameter(request, PARAM_QUERY, "").trim();
+            // Deliberately not run through XSS.filter since that could escape important things like @ and
+            // change strings in jcr:like etc. -> we take double care to escape output instead
+            String queryString = StringUtils.defaultString(request.getParameter(PARAM_QUERY)).trim();
             @SuppressWarnings("deprecation") String queryLang = Query.XPATH;
 
             String text;
@@ -478,7 +480,8 @@ public class NodeServlet extends NodeTreeServlet {
                 queryString += path;
             }
             queryString += queryString.endsWith("/") ? "/*" : "//*";
-            queryString += "[jcr:contains(.,'" + text + "')] order by @path";
+            String escapedText = StringUtils.replaceAll(text, "'", "''");
+            queryString += "[jcr:contains(.,'" + escapedText + "')] order by @path";
             return queryString;
         }
 
@@ -500,6 +503,7 @@ public class NodeServlet extends NodeTreeServlet {
             return nodesConfig.getQueryResultLimit() + 1;
         }
 
+        /** Writes the query result in the format appropriate to the output. Caution: think of escaping appropriately (XSS etc.). */
         protected abstract void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                                  String queryString, QueryResult result,
                                                  ResourceFilter filter, ResourceResolver resolver)

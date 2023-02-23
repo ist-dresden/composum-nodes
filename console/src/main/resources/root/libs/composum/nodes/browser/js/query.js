@@ -239,7 +239,7 @@
                     if (queries) {
                         content += '<ul class="template-links">';
                         for (var i = 0; i < queries.length; i++) {
-                            content += ('<li><a href="#" class="query-template">' + queries[i] + '</a></li>');
+                            content += ('<li><a href="#" class="query-template">' + _.escape(queries[i]) + '</a></li>');
                         }
                         content += '</ul>';
                     }
