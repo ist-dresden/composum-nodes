@@ -80,25 +80,27 @@ public class RegistryTree extends AbstractNode {
 
     @Override
     public void load(@Nonnull BeanContext context) throws IOException {
-        Map<String, RegistryItem> items = new TreeMap<>();
-        put(KEY_ITEMS, items);
-        PackageRegistries service = context.getService(PackageRegistries.class);
-        if (service != null) {
-            PackageRegistries.Registries registries = service.getRegistries(context.getResolver());
-            for (String namespace : registries.getNamespaces()) {
-                PackageRegistry registry = Objects.requireNonNull(registries.getRegistry(namespace));
-                if (merged) {
-                    for (PackageId pckgId : registry.packages()) {
-                    GroupNode group = RegistryNode.getGroup(this, pckgId.getGroup());
-                        group.addPackage(namespace, pckgId);
+        if (!isLoaded()) {
+            Map<String, RegistryItem> items = new TreeMap<>();
+            put(KEY_ITEMS, items);
+            PackageRegistries service = context.getService(PackageRegistries.class);
+            if (service != null) {
+                PackageRegistries.Registries registries = service.getRegistries(context.getResolver());
+                for (String namespace : registries.getNamespaces()) {
+                    PackageRegistry registry = Objects.requireNonNull(registries.getRegistry(namespace));
+                    if (merged) {
+                        for (PackageId pckgId : registry.packages()) {
+                            GroupNode group = RegistryNode.getGroup(this, pckgId.getGroup());
+                            group.addPackage(namespace, pckgId);
+                        }
+                    } else {
+                        RegistryNode node = new RegistryNode(namespace, registry);
+                        items.put("@" + namespace, node);
                     }
-                } else {
-                    RegistryNode node = new RegistryNode(namespace, registry);
-                    items.put("@" + namespace, node);
                 }
             }
+            setLoaded(true);
         }
-        setLoaded(true);
     }
 
     @Override
