@@ -108,10 +108,6 @@ public class PackageBean extends ConsoleSlingBean implements PackageView, Compar
         return currentVersion.isClosed();
     }
 
-    public boolean isLoaded() {
-        return currentVersion != null && currentVersion.isLoaded();
-    }
-
     public void load(BeanContext context) throws IOException {
         boolean merged = RegistryUtil.namespace(getPath()) == null;
         RegistryTree tree = new RegistryTree(merged);

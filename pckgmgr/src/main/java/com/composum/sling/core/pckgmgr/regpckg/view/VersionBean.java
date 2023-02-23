@@ -25,6 +25,7 @@ import org.apache.jackrabbit.vault.packaging.PackageId;
 import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.apache.jackrabbit.vault.packaging.VaultPackage;
 import org.apache.jackrabbit.vault.packaging.registry.DependencyReport;
+import org.apache.jackrabbit.vault.packaging.registry.PackageRegistry;
 import org.apache.jackrabbit.vault.packaging.registry.RegisteredPackage;
 import org.apache.jackrabbit.vault.packaging.registry.impl.JcrRegisteredPackage;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -105,19 +106,35 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
         if (registries == null) {
             PackageRegistries service = context.getService(PackageRegistries.class);
             registries = service.getRegistries(context.getResolver());
-        }
-        if (regPckg == null) {
-            Pair<String, RegisteredPackage> foundPckg = RegistryUtil.open(context, getNamespace(), getPackageId());
-            if (foundPckg != null) {
-                regPckg = foundPckg.getRight();
-                registryNamespace = foundPckg.getLeft();
+
+            Pair<String, PackageId> found = registries.resolve(getNamespace(), getPackageId());
+            if (found != null && found.getRight() != null) {
+                registryNamespace = found.getLeft();
             }
         }
-        if (regPckg != null) {
-            packageProps = regPckg.getPackageProperties();
-            vltPckg = regPckg.getPackage();
+        // we defer everything that needs opening the package until it's actually needed, since this is
+        // expensive, and we don't need it e.g. when traversing the RegistryTree .
+        // loadPackage() is called by the getters that need an open package.
+    }
+
+    /** Performs the expensive parts of the loading process (that need actually opening the package) if needed. */
+    protected void loadPackage() {
+        try {
+            if (!loaded) {
+                loaded = true;
+                if (regPckg == null && registryNamespace != null) {
+                    PackageRegistry registry = registries.getRegistry(registryNamespace);
+                    regPckg = registry.open(getPackageId());
+                    if (regPckg != null) {
+                        packageProps = regPckg.getPackageProperties();
+                        vltPckg = regPckg.getPackage();
+                    }
+                }
+            }
+        } catch (RuntimeException | IOException e) {
+            LOG.error("Error loading {} {}", getNamespace(), getPackageId(), e);
+            invalid = true;
         }
-        loaded = true;
     }
 
     /** Returns a path containing the registry namespace even in merged mode. */
@@ -172,22 +189,22 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     }
 
     public boolean isValid() {
+        loadPackage();
         return !invalid && vltPckg != null && vltPckg.isValid();
     }
 
     public boolean isInstalled() {
+        loadPackage();
         return regPckg != null && regPckg.isInstalled();
     }
 
     public boolean isClosed() {
+        loadPackage();
         return vltPckg != null && vltPckg.isClosed();
     }
 
-    public boolean isLoaded() {
-        return loaded;
-    }
-
     public String getDescription() {
+        loadPackage();
         return packageProps != null ? packageProps.getDescription() : null;
     }
 
@@ -213,6 +230,7 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     }
 
     public List<PathFilterSet> getFilterList() {
+        loadPackage();
         WorkspaceFilter workspaceFilter = regPckg != null ? regPckg.getWorkspaceFilter() : null;
         return workspaceFilter != null ? workspaceFilter.getFilterSets() : null;
     }
@@ -222,70 +240,86 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     }
 
     public String getInstallationTime() {
+        loadPackage();
         return packageProps != null ? format(regPckg.getInstallationTime(), null) : null;
     }
 
     public String getCreated() {
+        loadPackage();
         return packageProps != null ? format(packageProps.getCreated(), packageProps.getProperty(PackageProperties.NAME_CREATED)) : null;
     }
 
     public String getCreatedBy() {
+        loadPackage();
         return packageProps != null ? packageProps.getCreatedBy() : "--";
     }
 
     public String getLastModified() {
+        loadPackage();
         return packageProps != null ? format(packageProps.getLastModified(), packageProps.getProperty(PackageProperties.NAME_LAST_MODIFIED)) : null;
     }
 
     public String getLastModifiedBy() {
+        loadPackage();
         return packageProps != null ? packageProps.getLastModifiedBy() : "--";
     }
 
     public String getLastWrapped() {
+        loadPackage();
         return packageProps != null ? format(packageProps.getLastWrapped(), packageProps.getProperty(PackageProperties.NAME_LAST_WRAPPED)) : null;
     }
 
     public String getLastWrappedBy() {
+        loadPackage();
         return packageProps != null ? packageProps.getLastWrappedBy() : "--";
     }
 
     public String getAcHandling() {
+        loadPackage();
         AccessControlHandling acHandling = packageProps.getACHandling();
         return acHandling != null ? acHandling.name() : "";
     }
 
     public String getAcHandlingLabel() {
+        loadPackage();
         AccessControlHandling acHandling = packageProps.getACHandling();
         return acHandling != null ? acHandling.name() : "-- -- ";
     }
 
     public boolean getRequiresRestart() {
+        loadPackage();
         return RegistryUtil.booleanProperty(packageProps,PackageUtil.DEF_REQUIRES_RESTART, false);
     }
 
     public boolean getRequiresRoot() {
+        loadPackage();
         return packageProps.requiresRoot();
     }
 
     public String getProviderName()
     {
+        loadPackage();
         return packageProps.getProperty(PackageUtil.DEF_PROVIDER_NAME);
     }
 
     public String getProviderUrl() {
+        loadPackage();
         return packageProps.getProperty(PackageUtil.DEF_PROVIDER_URL);
     }
 
     public String getProviderLink() {
+        loadPackage();
         return packageProps.getProperty(PackageUtil.DEF_PROVIDER_LINK);
     }
 
     public String[] getDependencies() {
+        loadPackage();
         return Arrays.stream(packageProps.getDependencies()).map(Object::toString).toArray(String[]::new);
     }
 
     protected void calculateDependencies() {
         if (unresolvedDependencies == null) {
+            loadPackage();
             try {
                 DependencyReport reportInstalled = registries.getRegistry(getRegistryNamespace()).analyzeDependencies(getPackageId(), true);;
                 DependencyReport reportAll = registries.getRegistry(getRegistryNamespace()).analyzeDependencies(getPackageId(), false);
@@ -316,6 +350,7 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     }
 
     public String[] getReplaces() {
+        loadPackage();
         // TODO: what is the format here? Does that really exist? That's just a guess here.
         String replaces = packageProps.getProperty(PackageUtil.DEF_REPLACES);
         return StringUtils.isNotBlank(replaces) ? replaces.split(",") : null;
@@ -326,7 +361,7 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
         try {
             PackageId[] usages = registries.getRegistry(getRegistryNamespace()).usage(getPackageId());
             result = Arrays.stream(usages).map(Object::toString).toArray(String[]::new);
-        } catch (IOException e) {
+        } catch (RuntimeException | IOException e) {
             LOG.error("Error calculating dependencies for {}", getPackageId(), e);
         }
         return result;
@@ -355,6 +390,7 @@ public class VersionBean extends ConsoleSlingBean implements PackageView, AutoCl
     /** Thumbnail works only for JCR packages. */
     @Nullable
     public String getThumbnailUrl() throws IOException {
+        loadPackage();
         Archive.Entry thumbnailEntry = vltPckg.getArchive().getEntry("META-INF/vault/definition/thumbnail.png");
         String thumbnailUrl = null;
         if (thumbnailEntry != null) {

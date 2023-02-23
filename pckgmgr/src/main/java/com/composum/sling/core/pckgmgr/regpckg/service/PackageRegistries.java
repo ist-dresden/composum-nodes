@@ -57,6 +57,12 @@ public interface PackageRegistries {
         @Nullable
         Pair<String, RegisteredPackage> open(@Nonnull PackageId id) throws IOException;
 
+        /**
+         * Checks whether there is actually package with that id in the registry, looking through the registries if no namespace is given. If package wasn't found, this returns null.
+         */
+        @Nullable
+        Pair<String, PackageId> resolve(@Nullable String namespace, @Nullable PackageId packageId) throws IOException;
+
     }
 
     @Nonnull
