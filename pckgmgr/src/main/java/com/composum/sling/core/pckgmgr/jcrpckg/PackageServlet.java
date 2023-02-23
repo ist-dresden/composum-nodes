@@ -1,5 +1,7 @@
 package com.composum.sling.core.pckgmgr.jcrpckg;
 
+import static java.util.Collections.emptyList;
+
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.Restricted;
@@ -37,10 +39,12 @@ import org.apache.jackrabbit.vault.fs.api.FilterSet;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.api.PathFilter;
 import org.apache.jackrabbit.vault.fs.api.PathFilterSet;
+import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.api.WorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.DefaultWorkspaceFilter;
 import org.apache.jackrabbit.vault.fs.config.MetaInf;
 import org.apache.jackrabbit.vault.fs.filter.DefaultPathFilter;
+import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.JcrPackageDefinition;
 import org.apache.jackrabbit.vault.packaging.JcrPackageManager;
@@ -70,6 +74,8 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -77,6 +83,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -98,6 +105,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -133,6 +141,9 @@ public class PackageServlet extends AbstractServiceServlet {
     /** The key (namespace) of the PackageRegistry, {@link PackageRegistries.Registries#getNamespaces()}.  */
     public static final String PARAM_REGISTRY = "registry";
 
+    /** Has value "merged" in some cases if it's important whether we are in registry merged mode or not. */
+    public static final String PARAM_MERGED = "merged";
+
     private volatile long jobIdleTimeout;
 
     public static final String ZIP_CONTENT_TYPE = "application/zip";
@@ -153,8 +164,8 @@ public class PackageServlet extends AbstractServiceServlet {
     @Reference
     private Packaging packaging;
 
-    @Reference
-    private PackageRegistries packageRegistries;
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
+    private volatile PackageRegistries packageRegistries;
 
     private BundleContext bundleContext;
 
@@ -169,8 +180,8 @@ public class PackageServlet extends AbstractServiceServlet {
     public enum Operation {
         create, update, delete, download, upload, install, uninstall, deploy, service, list, tree, view, query,
         coverage, filterList, filterChange, filterAdd, filterRemove, filterMoveUp, filterMoveDown,
-        cleanup,
-        mode, registryTree, registries, registriesTree
+        cleanup, cleanupObsoleteVersions,
+        mode, registryTree, registries, registriesTree, thumbnail
     }
 
     protected PackageOperationSet operations = new PackageOperationSet();
@@ -222,6 +233,8 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.registries, new RegistriesOperation());
         operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
                 Operation.registriesTree, new RegistriesTreeOperation());
+        operations.setOperation(ServletOperationSet.Method.GET, Extension.json,
+                Operation.thumbnail, new ThumbnailOperation());
 
         // POST
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
@@ -239,6 +252,8 @@ public class PackageServlet extends AbstractServiceServlet {
                 Operation.uninstall, new UninstallOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.deploy, new ServiceOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
+                Operation.cleanupObsoleteVersions, new CleanupObsoleteVersionsOperation());
 
         operations.setOperation(ServletOperationSet.Method.POST, Extension.html,
                 Operation.filterChange, new ChangeFilterOperation());
@@ -258,6 +273,34 @@ public class PackageServlet extends AbstractServiceServlet {
         // DELETE
         operations.setOperation(ServletOperationSet.Method.DELETE, Extension.json,
                 Operation.delete, new DeleteOperation());
+    }
+
+    protected String getGroup(RequestParameterMap parameters) throws UnsupportedEncodingException {
+        return getStringParameter(parameters, "group");
+    }
+
+    protected String getName(RequestParameterMap parameters) throws UnsupportedEncodingException {
+        return getStringParameter(parameters, "name");
+    }
+
+    protected String getStringParameter(RequestParameterMap parameters, String parameterName) throws UnsupportedEncodingException {
+        final RequestParameter parameter = parameters.getValue(parameterName);
+        String value = "";
+        if (parameter != null) {
+            value = parameter.getString("UTF-8");
+        }
+        return value;
+    }
+
+    protected @Nonnull List<String> getArrayParameter(RequestParameterMap parameters, String parameterName) throws UnsupportedEncodingException {
+        RequestParameter[] parameterValues = parameters.getValues(parameterName);
+        List<String> values = new ArrayList<>();
+        if (parameterValues != null && parameterValues.length > 0) {
+            for (RequestParameter parameterValue : parameterValues) {
+                values.add(parameterValue.getString("UTF-8"));
+            }
+        }
+        return values;
     }
 
     public class PackageOperationSet extends ServletOperationSet<Extension, Operation> {
@@ -337,6 +380,7 @@ public class PackageServlet extends AbstractServiceServlet {
                 if (!treeItem.isLoaded()) {
                     treeItem.load(context);
                 }
+                treeItem = treeItem.compactTree();
                 treeItem.toTree(writer, true, true);
             } else { // that's not the way status is intended to be used, but that'd not be compatible with treeItem.toTree .
                 Status status = new Status(request, response);
@@ -354,21 +398,23 @@ public class PackageServlet extends AbstractServiceServlet {
                          @Nonnull final SlingHttpServletResponse response,
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
-            PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             writer.beginArray();
-            for (PackageRegistry registry : registries.iterable()) {
-                writer.beginObject();
-                writer.name("type").value(registry.getClass().getSimpleName());
-                writer.name("packages").beginArray();
-                for (PackageId pckgId : registry.packages()) {
+            if (packageRegistries != null) {
+                PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                for (PackageRegistry registry : registries.iterable()) {
                     writer.beginObject();
-                    writer.name("id").value(pckgId.toString());
-                    writer.name("filename").value(RegistryUtil.getFilename(pckgId));
+                    writer.name("type").value(registry.getClass().getSimpleName());
+                    writer.name("packages").beginArray();
+                    for (PackageId pckgId : registry.packages()) {
+                        writer.beginObject();
+                        writer.name("id").value(pckgId.toString());
+                        writer.name("filename").value(RegistryUtil.getFilename(pckgId));
+                        writer.endObject();
+                    }
+                    writer.endArray();
                     writer.endObject();
                 }
-                writer.endArray();
-                writer.endObject();
             }
             writer.endArray();
         }
@@ -384,6 +430,7 @@ public class PackageServlet extends AbstractServiceServlet {
             BeanContext context = new BeanContext.Servlet(getServletContext(), bundleContext, request, response);
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             RegistryTree tree = new RegistryTree(false);
+            tree.compactTree();
             toJson(writer, context, tree);
         }
 
@@ -633,23 +680,29 @@ public class PackageServlet extends AbstractServiceServlet {
                 throws RepositoryException, IOException {
             String deletedPath = request.getRequestPathInfo().getSuffix();
             String namespace = RegistryUtil.namespace(deletedPath);
-            if (StringUtils.isBlank(namespace)) {
+            if (StringUtils.isBlank(namespace) && Packages.getMode(request) != Mode.regpckg) {
                 deleteJcrPackage(request, response, resource);
             } else {
-                PackageId packageId = RegistryUtil.fromPath(deletedPath);
                 PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
-                PackageRegistry registry = registries.getRegistry(namespace);
-                JsonWriter writer = ResponseUtil.getJsonWriter(response);
-                try {
-                    registry.remove(packageId);
-                    jsonAnswer(writer, "delete", "successful", namespace, packageId);
-                } catch (NoSuchPackageException | ClassCastException e) {
-                    // (probably bug in FileVault: if package deletion requested in JCR but is in FS -> ClassCastException.
-                    LOG.warn("Registry {} : could not find requested package {}", namespace, packageId, e);
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-                            packageId + " can not be found in the registry " + namespace);
+                boolean removed = false;
+                Pair<String, PackageId> location;
+                while (null != (location = registries.resolve(deletedPath))) {
+                    PackageRegistry registry = registries.getRegistry(location.getLeft());
+                    JsonWriter writer = ResponseUtil.getJsonWriter(response);
+                    try {
+                        registry.remove(location.getRight());
+                        jsonAnswer(writer, "delete", "successful", namespace, location.getRight());
+                        removed = true;
+                    } catch (NoSuchPackageException | ClassCastException e) {
+                        // (possibly bug in FileVault: if package deletion requested in JCR but is in FS -> ClassCastException.
+                        LOG.error("Error deleting {}", deletedPath, e);
+                    }
                 }
-
+                if (!removed) {
+                    LOG.warn("Registry {} : could not find requested package {}", namespace, deletedPath);
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                            deletedPath + " can not be found or deleted in the registries.");
+                }
             }
         }
 
@@ -662,6 +715,10 @@ public class PackageServlet extends AbstractServiceServlet {
 
                 JsonWriter writer = ResponseUtil.getJsonWriter(response);
                 jsonAnswer(writer, "delete", "successful", manager, jcrPackage);
+            } else {
+                LOG.warn("Package not found: {}", PackageUtil.getPath(request));
+                response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                        "Package not found: " + PackageUtil.getPath(request));
             }
         }
     }
@@ -784,6 +841,7 @@ public class PackageServlet extends AbstractServiceServlet {
 
             boolean force = RequestUtil.getParameter(request, PARAM_FORCE, false);
             String namespace = request.getParameter(PARAM_REGISTRY);
+            boolean merged = "merged".equals(request.getParameter(PARAM_MERGED));
             RequestParameter file = request.getRequestParameter(AbstractServiceServlet.PARAM_FILE);
             JsonWriter writer = ResponseUtil.getJsonWriter(response);
             try (InputStream input = file != null ? file.getInputStream() : null) {
@@ -798,7 +856,7 @@ public class PackageServlet extends AbstractServiceServlet {
                         PackageRegistry registry = registries.getRegistry(namespace);
                         if (registry != null) {
                             PackageId packageId = registry.register(input, force);
-                            jsonAnswer(writer, "upload", "successful", namespace, packageId);
+                            jsonAnswer(writer, "upload", "successful", (merged ? null : namespace), packageId);
                         } else {
                             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "unknown registry " + registry);
                         }
@@ -968,6 +1026,54 @@ public class PackageServlet extends AbstractServiceServlet {
     }
 
     /**
+     * Deletes the given obsolete package versions. As safety checks, we check that neither of the
+     * packages is in installed state and for all of them there is a newer version present. If that's the case for
+     * all packageIds, we {@link PackageRegistry#remove(PackageId)} them.
+     * <dl>
+     *     <dt>path</dt><dd>Path below which we delete package versions, registry path or not</dd>
+     *     <dt>packlageId</dt><dd>One or more packageIds {@link PackageId#toString()}</dd>
+     * </dl>
+     */
+    protected class CleanupObsoleteVersionsOperation implements ServletOperation {
+
+        @Override
+        public void doIt(@Nonnull SlingHttpServletRequest request, @Nonnull SlingHttpServletResponse response, @Nullable ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            final Status status = new Status(request, response, LOG);
+            String path = getPath(request);
+            List<String> cleanupVersions = getArrayParameter(request.getRequestParameterMap(), "cleanupVersion");
+            if (StringUtils.isNotBlank(path) && cleanupVersions != null && !cleanupVersions.isEmpty()) {
+                String currentPath = null;
+                try {
+                    PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                    Map<String, Object> data = status.data("result");
+                    data.put("path", path);
+                    List<String> deletedPaths = new ArrayList<>();
+                    data.put("deletedPaths", deletedPaths);
+                    for (String cleanupVersion : cleanupVersions) {
+                        currentPath = cleanupVersion; // for error logging
+                        Pair<String, PackageId> resolved;
+                        boolean found = false;
+                        while (null != (resolved = registries.resolve(cleanupVersion))) {
+                            registries.getRegistry(resolved.getKey()).remove(resolved.getValue());
+                            deletedPaths.add(cleanupVersion);
+                            found = true;
+                        }
+                        if (!found) {
+                            status.error("Could not find package {}", cleanupVersion);
+                        }
+                    }
+                } catch (Exception e) {
+                    status.error("Problem deleting obsolete versions; currentPath=" + currentPath, e);
+                }
+            } else {
+                status.error("path and packageId(s) expected");
+            }
+            status.sendJson();
+
+        }
+    }
+
+    /**
      * The 'service' implementation based on the behaviour of the 'service' servlet provided by the CRX Package Manager.
      * <dl>
      * <dt>targetURL</dt>
@@ -979,24 +1085,6 @@ public class PackageServlet extends AbstractServiceServlet {
         abstract class ServiceCommand {
 
             abstract void doCommand(SlingHttpServletRequest request, SlingHttpServletResponse response, RequestParameterMap parameters) throws RepositoryException, IOException;
-
-            String getGroup(RequestParameterMap parameters) throws UnsupportedEncodingException {
-                final RequestParameter groupParameter = parameters.getValue("group");
-                String group = null;
-                if (groupParameter != null) {
-                    group = groupParameter.getString("UTF-8");
-                }
-                return group;
-            }
-
-            String getName(RequestParameterMap parameters) throws UnsupportedEncodingException {
-                final RequestParameter nameParameter = parameters.getValue("name");
-                String name = "";
-                if (nameParameter != null) {
-                    name = nameParameter.getString("UTF-8");
-                }
-                return name;
-            }
 
         }
 
@@ -1263,10 +1351,25 @@ public class PackageServlet extends AbstractServiceServlet {
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
             Session session = RequestUtil.getSession(request);
-
             PackageProgressTracker tracker = new PackageProgressTracker.JsonTracking(response, null);
             tracker.writePrologue();
-            PackageUtil.getCoverage(jcrPackage.getDefinition(), session, tracker);
+            if (jcrPackage != null) {
+                PackageUtil.getCoverage(jcrPackage.getDefinition(), session, tracker);
+            } else {
+                PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+                String path = RegistryUtil.requestPath(request);
+                Pair<String, PackageId> location = registries.resolve(path);
+                Pair<String, RegisteredPackage> pckgEntry = location != null ? registries.open(location.getRight()) : null;
+                if (pckgEntry != null) {
+                    WorkspaceFilter filter = pckgEntry.getRight().getWorkspaceFilter();
+                    try {
+                        filter.dumpCoverage(session, tracker, false);
+                    } catch (RepositoryException rex) {
+                        LOG.error(rex.getMessage(), rex);
+                        tracker.onError(ProgressTrackerListener.Mode.TEXT, "exception thrown", rex);
+                    }
+                }
+            }
             tracker.writeEpilogue();
         }
     }
@@ -1279,19 +1382,29 @@ public class PackageServlet extends AbstractServiceServlet {
                          ResourceHandle resource)
                 throws RepositoryException, IOException {
 
-            List<PathFilterSet> filters;
+            List<PathFilterSet> filters = emptyList();
             JcrPackageManager manager = PackageUtil.getPackageManager(packaging, request);
             JcrPackage jcrPackage = PackageUtil.getJcrPackage(manager, resource);
             if (jcrPackage != null) {
-                filters = PackageUtil.getFilterList(jcrPackage.getDefinition());
-                jcrPackage.close();
+                try {
+                    filters = PackageUtil.getFilterList(jcrPackage.getDefinition());
+                } finally {
+                    jcrPackage.close();
+                }
             } else { // try to find it in the registries
                 PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
                 String path = RegistryUtil.requestPath(request);
                 Pair<String, PackageId> location = registries.resolve(path);
                 Pair<String, RegisteredPackage> pckgEntry = location != null ? registries.open(location.getRight()) : null;
                 try (RegisteredPackage pckg = pckgEntry != null ? pckgEntry.getRight() : null) {
-                    filters = pckg != null ? pckg.getWorkspaceFilter().getFilterSets() : Collections.emptyList();
+                    if (pckg != null) {
+                        WorkspaceFilter workspaceFilter = pckg.getWorkspaceFilter();
+                        if (workspaceFilter != null) {
+                            filters = workspaceFilter.getFilterSets();
+                        } else {
+                            LOG.error("BUG: WorkspaceFilter is null but promised to be not null for package {}.", pckgEntry.getLeft());
+                        }
+                    }
                 }
             }
 
@@ -1504,6 +1617,29 @@ public class PackageServlet extends AbstractServiceServlet {
         }
     }
 
+    /** Provides thumbnail for registry packages. */
+    private class ThumbnailOperation implements ServletOperation {
+        @Override
+        public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            PackageRegistries.Registries registries = packageRegistries.getRegistries(request.getResourceResolver());
+            String path = RegistryUtil.requestPath(request);
+            Pair<String, PackageId> location = registries.resolve(path);
+            Pair<String, RegisteredPackage> pckgEntry = location != null ? registries.open(location.getRight()) : null;
+            if (pckgEntry != null) {
+                RegisteredPackage pckg = pckgEntry.getRight();
+                Archive archive = pckg.getPackage().getArchive();
+                Archive.Entry thumbnailEntry = archive.getEntry("META-INF/vault/definition/thumbnail.png");
+                if (thumbnailEntry != null) {
+                    InputStream stream = archive.openInputStream(thumbnailEntry);
+                    response.setContentType("image/png");
+                    IOUtils.copy(stream, response.getOutputStream());
+                    return;
+                }
+            }
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Thumbnail not found for " + PackageUtil.getPath(request));
+        }
+    }
+
     //
     // JSON mapping helpers
     //
@@ -1589,5 +1725,4 @@ public class PackageServlet extends AbstractServiceServlet {
         long package_job_timeout() default 60L * 1000L;
 
     }
-
 }

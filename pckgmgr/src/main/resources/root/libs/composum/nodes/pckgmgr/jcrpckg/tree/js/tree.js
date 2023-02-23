@@ -20,6 +20,7 @@
             this.$('button.create').on('click', _.bind(this.createPackage, this));
             this.$('button.delete').on('click', _.bind(this.deletePackage, this));
             this.$('button.upload').on('click', _.bind(this.uploadPackage, this));
+            this.$('button.cleanup').on('click', _.bind(this.cleanupVersions, this));
             this.$download = this.$('a.download');
         },
 
@@ -34,12 +35,12 @@
         createPackage: function (event) {
             var dialog = pckgmgr.getCreatePackageDialog();
             dialog.show(_.bind(function () {
-                var parentNode = this.tree.current();
+                var parentNode = this.tree.current() || {};
                 var parentPath = parentNode.path;
                 if (parentNode.type === 'package') {
                     parentPath = core.getParentPath(parentPath);
                 }
-                if (parentNode) {
+                if (parentPath) {
                     dialog.initGroup(parentPath.substring(1));
                 }
             }, this));
@@ -57,6 +58,7 @@
         uploadPackage: function (event) {
             var dialog = pckgmgr.getUploadPackageDialog();
             dialog.show(_.bind(function () {
+                dialog.initDialog(pckgmgr.current.path, '');
             }, this));
         },
 
@@ -65,6 +67,13 @@
 
         refreshTree: function (event) {
             this.tree.refresh();
+        },
+
+        cleanupVersions: function (event) {
+            var dialog = pckgmgr.getCleanupPackagesDialog();
+            dialog.show(_.bind(function () {
+                dialog.setPackage(pckgmgr.current);
+            }, this));
         }
     });
 
@@ -88,8 +97,29 @@
             return jcrpckg.mode.tree.uri() + path;
         },
 
-        onNodeSelected: function (path, node) {
-            $(document).trigger("path:select", [path]);
+        /** We cannot determine the package name uniquely from the path of the package, so we need to make a call. */
+        parentPathsOfPath: function (path, rootPath, resultCallback) {
+            var superMethod = core.components.Tree.prototype.parentPathsOfPath;
+            if (path.indexOf('.') < 0) { // not a package, just use normal logic.
+                superMethod.apply(this, [path, rootPath, resultCallback]);
+            } else {
+                this.nodeData({original: {path: path}}, function(result) {
+                    if (result.parent) {
+                        var parentPaths;
+                        superMethod.apply(this, [result.parent, rootPath, function (parentResult) {
+                            parentPaths = parentResult;
+                        }]);
+                        parentPaths.push(result.parent);
+                        resultCallback(parentPaths);
+                    } else { // not a package, normal logic
+                        superMethod.apply(this, [path, rootPath, resultCallback]);
+                    }
+                });
+            }
+        },
+
+        onNodeSelected: function (path, node, event) {
+            $(document).trigger(core.makeEvent("path:select", undefined, event), [path])
         }
     });
 

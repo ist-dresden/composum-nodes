@@ -52,6 +52,7 @@
         uploadPackage: function () {
             var dialog = pckgmgr.getUploadPackageDialog();
             dialog.show(_.bind(function () {
+                dialog.initDialog(pckgmgr.current.path, regpckg.mode.current);
             }, this));
         }
     };

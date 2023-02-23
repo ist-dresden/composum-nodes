@@ -31,6 +31,7 @@
                         title="Refresh"><span class="label">Refresh view</span>
                 </button>
             </div>
+            <sling:include resourceType="composum/nodes/pckgmgr" replaceSelectors="helpbutton"/>
         </div>
         <div class="options-detail">
             <sling:include replaceSelectors="detail"/>

@@ -222,6 +222,11 @@ public class LazyCreationServiceImplTest {
     /**
      * Runs a call that is fast to create the resource, but is slow to initialize it, and a second call that is slow
      * to create the resource (is overrun by the first) but then finishes the job.
+     * <p>
+     * ABOUT FAILURES:
+     * Strangely, this test sometimes fails, but mostly works. Probably there are problems with the JCR locking
+     * mechanism. In practice there is also the Sequencer that is deliberately not used here, and in the worst case the
+     * resource is rendered twice, which isn't a serious problem, so we can safely ignore that.
      */
     @Test
     public void testCreationAndInitWithLockBreak() throws Exception {
@@ -343,6 +348,7 @@ public class LazyCreationServiceImplTest {
         }
         assertEquals(TYPE_UNSTRUCTURED, result.getPrimaryType());
         assertEquals(TYPE_SLING_FOLDER, result.getParent().getPrimaryType());
+        context.resourceResolver().refresh();
         LockManager lockManager = context.resourceResolver().adaptTo(Session.class).getWorkspace().getLockManager();
         assertFalse("Initialized=" + initialized + " but still locked: " + result.getPath(), lockManager.holdsLock
                 (result.getPath()));

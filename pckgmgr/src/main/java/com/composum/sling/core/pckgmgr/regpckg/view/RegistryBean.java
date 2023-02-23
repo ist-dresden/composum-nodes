@@ -1,6 +1,8 @@
 package com.composum.sling.core.pckgmgr.regpckg.view;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.pckgmgr.jcrpckg.PackageServlet;
 import com.composum.sling.core.pckgmgr.regpckg.service.PackageRegistries;
 import com.composum.sling.core.pckgmgr.regpckg.util.RegistryUtil;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+@Restricted(key = PackageServlet.SERVICE_KEY)
 public class RegistryBean extends ConsoleSlingBean {
 
     public static final String RESOURCE_TYPE = "";

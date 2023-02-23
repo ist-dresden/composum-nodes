@@ -646,4 +646,11 @@
         <function-signature>java.lang.String cdata(java.lang.String)</function-signature>
     </function>
 
+    <function>
+        <description>checks whether an array of objects or collection contains an object</description>
+        <name>contains</name>
+        <function-class>com.composum.sling.cpnl.CpnlElFunctions</function-class>
+        <function-signature>java.lang.Boolean contains(java.lang.Object, java.lang.Object)</function-signature>
+    </function>
+
 </taglib>

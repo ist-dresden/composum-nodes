@@ -10,6 +10,10 @@ import org.apache.jackrabbit.vault.packaging.registry.PackageRegistry;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -19,6 +23,7 @@ public class RegistryTree extends AbstractNode {
     protected final boolean merged;
 
     public RegistryTree(boolean merged) {
+        super(null);
         this.merged = merged;
         put(KEY_PATH, "/");
         put(KEY_NAME, "/");
@@ -28,6 +33,22 @@ public class RegistryTree extends AbstractNode {
 
     @Nullable
     public RegistryItem getItem(@Nonnull final BeanContext context, @Nonnull final String path)
+            throws IOException {
+        RegistryItem item = getItemInternal(context, path);
+        if (item == null) {
+            compactTree();
+            item = getItemInternal(context, path);
+        }
+        if (item == null) {
+            // Accesses to parts of the tree that do not exist (anymore) occur after deletions.
+            // We return an empty folder there to not break the tree in the FE.
+            item = new GroupNode(null, ResourceUtil.getParent(path), ResourceUtil.getName(path));
+        }
+        return item;
+    }
+
+    @Nullable
+    protected RegistryItem getItemInternal(@Nonnull final BeanContext context, @Nonnull final String path)
             throws IOException {
         RegistryItem item = this;
         if (!"/".equals(path)) {
@@ -52,31 +73,29 @@ public class RegistryTree extends AbstractNode {
                 }
                 item = item.getItem(segments[i]);
             }
-            if (item == null) {
-                // Accesses to parts of the tree that do not exist (anymore) occur after deletions.
-                // We return an empty folder there to not break the tree in the FE.
-                item = new GroupNode(null, ResourceUtil.getParent(path), ResourceUtil.getName(path));
-            }
         }
         return item;
     }
 
+
     @Override
     public void load(@Nonnull BeanContext context) throws IOException {
-        PackageRegistries service = context.getService(PackageRegistries.class);
         Map<String, RegistryItem> items = new TreeMap<>();
         put(KEY_ITEMS, items);
-        PackageRegistries.Registries registries = service.getRegistries(context.getResolver());
-        for (String namespace : registries.getNamespaces()) {
-            PackageRegistry registry = Objects.requireNonNull(registries.getRegistry(namespace));
-            if (merged) {
-                for (PackageId pckgId : registry.packages()) {
-                    GroupNode group = RegistryNode.getGroup(this, "", pckgId.getGroup());
-                    group.addPackage(namespace, pckgId);
+        PackageRegistries service = context.getService(PackageRegistries.class);
+        if (service != null) {
+            PackageRegistries.Registries registries = service.getRegistries(context.getResolver());
+            for (String namespace : registries.getNamespaces()) {
+                PackageRegistry registry = Objects.requireNonNull(registries.getRegistry(namespace));
+                if (merged) {
+                    for (PackageId pckgId : registry.packages()) {
+                    GroupNode group = RegistryNode.getGroup(this, pckgId.getGroup());
+                        group.addPackage(namespace, pckgId);
+                    }
+                } else {
+                    RegistryNode node = new RegistryNode(namespace, registry);
+                    items.put("@" + namespace, node);
                 }
-            } else {
-                RegistryNode node = new RegistryNode(namespace, registry);
-                items.put("@" + namespace, node);
             }
         }
         setLoaded(true);
@@ -87,14 +106,27 @@ public class RegistryTree extends AbstractNode {
         if (showRoot) {
             super.toTree(writer, children, true);
         } else {
-            writer.beginArray();
-            Map<String, RegistryItem> items = getItemsMap();
-            if (items != null) {
-                for (RegistryItem item : items.values()) {
-                    item.toTree(writer, false, true);
-                }
-            }
-            writer.endArray();
+            toTreeChildren(writer);
         }
     }
+
+    @Override
+    public void compactSubTree() {
+        getItemsMap().values().forEach(RegistryItem::compactSubTree);
+    }
+
+    @Override
+    @Nullable
+    public RegistryItem getItem(@Nonnull final String name) {
+        Map<String, RegistryItem> items = Objects.requireNonNull(getItemsMap());
+        RegistryItem result = items.get(name);
+        if (result == null) {
+            result = items.get("1_" + name);
+        }
+        if (result == null) {
+            result = items.get("0_" + name);
+        }
+        return result;
+    }
+
 }

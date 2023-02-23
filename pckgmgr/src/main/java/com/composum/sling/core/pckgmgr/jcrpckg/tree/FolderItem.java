@@ -10,11 +10,15 @@ import java.util.Map;
 public class FolderItem extends LinkedHashMap<String, Object> implements TreeItem {
 
     public FolderItem(String path, String name) {
+        this(path, name, "/".equals(path) ? "root" : "folder");
+    }
+
+    public FolderItem(String path, String name, String type) {
         put("id", path);
         put("path", path);
         put("name", name);
         put("text", name);
-        put("type", "/".equals(path) ? "root" : "folder");
+        put("type", type);
         Map<String, Object> treeState = new LinkedHashMap<>();
         treeState.put("loaded", Boolean.FALSE);
         put("state", treeState);

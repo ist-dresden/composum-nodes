@@ -275,7 +275,7 @@
             },
 
             refresh: function (event) {
-                if (event) {
+                if (event instanceof Event) {
                     event.preventDefault();
                     this.getSelectedRow(); // save the current index
                 }

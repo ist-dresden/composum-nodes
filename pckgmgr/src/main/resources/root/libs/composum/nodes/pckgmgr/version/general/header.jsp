@@ -6,6 +6,11 @@
 <cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.VersionBean" scope="request">
     <%--@elvariable id="pckg" type="com.composum.sling.core.pckgmgr.regpckg.view.VersionBean"--%>
     <div class="panel-heading header">
+        <div class="thumbnail">
+            <div class="image-wrapper">
+                <img src="${pckg.thumbnailUrl}"/>
+            </div>
+        </div>
         <div class="identifiers">
             <h3>${cpn:text(pckg.group)}&nbsp;</h3>
             <h1>${cpn:text(pckg.name)}</h1>

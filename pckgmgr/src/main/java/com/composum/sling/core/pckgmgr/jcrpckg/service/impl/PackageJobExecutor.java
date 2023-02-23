@@ -81,8 +81,8 @@ public class PackageJobExecutor extends AbstractJobExecutor<String> {
     @Reference
     private Packaging packaging;
 
-    @Reference
-    private PackageRegistries packageRegistries;
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
+    private volatile PackageRegistries packageRegistries;
 
     @Reference
     private ResourceResolverFactory resolverFactory;

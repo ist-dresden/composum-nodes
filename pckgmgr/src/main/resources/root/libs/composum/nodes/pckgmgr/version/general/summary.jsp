@@ -8,16 +8,16 @@
     <sling:include replaceSelectors="status"/>
     <div class="status-block edit-state">
         <div><span class="fa fa-star-o"></span><span class="name">created: </span><span
-                class="date">${pckg.created}</span> by ${pckg.createdBy}</div>
+                class="date">${pckg.created}</span> by ${cpn:text(pckg.createdBy)}</div>
         <div><span class="fa fa-sign-in"></span><span class="name">installed: </span><span
                 class="date">${pckg.installationTime}</span></div>
         <div><span class="fa fa-download"></span><a
-                href="${pckg.downloadUrl}">${pckg.filename}</a></div>
+                href="${pckg.downloadUrl}">${cpn:text(pckg.filename)}</a></div>
     </div>
     <div class="status-block pack-state">
         <div><span class="fa fa-edit"></span><span class="name">last modified: </span><span
-                class="date">${pckg.lastModified}</span> by ${pckg.lastModifiedBy}</div>
+                class="date">${pckg.lastModified}</span> by ${cpn:text(pckg.lastModifiedBy)}</div>
         <div><span class="fa fa-folder-o"></span><span class="name">last wrapped: </span><span
-                class="date">${pckg.lastWrapped}</span> by ${pckg.lastWrappedBy}</div>
+                class="date">${pckg.lastWrapped}</span> by ${cpn:text(pckg.lastWrappedBy)}</div>
     </div>
 </cpn:component>

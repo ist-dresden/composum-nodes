@@ -637,6 +637,17 @@
             return value
                 ? !_.contains(['false', 'off', 'no'], value.toLowerCase())
                 : defaultResult ? defaultResult : false;
+        },
+
+        /**
+         * Creates an event object with the given eventname, and allows to set an eventorigin to be able to detect loops.
+         * (An event might trigger another events which might trigger the original event again, which could cause an endless loop.)
+         * @param currenteventorigin the value to set as eventorigin if originalevent is not set
+         * @param originalevent optional, the original event to copy the eventorigin from
+         */
+        makeEvent: function(eventname, currenteventorigin, originalevent) {
+            var eventorigin = originalevent && originalevent.eventorigin || currenteventorigin;
+            return $.Event(eventname, {eventorigin: eventorigin});
         }
     };
 
