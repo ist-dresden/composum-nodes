@@ -129,6 +129,11 @@ public class PackageNode extends AbstractNode implements PackageView {
         }
     }
 
+    @Override
+    public void loadForItems(@Nonnull BeanContext context) throws IOException {
+        // empty - for getItems() to work we don't need a load() here
+    }
+
     @Nullable
     public VersionNode getVersion(String versionKey) {
         Map<String, RegistryItem> items = Objects.requireNonNull(getItemsMap());

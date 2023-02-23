@@ -50,6 +50,11 @@ public class RegistryNode extends AbstractNode {
         }
     }
 
+    @Override
+    public void loadForItems(@Nonnull BeanContext context) throws IOException {
+        load(context);
+    }
+
     protected static GroupNode getGroup(@Nonnull AbstractNode parent, String name) {
         Map<String, RegistryItem> items = Objects.requireNonNull(parent.getItemsMap());
         String[] groupPath;

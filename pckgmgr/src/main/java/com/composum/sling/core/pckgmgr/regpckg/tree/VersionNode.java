@@ -188,4 +188,10 @@ public class VersionNode extends AbstractNode implements PackageView {
             setLoaded(true);
         }
     }
+
+    @Override
+    public void loadForItems(@Nonnull BeanContext context) throws IOException {
+        // empty - for getItems() to work we don't need a load() here
+    }
+
 }

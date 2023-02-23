@@ -26,6 +26,11 @@ public interface RegistryItem extends Map<String, Object>, Serializable {
      * though not necessarily loaded. */
     void load(@Nonnull BeanContext context) throws IOException;
 
+    /** Makes sure {@link #getItems()} are present, though not necessarily loaded.
+     * might or might not trigger a {@link #load(BeanContext)} if that's necessary for that.
+     * (Optimized version of {@link #load(BeanContext)} if we just need the {@link #getItems()}). */
+    void loadForItems(@Nonnull BeanContext context) throws IOException;
+
     boolean isLoaded();
 
     @Nonnull

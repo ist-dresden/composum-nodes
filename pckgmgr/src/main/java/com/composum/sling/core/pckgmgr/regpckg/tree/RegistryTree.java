@@ -56,9 +56,7 @@ public class RegistryTree extends AbstractNode {
             int i = 0;
             if (merged) {
                 if (segments.length > 0) {
-                    if (!item.isLoaded()) {
-                        item.load(context);
-                    }
+                    item.loadForItems(context);
                     RegistryItem found = item.getItem("0_" + segments[i]);
                     if (found == null) {
                         found = item.getItem("1_" + segments[i]);
@@ -68,9 +66,7 @@ public class RegistryTree extends AbstractNode {
                 i++;
             }
             for (; item != null && i < segments.length; i++) {
-                if (!item.isLoaded()) {
-                    item.load(context);
-                }
+                item.loadForItems(context);
                 item = item.getItem(segments[i]);
             }
         }
@@ -101,6 +97,11 @@ public class RegistryTree extends AbstractNode {
             }
             setLoaded(true);
         }
+    }
+
+    @Override
+    public void loadForItems(@Nonnull BeanContext context) throws IOException {
+        load(context);
     }
 
     @Override
