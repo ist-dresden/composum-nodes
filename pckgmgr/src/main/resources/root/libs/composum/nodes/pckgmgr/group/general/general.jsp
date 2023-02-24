@@ -3,6 +3,9 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
+<%
+    long stopTime = System.currentTimeMillis() + 5000;
+%>
 <cpn:component id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean" scope="request">
     <%--@elvariable id="pckgmgr" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageManagerBean"--%>
     <c:set var="writeAllowed" value="${pckgmgr.writeAllowed}"/>
@@ -40,9 +43,17 @@
                     </div>
 
                     <c:forEach items="${pckgmgr.pathsToHighestVersionOfEachPackage}" var="pckgpath">
+                        <% if (System.currentTimeMillis() < stopTime) { %>
                         <sling:include replaceSuffix="${pckgpath}" replaceSelectors="listitem.listalternativeversions"
                                        resourceType="composum/nodes/pckgmgr/jcrpckg/general"/>
+                        <% } %>
                     </c:forEach>
+
+                    <% if (System.currentTimeMillis() >= stopTime) { %>
+                    <div class="alert alert-warning" role="alert">
+                        <cpn:text class="text" i18n="true">Too many packages to display.</cpn:text>
+                    </div>
+                    <% } %>
                 </c:if>
             </div>
 
