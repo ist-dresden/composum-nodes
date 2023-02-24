@@ -4,6 +4,6 @@
 <sling:defineObjects/>
 <div class="description short">
     <cpn:link href="/bin/browser.html"><h3>Repository Browser</h3></cpn:link>
-    <p>a 'Swiss Knife'for the resource repository -
+    <p>a 'Swiss Knife' for the resource repository -
         a tool to explore the repository and manage the content at the resource (JCR) level</p>
 </div>
