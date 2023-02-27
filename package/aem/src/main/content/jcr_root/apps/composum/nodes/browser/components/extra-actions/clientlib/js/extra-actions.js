@@ -3,11 +3,9 @@
     CPM.namespace('nodes.aem.browser');
     (function (aemBrowser, browser, core) {
 
-        aemBrowser.TreeActions = browser.TreeActions.extend({
+        aemBrowser.TreeMenuActions = Backbone.View.extend({
 
             initialize: function (options) {
-                this.tree = browser.tree;
-                browser.TreeActions.prototype.initialize.apply(this, [options]);
                 this.$('a.activate').on('click', _.bind(this.activateNode, this));
                 this.$('a.deactivate').on('click', _.bind(this.deactivateNode, this));
             },
@@ -17,7 +15,7 @@
                     event.preventDefault();
                 }
                 if (!$(event.currentTarget).hasClass('disabled')) {
-                    var node = this.tree.current()
+                    var node = browser.tree.current()
                     this.performReplicationCommand('activate', node.path, 'Activated');
                 }
             },
@@ -53,14 +51,14 @@
                     event.preventDefault();
                 }
                 if (!$(event.currentTarget).hasClass('disabled')) {
-                   var node = this.tree.current()
+                    var node = browser.tree.current()
                     this.performReplicationCommand('deactivate', node.path, 'Deactivated');
                 }
             }
 
         });
 
-        aemBrowser.treeActions = core.getView('#browser-tree-actions', aemBrowser.TreeActions, null, true);
+        aemBrowser.treeMenuActions = core.getView('#browser-tree-actions .menu', aemBrowser.TreeMenuActions);
 
     })(CPM.nodes.aem.browser, CPM.nodes.browser, CPM.core);
 })();
