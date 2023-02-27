@@ -41,3 +41,7 @@
     background: #f0f0f0;
     color: #000;
 }
+
+#pckgmgr-view .vertically-centered {
+    display: flex; align-items: center; min-height: 100%;
+}
