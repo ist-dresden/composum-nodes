@@ -17,27 +17,38 @@
             </ul>
         </div>
     </div>
-<%-- TODO: add some screenshots --%>
-<%--    <ul class="nav nav-tabs">--%>
-<%--        <li class="active"><a data-toggle="pill" href="#browser-props">Repository Browser</a></li>--%>
-<%--        <li><a data-toggle="pill" href="#browser-view">Render / Image View</a></li>--%>
-<%--        <li><a data-toggle="pill" href="#browser-code">Code View and Editing</a></li>--%>
-<%--    </ul>--%>
-<%--    <div class="tab-content">--%>
-<%--        <div id="browser-props" class="tab-pane fade active in">--%>
-<%--            <img class="img-responsive"--%>
-<%--                 src="${cpn:url(slingRequest,cpn:cpm('composum/nodes/browser/description/images/browser-props.png'))}"--%>
-<%--                 alt="Repository Browser and Query View"/>--%>
-<%--        </div>--%>
-<%--        <div id="browser-view" class="tab-pane fade">--%>
-<%--            <img class="img-responsive"--%>
-<%--                 src="${cpn:url(slingRequest,cpn:cpm('composum/nodes/browser/description/images/browser-view.png'))}"--%>
-<%--                 alt="Repository Browser Render View"/>--%>
-<%--        </div>--%>
-<%--        <div id="browser-code" class="tab-pane fade">--%>
-<%--            <img class="img-responsive"--%>
-<%--                 src="${cpn:url(slingRequest,cpn:cpm('composum/nodes/browser/description/images/browser-code.png'))}"--%>
-<%--                 alt="Repository Browser Code View"/>--%>
-<%--        </div>--%>
-<%--    </div>--%>
+    <ul class="nav nav-tabs">
+        <li class="active"><a data-toggle="pill" href="#usermanager-user">User Browser</a></li>
+        <li><a data-toggle="pill" href="#usermanager-user-rights">User Rights</a></li>
+        <li><a data-toggle="pill" href="#usermanager-group">Group View</a></li>
+        <li><a data-toggle="pill" href="#usermanager-relationship-graph">Relationship Graph</a></li>
+        <li><a data-toggle="pill" href="#usermanager-systemusers">System Users</a></li>
+    </ul>
+    <div class="tab-content">
+        <div id="usermanager-user" class="tab-pane fade active in">
+            <img class="img-responsive"
+                 src="${cpn:url(slingRequest,cpn:cpm('composum/nodes/usermgnt/description/images/usermanager-user.png'))}"
+                 alt="User Manager User Browser View incl. Query"/>
+        </div>
+        <div id="usermanager-user-rights" class="tab-pane fade">
+            <img class="img-responsive"
+                 src="${cpn:url(slingRequest,cpn:cpm('composum/nodes/usermgnt/description/images/usermanager-user-rights.png'))}"
+                 alt="User Manager Users Rights View"/>
+        </div>
+        <div id="usermanager-group" class="tab-pane fade">
+            <img class="img-responsive"
+                 src="${cpn:url(slingRequest,cpn:cpm('composum/nodes/usermgnt/description/images/usermanager-group.png'))}"
+                 alt="User Manager Group View"/>
+        </div>
+        <div id="usermanager-relationship-graph" class="tab-pane fade">
+            <img class="img-responsive"
+                 src="${cpn:url(slingRequest,cpn:cpm('composum/nodes/usermgnt/description/images/usermanager-relationship-graph.png'))}"
+                 alt="User Manager Relationship Graph View"/>
+        </div>
+        <div id="usermanager-systemusers" class="tab-pane fade">
+            <img class="img-responsive"
+                 src="${cpn:url(slingRequest,cpn:cpm('composum/nodes/usermgnt/description/images/usermanager-systemusers.png'))}"
+                 alt="User Manager System User View"/>
+        </div>
+    </div>
 </div>
