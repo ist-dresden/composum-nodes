@@ -29,4 +29,6 @@ jobs:
         git log -3 --no-color
 
     - name: Testbuild with Maven
-      run: mvn -B -ntp -s .github/settings-public.xml -P test -B verify
+      run: |
+        mvn -version
+        mvn -B -ntp -s .github/settings-public.xml -P test -B verify
