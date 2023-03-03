@@ -23,6 +23,12 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    # TODO currently maven 3.9.0 creates an error in the maven-minify-plugin , so we use 3.8.7 as workaround
+    - name: Set up Maven
+      uses: stCarolas/setup-maven@v4.5
+      with:
+        maven-version: 3.8.7
+
     - name: Git Status
       run: |
         git status --untracked-files --ignored
