@@ -43,8 +43,17 @@ jobs:
 #      run: |
 #          echo '${{ toJSON(github) }}'
 
-    - name: Git Status before setting the version , on other
-      run: git status
+    - name: Git & Maven Status
+      run: |
+        git status --untracked-files --ignored
+        git log -3 --no-color
+        mvn -version
+
+    - name: Mvn Effective POM
+      run: mvn -s .github/settings-istrepo.xml help:effective-pom
+
+    - name: Mvn Effective Settings
+      run: mvn -s .github/settings-istrepo.xml help:effective-settings
 
     - name: Set new version
       run: |

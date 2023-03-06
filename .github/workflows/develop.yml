@@ -30,10 +30,17 @@ jobs:
       with:
         maven-version: 3.8.7
 
-    - name: Git Status
+    - name: Git & Maven Status
       run: |
         git status --untracked-files --ignored
         git log -3 --no-color
+        mvn -version
+
+    - name: Mvn Effective POM
+      run: mvn -s .github/settings-istrepo.xml help:effective-pom
+
+    - name: Mvn Effective Settings
+      run: mvn -s .github/settings-istrepo.xml help:effective-settings
 
     - name: Build with Maven
       # When parent-2:1.7 is active, -P ensureSnapshots will do a sanity check of the version number

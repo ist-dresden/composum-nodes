@@ -29,10 +29,17 @@ jobs:
       with:
         maven-version: 3.8.7
 
-    - name: Git Status
+    - name: Git & Maven Status
       run: |
         git status --untracked-files --ignored
         git log -3 --no-color
+        mvn -version
+
+    - name: Mvn Effective POM
+      run: mvn -s .github/settings-istrepo.xml help:effective-pom
+
+    - name: Mvn Effective Settings
+      run: mvn -s .github/settings-istrepo.xml help:effective-settings
 
     - name: Check versioning
       run: mvn -s .github/settings-public.xml org.apache.maven.plugins:maven-enforcer-plugin:3.0.0:enforce -Drules=requireReleaseVersion,requireReleaseDeps
