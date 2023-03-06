@@ -5,6 +5,7 @@ name: Master - Test public build and generate and deploy site
 on:
   push:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build:
