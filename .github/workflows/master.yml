@@ -36,19 +36,19 @@ jobs:
         mvn -version
 
     - name: Mvn Effective POM
-      run: mvn -s .github/settings-istrepo.xml help:effective-pom
+      run: mvn -B -ntp -s .github/settings-istrepo.xml help:effective-pom
 
     - name: Mvn Effective Settings
-      run: mvn -s .github/settings-istrepo.xml help:effective-settings
+      run: mvn -B -ntp -s .github/settings-istrepo.xml help:effective-settings
 
     - name: Check versioning
-      run: mvn -s .github/settings-public.xml org.apache.maven.plugins:maven-enforcer-plugin:3.0.0:enforce -Drules=requireReleaseVersion,requireReleaseDeps
+      run: mvn -B -ntp -s .github/settings-public.xml org.apache.maven.plugins:maven-enforcer-plugin:3.0.0:enforce -Drules=requireReleaseVersion,requireReleaseDeps
 
     - name: Check build with Maven
-      run: mvn -s .github/settings-public.xml -B verify
+      run: mvn -B -ntp -s .github/settings-public.xml -B verify
 
     - name: Site with Maven
-      run: mvn -s .github/settings-public.xml -B site site:stage
+      run: mvn -B -ntp -s .github/settings-public.xml -B site site:stage
 
     - name: Deploy Site
       uses: JamesIves/github-pages-deploy-action@v4.3.0

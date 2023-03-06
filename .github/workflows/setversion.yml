@@ -50,16 +50,16 @@ jobs:
         mvn -version
 
     - name: Mvn Effective POM
-      run: mvn -s .github/settings-istrepo.xml help:effective-pom
+      run: mvn -B -ntp -s .github/settings-istrepo.xml help:effective-pom
 
     - name: Mvn Effective Settings
-      run: mvn -s .github/settings-istrepo.xml help:effective-settings
+      run: mvn -B -ntp -s .github/settings-istrepo.xml help:effective-settings
 
     - name: Set new version
       run: |
-        mvn -B -ntp -s .github/settings-public.xml versions:set -DnewVersion=${{ github.event.inputs.version }} -DgenerateBackupPoms=false
+        mvn -B -ntp -B -ntp -s .github/settings-public.xml versions:set -DnewVersion=${{ github.event.inputs.version }} -DgenerateBackupPoms=false
         echo "Version is now: "
-        mvn -B -ntp -s .github/settings-public.xml -N help:evaluate -Dexpression=project.version -q -DforceStdout
+        mvn -B -ntp -B -ntp -s .github/settings-public.xml -N help:evaluate -Dexpression=project.version -q -DforceStdout
 
     - name: Commit changes
       run: |

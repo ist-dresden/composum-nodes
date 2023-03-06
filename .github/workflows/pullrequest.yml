@@ -36,10 +36,10 @@ jobs:
         mvn -version
 
     - name: Mvn Effective POM
-      run: mvn -s .github/settings-istrepo.xml help:effective-pom
+      run: mvn -B -ntp -s .github/settings-istrepo.xml help:effective-pom
 
     - name: Mvn Effective Settings
-      run: mvn -s .github/settings-istrepo.xml help:effective-settings
+      run: mvn -B -ntp -s .github/settings-istrepo.xml help:effective-settings
 
     - name: Testbuild with Maven
       run: mvn -B -ntp -s .github/settings-public.xml -P test -B verify
