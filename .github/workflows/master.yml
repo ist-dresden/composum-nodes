@@ -37,10 +37,10 @@ jobs:
         mvn -version
 
     - name: Mvn Effective POM
-      run: mvn -B -ntp -s .github/settings-istrepo.xml help:effective-pom
+      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-pom
 
     - name: Mvn Effective Settings
-      run: mvn -B -ntp -s .github/settings-istrepo.xml help:effective-settings
+      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-settings
 
     - name: Check versioning
       run: mvn -B -ntp -s .github/settings-public.xml org.apache.maven.plugins:maven-enforcer-plugin:3.0.0:enforce -Drules=requireReleaseVersion,requireReleaseDeps
