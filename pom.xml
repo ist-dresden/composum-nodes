@@ -60,22 +60,12 @@
         <module>osgi</module>
         <module>setup</module>
         <module>package</module>
-        <module>test</module>
     </modules>
 
     <profiles>
         <profile>
             <id>test</id>
             <modules>
-                <module>jslibs</module>
-                <module>commons</module>
-                <module>console</module>
-                <module>pckgmgr</module>
-                <module>usermgr</module>
-                <module>corecfg</module>
-                <module>osgi</module>
-                <module>setup</module>
-                <module>package</module>
                 <module>xtracts/debugutil</module>
                 <!-- Test modules - no deployed code contained -->
                 <module>test</module>
