@@ -63,8 +63,9 @@ jobs:
         GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
         GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
       run: |
+        gpg --recv-keys EDF04A0BF835E92A
         echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
-        echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust --no-tty --batch --yes
+        echo $GPG_OWNERTRUST | base64 --decode | fgrep 43396 | gpg --import-ownertrust --no-tty --batch --yes
         gpg --list-secret-keys --keyid-format LONG
 
     - name: Configure git user for release commits
