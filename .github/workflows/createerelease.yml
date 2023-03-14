@@ -133,13 +133,14 @@ jobs:
         OSSRH_PASSWD: "TESTINGONLY"
         GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
       run: |
-        mvn -B --no-transfer-progress -s .github/settings-istrepo.xml -P nexus-staging release:perform -DlocalCheckout=true -DdeployAtEnd=true -Darguments="-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgoals=clean install package source:jar javadoc:jar install"
+        mvn -B --no-transfer-progress -s .github/settings-istrepo.xml -P nexus-staging release:perform -DlocalCheckout=true -DdeployAtEnd=true -Darguments="-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgoals=clean install package source:jar javadoc:jar deploy"
 
     - name: Git Status
       if: always()
       run: |
         git status
         git log -3 --no-color --decorate
+        git remote -v
 
     - name: Git Status Long
       if: always()
@@ -148,12 +149,11 @@ jobs:
 
     - name: Push changes
       run: |
-        echo FIXME UNIMPLEMENTED YET
-        echo git push would be done
+        git push origin --follow-tags
 
     - name: Release to maven central repository
       run: |
-          echo FIXME UNIMPLEMENTED YET
+        mvn -B --no-transfer-progress -s .github/settings-istrepo.xml -P nexus-staging nexus-staging:release
 
     - name: List target files even if recipe fails
       if: always()
