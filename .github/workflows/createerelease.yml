@@ -133,7 +133,7 @@ jobs:
         OSSRH_PASSWD: "TESTINGONLY"
         GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
       run: |
-        mvn -B --no-transfer-progress -s .github/settings-istrepo.xml -P nexus-staging release:perform -DlocalCheckout=true -DdeployAtEnd=true -Darguments="-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgoals=clean install package source:jar javadoc:jar deploy"
+        mvn -B --no-transfer-progress -s .github/settings-istrepo.xml -P nexus-staging release:perform -DlocalCheckout=true -DdeployAtEnd=true -Darguments="-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgoals=clean install package source:jar javadoc:jar verify"
 
     - name: Git Status
       if: always()
