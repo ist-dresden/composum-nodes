@@ -3,6 +3,9 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
+<%
+    long stopTime = System.currentTimeMillis() + 5000;
+%>
 <cpn:component id="bean" type="com.composum.sling.core.pckgmgr.regpckg.view.GroupBean" scope="request">
     <%--@elvariable id="bean" type="com.composum.sling.core.pckgmgr.regpckg.view.GroupBean"--%>
     <c:set var="writeAllowed" value="${bean.writeAllowed}"/>
@@ -22,9 +25,17 @@
 
         <div class="group-detail">
             <c:forEach items="${bean.packagePaths}" var="packagepath">
+                <% if (System.currentTimeMillis() < stopTime) { %>
                 <sling:include replaceSuffix="${packagepath}" replaceSelectors="listitem"
                                resourceType="composum/nodes/pckgmgr/regpckg/general"/>
+                <% } %>
             </c:forEach>
+
+            <% if (System.currentTimeMillis() >= stopTime) { %>
+            <div class="alert alert-warning" role="alert">
+                <cpn:text class="text" i18n="true">Too many packages to display.</cpn:text>
+            </div>
+            <% } %>
         </div>
     </div>
     <c:remove var="writeDisabled"/>

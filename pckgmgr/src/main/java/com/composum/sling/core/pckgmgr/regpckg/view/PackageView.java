@@ -23,7 +23,4 @@ public interface PackageView {
 
     boolean isClosed();
 
-    boolean isLoaded();
-
-    void load(BeanContext context) throws IOException;
 }
