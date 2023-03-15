@@ -83,12 +83,6 @@ jobs:
         git status --untracked-files --ignored
         git log -3 --no-color --decorate
 
-    - name: Mvn Effective POM
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-pom
-
-    - name: Mvn Effective Settings
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-settings
-
     - name: Check that we are on snapshot branch before creating the release
       run: |
         mvn -version
