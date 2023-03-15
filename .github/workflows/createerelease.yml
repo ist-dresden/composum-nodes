@@ -118,9 +118,8 @@ jobs:
       run: |
         git clean -f -d -x
         mvn -B --no-transfer-progress -s .github/settings-istrepo.xml clean release:clean release:prepare -DpushChanges=false
-        cat release.properties || true
 
-    - name: Git status
+    - name: Git status after prepare
       run: |
         git status --untracked-files --ignored
         git log -3 --no-color --decorate
@@ -129,31 +128,33 @@ jobs:
     - name: Perform release
       env:
         OSSRH_USER: ${{ secrets.OSSRH_USER  }}
-        # OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
-        OSSRH_PASSWD: "TESTINGONLY"
+        OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
         GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
       run: |
-        mvn -B --no-transfer-progress -s .github/settings-istrepo.xml -P nexus-staging release:perform -DlocalCheckout=true -DdeployAtEnd=true -Darguments="-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgoals=clean install package source:jar javadoc:jar verify"
+        mvn -B --no-transfer-progress -s .github/settings-istrepo.xml -P nexus-staging release:perform -DlocalCheckout=true -DdeployAtEnd=true -Darguments="-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgoals=clean install package source:jar javadoc:jar deploy"
 
-    - name: Git Status
+    - name: Git Status after perform
       if: always()
       run: |
         git status
         git log -3 --no-color --decorate
-        git remote -v
 
-    - name: Git Status Long
+    - name: Git Status after perform, long
       if: always()
       run: |
         git status --untracked-files --ignored
 
     - name: Push changes
       run: |
-        git push origin --follow-tags
+        git push origin --follow-tags -v
 
     - name: Release to maven central repository
+      env:
+        OSSRH_USER: ${{ secrets.OSSRH_USER  }}
+        OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
       run: |
-        mvn -B --no-transfer-progress -s .github/settings-istrepo.xml -P nexus-staging nexus-staging:release
+        cd target/checkout
+        mvn -B --no-transfer-progress -s ../../.github/settings-istrepo.xml -P nexus-staging nexus-staging:release
 
     - name: List target files even if recipe fails
       if: always()
