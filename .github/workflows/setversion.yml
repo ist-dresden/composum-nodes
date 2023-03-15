@@ -1,0 +1,76 @@
+# This sets a new version number in the pom.xml files, and commits the changes.
+name: Set Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The new version to set in the pom.xml'
+        required: true
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 3
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: maven
+
+    # TODO currently maven 3.9.0 creates an error in the maven-minify-plugin , so we use 3.8.7 as workaround
+    - name: Set up Maven
+      uses: stCarolas/setup-maven@v4.5
+      with:
+        maven-version: 3.8.7
+
+#    - name: Dump event context for debugging
+#      continue-on-error: true  # Debugging output only, and this annoyingly fails when the commit messge has a (
+#      run: |
+#        echo '${{ github.event_name }} for ${{ github.ref_type }} ${{ github.ref_name }} or ${{ github.event.ref }}'
+#        # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
+#        echo 'github.event:'
+#        echo '${{ toJSON(github.event) }}'
+#
+#    - name: Dump github context
+#      continue-on-error: true  # Debugging output only, and this annoyingly fails when the commit message has a (
+#      run: |
+#          echo '${{ toJSON(github) }}'
+
+    - name: Git & Maven Status
+      run: |
+        git status --untracked-files --ignored
+        git log -3 --no-color
+        mvn -version
+
+    - name: Mvn Effective POM
+      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-pom
+
+    - name: Mvn Effective Settings
+      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-settings
+
+    - name: Set new version
+      run: |
+        mvn -B -ntp -B -ntp -s .github/settings-public.xml versions:set -DnewVersion=${{ github.event.inputs.version }} -DgenerateBackupPoms=false
+        echo "Version is now: "
+        mvn -B -ntp -B -ntp -s .github/settings-public.xml -N help:evaluate -Dexpression=project.version -q -DforceStdout
+
+    - name: Commit changes
+      run: |
+        git config user.name "github-actions setversion for ${{ github.event.sender.login }}"
+        git config user.email github-actions@github.com
+        git commit -a -m "Update version to ${{ github.event.inputs.version }}"
+
+    - name: Git Status after setting the version
+      run: |
+        git status
+        git log -3 --no-color
+
+    - name: Push changes
+      run: git push
