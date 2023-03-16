@@ -8,6 +8,11 @@ name: Create Release
 
 on:
   workflow_dispatch:
+    inputs:
+      dryrun:
+        type: boolean
+        description: 'Dry run? If given, the release will be built but dropped afterwards from OSSRH, and the git changes will not be pushed.'
+        default: false
 
 jobs:
   createrelease:
@@ -17,6 +22,10 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 3
+
+    - name: print configuration
+      run: |
+        echo "dryrun: ${{ github.event.inputs.dryrun }}"
 
     - name: Set up JDK 11
       uses: actions/setup-java@v3
@@ -76,26 +85,16 @@ jobs:
         git config --global user.email "${X_RELEASE_USERNAME}"
         git config --global user.name "${X_RELEASE_USEREMAIL}"
 
-    - name: Git & Maven Status at the start
-      run: |
-        mvn -version
-        git remote -v
-        git status --untracked-files --ignored
-        git log -3 --no-color --decorate
-
     - name: Check that we are on snapshot branch before creating the release
       run: |
-        mvn -version
         echo "Version: "
         mvn -s .github/settings-istrepo.xml help:evaluate -Dexpression=project.version -q -DforceStdout
         mvn -s .github/settings-istrepo.xml help:evaluate -Dexpression=project.version -q -DforceStdout | egrep -- '-SNAPSHOT$' > /dev/null || exit 1
         # unfortunately, this would require a snapshot parent if just called from the command line, so we cannot use it: :-(
         # mvn org.apache.maven.plugins:maven-enforcer-plugin:3.2.1:enforce -Drules=requireSnapshotVersion
 
-    - name: Dry run
-      continue-on-error: true
+    - name: Dry run of release goals
       run: |
-        mvn -version
         mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging clean release:clean
         mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging release:prepare -DdryRun=true -DpushChanges=false
         mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging release:perform -DdryRun=true -DlocalCheckout=true -DdeployAtEnd=true
@@ -139,16 +138,29 @@ jobs:
         git status --untracked-files --ignored
 
     - name: Push changes
+      if: ${{ github.event.inputs.dryrun == 'false' }}
       run: |
         git push origin --follow-tags -v
 
     - name: Release to maven central repository
+      if: ${{ github.event.inputs.dryrun == 'false' }}
       env:
         OSSRH_USER: ${{ secrets.OSSRH_USER  }}
         OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
       run: |
         cd target/checkout
+        pwd
         mvn -B --no-transfer-progress -s ../../.github/settings-istrepo.xml -P nexus-staging nexus-staging:release
+
+    - name: Drop from OSSRH on dryrun
+      if: ${{ github.event.inputs.dryrun }}
+      env:
+        OSSRH_USER: ${{ secrets.OSSRH_USER  }}
+        OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
+      run: |
+        cd target/checkout
+        pwd
+        mvn -B --no-transfer-progress -s ../../.github/settings-istrepo.xml -P nexus-staging nexus-staging:drop
 
     - name: List target files even if recipe fails
       if: always()

@@ -266,7 +266,6 @@
                     <version>3.0.1</version>
                     <configuration>
                         <keyname>info@composum.com</keyname>
-                        <passphraseServerId>info@composum.com</passphraseServerId>
                         <gpgArguments>
                             <arg>--batch</arg>
                             <arg>--pinentry-mode</arg>
