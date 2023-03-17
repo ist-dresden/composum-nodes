@@ -107,52 +107,6 @@
                 </plugins>
             </build>
         </profile>
-
-        <profile>
-            <!-- profile to release the artifacts for the public repository. This overwrites the profile in the parent-2-public, since
-             we cannot update this to the latest version while in 3.4.3, but we have to overwrite autoReleaseAfterClose to false
-             to be fully error tolerant during the release process.
-            FIXME(hps,14.3.2023): remove this profile when this is merged update to 4
-             -->
-            <id>nexus-staging</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>${release.repository.id}</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                                <configuration>
-                                    <keyname>info@composum.com</keyname>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
     </profiles>
 
     <build>
@@ -204,84 +158,6 @@
                     </configuration>
                 </plugin>
 
-                <!-- TODO remove when parent in composum-meta is released -->
-                <!-- https://mvnrepository.com/artifact/org.apache.sling/slingfeature-maven-plugin -->
-                <plugin>
-                    <groupId>org.apache.sling</groupId>
-                    <artifactId>slingfeature-maven-plugin</artifactId>
-                    <version>1.5.0</version>
-                </plugin>
-                <!-- https://mvnrepository.com/artifact/org.apache.sling/sling-kickstart-maven-plugin -->
-                <plugin>
-                    <groupId>org.apache.sling</groupId>
-                    <artifactId>sling-kickstart-maven-plugin</artifactId>
-                    <version>0.0.8</version>
-                </plugin>
-
-                <plugin>
-                    <!-- FIXME use version from parent pom once changed; workaround for https://github.com/bndtools/bnd/issues/3903 -->
-                    <groupId>org.apache.felix</groupId>
-                    <artifactId>maven-bundle-plugin</artifactId>
-                    <version>5.1.8</version>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.5.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.5.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.3.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.4.2</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-site-plugin</artifactId>
-                    <version>3.12.1</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-release-plugin</artifactId>
-                    <version>2.5.3</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-gpg-plugin</artifactId>
-                    <version>3.0.1</version>
-                    <configuration>
-                        <keyname>info@composum.com</keyname>
-                        <gpgArguments>
-                            <arg>--batch</arg>
-                            <arg>--pinentry-mode</arg>
-                            <arg>loopback</arg>
-                            <arg>-v</arg>
-                        </gpgArguments>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.sonatype.plugins</groupId>
-                    <artifactId>nexus-staging-maven-plugin</artifactId>
-                    <version>1.6.13</version>
-                    <configuration>
-                        <autoReleaseAfterClose>false</autoReleaseAfterClose>
-                    </configuration>
-                </plugin>
             </plugins>
         </pluginManagement>
     </build>
