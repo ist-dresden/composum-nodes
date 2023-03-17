@@ -18,6 +18,10 @@ jobs:
   createrelease:
     runs-on: ubuntu-latest
 
+    env:
+      SUBDIR: ${{ github.event.inputs.subdir }}
+      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings-istrepo.xml -P nexus-staging
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -25,6 +29,7 @@ jobs:
 
     - name: print configuration
       run: |
+        echo "MVNCMD: $MVNCMD"
         echo "dryrun: ${{ github.event.inputs.dryrun }}"
 
     - name: Set up JDK 11
@@ -55,16 +60,16 @@ jobs:
 
     - name: Git & Maven Status
       run: |
-        mvn -version
+        ${{ env.MVNCMD }} -version
         git remote -v
         git status --untracked-files --ignored
         git log -3 --no-color --decorate
 
     - name: Mvn Effective POM
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N -P nexus-staging help:effective-pom
+      run: ${{ env.MVNCMD }} -N help:effective-pom
 
     - name: Mvn Effective Settings
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N -P nexus-staging help:effective-settings
+      run: ${{ env.MVNCMD }} -N help:effective-settings
 
     - name: Import GPG key
       env:
@@ -88,17 +93,17 @@ jobs:
     - name: Check that we are on snapshot branch before creating the release
       run: |
         echo "Version: "
-        mvn -s .github/settings-istrepo.xml help:evaluate -Dexpression=project.version -q -DforceStdout
-        mvn -s .github/settings-istrepo.xml help:evaluate -Dexpression=project.version -q -DforceStdout | egrep -- '-SNAPSHOT$' > /dev/null || exit 1
+        ${{ env.MVNCMD }} help:evaluate -Dexpression=project.version -q -DforceStdout
+        ${{ env.MVNCMD }} help:evaluate -Dexpression=project.version -q -DforceStdout | egrep -- '-SNAPSHOT$' > /dev/null || exit 1
         # unfortunately, this would require a snapshot parent if just called from the command line, so we cannot use it: :-(
         # mvn org.apache.maven.plugins:maven-enforcer-plugin:3.2.1:enforce -Drules=requireSnapshotVersion
 
     - name: Dry run of release goals
       run: |
-        mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging clean release:clean
-        mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging release:prepare -DdryRun=true -DpushChanges=false -Dgpg.skip=true
-        mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging release:perform -DdryRun=true -DlocalCheckout=true -DdeployAtEnd=true
-        mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging clean release:clean
+        ${{ env.MVNCMD }} clean release:clean
+        ${{ env.MVNCMD }} release:prepare -DdryRun=true -DpushChanges=false
+        ${{ env.MVNCMD }} release:perform -DdryRun=true -DlocalCheckout=true -DdeployAtEnd=true
+        ${{ env.MVNCMD }} clean release:clean
         git clean -f -d -x
 
     - name: Verify git is clean
@@ -110,7 +115,7 @@ jobs:
     - name: Prepare release
       run: |
         git clean -f -d -x
-        mvn -B --no-transfer-progress -s .github/settings-istrepo.xml clean release:clean release:prepare -DpushChanges=false
+        ${{ env.MVNCMD }} clean release:clean release:prepare -DpushChanges=false
 
     - name: Git status after prepare
       run: |
@@ -124,7 +129,7 @@ jobs:
         OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
         GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
       run: |
-        mvn -B --no-transfer-progress -s .github/settings-istrepo.xml -P nexus-staging release:perform -DlocalCheckout=true -DdeployAtEnd=true -Darguments="-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgpg.passphrase=$GPG_PASSPHRASE" "-Dgoals=clean install package source:jar javadoc:jar deploy"
+        ${{ env.MVNCMD }} release:perform -DlocalCheckout=true -DdeployAtEnd=true "-Dgoals=clean install package source:jar javadoc:jar deploy"
 
     - name: Git Status after perform
       if: always()
@@ -150,17 +155,17 @@ jobs:
       run: |
         cd target/checkout
         pwd
-        mvn -B --no-transfer-progress -s ../../.github/settings-istrepo.xml -P nexus-staging nexus-staging:release
+        ${{ env.MVNCMD }} nexus-staging:release
 
     - name: Drop from OSSRH on dryrun
-      if: ${{ github.event.inputs.dryrun != "false" }}
+      if: ${{ github.event.inputs.dryrun != 'false' }}
       env:
         OSSRH_USER: ${{ secrets.OSSRH_USER  }}
         OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
       run: |
         cd target/checkout
         pwd
-        mvn -B --no-transfer-progress -s ../../.github/settings-istrepo.xml -P nexus-staging nexus-staging:drop
+        ${{ env.MVNCMD }} nexus-staging:drop
 
     - name: List target files even if recipe fails
       if: always()
