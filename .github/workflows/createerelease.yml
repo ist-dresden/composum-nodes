@@ -5,6 +5,7 @@
 # with no harm done and no traces in git.
 
 name: Create Release
+run-name: Create Release of ${{ github.ref_name }} , dryrun=${{ inputs.dryrun }}
 
 on:
   workflow_dispatch:
