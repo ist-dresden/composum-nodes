@@ -73,7 +73,7 @@ jobs:
       run: |
         gpg --recv-keys EDF04A0BF835E92A
         echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
-        echo $GPG_OWNERTRUST | base64 --decode | fgrep 43396 | gpg --import-ownertrust --no-tty --batch --yes
+        echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust --no-tty --batch --yes
         gpg --list-secret-keys --keyid-format LONG
 
     - name: Configure git user for release commits
@@ -96,7 +96,7 @@ jobs:
     - name: Dry run of release goals
       run: |
         mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging clean release:clean
-        mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging release:prepare -DdryRun=true -DpushChanges=false
+        mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging release:prepare -DdryRun=true -DpushChanges=false -Dgpg.skip=true
         mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging release:perform -DdryRun=true -DlocalCheckout=true -DdeployAtEnd=true
         mvn -B -ntp -s .github/settings-istrepo.xml -P nexus-staging clean release:clean
         git clean -f -d -x
@@ -153,7 +153,7 @@ jobs:
         mvn -B --no-transfer-progress -s ../../.github/settings-istrepo.xml -P nexus-staging nexus-staging:release
 
     - name: Drop from OSSRH on dryrun
-      if: ${{ github.event.inputs.dryrun }}
+      if: ${{ github.event.inputs.dryrun != "false" }}
       env:
         OSSRH_USER: ${{ secrets.OSSRH_USER  }}
         OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
