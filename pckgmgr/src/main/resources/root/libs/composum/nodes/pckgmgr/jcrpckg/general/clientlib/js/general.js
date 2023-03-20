@@ -80,10 +80,13 @@
                 this.$('.display-toolbar .install').click(_.bind(this.installPackage, this));
                 this.$('.display-toolbar .assemble').click(_.bind(this.assemblePackage, this));
                 this.$('.display-toolbar .uninstall').click(_.bind(this.uninstallPackage, this));
-                this.$('.display-toolbar .upload').click(_.bind(pckgmgr.treeActions.uploadPackage, pckgmgr.treeActions));
-                this.$('.display-toolbar .create').click(_.bind(pckgmgr.treeActions.createPackage, pckgmgr.treeActions));
-                this.$('.display-toolbar .delete').click(_.bind(pckgmgr.treeActions.deletePackage, pckgmgr.treeActions));
+                this.$('.display-toolbar .upload').click(_.bind(pckgmgr[pckgmgr.mode.current].tree.actions.uploadPackage, pckgmgr[pckgmgr.mode.current].tree.actions));
+                if (pckgmgr[pckgmgr.mode.current].tree.actions.createPackage) {
+                    this.$('.display-toolbar .create').click(_.bind(pckgmgr[pckgmgr.mode.current].tree.actions.createPackage, pckgmgr[pckgmgr.mode.current].tree.actions));
+                }
+                this.$('.display-toolbar .delete').click(_.bind(pckgmgr[pckgmgr.mode.current].tree.actions.deletePackage, pckgmgr[pckgmgr.mode.current].tree.actions));
                 this.$('.display-toolbar .refresh').click(_.bind(this.refresh, this));
+                this.$('.display-toolbar .cleanup').click(_.bind(pckgmgr[pckgmgr.mode.current].tree.actions.cleanupVersions, pckgmgr[pckgmgr.mode.current].tree.actions));
                 this.$feedback.find('.close').click(_.bind(this.closeFeedback, this));
                 this.$logOutput = this.$feedback.find('.feedback-display .log-output');
                 this.$auditLog = this.$('.audit-log');
@@ -115,8 +118,10 @@
             },
 
             startPackageOperation: function (event, title, operation) {
+                var path = this.getCurrentPath();
                 if (event) {
                     event.preventDefault();
+                    path = $(event.currentTarget).data('path') || path;
                 }
                 var dialog = core.console.getApprovalDialog();
                 dialog.show(
@@ -124,12 +129,13 @@
                         dialog.initDialog(
                             title,
                             '<div class="">'
-                            + this.getCurrentPath()
+                            + path
                             + '</div>'
                         )
                     }, this), _.bind(function () {
                         this.startJob({
-                            operation: operation
+                            operation: operation,
+                            overridePath: path
                         });
                     }, this));
             },

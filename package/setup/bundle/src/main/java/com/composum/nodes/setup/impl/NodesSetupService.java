@@ -450,6 +450,7 @@ public class NodesSetupService implements JobConsumer {
             TimeUnit.SECONDS.sleep(seconds);
         } catch (InterruptedException ex) {
             LOG.warn(ex.toString());
+            Thread.currentThread().interrupt();
         }
     }
 }

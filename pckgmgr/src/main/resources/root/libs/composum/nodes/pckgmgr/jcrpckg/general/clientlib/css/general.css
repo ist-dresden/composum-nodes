@@ -217,6 +217,10 @@
     display: inline-block;
 }
 
+.active-versions.indicator-block {
+    width: unset;
+}
+
 .detail-panel.jcrpckg .package-detail .list-group-item {
     padding: 5px 15px;
 }

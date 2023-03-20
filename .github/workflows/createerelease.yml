@@ -1,0 +1,191 @@
+# Creates a release and uploads that. We don't upload the site - that's done in the master.yml workflow once it's merged.
+# Since our build sometimes fails (because some tests occasionally fail for reasons not in our code) we make this robust:
+# the irreversible actions are done only after all builds are done. That is the git push and the release to maven central.
+# The copy to the Sonatype staging area is likely repeatable. That way you just have to restart the job if it fails,
+# with no harm done and no traces in git.
+
+name: Create Release
+run-name: Create Release of ${{ github.ref_name }} , dryrun=${{ inputs.dryrun }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      dryrun:
+        type: boolean
+        description: 'Dry run? If given, the release will be built but dropped afterwards from OSSRH, and the git changes will not be pushed.'
+        default: false
+
+jobs:
+  createrelease:
+    runs-on: ubuntu-latest
+
+    env:
+      SUBDIR: ${{ github.event.inputs.subdir }}
+      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings-istrepo.xml -P nexus-staging
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 3
+
+    - name: print configuration
+      run: |
+        echo "MVNCMD: $MVNCMD"
+        echo "dryrun: ${{ github.event.inputs.dryrun }}"
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        # deliberately not: cache: maven
+
+    # TODO currently maven 3.9.0 creates an error in the maven-minify-plugin , so we use 3.8.7 as workaround
+    - name: Set up Maven
+      uses: stCarolas/setup-maven@v4.5
+      with:
+        maven-version: 3.8.7
+
+    - name: Dump event context for debugging
+      continue-on-error: true  # Debugging output only, and this annoyingly fails when the commit messge has a (
+      run: |
+        echo '${{ github.event_name }} for ${{ github.ref_type }} ${{ github.ref_name }} or ${{ github.event.ref }}'
+        # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
+        echo 'github.event:'
+        echo '${{ toJSON(github.event) }}'
+
+    - name: Dump github context for debugging
+      continue-on-error: true  # Debugging output only, and this annoyingly fails when the commit message has a (
+      run: |
+          echo '${{ toJSON(github) }}'
+
+    - name: Try to set a master password
+      run: |
+        MASTERPWD=$(openssl rand -base64 25)
+        echo "<settingsSecurity> <master>$(mvn --encrypt-master-password "$MASTERPWD")</master></settingsSecurity>" > $HOME/.m2/settings-security.xml
+        # echo "MASTERPWD=\"$MASTERPWD\"" >> $GITHUB_ENV
+        # The master password isn't actually used, but the maven-gpg-plugin complains otherwise.
+
+    - name: Git & Maven Status
+      run: |
+        ${{ env.MVNCMD }} -version
+        git remote -v
+        git status --untracked-files --ignored
+        git log -3 --no-color --decorate
+
+    - name: Mvn Effective POM
+      run: ${{ env.MVNCMD }} -N help:effective-pom
+
+    - name: Mvn Effective Settings
+      run: ${{ env.MVNCMD }} -N help:effective-settings
+
+    - name: Import GPG key
+      env:
+        GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
+        GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
+      run: |
+        echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
+        echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust --no-tty --batch --yes
+        gpg -v --refresh-keys
+        gpg --list-secret-keys --keyid-format LONG
+
+    - name: Configure git user for release commits
+      # specific to repository - we don't want that to be the same thing in a fork.
+      env:
+        X_RELEASE_USERNAME: ${{ vars.RELEASE_USERNAME  }}
+        X_RELEASE_USEREMAIL: ${{ vars.RELEASE_USEREMAIL  }}
+      run: |
+        git config --global user.email "${X_RELEASE_USERNAME}"
+        git config --global user.name "${X_RELEASE_USEREMAIL}"
+
+    - name: Check that we are on snapshot branch before creating the release
+      run: |
+        echo "Version: "
+        ${{ env.MVNCMD }} help:evaluate -Dexpression=project.version -q -DforceStdout
+        ${{ env.MVNCMD }} help:evaluate -Dexpression=project.version -q -DforceStdout | egrep -- '-SNAPSHOT$' > /dev/null || exit 1
+        # unfortunately, this would require a snapshot parent if just called from the command line, so we cannot use it: :-(
+        # mvn org.apache.maven.plugins:maven-enforcer-plugin:3.2.1:enforce -Drules=requireSnapshotVersion
+
+    - name: Dry run of release goals
+      env:
+        GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
+      run: |
+        # export GPG_PASSPHRASE=$(mvn --encrypt-password "$(echo $GPG_PASSPHRASE_RAW | base64 --decode)")
+        ${{ env.MVNCMD }} clean release:clean
+        ${{ env.MVNCMD }} release:prepare -DdryRun=true -DpushChanges=false
+        ${{ env.MVNCMD }} release:perform -DdryRun=true -DlocalCheckout=true -DdeployAtEnd=true
+        ${{ env.MVNCMD }} clean release:clean
+        git clean -f -d -x
+
+    - name: Verify git is clean
+      run: |
+        git status --untracked-files --ignored
+        git log -3 --no-color --decorate
+        git clean -f -d
+
+    - name: Prepare release
+      env:
+        GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
+      run: |
+        git clean -f -d -x
+        ${{ env.MVNCMD }} clean release:clean release:prepare -DpushChanges=false
+
+    - name: Git status after prepare
+      run: |
+        git status --untracked-files --ignored
+        git log -3 --no-color --decorate
+        cat release.properties || true
+
+    - name: Perform release
+      env:
+        OSSRH_USER: ${{ secrets.OSSRH_USER  }}
+        OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
+        GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
+      run: |
+        ${{ env.MVNCMD }} release:perform -DlocalCheckout=true -DdeployAtEnd=true "-Dgoals=clean install package source:jar javadoc:jar deploy"
+
+    - name: Git Status after perform
+      if: always()
+      run: |
+        git status
+        git log -3 --no-color --decorate
+
+    - name: Git Status after perform, long
+      if: always()
+      run: |
+        git status --untracked-files --ignored
+
+    - name: Push changes
+      if: ${{ github.event.inputs.dryrun == 'false' }}
+      run: |
+        git push origin --follow-tags -v
+
+    - name: Release to maven central repository
+      if: ${{ github.event.inputs.dryrun == 'false' }}
+      env:
+        OSSRH_USER: ${{ secrets.OSSRH_USER  }}
+        OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
+      run: |
+        cd target/checkout
+        pwd
+        ${{ env.MVNCMD }} nexus-staging:release
+
+    - name: Drop from OSSRH on dryrun
+      if: ${{ github.event.inputs.dryrun != 'false' }}
+      env:
+        OSSRH_USER: ${{ secrets.OSSRH_USER  }}
+        OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
+      run: |
+        cd target/checkout
+        pwd
+        ${{ env.MVNCMD }} nexus-staging:drop
+
+    - name: List target files even if recipe fails
+      if: always()
+      run: |
+        pwd
+        ls -ld
+        ls -ld target
+        find . -type d -name target
+        ls -l ./target/checkout/target || true
+        ls -l ./target/checkout/commons/target || true

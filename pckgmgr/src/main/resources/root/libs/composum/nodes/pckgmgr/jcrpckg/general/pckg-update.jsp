@@ -34,7 +34,7 @@
                     <div class="form-group">
                         <label class="control-label">Version</label>
                         <input name="version" class="widget text-field-widget form-control" type="text"
-                               placeholder="enter version key (number)" data-rules="mandatory"/>
+                               placeholder="enter version key (number)"/>
                     </div>
                     <div class="form-group">
                         <label class="control-label">Description</label>

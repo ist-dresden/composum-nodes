@@ -3,7 +3,7 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
-<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.view.PackageBean" scope="request">
+<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean" scope="request">
     <div class="panel-heading header">
         <div class="thumbnail">
             <a class="upload-thumbnail" href="#" title="Upload a new thumbnail image (64x64)">

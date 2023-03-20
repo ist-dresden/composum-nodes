@@ -35,8 +35,8 @@
                 this.$jstree.on('keydown.BrowserTree', '.jstree-anchor', _.bind(this.customKeys, this));
             },
 
-            onNodeSelected: function (path, node) {
-                $(document).trigger("path:select", [path]);
+            onNodeSelected: function (path, node, event) {
+                $(document).trigger(core.makeEvent("path:select", undefined, event), [path]);
             },
 
             customKeys: function (event) {

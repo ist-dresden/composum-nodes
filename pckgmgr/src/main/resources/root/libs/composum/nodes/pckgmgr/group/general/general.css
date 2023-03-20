@@ -14,7 +14,7 @@
 
 .detail-panel.group .panel-heading.header {
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
 }
 
 .detail-panel.group .panel-heading.header .identifiers {
@@ -42,6 +42,10 @@
 
 .detail-panel.group .identifiers h3 {
     display: none;
+}
+
+.detail-panel.group .subgroups .identifiers h3 {
+    display: block;
 }
 
 .detail-panel.group .identifiers h1 {

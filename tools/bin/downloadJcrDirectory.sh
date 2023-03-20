@@ -34,48 +34,53 @@ if [ -z "$CPM_PORT" ]; then
 fi
 
 if [ -z "$CPM_PROTOCOL" ]; then
-   CPM_PROTOCOL=http
+  CPM_PROTOCOL=http
 fi
 
 if [ -z "$CPM_ADMINUSER" ]; then
-   CPM_ADMINUSER=admin
+  CPM_ADMINUSER=admin
 fi
 
 if [ -z "$CPM_ADMINPASSWD" ]; then
-   CPM_ADMINPASSWD=admin
+  CPM_ADMINPASSWD=admin
 fi
 
-echo Arguments "$*"
-echo Dir: $(pwd)
-echo URL: $CPM_PROTOCOL://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/source.zip/$1
+jcrpath="$1"
+jcrpath="${jcrpath#jcr_root/}"
+jcrpath="${jcrpath#root/}"
+url="${CPM_PROTOCOL}://${CPM_HOST}:${CPM_PORT}/bin/cpm/nodes/source.zip/${jcrpath}"
+
+echo "Arguments: $*"
+echo "Dir: $(pwd)"
+echo "Path: ${jcrpath}"
+echo "URL: $url"
 
 if [ -z $1 ]; then
-    echo NO SOURCE DIR GIVEN
-    exit 1
+  echo "NO SOURCE DIR GIVEN"
+  exit 1
 fi
 
-TMPFIL=`mktemp -u`.zip
-trap "{ /bin/rm -f $TMPFIL; }" EXIT
-# echo temporary file: $TMPFIL
+TMPFIL="$(mktemp -u).zip"
+trap "{ rm -f $TMPFIL; }" EXIT
 
-curl -s -S -o $TMPFIL -u $CPM_ADMINUSER:$CPM_ADMINPASSWD $CPM_PROTOCOL://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/source.zip/$1
+curl -D - -s -S -o $TMPFIL -u $CPM_ADMINUSER:$CPM_ADMINPASSWD $url
+
+ls -l $TMPFIL
 
 echo
-echo FILES:
+echo "FILES:"
 echo
 
-if command -v 7z &> /dev/null
-then
+if command -v 7z &>/dev/null; then
   7z l $CPM_7Z_EXTRACT_EXCLUDE $TMPFIL
 else
   unzip -l $TMPFIL
 fi
 
 echo
-echo EXTRACTION:
+echo "EXTRACTION:"
 echo
-if command -v 7z &> /dev/null
-then
+if command -v 7z &>/dev/null; then
   7z x "$CPM_CPM_7Z_EXTRACT_EXCLUDE" -y $TMPFIL
   if [ -n "$CPM_CPM_7Z_EXTRACT_EXCLUDE" ]; then
     echo Using 7z additional switches $CPM_7Z_EXTRACT_EXCLUDE

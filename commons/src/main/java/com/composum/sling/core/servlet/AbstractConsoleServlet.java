@@ -4,6 +4,7 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.Restricted;
 import com.composum.sling.core.service.ServiceRestrictions;
 import com.composum.sling.core.util.LinkUtil;
+import com.composum.sling.core.util.SlingResourceUtil;
 import com.composum.sling.core.util.XSS;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -93,6 +94,7 @@ public abstract class AbstractConsoleServlet extends SlingSafeMethodsServlet {
 
                 Resource resource = request.getResource();
                 RequestDispatcher dispatcher = request.getRequestDispatcher(resource, options);
+                LOG.debug("Forwarding to {} with {}", resource.getPath(), options);
                 dispatcher.forward(request, response);
 
             } else {

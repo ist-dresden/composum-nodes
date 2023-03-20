@@ -3,10 +3,10 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
-<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.view.PackageBean" scope="request">
-    <c:set var="writeAllowed" value="${pckg.permissible['nodes/packages/manager']['write']}"/>
+<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean" scope="request">
+    <c:set var="writeAllowed" value="${pckg.writeAllowed}"/>
     <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
-    <div class="detail-panel filters ${pckg.cssClasses} full-table-view">
+   <div class="detail-panel filters ${pckg.cssClasses} full-table-view">
         <div class="table-toolbar">
             <div class="btn-group btn-group-sm" role="group">
                 <button class="edit fa fa-pencil btn btn-default" title="Edit filter rules"${writeDisabled}><span

@@ -6,6 +6,9 @@
     <div class="row">
         <div class="left col col-xs-6">
             <sling:call script="short.jsp"/>
+            <p>
+                More documentation is <a href="https://www.composum.com/home/nodes/browser.html">available online.</a>
+            </p>
         </div>
         <div class="left col col-xs-6">
             <ul>
