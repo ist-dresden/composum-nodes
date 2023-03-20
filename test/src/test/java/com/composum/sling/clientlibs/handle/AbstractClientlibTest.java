@@ -26,7 +26,7 @@ import org.apache.sling.xss.impl.XSSAPIImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 import javax.jcr.RepositoryException;
@@ -80,9 +80,8 @@ public class AbstractClientlibTest {
      */
     private Calendar setupTime;
 
-    @SuppressWarnings("deprecation")
     @Before
-    public final void setupFramework() throws IllegalAccessException {
+    public void setupFramework() throws IllegalAccessException {
         setupTime = GregorianCalendar.getInstance();
         context.request().setContextPath(CONTEXTPATH);
 
@@ -92,7 +91,7 @@ public class AbstractClientlibTest {
                 new LazyCreationServiceImpl());
 
         permissionPlugin = Mockito.mock(ClientlibPermissionPlugin.class);
-        Mockito.when(permissionPlugin.categoryFilter(Matchers.anyString())).thenReturn(ResourceFilter.ALL);
+        Mockito.when(permissionPlugin.categoryFilter(ArgumentMatchers.anyString())).thenReturn(ResourceFilter.ALL);
 
         final ClientlibConfiguration.Config serviceConfig = new ClientlibConfiguration.Config() {
 
