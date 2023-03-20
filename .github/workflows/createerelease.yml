@@ -59,6 +59,13 @@ jobs:
       run: |
           echo '${{ toJSON(github) }}'
 
+    - name: Try to set a master password
+      run: |
+        MASTERPWD=$(openssl rand -base64 25)
+        echo "<settingsSecurity> <master>$(mvn --encrypt-master-password "$MASTERPWD")</master></settingsSecurity>" > $HOME/.m2/settings-security.xml
+        # echo "MASTERPWD=\"$MASTERPWD\"" >> $GITHUB_ENV
+        # The master password isn't actually used, but the maven-gpg-plugin complains otherwise.
+
     - name: Git & Maven Status
       run: |
         ${{ env.MVNCMD }} -version
@@ -77,9 +84,9 @@ jobs:
         GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
         GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
       run: |
-        gpg --recv-keys EDF04A0BF835E92A
         echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
         echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust --no-tty --batch --yes
+        gpg -v --refresh-keys
         gpg --list-secret-keys --keyid-format LONG
 
     - name: Configure git user for release commits
@@ -99,6 +106,17 @@ jobs:
         # unfortunately, this would require a snapshot parent if just called from the command line, so we cannot use it: :-(
         # mvn org.apache.maven.plugins:maven-enforcer-plugin:3.2.1:enforce -Drules=requireSnapshotVersion
 
+    - name: Dry run of release goals
+      env:
+        GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
+      run: |
+        # export GPG_PASSPHRASE=$(mvn --encrypt-password "$(echo $GPG_PASSPHRASE_RAW | base64 --decode)")
+        ${{ env.MVNCMD }} clean release:clean
+        ${{ env.MVNCMD }} release:prepare -DdryRun=true -DpushChanges=false
+        ${{ env.MVNCMD }} release:perform -DdryRun=true -DlocalCheckout=true -DdeployAtEnd=true
+        ${{ env.MVNCMD }} clean release:clean
+        git clean -f -d -x
+
     - name: Verify git is clean
       run: |
         git status --untracked-files --ignored
@@ -106,6 +124,8 @@ jobs:
         git clean -f -d
 
     - name: Prepare release
+      env:
+        GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
       run: |
         git clean -f -d -x
         ${{ env.MVNCMD }} clean release:clean release:prepare -DpushChanges=false
