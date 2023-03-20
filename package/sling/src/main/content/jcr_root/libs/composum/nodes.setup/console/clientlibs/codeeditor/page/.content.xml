@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+        xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+        jcr:primaryType="sling:Folder"
+        sling:resourceType="composum/nodes/commons/clientlib"
+        category="[composum.edit.codeeditor.page]">
+    <link jcr:primaryType="sling:OrderedFolder">
+        <cpn-64 jcr:primaryType="nt:unstructured"
+                rel="shortcut icon"
+                embed="composum/nodes/commons/components/images/cpn-64.png"/>
+        <cpn-128 jcr:primaryType="nt:unstructured"
+                rel="apple-touch-icon"
+                embed="composum/nodes/commons/components/images/cpn-128.png"/>
+    </link>
+    <css jcr:primaryType="sling:OrderedFolder"
+            depends="[
+                  category:composum.edit.codeeditor
+            ]"/>
+    <js jcr:primaryType="sling:OrderedFolder"
+            depends="[
+                  category:composum.edit.codeeditor
+            ]">
+        <aem-6.1 jcr:primaryType="nt:unstructured"
+                optional="{Boolean}true"
+                embed="[
+                    /etc/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js,
+                    /etc/clientlibs/granite/jquery/granite/csrf/source/csrf.js
+                ]"/>
+        <aem-6.4 jcr:primaryType="nt:unstructured"
+                optional="{Boolean}true"
+                embed="[
+                    /libs/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js,
+                    /libs/clientlibs/granite/jquery/granite/csrf/source/csrf.js
+                ]"/>
+    </js>
+</jcr:root>

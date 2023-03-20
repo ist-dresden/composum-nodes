@@ -7,14 +7,15 @@
     <head>
         <meta name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1, user-scalable=no"/>
         <title>Edit - ${editor.path}</title>
-        <cpn:clientlib type="css" category="composum.edit.codeeditor"/>
+        <cpn:clientlib type="link" category="composum.edit.codeeditor.page"/>
+        <cpn:clientlib type="css" category="composum.edit.codeeditor.page"/>
     </head>
     <body id="editor" class="composum-nodes-components-codeeditor_page"
           data-path="${editor.contentPath}" data-type="${editor.textType}">
     <sling:call script="${composumBase}composum/nodes/commons/components/dialogs/alert.jsp"/>
     <sling:call script="${composumBase}composum/nodes/console/dialogs/user-status.jsp"/>
     <sling:include resourceType="composum/nodes/console/components/codeeditor"/>
-    <cpn:clientlib type="js" category="composum.edit.codeeditor"/>
+    <cpn:clientlib type="js" category="composum.edit.codeeditor.page"/>
     </body>
     </html>
 </cpn:component>
