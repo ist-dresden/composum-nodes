@@ -1,0 +1,8 @@
+com.composum.sling.core.usermanagement
+com.composum.sling.core.usermanagement.core
+com.composum.sling.core.usermanagement.core.impl
+com.composum.sling.core.usermanagement.model
+com.composum.sling.core.usermanagement.service
+com.composum.sling.core.usermanagement.service.impl
+com.composum.sling.core.usermanagement.servlet
+com.composum.sling.core.usermanagement.view

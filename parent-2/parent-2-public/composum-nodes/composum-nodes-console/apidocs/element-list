@@ -1,0 +1,16 @@
+com.composum.sling.nodes
+com.composum.sling.nodes.browser
+com.composum.sling.nodes.browser.impl
+com.composum.sling.nodes.components
+com.composum.sling.nodes.components.codeeditor
+com.composum.sling.nodes.console
+com.composum.sling.nodes.consoleplugin
+com.composum.sling.nodes.mount
+com.composum.sling.nodes.mount.remote
+com.composum.sling.nodes.query
+com.composum.sling.nodes.scene
+com.composum.sling.nodes.service
+com.composum.sling.nodes.service.impl
+com.composum.sling.nodes.servlet
+com.composum.sling.nodes.tools
+com.composum.sling.nodes.update

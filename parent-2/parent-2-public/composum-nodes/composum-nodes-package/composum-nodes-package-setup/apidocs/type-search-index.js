@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"com.composum.nodes.setup.impl","l":"NodesSetupService"},{"p":"com.composum.sling.core.setup.hook","l":"SetupHook"}]
