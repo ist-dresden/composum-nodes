@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.composum.meta.ist</groupId>
         <artifactId>parent-2-public</artifactId>
         <version>1.4</version>
-        <relativePath/>
+        <relativePath />
     </parent>
 
     <groupId>com.composum.nodes</groupId>
     <artifactId>composum-nodes</artifactId>
-    <version>3.4.2</version>
+    <version>3.4.4</version>
     <packaging>pom</packaging>
 
     <name>Composum Nodes</name>
@@ -32,7 +31,8 @@
         <connection>scm:git:https://github.com/ist-dresden/composum.git</connection>
         <developerConnection>scm:git:https://github.com/ist-dresden/composum.git</developerConnection>
         <url>https://github.com/ist-dresden/composum.git</url>
-    </scm>
+      <tag>composum-nodes-3.4.4</tag>
+  </scm>
 
     <distributionManagement>
         <repository>
@@ -66,15 +66,6 @@
         <profile>
             <id>test</id>
             <modules>
-                <module>jslibs</module>
-                <module>commons</module>
-                <module>console</module>
-                <module>pckgmgr</module>
-                <module>usermgr</module>
-                <module>corecfg</module>
-                <module>osgi</module>
-                <module>setup</module>
-                <module>package</module>
                 <module>xtracts/debugutil</module>
                 <!-- Test modules - no deployed code contained -->
                 <module>test</module>
@@ -92,7 +83,7 @@
                         <configuration>
                             <deploymentMethod>WebConsole</deploymentMethod>
                             <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
-                            <slingUrlSuffix/>
+                            <slingUrlSuffix />
                         </configuration>
                     </plugin>
                 </plugins>
@@ -112,6 +103,52 @@
                             <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}</slingUrl>
                             <slingUrlSuffix>${sling.upload.path}</slingUrlSuffix>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <!-- profile to release the artifacts for the public repository. This overwrites the profile in the parent-2-public, since
+             we cannot update this to the latest version while in 3.4.3, but we have to overwrite autoReleaseAfterClose to false
+             to be fully error tolerant during the release process.
+            FIXME(hps,14.3.2023): remove this profile when this is merged update to 4
+             -->
+            <id>nexus-staging</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>${release.repository.id}</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <keyname>info@composum.com</keyname>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -146,7 +183,7 @@
                         <execution>
                             <id>add-minified-resource</id>
                             <phase>generate-resources</phase>
-                            <goals></goals>
+                            <goals />
                             <configuration>
                                 <resources>
                                     <resource>
@@ -181,6 +218,71 @@
                     <version>0.0.8</version>
                 </plugin>
 
+                <plugin>
+                    <!-- FIXME use version from parent pom once changed; workaround for https://github.com/bndtools/bnd/issues/3903 -->
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <version>5.1.8</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.5.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.5.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.3.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-project-info-reports-plugin</artifactId>
+                    <version>3.4.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.12.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.5.3</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>3.0.1</version>
+                    <configuration>
+                        <keyname>info@composum.com</keyname>
+                        <passphraseServerId>info@composum.com</passphraseServerId>
+                        <gpgArguments>
+                            <arg>--batch</arg>
+                            <arg>--pinentry-mode</arg>
+                            <arg>loopback</arg>
+                            <arg>-v</arg>
+                        </gpgArguments>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <version>1.6.13</version>
+                    <configuration>
+                        <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -251,6 +353,12 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
+                <!-- AEM 6.5.0 compatibility -->
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>4.1</version>
+            </dependency>
+            <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
                 <version>1.10</version>
@@ -261,6 +369,12 @@
                 <artifactId>geronimo-atinject_1.0_spec</artifactId>
                 <version>1.0</version>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <!-- Compatibility with AEM 6.5.0 -->
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>4.1</version>
             </dependency>
 
             <!-- Groovy -->

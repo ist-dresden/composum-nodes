@@ -2,6 +2,8 @@ package com.composum.nodes.debugutil;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import javax.servlet.Filter;
@@ -36,7 +38,9 @@ import org.slf4j.LoggerFactory;
         service = Filter.class,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Nodes Debugutil Renderinfo Comment Logging Filter",
-                "sling.filter.scope=COMPONENT",
+                "sling.filter.scope=REQUEST",
+                "sling.filter.scope=INCLUDE",
+                "sling.filter.scope=FORWARD",
                 "service.ranking:Integer=" + 99999
         },
         configurationPolicy = ConfigurationPolicy.REQUIRE
@@ -47,10 +51,11 @@ public class RenderInfoLoggingFilter implements Filter {
     private static final Logger LOG = LoggerFactory.getLogger(RenderInfoLoggingFilter.class);
 
     private volatile Pattern urlpattern;
+    private volatile Pattern extpattern;
 
     @Override
     public void doFilter(ServletRequest rawRequest, ServletResponse rawResponse, FilterChain chain) throws IOException, ServletException {
-        if (urlpattern == null ||
+        if (urlpattern == null || extpattern == null ||
                 !(rawRequest instanceof SlingHttpServletRequest) || !(rawResponse instanceof SlingHttpServletResponse)) {
             chain.doFilter(rawRequest, rawResponse);
             return;
@@ -60,11 +65,20 @@ public class RenderInfoLoggingFilter implements Filter {
         SlingHttpServletResponse response = (SlingHttpServletResponse) rawResponse;
         String uri = request.getRequestURI();
         if (!urlpattern.matcher(uri).matches()) {
+            LOG.trace("Not matched: {}", uri);
             chain.doFilter(rawRequest, rawResponse);
             return;
         }
+        LOG.trace("Matched: {}", uri);
 
         RequestPathInfo pathInfo = request.getRequestPathInfo();
+        if (!extpattern.matcher("" + pathInfo.getExtension()).matches()) {
+            LOG.trace("Extension not matched: {}", pathInfo.getExtension());
+            chain.doFilter(rawRequest, rawResponse);
+            return;
+        }
+        LOG.trace("Matched: {}", pathInfo.getExtension());
+
         Resource resource = request.getResource();
         StringBuilder msgBuf = new StringBuilder(resource.getResourceType());
         if (pathInfo.getSelectorString() != null) {
@@ -78,37 +92,36 @@ public class RenderInfoLoggingFilter implements Filter {
         }
         msgBuf.append(resource.getPath());
         String msg = msgBuf.toString();
-        PrintWriter[] writerCapture = new PrintWriter[1];
-        boolean[] closeWritten = new boolean[1];
-        closeWritten[0] = false;
+        AtomicReference<PrintWriter> writerCapture = new AtomicReference<>();
+        AtomicBoolean closeWritten = new AtomicBoolean(false);
 
         SlingHttpServletResponseWrapper wrappedResponse = new SlingHttpServletResponseWrapper(response) {
 
             @Override
             public PrintWriter getWriter() throws IOException {
-                if (writerCapture[0] == null) {
-                    writerCapture[0] = new PrintWriter(getResponse().getWriter()) {
+                if (writerCapture.get() == null) {
+                    writerCapture.set(new PrintWriter(getResponse().getWriter()) {
                         @Override
                         public void close() {
                             LOG.debug("RenderInfo End: {}", msg);
-                            write("<!-- END RENDERINFO: " + msg + " -->");
-                            closeWritten[0] = true;
+                            write("<!-- END RENDERINFO: " + msg + " -->\n");
+                            closeWritten.set(true);
                             super.close();
                         }
-                    };
+                    });
                     LOG.debug("RenderInfo Start: {}", msg);
-                    writerCapture[0].write("<!-- START RENDERINFO: " + msg + " -->");
+                    writerCapture.get().write("<!-- START RENDERINFO: " + msg + " -->\n");
                 }
-                return writerCapture[0];
+                return writerCapture.get();
             }
         };
 
         chain.doFilter(request, wrappedResponse);
 
-        if (!closeWritten[0]) {
+        if (!closeWritten.get() && writerCapture.get() != null) {
             LOG.debug("RenderInfo End: {}", msg);
-            writerCapture[0].write("<!-- END RENDERINFO: " + msg + " -->");
-            writerCapture[0].flush();
+            writerCapture.get().write("<!-- END RENDERINFO: " + msg + " -->");
+            writerCapture.get().flush();
         }
     }
 
@@ -126,8 +139,12 @@ public class RenderInfoLoggingFilter implements Filter {
     @Modified
     public void activate(final Config config) {
         urlpattern = null;
-        if (!"".equals(config.regex().trim())) {
+        if (!"".equals(config.regex().trim()) && !"".equalsIgnoreCase(config.extregex().trim())) {
             urlpattern = Pattern.compile(config.regex());
+            extpattern = Pattern.compile(config.extregex());
+            LOG.info("activated with {}", config.regex());
+        } else {
+            LOG.info("deactivated");
         }
     }
 
@@ -146,6 +163,12 @@ public class RenderInfoLoggingFilter implements Filter {
                 description = "Regular expression that has to match the request's URL. If empty, this filter is inactive."
         )
         String regex();
+
+        @AttributeDefinition(
+                name = "Extension regex",
+                description = "Regular expression that has to match the request's extension (as parsed by Sling). If empty, this filter is inactive."
+        )
+        String extregex() default "htm.*";
     }
 
 }

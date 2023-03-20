@@ -244,7 +244,7 @@
 
             startJob: function (properties) {
                 if (!this.currentJob) {
-                    var path = this.getCurrentPath();
+                    var path = properties.overridePath || this.getCurrentPath();
                     this.delay(); // cancel all open timeouts
                     this.logOffset = 0;
                     core.ajaxPost('/bin/cpm/core/jobcontrol.job.json', _.extend({
@@ -550,8 +550,10 @@
                                     }
                                 }
                                 // get the tab key from the links anchor and select the tab
-                                var tab = $tab.attr('href').substring(1);
-                                this.selectTab(tab, group); // remember the group key(!)
+                                var tab = $tab.attr('href');
+                                if (tab) {
+                                    this.selectTab(tab.substring(1), group); // remember the group key(!)
+                                }
                                 if (_.isFunction(this.onReload)) {
                                     this.onReload();
                                 }

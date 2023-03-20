@@ -3,7 +3,7 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
-<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.view.PackageBean" scope="request">
+<cpn:component id="pckg" type="com.composum.sling.core.pckgmgr.jcrpckg.view.PackageBean" scope="request">
     <c:set var="writeAllowed" value="${pckg.permissible['nodes/packages/manager']['write']}"/>
     <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
     <div class="detail-panel package ${pckg.cssClasses}">
@@ -30,7 +30,7 @@
                         class="fa-stack"><i class="fa fa-spin fa-gear fa-stack-2x background-text"></i><i
                         class="symbol fa fa-history fa-stack-1x"></i><i
                         class="error fa fa-stack-2x">!</i></span><span
-                        class="label">Rewrap</span></button>
+                        class="label">Uninstall</span></button>
                 <button class="delete fa fa-trash btn btn-default" title="Delete this package"${writeDisabled}><span
                         class="label">Delete</span>
                 </button>
@@ -47,7 +47,12 @@
                 <button class="refresh fa fa-refresh btn btn-default" title="Reload"><span class="label">Reload</span>
                 </button>
             </div>
-        </div>
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="cleanup fa fa-recycle btn btn-default"${writeDisabled}
+                        title="Cleanup obsolete package versions"><span class="label">Cleanup</span></button>
+            </div>
+            <sling:include resourceType="composum/nodes/pckgmgr" replaceSelectors="helpbutton"/>
+         </div>
         <div class="package-detail">
             <div class="header-view panel panel-default">
                 <sling:include replaceSelectors="header"/>

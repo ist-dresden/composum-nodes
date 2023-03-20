@@ -7,6 +7,7 @@
     "jcr:title": "Tools",
     "consoleId": "tools",
     "jcr:description": "the console tools navigation menu root",
+    "description": "composum/nodes/system/tools/description",
     "order": 80,
     "menu": true,
     "sling:resourceType": "composum/nodes/console/tools",

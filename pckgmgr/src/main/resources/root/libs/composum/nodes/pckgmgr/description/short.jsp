@@ -4,5 +4,5 @@
 <sling:defineObjects/>
 <div class="description short">
     <cpn:link href="/bin/packages.html"><h3>Package Manager</h3></cpn:link>
-    <p>a user interface to the JCR Vault package management framework</p>
+    <p>a user interface to the Jackrabbit FileVault content packages management framework</p>
 </div>

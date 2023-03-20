@@ -169,10 +169,10 @@
                 if (this.log.getLevel() <= log.levels.DEBUG) {
                     this.log.debug(this.nodeIdPrefix + 'tree.refresh(' + currentPath + ')>>>');
                 }
-                this.preventFromSelect = true;
+                this.preventFromSelectLock.lock('refresh for ' + currentPath, true);
                 this.delegate('refresh.jstree', _.bind(function () {
                     this.undelegate('refresh.jstree');
-                    this.preventFromSelect = false;
+                    this.preventFromSelectLock.unlock('refresh for ' + currentPath);
                     if (this.log.getLevel() <= log.levels.DEBUG) {
                         this.log.debug(this.nodeIdPrefix + 'tree.refresh(' + currentPath + ').ends.');
                     }
@@ -187,38 +187,60 @@
                 this.jstree.refresh(true, true);
             },
 
+            /** Helper for selectNode: calculates all the parent paths of a path, excl. parents of the rootPath,
+             * and gives that to resultCallback. (Callback because that can need an AJAX call.)  */
+            parentPathsOfPath: function (path, rootPath, resultCallback) {
+                rootPath = rootPath || '/';
+                if (path.indexOf(rootPath) === 0) {
+                    var names = path.split('/');
+                    var parentPath = ''
+                    var result = path !== '/' ? ['/'] : []
+                    for (var index = 1; index < names.length - 1; index++) {
+                        parentPath = parentPath + '/' + names[index];
+                        result.push(parentPath);
+                    }
+                    if (rootPath !== '/') {
+                        var rootNames = rootPath.split('/');
+                        result = result.slice(rootNames.length-1);
+                    }
+                    resultCallback(result);
+                } else {
+                    this.log.warn(this.nodeIdPrefix + 'tree.prefixPathsOfPath(' + path + ') not matching to root: ' + rootPath);
+                    resultCallback([]);
+                }
+            },
+
             /**
              * selects the node specified by its node path if the node is accepted by the filter
              * opens all nodes up to the target node automatically
              */
-            selectNode: function (path, callback, suppressEvent) {
-                this.resetSelection();
+            selectNode: function (path, callback, suppressEvent, event) {
                 if (path) {
-                    if (this.preventFromSelect) {
+                    if (this.preventFromSelectLock.isLocked()) {
                         window.setTimeout(_.bind(function () {
                             if (this.log.getLevel() <= log.levels.DEBUG) {
                                 this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').delay...');
                             }
-                            this.selectNode(path, callback, suppressEvent);
+                            this.selectNode(path, callback, suppressEvent, event);
                         }, this), 100);
                     } else {
-                        this.preventFromSelect = true;
+                        this.preventFromSelectLock.lock(path);
+                        this.resetSelection(suppressEvent);
                         if (this.log.getLevel() <= log.levels.DEBUG) {
                             this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ')>>>');
                         }
                         var tree = this;
-                        var names = $.isArray(path) ? path : path.split('/');
-                        var index = 1;
                         var rootPath = this.getRootPath();
+                        var parentPaths = undefined;
+                        this.parentPathsOfPath(path, rootPath, function (result) {
+                            parentPaths = result;
+                        });
+                        var index = 0;
                         if (path.indexOf(rootPath) === 0) {
-                            if (rootPath !== '/') {
-                                var rootNames = rootPath.split('/');
-                                index = rootNames.length;
-                            }
                             var $node;
                             var exit = _.bind(function () {
                                 tree.undelegate('after_open.jstree');
-                                this.preventFromSelect = false;
+                                this.preventFromSelectLock.unlock();
                                 if (_.isFunction(callback)) {
                                     callback(path);
                                 }
@@ -228,8 +250,11 @@
                             }, this);
                             var drilldown = function () {
                                 var id;
-                                if (index < names.length - 1) {
-                                    id = tree.nodeId(_.first(names, index + 1));
+                                if (parentPaths == undefined) {
+                                    this.log.debug(this.nodeIdPrefix + 'tree.selectNode(' + path + ').parentPathsDelay...');
+                                    window.setTimeout(_.bind(drilldown, this), 100);
+                                } else if (index < parentPaths.length) {
+                                    id = tree.nodeId(parentPaths[index]);
                                     $node = tree.$('#' + id);
                                     index++;
                                     if ($node && $node.length > 0) {
@@ -250,10 +275,10 @@
                                         exit();
                                     }
                                 } else {
-                                    id = tree.nodeId(_.first(names, names.length));
+                                    id = tree.nodeId(path);
                                     $node = tree.$('#' + id);
                                     if ($node && $node.length > 0) {
-                                        tree.jstree.select_node($node, suppressEvent);
+                                        tree.jstree.select_node($node, suppressEvent, false, event);
                                         this.scrollIntoView($node);
                                     }
                                     exit();
@@ -282,12 +307,14 @@
                             this.log.warn(this.nodeIdPrefix + 'tree.selectNode(' + path + ') not matching to root: ' + rootPath);
                         }
                     }
+                } else {
+                    this.resetSelection(suppressEvent);
                 }
             },
 
-            resetSelection: function () {
+            resetSelection: function (suppressEvent) {
                 if (this.getSelectedTreeNode()) {
-                    this.jstree.deselect_all();
+                    this.jstree.deselect_all(suppressEvent);
                 }
             },
 
@@ -320,7 +347,7 @@
              * sets the root path for the tree
              */
             setRootPath: function (rootPath, refresh) {
-                if (this.preventFromSelect) {
+                if (this.preventFromSelectLock.isLocked()) {
                     window.setTimeout(_.bind(function () {
                         this.setRootPath(rootPath, refresh);
                     }, this), 100);
@@ -376,6 +403,10 @@
                 };
 
                 this.log = options.log || log.getLogger('tree');
+
+                // FIXME NO CHECKIN; for debugging
+                this.log.setLevel(log.levels.DEBUG);
+                this.preventFromSelectLock.log.setLevel(log.levels.DEBUG);
 
                 // extend initialization to set up the drag and drop functionality if configured in the options
                 if (options.dragAndDrop) {
@@ -470,9 +501,56 @@
             onPathInserted: function (event, parentPath, nodeName) {
                 var nodeId = this.nodeId(parentPath);
                 if (this.log.getLevel() <= log.levels.DEBUG) {
-                    this.log.debug(this.nodeIdPrefix + 'tree.onPathInserted(' + parentPath + ',' + nodeName + '):' + nodeId);
+                    this.log.debug(this.nodeIdPrefix + 'tree.onPathInserted(' + parentPath + ',' + nodeName + ')>>>:' + nodeId);
                 }
-                this.refreshNodeById(nodeId);
+                this.preventFromSelectLock.lock('pathInserted ' + parentPath, true); // nodes have to be loaded before being selected
+                this.ensureNodeExists(parentPath, _.bind(function () {
+                    this.refreshNodeById(nodeId,  _.bind(function () {
+                        if (this.log.getLevel() <= this.log.levels.DEBUG) {
+                            this.log.debug(this.nodeIdPrefix + 'tree.onPathInserted(' + parentPath + ',' + nodeName + ').exit.');
+                        }
+                        this.preventFromSelectLock.unlock('pathInserted ' + parentPath);
+                    }, this));
+                }, this));
+            },
+
+            /** Makes sure the (new) node at path exists in the tree by calling
+             * jstree.load_node on the parents of nodes that weren't reflected in the tree yet.
+             * callbackWhenDone is called once loading is finished or immediately, if there wasn't anything to load. */
+            ensureNodeExists: function(path, callbackWhenDone) {
+                var callbackQueued = false
+                if (path && !this.getTreeNode(path)) {
+                    var parentPath = core.getParentPath(path)
+                    if (parentPath && parentPath !== path) {
+                        this.ensureNodeExists(parentPath,
+                            _.bind(function () {
+                                this.load_node_with_retry(this.nodeId(parentPath), callbackWhenDone);
+                            }, this));
+                        callbackQueued = true;
+                    }
+
+                }
+                if (!callbackQueued) {
+                    callbackWhenDone();
+                }
+            },
+
+            /** jstree.load_node seems to throw quite often a "TypeError: Cannot read properties of undefined (reading 'state')" for an unknown reason.
+             * As a workaround we retry, which seems to work. TODO find a better solution */
+            load_node_with_retry: function (node, callback) {
+                try {
+                    this.jstree.load_node(node, callback);
+                } catch (err1) {
+                    this.log.info('First failure on loading ' + node + ' : ' + err1.message);
+                    try {
+                        this.jstree.load_node(node, callback);
+                    } catch (err2) {
+                        this.log.warn('Second failure on loading ' + node + ' : ' + err2.message);
+                        if (_.isFunction(callbackWhenDone)) {
+                            callbackWhenDone(); // give up, but call callback because it resets a lock sometimes
+                        }
+                    }
+                }
             },
 
             onPathChanged: function (event, path) {
@@ -735,7 +813,7 @@
             },
 
             /**
-             * 'jstree' eventhandler for 'selected'
+             * 'jstree' eventhandler for 'selected' ('select_node.jstree')
              * the node selected event handler opens the selected node and
              * calls the 'onNodeSelected' function if declared
              */
@@ -744,16 +822,17 @@
                 var path = data.node.original.path;
                 var $node = this.$('#' + (id ? id : this.nodeId(path)));
                 this.jstree.open_node($node);
-                this.onNodeSelected(path, data.node);
+                this.onNodeSelected(path, data.node, data && data.event || event);
             },
 
             /**
              * triggers a 'node:selected(path,node)' event to adjust the view to the new selected path
              * @param path
              * @param node
+             * @param event the event that triggered this call (mostly to find event loops)
              */
-            onNodeSelected: function (path, node) {
-                this.$el.trigger("node:selected", [path, node]);
+            onNodeSelected: function (path, node, event) {
+                this.$el.trigger(core.makeEvent("node:selected", undefined, event), [path, node]);
             },
 
             /**
@@ -808,8 +887,8 @@
                 }
                 if (id) {
                     selected = this.jstree.get_selected();
-                    this.jstree.load_node(id, _.bind(function () {
-                        this.jstree.open_node(id, _.bind(function () {
+                    this.load_node_with_retry(id, _.bind(function () {
+                        var opened = this.jstree.open_node(id, _.bind(function () {
                             if (selected && this.jstree.get_node(selected)) {
                                 this.jstree.select_node(selected, true);
                                 this.refreshNodeStateById(selected);
@@ -818,6 +897,9 @@
                                 callback.call(this, selected);
                             }
                         }, this));
+                        if (!opened && _.isFunction(callback)) { // if the node could not be opened, the callback won't be called.
+                            callback.call(this, selected);
+                        }
                     }, this));
                 }
             },
@@ -871,7 +953,61 @@
                     }
                 }
                 return undefined;
+            },
+
+
+            /** Lock to try to prevent event races by deferring new selections until last selection was processed. */
+            preventFromSelectLock: {
+                log : log.getLogger('tree.preventFromSelectLock'),
+
+                /**
+                 * Limit time for delaying events to 20 seconds - that should be enough time to sort things out but prevent
+                 * occasional endless loops due to weird race conditions.
+                 */
+                lockDuration : 20*1000,
+
+                /** The time it was locked; falsy if not locked */
+                lockedAtTime: 0,
+
+                /** A message for debug logging why it was locked */
+                lockmsg: '',
+
+                isLocked: function() {
+                    var isLocked = this.lockedAtTime + this.lockDuration > Date.now();
+                    if (this.lockedAtTime && !isLocked) {
+                        this.log.warn('tree.preventFromSelectLock timing out, breaking the log of ', this.lockmsg);
+                        this.lockedAtTime = 0;
+                        this.lockmsg = '';
+                    }
+                    if (isLocked && this.lockmsg) {
+                        this.log.debug('tree.preventFromSelectLock is currently locked for ', this.lockmsg);
+                    }
+                    return isLocked;
+                },
+
+                lock: function(lockmsg, force) {
+                    if (!force && this.isLocked()) throw new Error('tree.preventFromSelectLock already locked for ' + this.lockmsg);
+                    if (force) {
+                        this.log.info('tree.preventFromSelectLock is now locked with force unlock for ', lockmsg, ' (was locked for ', this.lockmsg, ')');
+                    } else {
+                        this.log.debug('tree.preventFromSelectLock is now locked for ', lockmsg);
+                    }
+                    this.lockedAtTime = Date.now();
+                    this.lockmsg = lockmsg;
+                },
+
+                unlock: function(unlockmsg) {
+                    if (unlockmsg && this.lockmsg !== unlockmsg) {
+                        this.log.info('tree.preventFromSelectLock unlocks now for ', this.lockmsg, ' (but was locked for ', unlockmsg, ')');
+                    } else {
+                        this.log.debug('tree.preventFromSelectLock unlocks now for ', this.lockmsg);
+                    }
+                    this.lockedAtTime = 0;
+                    this.lockmsg = '';
+                }
+
             }
+
         });
 
     })(CPM.core.components, CPM.core);

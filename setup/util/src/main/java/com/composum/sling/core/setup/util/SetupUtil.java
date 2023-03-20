@@ -105,6 +105,7 @@ public class SetupUtil {
             // wait to give the bundle installer a chance to install bundles
             Thread.sleep(waitToStartSeconds * 1000);
         } catch (InterruptedException ignore) {
+            Thread.currentThread().interrupt();
         }
         LOG.info("Check bundles...");
         BundleContext bundleContext = FrameworkUtil.getBundle(ctx.getSession().getClass()).getBundleContext();
@@ -123,7 +124,9 @@ public class SetupUtil {
             }
             try {
                 Thread.sleep(1000);
-            } catch (InterruptedException ignore) {
+            } catch (InterruptedException ex) {
+                // someone tried to stop us. We better give up since we are in a long loop.
+                throw new PackageException(ex);
             }
         }
         if (ready < bundlesToCheck.size()) {
