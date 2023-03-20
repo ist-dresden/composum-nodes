@@ -49,7 +49,7 @@ jobs:
       run: mvn -B -ntp -s .github/settings-public.xml -B verify
 
     - name: Site with Maven
-      run: mvn -B -ntp -s .github/settings-public.xml -B site site:stage
+      run: mvn -B -ntp -s .github/settings-public.xml -B install javadoc:aggregate site site:stage
 
     - name: Deploy Site
       uses: JamesIves/github-pages-deploy-action@v4.3.0
