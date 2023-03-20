@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.composum.meta.ist</groupId>
         <artifactId>parent-2-public</artifactId>
-        <version>1.4</version>
-        <relativePath/>
+        <version>1.5.2</version>
+        <relativePath />
     </parent>
 
     <groupId>com.composum.nodes</groupId>
@@ -32,7 +31,8 @@
         <connection>scm:git:https://github.com/ist-dresden/composum.git</connection>
         <developerConnection>scm:git:https://github.com/ist-dresden/composum.git</developerConnection>
         <url>https://github.com/ist-dresden/composum.git</url>
-    </scm>
+      <tag>composum-nodes-3.4.3</tag>
+  </scm>
 
     <distributionManagement>
         <repository>
@@ -60,22 +60,12 @@
         <module>osgi</module>
         <module>setup</module>
         <module>package</module>
-        <module>test</module>
     </modules>
 
     <profiles>
         <profile>
             <id>test</id>
             <modules>
-                <module>jslibs</module>
-                <module>commons</module>
-                <module>console</module>
-                <module>pckgmgr</module>
-                <module>usermgr</module>
-                <module>corecfg</module>
-                <module>osgi</module>
-                <module>setup</module>
-                <module>package</module>
                 <module>xtracts/debugutil</module>
                 <!-- Test modules - no deployed code contained -->
                 <module>test</module>
@@ -93,7 +83,7 @@
                         <configuration>
                             <deploymentMethod>WebConsole</deploymentMethod>
                             <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
-                            <slingUrlSuffix/>
+                            <slingUrlSuffix />
                         </configuration>
                     </plugin>
                 </plugins>
@@ -147,7 +137,7 @@
                         <execution>
                             <id>add-minified-resource</id>
                             <phase>generate-resources</phase>
-                            <goals></goals>
+                            <goals />
                             <configuration>
                                 <resources>
                                     <resource>
@@ -168,26 +158,6 @@
                     </configuration>
                 </plugin>
 
-                <!-- TODO remove when parent in composum-meta is released -->
-                <!-- https://mvnrepository.com/artifact/org.apache.sling/slingfeature-maven-plugin -->
-                <plugin>
-                    <groupId>org.apache.sling</groupId>
-                    <artifactId>slingfeature-maven-plugin</artifactId>
-                    <version>1.5.0</version>
-                </plugin>
-                <!-- https://mvnrepository.com/artifact/org.apache.sling/sling-kickstart-maven-plugin -->
-                <plugin>
-                    <groupId>org.apache.sling</groupId>
-                    <artifactId>sling-kickstart-maven-plugin</artifactId>
-                    <version>0.0.8</version>
-                </plugin>
-
-                <plugin>
-                    <!-- FIXME use version from parent pom once changed; workaround for https://github.com/bndtools/bnd/issues/3903 -->
-                    <groupId>org.apache.felix</groupId>
-                    <artifactId>maven-bundle-plugin</artifactId>
-                    <version>5.1.4</version>
-                </plugin>
             </plugins>
         </pluginManagement>
     </build>

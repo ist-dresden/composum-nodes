@@ -7,6 +7,8 @@ import org.apache.jackrabbit.vault.packaging.PackageId;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -37,6 +39,11 @@ public class GroupNode extends AbstractNode {
     @Override
     public void load(@Nonnull final BeanContext context) {
         setLoaded(true);
+    }
+
+    @Override
+    public void loadForItems(@Nonnull BeanContext context) throws IOException {
+        // empty - for getItems() to work we don't need a load() here
     }
 
     @Nonnull

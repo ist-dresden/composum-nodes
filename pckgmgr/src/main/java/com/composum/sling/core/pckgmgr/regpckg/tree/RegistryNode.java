@@ -35,17 +35,24 @@ public class RegistryNode extends AbstractNode {
 
     @Override
     public void load(@Nonnull final BeanContext context) throws IOException {
-        PackageRegistries service = context.getService(PackageRegistries.class);
-        PackageRegistry registry = service.getRegistries(context.getResolver()).getRegistry(getName());
-        Map<String, RegistryItem> items = new TreeMap<>();
-        put(KEY_ITEMS, items);
-        if (registry != null) {
-            for (PackageId pckgId : registry.packages()) {
-                GroupNode group = getGroup(this, pckgId.getGroup());
-                group.addPackage(getName(), pckgId);
+        if (!isLoaded()) {
+            PackageRegistries service = context.getService(PackageRegistries.class);
+            PackageRegistry registry = service.getRegistries(context.getResolver()).getRegistry(getName());
+            Map<String, RegistryItem> items = new TreeMap<>();
+            put(KEY_ITEMS, items);
+            if (registry != null) {
+                for (PackageId pckgId : registry.packages()) {
+                    GroupNode group = getGroup(this, pckgId.getGroup());
+                    group.addPackage(getName(), pckgId);
+                }
             }
+            setLoaded(true);
         }
-        setLoaded(true);
+    }
+
+    @Override
+    public void loadForItems(@Nonnull BeanContext context) throws IOException {
+        load(context);
     }
 
     protected static GroupNode getGroup(@Nonnull AbstractNode parent, String name) {

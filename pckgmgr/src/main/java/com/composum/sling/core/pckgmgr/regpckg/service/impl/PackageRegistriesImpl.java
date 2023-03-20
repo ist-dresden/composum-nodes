@@ -186,6 +186,20 @@ public class PackageRegistriesImpl implements PackageRegistries {
             return pckg != null ? Pair.of(namespace, pckg) : null;
         }
 
+        @Nullable
+        @Override
+        public Pair<String, PackageId> resolve(@Nullable String namespace, @Nullable PackageId packageId) throws IOException {
+            Pair<String, PackageId> result = null;
+            for (PackageRegistry registry : iterable()) {
+                String regNamespace = RegistryUtil.namespace(registry);
+                if ( (namespace == null || namespace.equals(regNamespace)) && packageId != null && registry.contains(packageId)) {
+                    result = Pair.of(RegistryUtil.namespace(registry), packageId);
+                    break;
+                }
+            }
+            return result;
+        }
+
         protected void add(@Nullable final PackageRegistry registry) {
             if (registry != null) {
                 registries.put(RegistryUtil.namespace(registry), registry);
