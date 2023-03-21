@@ -55,6 +55,6 @@ jobs:
       uses: JamesIves/github-pages-deploy-action@v4.3.0
       with:
         branch: gh-pages
-        folder: target/staging
-        git-config-name: build
-        git-config-email: <>
+        folder: target/staging/parent-2/parent-2-public/composum-nodes
+        git-config-name: ${{ vars.RELEASE_USERNAME  }}
+        git-config-email: ${{ vars.RELEASE_USEREMAIL  }}
