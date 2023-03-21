@@ -26,9 +26,9 @@ import java.util.regex.Pattern;
 
 /**
  * Plots a graph of service usages. Use as console plugin: http://localhost:9090/system/console/servicegraph.
- * Use with graphviz tools http://graphviz.org/ e.g. with <br/> <code>
+ * Use with graphviz tools http://graphviz.org/ e.g. with <br> <pre>
  * curl -u admin:admin 'http://localhost:9090/system/console/servicegraph.dot?classregex=%5Ecom.composum&type=dotty&bundle=true' | ccomps -x | unflatten -f -l 6 -c 3 | dot | gvpack | neato -Tpng -n2  > $TMPDIR/services.png ; open $TMPDIR/services.png
- * </code>
+ * </pre>
  *
  * @see "https://github.com/magjac/d3-graphviz"
  */
