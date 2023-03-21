@@ -12,6 +12,10 @@ jobs:
   update-version:
     runs-on: ubuntu-latest
 
+    env:
+      SUBDIR: ${{ github.event.inputs.subdir }}
+      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings-public.xml
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -47,19 +51,19 @@ jobs:
       run: |
         git status --untracked-files --ignored
         git log -3 --no-color
-        mvn -version
+        $MVNCMD -version
 
     - name: Mvn Effective POM
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-pom
+      run: $MVNCMD -N help:effective-pom
 
     - name: Mvn Effective Settings
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-settings
+      run: $MVNCMD -N help:effective-settings
 
     - name: Set new version
       run: |
-        mvn -B -ntp -B -ntp -s .github/settings-public.xml versions:set -DnewVersion=${{ github.event.inputs.version }} -DgenerateBackupPoms=false
+        $MVNCMD versions:set -DnewVersion=${{ github.event.inputs.version }} -DgenerateBackupPoms=false
         echo "Version is now: "
-        mvn -B -ntp -B -ntp -s .github/settings-public.xml -N help:evaluate -Dexpression=project.version -q -DforceStdout
+        $MVNCMD -N help:evaluate -Dexpression=project.version -q -DforceStdout
 
     - name: Commit changes
       run: |
@@ -73,4 +77,5 @@ jobs:
         git log -3 --no-color
 
     - name: Push changes
-      run: git push
+      run: |
+        echo FIXME git push
