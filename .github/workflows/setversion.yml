@@ -74,6 +74,8 @@ jobs:
     - name: Print changes
       run: |
         git status -v
+        git diff
+        git diff --cached
 
     - name: Commit changes
       run: |
