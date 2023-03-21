@@ -128,7 +128,9 @@ jobs:
         GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
       run: |
         git clean -f -d -x
-        ${{ env.MVNCMD }} clean release:clean release:prepare -DpushChanges=false
+        # we use -P allmodules to set the new versions here even in the modules that we want not pushed to maven central
+        # That is not done during mvn release:perform, so they aren't uploaded to maven central.
+        ${{ env.MVNCMD }} -P allmodules clean release:clean release:prepare -DpushChanges=false
 
     - name: Git status after prepare
       run: |

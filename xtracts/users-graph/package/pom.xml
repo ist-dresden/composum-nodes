@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-users-graph</artifactId>
-        <version>4.1.4-SNAPSHOT</version>
+        <version>4.2.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>composum-nodes-users-graph-package</artifactId>
@@ -69,7 +69,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>composum-nodes-sling-package</artifactId>
-                                    <version>${composum.nodes.version}</version>
+                                    <version>${project.version}</version>
                                     <type>content-package</type>
                                     <includes>
                                         jcr_root/libs/composum/nodes.setup/usermgnt/graph/**
@@ -142,7 +142,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>composum-nodes-sling-package</artifactId>
-            <version>${composum.nodes.version}</version>
+            <version>${project.version}</version>
             <type>content-package</type>
         </dependency>
 

@@ -6,17 +6,13 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>4.1.4-SNAPSHOT</version>
+        <version>4.2.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>composum-nodes-xtracts</artifactId>
     <packaging>pom</packaging>
 
     <name>Composum Nodes Feature Extracts</name>
-
-    <properties>
-        <composum.nodes.version>4.1.4-SNAPSHOT</composum.nodes.version>
-    </properties>
 
     <modules>
         <module>users-graph</module>
