@@ -73,6 +73,15 @@
         </profile>
 
         <profile>
+            <!-- Covers all modules, primarily for setting versions etc., since some modules are not released or even built. -->
+            <id>allmodules</id>
+            <modules>
+                <module>xtracts</module>
+                <module>test</module>
+            </modules>
+        </profile>
+
+        <profile>
             <!-- install bundles via Sling installer (REST API: /system/console/install) -->
             <id>installBundle</id>
             <build>

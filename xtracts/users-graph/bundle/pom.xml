@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-users-graph</artifactId>
-        <version>3.4.3-SNAPSHOT</version>
+        <version>3.4.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>composum-nodes-users-graph-bundle</artifactId>
@@ -106,6 +106,16 @@
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.annotation</artifactId>
+        </dependency>
+
+        <!-- Composum -->
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-console</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-commons</artifactId>
         </dependency>
 
         <!-- Apache Sling -->

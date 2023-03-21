@@ -6,8 +6,8 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>3.4.4-SNAPSHOT</version>
-        <relativePath>../..</relativePath>
+        <version>3.4.6-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>composum-nodes-debugutil-bundle</artifactId>
