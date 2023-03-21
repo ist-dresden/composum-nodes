@@ -14,10 +14,6 @@
 
     <name>Composum Nodes Feature Extracts</name>
 
-    <properties>
-        <composum.nodes.version>4.1.4-SNAPSHOT</composum.nodes.version>
-    </properties>
-
     <modules>
         <module>users-graph</module>
         <module>debugutil</module>
