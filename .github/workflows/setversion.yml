@@ -1,5 +1,6 @@
 # This sets a new version number in the pom.xml files, and commits the changes.
 name: Set Version
+run-name: Set Version of ${{ github.ref_name }} to ${{ inputs.version }}
 
 on:
   workflow_dispatch:
