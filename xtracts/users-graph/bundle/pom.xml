@@ -108,6 +108,16 @@
             <artifactId>org.osgi.annotation</artifactId>
         </dependency>
 
+        <!-- Composum -->
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-console</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.nodes</groupId>
+            <artifactId>composum-nodes-commons</artifactId>
+        </dependency>
+
         <!-- Apache Sling -->
         <dependency>
             <groupId>org.apache.sling</groupId>
