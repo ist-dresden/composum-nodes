@@ -38,13 +38,8 @@ jobs:
       with:
         java-version: '11'
         distribution: 'temurin'
-        # deliberately not: cache: maven
-
-    # TODO currently maven 3.9.0 creates an error in the maven-minify-plugin , so we use 3.8.7 as workaround
-    - name: Set up Maven
-      uses: stCarolas/setup-maven@v4.5
-      with:
         maven-version: 3.8.7
+        # deliberately not: cache: maven
 
     - name: Dump event context for debugging
       continue-on-error: true  # Debugging output only, and this annoyingly fails when the commit messge has a (
