@@ -21,6 +21,7 @@ Usage: just open
 on your Sling or AEM instance.
 
 * [Composum Nodes Homepage](https://www.composum.com/home/nodes.html)
+* [Maven Build reports, incl. Javadoc](https://ist-dresden.github.io/composum-nodes/index.html)
 
 ### How to start it
 
