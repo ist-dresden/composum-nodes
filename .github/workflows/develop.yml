@@ -53,7 +53,7 @@ jobs:
         # mvn org.apache.maven.plugins:maven-enforcer-plugin:3.0.0:enforce -Drules=requireSnapshotVersion
 
     - name: Deploy with Maven
-      run: $MVNCMD -P develop -B deploy
+      run: $MVNCMD -P develop deploy
       env:
         NEXUS_BUILD_USER: ${{ secrets.NEXUS_BUILD_USER }}
         NEXUS_BUILD_PASSWD: ${{ secrets.NEXUS_BUILD_PASSWD }}
