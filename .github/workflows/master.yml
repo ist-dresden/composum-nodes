@@ -12,6 +12,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings-istrepo.xml  -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -22,34 +25,29 @@ jobs:
       with:
         java-version: '11'
         distribution: 'temurin'
-        # deliberately not, to check with central repo: cache: maven
-
-    # TODO currently maven 3.9.0 creates an error in the maven-minify-plugin , so we use 3.8.7 as workaround
-    - name: Set up Maven
-      uses: stCarolas/setup-maven@v4.5
-      with:
         maven-version: 3.8.7
+        # deliberately not, to check with central repo: cache: maven
 
     - name: Git & Maven Status
       run: |
         git status --untracked-files --ignored
         git log -3 --no-color
-        mvn -version
+        $MVNCMD -version
 
     - name: Mvn Effective POM
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-pom
+      run: $MVNCMD -N help:effective-pom
 
     - name: Mvn Effective Settings
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-settings
+      run: $MVNCMD -N help:effective-settings
 
     - name: Check versioning
-      run: mvn -B -ntp -s .github/settings-public.xml org.apache.maven.plugins:maven-enforcer-plugin:3.0.0:enforce -Drules=requireReleaseVersion,requireReleaseDeps
+      run: $MVNCMD org.apache.maven.plugins:maven-enforcer-plugin:3.0.0:enforce -Drules=requireReleaseVersion,requireReleaseDeps
 
     - name: Check build with Maven
-      run: mvn -B -ntp -s .github/settings-public.xml -B verify
+      run: $MVNCMD verify
 
     - name: Site with Maven
-      run: mvn -B -ntp -s .github/settings-public.xml -B install javadoc:aggregate site site:stage
+      run: $MVNCMD install javadoc:aggregate site site:stage
 
     - name: Deploy Site
       uses: JamesIves/github-pages-deploy-action@v4.3.0

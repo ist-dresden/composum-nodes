@@ -38,13 +38,8 @@ jobs:
       with:
         java-version: '11'
         distribution: 'temurin'
-        # deliberately not: cache: maven
-
-    # TODO currently maven 3.9.0 creates an error in the maven-minify-plugin , so we use 3.8.7 as workaround
-    - name: Set up Maven
-      uses: stCarolas/setup-maven@v4.5
-      with:
         maven-version: 3.8.7
+        # deliberately not: cache: maven
 
     - name: Dump event context for debugging
       continue-on-error: true  # Debugging output only, and this annoyingly fails when the commit messge has a (
@@ -68,16 +63,16 @@ jobs:
 
     - name: Git & Maven Status
       run: |
-        ${{ env.MVNCMD }} -version
+        $MVNCMD -version
         git remote -v
         git status --untracked-files --ignored
         git log -3 --no-color --decorate
 
     - name: Mvn Effective POM
-      run: ${{ env.MVNCMD }} -N help:effective-pom
+      run: $MVNCMD -N help:effective-pom
 
     - name: Mvn Effective Settings
-      run: ${{ env.MVNCMD }} -N help:effective-settings
+      run: $MVNCMD -N help:effective-settings
 
     - name: Import GPG key
       env:
@@ -101,8 +96,8 @@ jobs:
     - name: Check that we are on snapshot branch before creating the release
       run: |
         echo "Version: "
-        ${{ env.MVNCMD }} help:evaluate -Dexpression=project.version -q -DforceStdout
-        ${{ env.MVNCMD }} help:evaluate -Dexpression=project.version -q -DforceStdout | egrep -- '-SNAPSHOT$' > /dev/null || exit 1
+        $MVNCMD help:evaluate -Dexpression=project.version -q -DforceStdout
+        $MVNCMD help:evaluate -Dexpression=project.version -q -DforceStdout | egrep -- '-SNAPSHOT$' > /dev/null || exit 1
         # unfortunately, this would require a snapshot parent if just called from the command line, so we cannot use it: :-(
         # mvn org.apache.maven.plugins:maven-enforcer-plugin:3.2.1:enforce -Drules=requireSnapshotVersion
 
@@ -111,10 +106,10 @@ jobs:
         GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
       run: |
         # export GPG_PASSPHRASE=$(mvn --encrypt-password "$(echo $GPG_PASSPHRASE_RAW | base64 --decode)")
-        ${{ env.MVNCMD }} clean release:clean
-        ${{ env.MVNCMD }} release:prepare -DdryRun=true -DpushChanges=false
-        ${{ env.MVNCMD }} release:perform -DdryRun=true -DlocalCheckout=true -DdeployAtEnd=true
-        ${{ env.MVNCMD }} clean release:clean
+        $MVNCMD clean release:clean
+        $MVNCMD release:prepare -DdryRun=true -DpushChanges=false
+        $MVNCMD release:perform -DdryRun=true -DlocalCheckout=true -DdeployAtEnd=true
+        $MVNCMD clean release:clean
         git clean -f -d -x
 
     - name: Verify git is clean
@@ -130,7 +125,7 @@ jobs:
         git clean -f -d -x
         # we use -P allmodules to set the new versions here even in the modules that we want not pushed to maven central
         # That is not done during mvn release:perform, so they aren't uploaded to maven central.
-        ${{ env.MVNCMD }} -P allmodules clean release:clean release:prepare -DpushChanges=false
+        $MVNCMD -P allmodules clean release:clean release:prepare -DpushChanges=false
 
     - name: Git status after prepare
       run: |
@@ -144,7 +139,7 @@ jobs:
         OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
         GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
       run: |
-        ${{ env.MVNCMD }} release:perform -DlocalCheckout=true -DdeployAtEnd=true "-Dgoals=clean install package source:jar javadoc:jar deploy"
+        $MVNCMD release:perform -DlocalCheckout=true -DdeployAtEnd=true "-Dgoals=clean install package source:jar javadoc:jar deploy"
 
     - name: Git Status after perform
       if: always()
@@ -170,7 +165,7 @@ jobs:
       run: |
         cd target/checkout
         pwd
-        ${{ env.MVNCMD }} nexus-staging:release
+        $MVNCMD nexus-staging:release
 
     - name: Drop from OSSRH on dryrun
       if: ${{ github.event.inputs.dryrun != 'false' }}
@@ -180,7 +175,7 @@ jobs:
       run: |
         cd target/checkout
         pwd
-        ${{ env.MVNCMD }} nexus-staging:drop
+        $MVNCMD nexus-staging:drop
 
     - name: List target files even if recipe fails
       if: always()
