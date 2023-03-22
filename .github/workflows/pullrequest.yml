@@ -11,6 +11,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings-public.xml  -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -33,13 +36,13 @@ jobs:
       run: |
         git status --untracked-files --ignored
         git log -3 --no-color
-        mvn -version
+        $MVNCMD -version
 
     - name: Mvn Effective POM
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-pom
+      run: $MVNCMD -N help:effective-pom
 
     - name: Mvn Effective Settings
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-settings
+      run: $MVNCMD -N help:effective-settings
 
     - name: Testbuild with Maven
-      run: mvn -B -ntp -s .github/settings-public.xml -P test -B verify
+      run: $MVNCMD -P test verify

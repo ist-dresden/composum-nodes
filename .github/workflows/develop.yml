@@ -12,6 +12,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings-istrepo.xml  -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -34,28 +37,28 @@ jobs:
       run: |
         git status --untracked-files --ignored
         git log -3 --no-color
-        mvn -version
+        $MVNCMD -version
 
     - name: Mvn Effective POM
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-pom
+      run: $MVNCMD -N help:effective-pom
 
     - name: Mvn Effective Settings
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-settings
+      run: $MVNCMD -N help:effective-settings
 
     - name: Build with Maven
       # When parent-2:1.7 is active, -P ensureSnapshots will do a sanity check of the version number
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -P ensureSnapshots,test -B verify
+      run: $MVNCMD -P ensureSnapshots,test -B verify
 
     - name: Sanitycheck version before deploying
       run: |
         echo "Version: "
-        mvn -B -ntp -s .github/settings-istrepo.xml help:evaluate -Dexpression=project.version -q -DforceStdout
-        mvn -B -ntp -s .github/settings-istrepo.xml help:evaluate -Dexpression=project.version -q -DforceStdout | egrep -- '-SNAPSHOT$' > /dev/null || exit 1
+        $MVNCMD help:evaluate -Dexpression=project.version -q -DforceStdout
+        $MVNCMD help:evaluate -Dexpression=project.version -q -DforceStdout | egrep -- '-SNAPSHOT$' > /dev/null || exit 1
         # unfortunately, this would require a snapshot parent if just called from the command line, so we cannot use it: :-(
         # mvn org.apache.maven.plugins:maven-enforcer-plugin:3.0.0:enforce -Drules=requireSnapshotVersion
 
     - name: Deploy with Maven
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -P develop -B deploy
+      run: $MVNCMD -P develop -B deploy
       env:
         NEXUS_BUILD_USER: ${{ secrets.NEXUS_BUILD_USER }}
         NEXUS_BUILD_PASSWD: ${{ secrets.NEXUS_BUILD_PASSWD }}
