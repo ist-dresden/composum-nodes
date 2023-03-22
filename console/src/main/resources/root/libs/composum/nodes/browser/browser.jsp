@@ -49,6 +49,7 @@
                                                     Node</a></li>
                                                 <li><a href="#" class="rename${browser.writeAllowed?'':' disabled'}"
                                                        title="Rename the selected node">Rename</a></li>
+                                                <sling:include resourceType="composum/nodes/browser/components/extra-actions"/>
                                             </ul>
                                         </div>
                                         <div class="btn-group btn-group-sm" role="group">

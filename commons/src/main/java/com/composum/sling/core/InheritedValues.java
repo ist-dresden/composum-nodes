@@ -23,29 +23,29 @@ public class InheritedValues extends HashMap<String, Object> implements ValueMap
      * <dt>contentRelated</dt>
      * <dd>
      * Each node at the same position relative to the 'jcr:content' nodes is checked for an inherited value.
-     * <code><pre>
+     * <pre>
      *     - jcr:content/aaa/bbb/{relative/property/path}
      *       - ...
      *       - jcr:content/aaa/bbb/{relative/property/path}
-     * </pre></code></dd>
+     * </pre></dd>
      * <dt>contentBased</dt>
      * <dd>
      * The 'jcr:content' parents are the base to retrieve the inherited value.
-     * <code><pre>
+     * <pre>
      *     - jcr:content/{relative/property/path}
      *       - ...
      *       - jcr:content/aaa/.../xxx/{relative/property/path}
-     * </pre></code></dd>
+     * </pre></dd>
      * <dt>nodeRelated</dt>
      * <dd>
      * Each parent node can store an appropriate value.
-     * <code><pre>
+     * <pre>
      *     - jcr:content/{relative/property/path}
      *       - aaa
      *         - bbb/{relative/property/path}
      *           ...
      *           - xxx/{relative/property/path}
-     * </pre></code>
+     * </pre>
      * Can be restricted to the subtree of 'jcr:content/...'.</dd>
      * <dt>sameContent</dt>
      * <dd>

@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-package</artifactId>
-        <version>3.4.5</version>
+        <version>4.2.1</version>
     </parent>
 
     <artifactId>composum-nodes-aem-package</artifactId>
@@ -13,6 +13,13 @@
 
     <name>Composum Nodes AEM Package</name>
     <description>Composum Nodes Package - the Composum Nodes tools collection for AEM with initial content separated</description>
+
+    <properties>
+        <aem.host>localhost</aem.host>
+        <aem.port>4502</aem.port>
+        <aem.user>admin</aem.user>
+        <aem.password>admin</aem.password>
+    </properties>
 
     <build>
         <resources>
@@ -344,4 +351,35 @@
         </dependency>
 
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>autoInstallPackage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.wcm.maven.plugins</groupId>
+                        <artifactId>wcmio-content-package-maven-plugin</artifactId>
+                        <version>2.1.2</version>
+                        <executions>
+                            <execution>
+                                <id>install-package</id>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                                <configuration>
+                                    <serviceURL>http://${aem.host}:${aem.port}/crx/packmgr/service.jsp</serviceURL>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <serviceURL>http://${aem.host}:${aem.port}/crx/packmgr/service.jsp</serviceURL>
+                            <userId>${aem.user}</userId>
+                            <password>${aem.password}</password>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

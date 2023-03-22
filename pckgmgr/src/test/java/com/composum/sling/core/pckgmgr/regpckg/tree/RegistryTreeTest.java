@@ -70,7 +70,9 @@ public class RegistryTreeTest {
         }
         treeItem = treeItem.compactTree();
         treeItem.toTree(writer, true, true);
-        String normalizedResult = out.toString().replaceAll("PackageRegistry.MockitoMock.[0-9]+", "JcrPackageRegistry");
+        // that's a class name that changes sometimes:
+        String normalizedResult = out.toString().replaceAll("PackageRegistry.MockitoMock(\\$?\\w)+", "JcrPackageRegistry");
+        normalizedResult = normalizedResult.replaceAll("JcrPackageRegistryAeJvsw", "JcrPackageRegistry");
         System.out.println();
         System.out.println("####### " + treeItem.getPath() + " #######");
         System.out.println(normalizedResult);

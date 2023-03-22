@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes-users-graph</artifactId>
-        <version>3.4.3-SNAPSHOT</version>
+        <version>4.2.1</version>
     </parent>
 
     <artifactId>composum-nodes-users-graph-package</artifactId>
@@ -69,7 +68,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>composum-nodes-sling-package</artifactId>
-                                    <version>${composum.nodes.version}</version>
+                                    <version>${project.version}</version>
                                     <type>content-package</type>
                                     <includes>
                                         jcr_root/libs/composum/nodes.setup/usermgnt/graph/**
@@ -142,7 +141,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>composum-nodes-sling-package</artifactId>
-            <version>${composum.nodes.version}</version>
+            <version>${project.version}</version>
             <type>content-package</type>
         </dependency>
 

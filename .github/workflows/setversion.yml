@@ -1,5 +1,6 @@
 # This sets a new version number in the pom.xml files, and commits the changes.
 name: Set Version
+run-name: Set Version of ${{ github.ref_name }} to ${{ inputs.version }}
 
 on:
   workflow_dispatch:
@@ -11,6 +12,10 @@ on:
 jobs:
   update-version:
     runs-on: ubuntu-latest
+
+    env:
+      SUBDIR: ${{ github.event.inputs.subdir }}
+      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings-public.xml -P allmodules
 
     steps:
     - uses: actions/checkout@v3
@@ -47,19 +52,30 @@ jobs:
       run: |
         git status --untracked-files --ignored
         git log -3 --no-color
-        mvn -version
+        $MVNCMD -version
 
     - name: Mvn Effective POM
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-pom
+      run: $MVNCMD -N help:effective-pom
 
     - name: Mvn Effective Settings
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -N help:effective-settings
+      run: $MVNCMD -N help:effective-settings
 
     - name: Set new version
       run: |
-        mvn -B -ntp -B -ntp -s .github/settings-public.xml versions:set -DnewVersion=${{ github.event.inputs.version }} -DgenerateBackupPoms=false
+        $MVNCMD versions:set -DnewVersion=${{ github.event.inputs.version }} -DgenerateBackupPoms=false -DprocessAllModules=true
+
+    - name: Check current versions
+      run: |
         echo "Version is now: "
-        mvn -B -ntp -B -ntp -s .github/settings-public.xml -N help:evaluate -Dexpression=project.version -q -DforceStdout
+        $MVNCMD -N help:evaluate -Dexpression=project.version -q -DforceStdout
+        echo "Version count: "
+        for pom in $(find . -name pom.xml | fgrep -v /target/); do $MVNCMD -f $pom -N help:evaluate -Dexpression=project.version -q -DforceStdout; done | sort | uniq -c | sort -nr
+
+    - name: Print changes
+      run: |
+        git status -v
+        git diff
+        git diff --cached
 
     - name: Commit changes
       run: |
@@ -73,4 +89,5 @@ jobs:
         git log -3 --no-color
 
     - name: Push changes
-      run: git push
+      run: |
+        echo FIXME git push

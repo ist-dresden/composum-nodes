@@ -1,7 +1,7 @@
 package com.composum.sling.nodes.mount.remote;
 
 import com.composum.sling.nodes.mount.ExtendedResolver;
-import org.apache.commons.collections.map.LRUMap;
+import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.LoginException;

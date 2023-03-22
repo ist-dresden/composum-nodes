@@ -49,12 +49,12 @@ jobs:
       run: mvn -B -ntp -s .github/settings-public.xml -B verify
 
     - name: Site with Maven
-      run: mvn -B -ntp -s .github/settings-public.xml -B site site:stage
+      run: mvn -B -ntp -s .github/settings-public.xml -B install javadoc:aggregate site site:stage
 
     - name: Deploy Site
       uses: JamesIves/github-pages-deploy-action@v4.3.0
       with:
         branch: gh-pages
-        folder: target/staging
-        git-config-name: build
-        git-config-email: <>
+        folder: target/staging/parent-2/parent-2-public/composum-nodes
+        git-config-name: ${{ vars.RELEASE_USERNAME  }}
+        git-config-email: ${{ vars.RELEASE_USEREMAIL  }}

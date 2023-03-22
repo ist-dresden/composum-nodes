@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.composum.nodes</groupId>
         <artifactId>composum-nodes</artifactId>
-        <version>3.4.5</version>
+        <version>4.2.1</version>
     </parent>
 
     <groupId>com.composum.nodes.setup</groupId>
@@ -21,4 +21,3 @@
     </modules>
 
 </project>
-

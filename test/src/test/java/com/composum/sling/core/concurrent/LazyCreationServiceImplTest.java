@@ -1,8 +1,8 @@
 package com.composum.sling.core.concurrent;
 
 import com.composum.sling.core.ResourceHandle;
-import org.apache.commons.collections.Factory;
-import org.apache.commons.collections.map.LazyMap;
+import org.apache.commons.collections4.Factory;
+import org.apache.commons.collections4.map.LazyMap;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -41,7 +41,7 @@ public class LazyCreationServiceImplTest {
     protected ResourceResolverFactory resourceResolverFactory;
     protected ExecutorService executor;
     protected Random rnd;
-    protected Map<String, AtomicInteger> initCount = Collections.synchronizedMap(LazyMap.decorate(new TreeMap<>(),
+    protected Map<String, AtomicInteger> initCount = Collections.synchronizedMap(LazyMap.lazyMap(new TreeMap<>(),
             new Factory() {
                 @Override
                 public Object create() {

@@ -38,10 +38,12 @@
     "link": {
       "jcr:primaryType": "sling:OrderedFolder",
       "cpn-64": {
+        "jcr:primaryType": "nt:unstructured",
         "rel": "shortcut icon",
         "embed": "composum/nodes/commons/components/images/cpn-64.png"
       },
       "cpn-128": {
+        "jcr:primaryType": "nt:unstructured",
         "rel": "apple-touch-icon",
         "embed": "composum/nodes/commons/components/images/cpn-128.png"
       }
@@ -162,6 +164,52 @@
         "composum/nodes/console/js/console.js",
         "composum/nodes/console/components/codeeditor/clientlib"
       ]
+    },
+    "page": {
+      "jcr:primaryType": "sling:Folder",
+      "sling:resourceType": "composum/nodes/commons/clientlib",
+      "category": [
+        "composum.edit.codeeditor.page"
+      ],
+      "link": {
+        "jcr:primaryType": "sling:OrderedFolder",
+        "cpn-64": {
+          "jcr:primaryType": "nt:unstructured",
+          "rel": "shortcut icon",
+          "embed": "composum/nodes/commons/components/images/cpn-64.png"
+        },
+        "cpn-128": {
+          "jcr:primaryType": "nt:unstructured",
+          "rel": "apple-touch-icon",
+          "embed": "composum/nodes/commons/components/images/cpn-128.png"
+        }
+      },
+      "css": {
+        "jcr:primaryType": "sling:OrderedFolder",
+        "depends": [
+          "category:composum.edit.codeeditor"
+        ]
+      },
+      "js": {
+        "depends": [
+          "category:composum.edit.codeeditor"
+        ],
+        "jcr:primaryType": "sling:OrderedFolder",
+        "aem-6.1": {
+          "optional": true,
+          "embed": [
+            "/etc/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js",
+            "/etc/clientlibs/granite/jquery/granite/csrf/source/csrf.js"
+          ]
+        },
+        "aem-6.4": {
+          "optional": true,
+          "embed": [
+            "/libs/clientlibs/granite/jquery/granite/csrf/source/granite.http.externalize.js",
+            "/libs/clientlibs/granite/jquery/granite/csrf/source/csrf.js"
+          ]
+        }
+      }
     }
   },
   "page": {
