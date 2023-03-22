@@ -1,6 +1,6 @@
 # This sets a new version number in the pom.xml files, and commits the changes.
 name: Set Version
-run-name: Set Version of ${{ github.ref_name }} to ${{ inputs.version }}
+run-name: Set Version of ${{ github.ref_name }} to ${{ inputs.version }} because ${{ inputs.remark }}
 
 on:
   workflow_dispatch:
@@ -8,6 +8,9 @@ on:
       version:
         description: 'The new version to set in the pom.xml'
         required: true
+      remark:
+        description: 'Optional, a remark to add to the commit message'
+        required: false
 
 jobs:
   update-version:
@@ -76,7 +79,7 @@ jobs:
       run: |
         git config user.name "github-actions setversion for ${{ github.event.sender.login }}"
         git config user.email github-actions@github.com
-        git commit -a -m "Update version to ${{ github.event.inputs.version }}"
+        git commit -a -m "Update version to ${{ github.event.inputs.version }} ${{ inputs.remark }}"
 
     - name: Git Status after setting the version
       run: |
