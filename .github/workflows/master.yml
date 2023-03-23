@@ -62,11 +62,17 @@ jobs:
     - name: Site with Maven
       run: $MVNCMD install javadoc:aggregate site site:stage
 
+    - name: Show location(s) of site
+      # for determining the right path for
+      if: always()
+      run: |
+        find target/staging -type f -name index.html
+
     - name: Deploy Site
       uses: JamesIves/github-pages-deploy-action@v4.3.0
       with:
         branch: gh-pages
-        # This path might or might not work for the repositories - check
-        folder: target/staging/parent-2/parent-2-public/${{ github.repository.name }}
+        # This path is different for the repositories - check
+        folder: target/staging/parent-2/parent-2-public/composum-nodes
         git-config-name: ${{ vars.RELEASE_USERNAME  }}
         git-config-email: ${{ vars.RELEASE_USEREMAIL  }}
