@@ -62,12 +62,12 @@ jobs:
       run: |
         $MVNCMD versions:set -DnewVersion=${{ github.event.inputs.version }} -DgenerateBackupPoms=false -DprocessAllModules=true
 
-    - name: Check current versions
+    - name: Print new versions in submodules
       run: |
-        echo "Version is now: "
+        echo "Parent version is now: "
         $MVNCMD -N help:evaluate -Dexpression=project.version -q -DforceStdout
-        echo "Version count: "
-        for pom in $(find . -name pom.xml | fgrep -v /target/); do $MVNCMD -f $pom -N help:evaluate -Dexpression=project.version -q -DforceStdout; done | sort | uniq -c | sort -nr
+        echo "Version count from the submodules. Everything should be like parent version: "
+        for pom in $(find . -name pom.xml | fgrep -v /target/); do $MVNCMD -f $pom -N help:evaluate -Dexpression=project.version -q -DforceStdout; echo; done | sort | uniq -c | sort -nr
 
     - name: Print changes
       run: |
