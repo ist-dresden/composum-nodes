@@ -28,6 +28,19 @@ jobs:
         maven-version: 3.8.7
         # deliberately not, to check with central repo: cache: maven
 
+    - name: Dump event context for debugging
+      continue-on-error: true  # Debugging output only, and this annoyingly fails when the commit messge has a (
+      run: |
+        echo '${{ github.event_name }} for ${{ github.ref_type }} ${{ github.ref_name }} or ${{ github.event.ref }}'
+        # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
+        echo 'github.event:'
+        echo '${{ toJSON(github.event) }}'
+
+    - name: Dump github context
+      continue-on-error: true  # Debugging output only, and this annoyingly fails when the commit message has a (
+      run: |
+          echo '${{ toJSON(github) }}'
+
     - name: Git & Maven Status
       run: |
         git status --untracked-files --ignored
@@ -53,6 +66,7 @@ jobs:
       uses: JamesIves/github-pages-deploy-action@v4.3.0
       with:
         branch: gh-pages
-        folder: target/staging/parent-2/parent-2-public/composum-nodes
+        # This path might or might not work for the repositories - check
+        folder: target/staging/parent-2/parent-2-public/${{ github.repository.name }}
         git-config-name: ${{ vars.RELEASE_USERNAME  }}
         git-config-email: ${{ vars.RELEASE_USEREMAIL  }}
