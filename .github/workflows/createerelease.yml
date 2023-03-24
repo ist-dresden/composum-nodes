@@ -139,7 +139,7 @@ jobs:
         OSSRH_PASSWD: ${{ secrets.OSSRH_PASSWD  }}
         GPG_PASSPHRASE : ${{ secrets.GPG_PASSPHRASE }}
       run: |
-        $MVNCMD release:perform -DlocalCheckout=true -DdeployAtEnd=true "-Dgoals=clean install package source:jar javadoc:jar deploy"
+        $MVNCMD release:perform -DlocalCheckout=true -DdeployAtEnd=true -DautoReleaseAfterClose=false "-Dgoals=clean install package source:jar javadoc:jar deploy" "-Darguments=-DdeployAtEnd=true -DautoReleaseAfterClose=false"
 
     - name: Git Status after perform
       if: always()

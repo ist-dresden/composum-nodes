@@ -48,10 +48,10 @@ jobs:
         $MVNCMD -version
 
     - name: Mvn Effective POM
-      run: $MVNCMD -N help:effective-pom
+      run: $MVNCMD -P develop -N help:effective-pom
 
     - name: Mvn Effective Settings
-      run: $MVNCMD -N help:effective-settings
+      run: $MVNCMD -P develop -N help:effective-settings
 
     - name: Build with Maven
       # When parent-2:1.7 is active, -P ensureSnapshots will do a sanity check of the version number
