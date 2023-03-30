@@ -1,6 +1,7 @@
 # This builds develop and deploys a snapshot to our repository.
 # Will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
 name: Develop - Build and Deploy Snapshot
+run-name: Develop - Build and Deploy Snapshot on ${{ github.ref_name }}
 
 on:
   push:

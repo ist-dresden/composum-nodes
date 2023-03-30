@@ -1,6 +1,7 @@
 # Sanity check for pull requests - just checks that it compiles.
 # Will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
 name: Pullrequest - Sanitycheck
+run-name: Pullrequest - Sanitycheck on ${{ github.ref_name }}
 
 on:
   pull_request:

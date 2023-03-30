@@ -1,6 +1,7 @@
 #
 # Will build a Java project with Maven, but NOT cache/restore any dependencies to check with central repo
 name: Master - Test public build and generate and deploy site
+run-name: Master - Test public build and generate and deploy site on ${{ github.ref_name }}
 
 on:
   push:
