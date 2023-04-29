@@ -12,6 +12,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.annotation.Nonnull;
+
 /**
  * A set of utility functions related to the handling of Sling Resources, without going down to JCR specifics.
  * This is a replacement for the JCR usage ridden {@link PropertyUtil} that contains all "pure" Sling functions that do not
@@ -313,6 +315,20 @@ public class SlingResourceUtil {
         } else {
             valueMap.put(key, value);
         }
+    }
+
+    /**
+     * Returns the children of a resource as {@link Stream}.
+     *
+     * @param a resource or null
+     * @return stream with the children, possibly empty.
+     */
+    @Nonnull
+    public static Stream<Resource> getChildrenAsStream(@Nullable Resource resource) {
+        if (resource == null) {
+            return Stream.empty();
+        }
+        return StreamSupport.stream(resource.getChildren().spliterator(), false);
     }
 
 }

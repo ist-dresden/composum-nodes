@@ -90,6 +90,7 @@
                             org.apache.sling.api.resource.*;version="[2.10,3)",
                             !sun.*,
                             !junit.*,
+                            !javax.annotation,
                             *
                         </Import-Package>
                         <Export-Package>

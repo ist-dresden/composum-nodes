@@ -35,6 +35,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -166,6 +168,8 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             }
 
             writer.println("<hr/></body></html>");
+        } catch (FileNotFoundException e) { // clientlib was not found
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, e.getMessage());
         } finally {
             if (null != processor.adminResolver) processor.adminResolver.close();
             if (null != processor.impersonationResolver) processor.impersonationResolver.close();
@@ -314,6 +318,9 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
          */
         protected void displayClientlibStructure(ClientlibRef ref) throws IOException, ServletException {
             ClientlibElement clientlib = clientlibService.resolve(ref, adminResolver);
+            if (clientlib == null) {
+                throw new FileNotFoundException("Clientlib " + ref + " not found.");
+            }
             String normalizedPath = normalizePath(ref, clientlib);
             StringBuilder categories = new StringBuilder();
             String requestUrl = request.getRequestURL().toString();
@@ -334,7 +341,6 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
                     categories.append(")");
                 }
             }
-            Validate.notNull(clientlib, "Not found: " + ref);
             writer.println("<hr/>");
             writer.println("<h3>Structure of <a href=\"" + url + "?lib=" + normalizedPath + impersonationParam + "\">" +
                     ref + "</a>" + categories + "</h3>");
