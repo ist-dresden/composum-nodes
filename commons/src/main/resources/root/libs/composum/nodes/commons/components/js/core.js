@@ -120,6 +120,11 @@
         },
 
         ajaxCall: function (config, onSuccess, onError, onComplete) {
+            function consumeXhr(xhr) {
+                if (config.xhrconsumer && _.isFunction(config.xhrconsumer)) {
+                    config.xhrconsumer(xhr);
+                }
+            }
             var ajaxConf = _.extend({
                 async: true,
                 cache: false,
@@ -133,7 +138,7 @@
                         if (_.isFunction(core.unauthorizedDelegate)) {
                             core.unauthorizedDelegate(function () {
                                 // try it once more after delegation to authorize
-                                core.ajaxCall(config, onSuccess, onError, onComplete);
+                                consumeXhr(core.ajaxCall(config, onSuccess, onError, onComplete));
                             });
                             return;
                         }
@@ -159,7 +164,7 @@
                     }
                 }
             }, config);
-            $.ajax(ajaxConf);
+            consumeXhr($.ajax(ajaxConf));
         },
 
         ajaxPoll: function (method, url, progress, onSuccess, onError) {
@@ -205,7 +210,7 @@
             if (!formData.get('_charset_')) {
                 formData.set('_charset_', 'UTF-8');
             }
-            $.ajax({
+            return $.ajax({
                 type: 'POST',
                 url: core.getContextUrl(action),
                 data: formData,
@@ -266,7 +271,7 @@
                     data[key.value] = value.length === 1 ? value[0] : value;
                 }
             }
-            $.ajax({
+            return $.ajax({
                 type: 'PUT',
                 url: core.getContextUrl(action),
                 data: JSON.stringify(data),

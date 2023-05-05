@@ -354,7 +354,7 @@ public interface BeanContext extends Adaptable {
         }
 
         public Map(java.util.Map<String, Object> pageScopeMap, SlingHttpServletRequest request) {
-            this(pageScopeMap, null, new HashMap<>());
+            this(pageScopeMap, new HashMap<>(), new HashMap<>());
             this.request = request;
         }
 
