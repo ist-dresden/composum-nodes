@@ -1,17 +1,20 @@
 package com.composum.sling.clientlibs.handle;
 
-import com.composum.sling.core.ResourceHandle;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Nullable;
+import javax.jcr.RepositoryException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import javax.jcr.RepositoryException;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import com.composum.sling.core.ResourceHandle;
 
 /**
  * Models a client library, containing one or several ClientlibResourceFolders.
@@ -95,6 +98,11 @@ public class Clientlib implements ClientlibElement {
     @NotNull
     public List<String> getCategories() {
         return Arrays.asList(resource.getProperty(PROP_CATEGORY, new String[0]));
+    }
+
+    @Nullable
+    public String getDescription() {
+        return resource.getProperty("jcr:description", null);
     }
 
     @Override

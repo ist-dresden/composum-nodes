@@ -16,7 +16,6 @@ import com.composum.sling.core.util.XSS;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -49,6 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.composum.sling.clientlibs.handle.ClientlibRef.PREFIX_CATEGORY;
 
@@ -93,6 +93,13 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
      * Request parameter that triggers clearing the clientlib cache. Obviously something to be used sparingly.
      */
     protected static final String REQUEST_PARAM_CLEAR_CACHE = "clearCache";
+
+    /**
+     * Request parameter that sets a filter for clientlibs. When listing all clientlibs,
+     * Only clientlibs where the filter regex can be found in the
+     * name, path, category or description are shown.
+     */
+    protected static final String REQUEST_PARAM_FILTER = "filter";
 
     /**
      * Location for the CSS.
@@ -231,6 +238,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
         ResourceResolver impersonationResolver;
         String impersonation;
         String impersonationParam;
+        boolean firstOutput = true;
 
         public Processor(HttpServletRequest request, String impersonation, PrintWriter writer) {
             this.request = request;
@@ -270,12 +278,17 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             }
             writer.println("</select>");
             writer.print(" Library: <input type=\"text\" name=\"" + REQUEST_PARAM_LIB + "\" value=\"");
-            String lib = request.getParameter(REQUEST_PARAM_LIB);
+            String lib = XSS.filter(request.getParameter(REQUEST_PARAM_LIB));
             if (lib != null) writer.print(lib);
             writer.println("\">\n");
             writer.print(" Impersonate:\n <input type=\"text\" name=\"" + REQUEST_PARAM_IMPERSONATE + "\" value=\"");
-            String impersonate = request.getParameter(REQUEST_PARAM_IMPERSONATE);
+            String impersonate = XSS.filter(request.getParameter(REQUEST_PARAM_IMPERSONATE));
             if (StringUtils.isNotBlank(impersonate)) writer.print(impersonate);
+            writer.println("\">");
+            // search field with a regex
+            writer.print(" Search filter regex:\n <input type=\"text\" name=\"" + REQUEST_PARAM_FILTER + "\" value=\"");
+            String search = XSS.filter(request.getParameter(REQUEST_PARAM_FILTER));
+            if (StringUtils.isNotBlank(search)) writer.print(search);
             writer.println("\">");
             writer.println("<input type=\"submit\" value=\"Submit\">\n");
             writer.println("<br><br><input type=\"submit\" title=\"This shouldn't normally be neccesary - use with caution - all used client libraries have to be rendered again.\" name=\"clearCache\" value=\"Clear the whole Clientlib Cache\">\n");
@@ -297,6 +310,15 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
          * Prints all client libraries readable for the impersonation user.
          */
         protected void printAllLibs() throws ServletException, IOException {
+            String filter = XSS.filter(request.getParameter(REQUEST_PARAM_FILTER));
+            Pattern filterregex = null;
+            if (StringUtils.isNotBlank(filter)) {
+                if (firstOutput) {
+                    writer.println("<h3>Client libraries matching regex '" + filter + "' somewhere:</h3>");
+                    firstOutput = false;
+                }
+                filterregex = Pattern.compile(filter);
+            }
             try {
                 QueryManager querymanager = Objects.requireNonNull(adminResolver.adaptTo(Session.class)).getWorkspace()
                         .getQueryManager();
@@ -305,8 +327,19 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
                 @SuppressWarnings({"unchecked", "deprecation"})
                 List<Resource> clientlibs = IteratorUtils.toList(adminResolver.findResources(statement, Query.XPATH));
                 for (Resource clientlibResource : clientlibs) {
-                    if (impersonationResolver.getResource(clientlibResource.getPath()) != null)
-                        displayClientlibStructure(new Clientlib(type, clientlibResource).getRef());
+                    if (impersonationResolver.getResource(clientlibResource.getPath()) != null) {
+                        Clientlib clientlib = new Clientlib(type, clientlibResource);
+                        if (filterregex != null) {
+                            String tomatch = clientlibResource.getPath() + " " + clientlib.getCategories()
+                                    + " " + clientlib.getDescription() + " "
+                                    + clientlib.getResourceFolder().getChildren() + " "
+                                    + clientlib.getResourceFolder().getEmbedded();
+                            if (!filterregex.matcher(tomatch).find()) {
+                                continue;
+                            }
+                        }
+                        displayClientlibStructure(clientlib.getRef());
+                    }
                 }
             } catch (RepositoryException e) { // shouldn't happen
                 throw new ServletException(e);
@@ -325,6 +358,7 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
             StringBuilder categories = new StringBuilder();
             String requestUrl = request.getRequestURL().toString();
             String url = requestUrl.replaceAll("\\.[^/]+$", "") + "." + ref.type.name() + ".html";
+            String description = null;
             if (clientlib instanceof Clientlib) {
                 Clientlib thelib = (Clientlib) clientlib;
                 if (thelib.getCategories().isEmpty()) categories.append(" (no categories)");
@@ -340,10 +374,14 @@ public class ClientlibDebugConsolePlugin extends HttpServlet {
                     }
                     categories.append(")");
                 }
+                description = thelib.getDescription();
             }
             writer.println("<hr/>");
             writer.println("<h3>Structure of <a href=\"" + url + "?lib=" + normalizedPath + impersonationParam + "\">" +
                     ref + "</a>" + categories + "</h3>");
+            if (description != null) {
+                writer.println("<h5><b>" + XSS.encodeForHTML(description) + "</b></h5>");
+            }
             writer.println("<code>&lt;cpn:clientlib type=\"" + ref.type.name() + "\" path=\"" + normalizedPath +
                     "\"/&gt;</code><br/><hr/><pre>");
             try {
