@@ -2,6 +2,7 @@ package com.composum.nodes.debugutil;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -92,6 +93,7 @@ public class RenderInfoLoggingFilter implements Filter {
         }
         msgBuf.append(resource.getPath());
         String msg = msgBuf.toString();
+        AtomicReference<StringWriter> stringWriterCapture = new AtomicReference<>();
         AtomicReference<PrintWriter> writerCapture = new AtomicReference<>();
         AtomicBoolean closeWritten = new AtomicBoolean(false);
 
@@ -100,17 +102,17 @@ public class RenderInfoLoggingFilter implements Filter {
             @Override
             public PrintWriter getWriter() throws IOException {
                 if (writerCapture.get() == null) {
-                    writerCapture.set(new PrintWriter(getResponse().getWriter()) {
+                    stringWriterCapture.set(new StringWriter());
+
+                    writerCapture.set(new PrintWriter(stringWriterCapture.get()) {
                         @Override
                         public void close() {
                             LOG.debug("RenderInfo End: {}", msg);
-                            write("<!-- END RENDERINFO: " + msg + " -->\n");
                             closeWritten.set(true);
                             super.close();
                         }
                     });
                     LOG.debug("RenderInfo Start: {}", msg);
-                    writerCapture.get().write("<!-- START RENDERINFO: " + msg + " -->\n");
                 }
                 return writerCapture.get();
             }
@@ -118,10 +120,15 @@ public class RenderInfoLoggingFilter implements Filter {
 
         chain.doFilter(request, wrappedResponse);
 
-        if (!closeWritten.get() && writerCapture.get() != null) {
-            LOG.debug("RenderInfo End: {}", msg);
-            writerCapture.get().write("<!-- END RENDERINFO: " + msg + " -->");
-            writerCapture.get().flush();
+        if (writerCapture.get() != null) {
+            if (!closeWritten.get()) {
+                LOG.debug("RenderInfo End: {}", msg);
+                writerCapture.get().close();
+            }
+            PrintWriter out = response.getWriter();
+            out.write("<!-- START RENDERINFO: " + msg + " -->\n");
+            out.write(stringWriterCapture.get().toString().trim());
+            out.write("<!-- END RENDERINFO: " + msg + " -->\n");
         }
     }
 

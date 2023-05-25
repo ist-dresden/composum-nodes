@@ -9,6 +9,8 @@
                 editorSelector: '.rich-editor',
                 defaultOptions: {
                     semantic: true,
+                    autogrowOnEnter: true,
+                    urlProtocol: true,
                     btns: [
                         ['bold', 'italic', 'underline', 'strikethrough', 'code'],
                         ['superscript', 'subscript'], ['removeformat'],
