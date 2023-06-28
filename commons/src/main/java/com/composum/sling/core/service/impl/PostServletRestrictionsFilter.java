@@ -13,6 +13,8 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -29,7 +31,9 @@ import java.util.regex.Pattern;
 import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
 
 /**
- * Service restrictions support for POST requests to restict Sling POST Servlet requests.
+ * Service restrictions support for POST requests to restrict Sling POST Servlet requests.
+ * For example: ^/content(/.*)?$=pages/content/edit restricts POST to /content paths to servlets with
+ * @Restricted(key = "pages/content/edit")
  */
 @Component(
         service = {Filter.class},
@@ -42,6 +46,8 @@ import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
 )
 @Designate(ocd = PostServletRestrictionsFilter.Config.class)
 public class PostServletRestrictionsFilter implements Filter {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PostServletRestrictionsFilter.class);
 
     @ObjectClassDefinition(
             name = "Composum Service Restrictions POST Filter Configuration"
@@ -99,6 +105,7 @@ public class PostServletRestrictionsFilter implements Filter {
                     if (entry.getKey().matcher(path).matches()
                             && !restrictions.isPermissible(request, entry.getValue(), ServiceRestrictions.Permission.write)) {
                         final SlingHttpServletResponse response = (SlingHttpServletResponse) servletResponse;
+                        LOG.warn("POST request to {} denied due to restrictions for service {}", path, entry.getValue());
                         response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
                         return;
                     }
