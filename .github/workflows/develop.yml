@@ -55,7 +55,7 @@ jobs:
         # mvn org.apache.maven.plugins:maven-enforcer-plugin:3.0.0:enforce -Drules=requireSnapshotVersion
 
     - name: Deploy with Maven
-      run: mvn -B -ntp -s .github/settings-istrepo.xml -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -P develop -B deploy
+      run: mvn -B -ntp -s .github/settings-istrepo.xml -P develop -B deploy
       env:
         NEXUS_BUILD_USER: ${{ secrets.NEXUS_BUILD_USER }}
         NEXUS_BUILD_PASSWD: ${{ secrets.NEXUS_BUILD_PASSWD }}
