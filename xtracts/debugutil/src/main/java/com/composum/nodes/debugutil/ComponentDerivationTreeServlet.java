@@ -3,7 +3,9 @@ package com.composum.nodes.debugutil;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import javax.jcr.query.Query;
@@ -35,6 +37,10 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
  * wget --user=admin --password=admin -O componenttree.dotty http://localhost:9090/bin/cpm/nodes/debug/componenttree.dotty ; <br/>
  * ccomps -x componenttree.dotty | dot | gvpack | neato -Tpng -n2 -o componenttree.png ; open componenttree.png </code>
  * There can also be a parameter regex to filter the components we consider.
+ * <p>
+ * For mermaid diagram (to include e.g. into Github markdown), use extension .mermaid, e.g.
+ * http://localhost:4502/bin/cpm/nodes/debug/componenttree.mermaid?regex=wknd
+ * </p>
  */
 @Component(service = Servlet.class,
         property = {
@@ -61,7 +67,7 @@ public class ComponentDerivationTreeServlet extends SlingSafeMethodsServlet {
             throw new IllegalStateException("Not enabled.");
         }
         ResourceResolver resolver = request.getResourceResolver();
-        response.setContentType("text/html;charset=UTF-8");
+        response.setContentType("text/plain;charset=UTF-8");
         Pattern regex = Pattern.compile(StringUtils.defaultString(request.getParameter(PARAM_REGEX)));
         Map<String, String> derivations = new TreeMap<>();
         for (Resource resource : IteratorUtils.asIterable(resolver.findResources("/jcr:root/(apps|libs)//*[@sling:resourceSuperType]", Query.XPATH))) {
@@ -72,12 +78,32 @@ public class ComponentDerivationTreeServlet extends SlingSafeMethodsServlet {
             }
         }
         try (PrintWriter out = response.getWriter()) {
-            out.println("digraph componentree {");
-            for (Map.Entry<String, String> entry : derivations.entrySet()) {
-                out.println('"' + entry.getKey() + "\" -> \"" + entry.getValue() + "\" ;");
+            if (request.getRequestPathInfo().getExtension().equals("mermaid")) {
+                out.println("```mermaid");
+                out.println("graph TD");
+                Set<String> nodes = new TreeSet<>();
+                nodes.addAll(derivations.keySet());
+                nodes.addAll(derivations.values());
+                for (String node : nodes) {
+                    out.println(escape(node) + "[\"" + node + "\"]");
+                }
+                for (Map.Entry<String, String> entry : derivations.entrySet()) {
+                    out.println(escape(entry.getKey()) + " --> " + escape(entry.getValue()));
+                }
+                out.println("```");
+            } else { // default dotty
+                out.println("digraph componentree {");
+                for (Map.Entry<String, String> entry : derivations.entrySet()) {
+                    out.println('"' + entry.getKey() + "\" -> \"" + entry.getValue() + "\" ;");
+                }
+                out.println("}");
             }
-            out.println("}");
         }
+    }
+
+    String escape(String s) {
+        // replace all nonalphanumeric characters with _
+        return s.replaceAll("[^a-zA-Z0-9]", "_");
     }
 
     @ObjectClassDefinition(
