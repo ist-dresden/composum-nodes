@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Since it is in some settings difficult to change configurations, this uses a special parameter {@value #PARAM_CONFIGURE_SERVLET}
  * to change the logged url.
- * https://publish-p49802-e271952.adobeaemcloud.com/content/eriks-uk/en.html?DebugRequestLoggingFilter-set-urlpattern=.*pdf.*
+ * https://somehost.somewhere.net/content/foo/bar/en.html?DebugRequestLoggingFilter-set-urlpattern=.*pdf.*
  */
 @Component(
         service = Filter.class,

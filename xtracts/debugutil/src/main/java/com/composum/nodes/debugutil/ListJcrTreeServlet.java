@@ -116,7 +116,7 @@ public class ListJcrTreeServlet extends SlingSafeMethodsServlet {
     }
 
     @ObjectClassDefinition(
-            name = "ERIKS - Debugutil List Jcr Tree Servlet",
+            name = "Composum Nodes Debugutil - Debugutil List Jcr Tree Servlet",
             description = "This servlet enables listing the resources in a JCR subtree - mainly for the publish instance, where there\n" +
                     " is no CRX. It requires a resource in a published page that has the sling:resourceType cpm/nodes/debug/listtree ,\n" +
                     " and then lists the suffix when a GET is triggered on that resource.\n" +
