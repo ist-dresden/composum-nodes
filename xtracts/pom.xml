@@ -15,7 +15,7 @@
 
     <modules>
         <module>users-graph</module>
-        <module>debugutil</module>
+        <!-- <module>debugutil</module> already present in ../pom.xml -->
     </modules>
 
 </project>
