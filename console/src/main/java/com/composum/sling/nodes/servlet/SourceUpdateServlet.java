@@ -110,7 +110,7 @@ public class SourceUpdateServlet extends SlingAllMethodsServlet implements Restr
 
             } catch (RepositoryException | TransformerException | RuntimeException | IOException ex) {
                 LOG.error("Trouble during update: {}", ex, ex);
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal error: " + ex.toString());
             }
         } else {
             response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);

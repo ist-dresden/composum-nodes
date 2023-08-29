@@ -52,6 +52,7 @@ import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -598,6 +599,7 @@ public class SourceModel extends ConsoleSlingBean {
      */
     protected void writeFile(@NotNull ZipOutputStream zipStream, @NotNull String root, @NotNull ResourceHandle file)
             throws IOException, RepositoryException {
+        @NotNull ResourceHandle origFile = file;
         if (file.getName().equals(JCR_CONTENT)) {
             // file format doesn't allow this - we need to write the file with the parent's name
             file = file.getParent();
@@ -624,13 +626,8 @@ public class SourceModel extends ConsoleSlingBean {
             if (lastModified != null) {
                 entry.setLastModifiedTime(lastModified);
             }
-            zipStream.putNextEntry(entry);
-            try {
-                IOUtils.copy(fileContent, zipStream);
-            } finally {
-                zipStream.closeEntry();
-                fileContent.close();
-            }
+            InputStream writeContent = fileContent;
+            putEntry(zipStream, entry, () -> IOUtils.copy(writeContent, zipStream), () -> writeContent.close());
         } else {
             LOG.warn("Can't get binary data for {}", path);
         }
@@ -649,15 +646,37 @@ public class SourceModel extends ConsoleSlingBean {
             if (lastModified != null) {
                 entry.setLastModifiedTime(lastModified);
             }
-            zipStream.putNextEntry(entry);
-            Writer writer = new OutputStreamWriter(zipStream, UTF_8);
             SourceModel fileModel = new SourceModel(config, context, file);
-            fileModel.writeXmlFile(writer, DepthMode.DEEP, binaryProperties, binaryFiles);
-            writer.flush();
-            zipStream.closeEntry();
+            putEntry(zipStream, entry, () -> {
+                Writer writer = new OutputStreamWriter(zipStream, UTF_8);
+                fileModel.writeXmlFile(writer, DepthMode.DEEP, binaryProperties, binaryFiles);
+                writer.flush();
+            }, null);
             writeBinaryProperties(zipStream, root, binaryProperties);
             for (SourceModel binaryFile : binaryFiles) {
                 binaryFile.writeIntoZip(zipStream, root, DepthMode.DEEP);
+            }
+        }
+    }
+
+    @FunctionalInterface
+    private interface IOExceptionRunnable {
+        void run() throws IOException, RepositoryException;
+    }
+
+    private void putEntry(@NotNull ZipOutputStream zipStream, @NotNull ZipEntry entry, @NotNull IOExceptionRunnable writeAction, @Nullable IOExceptionRunnable finalAction) throws IOException, RepositoryException {
+        try {
+            zipStream.putNextEntry(entry);
+            writeAction.run();
+        } catch (ZipException e) {
+            if (!e.getMessage().contains("duplicate entry")) {
+                throw e;
+            }
+            LOG.warn("Duplicated entry for {} - skipping duplicate", entry.getName(), e);
+        } finally {
+            zipStream.closeEntry();
+            if (finalAction != null) {
+                finalAction.run();
             }
         }
     }
