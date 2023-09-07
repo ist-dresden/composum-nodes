@@ -114,6 +114,7 @@ public class Browser extends ConsoleServletBean {
         EDITOR_MODES.put("ru", "ruby");
         EDITOR_MODES.put("ruby", "ruby");
         EDITOR_MODES.put("rs", "rust");
+        EDITOR_MODES.put("rst", "text"); // AEM documentation files
         EDITOR_MODES.put("scala", "scala");
         EDITOR_MODES.put("sass", "sass");
         EDITOR_MODES.put("scss", "scss");

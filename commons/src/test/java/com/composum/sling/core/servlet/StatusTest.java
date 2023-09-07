@@ -5,6 +5,7 @@ import com.composum.sling.core.logging.MessageContainerTest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
+
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
@@ -93,6 +94,18 @@ public class StatusTest {
         assertNotNull(readback.list("list1"));
         assertEquals(54.0, readback.list("list1").get(1).get("mlkey2"));
         assertEquals(18.0, readback.data("dat1").get("dk2"));
+    }
+
+    @Test
+    public void testErrorSerialization() throws IOException {
+        Status status = new Status(request, response, LOG);
+        status.error("error", "arg1", "arg2");
+        Writer stringWriter = new StringWriter();
+        JsonWriter jsonWriter = new JsonWriter(stringWriter);
+        status.toJson(jsonWriter);
+
+        assertEquals("{\"status\":400,\"success\":false,\"warning\":false,\"title\":\"Error\",\"messages\":[{\"level\":\"error\",\"text\":\"error\",\"rawText\":\"error\",\"arguments\":[\"arg1\",\"arg2\"],\"timestamp\":<timestamp>}]}",
+                stringWriter.toString().replaceAll(MessageContainerTest.TIMESTAMP_REGEX, "<timestamp>"));
     }
 
     @Test
