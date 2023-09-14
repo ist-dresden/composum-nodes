@@ -54,7 +54,7 @@ public class AuthorizablesView {
                              @Nullable final Authorizables.Filter filter)
             throws RepositoryException {
         this.context = context;
-        Set<Authorizable> authorizables = context.getService().findAuthorizables(
+        Set<? extends Authorizable> authorizables = context.getService().findAuthorizables(
                 context, selector, nameQueryPattern, filter);
         for (Authorizable authorizable : authorizables) {
             addNode(authorizable);

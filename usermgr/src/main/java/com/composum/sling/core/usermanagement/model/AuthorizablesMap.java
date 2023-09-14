@@ -92,7 +92,7 @@ public abstract class AuthorizablesMap extends AuthorizablesView {
                                       @Nullable final Authorizables.Filter filter,
                                       @NotNull final AuthorizableModel target, @NotNull final Set<String> done)
             throws RepositoryException {
-        Set<Authorizable> sources = context.getService().findAuthorizables(
+        Set<? extends Authorizable> sources = context.getService().findAuthorizables(
                 context, selector, null, authorizable
                         -> (filter == null || filter.accept(authorizable))
                         && isSourceOfTarget(authorizable, target.getId()));

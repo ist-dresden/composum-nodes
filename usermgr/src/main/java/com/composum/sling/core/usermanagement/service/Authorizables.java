@@ -140,7 +140,7 @@ public interface Authorizables {
     @Nullable Authorizable getAuthorizable(@NotNull final Context context, @NotNull final String id)
             throws RepositoryException;
 
-    @NotNull Set<Authorizable> findAuthorizables(@NotNull Context context,
+    @NotNull Set<? extends Authorizable> findAuthorizables(@NotNull Context context,
                                                  @Nullable Class<? extends Authorizable> selector,
                                                  @Nullable String nameQueryPattern,
                                                  @Nullable Filter filter)

@@ -66,7 +66,7 @@ public class AuthorizablesImpl implements Authorizables {
 
     @Override
     @NotNull
-    public Set<Authorizable> findAuthorizables(@NotNull final Context context,
+    public Set<? extends Authorizable> findAuthorizables(@NotNull final Context context,
                                                @Nullable final Class<? extends Authorizable> selector,
                                                @Nullable String nameQueryPattern,
                                                @Nullable final Filter filter)
