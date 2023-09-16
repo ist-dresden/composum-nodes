@@ -1,6 +1,8 @@
 package com.composum.sling.core.usermanagement.model;
 
+import com.composum.sling.core.usermanagement.service.AuthorizableWrapper;
 import com.composum.sling.core.usermanagement.service.Authorizables;
+import com.composum.sling.core.usermanagement.service.UserWrapper;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
@@ -35,21 +37,21 @@ public class UserModel extends AuthorizableModel {
     private transient Collection<AuthorizableModel> serviceUsers;
 
     public UserModel(@NotNull final Authorizables.Context context,
-                     @NotNull final User jcrUser)
+                     @NotNull final UserWrapper jcrUser)
             throws RepositoryException {
-        this(context, (Authorizable) jcrUser);
+        this(context, (AuthorizableWrapper) jcrUser);
     }
 
     protected UserModel(@NotNull final Authorizables.Context context,
-                        @NotNull final Authorizable authorizable)
+                        @NotNull final AuthorizableWrapper authorizable)
             throws RepositoryException {
         super(context, authorizable);
-        if (authorizable instanceof User) {
-            User jcrUser = (User) authorizable;
-            admin = jcrUser.isAdmin();
-            systemUser = jcrUser.isSystemUser();
-            disabled = jcrUser.isDisabled();
-            disabledReason = jcrUser.getDisabledReason();
+        if (authorizable instanceof UserWrapper) {
+            UserWrapper userWrapper = (UserWrapper) authorizable;
+            admin = userWrapper.isAdmin();
+            systemUser = userWrapper.isSystemUser();
+            disabled = userWrapper.isDisabled();
+            disabledReason = userWrapper.getDisabledReason();
         } else {
             admin = false;
             systemUser = true;

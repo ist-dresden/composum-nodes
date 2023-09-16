@@ -1,5 +1,6 @@
 package com.composum.sling.core.usermanagement.model;
 
+import com.composum.sling.core.usermanagement.service.AuthorizableWrapper;
 import com.composum.sling.core.usermanagement.service.Authorizables;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
@@ -24,7 +25,7 @@ public class AuthorizablesTree extends AuthorizablesView {
     }
 
     public AuthorizablesTree(@NotNull final Authorizables.Context context,
-                             @Nullable final Class<? extends Authorizable> selector,
+                             @Nullable final Class<? extends AuthorizableWrapper> selector,
                              @Nullable final String nameQueryPattern,
                              @Nullable final Authorizables.Filter filter)
             throws RepositoryException {

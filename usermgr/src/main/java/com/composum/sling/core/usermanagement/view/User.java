@@ -2,6 +2,8 @@ package com.composum.sling.core.usermanagement.view;
 
 import com.composum.sling.core.usermanagement.model.UserModel;
 import com.composum.sling.core.user.UserProfile;
+import com.composum.sling.core.usermanagement.service.AuthorizableWrapper;
+import com.composum.sling.core.usermanagement.service.UserWrapper;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.UserManager;
@@ -23,8 +25,8 @@ public class User extends View {
     private transient UserProfile profile;
 
     @Override
-    protected @NotNull Class<? extends Authorizable> getSelector() {
-        return org.apache.jackrabbit.api.security.user.User.class;
+    protected @NotNull Class<? extends AuthorizableWrapper> getSelector() {
+        return UserWrapper.class;
     }
 
     public @NotNull UserModel getUser() {

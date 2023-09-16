@@ -1,5 +1,6 @@
 package com.composum.sling.core.usermanagement.model;
 
+import com.composum.sling.core.usermanagement.service.AuthorizableWrapper;
 import com.composum.sling.core.usermanagement.service.Authorizables;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
@@ -43,7 +44,7 @@ public class AuthorizablesPaths extends AuthorizablesMap {
     }
 
     public AuthorizablesPaths(@NotNull final Authorizables.Context context,
-                              @Nullable final Class<? extends Authorizable> selector,
+                              @Nullable final Class<? extends AuthorizableWrapper> selector,
                               @Nullable final String nameQueryPattern,
                               @Nullable final Authorizables.Filter filter,
                               @Nullable final String textPattern)

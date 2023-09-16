@@ -1,5 +1,6 @@
 package com.composum.sling.core.usermanagement.model;
 
+import com.composum.sling.core.usermanagement.service.AuthorizableWrapper;
 import com.composum.sling.core.usermanagement.service.Authorizables;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
@@ -32,7 +33,7 @@ public class AuthorizablesGraph extends AuthorizablesMap {
     }
 
     public AuthorizablesGraph(@NotNull final Authorizables.Context context,
-                              @Nullable final Class<? extends Authorizable> selector,
+                              @Nullable final Class<? extends AuthorizableWrapper> selector,
                               @Nullable final String nameQueryPattern,
                               @Nullable final Authorizables.Filter filter)
             throws RepositoryException {
@@ -40,7 +41,7 @@ public class AuthorizablesGraph extends AuthorizablesMap {
     }
 
     @Override
-    protected void extendedScan(@Nullable final Class<? extends Authorizable> selector,
+    protected void extendedScan(@Nullable final Class<? extends AuthorizableWrapper> selector,
                                 @Nullable final Authorizables.Filter filter,
                                 @Nullable final Set<String> singleFocusDone)
             throws RepositoryException {

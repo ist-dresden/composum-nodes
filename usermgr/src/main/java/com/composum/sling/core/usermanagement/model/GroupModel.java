@@ -1,6 +1,7 @@
 package com.composum.sling.core.usermanagement.model;
 
 import com.composum.sling.core.usermanagement.service.Authorizables;
+import com.composum.sling.core.usermanagement.service.GroupWrapper;
 import com.google.gson.stream.JsonWriter;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ public class GroupModel extends AuthorizableModel {
     private transient Collection<GroupModel> declaredGroups;
 
     public GroupModel(@NotNull final Authorizables.Context context,
-                      @NotNull final Group jcrGroup) throws RepositoryException {
+                      @NotNull final GroupWrapper jcrGroup) throws RepositoryException {
         super(context, jcrGroup);
         members = stripIDs(jcrGroup.getMembers());
         declaredMembers = stripIDs(jcrGroup.getDeclaredMembers());
