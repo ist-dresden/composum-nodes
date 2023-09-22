@@ -14,6 +14,14 @@
     <name>Composum Nodes Sling Package</name>
     <description>Composum Nodes Package - the Composum Nodes tools collection with initial content separated</description>
 
+    <properties>
+        <sling.host>localhost</sling.host>
+        <sling.port>8080</sling.port>
+        <sling.user>admin</sling.user>
+        <sling.password>admin</sling.password>
+    </properties>
+
+
     <build>
         <resources>
 
@@ -259,4 +267,35 @@
         </dependency>
 
     </dependencies>
+
+    <profiles>
+    <profile>
+        <id>autoInstallPackage</id>
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>io.wcm.maven.plugins</groupId>
+                    <artifactId>wcmio-content-package-maven-plugin</artifactId>
+                    <version>2.1.2</version>
+                    <executions>
+                        <execution>
+                            <id>install-package</id>
+                            <goals>
+                                <goal>install</goal>
+                            </goals>
+                            <configuration>
+                                <serviceURL>http://${sling.host}:${sling.port}/bin/cpm/package.service.html</serviceURL>
+                            </configuration>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <serviceURL>http://${sling.host}:${sling.port}/crx/packmgr/service.jsp</serviceURL>
+                        <userId>${sling.user}</userId>
+                        <password>${sling.password}</password>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
+    </profiles>
 </project>
