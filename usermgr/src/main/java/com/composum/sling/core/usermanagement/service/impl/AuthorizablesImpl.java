@@ -132,9 +132,9 @@ public class AuthorizablesImpl implements Authorizables {
                                 .nameMatches(StringUtils.isNotBlank(nameQueryPattern) ? nameQueryPattern : "%"));
                         builder.setSortOrder("@name", QueryBuilder.Direction.ASCENDING);
                         if (selector != null) {
-                            if (selector.isInstance(UserWrapper.class)) {
+                            if (selector.equals(UserWrapper.class)) {
                                 builder.setSelector(User.class);
-                            } else if (selector.isInstance(GroupWrapper.class)) {
+                            } else if (selector.equals(GroupWrapper.class)) {
                                 builder.setSelector(Group.class);
                             }
                         }
