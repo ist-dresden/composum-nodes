@@ -1,6 +1,8 @@
 package com.composum.sling.core.usermanagement.model;
 
+import com.composum.sling.core.usermanagement.service.AuthorizableWrapper;
 import com.composum.sling.core.usermanagement.service.Authorizables;
+import com.composum.sling.core.usermanagement.service.GroupWrapper;
 import com.google.gson.stream.JsonWriter;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
@@ -42,7 +44,7 @@ public abstract class AuthorizablesMap extends AuthorizablesView {
     protected final Set<Relation> sourceRelations = new HashSet<>();
 
     public AuthorizablesMap(@NotNull final Authorizables.Context context,
-                            @Nullable final Class<? extends Authorizable> selector,
+                            @Nullable final Class<? extends AuthorizableWrapper> selector,
                             @Nullable final String nameQueryPattern,
                             @Nullable final Authorizables.Filter filter)
             throws RepositoryException {
@@ -50,7 +52,7 @@ public abstract class AuthorizablesMap extends AuthorizablesView {
         scanRelations(selector, filter);
     }
 
-    protected void scanRelations(@Nullable final Class<? extends Authorizable> selector,
+    protected void scanRelations(@Nullable final Class<? extends AuthorizableWrapper> selector,
                                  @Nullable final Authorizables.Filter filter)
             throws RepositoryException {
         Set<String> singleFocusDone = singleFocus != null ? new HashSet<>() : null;
@@ -60,7 +62,7 @@ public abstract class AuthorizablesMap extends AuthorizablesView {
         extendedScan(selector, filter, singleFocusDone);
     }
 
-    protected void extendedScan(@Nullable final Class<? extends Authorizable> selector,
+    protected void extendedScan(@Nullable final Class<? extends AuthorizableWrapper> selector,
                                 @Nullable final Authorizables.Filter filter,
                                 @Nullable final Set<String> singleFocusDone)
             throws RepositoryException {
@@ -88,24 +90,24 @@ public abstract class AuthorizablesMap extends AuthorizablesView {
         }
     }
 
-    protected void addSourceRelations(@Nullable final Class<? extends Authorizable> selector,
+    protected void addSourceRelations(@Nullable final Class<? extends AuthorizableWrapper> selector,
                                       @Nullable final Authorizables.Filter filter,
                                       @NotNull final AuthorizableModel target, @NotNull final Set<String> done)
             throws RepositoryException {
-        Set<Authorizable> sources = context.getService().findAuthorizables(
+        Set<? extends AuthorizableWrapper> sources = context.getService().findAuthorizables(
                 context, selector, null, authorizable
                         -> (filter == null || filter.accept(authorizable))
                         && isSourceOfTarget(authorizable, target.getId()));
-        for (Authorizable source : sources) {
+        for (AuthorizableWrapper source : sources) {
             if (done.add(source.getID())) {
                 sourceRelations.add(new AuthorizablesGraph.Relation(addNode(source), target));
             }
         }
     }
 
-    protected boolean isSourceOfTarget(Authorizable source, String targetId)
+    protected boolean isSourceOfTarget(AuthorizableWrapper source, String targetId)
             throws RepositoryException {
-        Iterator<Group> targets = source.declaredMemberOf();
+        Iterator<GroupWrapper> targets = source.declaredMemberOf();
         while (targets.hasNext()) {
             if (targetId.equals(targets.next().getID())) {
                 return true;

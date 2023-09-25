@@ -1,12 +1,8 @@
 package com.composum.sling.core.usermanagement.service.impl;
 
-import com.composum.sling.core.usermanagement.service.Authorizables;
-import com.composum.sling.core.usermanagement.service.ServiceUser;
+import com.composum.sling.core.usermanagement.service.*;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.Query;
-import org.apache.jackrabbit.api.security.user.QueryBuilder;
-import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.jackrabbit.api.security.user.*;
 import org.apache.sling.serviceusermapping.Mapping;
 import org.apache.sling.serviceusermapping.ServiceUserMapper;
 import org.jetbrains.annotations.NotNull;
@@ -18,13 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @Component
@@ -43,35 +33,51 @@ public class AuthorizablesImpl implements Authorizables {
     }
 
     @Nullable
-    public Authorizable getAuthorizable(@NotNull final Context context, @NotNull final String id)
+    public AuthorizableWrapper getAuthorizable(@NotNull final Context context, @NotNull final String id)
             throws RepositoryException {
-        Authorizable authorizable = context.getAuthorizables().get(id);
+        AuthorizableWrapper authorizable = context.getAuthorizables().get(id);
         if (authorizable == null) {
             UserManager userManager = context.getUserManager();
             if (userManager != null) {
-                authorizable = userManager.getAuthorizable(id);
+                authorizable = getAuthorizableWrapper(id, userManager);
             }
             if (authorizable == null) {
-                authorizable = getServiceUser(context, id);
+                authorizable = getServiceUser(id);
             }
             if (authorizable != null) {
                 context.getAuthorizables().put(id, authorizable);
             }
-            if (authorizable instanceof ServiceUser) {
-                ((ServiceUser) authorizable).initialize(context);
+            if (authorizable instanceof ServiceUserWrapper) {
+                ((ServiceUserWrapper) authorizable).initialize(context);
             }
         }
         return authorizable;
     }
 
+    private static AuthorizableWrapper getAuthorizableWrapper(@NotNull String id, UserManager userManager) throws RepositoryException {
+        AuthorizableWrapper wrapper = null;
+        Authorizable jcrAuthorizable = userManager.getAuthorizable(id);
+        if (jcrAuthorizable != null) {
+            if (jcrAuthorizable instanceof User) {
+                wrapper = new UserWrapper((User) jcrAuthorizable);
+
+            } else if (jcrAuthorizable instanceof Group) {
+                wrapper = new GroupWrapper((Group) jcrAuthorizable);
+            } else {
+                wrapper = new AuthorizableWrapper(jcrAuthorizable);
+            }
+        }
+        return wrapper;
+    }
+
     @Override
     @NotNull
-    public Set<Authorizable> findAuthorizables(@NotNull final Context context,
-                                               @Nullable final Class<? extends Authorizable> selector,
-                                               @Nullable String nameQueryPattern,
-                                               @Nullable final Filter filter)
+    public Set<? extends AuthorizableWrapper> findAuthorizables(@NotNull final Context context,
+                                                                @Nullable final Class<? extends AuthorizableWrapper> selector,
+                                                                @Nullable String nameQueryPattern,
+                                                                @Nullable final Filter filter)
             throws RepositoryException {
-        Set<Authorizable> result = new HashSet<>();
+        Set<AuthorizableWrapper> result = new HashSet<>();
         if (StringUtils.isNotBlank(nameQueryPattern)) {
             nameQueryPattern = nameQueryPattern
                     .replaceAll("\\.\\*", "%")
@@ -79,17 +85,17 @@ public class AuthorizablesImpl implements Authorizables {
         }
         UserManager userManager = context.getUserManager();
         if (userManager != null) {
-            Iterator<Authorizable> iterator = findAuthorizables(context, selector, nameQueryPattern);
+            Iterator<AuthorizableWrapper> iterator = findAuthorizables(context, selector, nameQueryPattern);
             while (iterator.hasNext()) {
-                Authorizable authorizable = iterator.next();
+                AuthorizableWrapper authorizable = iterator.next();
                 if (filter == null || filter.accept(authorizable)) {
                     result.add(authorizable);
                 }
             }
         }
-        for (Authorizable authorizable : findServiceUsers(context, selector, nameQueryPattern)) {
-            if (filter == null || filter.accept(authorizable)) {
-                result.add(authorizable);
+        for (ServiceUserWrapper serviceUser : findServiceUsers(context, selector, nameQueryPattern)) {
+            if (filter == null || filter.accept(serviceUser)) {
+                result.add(serviceUser);
             }
         }
         return result;
@@ -97,14 +103,13 @@ public class AuthorizablesImpl implements Authorizables {
 
     @Override
     @NotNull
-    public <T extends Authorizable> Collection<T> loadAuthorizables(@NotNull final Context context,
-                                                                    @NotNull final Class<T> selector,
-                                                                    @NotNull final Set<String> idSet)
+    public <T extends AuthorizableWrapper> Collection<T> loadAuthorizables(@NotNull final Context context,
+                                                                           @NotNull final Class<T> selector,
+                                                                           @NotNull final Set<String> idSet)
             throws RepositoryException {
         List<T> result = new ArrayList<>();
-        UserManager userManager = context.getUserManager();
         for (String id : idSet) {
-            Authorizable authorizable = getAuthorizable(context, id);
+            AuthorizableWrapper authorizable = getAuthorizable(context, id);
             if (selector.isInstance(authorizable)) {
                 result.add(selector.cast(authorizable));
             }
@@ -113,11 +118,11 @@ public class AuthorizablesImpl implements Authorizables {
     }
 
     @NotNull
-    protected Iterator<Authorizable> findAuthorizables(@NotNull final Context context,
-                                                       @Nullable final Class<? extends Authorizable> selector,
-                                                       @Nullable final String nameQueryPattern)
+    protected Iterator<AuthorizableWrapper> findAuthorizables(@NotNull final Context context,
+                                                              @Nullable final Class<? extends AuthorizableWrapper> selector,
+                                                              @Nullable final String nameQueryPattern)
             throws RepositoryException {
-        if (selector == null || !selector.equals(ServiceUser.class)) {
+        if (selector == null || !selector.equals(ServiceUserWrapper.class)) {
             UserManager userManager = context.getUserManager();
             if (userManager != null) {
                 final Query authorizableQuery = new Query() {
@@ -127,30 +132,51 @@ public class AuthorizablesImpl implements Authorizables {
                                 .nameMatches(StringUtils.isNotBlank(nameQueryPattern) ? nameQueryPattern : "%"));
                         builder.setSortOrder("@name", QueryBuilder.Direction.ASCENDING);
                         if (selector != null) {
-                            builder.setSelector(selector);
+                            if (selector.isInstance(UserWrapper.class)) {
+                                builder.setSelector(User.class);
+                            } else if (selector.isInstance(GroupWrapper.class)) {
+                                builder.setSelector(Group.class);
+                            }
                         }
                     }
                 };
-                return userManager.findAuthorizables(authorizableQuery);
+                return getAuthorizableWrapperIterator(userManager, authorizableQuery);
             }
         }
         return Collections.emptyIterator();
     }
 
     @NotNull
-    protected List<ServiceUser> findServiceUsers(@NotNull final Context context,
-                                                 @Nullable final Class<? extends Authorizable> selector,
-                                                 @Nullable final String nameQueryPattern)
+    private static Iterator<AuthorizableWrapper> getAuthorizableWrapperIterator(UserManager userManager, Query authorizableQuery) throws RepositoryException {
+        Iterator<Authorizable> jcrAuthorizableIterator = userManager.findAuthorizables(authorizableQuery);
+        List<AuthorizableWrapper> result = new ArrayList<>();
+        while (jcrAuthorizableIterator.hasNext()) {
+            Authorizable jcrAuthorizable = jcrAuthorizableIterator.next();
+            if (jcrAuthorizable instanceof User) {
+                result.add(new UserWrapper((User) jcrAuthorizable));
+            } else if (jcrAuthorizable instanceof Group) {
+                result.add(new GroupWrapper((Group) jcrAuthorizable));
+            } else {
+                result.add(new AuthorizableWrapper(jcrAuthorizable));
+            }
+        }
+        return result.iterator();
+    }
+
+    @NotNull
+    protected List<ServiceUserWrapper> findServiceUsers(@NotNull final Context context,
+                                                        @Nullable final Class<? extends AuthorizableWrapper> selector,
+                                                        @Nullable final String nameQueryPattern)
             throws RepositoryException {
-        List<ServiceUser> serviceUsers = new ArrayList<>();
-        if (!incompatibleServiceMapper && (selector == null || selector.equals(ServiceUser.class))) {
+        List<ServiceUserWrapper> serviceUsers = new ArrayList<>();
+        if (!incompatibleServiceMapper && (selector == null || selector.equals(ServiceUserWrapper.class))) {
             Pattern namePattern = StringUtils.isNotBlank(nameQueryPattern)
                     ? Pattern.compile("^" + nameQueryPattern.replaceAll("%", ".*") + "$")
                     : null;
             try {
                 List<Mapping> mappings = serviceUserMapper.getActiveMappings();
                 for (Mapping mapping : mappings) {
-                    ServiceUser service = new ServiceUser(context, mapping);
+                    ServiceUserWrapper service = new ServiceUserWrapper(mapping);
                     if (namePattern == null || namePattern.matcher(service.getID()).matches()) {
                         service.initialize(context);
                         serviceUsers.add(service);
@@ -165,11 +191,10 @@ public class AuthorizablesImpl implements Authorizables {
     }
 
     @Nullable
-    protected ServiceUser getServiceUser(@NotNull final Context context, @NotNull final String id)
-            throws RepositoryException {
+    protected ServiceUserWrapper getServiceUser(@NotNull final String id) {
         List<Mapping> mappings = serviceUserMapper.getActiveMappings();
         for (Mapping mapping : mappings) {
-            ServiceUser service = new ServiceUser(context, mapping);
+            ServiceUserWrapper service = new ServiceUserWrapper(mapping);
             if (id.equals(service.getID())) {
                 return service;
             }

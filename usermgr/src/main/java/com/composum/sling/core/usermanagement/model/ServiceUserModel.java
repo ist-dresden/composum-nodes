@@ -1,7 +1,7 @@
 package com.composum.sling.core.usermanagement.model;
 
 import com.composum.sling.core.usermanagement.service.Authorizables;
-import com.composum.sling.core.usermanagement.service.ServiceUser;
+import com.composum.sling.core.usermanagement.service.ServiceUserWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.jcr.RepositoryException;
@@ -15,8 +15,7 @@ public class ServiceUserModel extends UserModel {
     private transient Collection<AuthorizableModel> userOf;
     private transient Collection<AuthorizableModel> declaredUserOf;
 
-    public ServiceUserModel(@NotNull final Authorizables.Context context, @NotNull final ServiceUser service)
-            throws RepositoryException {
+    public ServiceUserModel(@NotNull final Authorizables.Context context, @NotNull final ServiceUserWrapper service) throws RepositoryException {
         super(context, service);
         serviceName = service.getServiceName();
         serviceInfo = service.getServiceInfo();

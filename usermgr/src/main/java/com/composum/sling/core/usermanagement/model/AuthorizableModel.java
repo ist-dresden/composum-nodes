@@ -1,24 +1,14 @@
 package com.composum.sling.core.usermanagement.model;
 
-import com.composum.sling.core.usermanagement.service.Authorizables;
-import com.composum.sling.core.usermanagement.service.ServiceUser;
+import com.composum.sling.core.usermanagement.service.*;
 import com.google.gson.stream.JsonWriter;
 import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.Group;
-import org.apache.jackrabbit.api.security.user.User;
 import org.jetbrains.annotations.NotNull;
 
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public abstract class AuthorizableModel implements Serializable, Comparable<AuthorizableModel> {
 
@@ -47,7 +37,7 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
     private transient Collection<GroupModel> declaredModelOf;
 
     protected AuthorizableModel(@NotNull final Authorizables.Context context,
-                                @NotNull final Authorizable authorizable) throws RepositoryException {
+                                @NotNull final AuthorizableWrapper authorizable) throws RepositoryException {
         this.context = context;
         type = getType(authorizable);
         id = authorizable.getID();
@@ -161,7 +151,7 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
                                                  @NotNull final Set<String> idSet)
             throws RepositoryException {
         List<UserModel> result = new ArrayList<>();
-        for (User jcrUser : context.getService().loadAuthorizables(context, User.class, idSet)) {
+        for (UserWrapper jcrUser : context.getService().loadAuthorizables(context, UserWrapper.class, idSet)) {
             result.add(new UserModel(context, jcrUser));
         }
         return result;
@@ -172,7 +162,7 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
                                                    @NotNull final Set<String> idSet)
             throws RepositoryException {
         List<GroupModel> result = new ArrayList<>();
-        for (Group jcrGroup : context.getService().loadAuthorizables(context, Group.class, idSet)) {
+        for (GroupWrapper jcrGroup : context.getService().loadAuthorizables(context, GroupWrapper.class, idSet)) {
             result.add(new GroupModel(context, jcrGroup));
         }
         return result;
@@ -183,33 +173,33 @@ public abstract class AuthorizableModel implements Serializable, Comparable<Auth
                                                           @NotNull final Set<String> idSet)
             throws RepositoryException {
         List<AuthorizableModel> result = new ArrayList<>();
-        for (Authorizable authorizable : context.getService().loadAuthorizables(context, Authorizable.class, idSet)) {
-            if (authorizable instanceof Group) {
-                result.add(new GroupModel(context, (Group) authorizable));
-            } else if (authorizable instanceof User) {
-                result.add(new UserModel(context, (User) authorizable));
-            } else if (authorizable instanceof ServiceUser) {
-                result.add(new ServiceUserModel(context, (ServiceUser) authorizable));
+        for (AuthorizableWrapper authorizable : context.getService().loadAuthorizables(context, AuthorizableWrapper.class, idSet)) {
+            if (authorizable instanceof GroupWrapper) {
+                result.add(new GroupModel(context, (GroupWrapper) authorizable));
+            } else if (authorizable instanceof UserWrapper) {
+                result.add(new UserModel(context, (UserWrapper) authorizable));
+            } else if (authorizable instanceof ServiceUserWrapper) {
+                result.add(new ServiceUserModel(context, (ServiceUserWrapper) authorizable));
             }
         }
         return result;
     }
 
     @NotNull
-    protected static Set<String> stripIDs(@NotNull final Iterator<? extends Authorizable> authorizableIterator)
+    protected static Set<String> stripIDs(@NotNull final Iterator<? extends AuthorizableWrapper> authorizableIterator)
             throws RepositoryException {
         Set<String> idSet = new TreeSet<>();
         while (authorizableIterator.hasNext()) {
-            Authorizable authorizable = authorizableIterator.next();
+            AuthorizableWrapper authorizable = authorizableIterator.next();
             idSet.add(authorizable.getID());
         }
         return idSet;
     }
 
-    protected static String getType(@NotNull final Authorizable authorizable) {
-        if (authorizable instanceof Group) {
+    protected static String getType(@NotNull final AuthorizableWrapper authorizable) {
+        if (authorizable instanceof GroupWrapper) {
             return TYPE_GROUP;
-        } else if (authorizable instanceof ServiceUser) {
+        } else if (authorizable instanceof ServiceUserWrapper) {
             return TYPE_SERVICE;
         } else {
             return TYPE_USER;

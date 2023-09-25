@@ -1,12 +1,8 @@
 package com.composum.sling.core.usermanagement.model;
 
-import com.composum.sling.core.usermanagement.service.Authorizables;
-import com.composum.sling.core.usermanagement.service.ServiceUser;
+import com.composum.sling.core.usermanagement.service.*;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.Group;
-import org.apache.jackrabbit.api.security.user.User;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,14 +45,14 @@ public class AuthorizablesView {
     }
 
     public AuthorizablesView(@NotNull final Authorizables.Context context,
-                             @Nullable final Class<? extends Authorizable> selector,
+                             @Nullable final Class<? extends AuthorizableWrapper> selector,
                              @Nullable final String nameQueryPattern,
                              @Nullable final Authorizables.Filter filter)
             throws RepositoryException {
         this.context = context;
-        Set<Authorizable> authorizables = context.getService().findAuthorizables(
+        Set<? extends AuthorizableWrapper> authorizables = context.getService().findAuthorizables(
                 context, selector, nameQueryPattern, filter);
-        for (Authorizable authorizable : authorizables) {
+        for (AuthorizableWrapper authorizable : authorizables) {
             addNode(authorizable);
         }
         singleFocus = nodes.size() == 1 ? nodes.values().iterator().next() : null;
@@ -70,7 +66,7 @@ public class AuthorizablesView {
         return nodes.values();
     }
 
-    protected AuthorizableModel addNode(@Nullable final Authorizable authorizable)
+    protected AuthorizableModel addNode(@Nullable final AuthorizableWrapper authorizable)
             throws RepositoryException {
         AuthorizableModel result = null;
         if (authorizable != null) {
@@ -87,14 +83,14 @@ public class AuthorizablesView {
     }
 
     @Nullable
-    protected AuthorizableModel createNode(@NotNull final Authorizable authorizable)
+    protected AuthorizableModel createNode(@NotNull final AuthorizableWrapper authorizable)
             throws RepositoryException {
-        return authorizable instanceof Group
-                ? new GroupModel(context, (Group) authorizable)
-                : authorizable instanceof User
-                ? new UserModel(context, (User) authorizable)
-                : authorizable instanceof ServiceUser
-                ? new ServiceUserModel(context, (ServiceUser) authorizable)
+        return authorizable instanceof GroupWrapper
+                ? new GroupModel(context, (GroupWrapper) authorizable)
+                : authorizable instanceof UserWrapper
+                ? new UserModel(context, (UserWrapper) authorizable)
+                : authorizable instanceof ServiceUserWrapper
+                ? new ServiceUserModel(context, (ServiceUserWrapper) authorizable)
                 : null;
     }
 

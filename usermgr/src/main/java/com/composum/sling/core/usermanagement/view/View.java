@@ -6,6 +6,7 @@ import com.composum.sling.core.usermanagement.core.UserManagementServlet;
 import com.composum.sling.core.usermanagement.model.AuthorizableModel;
 import com.composum.sling.core.usermanagement.model.AuthorizablesView;
 import com.composum.sling.core.usermanagement.model.UserModel;
+import com.composum.sling.core.usermanagement.service.AuthorizableWrapper;
 import com.composum.sling.core.usermanagement.service.Authorizables;
 import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.console.ConsoleSlingBean;
@@ -56,7 +57,7 @@ public class View extends ConsoleSlingBean {
         return this.view;
     }
 
-    protected @Nullable Class<? extends Authorizable> getSelector() {
+    protected @Nullable Class<? extends AuthorizableWrapper> getSelector() {
         return null;
     }
 

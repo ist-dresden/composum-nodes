@@ -1,8 +1,6 @@
 package com.composum.sling.core.usermanagement.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.sling.serviceusermapping.Mapping;
 
 import javax.jcr.RepositoryException;
@@ -16,7 +14,7 @@ import java.util.Set;
 /**
  * an Authorizable facade to represent a service user (bundle or subservice) as a member of an Authorizable set
  */
-public class ServiceUser implements Authorizable {
+public class ServiceUserWrapper extends AuthorizableWrapper {
 
     public static final String SERVICE_USER_ROOT = "/home/services";
 
@@ -36,10 +34,11 @@ public class ServiceUser implements Authorizable {
     protected final Mapping mapping;
     protected final Principal principal;
 
-    private transient Set<Group> declaredMemberOf;
-    private transient Set<Group> memberOf;
+    private transient Set<GroupWrapper> declaredMemberOf;
+    private transient Set<GroupWrapper> memberOf;
 
-    public ServiceUser(Authorizables.Context context, Mapping mapping) throws RepositoryException {
+    public ServiceUserWrapper(Mapping mapping) {
+        super(null);
         this.mapping = mapping;
         serviceName = mapping.getServiceName();
         serviceInfo = mapping.getSubServiceName();
@@ -60,7 +59,7 @@ public class ServiceUser implements Authorizable {
         if (declaredMemberOf == null) {
             declaredMemberOf = new LinkedHashSet<>();
             memberOf = new LinkedHashSet<>();
-            Authorizable authorizable;
+            AuthorizableWrapper authorizable;
             String user = mapping.map(mapping.getServiceName(), mapping.getSubServiceName());
             if (StringUtils.isNotBlank(user)) {
                 authorizable = context.getService().getAuthorizable(context, user);
@@ -77,9 +76,9 @@ public class ServiceUser implements Authorizable {
                     }
                 }
             }
-            for (Group group : declaredMemberOf) {
+            for (GroupWrapper group : declaredMemberOf) {
                 memberOf.add(group);
-                Iterator<Group> groups = group.memberOf();
+                Iterator<GroupWrapper> groups = group.memberOf();
                 while (groups.hasNext()) {
                     memberOf.add(groups.next());
                 }
@@ -101,8 +100,8 @@ public class ServiceUser implements Authorizable {
     }
 
     @Override
-    public boolean isGroup() {
-        return false;
+    public String getPath() {
+        return path;
     }
 
     @Override
@@ -111,12 +110,12 @@ public class ServiceUser implements Authorizable {
     }
 
     @Override
-    public Iterator<Group> declaredMemberOf() {
+    public Iterator<GroupWrapper> declaredMemberOf() {
         return declaredMemberOf.iterator();
     }
 
     @Override
-    public Iterator<Group> memberOf() {
+    public Iterator<GroupWrapper> memberOf() {
         return memberOf.iterator();
     }
 
@@ -159,8 +158,4 @@ public class ServiceUser implements Authorizable {
         return false;
     }
 
-    @Override
-    public String getPath() {
-        return path;
-    }
 }

@@ -2,9 +2,6 @@ package com.composum.sling.core.usermanagement.service;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.Group;
-import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -26,19 +23,19 @@ import java.util.regex.Pattern;
 @ProviderType
 public interface Authorizables {
 
-    Map<String, Class<? extends Authorizable>> SELECTORS = new HashMap<String, Class<? extends Authorizable>>() {{
-        put("user", User.class);
-        put("group", Group.class);
-        put("service", ServiceUser.class);
+    Map<String, Class<? extends AuthorizableWrapper>> SELECTORS = new HashMap<String, Class<? extends AuthorizableWrapper>>() {{
+        put("user", UserWrapper.class);
+        put("group", GroupWrapper.class);
+        put("service", ServiceUserWrapper.class);
     }};
 
-    static @Nullable Class<? extends Authorizable> selector(@Nullable final String key) {
+    static @Nullable Class<? extends AuthorizableWrapper> selector(@Nullable final String key) {
         return StringUtils.isNotBlank(key) ? SELECTORS.get(key.toLowerCase()) : null;
     }
 
     interface Filter {
 
-        boolean accept(Authorizable authorizable) throws RepositoryException;
+        boolean accept(AuthorizableWrapper authorizable) throws RepositoryException;
 
         class Path implements Filter {
 
@@ -53,7 +50,7 @@ public interface Authorizables {
             }
 
             @Override
-            public boolean accept(Authorizable authorizable) {
+            public boolean accept(AuthorizableWrapper authorizable) {
                 try {
                     return pattern.matcher(authorizable.getPath()).matches();
                 } catch (RepositoryException ignore) {
@@ -83,7 +80,7 @@ public interface Authorizables {
         private transient UserManager userManager;
 
         // the map to cache authorizables during requst execution
-        protected final Map<String, Authorizable> authorizables = new HashMap<>();
+        protected final Map<String, AuthorizableWrapper> authorizables = new HashMap<>();
 
         public Context(@NotNull final Authorizables service,
                        @NotNull final SlingHttpServletRequest request,
@@ -132,22 +129,22 @@ public interface Authorizables {
             return userManager;
         }
 
-        public Map<String, Authorizable> getAuthorizables() {
+        public Map<String, AuthorizableWrapper> getAuthorizables() {
             return authorizables;
         }
     }
 
-    @Nullable Authorizable getAuthorizable(@NotNull final Context context, @NotNull final String id)
+    @Nullable AuthorizableWrapper getAuthorizable(@NotNull final Context context, @NotNull final String id)
             throws RepositoryException;
 
-    @NotNull Set<Authorizable> findAuthorizables(@NotNull Context context,
-                                                 @Nullable Class<? extends Authorizable> selector,
-                                                 @Nullable String nameQueryPattern,
-                                                 @Nullable Filter filter)
+    @NotNull Set<? extends AuthorizableWrapper> findAuthorizables(@NotNull Context context,
+                                                                  @Nullable Class<? extends AuthorizableWrapper> selector,
+                                                                  @Nullable String nameQueryPattern,
+                                                                  @Nullable Filter filter)
             throws RepositoryException;
 
-    @NotNull <T extends Authorizable> Collection<T> loadAuthorizables(@NotNull Context context,
-                                                                      @NotNull Class<T> selector,
-                                                                      @NotNull Set<String> idSet)
+    @NotNull <T extends AuthorizableWrapper> Collection<T> loadAuthorizables(@NotNull Context context,
+                                                                             @NotNull Class<T> selector,
+                                                                             @NotNull Set<String> idSet)
             throws RepositoryException;
 }

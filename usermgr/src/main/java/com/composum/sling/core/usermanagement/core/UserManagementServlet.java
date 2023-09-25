@@ -6,13 +6,11 @@ import com.composum.sling.core.mapping.MappingRules;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
-import com.composum.sling.core.usermanagement.model.AuthorizableModel;
-import com.composum.sling.core.usermanagement.model.AuthorizablesTree;
-import com.composum.sling.core.usermanagement.model.AuthorizablesView;
-import com.composum.sling.core.usermanagement.model.GroupModel;
-import com.composum.sling.core.usermanagement.model.TreeNode;
-import com.composum.sling.core.usermanagement.model.UserModel;
+import com.composum.sling.core.usermanagement.model.*;
+import com.composum.sling.core.usermanagement.service.AuthorizableWrapper;
 import com.composum.sling.core.usermanagement.service.Authorizables;
+import com.composum.sling.core.usermanagement.service.GroupWrapper;
+import com.composum.sling.core.usermanagement.service.UserWrapper;
 import com.composum.sling.core.util.ResponseUtil;
 import com.composum.sling.core.util.XSS;
 import com.composum.sling.nodes.NodesConfiguration;
@@ -25,7 +23,6 @@ import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.jetbrains.annotations.NotNull;
@@ -130,7 +127,6 @@ public class UserManagementServlet extends AbstractServiceServlet {
         public void doIt(@NotNull final SlingHttpServletRequest request,
                          @NotNull final SlingHttpServletResponse response, ResourceHandle resource)
                 throws RepositoryException, IOException {
-            final ResourceResolver resolver = request.getResourceResolver();
             final Authorizables.Context context = new Authorizables.Context(authorizablesService, request, response);
             String path = AbstractServiceServlet.getPath(request);
             if (StringUtils.isBlank(path) || "/".equals(path)) {
@@ -147,7 +143,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
         }
     }
 
-    public abstract class GetAuthorizables<A extends Authorizable, E extends AuthorizableModel> implements ServletOperation {
+    public abstract class GetAuthorizables<A extends AuthorizableWrapper, E extends AuthorizableModel> implements ServletOperation {
 
         protected final Class<A> authorizableClass;
 
@@ -181,25 +177,25 @@ public class UserManagementServlet extends AbstractServiceServlet {
         }
     }
 
-    public class GetAllAuthorizables extends GetAuthorizables<Authorizable, AuthorizableModel> {
+    public class GetAllAuthorizables extends GetAuthorizables<AuthorizableWrapper, AuthorizableModel> {
         public GetAllAuthorizables() {
-            super(Authorizable.class);
+            super(AuthorizableWrapper.class);
         }
     }
 
-    public class GetUsers extends GetAuthorizables<User, UserModel> {
+    public class GetUsers extends GetAuthorizables<UserWrapper, UserModel> {
         public GetUsers() {
-            super(User.class);
+            super(UserWrapper.class);
         }
     }
 
-    public class GetGroups extends GetAuthorizables<Group, GroupModel> {
+    public class GetGroups extends GetAuthorizables<GroupWrapper, GroupModel> {
         public GetGroups() {
-            super(Group.class);
+            super(GroupWrapper.class);
         }
     }
 
-    public class QueryAuthorizables extends GetAuthorizables<Authorizable, AuthorizableModel> {
+    public class QueryAuthorizables extends GetAuthorizables<AuthorizableWrapper, AuthorizableModel> {
 
         public QueryAuthorizables() {
             super(null);
@@ -428,7 +424,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
                     ResponseUtil.writeEmptyArray(response);
                 } else {
                     User user = (User) authorizable;
-                    UserModel userModel = new UserModel(context, user);
+                    UserModel userModel = new UserModel(context, new UserWrapper(user));
                     response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
                     response.setCharacterEncoding(MappingRules.CHARSET.name());
                     try (JsonWriter writer = new JsonWriter(response.getWriter())) {
@@ -459,10 +455,10 @@ public class UserManagementServlet extends AbstractServiceServlet {
                     }
                     //public User createSystemUser(String userID, String intermediatePath)
                     Method method = userManager.getClass().getMethod("createSystemUser", String.class, String.class);
-                    Object newUser = method.invoke(userManager, username, intermediatePath);
+                    Object jcrNewUser = method.invoke(userManager, username, intermediatePath);
                     //
                     context.commit();
-                    UserModel userModel = new UserModel(context, (User) newUser);
+                    UserModel userModel = new UserModel(context, new UserWrapper((User) jcrNewUser));
                     response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
                     response.setCharacterEncoding(MappingRules.CHARSET.name());
                     try (JsonWriter writer = new JsonWriter(response.getWriter())) {
@@ -507,7 +503,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
                         newUser = userManager.createUser(username, password, () -> username, intermediatePath);
                     }
                     context.commit();
-                    UserModel userModel = new UserModel(context, newUser);
+                    UserModel userModel = new UserModel(context, new UserWrapper(newUser));
                     response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
                     response.setCharacterEncoding(MappingRules.CHARSET.name());
                     try (JsonWriter writer = new JsonWriter(response.getWriter())) {
@@ -580,7 +576,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
                     newGroup = userManager.createGroup(name, () -> name, intermediatePath);
                 }
                 context.commit();
-                GroupModel groupModel = new GroupModel(context, newGroup);
+                GroupModel groupModel = new GroupModel(context, new GroupWrapper(newGroup));
                 response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
                 response.setCharacterEncoding(MappingRules.CHARSET.name());
                 try (JsonWriter writer = new JsonWriter(response.getWriter())) {
@@ -609,7 +605,7 @@ public class UserManagementServlet extends AbstractServiceServlet {
                     ResponseUtil.writeEmptyArray(response);
                 } else {
                     Group group = (Group) authorizable;
-                    GroupModel groupModel = new GroupModel(context, group);
+                    GroupModel groupModel = new GroupModel(context, new GroupWrapper(group));
                     response.setContentType(ResponseUtil.JSON_CONTENT_TYPE);
                     response.setCharacterEncoding(MappingRules.CHARSET.name());
                     try (JsonWriter writer = new JsonWriter(response.getWriter())) {

@@ -14,39 +14,40 @@ import java.util.Set;
 /**
  * represents an authorizable as a group; used to construct a service user as a member of the assigned system users
  */
-public class GroupFacade implements Group {
+public class GroupFacade extends GroupWrapper {
 
-    protected final Authorizable delegate;
-    protected final Authorizable member;
+    protected final AuthorizableWrapper delegate;
+    protected final ServiceUserWrapper serviceUser;
 
-    public GroupFacade(@NotNull final Authorizable delegate, @NotNull final Authorizable member) {
+    public GroupFacade(@NotNull final AuthorizableWrapper delegate, @NotNull final ServiceUserWrapper serviceUser) {
+        super(null);
         this.delegate = delegate;
-        this.member = member;
+        this.serviceUser = serviceUser;
     }
 
     @Override
-    public Iterator<Authorizable> getDeclaredMembers() throws RepositoryException {
-        return delegate instanceof Group
-                ? ((Group) delegate).getDeclaredMembers()
-                : Collections.singleton(member).iterator();
+    public Iterator<AuthorizableWrapper> getDeclaredMembers() throws RepositoryException {
+        return delegate instanceof GroupWrapper
+                ? ((GroupWrapper) delegate).getDeclaredMembers()
+                : Collections.singleton((AuthorizableWrapper) serviceUser).iterator();
     }
 
     @Override
-    public Iterator<Authorizable> getMembers() throws RepositoryException {
-        return delegate instanceof Group
-                ? ((Group) delegate).getMembers()
-                : Collections.singleton(member).iterator();
+    public Iterator<AuthorizableWrapper> getMembers() throws RepositoryException {
+        return delegate instanceof GroupWrapper
+                ? ((GroupWrapper) delegate).getMembers()
+                : Collections.singleton((AuthorizableWrapper) serviceUser).iterator();
     }
 
     @Override
     public boolean isDeclaredMember(Authorizable authorizable) throws RepositoryException {
-        return authorizable.equals(member) ||
+        return authorizable.equals(serviceUser) ||
                 (delegate instanceof Group && ((Group) delegate).isDeclaredMember(authorizable));
     }
 
     @Override
     public boolean isMember(Authorizable authorizable) throws RepositoryException {
-        return authorizable.equals(member) ||
+        return authorizable.equals(serviceUser) ||
                 (delegate instanceof Group && ((Group) delegate).isMember(authorizable));
     }
 
@@ -86,12 +87,12 @@ public class GroupFacade implements Group {
     }
 
     @Override
-    public Iterator<Group> declaredMemberOf() throws RepositoryException {
+    public Iterator<GroupWrapper> declaredMemberOf() throws RepositoryException {
         return delegate.declaredMemberOf();
     }
 
     @Override
-    public Iterator<Group> memberOf() throws RepositoryException {
+    public Iterator<GroupWrapper> memberOf() throws RepositoryException {
         return delegate.memberOf();
     }
 
