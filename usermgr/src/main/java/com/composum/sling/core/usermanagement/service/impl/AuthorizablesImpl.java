@@ -122,7 +122,7 @@ public class AuthorizablesImpl implements Authorizables {
                                                               @Nullable final Class<? extends AuthorizableWrapper> selector,
                                                               @Nullable final String nameQueryPattern)
             throws RepositoryException {
-        if (selector == null || !selector.equals(ServiceUserWrapper.class)) {
+        if (selector == null || !ServiceUserWrapper.class.isAssignableFrom(selector)) {
             UserManager userManager = context.getUserManager();
             if (userManager != null) {
                 final Query authorizableQuery = new Query() {
@@ -169,7 +169,7 @@ public class AuthorizablesImpl implements Authorizables {
                                                         @Nullable final String nameQueryPattern)
             throws RepositoryException {
         List<ServiceUserWrapper> serviceUsers = new ArrayList<>();
-        if (!incompatibleServiceMapper && (selector == null || selector.equals(ServiceUserWrapper.class))) {
+        if (!incompatibleServiceMapper && (selector == null || ServiceUserWrapper.class.isAssignableFrom(selector))) {
             Pattern namePattern = StringUtils.isNotBlank(nameQueryPattern)
                     ? Pattern.compile("^" + nameQueryPattern.replaceAll("%", ".*") + "$")
                     : null;
