@@ -5,6 +5,7 @@ import com.composum.sling.core.filter.StringFilter;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +25,7 @@ public class StringFilterMapping {
     private static final Logger LOG = LoggerFactory.getLogger(StringFilterMapping.class);
 
     public static final String PROPERTY_TYPE = "type";
+    public static final String PROPERTY_NOT = "not";
     public static final String PROPERTY_RULE = "rule";
     public static final String PROPERTY_PATTERNS = "patterns";
     public static final String NODE_NAME_ENTRY = "entry";
@@ -34,7 +36,7 @@ public class StringFilterMapping {
     //
 
     public static final Pattern FILTER_SET_PATTERN = Pattern.compile(
-            "^(and|or|first|last)\\{(.+)\\}$"
+            "^(and|or|first|last)\\{(.+)}$"
     );
     public static final Pattern STRING_PATTERN = Pattern.compile(
             "^(\\+|-|All)('(.*)')?$"
@@ -42,8 +44,8 @@ public class StringFilterMapping {
     public static final String DEFAULT_FILTER_TYPE = "+";
     public static final String ALL_FILTER_TYPE = "All";
 
-    public static StringFilter fromString(String rules) {
-        StringFilter filter = StringFilter.ALL;
+    public static @Nullable StringFilter fromString(String rules) {
+        StringFilter filter = null;
         Matcher matcher = FILTER_SET_PATTERN.matcher(rules);
         if (matcher.matches()) {
             String type = matcher.group(1);
@@ -57,7 +59,10 @@ public class StringFilterMapping {
                     if (StringUtils.isBlank(nextRule) ||
                             STRING_PATTERN.matcher(nextRule).matches() ||
                             FILTER_SET_PATTERN.matcher(nextRule).matches()) {
-                        filters.add(fromString(nextRule));
+                        StringFilter f = fromString(nextRule);
+                        if (f != null) {
+                            filters.add(f);
+                        }
                         nextRule = "";
                     } else {
                         nextRule += ",";
@@ -65,42 +70,49 @@ public class StringFilterMapping {
                 }
                 filter = new StringFilter.FilterSet(rule, filters);
             } catch (Exception ex) {
-                LOG.error("invalid filter rule: '" + rules + "' (" + ex.toString() + ")");
+                LOG.error("invalid filter rule: '" + rules + "' (" + ex + ")");
             }
         } else {
-            matcher = STRING_PATTERN.matcher(rules);
-            if (matcher.matches()) {
-                String type = matcher.group(1);
-                if (StringUtils.isBlank(type)) {
-                    type = DEFAULT_FILTER_TYPE;
-                }
-                String values = matcher.group(3);
-                try {
-                    StringFilter.FilterSet.Rule rule = StringFilter.FilterSet.Rule.valueOf(type);
-                    List<StringFilter> filters = new ArrayList<>();
-                    String nextRule = "";
-                    for (String item : StringUtils.split(values, ',')) {
-                        nextRule += item;
-                        if (STRING_PATTERN.matcher(nextRule).matches() || StringUtils.isBlank(nextRule)) {
-                            filters.add(fromString(nextRule));
-                            nextRule = "";
+            if (StringUtils.isNotBlank(rules) && rules.charAt(0) == '!') {
+                filter = new StringFilter.Not(fromString(rules.substring(1)));
+            } else {
+                matcher = STRING_PATTERN.matcher(rules);
+                if (matcher.matches()) {
+                    String type = matcher.group(1);
+                    if (StringUtils.isBlank(type)) {
+                        type = DEFAULT_FILTER_TYPE;
+                    }
+                    String values = matcher.group(3);
+                    try {
+                        StringFilter.FilterSet.Rule rule = StringFilter.FilterSet.Rule.valueOf(type);
+                        List<StringFilter> filters = new ArrayList<>();
+                        String nextRule = "";
+                        for (String item : StringUtils.split(values, ',')) {
+                            nextRule += item;
+                            if (STRING_PATTERN.matcher(nextRule).matches() || StringUtils.isBlank(nextRule)) {
+                                StringFilter f = fromString(nextRule);
+                                if (f != null) {
+                                    filters.add(f);
+                                }
+                                nextRule = "";
+                            } else {
+                                nextRule += ",";
+                            }
+                        }
+                        filter = new StringFilter.FilterSet(rule, filters);
+                    } catch (IllegalArgumentException iaex) {
+                        if (ALL_FILTER_TYPE.equals(type)) {
+                            filter = StringFilter.ALL;
+                        } else if ("-".equals(type)) {
+                            filter = new StringFilter.BlackList(values);
                         } else {
-                            nextRule += ",";
+                            filter = new StringFilter.WhiteList(values);
                         }
                     }
-                    filter = new StringFilter.FilterSet(rule, filters);
-                } catch (IllegalArgumentException iaex) {
-                    if (ALL_FILTER_TYPE.equals(type)) {
-                        filter = StringFilter.ALL;
-                    } else if ("-".equals(type)) {
-                        filter = new StringFilter.BlackList(values);
-                    } else {
-                        filter = new StringFilter.WhiteList(values);
+                } else {
+                    if (StringUtils.isNotBlank(rules)) {
+                        LOG.error("invalid filter rule: '" + rules + "'");
                     }
-                }
-            } else {
-                if (StringUtils.isNotBlank(rules)) {
-                    LOG.error("invalid filter rule: '" + rules + "'");
                 }
             }
         }
@@ -119,6 +131,7 @@ public class StringFilterMapping {
             Class<? extends StringFilter> type = getType(typeName);
             MappingStrategy strategy = getStrategy(type);
             filter = strategy.fromResource(resource);
+            return handle.getProperty(PROPERTY_NOT, Boolean.FALSE) ? new StringFilter.Not(filter) : filter;
         }
         return filter;
     }
@@ -141,6 +154,7 @@ public class StringFilterMapping {
         STRATEGY_MAP.put(StringFilter.FilterSet.class, new FilterSetStrategy());
         STRATEGY_MAP.put(StringFilter.WhiteList.class, new PatternFilterStrategy());
         STRATEGY_MAP.put(StringFilter.BlackList.class, new PatternFilterStrategy());
+        STRATEGY_MAP.put(StringFilter.Not.class, new NotFilterStrategy());
         STRATEGY_MAP.put(StringFilter.All.class, new AllFilterStrategy());
     }
 
@@ -158,8 +172,7 @@ public class StringFilterMapping {
         protected StringFilter createInstance(ResourceHandle resource,
                                               Class<? extends StringFilter> type)
                 throws Exception {
-            StringFilter filter = type.newInstance();
-            return filter;
+            return type.getDeclaredConstructor().newInstance();
         }
 
         @Override
@@ -167,8 +180,7 @@ public class StringFilterMapping {
             ResourceHandle handle = ResourceHandle.use(resource);
             String typeName = handle.getProperty(PROPERTY_TYPE, (String) null);
             Class<? extends StringFilter> type = getType(typeName);
-            StringFilter filter = createInstance(handle, type);
-            return filter;
+            return createInstance(handle, type);
         }
 
         @Override
@@ -183,8 +195,18 @@ public class StringFilterMapping {
 
         @Override
         protected StringFilter createInstance(ResourceHandle resource,
-                                              Class<? extends StringFilter> type) throws Exception {
+                                              Class<? extends StringFilter> type) {
             return StringFilter.ALL;
+        }
+    }
+
+    public static class NotFilterStrategy extends GeneralStrategy {
+
+        @Override
+        public void toResource(Resource resource, StringFilter filter) throws RepositoryException {
+            super.toResource(resource, ((StringFilter.Not) filter).getFilter());
+            ResourceHandle handle = ResourceHandle.use(resource);
+            handle.setProperty(PROPERTY_NOT, Boolean.TRUE);
         }
     }
 
@@ -199,8 +221,7 @@ public class StringFilterMapping {
             for (String pattern : patternStrings) {
                 patterns.add(Pattern.compile(pattern));
             }
-            StringFilter filter = type.getConstructor(List.class).newInstance(patterns);
-            return filter;
+            return type.getConstructor(List.class).newInstance(patterns);
         }
 
         @Override
@@ -230,10 +251,8 @@ public class StringFilterMapping {
                 StringFilter filter = StringFilterMapping.fromResource(filterRes);
                 filterList.add(filter);
             }
-            StringFilter filter = type.getConstructor(
-                    StringFilter.FilterSet.Rule.class, List.class)
+            return type.getConstructor(StringFilter.FilterSet.Rule.class, List.class)
                     .newInstance(rule, filterList);
-            return filter;
         }
 
         @Override
@@ -266,6 +285,7 @@ public class StringFilterMapping {
             Pattern.compile("^" + StringFilter.class.getName() + ".([A-Za-z]+)$");
     public static final Pattern IS_SIMPLIFIED_TYPE_PATTERN = Pattern.compile("^[A-Za-z]+$");
 
+    @SuppressWarnings("unchecked")
     public static Class<? extends StringFilter> getType(String typeName) throws Exception {
         Class<? extends StringFilter> type;
         if (StringFilterMapping.IS_SIMPLIFIED_TYPE_PATTERN.matcher(typeName).matches()) {

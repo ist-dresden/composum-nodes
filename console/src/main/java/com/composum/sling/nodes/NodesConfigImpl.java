@@ -53,13 +53,6 @@ public class NodesConfigImpl implements NodesConfiguration {
         )
         long query_result_limit() default 500L;
 
-        // FIXME(hps,25.05.20) should that be used somehow? It isn't now. Relation to CoreConfig-errorpages?
-        @AttributeDefinition(
-                name = "Errorpages",
-                description = "the path to the errorpages; e.g. 'meta/errorpages' for searching errorpages along the requested path"
-        )
-        String errorpages_Path() default "meta/errorpages";
-
         @AttributeDefinition(
                 name = "Content Page Filter",
                 description = "the filter configuration to set the scope to the content pages"
@@ -70,7 +63,7 @@ public class NodesConfigImpl implements NodesConfiguration {
                 name = "The default Node Filter",
                 description = "the filter configuration to filter out system nodes"
         )
-        String node_default_filter() default "and{Name(-'^rep:(repo)?[Pp]olicy$'),Path(-'^/bin(/.*)?$,^/services(/.*)?$,^/servlet(/.*)?$,^/(jcr:)?system(/.*)?$')}";
+        String node_default_filter() default "and{Name(-'^rep:(repo)?[Pp]olicy$'),Path(-'^/(api|bin|services|servlet)(/.*)?$,^/[^/]+\\.servlet(/.*)?$,^/(jcr:)?system(/.*)?$'),Property(servletClass!)}";
 
         @AttributeDefinition(
                 name = "Tree Intermediate (Folder) Filter",
@@ -88,7 +81,7 @@ public class NodesConfigImpl implements NodesConfiguration {
                 name = "Orderable Nodes Filter",
                 description = "the filter configuration to detect ordered nodes (prevent from sorting in the tree)"
         )
-        String node_orderable_filter() default "or{Type(node:orderable),PrimaryType(+'^.*([Oo]rdered|[Pp]age).*$,^sling:(Mapping)$,^nt:(unstructured|frozenNode)$,^rep:(ACL|Members|system)$')}";
+        String node_orderable_filter() default "and{or{Type(node:orderable),PrimaryType(+'^.*([Oo]rdered|[Pp]age).*$,^sling:(Mapping)$,^nt:(unstructured|frozenNode)$,^rep:(ACL|Members|system)$')},PrimaryType(-'^rep:root$')}";
 
         @AttributeDefinition(
                 name = "XML Source Nodes Filter",

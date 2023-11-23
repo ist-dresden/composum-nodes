@@ -2,6 +2,7 @@ package com.composum.sling.core.filter;
 
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.mapping.jcr.ResourceFilterMapping;
+import com.composum.sling.core.mapping.jcr.StringFilterMapping;
 import com.composum.sling.core.util.CoreConstants;
 import com.composum.sling.core.util.ResourceUtil;
 import com.composum.sling.core.util.SlingResourceUtil;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
@@ -32,6 +34,7 @@ import static com.composum.sling.core.filter.NodeTypeFilters.NODE_TYPE_PREFIX;
  * <p>
  * Do not implement this directly, but extend {@link AbstractResourceFilter}.
  */
+@SuppressWarnings({"unused", "DuplicatedCode"})
 public interface ResourceFilter {
 
     Pattern SIMPLE_ARRAY_PATTERN = Pattern.compile("^([+-])\\[(.*)]$");
@@ -65,10 +68,14 @@ public interface ResourceFilter {
      */
     void toString(@NotNull StringBuilder builder);
 
-    /** The predefined filter instance which accepts each resource (but fails if it's null). */
+    /**
+     * The predefined filter instance which accepts each resource (but fails if it's null).
+     */
     ResourceFilter ALL = new AllFilter();
 
-    /** the predefined filter instance for folders */
+    /**
+     * the predefined filter instance for folders
+     */
     ResourceFilter FOLDER = new FolderFilter();
 
 
@@ -78,7 +85,7 @@ public interface ResourceFilter {
     abstract class AbstractResourceFilter implements ResourceFilter {
 
         /**
-         * Human readable String representation for debugging purposes: this
+         * Human-readable String representation for debugging purposes: this
          * default implementation uses {@link ResourceFilter#toString(StringBuilder)}.
          */
         @Override
@@ -100,7 +107,9 @@ public interface ResourceFilter {
             return resource != null;
         }
 
-        /** This counts as empty blacklist - that is, this returns true. */
+        /**
+         * This counts as empty blacklist - that is, this returns true.
+         */
         @Override
         public boolean isRestriction() {
             return true;
@@ -167,7 +176,9 @@ public interface ResourceFilter {
 
         @Override
         public boolean accept(Resource resource) {
-            if (resource == null) { return restriction; }
+            if (resource == null) {
+                return restriction;
+            }
             for (String type : typeNames) {
                 if (type.startsWith(NODE_TYPE_PREFIX)) {
                     if (NodeTypeFilters.accept(resource, type)) {
@@ -177,7 +188,9 @@ public interface ResourceFilter {
                     if (!StringUtils.contains(type, "/")) {
                         try {
                             Node node = resource.adaptTo(Node.class);
-                            if (node != null && node.isNodeType(type)) { return !restriction; }
+                            if (node != null && node.isNodeType(type)) {
+                                return !restriction;
+                            }
                         } catch (RepositoryException e) {
                             LOG.error("Error checking node type for " + resource.getPath(), e);
                         }
@@ -202,7 +215,9 @@ public interface ResourceFilter {
             builder.append(")");
         }
 
-        /** Writes the typenames in a format parseable with TypeFilter{@link #TypeFilter(List, boolean)}. */
+        /**
+         * Writes the type names in a format parseable with TypeFilter{@link #TypeFilter(List, boolean)}.
+         */
         public void typeNamesToString(StringBuilder builder) {
             builder.append(restriction ? '-' : '+');
             builder.append('[');
@@ -216,7 +231,9 @@ public interface ResourceFilter {
      */
     abstract class PatternFilter extends AbstractResourceFilter {
 
-        /** the filter instance for the value */
+        /**
+         * the filter instance for the value
+         */
         protected StringFilter filter;
 
         public StringFilter getFilter() {
@@ -273,6 +290,85 @@ public interface ResourceFilter {
         public void toString(@NotNull StringBuilder builder) {
             builder.append("Name(");
             super.toString(builder);
+            builder.append(")");
+        }
+    }
+
+    /**
+     * A ResourceFilter implementation which checks a property
+     * of a resource using a StringFilter for the property value.
+     */
+    class PropertyFilter extends PatternFilter {
+
+        public static final Pattern STRING_RULE = Pattern.compile(
+                "^(?<name>[^!:]+)(?<op>[!:])(?<filter>.*)$");
+
+        protected final String propertyName;
+
+        /**
+         * The constructor based on a StringFilter for the property value.
+         *
+         * @param filter the string filter (or a filter set) to use; 'null': check for non-existing property
+         */
+        public PropertyFilter(String propertyName, StringFilter filter) {
+            this.propertyName = propertyName;
+            this.filter = filter;
+        }
+
+        /**
+         * The constructor based on a String rule ('{property-name}:{string-filter}')
+         *
+         * @param filterRule the string rule to build the filter instance
+         */
+        public PropertyFilter(String filterRule) {
+            Matcher matcher = STRING_RULE.matcher(filterRule);
+            this.filter = null;
+            if (matcher.matches()) {
+                String stringRule = matcher.group("filter");
+                this.propertyName = matcher.group("name");
+                if (":".equals(matcher.group("op"))) {
+                    filter = StringUtils.isNotEmpty(stringRule)
+                            ? StringFilterMapping.fromString(stringRule) : StringFilter.ALL;
+                }
+            } else {
+                // simple property existence check
+                this.propertyName = filterRule;
+                this.filter = StringFilter.ALL;
+            }
+        }
+
+        public String getPropertyName() {
+            return propertyName;
+        }
+
+        /**
+         * Accepts a resource if their property values matches to the used StringFilter
+         *
+         * @param resource the resource object to check
+         * @return 'true', if the filter matches
+         */
+        @Override
+        public boolean accept(Resource resource) {
+            if (resource != null) {
+                final String value = resource.getValueMap().get(propertyName, String.class);
+                return (filter == null && value == null) // property mustn't be there
+                        || (filter != null && value != null && filter.accept(value));
+            }
+            return false;
+        }
+
+        /**
+         * Returns the string representation of the filter itself [Name('filter')]
+         */
+        @Override
+        public void toString(@NotNull StringBuilder builder) {
+            builder.append("Property(").append(propertyName);
+            if (filter != null) {
+                builder.append(':');
+                super.toString(builder);
+            } else {
+                builder.append('!');
+            }
             builder.append(")");
         }
     }
@@ -338,7 +434,9 @@ public interface ResourceFilter {
         @Override
         public boolean accept(Resource resource) {
             String primaryType = ResourceUtil.getPrimaryType(resource);
-            if (StringUtils.isNotBlank(primaryType)) { return filter.accept(primaryType); }
+            if (StringUtils.isNotBlank(primaryType)) {
+                return filter.accept(primaryType);
+            }
             return false;
         }
 
@@ -354,14 +452,15 @@ public interface ResourceFilter {
     }
 
     /**
-     * A ResourceFilter implementation which checks for JCR nodetypes similar to {@link Node#isNodeType(String)} -
+     * A ResourceFilter implementation which checks for JCR node types similar to {@link Node#isNodeType(String)} -
      * both primary type and all direct and inherited mixin types are checked against the filters.
      * Can work as a blacklist (restriction) or whitelist, depending on the filter.
      */
+    @SuppressWarnings("DuplicatedCode")
     class NodeTypeFilter extends PatternFilter {
 
         /**
-         * A ResourceFilter implementation which checks for JCR nodetypes similar to {@link Node#isNodeType(String)} -
+         * A ResourceFilter implementation which checks for JCR node types similar to {@link Node#isNodeType(String)} -
          * both primary type and all direct and inherited mixin types are checked against the filters.
          * Can work as a blacklist (restriction) or whitelist, depending on the filter.
          *
@@ -405,7 +504,7 @@ public interface ResourceFilter {
                         }
                         return filter.isRestriction();
                     } catch (RepositoryException e) {
-                        // ok, its possible that mixin types are not available (synthetic resource)
+                        // ok, it's possible that mixin types are not available (synthetic resource)
                     }
                 }
             }
@@ -536,9 +635,13 @@ public interface ResourceFilter {
          * - {@link Rule#none}:  no pattern in the set accepts a value. With one argument this is a simple negation.
          */
         public enum Rule {
-            /** each pattern in the set must accept a value */
+            /**
+             * each pattern in the set must accept a value
+             */
             and,
-            /** at least one pattern in the set must accept a value */
+            /**
+             * at least one pattern in the set must accept a value
+             */
             or,
             /**
              * The first appropriate filter determines the result:
@@ -564,7 +667,9 @@ public interface ResourceFilter {
              * target filter was matched, or just one of the intermediate resources filters.
              */
             tree,
-            /** no pattern in the set accepts a value. With one argument this is a simple negation. */
+            /**
+             * no pattern in the set accepts a value. With one argument this is a simple negation.
+             */
             none;
 
             /**
@@ -575,12 +680,14 @@ public interface ResourceFilter {
              */
             public FilterSet of(ResourceFilter... filters) {
                 if (this.equals(and) || this.equals(or)) {
-                    // simplify if we have an 'and' of 'and's or 'or' of 'or's.
+                    // simplify if we have an 'and' of 'and' or 'or' of 'or's.
                     List<ResourceFilter> flattenedFilters = new ArrayList<>();
                     for (ResourceFilter filter : filters) {
                         if (filter instanceof FilterSet && ((FilterSet) filter).rule.equals(this)) {
                             flattenedFilters.addAll(((FilterSet) filter).getSet());
-                        } else { flattenedFilters.add(filter); }
+                        } else {
+                            flattenedFilters.add(filter);
+                        }
                     }
                     return new FilterSet(this, flattenedFilters);
                 }
@@ -589,12 +696,18 @@ public interface ResourceFilter {
 
         }
 
-        /** the selected combination rule for this filter set */
+        /**
+         * the selected combination rule for this filter set
+         */
         protected final Rule rule;
-        /** the set of combined filters collected in this set */
+        /**
+         * the set of combined filters collected in this set
+         */
         protected final List<ResourceFilter> set;
 
-        /** the cached value for the 'restriction' aspect */
+        /**
+         * the cached value for the 'restriction' aspect
+         */
         protected transient Boolean restriction;
 
         /**
@@ -659,7 +772,7 @@ public interface ResourceFilter {
          * this check method.
          */
         public boolean isIntermediate(Resource resource) {
-            return rule == Rule.tree && set.size() > 0 && !set.get(0).accept(resource);
+            return rule == Rule.tree && !set.isEmpty() && !set.get(0).accept(resource);
         }
 
         /**
@@ -678,14 +791,14 @@ public interface ResourceFilter {
                             return true;
                         }
                     }
-                    return set.size() == 0;
+                    return set.isEmpty();
                 case and:
                     for (ResourceFilter filter : set) {
                         if (!filter.accept(resource)) {
                             return false;
                         }
                     }
-                    return set.size() > 0;
+                    return !set.isEmpty();
                 case none:
                     for (ResourceFilter filter : set) {
                         if (filter.accept(resource)) {
@@ -720,8 +833,8 @@ public interface ResourceFilter {
 
         /**
          * This implements a heuristic whether the filter is a blacklist or whitelist, but <b>caution</b>: for {@link FilterSet}s
-         * this is not well defined: please don't rely on this. That is: it's sensible to avoid
-         * putting FilterSets into other FilterSet with rules 'first' or 'last' that depend on this - perhaps with the exception of FilterSets with rule 'none' and one argument.
+         * this is not well-defined: please don't rely on this. That is: it's sensible to avoid
+         * putting FilterSets into other FilterSet with rules 'first' or 'last' that depend on this - perhaps except for FilterSets with rule 'none' and one argument.
          *
          * @return true for 'or' and 'last' if each of the filters is a restriction,
          * for 'and' and 'first' if one of the filters is a restriction,
@@ -764,7 +877,7 @@ public interface ResourceFilter {
                         }
                         break;
                     case tree:
-                        restriction = set.size() <= 0 || set.get(0).isRestriction();
+                        restriction = set.isEmpty() || set.get(0).isRestriction();
                         break;
                 }
             }
@@ -774,7 +887,6 @@ public interface ResourceFilter {
         /**
          * Returns the string representation of the filter itself ['rule'{'filter', ...}]
          */
-        @SuppressWarnings("Duplicates")
         @Override
         public void toString(@NotNull StringBuilder builder) {
             builder.append(rule.name());
@@ -835,7 +947,9 @@ public interface ResourceFilter {
             contentNodeFilter = ResourceFilterMapping.fromString(m.group(3));
         }
 
-        /** See {@link ContentNodeFilter} for details when this matches. */
+        /**
+         * See {@link ContentNodeFilter} for details when this matches.
+         */
         @Override
         public boolean accept(Resource resource) {
             boolean applicable = applicableFilter.accept(resource);
@@ -847,28 +961,36 @@ public interface ResourceFilter {
                 result = applicable && contentNodeFilter.accept(contentNode);
             }
             if (LOG.isTraceEnabled()) {
-                LOG.trace("accept {} = {} , applicable {}", new Object[]{SlingResourceUtil.getPath(resource), result, applicable});
+                LOG.trace("accept {} = {} , applicable {}", SlingResourceUtil.getPath(resource), result, applicable);
             }
             return result;
         }
 
-        /** The filter that determines to which node's content node the 'contentNodeFilter' should be applied. */
+        /**
+         * The filter that determines to which node's content node the 'contentNodeFilter' should be applied.
+         */
         public ResourceFilter getApplicableFilter() {
             return applicableFilter;
         }
 
-        /** The filter the content nodes of the resources matching applicableFilter have to match. */
+        /**
+         * The filter the content nodes of the resources matching applicableFilter have to match.
+         */
         public ResourceFilter getContentNodeFilter() {
             return contentNodeFilter;
         }
 
-        /** Whether it is configured to work as a restriction. */
+        /**
+         * Whether it is configured to work as a restriction.
+         */
         @Override
         public boolean isRestriction() {
             return restriction;
         }
 
-        /** Generates an external representation. Caution: there is currently no way to deserialize this. */
+        /**
+         * Generates an external representation. Caution: there is currently no way to deserialize this.
+         */
         @Override
         public void toString(@NotNull StringBuilder builder) {
             builder.append("ContentNode(");

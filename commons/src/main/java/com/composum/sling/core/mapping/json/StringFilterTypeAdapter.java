@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 /**
  * The TypeAdapter implementation to write and read StringFilters instances to and from JSON text.
  */
+@SuppressWarnings({"SwitchStatementWithTooFewBranches", "DuplicatedCode"})
 public class StringFilterTypeAdapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(StringFilterTypeAdapter.class);
@@ -37,7 +38,7 @@ public class StringFilterTypeAdapter {
 
     public static class GeneralAdapter extends TypeAdapter<StringFilter> {
 
-        enum JsonValues {type}
+        enum JsonValues {type, not}
 
         // write
 
@@ -57,28 +58,34 @@ public class StringFilterTypeAdapter {
 
         protected transient Class<? extends StringFilter> type = null;
         protected transient GeneralAdapter delegate = null;
+        protected transient boolean not = false;
+
+        protected StringFilter modify(StringFilter instance) {
+            return not ? new StringFilter.Not(instance) : instance;
+        }
 
         protected StringFilter createInstance(Class<? extends StringFilter> type) throws Exception {
             StringFilter result;
             if (StringFilter.All.class.equals(type)) {
                 result = StringFilter.ALL;
             } else {
-                result = type.newInstance();
+                result = type.getConstructor().newInstance();
             }
-            return result;
+            return modify(result);
         }
 
         protected Object parseValue(JsonReader reader, String name) throws Exception {
             switch (JsonValues.valueOf(name)) {
                 case type:
                     this.type = StringFilterMapping.getType(reader.nextString());
-                    if (this.type != null) {
-                        TypeAdapter adapter = GSON.getAdapter(this.type);
-                        if (adapter instanceof GeneralAdapter) {
-                            this.delegate = (GeneralAdapter) adapter;
-                        }
+                    TypeAdapter<?> adapter = GSON.getAdapter(this.type);
+                    if (adapter instanceof GeneralAdapter) {
+                        this.delegate = (GeneralAdapter) adapter;
                     }
                     return this.type;
+                case not:
+                    this.not = reader.nextBoolean();
+                    break;
             }
             return null;
         }
@@ -150,7 +157,7 @@ public class StringFilterTypeAdapter {
             } else {
                 result = super.createInstance(type);
             }
-            return result;
+            return modify(result);
         }
 
         @Override
@@ -195,7 +202,7 @@ public class StringFilterTypeAdapter {
             StringFilter result;
             result = type.getConstructor(StringFilter.FilterSet.Rule.class, List.class)
                     .newInstance(this.rule, this.set);
-            return result;
+            return modify(result);
         }
 
         @Override

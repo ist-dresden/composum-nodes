@@ -37,7 +37,9 @@ public interface StringFilter {
      */
     void toString(StringBuilder builder);
 
-    /** the predefined filter instance which accepts each string value */
+    /**
+     * the predefined filter instance which accepts each string value
+     */
     StringFilter ALL = new All();
 
     /**
@@ -61,6 +63,38 @@ public interface StringFilter {
         @Override
         public void toString(StringBuilder builder) {
             builder.append("All''");
+        }
+    }
+
+    /**
+     * the 'Not...' implementation to invert a filter
+     */
+    class Not implements StringFilter {
+
+        protected final StringFilter filter;
+
+        public Not(StringFilter filter) {
+            this.filter = filter;
+        }
+
+        public StringFilter getFilter() {
+            return filter;
+        }
+
+        @Override
+        public boolean accept(String value) {
+            return !filter.accept(value);
+        }
+
+        @Override
+        public boolean isRestriction() {
+            return !filter.isRestriction();
+        }
+
+        @Override
+        public void toString(StringBuilder builder) {
+            builder.append("!");
+            filter.toString(builder);
         }
     }
 
@@ -95,7 +129,9 @@ public interface StringFilter {
      */
     abstract class PatternList extends FilterBase {
 
-        /** such a filter uses a list of patterns to implement the filter function */
+        /**
+         * such a filter uses a list of patterns to implement the filter function
+         */
         protected List<Pattern> patterns;
 
         /**
@@ -332,12 +368,18 @@ public interface StringFilter {
             and, or, first, last
         }
 
-        /** the selected combination rule for this filter set */
+        /**
+         * the selected combination rule for this filter set
+         */
         protected final Rule rule;
-        /** the set of combined filters collected in this set */
+        /**
+         * the set of combined filters collected in this set
+         */
         protected final List<StringFilter> set;
 
-        /** the cached value for the 'restriction' aspect */
+        /**
+         * the cached value for the 'restriction' aspect
+         */
         protected transient Boolean restriction;
 
         /**

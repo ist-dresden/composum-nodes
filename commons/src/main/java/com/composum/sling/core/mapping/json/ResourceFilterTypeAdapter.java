@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
+/*
  * A ResourceFilter is useful to describe a general way to define scopes in resource hierarchy.
  * Such a filter accepts only resources which properties are matching to filter patterns.
  * These filters can be combined in filter sets with various combination rules.
@@ -25,11 +25,12 @@ import java.util.List;
 /**
  * The TypeAdapter implementation to write and read StringFilters instances to and from JSON text.
  */
+@SuppressWarnings("SwitchStatementWithTooFewBranches")
 public class ResourceFilterTypeAdapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(StringFilterTypeAdapter.class);
 
-    public static GsonBuilder registerTypeAdapters(GsonBuilder builder) {
+    public static GsonBuilder registerTypeAdapters(final GsonBuilder builder) {
         builder.registerTypeAdapter(ResourceFilter.FilterSet.class, new FilterSetAdapter());
         builder.registerTypeAdapter(ResourceFilter.TypeFilter.class, new TypeFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.NameFilter.class, new PatternFilterAdapter());
@@ -38,11 +39,11 @@ public class ResourceFilterTypeAdapter {
         builder.registerTypeAdapter(ResourceFilter.NodeTypeFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.ResourceTypeFilter.class, new PatternFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.MimeTypeFilter.class, new PatternFilterAdapter());
+        builder.registerTypeAdapter(ResourceFilter.PropertyFilter.class, new PropertyFilterAdapter());
         builder.registerTypeAdapter(ResourceFilter.FolderFilter.class, new PredefinedFilterAdapter(ResourceFilter.FOLDER));
         builder.registerTypeAdapter(ResourceFilter.AllFilter.class, new PredefinedFilterAdapter(ResourceFilter.ALL));
         builder.registerTypeAdapter(ResourceFilter.class, new GeneralAdapter());
-        builder = StringFilterTypeAdapter.registerTypeAdapters(builder);
-        return builder;
+        return StringFilterTypeAdapter.registerTypeAdapters(builder);
     }
 
     public static final GsonBuilder GSON_BUILDER = registerTypeAdapters(new GsonBuilder());
@@ -74,7 +75,7 @@ public class ResourceFilterTypeAdapter {
 
         protected ResourceFilter createInstance(Class<? extends ResourceFilter> type) throws Exception {
             ResourceFilter result;
-            result = type.newInstance();
+            result = type.getDeclaredConstructor().newInstance();
             return result;
         }
 
@@ -88,7 +89,7 @@ public class ResourceFilterTypeAdapter {
                         throw new IOException(ex);
                     }
                     if (this.type != null) {
-                        TypeAdapter adapter = GSON.getAdapter(this.type);
+                        TypeAdapter<?> adapter = GSON.getAdapter(this.type);
                         if (adapter instanceof GeneralAdapter) {
                             this.delegate = (GeneralAdapter) adapter;
                         }
@@ -98,6 +99,7 @@ public class ResourceFilterTypeAdapter {
             return null;
         }
 
+        @SuppressWarnings("DuplicatedCode")
         @Override
         public ResourceFilter read(JsonReader reader) throws IOException {
             ResourceFilter result = null;
@@ -143,7 +145,7 @@ public class ResourceFilterTypeAdapter {
         // read
 
         @Override
-        protected ResourceFilter createInstance(Class<? extends ResourceFilter> type) throws Exception {
+        protected ResourceFilter createInstance(Class<? extends ResourceFilter> type) {
             return this.instance;
         }
     }
@@ -202,9 +204,11 @@ public class ResourceFilterTypeAdapter {
         @Override
         protected void writeValues(JsonWriter writer, ResourceFilter value) throws IOException {
             super.writeValues(writer, value);
-            writer.name(JsonValues.filter.name());
             StringFilter filter = ((ResourceFilter.PatternFilter) value).getFilter();
-            GSON.toJson(filter, filter.getClass(), writer);
+            if (filter != null) {
+                writer.name(JsonValues.filter.name());
+                GSON.toJson(filter, filter.getClass(), writer);
+            }
         }
 
         // read
@@ -226,6 +230,40 @@ public class ResourceFilterTypeAdapter {
                 case filter:
                     this.filter = GSON.fromJson(reader, StringFilter.class);
                     return this.filter;
+                default:
+                    return super.parseValue(reader, name);
+            }
+        }
+    }
+
+    public static class PropertyFilterAdapter extends PatternFilterAdapter {
+
+        enum JsonValues {type, property, filter}
+
+        protected transient String propertyName = null;
+
+        // write
+
+        @Override
+        protected void writeValues(JsonWriter writer, ResourceFilter value) throws IOException {
+            writer.name(JsonValues.property.name());
+            writer.value(((ResourceFilter.PropertyFilter) value).getPropertyName());
+            super.writeValues(writer, value);
+        }
+
+        // read
+
+        @Override
+        protected ResourceFilter createInstance(Class<? extends ResourceFilter> type) throws Exception {
+            return type.getConstructor(String.class, StringFilter.class).newInstance(this.propertyName, this.filter);
+        }
+
+        @Override
+        protected Object parseValue(JsonReader reader, String name) throws IOException {
+            switch (JsonValues.valueOf(name)) {
+                case property:
+                    this.propertyName = GSON.fromJson(reader, String.class);
+                    return this.propertyName;
                 default:
                     return super.parseValue(reader, name);
             }
