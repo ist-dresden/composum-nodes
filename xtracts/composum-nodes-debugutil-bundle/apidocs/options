@@ -18,11 +18,11 @@
 -docencoding
 'UTF-8'
 -doctitle
-'Composum Nodes Debug Util Bundle 4.2.2 API'
+'Composum Nodes Debug Util Bundle 4.2.3 API'
 -linkoffline
 'https://docs.oracle.com/javase/8/docs/api' '/home/runner/work/composum-nodes/composum-nodes/xtracts/debugutil/target/javadoc-bundle-options'
 -notimestamp
 -use
 -version
 -windowtitle
-'Composum Nodes Debug Util Bundle 4.2.2 API'
+'Composum Nodes Debug Util Bundle 4.2.3 API'
