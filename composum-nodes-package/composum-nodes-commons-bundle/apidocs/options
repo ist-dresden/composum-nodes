@@ -18,11 +18,11 @@
 -docencoding
 'UTF-8'
 -doctitle
-'Composum Nodes API (Commons) Bundle 4.2.1 API'
+'Composum Nodes API (Commons) Bundle 4.2.2 API'
 -linkoffline
 'https://docs.oracle.com/javase/8/docs/api' '/home/runner/work/composum-nodes/composum-nodes/package/commons/target/javadoc-bundle-options'
 -notimestamp
 -use
 -version
 -windowtitle
-'Composum Nodes API (Commons) Bundle 4.2.1 API'
+'Composum Nodes API (Commons) Bundle 4.2.2 API'

@@ -1,3 +1,4 @@
+com.composum.nodes.debugutil
 com.composum.nodes.setup.impl
 com.composum.sling.clientlibs.handle
 com.composum.sling.clientlibs.processor
