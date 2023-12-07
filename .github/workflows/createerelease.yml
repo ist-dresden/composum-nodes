@@ -177,6 +177,15 @@ jobs:
         pwd
         $MVNCMD nexus-staging:drop
 
+    - name: Set master branch to released version
+      if: ${{ github.event.inputs.dryrun == 'false' }}
+      run: |
+        # we are now at the "prepare for next development iteration" commit, the commit with the release is the previous one.
+        # We need to set the master branch to that commit, and then push it.
+        git branch temp develop~1
+        git push origin temp:master
+        git branch -d temp
+
     - name: List target files even if recipe fails
       if: always()
       run: |
