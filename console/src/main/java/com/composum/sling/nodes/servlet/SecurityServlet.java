@@ -500,8 +500,10 @@ public class SecurityServlet extends AbstractServiceServlet {
             writer.name("restrictions").beginArray();
             for (String name : restrictionNames) {
                 try {
-                    Value value = entry.getRestriction(name);
-                    writer.value(name + "=" + (value != null ? value.toString() : "<null>"));
+                    Value[] restrictions = entry.getRestrictions(name);
+                    for (Value restriction : restrictions) {
+                        writer.value(name + "=" + (restriction != null ? restriction.toString() : "<null>"));
+                    }
                 } catch (Exception ex) {
                     writer.value(name + ":" + ex.toString());
                 }
