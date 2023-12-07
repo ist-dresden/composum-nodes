@@ -65,5 +65,15 @@
     "order": 150,
     "jcr:description": "\u003cp\u003eis searching for a node with a specific uuid\u003c/p\u003e",
     "xpath": "/jcr:root//*[@jcr:uuid\u003d\u0027${uuid}\u0027]"
+  },
+  "by-nodename": {
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "composum/nodes/browser/query/template",
+    "jcr:title": "search by node name",
+    "group": "Nodes",
+    "order": 170,
+    "jcr:description": "\u003cp\u003eis searching for a node with a name matching a pattern with % as placeholder\u003c/p\u003e",
+    "sql2": "SELECT * FROM [nt:base] AS node WHERE ISDESCENDANTNODE(node, '${root_path.path}') AND NAME(node) LIKE '${nodenamepattern}'",
+    "xpath": "/jcr:root${root_path.path}//element(*, nt:base)[jcr:like(fn:name(), \u0027${namepattern}\u0027)]"
   }
 }

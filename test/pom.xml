@@ -28,6 +28,7 @@
 
     <developers>
         <developer>
+            <id>hp.stoerr</id>
             <name>Hans-Peter Störr</name>
             <email>hp.stoerr@ist-software.com</email>
             <organization>IST GmbH Dresden</organization>
