@@ -31,43 +31,79 @@
         </c:forEach>
     </ul>
     --%>
-    <dl>
-        <c:forEach var="config" items="${model.singletonConfigurations}">
+    <c:forEach var="config" items="${model.singletonConfigurations}">
+        <%--@elvariable id="config" type="com.composum.sling.nodes.components.CAConfigModel.SingletonConfigInfo"--%>
+        <hr>
+        ${config.metadata.label} ( ${config.name} ) : ${config.metadata.description}
+        from ${config.configurationData.resourcePath}
+        <dl>
+            <c:forEach var="propInfo" items="${config.valueInfos}">
+                <dt>${propInfo.propertyMetadata.label} = ${propInfo.value}</dt>
+                <dd>
+                    <dl>
+                        <dt>description</dt>
+                        <dd>${propInfo.propertyMetadata.description}</dd>
+                        <dt>props</dt>
+                        <dd>${propInfo.propertyMetadata.properties}</dd>
+                        <dt>default</dt>
+                        <dd>${propInfo.propertyMetadata.defaultValue}</dd>
+                        <dt>default2</dt>
+                        <dd>${propInfo.default}</dd>
+                        <dt>cfgsrc</dt>
+                        <dd>${propInfo.configSourcePath}</dd>
+                        <dt>effval</dt>
+                        <dd>${propInfo.effectiveValue}</dd>
+                        <dt>inh</dt>
+                        <dd>${propInfo.inherited}</dd>
+                        <dt>overr</dt>
+                        <dd>${propInfo.overridden}</dd>
+                        <dt>name</dt>
+                        <dd>${propInfo.name}</dd>
+                    </dl>
+                </dd>
+            </c:forEach>
+        </dl>
+    </c:forEach>
+    <hr>
+    Collections
+    <hr>
+    <c:forEach var="collection" items="${model.collectionConfigurations}">
+        <%--@elvariable id="collection" type="com.composum.sling.nodes.components.CAConfigModel.CollectionConfigInfo"--%>
+        <hr>
+                ${collection.metadata.label} ( ${collection.collectionConfigData.configName} ) : ${collection.metadata.description}
+        props ${collection.collectionConfigData.properties}
+        <c:forEach var="config" items="${collection.configs}">
             <%--@elvariable id="config" type="com.composum.sling.nodes.components.CAConfigModel.SingletonConfigInfo"--%>
-            <dt>${config.metadata.label} ( ${config.name} ) : ${config.metadata.description}
-                    ${config.configurationData.resourcePath}
-            </dt>
-            <dd>
-                <dl>
-                    <c:forEach var="propInfo" items="${config.valueInfos}">
-                        <dt>${propInfo.propertyMetadata.label} = ${propInfo.value}</dt>
-                        <dd>
-                            <dl>
-                                <dt>description</dt>
-                                <dd>${propInfo.propertyMetadata.description}</dd>
-                                <dt>props</dt>
-                                <dd>${propInfo.propertyMetadata.properties}</dd>
-                                <dt>default</dt>
-                                <dd>${propInfo.propertyMetadata.defaultValue}</dd>
-                                <dt>default2</dt>
-                                <dd>${propInfo.default}</dd>
-                                <dt>cfgsrc</dt>
-                                <dd>${propInfo.configSourcePath}</dd>
-                                <dt>effval</dt>
-                                <dd>${propInfo.effectiveValue}</dd>
-                                <dt>inh</dt>
-                                <dd>${propInfo.inherited}</dd>
-                                <dt>overr</dt>
-                                <dd>${propInfo.overridden}</dd>
-                                <dt>name</dt>
-                                <dd>${propInfo.name}</dd>
-                            </dl>
-                        </dd>
-                    </c:forEach>
-                </dl>
-            </dd>
+            from ${config.configurationData.resourcePath}
+            <dl>
+                <c:forEach var="propInfo" items="${config.valueInfos}">
+                    <dt>${propInfo.propertyMetadata.label} = ${propInfo.value}</dt>
+                    <dd>
+                        <dl>
+                            <dt>description</dt>
+                            <dd>${propInfo.propertyMetadata.description}</dd>
+                            <dt>props</dt>
+                            <dd>${propInfo.propertyMetadata.properties}</dd>
+                            <dt>default</dt>
+                            <dd>${propInfo.propertyMetadata.defaultValue}</dd>
+                            <dt>default2</dt>
+                            <dd>${propInfo.default}</dd>
+                            <dt>cfgsrc</dt>
+                            <dd>${propInfo.configSourcePath}</dd>
+                            <dt>effval</dt>
+                            <dd>${propInfo.effectiveValue}</dd>
+                            <dt>inh</dt>
+                            <dd>${propInfo.inherited}</dd>
+                            <dt>overr</dt>
+                            <dd>${propInfo.overridden}</dd>
+                            <dt>name</dt>
+                            <dd>${propInfo.name}</dd>
+                        </dl>
+                    </dd>
+                </c:forEach>
+            </dl>
         </c:forEach>
-    </dl>
+    </c:forEach>
 </cpn:component>
 <%
     } catch (Exception ex) {

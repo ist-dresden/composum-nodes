@@ -10,6 +10,7 @@ import java.util.SortedSet;
 import java.util.stream.Collectors;
 
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.caconfig.management.ConfigurationCollectionData;
 import org.apache.sling.caconfig.management.ConfigurationData;
 import org.apache.sling.caconfig.management.ConfigurationManager;
 import org.apache.sling.caconfig.management.ValueInfo;
@@ -59,8 +60,43 @@ public class CAConfigModel extends ConsoleServletBean {
         return names.stream()
                 .filter(name ->
                         requireNonNull(getConfigurationManager().getConfigurationMetadata(name)).isSingleton())
-                .map(SingletonConfigInfo::new)
+                .map(name ->
+                        new SingletonConfigInfo(name, getConfigurationManager().getConfiguration(resource, name)))
                 .collect(Collectors.toList());
+    }
+
+    public List<CollectionConfigInfo> getCollectionConfigurations() {
+        SortedSet<String> names = getConfigurationManager().getConfigurationNames();
+        return names.stream()
+                .filter(name ->
+                        requireNonNull(getConfigurationManager().getConfigurationMetadata(name)).isCollection())
+                .map(name -> new CollectionConfigInfo(getConfigurationManager().getConfigurationCollection(resource, name)))
+                .collect(Collectors.toList());
+    }
+
+    public class CollectionConfigInfo {
+
+        protected final ConfigurationCollectionData collectionConfigData;
+        protected final ConfigurationMetadata metadata;
+
+        public CollectionConfigInfo(ConfigurationCollectionData configurationCollection) {
+            this.collectionConfigData = configurationCollection;
+            this.metadata = getConfigurationManager().getConfigurationMetadata(collectionConfigData.getConfigName());
+        }
+
+        public ConfigurationCollectionData getCollectionConfigData() {
+            return collectionConfigData;
+        }
+
+        public ConfigurationMetadata getMetadata() {
+            return metadata;
+        }
+
+        public List<SingletonConfigInfo> getConfigs() {
+            return collectionConfigData.getItems().stream()
+                    .map(item -> new SingletonConfigInfo(collectionConfigData.getConfigName(), item))
+                    .collect(Collectors.toList());
+        }
     }
 
     public class SingletonConfigInfo {
@@ -68,19 +104,11 @@ public class CAConfigModel extends ConsoleServletBean {
         protected final ConfigurationData configurationData;
         protected final String name;
         protected final ConfigurationMetadata metadata;
-        protected final List<ValueInfo<?>> valueInfos = new ArrayList<>();
 
-        public SingletonConfigInfo(String name) {
+        public SingletonConfigInfo(String name, ConfigurationData configurationData) {
             this.name = name;
             this.metadata = getConfigurationManager().getConfigurationMetadata(name);
-            this.configurationData = getConfigurationManager().getConfiguration(resource, name);
-
-            for (String propertyName : configurationData.getPropertyNames()) {
-                ValueInfo<?> valueInfo = configurationData.getValueInfo(propertyName);
-                valueInfos.add(valueInfo);
-            }
-            Collections.sort(valueInfos,
-                    Comparator.comparing(valueInfo -> valueInfo.getPropertyMetadata().getOrder()));
+            this.configurationData = configurationData;
         }
 
         public ConfigurationData getConfigurationData() {
@@ -96,6 +124,13 @@ public class CAConfigModel extends ConsoleServletBean {
         }
 
         public List<ValueInfo<?>> getValueInfos() {
+            List<ValueInfo<?>> valueInfos = new ArrayList<>();
+            for (String propertyName : configurationData.getPropertyNames()) {
+                ValueInfo<?> valueInfo = configurationData.getValueInfo(propertyName);
+                valueInfos.add(valueInfo);
+            }
+            Collections.sort(valueInfos,
+                    Comparator.comparing(valueInfo -> valueInfo.getPropertyMetadata().getOrder()));
             return valueInfos;
         }
 
