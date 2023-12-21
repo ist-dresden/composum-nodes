@@ -63,4 +63,10 @@ configuration. It just offers to go to the relevant /conf resource, and there yo
 
 
 
-PROMPT: print a possible continuation of this specfication from here.
+PROMPT: print a possible continuation of this specification from here, ignoring the lines below.
+
+## Debugging
+
+### Some JCR Queries
+
+- /jcr:root/content//*[@sling:configRef]
