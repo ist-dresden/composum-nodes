@@ -28,7 +28,9 @@
            title="${cpn:i18n(slingRequest,'Versions')}"><span
                 class="label">${cpn:i18n(slingRequest,'Versions')}</span></a>
     </c:if>
-    <a class="caconfig fa fa-sliders btn btn-default" href="#caconfig" data-group="caconfig"
-       title="${cpn:i18n(slingRequest,'Sling Context Aware Configuration')}"><span
-            class="label">${cpn:i18n(slingRequest,'CA Config')}</span></a>
+    <c:if test="${browser.caConfigRelevant}">
+        <a class="caconfig fa fa-sliders btn btn-default" href="#caconfig" data-group="caconfig"
+           title="${cpn:i18n(slingRequest,'Sling Context Aware Configuration')}"><span
+                class="label">${cpn:i18n(slingRequest,'CA Config')}</span></a>
+    </c:if>
 </cpn:component>
