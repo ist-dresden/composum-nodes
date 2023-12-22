@@ -126,11 +126,15 @@ public class CAConfigModel extends ConsoleServletBean {
         public List<ValueInfo<?>> getValueInfos() {
             List<ValueInfo<?>> valueInfos = new ArrayList<>();
             for (String propertyName : configurationData.getPropertyNames()) {
-                ValueInfo<?> valueInfo = configurationData.getValueInfo(propertyName);
-                valueInfos.add(valueInfo);
+                if (!propertyName.startsWith("jcr:") && !propertyName.startsWith("sling:")) {
+                    ValueInfo<?> valueInfo = configurationData.getValueInfo(propertyName);
+                    valueInfos.add(valueInfo);
+                }
             }
             Collections.sort(valueInfos,
-                    Comparator.comparing(valueInfo -> valueInfo.getPropertyMetadata().getOrder()));
+                    Comparator.comparingInt(valueInfo ->
+                            valueInfo.getPropertyMetadata() != null ? valueInfo.getPropertyMetadata().getOrder() : Integer.MAX_VALUE
+                    ));
             return valueInfos;
         }
 
