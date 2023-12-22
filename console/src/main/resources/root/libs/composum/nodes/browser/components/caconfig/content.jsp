@@ -25,6 +25,8 @@
 <%
     try {
 %>
+<h4>Effective configuration values</h4>
+<p>To edit please go to the configuration locations.</p>
 <cpn:component id="model" type="com.composum.sling.nodes.components.CAConfigModel" scope="request">
     <%--@elvariable id="model" type="com.composum.sling.nodes.components.CAConfigModel"--%>
     <%--
@@ -98,12 +100,12 @@
                                     </c:if>
                                 </td>
                                 <td>
-                                <c:if test="${propInfo.inherited}">
-                                    <a class="target-link btn btn-default btn-xs fa fa-share"
-                                       data-path="${propInfo.configSourcePath}"
-                                       href="/bin/browser.html${propInfo.configSourcePath}"
-                                       title="Configuration inherited from: ${propInfo.configSourcePath}"></a>
-                                </c:if>
+                                    <c:if test="${propInfo.inherited}">
+                                        <a class="target-link btn btn-default btn-xs fa fa-share"
+                                           data-path="${propInfo.configSourcePath}"
+                                           href="/bin/browser.html${propInfo.configSourcePath}"
+                                           title="Configuration inherited from: ${propInfo.configSourcePath}"></a>
+                                    </c:if>
                                 </td>
                                 <td class="${propInfo.default ? 'text-muted' : ''}">
                                     <%= renderAsStringOrArray(pageContext.getAttribute("propInfo")) %>
@@ -172,6 +174,7 @@
                         <div class="panel-heading">
                             <h5 class="panel-title">
                                     ${config.configurationData.collectionItemName}
+                                    (inherited = ${config.configurationData.inherited})
                             </h5>
                         </div>
                         <div class="row">
@@ -186,31 +189,71 @@
                         </div>
                         <div class="row">
                             <div class="col-md-12">
-                                <c:forEach var="propInfo" items="${config.valueInfos}">
-                                    <dt>${propInfo.propertyMetadata.label} = ${propInfo.value}</dt>
-                                    <dd>
-                                        <dl>
-                                            <dt>description</dt>
-                                            <dd>${propInfo.propertyMetadata.description}</dd>
-                                            <dt>props</dt>
-                                            <dd>${propInfo.propertyMetadata.properties}</dd>
-                                            <dt>default</dt>
-                                            <dd>${propInfo.propertyMetadata.defaultValue}</dd>
-                                            <dt>default2</dt>
-                                            <dd>${propInfo.default}</dd>
-                                            <dt>cfgsrc</dt>
-                                            <dd>${propInfo.configSourcePath}</dd>
-                                            <dt>effval</dt>
-                                            <dd>${propInfo.effectiveValue}</dd>
-                                            <dt>inh</dt>
-                                            <dd>${propInfo.inherited}</dd>
-                                            <dt>overr</dt>
-                                            <dd>${propInfo.overridden}</dd>
-                                            <dt>name</dt>
-                                            <dd>${propInfo.name}</dd>
-                                        </dl>
-                                    </dd>
-                                </c:forEach>
+                                <!-- bootstrap table striped -->
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Property</th>
+                                        <th>Label</th>
+                                        <th></th>
+                                        <th></th>
+                                        <th>Value</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <c:forEach var="propInfo" items="${config.valueInfos}">
+                                        <tr>
+                                            <th scope="row">${propInfo.name}</th>
+                                            <td title="${propInfo.propertyMetadata.description}">
+                                                    ${propInfo.propertyMetadata.label}
+                                            </td>
+                                            <td>
+                                                <c:if test="${not empty propInfo.propertyMetadata.description}">
+                                                    <span class="fa fa-info-circle"
+                                                          title="${propInfo.propertyMetadata.description}">
+                                                    </span>
+                                                </c:if>
+                                            </td>
+                                            <td>
+                                                <c:if test="${propInfo.inherited}">
+                                                    <a class="target-link btn btn-default btn-xs fa fa-share"
+                                                       data-path="${propInfo.configSourcePath}"
+                                                       href="/bin/browser.html${propInfo.configSourcePath}"
+                                                       title="Configuration inherited from: ${propInfo.configSourcePath}"></a>
+                                                </c:if>
+                                            </td>
+                                            <td class="${propInfo.default ? 'text-muted' : ''}">
+                                                <%= renderAsStringOrArray(pageContext.getAttribute("propInfo")) %>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                    </tbody>
+                                </table>
+                                    <%-- <c:forEach var="propInfo" items="${config.valueInfos}">
+                                        <dt>${propInfo.propertyMetadata.label} = ${propInfo.value}</dt>
+                                        <dd>
+                                            <dl>
+                                                <dt>description</dt>
+                                                <dd>${propInfo.propertyMetadata.description}</dd>
+                                                <dt>props</dt>
+                                                <dd>${propInfo.propertyMetadata.properties}</dd>
+                                                <dt>default</dt>
+                                                <dd>${propInfo.propertyMetadata.defaultValue}</dd>
+                                                <dt>default2</dt>
+                                                <dd>${propInfo.default}</dd>
+                                                <dt>cfgsrc</dt>
+                                                <dd>${propInfo.configSourcePath}</dd>
+                                                <dt>effval</dt>
+                                                <dd>${propInfo.effectiveValue}</dd>
+                                                <dt>inh</dt>
+                                                <dd>${propInfo.inherited}</dd>
+                                                <dt>overr</dt>
+                                                <dd>${propInfo.overridden}</dd>
+                                                <dt>name</dt>
+                                                <dd>${propInfo.name}</dd>
+                                            </dl>
+                                        </dd>
+                                    </c:forEach> --%>
                             </div>
                         </div>
                     </div>

@@ -15,6 +15,8 @@ import org.apache.sling.caconfig.management.ConfigurationData;
 import org.apache.sling.caconfig.management.ConfigurationManager;
 import org.apache.sling.caconfig.management.ValueInfo;
 import org.apache.sling.caconfig.spi.metadata.ConfigurationMetadata;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.Restricted;
@@ -23,6 +25,8 @@ import com.composum.sling.nodes.servlet.NodeServlet;
 
 @Restricted(key = NodeServlet.SERVICE_KEY)
 public class CAConfigModel extends ConsoleServletBean {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CAConfigModel.class);
 
     protected ConfigurationManager configurationManager;
 
@@ -36,6 +40,35 @@ public class CAConfigModel extends ConsoleServletBean {
 
     public CAConfigModel() {
         super();
+    }
+
+    public String getViewType() {
+        try {
+            if (getPath().startsWith("/content")) {
+                return "effectiveConfigurationsView";
+            } else if (getPath().matches(".*/sling:configs($|/)]")) {
+                if (getName().equals("sling:configs")) {
+                    return "listConfigurationsView";
+                } else if (getResource().getParent().getName().equals("sling:configs")) {
+                    String configName = getResource().getName();
+                    ConfigurationMetadata metadata = getConfigurationManager().getConfigurationMetadata(configName);
+                    if (metadata.isCollection()) {
+                        return "collectionView";
+                    } else {
+                        return "configurationView";
+                    }
+                } else if (getResource().getParent().getParent().getName().equals("sling:configs")) {
+                    String configName = getResource().getParent().getName();
+                    ConfigurationMetadata metadata = getConfigurationManager().getConfigurationMetadata(configName);
+                    if (metadata.isCollection()) {
+                        return "configurationView";
+                    }
+                }
+            }
+        } catch (RuntimeException e) {
+            LOG.error("Cannot determine view type for {}", getPath(), e);
+        }
+        return null;
     }
 
     protected ConfigurationManager getConfigurationManager() {
