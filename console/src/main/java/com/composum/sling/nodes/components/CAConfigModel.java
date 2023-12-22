@@ -46,7 +46,7 @@ public class CAConfigModel extends ConsoleServletBean {
         try {
             if (getPath().startsWith("/content")) {
                 return "effectiveConfigurationsView";
-            } else if (getPath().matches(".*/sling:configs($|/)]")) {
+            } else if (getPath().matches(".*/sling:configs($|/).*")) {
                 if (getName().equals("sling:configs")) {
                     return "listConfigurationsView";
                 } else if (getResource().getParent().getName().equals("sling:configs")) {
