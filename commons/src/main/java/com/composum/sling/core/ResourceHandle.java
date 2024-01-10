@@ -22,12 +22,15 @@ import org.apache.sling.api.resource.ValueMap;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.annotation.Nonnull;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -542,6 +545,19 @@ public class ResourceHandle extends ResourceWrapper implements JcrResource, Clon
             }
         }
         return lastModified;
+    }
+
+    /**
+     * Returns the children as immutable list - sometimes better for iteration.
+     */
+    @Nonnull
+    public List<Resource> getChildrenList() {
+        List<Resource> children = new ArrayList<>();
+        Iterable<Resource> rawChildren = super.getChildren();
+        if (rawChildren != null) {
+            rawChildren.forEach(children::add);
+        }
+        return Collections.unmodifiableList(children);
     }
 
 }
