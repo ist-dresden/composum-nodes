@@ -7,29 +7,53 @@
 <%
     try {
 %>
-<h4>Configuration types list</h4>
-<p>(TBD: lists all configurations types incl. descriptions and collection / single; buttons to create configurations /
-    configuration collections)</p>
-<cpn:component id="model" type="com.composum.sling.nodes.components.CAConfigModel" scope="request">
+<cpn:component id="model"
+               type="com.composum.sling.nodes.components.CAConfigModel"
+               scope="request">
     <%--@elvariable id="model" type="com.composum.sling.nodes.components.CAConfigModel"--%>
-    <c:if test="${not empty model.singletonConfigurations}">
-        <h5>Singleton Configurations</h5>
-        <c:forEach var="singletoncfg" items="${model.singletonConfigurations}">
-            <p>
-                <a href="/bin/browser.html/${model.path}/${singletoncfg.metadata.name}">${singletoncfg.metadata.name}</a>
-                : ${singletoncfg.metadata.description}
-            </p>
-        </c:forEach>
-    </c:if>
-    <c:if test="${not empty model.collectionConfigurations}">
-        <h5>Collection Configurations</h5>
-        <c:forEach var="collectioncfg" items="${model.collectionConfigurations}">
-            <p>
+    <table class="table table-striped">
+        <c:if test="${not empty model.singletonConfigurations}">
+            <tr>
+                <th></th>
+                <th colspan="2">Singleton Configuration</th>
+            </tr>
+            <c:forEach var="singletoncfg"
+                       items="${model.singletonConfigurations}">
+                <tr>
+                    <td>
+                        <button type="button" class="create glyphicon-plus glyphicon btn btn-default"
+                                title="Create a new configuration"></button>
+                    </td>
+                    <td>
+                        <a href="/bin/browser.html/${model.path}/${singletoncfg.metadata.name}">${singletoncfg.metadata.name}</a>
+                    </td>
+                    <td>
+                            ${singletoncfg.metadata.description}
+                    </td>
+                </tr>
+            </c:forEach>
+        </c:if>
+        <c:if test="${not empty model.collectionConfigurations}">
+        <tr>
+            <th></th>
+            <th colspan="2">Collection Configuration</th>
+        </tr>
+        <tbody>
+        <c:forEach var="collectioncfg"
+                items="${model.collectionConfigurations}">
+        <tr>
+            <td>
+                <button type="button" class="create glyphicon-plus glyphicon btn btn-default"
+                        title="Create a new configuration"></button>
+            </td>
+            <td>
                 <a href="/bin/browser.html/${model.path}/${collectioncfg.metadata.name}">${collectioncfg.metadata.name}</a>
-                : ${collectioncfg.metadata.description}
-            </p>
+            </td>
+            <td>${collectioncfg.metadata.description}</td>
+        </tr>
         </c:forEach>
-    </c:if>
+        </c:if>
+    </table>
 </cpn:component>
 <%
     } catch (Exception ex) {
