@@ -1,8 +1,10 @@
 package com.composum.sling.nodes.components;
 
-import static com.composum.sling.nodes.servlet.NodeServlet.Operation.map;
 import static java.util.Objects.requireNonNull;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,19 +15,21 @@ import java.util.SortedSet;
 import java.util.stream.Collectors;
 
 import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.caconfig.management.ConfigurationCollectionData;
 import org.apache.sling.caconfig.management.ConfigurationData;
 import org.apache.sling.caconfig.management.ConfigurationManager;
 import org.apache.sling.caconfig.management.ValueInfo;
 import org.apache.sling.caconfig.spi.metadata.ConfigurationMetadata;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.Restricted;
+import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.nodes.console.ConsoleServletBean;
 import com.composum.sling.nodes.servlet.NodeServlet;
+import com.google.gson.stream.JsonWriter;
 
 @Restricted(key = NodeServlet.SERVICE_KEY)
 public class CAConfigModel extends ConsoleServletBean {
@@ -191,7 +195,7 @@ public class CAConfigModel extends ConsoleServletBean {
 
     }
 
-    public static String renderAsString(Object valueInfo) {
+    public static String renderValueInfoAsString(Object valueInfo) {
         Object object = ((ValueInfo<?>) valueInfo).getEffectiveValue();
         if (object == null) {
             return "";
@@ -200,7 +204,7 @@ public class CAConfigModel extends ConsoleServletBean {
             Map<String, String> stringMap = new HashMap<>();
             for (String key : nestedData.getPropertyNames()) {
                 ValueInfo<?> nestedValueInfo = nestedData.getValueInfo(key);
-                String nestedValueAsString = renderAsString(nestedValueInfo);
+                String nestedValueAsString = renderValueInfoAsString(nestedValueInfo);
                 stringMap.put(key, nestedValueAsString);
             }
             return stringMap.toString();
@@ -218,5 +222,16 @@ public class CAConfigModel extends ConsoleServletBean {
         }
     }
 
+    public static String renderValueAsString(Object value) {
+        Writer writer = new StringWriter();
+        @NotNull JsonWriter jsonWriter = new JsonWriter(writer);
+        try {
+            JsonUtil.jsonValue(jsonWriter, value);
+        } catch (IOException e) {
+            LOG.error("Error in converting to String: {}", value, e);
+            return "(error)";
+        }
+        return writer.toString();
+    }
 
 }

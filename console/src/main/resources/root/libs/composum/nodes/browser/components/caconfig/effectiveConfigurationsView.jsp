@@ -6,8 +6,8 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <%!
-    String renderAsStringOrArray(Object valueInfo) {
-        return CAConfigModel.renderAsString(valueInfo);
+    String renderAsString(Object valueInfo) {
+        return CAConfigModel.renderValueInfoAsString(valueInfo);
     }
 %>
 <cpn:component id="model"
@@ -81,7 +81,7 @@
                                     </c:if>
                                 </td>
                                 <td class="${propInfo.default ? 'text-muted' : ''}">
-                                    <%= renderAsStringOrArray(pageContext.getAttribute("propInfo")) %>
+                                    <%= renderAsString(pageContext.getAttribute("propInfo")) %>
                                 </td>
                             </tr>
                         </c:forEach>
@@ -161,7 +161,7 @@
                                                 </c:if>
                                             </td>
                                             <td class="${propInfo.default ? 'text-muted' : ''}">
-                                                <%= renderAsStringOrArray(pageContext.getAttribute("propInfo")) %>
+                                                <%= renderAsString(pageContext.getAttribute("propInfo")) %>
                                             </td>
                                         </tr>
                                     </c:forEach>

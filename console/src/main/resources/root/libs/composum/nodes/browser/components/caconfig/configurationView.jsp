@@ -1,14 +1,18 @@
 <%@ page import="java.io.PrintWriter" %>
 <%@ page import="org.apache.sling.caconfig.management.ValueInfo" %>
 <%@ page import="com.composum.sling.nodes.components.CAConfigModel" %>
+<%@ page import="org.apache.sling.api.resource.Resource" %>
 <%@page session="false" pageEncoding="utf-8" %>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
 <%!
-    String renderAsStringOrArray(Object valueInfo) {
-        return CAConfigModel.renderAsString(valueInfo);
+    String renderValue(Object rawModel, Object valueInfoObject) {
+        ValueInfo valueInfo = (ValueInfo) valueInfoObject;
+        CAConfigModel model = (CAConfigModel) rawModel;
+        Object value = model.getResource().getValueMap().get(valueInfo.getName());
+        return CAConfigModel.renderValueAsString(value);
     }
 %>
 
@@ -57,15 +61,9 @@
                               title="${propInfo.propertyMetadata.description}">
                         </span>
                         </c:if>
-                        <c:if test="${propInfo.inherited}">
-                            <a class="target-link btn btn-default btn-xs fa fa-share"
-                               data-path="${propInfo.configSourcePath}"
-                               href="/bin/browser.html${propInfo.configSourcePath}"
-                               title="Configuration inherited from: ${propInfo.configSourcePath}"></a>
-                        </c:if>
                     </td>
                     <td class="${propInfo.default ? 'text-muted' : ''}">
-                        <%= renderAsStringOrArray(pageContext.getAttribute("propInfo")) %>
+                        <%= renderValue(request.getAttribute("model"), pageContext.getAttribute("propInfo")) %>
                     </td>
                 </tr>
             </c:forEach>
