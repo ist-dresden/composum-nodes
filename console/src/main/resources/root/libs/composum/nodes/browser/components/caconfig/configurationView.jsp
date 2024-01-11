@@ -22,63 +22,66 @@
         }
     }
 %>
-<%
-    try {
-%>
-<h4>Configuration Edit</h4>
-<p>(TBD: lists the values this configuration + inheritance settings, possibly links to the parents, everything editable)</p>
-<cpn:component id="model" type="com.composum.sling.nodes.components.CAConfigModel" scope="request">
-    <%--@elvariable id="model" type="com.composum.sling.nodes.components.CAConfigModel"--%>
-    <c:set var="config" value="${model.thisSingletonConfiguration}"/>
-    <h4>${config.metadata.name}</h4>
-    ${config.metadata.description}
-    <br/>
-    <table class="table table-striped">
-        <thead>
-        <tr>
-            <th>Property</th>
-            <th>Label</th>
-            <th></th>
-            <th></th>
-            <th>Value</th>
-        </tr>
-        </thead>
-        <tbody>
-        <c:forEach var="propInfo" items="${config.valueInfos}">
+<div class="detail-content">
+    <%
+        try {
+    %>
+    <h4>Configuration Edit</h4>
+    <p>(TBD: lists the values this configuration + inheritance settings, possibly links to the parents, everything
+        editable)</p>
+    <cpn:component id="model" type="com.composum.sling.nodes.components.CAConfigModel" scope="request">
+        <%--@elvariable id="model" type="com.composum.sling.nodes.components.CAConfigModel"--%>
+        <c:set var="config" value="${model.thisSingletonConfiguration}"/>
+        <h4>${config.metadata.name}</h4>
+        ${config.metadata.description}
+        <br/>
+        <table class="table table-striped">
+            <thead>
             <tr>
-                <th scope="row">${propInfo.name}</th>
-                <td title="${propInfo.propertyMetadata.description}">
-                        ${propInfo.propertyMetadata.label}
-                </td>
-                <td>
-                    <c:if test="${not empty propInfo.propertyMetadata.description}">
+                <th>Property</th>
+                <th>Label</th>
+                <th></th>
+                <th></th>
+                <th>Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            <c:forEach var="propInfo" items="${config.valueInfos}">
+                <tr>
+                    <th scope="row">${propInfo.name}</th>
+                    <td title="${propInfo.propertyMetadata.description}">
+                            ${propInfo.propertyMetadata.label}
+                    </td>
+                    <td>
+                        <c:if test="${not empty propInfo.propertyMetadata.description}">
                         <span class="fa fa-info-circle"
                               title="${propInfo.propertyMetadata.description}">
                         </span>
-                    </c:if>
-                </td>
-                <td>
-                    <c:if test="${propInfo.inherited}">
-                        <a class="target-link btn btn-default btn-xs fa fa-share"
-                           data-path="${propInfo.configSourcePath}"
-                           href="/bin/browser.html${propInfo.configSourcePath}"
-                           title="Configuration inherited from: ${propInfo.configSourcePath}"></a>
-                    </c:if>
-                </td>
-                <td class="${propInfo.default ? 'text-muted' : ''}">
-                    <%= renderAsStringOrArray(pageContext.getAttribute("propInfo")) %>
-                </td>
-            </tr>
-        </c:forEach>
-        </tbody>
-    </table>
-</cpn:component>
-<%
-    } catch (Exception ex) {
-        log.error(ex.toString(), ex);
-        PrintWriter writer = response.getWriter();
-        writer.println("<pre>");
-        ex.printStackTrace(writer);
-        writer.println("</pre>");
-    }
-%>
+                        </c:if>
+                    </td>
+                    <td>
+                        <c:if test="${propInfo.inherited}">
+                            <a class="target-link btn btn-default btn-xs fa fa-share"
+                               data-path="${propInfo.configSourcePath}"
+                               href="/bin/browser.html${propInfo.configSourcePath}"
+                               title="Configuration inherited from: ${propInfo.configSourcePath}"></a>
+                        </c:if>
+                    </td>
+                    <td class="${propInfo.default ? 'text-muted' : ''}">
+                        <%= renderAsStringOrArray(pageContext.getAttribute("propInfo")) %>
+                    </td>
+                </tr>
+            </c:forEach>
+            </tbody>
+        </table>
+    </cpn:component>
+    <%
+        } catch (Exception ex) {
+            log.error(ex.toString(), ex);
+            PrintWriter writer = response.getWriter();
+            writer.println("<pre>");
+            ex.printStackTrace(writer);
+            writer.println("</pre>");
+        }
+    %>
+</div>
