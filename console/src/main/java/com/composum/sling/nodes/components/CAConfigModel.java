@@ -15,6 +15,7 @@ import java.util.SortedSet;
 import java.util.stream.Collectors;
 
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.caconfig.management.ConfigurationCollectionData;
 import org.apache.sling.caconfig.management.ConfigurationData;
 import org.apache.sling.caconfig.management.ConfigurationManager;
@@ -237,6 +238,16 @@ public class CAConfigModel extends ConsoleServletBean {
     }
 
     public static String renderValueAsString(Object value) {
+        if (value instanceof ValueMap) {
+            // we don't want to render system properties, just stuff that belongs to the configuration.
+            Map<String, Object> map = new HashMap<>();
+            for (Map.Entry<String, Object> entry : ((ValueMap) value).entrySet()) {
+                if (!entry.getKey().startsWith("jcr:")) {
+                    map.put(entry.getKey(), renderValueAsString(entry.getValue()));
+                }
+            }
+            return renderValueAsString(map);
+        }
         Writer writer = new StringWriter();
         @NotNull JsonWriter jsonWriter = new JsonWriter(writer);
         try {

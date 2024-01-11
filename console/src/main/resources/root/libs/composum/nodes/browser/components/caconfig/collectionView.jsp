@@ -1,9 +1,16 @@
 <%@ page import="java.io.PrintWriter" %>
+<%@ page import="com.composum.sling.nodes.components.CAConfigModel" %>
+<%@ page import="org.apache.sling.api.resource.Resource" %>
 <%@page session="false" pageEncoding="utf-8" %>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
+<%!
+    String renderAsString(Object object) {
+        return CAConfigModel.renderValueAsString(object);
+    }
+%>
 <cpn:component id="model" type="com.composum.sling.nodes.components.CAConfigModel" scope="request">
     <%--@elvariable id="model" type="com.composum.sling.nodes.components.CAConfigModel"--%>
 
@@ -24,12 +31,14 @@
         <c:if test="${model.thisCollectionConfiguration != null}">
             <cpn:text tagName="h4" value="${model.thisCollectionConfiguration.metadata.name}"/>
             <cpn:text tagName="p" value="${model.thisCollectionConfiguration.metadata.description}"/>
-            <p>(TBD: lists the values for the items in this collection + inheritance setting and links to parents)</p>
-            <ul>
+            <table class="table table-striped">
                 <c:forEach var="item" items="${model.resource.childrenList}">
-                    <li><a href="/bin/browser.html/${item.path}">${item.name}</a><br/></li>
+                    <tr>
+                        <td><a href="/bin/browser.html/${item.path}">${item.name}</a></td>
+                        <td><%= renderAsString(((Resource) pageContext.getAttribute("item")).getValueMap()) %></td>
+                    </tr>
                 </c:forEach>
-            </ul>
+            </table>
         </c:if>
         <%
             } catch (Exception ex) {
