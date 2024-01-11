@@ -21,17 +21,15 @@
         <%
             try {
         %>
-        <p>(TBD: lists the values for the items in this collection + inheritance setting and links to parents)</p>
         <c:if test="${model.thisCollectionConfiguration != null}">
-            ${model.thisCollectionConfiguration.metadata.name} : ${model.thisCollectionConfiguration.metadata.description}
-            <br/>
-            <c:forEach var="item" items="${model.resource.childrenList}">
-                <a href="/bin/browser.html/${item.path}">${item.name}</a><br/>
-            </c:forEach>
-            <c:forEach var="item" items="${model.thisCollectionConfiguration.configs}">
-                <a href="/bin/browser.html/${model.path}/${item.name}">${item.name}</a>
-                ${item.metadata.description}
-            </c:forEach>
+            <cpn:text tagName="h4" value="${model.thisCollectionConfiguration.metadata.name}"/>
+            <cpn:text tagName="p" value="${model.thisCollectionConfiguration.metadata.description}"/>
+            <p>(TBD: lists the values for the items in this collection + inheritance setting and links to parents)</p>
+            <ul>
+                <c:forEach var="item" items="${model.resource.childrenList}">
+                    <li><a href="/bin/browser.html/${item.path}">${item.name}</a><br/></li>
+                </c:forEach>
+            </ul>
         </c:if>
         <%
             } catch (Exception ex) {
