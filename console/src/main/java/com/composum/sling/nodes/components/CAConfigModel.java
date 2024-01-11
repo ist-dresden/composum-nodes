@@ -107,6 +107,20 @@ public class CAConfigModel extends ConsoleServletBean {
                 .collect(Collectors.toList());
     }
 
+    public CollectionConfigInfo getThisCollectionConfiguration() {
+        CollectionConfigInfo configInfo = getCollectionConfigurations().stream()
+                .filter(collectionConfigInfo -> collectionConfigInfo.getCollectionConfigData().getConfigName().equals(getName()))
+                .findFirst().orElse(null);
+        return configInfo;
+    }
+
+    public SingletonConfigInfo getThisSingletonConfiguration() {
+        SingletonConfigInfo configInfo = getSingletonConfigurations().stream()
+                .filter(singletonConfigInfo -> singletonConfigInfo.getName().equals(getName()))
+                .findFirst().orElse(null);
+        return configInfo;
+    }
+
     public class CollectionConfigInfo {
 
         protected final ConfigurationCollectionData collectionConfigData;

@@ -5,6 +5,23 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
+<%!
+    String renderAsStringOrArray(Object valueInfo) {
+        Object object = ((ValueInfo<?>) valueInfo).getEffectiveValue();
+        if (Object[].class.isAssignableFrom(object.getClass())) {
+            StringBuilder builder = new StringBuilder();
+            for (Object item : (Object[]) object) {
+                if (builder.length() > 0) {
+                    builder.append("<br/>");
+                }
+                builder.append(item);
+            }
+            return builder.toString();
+        } else {
+            return object.toString();
+        }
+    }
+%>
 <%
     try {
 %>
@@ -12,6 +29,49 @@
 <p>(TBD: lists the values this configuration + inheritance settings, possibly links to the parents, everything editable)</p>
 <cpn:component id="model" type="com.composum.sling.nodes.components.CAConfigModel" scope="request">
     <%--@elvariable id="model" type="com.composum.sling.nodes.components.CAConfigModel"--%>
+    <c:set var="config" value="${model.thisSingletonConfiguration}"/>
+    <h4>${config.metadata.name}</h4>
+    ${config.metadata.description}
+    <br/>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Property</th>
+            <th>Label</th>
+            <th></th>
+            <th></th>
+            <th>Value</th>
+        </tr>
+        </thead>
+        <tbody>
+        <c:forEach var="propInfo" items="${config.valueInfos}">
+            <tr>
+                <th scope="row">${propInfo.name}</th>
+                <td title="${propInfo.propertyMetadata.description}">
+                        ${propInfo.propertyMetadata.label}
+                </td>
+                <td>
+                    <c:if test="${not empty propInfo.propertyMetadata.description}">
+                        <span class="fa fa-info-circle"
+                              title="${propInfo.propertyMetadata.description}">
+                        </span>
+                    </c:if>
+                </td>
+                <td>
+                    <c:if test="${propInfo.inherited}">
+                        <a class="target-link btn btn-default btn-xs fa fa-share"
+                           data-path="${propInfo.configSourcePath}"
+                           href="/bin/browser.html${propInfo.configSourcePath}"
+                           title="Configuration inherited from: ${propInfo.configSourcePath}"></a>
+                    </c:if>
+                </td>
+                <td class="${propInfo.default ? 'text-muted' : ''}">
+                    <%= renderAsStringOrArray(pageContext.getAttribute("propInfo")) %>
+                </td>
+            </tr>
+        </c:forEach>
+        </tbody>
+    </table>
 </cpn:component>
 <%
     } catch (Exception ex) {

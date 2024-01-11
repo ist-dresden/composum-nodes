@@ -15,13 +15,19 @@
     <c:if test="${not empty model.singletonConfigurations}">
         <h5>Singleton Configurations</h5>
         <c:forEach var="singletoncfg" items="${model.singletonConfigurations}">
-            ${singletoncfg.metadata.name} : ${singletoncfg.metadata.description}
+            <p>
+                <a href="/bin/browser.html/${model.path}/${singletoncfg.metadata.name}">${singletoncfg.metadata.name}</a>
+                : ${singletoncfg.metadata.description}
+            </p>
         </c:forEach>
     </c:if>
     <c:if test="${not empty model.collectionConfigurations}">
         <h5>Collection Configurations</h5>
         <c:forEach var="collectioncfg" items="${model.collectionConfigurations}">
-            ${collectioncfg.metadata.name} : ${collectioncfg.metadata.description}
+            <p>
+                <a href="/bin/browser.html/${model.path}/${collectioncfg.metadata.name}">${collectioncfg.metadata.name}</a>
+                : ${collectioncfg.metadata.description}
+            </p>
         </c:forEach>
     </c:if>
 </cpn:component>
