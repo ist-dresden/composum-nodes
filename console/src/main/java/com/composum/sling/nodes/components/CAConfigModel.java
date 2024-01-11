@@ -115,6 +115,9 @@ public class CAConfigModel extends ConsoleServletBean {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * The information about the configuration collection this resource represents.
+     */
     public CollectionConfigInfo getThisCollectionConfiguration() {
         CollectionConfigInfo configInfo = getCollectionConfigurations().stream()
                 .filter(collectionConfigInfo -> collectionConfigInfo.getCollectionConfigData().getConfigName().equals(getName()))
@@ -122,11 +125,22 @@ public class CAConfigModel extends ConsoleServletBean {
         return configInfo;
     }
 
+    /**
+     * The information about the configuration this resource represents. It can either be a singleton configuration
+     * or an item in a collection.
+     */
     public SingletonConfigInfo getThisSingletonConfiguration() {
-        SingletonConfigInfo configInfo = getSingletonConfigurations().stream()
-                .filter(singletonConfigInfo -> singletonConfigInfo.getName().equals(getName()))
-                .findFirst().orElse(null);
-        return configInfo;
+        Resource configResource = getResource();
+        while (configResource != null && configResource.getParent() != null
+                && !configResource.getParent().getName().equals("sling:configs")) {
+            configResource = configResource.getParent();
+        }
+        String configName = configResource != null ? configResource.getName() : null;
+        ConfigurationData configurationData = configName != null ? getConfigurationManager().getConfiguration(getResource(), configName) : null;
+        if (configurationData != null) {
+            return new SingletonConfigInfo(configName, configurationData);
+        }
+        return null;
     }
 
     public class CollectionConfigInfo {

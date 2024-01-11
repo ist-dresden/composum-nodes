@@ -34,11 +34,9 @@
         <%
             try {
         %>
-        <p>(TBD: lists the values this configuration + inheritance settings, possibly links to the parents, everything
-            editable)</p>
-        <h4>${config.metadata.name}</h4>
-            ${config.metadata.description}
-        <br/>
+        <cpn:text tagName="h4" value="${config.metadata.name}"/>
+        <cpn:text tagName="p" value="${config.metadata.description}"/>
+        <p>Please click on the line in the table to edit the value. The description of the item is shown on mouse hover.</p>
         <table class="table table-striped">
             <thead>
             <tr>
@@ -50,12 +48,13 @@
             </thead>
             <tbody>
             <c:forEach var="propInfo" items="${config.valueInfos}">
-                <tr>
+                <tr title="${propInfo.propertyMetadata.description}">
                     <th scope="row">${propInfo.name}</th>
-                    <td title="${propInfo.propertyMetadata.description}">
+                    <td>
                             ${propInfo.propertyMetadata.label}
                     </td>
                     <td>
+                        <%-- <cpn:text value="${propInfo.propertyMetadata.description}"/> --%>
                         <c:if test="${not empty propInfo.propertyMetadata.description}">
                         <span class="fa fa-info-circle"
                               title="${propInfo.propertyMetadata.description}">
