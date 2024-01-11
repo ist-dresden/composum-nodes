@@ -5,7 +5,6 @@
 <sling:defineObjects/>
 <cpn:component id="model" type="com.composum.sling.nodes.components.CAConfigModel" scope="request">
     <div class="caconfig detail-panel" data-path="${cpn:path(model.path)}">
-        <sling:call script="toolbar.jsp"/>
-        <sling:call script="content.jsp"/>
+        <sling:call script="${model.viewType}.jsp"/>
     </div>
 </cpn:component>

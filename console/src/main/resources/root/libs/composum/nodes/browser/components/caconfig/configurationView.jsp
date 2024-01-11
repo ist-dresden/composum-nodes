@@ -22,18 +22,29 @@
         }
     }
 %>
-<div class="detail-content">
-    <%
-        try {
-    %>
-    <h4>Configuration Edit</h4>
-    <p>(TBD: lists the values this configuration + inheritance settings, possibly links to the parents, everything
-        editable)</p>
-    <cpn:component id="model" type="com.composum.sling.nodes.components.CAConfigModel" scope="request">
-        <%--@elvariable id="model" type="com.composum.sling.nodes.components.CAConfigModel"--%>
-        <c:set var="config" value="${model.thisSingletonConfiguration}"/>
+
+<cpn:component id="model" type="com.composum.sling.nodes.components.CAConfigModel" scope="request">
+    <%--@elvariable id="model" type="com.composum.sling.nodes.components.CAConfigModel"--%>
+    <c:set var="config" value="${model.thisSingletonConfiguration}"/>
+
+    <div class="caconfig-toolbar detail-toolbar flex-toolbar">
+        <div class="detail-headline" style="margin-right: auto; font-weight: bold;">Configuration Edit</div>
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="refresh fa fa-refresh btn btn-default"
+                    title="${cpn:i18n(slingRequest,'Reload')}"><span
+                    class="label">${cpn:i18n(slingRequest,'Reload')}</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="detail-content">
+        <%
+            try {
+        %>
+        <p>(TBD: lists the values this configuration + inheritance settings, possibly links to the parents, everything
+            editable)</p>
         <h4>${config.metadata.name}</h4>
-        ${config.metadata.description}
+            ${config.metadata.description}
         <br/>
         <table class="table table-striped">
             <thead>
@@ -74,7 +85,7 @@
             </c:forEach>
             </tbody>
         </table>
-    </cpn:component>
+    </div>
     <%
         } catch (Exception ex) {
             log.error(ex.toString(), ex);
@@ -84,4 +95,4 @@
             writer.println("</pre>");
         }
     %>
-</div>
+</cpn:component>
