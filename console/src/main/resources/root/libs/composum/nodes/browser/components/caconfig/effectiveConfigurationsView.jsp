@@ -26,8 +26,18 @@
     </div>
 
     <div class="detail-content">
-        <p>To edit please go to the configuration locations.</p>
-
+        <p>To edit the configuration go to the mentioned configuration locations.
+            To create a new configuration you can go to the following nodes:
+        </p>
+        <ul>
+            <c:forEach var="configPath" items="${model.referencedConfigPaths}">
+                <li>
+                    <a class="target-link"
+                       href="/bin/browser.html${configPath}"
+                       data-path="${configPath}">${configPath}</a>
+                </li>
+            </c:forEach>
+        </ul>
         <%
             try {
         %>
@@ -44,9 +54,17 @@
                 </div>
                 <div class="panel-body">
                     <p>${config.metadata.description}</p>
-                    <p>Configuration location: <a class="target-link"
-                                                  href="/bin/browser.html${config.configurationData.resourcePath}"
-                                                  data-path="${config.configurationData.resourcePath}">${config.configurationData.resourcePath}</a>
+                    <p>Configuration location:
+                        <c:choose>
+                            <c:when test="${config.configurationData.resourcePath}">
+                                <a class="target-link"
+                                   href="/bin/browser.html${config.configurationData.resourcePath}"
+                                   data-path="${config.configurationData.resourcePath}">${config.configurationData.resourcePath}</a>
+                            </c:when>
+                            <c:otherwise>
+                                (defaults)
+                            </c:otherwise>
+                        </c:choose>
                     </p>
                     <table class="table table-striped">
                         <thead>
@@ -121,11 +139,16 @@
                             </div>
                             <div class="panel-body">
                                 <p>Configuration location:
-                                    <a class="target-link"
-                                       data-path="${config.configurationData.resourcePath}"
-                                       href="/bin/browser.html${config.configurationData.resourcePath}">
-                                            ${config.configurationData.resourcePath}
-                                    </a>
+                                    <c:choose>
+                                        <c:when test="${config.configurationData.resourcePath}">
+                                            <a class="target-link"
+                                               href="/bin/browser.html${config.configurationData.resourcePath}"
+                                               data-path="${config.configurationData.resourcePath}">${config.configurationData.resourcePath}</a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            (defaults)
+                                        </c:otherwise>
+                                    </c:choose>
                                 </p>
                                 <!-- bootstrap table striped -->
                                 <table class="table table-striped">

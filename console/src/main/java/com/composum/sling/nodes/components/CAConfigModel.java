@@ -144,6 +144,30 @@ public class CAConfigModel extends ConsoleServletBean {
         return null;
     }
 
+    /**
+     * List of all paths that are referenced from a sling:configRef of the resource or one of it's parents.
+     */
+    public List<String> getReferencedConfigPaths() {
+        List<String> paths = new ArrayList<>();
+        Resource resource = getResource();
+        while (resource != null) {
+            ValueMap properties = resource.getValueMap();
+            String configRef = properties.get("sling:configRef", String.class);
+            if (configRef != null) {
+                paths.add(configRef);
+            }
+            resource = resource.getParent();
+        }
+        for (String possibleDefault : new String[]{"/conf/global/sling:configs", "/apps/conf/sling:configs", "/libs/conf/sling:configs"}) {
+            // add the resource to the list if it exists
+            Resource defaultResource = getResolver().getResource(possibleDefault);
+            if (defaultResource != null) {
+                paths.add(possibleDefault);
+            }
+        }
+        return paths;
+    }
+
     public class CollectionConfigInfo {
 
         protected final ConfigurationCollectionData collectionConfigData;
