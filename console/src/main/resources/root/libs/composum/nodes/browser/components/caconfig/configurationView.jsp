@@ -1,5 +1,6 @@
 <%@ page import="java.io.PrintWriter" %>
 <%@ page import="org.apache.sling.caconfig.management.ValueInfo" %>
+<%@ page import="com.composum.sling.nodes.components.CAConfigModel" %>
 <%@page session="false" pageEncoding="utf-8" %>
 <%@taglib prefix="sling" uri="http://sling.apache.org/taglibs/sling/1.2" %>
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
@@ -7,19 +8,7 @@
 <sling:defineObjects/>
 <%!
     String renderAsStringOrArray(Object valueInfo) {
-        Object object = ((ValueInfo<?>) valueInfo).getEffectiveValue();
-        if (Object[].class.isAssignableFrom(object.getClass())) {
-            StringBuilder builder = new StringBuilder();
-            for (Object item : (Object[]) object) {
-                if (builder.length() > 0) {
-                    builder.append("<br/>");
-                }
-                builder.append(item);
-            }
-            return builder.toString();
-        } else {
-            return object.toString();
-        }
+        return CAConfigModel.renderAsString(valueInfo);
     }
 %>
 
@@ -52,7 +41,6 @@
                 <th>Property</th>
                 <th>Label</th>
                 <th></th>
-                <th></th>
                 <th>Value</th>
             </tr>
             </thead>
@@ -69,8 +57,6 @@
                               title="${propInfo.propertyMetadata.description}">
                         </span>
                         </c:if>
-                    </td>
-                    <td>
                         <c:if test="${propInfo.inherited}">
                             <a class="target-link btn btn-default btn-xs fa fa-share"
                                data-path="${propInfo.configSourcePath}"

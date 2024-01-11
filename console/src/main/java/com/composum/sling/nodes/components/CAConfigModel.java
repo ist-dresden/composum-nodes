@@ -1,15 +1,19 @@
 package com.composum.sling.nodes.components;
 
+import static com.composum.sling.nodes.servlet.NodeServlet.Operation.map;
 import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
 
 import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.caconfig.management.ConfigurationCollectionData;
 import org.apache.sling.caconfig.management.ConfigurationData;
 import org.apache.sling.caconfig.management.ConfigurationManager;
@@ -186,5 +190,33 @@ public class CAConfigModel extends ConsoleServletBean {
         }
 
     }
+
+    public static String renderAsString(Object valueInfo) {
+        Object object = ((ValueInfo<?>) valueInfo).getEffectiveValue();
+        if (object == null) {
+            return "";
+        } else if (object instanceof ConfigurationData) {
+            ConfigurationData nestedData = ((ConfigurationData) object);
+            Map<String, String> stringMap = new HashMap<>();
+            for (String key : nestedData.getPropertyNames()) {
+                ValueInfo<?> nestedValueInfo = nestedData.getValueInfo(key);
+                String nestedValueAsString = renderAsString(nestedValueInfo);
+                stringMap.put(key, nestedValueAsString);
+            }
+            return stringMap.toString();
+        } else if (Object[].class.isAssignableFrom(object.getClass())) {
+            StringBuilder builder = new StringBuilder();
+            for (Object item : (Object[]) object) {
+                if (builder.length() > 0) {
+                    builder.append("<br/>");
+                }
+                builder.append(item);
+            }
+            return builder.toString();
+        } else {
+            return object.toString();
+        }
+    }
+
 
 }
