@@ -65,6 +65,7 @@
                                 (defaults)
                             </c:otherwise>
                         </c:choose>
+                        , ${config.inherits ? 'inherits configurations' : 'does not inherit configurations'}
                     </p>
                     <table class="table table-striped">
                         <thead>
@@ -77,13 +78,6 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr>
-                            <th scope="row">Configuration inheritance</th>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td>${config.inherits ? 'inherits configurations' : 'does not inherit configurations'}</td>
-                        </tr>
                         <c:forEach var="propInfo" items="${config.valueInfos}">
                             <tr>
                                 <th scope="row">${propInfo.name}</th>
@@ -133,6 +127,7 @@
                         <a class="target-link"
                            href="/bin/browser.html${collection.collectionConfigData.resourcePath}"
                            data-path="${collection.collectionConfigData.resourcePath}">${collection.collectionConfigData.resourcePath}</a>
+                        , ${collection.inherits ? 'inherits configurations' : 'does not inherit configurations'}
                     </p>
                     <c:forEach var="config"
                                items="${collection.configs}">
@@ -141,13 +136,13 @@
                             <div class="panel-heading">
                                 <h5 class="panel-title">
                                         ${config.configurationData.collectionItemName}
-                                    (inherited = ${config.configurationData.inherited})
+                                    <c:if test="${config.configurationData.inherited}">(inherited)</c:if>
                                 </h5>
                             </div>
                             <div class="panel-body">
                                 <p>Configuration location:
                                     <c:choose>
-                                        <c:when test="${config.configurationData.resourcePath}">
+                                        <c:when test="${not empty config.configurationData.resourcePath}">
                                             <a class="target-link"
                                                href="/bin/browser.html${config.configurationData.resourcePath}"
                                                data-path="${config.configurationData.resourcePath}">${config.configurationData.resourcePath}</a>
@@ -183,7 +178,7 @@
                                                 </c:if>
                                             </td>
                                             <td>
-                                                <c:if test="${propInfo.inherited}">
+                                                <c:if test="${propInfo.inherited && propInfo.configSourcePath != config.configurationData.resourcePath}">
                                                     <a class="target-link btn btn-default btn-xs fa fa-share"
                                                        data-path="${propInfo.configSourcePath}"
                                                        href="/bin/browser.html${propInfo.configSourcePath}"

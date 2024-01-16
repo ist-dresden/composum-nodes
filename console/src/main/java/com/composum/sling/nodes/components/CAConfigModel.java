@@ -180,6 +180,14 @@ public class CAConfigModel extends ConsoleServletBean {
             this.metadata = getConfigurationManager().getConfigurationMetadata(collectionConfigData.getConfigName());
         }
 
+        /**
+         * Whether this collection is configured to inherit from parent configurations - sling:configPropertyInherit .
+         */
+        public boolean isInherits() {
+            Object inheritProperty = collectionConfigData.getProperties().get("sling:configCollectionInherit");
+            return inheritProperty instanceof Boolean && (Boolean) inheritProperty;
+        }
+
         public ConfigurationCollectionData getCollectionConfigData() {
             return collectionConfigData;
         }
