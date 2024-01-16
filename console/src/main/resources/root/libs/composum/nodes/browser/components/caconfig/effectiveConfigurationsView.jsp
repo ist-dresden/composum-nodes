@@ -56,7 +56,7 @@
                     <p>${config.metadata.description}</p>
                     <p>Configuration location:
                         <c:choose>
-                            <c:when test="${config.configurationData.resourcePath}">
+                            <c:when test="${not empty config.configurationData.resourcePath}">
                                 <a class="target-link"
                                    href="/bin/browser.html${config.configurationData.resourcePath}"
                                    data-path="${config.configurationData.resourcePath}">${config.configurationData.resourcePath}</a>
@@ -77,6 +77,13 @@
                         </tr>
                         </thead>
                         <tbody>
+                        <tr>
+                            <th scope="row">Configuration inheritance</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>${config.inherits ? 'inherits configurations' : 'does not inherit configurations'}</td>
+                        </tr>
                         <c:forEach var="propInfo" items="${config.valueInfos}">
                             <tr>
                                 <th scope="row">${propInfo.name}</th>

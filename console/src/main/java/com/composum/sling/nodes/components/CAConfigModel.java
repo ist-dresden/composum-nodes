@@ -99,21 +99,23 @@ public class CAConfigModel extends ConsoleServletBean {
 
     public List<SingletonConfigInfo> getSingletonConfigurations() {
         SortedSet<String> names = getConfigurationManager().getConfigurationNames();
-        return names.stream()
+        List<SingletonConfigInfo> result = names.stream()
                 .filter(name ->
                         requireNonNull(getConfigurationManager().getConfigurationMetadata(name)).isSingleton())
                 .map(name ->
                         new SingletonConfigInfo(name, getConfigurationManager().getConfiguration(resource, name)))
                 .collect(Collectors.toList());
+        return result;
     }
 
     public List<CollectionConfigInfo> getCollectionConfigurations() {
         SortedSet<String> names = getConfigurationManager().getConfigurationNames();
-        return names.stream()
+        List<CollectionConfigInfo> result = names.stream()
                 .filter(name ->
                         requireNonNull(getConfigurationManager().getConfigurationMetadata(name)).isCollection())
                 .map(name -> new CollectionConfigInfo(getConfigurationManager().getConfigurationCollection(resource, name)))
                 .collect(Collectors.toList());
+        return result;
     }
 
     /**
@@ -154,7 +156,7 @@ public class CAConfigModel extends ConsoleServletBean {
             ValueMap properties = resource.getValueMap();
             String configRef = properties.get("sling:configRef", String.class);
             if (configRef != null) {
-                paths.add(configRef);
+                paths.add(configRef + "/sling:configs");
             }
             resource = resource.getParent();
         }
@@ -215,6 +217,15 @@ public class CAConfigModel extends ConsoleServletBean {
 
         public ConfigurationMetadata getMetadata() {
             return metadata;
+        }
+
+        /**
+         * Whether this configuration is configured to inherit from parent configurations - sling:configPropertyInherit .
+         */
+        public boolean isInherits() {
+            Boolean inheritProperty = configurationData.getEffectiveValues()
+                    .get("sling:configPropertyInherit", Boolean.class);
+            return inheritProperty != null && inheritProperty;
         }
 
         public List<ValueInfo<?>> getValueInfos() {
