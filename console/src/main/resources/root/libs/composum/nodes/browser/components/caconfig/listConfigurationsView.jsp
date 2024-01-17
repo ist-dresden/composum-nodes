@@ -37,7 +37,9 @@
                                     title="Create a new configuration"></button>
                         </td>
                         <td>
-                            <a href="/bin/browser.html/${model.path}/${singletoncfg.metadata.name}">${singletoncfg.metadata.name}</a>
+                            <a href="/bin/browser.html/${model.path}/${singletoncfg.metadata.name}"
+                               data-path="${model.path}/${singletoncfg.metadata.name}">
+                                    ${singletoncfg.metadata.name}</a>
                         </td>
                         <td>
                                 ${singletoncfg.metadata.description}
@@ -59,7 +61,9 @@
                             title="Create a new configuration"></button>
                 </td>
                 <td>
-                    <a href="/bin/browser.html/${model.path}/${collectioncfg.metadata.name}">${collectioncfg.metadata.name}</a>
+                    <a href="/bin/browser.html/${model.path}/${collectioncfg.metadata.name}"
+                       data-path="${model.path}/${collectioncfg.metadata.name}">
+                            ${collectioncfg.metadata.name}</a>
                 </td>
                 <td>${collectioncfg.metadata.description}</td>
             </tr>

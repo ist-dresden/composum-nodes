@@ -34,7 +34,7 @@
             <table class="table table-striped">
                 <c:forEach var="item" items="${model.resource.childrenList}">
                     <tr>
-                        <td><a href="/bin/browser.html/${item.path}">${item.name}</a></td>
+                        <td><a href="/bin/browser.html/${item.path}" data-path="${item.path}">${item.name}</a></td>
                         <td><%= renderAsString(((Resource) pageContext.getAttribute("item")).getValueMap()) %></td>
                     </tr>
                 </c:forEach>
