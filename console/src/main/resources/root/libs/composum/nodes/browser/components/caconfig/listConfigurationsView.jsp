@@ -32,15 +32,30 @@
                 <c:forEach var="singletoncfg"
                            items="${model.singletonConfigurations}">
                     <tr>
-                        <td>
-                            <button type="button" class="create glyphicon-plus glyphicon btn btn-default"
-                                    title="Create a new configuration"></button>
-                        </td>
-                        <td>
-                            <a href="/bin/browser.html/${model.path}/${singletoncfg.metadata.name}"
-                               data-path="${model.path}/${singletoncfg.metadata.name}">
-                                    ${singletoncfg.metadata.name}</a>
-                        </td>
+                        <c:choose>
+                            <c:when test="${singletoncfg.resourceExists}">
+                                <td>
+                                        <%-- <button type="button" class="edit glyphicon-pencil glyphicon btn btn-default btn-xs"
+                                                title="Edit the configuration"></button> --%>
+                                </td>
+                                <td>
+                                    <a href="/bin/browser.html/${model.path}/${singletoncfg.metadata.name}"
+                                       data-path="${model.path}/${singletoncfg.metadata.name}">
+                                            ${singletoncfg.metadata.name}</a>
+                                </td>
+                            </c:when>
+                            <c:otherwise>
+                                <td>
+                                    <button type="button"
+                                            class="create glyphicon-plus glyphicon btn btn-default btn-xs create-configuration-resource"
+                                            data-path="${model.path}/${singletoncfg.metadata.name}"
+                                            title="Create a new configuration"></button>
+                                </td>
+                                <td>
+                                        ${singletoncfg.metadata.name}
+                                </td>
+                            </c:otherwise>
+                        </c:choose>
                         <td>
                                 ${singletoncfg.metadata.description}
                         </td>
@@ -56,15 +71,28 @@
             <c:forEach var="collectioncfg"
                     items="${model.collectionConfigurations}">
             <tr>
-                <td>
-                    <button type="button" class="create glyphicon-plus glyphicon btn btn-default"
-                            title="Create a new configuration"></button>
-                </td>
-                <td>
-                    <a href="/bin/browser.html/${model.path}/${collectioncfg.metadata.name}"
-                       data-path="${model.path}/${collectioncfg.metadata.name}">
-                            ${collectioncfg.metadata.name}</a>
-                </td>
+                <c:choose>
+                    <c:when test="${collectioncfg.resourceExists}">
+                        <td>
+                        </td>
+                        <td>
+                            <a href="/bin/browser.html/${model.path}/${collectioncfg.metadata.name}"
+                               data-path="${model.path}/${collectioncfg.metadata.name}">
+                                    ${collectioncfg.metadata.name}</a>
+                        </td>
+                    </c:when>
+                    <c:otherwise>
+                        <td>
+                            <button type="button"
+                                    class="create glyphicon-plus glyphicon btn btn-default btn-xs create-configuration-collection-resource"
+                                    data-path="${model.path}/${collectioncfg.metadata.name}"
+                                    title="Create a new configuration"></button>
+                        </td>
+                        <td>
+                            ${collectioncfg.metadata.name}
+                        </td>
+                    </c:otherwise>
+                </c:choose>
                 <td>${collectioncfg.metadata.description}</td>
             </tr>
             </c:forEach>

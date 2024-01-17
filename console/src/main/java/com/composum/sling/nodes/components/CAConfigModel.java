@@ -188,6 +188,10 @@ public class CAConfigModel extends ConsoleServletBean {
             return inheritProperty instanceof Boolean && (Boolean) inheritProperty;
         }
 
+        public boolean isResourceExists() {
+            return getResource().getChild(metadata.getName()) != null;
+        }
+
         public ConfigurationCollectionData getCollectionConfigData() {
             return collectionConfigData;
         }
@@ -225,6 +229,10 @@ public class CAConfigModel extends ConsoleServletBean {
 
         public ConfigurationMetadata getMetadata() {
             return metadata;
+        }
+
+        public boolean isResourceExists() {
+            return getResource().getChild(this.getName()) != null;
         }
 
         /**
