@@ -48,7 +48,7 @@
                                 <td>
                                     <button type="button"
                                             class="create glyphicon-plus glyphicon btn btn-default btn-xs create-configuration-resource"
-                                            data-path="${model.path}/${singletoncfg.metadata.name}"
+                                            data-path="${model.path}" data-nodename="${singletoncfg.metadata.name}" data-type="nt:unstructured"
                                             title="Create a new configuration"></button>
                                 </td>
                                 <td>
@@ -85,7 +85,7 @@
                         <td>
                             <button type="button"
                                     class="create glyphicon-plus glyphicon btn btn-default btn-xs create-configuration-collection-resource"
-                                    data-path="${model.path}/${collectioncfg.metadata.name}"
+                                    data-path="${model.path}" data-nodename="${collectioncfg.metadata.name}" data-type="sling:Folder"
                                     title="Create a new configuration"></button>
                         </td>
                         <td>

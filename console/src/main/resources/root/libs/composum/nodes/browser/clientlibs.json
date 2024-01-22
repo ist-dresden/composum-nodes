@@ -44,8 +44,8 @@
         "composum/nodes/browser/js/version.js",
         "category:composum.nodes.console.browser.references",
         "category:composum.nodes.console.browser.merged",
-        "composum/nodes/browser/js/nodeview.js",
-        "composum/nodes/browser/components/caconfig/clientlib"
+        "composum/nodes/browser/components/caconfig/clientlib",
+        "composum/nodes/browser/js/nodeview.js"
       ]
     }
   }

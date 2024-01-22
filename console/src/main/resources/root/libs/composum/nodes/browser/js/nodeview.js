@@ -863,6 +863,9 @@
             selector: '> .properties',
             tabType: browser.PropertiesTab
         }, {
+            selector: '> .caconfig',
+            tabType: browser.caconfig.CaconfigTab
+        }, {
             selector: '> .display',
             tabType: browser.HtmlTab
         }, {
