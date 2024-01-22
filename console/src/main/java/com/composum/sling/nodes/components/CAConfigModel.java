@@ -297,7 +297,7 @@ public class CAConfigModel extends ConsoleServletBean {
                     map.put(entry.getKey(), renderValueAsString(entry.getValue()));
                 }
             }
-            return renderValueAsString(map);
+            return map.toString();
         }
         Writer writer = new StringWriter();
         @NotNull JsonWriter jsonWriter = new JsonWriter(writer);

@@ -8,6 +8,8 @@
                type="com.composum.sling.nodes.components.CAConfigModel"
                scope="request">
     <%--@elvariable id="model" type="com.composum.sling.nodes.components.CAConfigModel"--%>
+    <c:set var="writeAllowed" value="${model.permissible['nodes/repository/permissions']['write']}"/>
+    <c:set var="writeDisabled" value="${writeAllowed?'':' disabled'}"/>
 
     <div class="caconfig-toolbar detail-toolbar flex-toolbar">
         <div class="detail-headline" style="margin-right: auto; font-weight: bold;">Configuration Types</div>
@@ -27,7 +29,7 @@
             <c:if test="${not empty model.singletonConfigurations}">
                 <tr>
                     <th></th>
-                    <th colspan="2">Singleton Configurations</th>
+                    <th colspan="2" class="wide-column">Singleton Configurations</th>
                 </tr>
                 <c:forEach var="singletoncfg"
                            items="${model.singletonConfigurations}">
@@ -46,7 +48,7 @@
                             </c:when>
                             <c:otherwise>
                                 <td>
-                                    <button type="button"
+                                    <button type="button"${writeDisabled}
                                             class="create glyphicon-plus glyphicon btn btn-default btn-xs create-configuration-resource"
                                             data-path="${model.path}" data-nodename="${singletoncfg.metadata.name}" data-type="nt:unstructured"
                                             title="Create a new configuration"></button>
@@ -65,7 +67,7 @@
             <c:if test="${not empty model.collectionConfigurations}">
             <tr>
                 <th></th>
-                <th colspan="2">Collection Configurations</th>
+                <th colspan="2" class="wide-column">Collection Configurations</th>
             </tr>
             <tbody>
             <c:forEach var="collectioncfg"
@@ -83,7 +85,7 @@
                     </c:when>
                     <c:otherwise>
                         <td>
-                            <button type="button"
+                            <button type="button"${writeDisabled}
                                     class="create glyphicon-plus glyphicon btn btn-default btn-xs create-configuration-collection-resource"
                                     data-path="${model.path}" data-nodename="${collectioncfg.metadata.name}" data-type="sling:Folder"
                                     title="Create a new configuration"></button>
@@ -108,4 +110,7 @@
             }
         %>
     </div>
+
+    <c:remove var="writeDisabled"/>
+    <c:remove var="writeAllowed"/>
 </cpn:component>

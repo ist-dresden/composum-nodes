@@ -863,9 +863,6 @@
             selector: '> .properties',
             tabType: browser.PropertiesTab
         }, {
-            selector: '> .caconfig',
-            tabType: browser.caconfig.CaconfigTab
-        }, {
             selector: '> .display',
             tabType: browser.HtmlTab
         }, {
@@ -904,6 +901,9 @@
         }, {
             selector: '> .versions',
             tabType: browser.VersionsTab
+        }, {
+            selector: '> .caconfig',
+            tabType: browser.caconfig.CaconfigTab
         }, function ($detailContent) {
             // the generic implementation...
             var $content = $detailContent.find('> div');

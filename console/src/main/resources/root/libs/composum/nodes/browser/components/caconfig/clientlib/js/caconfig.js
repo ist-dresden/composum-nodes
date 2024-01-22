@@ -19,6 +19,8 @@
                 this.$content = this.$('.detail-content');
                 this.$content.on('click', '.create-configuration-resource', _.bind(this.createConfigurationResource, this));
                 this.$content.on('click', '.create-configuration-collection-resource', _.bind(this.createConfigurationResource, this));
+                this.$toolbar.find('.add').click(_.bind(this.createConfigurationResource, this));
+                this.$toolbar.find('.remove').click(_.bind(this.deleteConfigurationResource, this));
             },
 
             createConfigurationResource: function (event) {
@@ -38,6 +40,20 @@
                     if (type) {
                         dialog.initType(type);
                     }
+                }, this));
+            },
+
+            deleteConfigurationResource: function (event) {
+                var selectedConfiguration = this.$content.find('.selected-configuration:checked');
+                var path = selectedConfiguration.data('path');
+                var name = selectedConfiguration.data('name');
+                if (!path || !name) {
+                    return;
+                }
+                var dialog = core.nodes.getDeleteNodeDialog();
+                dialog.show(_.bind(function () {
+                    dialog.setPath(path + '/' + name);
+                    dialog.setSmart(false);
                 }, this));
             },
 
