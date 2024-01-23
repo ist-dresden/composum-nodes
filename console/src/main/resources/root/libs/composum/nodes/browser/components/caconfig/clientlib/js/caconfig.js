@@ -17,10 +17,11 @@
             initialize: function (options) {
                 this.$toolbar = this.$('.caconfig-toolbar');
                 this.$content = this.$('.detail-content');
-                this.$content.on('click', '.create-configuration-resource', _.bind(this.createConfigurationResource, this));
-                this.$content.on('click', '.create-configuration-collection-resource', _.bind(this.createConfigurationResource, this));
                 this.$toolbar.find('.add').click(_.bind(this.createConfigurationResource, this));
                 this.$toolbar.find('.remove').click(_.bind(this.deleteConfigurationResource, this));
+                this.$content.on('click', '.create-configuration-resource', _.bind(this.createConfigurationResource, this));
+                this.$content.on('click', '.create-configuration-collection-resource', _.bind(this.createConfigurationResource, this));
+                this.$content.on('click', '.caconfig-property-editor', _.bind(this.openPropertyEditDialog, this));
             },
 
             createConfigurationResource: function (event) {
@@ -67,8 +68,28 @@
                     }, this), undefined, _.bind(function () {
                         this.$el.removeClass('loading');
                     }, this));
-            }
+            },
 
+            openPropertyEditDialog: function () {
+                console.log('openPropertyEditDialog', arguments);
+                core.openLoadedDialog(core.getComposumPath('composum/nodes/browser/components/caconfig/property.dialog.html'),
+                    caconfig.PropertyEdit, undefined, _.bind(function (dialog) {
+                        // init dialog
+                    }, this), _.bind(function (dialog) {
+                        // set values
+                    }, this));
+            },
+
+        });
+
+        caconfig.PropertyEdit = core.components.LoadedDialog.extend({
+
+            initialize: function (options) {
+                core.components.LoadedDialog.prototype.initialize.call(this, options);
+                this.$('button.apply').click(_.bind(function () {
+                    this.hide();
+                }, this));
+            }
         });
 
     })(CPM.nodes.browser.caconfig, CPM.nodes.browser, CPM.core);

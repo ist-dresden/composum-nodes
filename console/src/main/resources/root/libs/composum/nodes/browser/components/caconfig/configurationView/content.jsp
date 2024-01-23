@@ -24,7 +24,7 @@
     <cpn:text tagName="h4" value="${config.metadata.name}"/>
     <cpn:text tagName="p" value="${config.metadata.description}"/>
     <p>Please click on the line in the table to edit the value. The description of the item is shown on mouse hover.</p>
-    <table class="table table-striped">
+    <table class="table table-striped table-hover">
         <thead>
         <tr>
             <th>Property</th>
@@ -35,7 +35,8 @@
         </thead>
         <tbody>
         <c:forEach var="propInfo" items="${config.valueInfos}">
-            <tr title="${propInfo.propertyMetadata.description}">
+            <tr title="${propInfo.propertyMetadata.description}" class="caconfig-property-editor"
+                data-path="${model.path}" data-property="${propInfo.name}">
                 <th scope="row">${propInfo.name}</th>
                 <td>
                         ${propInfo.propertyMetadata.label}

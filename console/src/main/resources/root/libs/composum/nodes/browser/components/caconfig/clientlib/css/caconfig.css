@@ -2,3 +2,33 @@
 #browser-view .caconfig.detail-panel .wide-column {
     width: 100%;
 }
+
+.detail-view .caconfig .loading-curtain {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    content: '';
+}
+
+.detail-view .caconfig .loading-curtain i {
+    display: none;
+}
+
+.detail-view .caconfig.loading .loading-curtain {
+    pointer-events: all;
+    display: block;
+    right: 0;
+    bottom: 0;
+    content: ' ';
+    background: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    z-index: 8;
+}
+
+.detail-view .caconfig.loading .loading-curtain i {
+    display: inline-block;
+    margin: 30%;
+    font-size: 100px;
+}
