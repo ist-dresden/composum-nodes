@@ -5,12 +5,6 @@
 <sling:defineObjects/>
 <cpn:component id="model" type="com.composum.sling.nodes.components.CAConfigModel" scope="request">
     <c:if test="${not empty model.viewType}">
-        <div class="caconfig detail-panel" data-path="${cpn:path(model.path)}">
-            <sling:call script="${model.viewType}/toolbar.jsp"/>
-            <div class="loading-curtain"><i class="fa fa-spinner fa-pulse"></i></div>
-            <div class="detail-content">
-                    <%-- loaded lazily --%>
-            </div>
-        </div>
+        <sling:call script="${model.viewType}/content.jsp"/>
     </c:if>
 </cpn:component>

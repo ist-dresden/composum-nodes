@@ -14,6 +14,9 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.caconfig.management.ConfigurationCollectionData;
@@ -26,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.Restricted;
 import com.composum.sling.core.util.JsonUtil;
 import com.composum.sling.nodes.console.ConsoleServletBean;
@@ -49,6 +53,19 @@ public class CAConfigModel extends ConsoleServletBean {
 
     public CAConfigModel() {
         super();
+    }
+
+    @Override
+    @NotNull
+    public ResourceHandle getResource() {
+        Resource resource = null;
+        final SlingHttpServletRequest request = context.getRequest();
+        final RequestPathInfo pathInfo = request.getRequestPathInfo();
+        final String suffix = pathInfo.getSuffix();
+        if (StringUtils.isNotBlank(suffix)) {
+            resource = request.getResourceResolver().getResource(suffix);
+        }
+        return resource != null ? ResourceHandle.use(resource) : super.getResource();
     }
 
     public String getViewType() {

@@ -57,6 +57,18 @@
                 }, this));
             },
 
+            reload: function () {
+                this.$el.addClass('loading');
+                core.ajaxGet(core.getComposumPath('composum/nodes/browser/components/caconfig.content.html') +
+                    core.encodePath(browser.getCurrentPath()),
+                    {},
+                    _.bind(function (content) {
+                        this.$content.html(content);
+                    }, this), undefined, _.bind(function () {
+                        this.$el.removeClass('loading');
+                    }, this));
+            }
+
         });
 
     })(CPM.nodes.browser.caconfig, CPM.nodes.browser, CPM.core);
