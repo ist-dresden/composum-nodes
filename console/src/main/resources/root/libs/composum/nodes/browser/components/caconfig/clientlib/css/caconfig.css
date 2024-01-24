@@ -16,7 +16,7 @@
 }
 
 .detail-view .caconfig.loading .loading-curtain {
-    pointer-events: all;
+    /* pointer-events: all; */
     display: block;
     right: 0;
     bottom: 0;

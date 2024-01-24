@@ -58,6 +58,10 @@
                 }, this));
             },
 
+            initContent: function () {
+                this.$content.find('[data-toggle="tooltip"]').tooltip();
+            },
+
             reload: function () {
                 this.$el.addClass('loading');
                 core.ajaxGet(core.getComposumPath('composum/nodes/browser/components/caconfig.content.html') +
@@ -65,23 +69,31 @@
                     {},
                     _.bind(function (content) {
                         this.$content.html(content);
+                        this.initContent();
                     }, this), undefined, _.bind(function () {
                         this.$el.removeClass('loading');
                     }, this));
             },
 
-            openPropertyEditDialog: function () {
+            openPropertyEditDialog: function (event) {
                 console.log('openPropertyEditDialog', arguments);
-                core.openLoadedDialog(core.getComposumPath('composum/nodes/browser/components/caconfig/property.dialog.html'),
+                var $target = $(event.currentTarget);
+                var path = $target.data('path');
+                var propertyName = $target.data('propertyName');
+                core.openLoadedDialog(core.getComposumPath('composum/nodes/browser/components/caconfig/property.dialog.html') +
+                    core.encodePath(path) + "?propertyName=" + propertyName,
                     caconfig.PropertyEdit, undefined, _.bind(function (dialog) {
+                        debugger;
                         // init dialog
                     }, this), _.bind(function (dialog) {
+                        debugger;
                         // set values
                     }, this));
             },
 
         });
 
+        // FIXME use browser.PropertyValueWidget
         caconfig.PropertyEdit = core.components.LoadedDialog.extend({
 
             initialize: function (options) {

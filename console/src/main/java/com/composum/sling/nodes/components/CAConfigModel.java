@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -163,6 +164,19 @@ public class CAConfigModel extends ConsoleServletBean {
         return null;
     }
 
+    public ValueInfo<?> getThisProperty() {
+        String propertyName = getRequest().getParameter("propertyName");
+        SingletonConfigInfo configInfo = getThisSingletonConfiguration();
+        ValueInfo<?> result = null;
+        if (configInfo != null && propertyName != null) {
+            result = configInfo.getValueInfos().stream()
+                    .filter(valueInfo -> valueInfo.getPropertyMetadata() != null
+                            && valueInfo.getPropertyMetadata().getName().equals(propertyName))
+                    .findFirst().orElse(null);
+        }
+        return result;
+    }
+
     /**
      * List of all paths that are referenced from a sling:configRef of the resource or one of it's parents.
      */
@@ -274,6 +288,80 @@ public class CAConfigModel extends ConsoleServletBean {
                             valueInfo.getPropertyMetadata() != null ? valueInfo.getPropertyMetadata().getOrder() : Integer.MAX_VALUE
                     ));
             return valueInfos;
+        }
+
+    }
+
+    public class PropertyInfo {
+
+        protected final ValueInfo<?> valueInfo;
+        protected final String name;
+        protected final ConfigurationMetadata metadata;
+        private final Class<?> type;
+
+        public PropertyInfo(String name, ValueInfo<?> valueInfo) {
+            this.name = name;
+            this.metadata = getConfigurationManager().getConfigurationMetadata(name);
+            this.valueInfo = valueInfo;
+            this.type = valueInfo != null ? valueInfo.getPropertyMetadata().getType() : null;
+        }
+
+        public ValueInfo<?> getValueInfo() {
+            return valueInfo;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public ConfigurationMetadata getMetadata() {
+            return metadata;
+        }
+
+        public boolean isResourceExists() {
+            return getResource().getChild(this.getName()) != null;
+        }
+
+        public boolean isMultiValue() {
+            return type != null && (
+                    type.isArray() || Collection.class.isAssignableFrom(type)
+            );
+        }
+
+        public String getTypeName() {
+            if (type == null) {
+                return null;
+            }
+            return getBasicTypeName(type);
+        }
+
+        protected String getBasicTypeName(Class<?> clazz) {
+            if (clazz == null) {
+                return null;
+            }
+            if (Number.class.isAssignableFrom(clazz)) {
+                return "number";
+            } else if (Boolean.class.isAssignableFrom(clazz)) {
+                return "boolean";
+            } else if (String.class.isAssignableFrom(clazz)) {
+                return "string";
+            } else if (boolean.class.isAssignableFrom(clazz)) {
+                return "boolean";
+            } else if (int.class.isAssignableFrom(clazz)
+                    || long.class.isAssignableFrom(clazz)
+                    || double.class.isAssignableFrom(clazz)
+                    || float.class.isAssignableFrom(clazz)
+                    || short.class.isAssignableFrom(clazz)
+                    || byte.class.isAssignableFrom(clazz)) {
+                return "number";
+            } else if (clazz.isArray()) {
+                return getBasicTypeName(clazz.getComponentType());
+            } else if (Collection.class.isAssignableFrom(clazz)) {
+                // cannot determine that. :-( String works probably.
+                return "string";
+            } else {
+                return clazz.getName();
+            }
         }
 
     }

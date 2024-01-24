@@ -69,13 +69,13 @@
                     <tbody>
                     <c:forEach var="propInfo" items="${config.valueInfos}">
                         <tr>
-                            <th scope="row">${propInfo.name}</th>
+                            <th scope="row">${propInfo.name} (${propInfo.propertyMetadata.type.simpleName})</th>
                             <td title="${propInfo.propertyMetadata.description}">
                                     ${propInfo.propertyMetadata.label}
                             </td>
                             <td>
                                 <c:if test="${not empty propInfo.propertyMetadata.description}">
-                                        <span class="fa fa-info-circle"
+                                        <span class="fa fa-info-circle" data-toggle="tooltip"
                                               title="${propInfo.propertyMetadata.description}">
                                         </span>
                                 </c:if>
@@ -155,13 +155,13 @@
                                 <tbody>
                                 <c:forEach var="propInfo" items="${config.valueInfos}">
                                     <tr>
-                                        <th scope="row">${propInfo.name}</th>
+                                        <th scope="row">${propInfo.name} (${propInfo.propertyMetadata.type.simpleName})</th>
                                         <td title="${propInfo.propertyMetadata.description}">
                                                 ${propInfo.propertyMetadata.label}
                                         </td>
                                         <td>
                                             <c:if test="${not empty propInfo.propertyMetadata.description}">
-                                                    <span class="fa fa-info-circle"
+                                                    <span class="fa fa-info-circle" data-toggle="tooltip"
                                                           title="${propInfo.propertyMetadata.description}">
                                                     </span>
                                             </c:if>

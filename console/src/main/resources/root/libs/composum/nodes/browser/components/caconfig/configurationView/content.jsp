@@ -36,7 +36,7 @@
         <tbody>
         <c:forEach var="propInfo" items="${config.valueInfos}">
             <tr title="${propInfo.propertyMetadata.description}" class="caconfig-property-editor"
-                data-path="${model.path}" data-property="${propInfo.name}">
+                data-path="${model.path}" data-propertyName="${propInfo.name}">
                 <th scope="row">${propInfo.name}</th>
                 <td>
                         ${propInfo.propertyMetadata.label}

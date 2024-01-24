@@ -59,14 +59,27 @@ The editor should support the following operations:
 For resources in /content the configuration editor is read only - there is no button to add/delete/update a
 configuration. It just offers to go to the relevant /conf resource, and there you have the buttons to add/delete/update.
 
-## User stories
+## Configuration dialog
 
+For editing configurations we use the approach that all properties (if set or unset) of a configuration are displayed in
+the configuration view, comparable to the properties view for a resource, and a click on any of these properties opens a
+dialog that allows editing the property. This dialog is similar to the normal property editing dialog, except that the
+name, type and multi settings are fixed and the description is displayed as well. It contains the following fields:
 
-
-PROMPT: print a possible continuation of this specification from here, ignoring the lines below.
-
-## Debugging
+- type and multi are hidden fields
+- name is a displayed text and description as well
+- value is similar to the properties dialog.
 
 ### Some JCR Queries
 
 - /jcr:root/content//*[@sling:configRef]
+
+## Limitations
+
+In AEM the attribute items of com.adobe.cq.wcm.core.components.config.HtmlPageItemsConfig
+and menu of io.wcm.caconfig.sample.wcon60.FooterConfig have type
+ConfigurationMetadata[] . That is not supported yet. Other than that, the AEM standard configurations seem to have String, String[] , int, boolean.
+
+Interesting for tests is io.wcm.caconfig.sample.config.ConfigSample .
+What about io.wcm.caconfig.sample.config.ConfigSampleList , io.wcm.caconfig.sample.config.RequiredFieldsSampleList, 
+io.wcm.caconfig.sample.config.ValidationSample ?
