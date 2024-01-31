@@ -1,5 +1,7 @@
 package com.composum.sling.nodes.ai;
 
+import java.io.IOException;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -17,7 +19,7 @@ public interface AIService {
      * Simplest AI related service: execute a prompt and return the response of the AI.
      */
     @Nonnull
-    String prompt(@Nullable String systemprompt, @Nonnull String prompt);
+    String prompt(@Nullable String systemprompt, @Nonnull String prompt) throws AIServiceException;
 
     /**
      * Something went wrong.
@@ -25,6 +27,10 @@ public interface AIService {
     public class AIServiceException extends Exception {
         public AIServiceException(String message) {
             super(message);
+        }
+
+        public AIServiceException(String message, IOException e) {
+            super(message, e);
         }
     }
 
