@@ -344,6 +344,14 @@ public class CAConfigModel extends ConsoleServletBean {
             if (type == null) {
                 return null;
             }
+            if (valueInfo != null && valueInfo.getPropertyMetadata() != null
+                    && valueInfo.getPropertyMetadata().getProperties() != null) {
+                Map<String, String> props = valueInfo.getPropertyMetadata().getProperties();
+                String widgetType = props.get("widgetType");
+                if ("pathbrowser".equals(widgetType)) {
+                    return "Path";
+                }
+            }
             return getBasicTypeName(type);
         }
 

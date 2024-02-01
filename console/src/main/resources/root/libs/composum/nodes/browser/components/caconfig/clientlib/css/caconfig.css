@@ -32,3 +32,15 @@
     margin: 30%;
     font-size: 100px;
 }
+
+.detail-view .caconfig .loading-curtain {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    content: '';
+}
+
+.detail-view .caconfig .valuecolumn {
+    width: 70%;
+}

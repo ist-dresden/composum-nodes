@@ -22,7 +22,7 @@
             <th>Property</th>
             <th>Label</th>
             <th></th>
-            <th>Value</th>
+            <th class="valuecolumn">Value</th>
         </tr>
         </thead>
         <tbody>
