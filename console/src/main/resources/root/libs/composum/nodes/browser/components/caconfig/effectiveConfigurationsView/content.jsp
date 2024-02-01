@@ -25,7 +25,6 @@
         <c:forEach var="configPath" items="${model.referencedConfigPaths}">
             <li>
                 <a class="target-link"
-                   href="/bin/browser.html${configPath}"
                    data-path="${configPath}">${configPath}</a>
             </li>
         </c:forEach>
@@ -47,7 +46,6 @@
                     <c:choose>
                         <c:when test="${not empty config.configurationData.resourcePath}">
                             <a class="target-link"
-                               href="/bin/browser.html${config.configurationData.resourcePath}"
                                data-path="${config.configurationData.resourcePath}">${config.configurationData.resourcePath}</a>
                             , ${config.inherits ? 'inherits configurations' : 'does not inherit configurations'}
                         </c:when>
@@ -84,7 +82,6 @@
                                 <c:if test="${propInfo.inherited}">
                                     <a class="target-link btn btn-default btn-xs fa fa-share"
                                        data-path="${propInfo.configSourcePath}"
-                                       href="/bin/browser.html${propInfo.configSourcePath}"
                                        title="Configuration inherited from: ${propInfo.configSourcePath}"></a>
                                 </c:if>
                             </td>
@@ -116,7 +113,6 @@
                     <c:choose>
                         <c:when test="${not empty collection.collectionConfigData.resourcePath}">
                             <a class="target-link"
-                               href="/bin/browser.html${collection.collectionConfigData.resourcePath}"
                                data-path="${collection.collectionConfigData.resourcePath}">${collection.collectionConfigData.resourcePath}</a>
                             , ${collection.inherits ? 'inherits configurations' : 'does not inherit configurations'}
                         </c:when>
@@ -140,7 +136,6 @@
                                 <c:choose>
                                     <c:when test="${not empty config.configurationData.resourcePath}">
                                         <a class="target-link"
-                                           href="/bin/browser.html${config.configurationData.resourcePath}"
                                            data-path="${config.configurationData.resourcePath}">${config.configurationData.resourcePath}</a>
                                     </c:when>
                                     <c:otherwise>
@@ -177,7 +172,6 @@
                                             <c:if test="${propInfo.inherited && propInfo.configSourcePath != config.configurationData.resourcePath}">
                                                 <a class="target-link btn btn-default btn-xs fa fa-share"
                                                    data-path="${propInfo.configSourcePath}"
-                                                   href="/bin/browser.html${propInfo.configSourcePath}"
                                                    title="Configuration inherited from: ${propInfo.configSourcePath}"></a>
                                             </c:if>
                                         </td>

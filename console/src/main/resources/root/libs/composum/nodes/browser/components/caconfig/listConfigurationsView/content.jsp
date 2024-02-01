@@ -30,7 +30,7 @@
                                             title="Edit the configuration"></button> --%>
                             </td>
                             <td>
-                                <a href="/bin/browser.html/${model.path}/${singletoncfg.metadata.name}"
+                                <a class="target-link"
                                    data-path="${model.path}/${singletoncfg.metadata.name}">
                                         ${singletoncfg.metadata.name}</a>
                             </td>
@@ -68,7 +68,7 @@
                     <td>
                     </td>
                     <td>
-                        <a href="/bin/browser.html/${model.path}/${collectioncfg.metadata.name}"
+                        <a class="target-link"
                            data-path="${model.path}/${collectioncfg.metadata.name}">
                                 ${collectioncfg.metadata.name}</a>
                     </td>

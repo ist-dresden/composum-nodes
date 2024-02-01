@@ -22,6 +22,7 @@
                 this.$content.on('click', '.create-configuration-resource', _.bind(this.createConfigurationResource, this));
                 this.$content.on('click', '.create-configuration-collection-resource', _.bind(this.createConfigurationResource, this));
                 this.$content.on('click', '.caconfig-property-editor', _.bind(this.openPropertyEditDialog, this));
+                this.$content.on('click', '.target-link[data-path]', this.jumpToTarget.bind(this));
             },
 
             createConfigurationResource: function (event) {
@@ -99,9 +100,14 @@
                 );
             },
 
+            jumpToTarget: function (event) {
+                event.preventDefault();
+                browser.setCurrentPath($(event.currentTarget).data('path'));
+                return false;
+            },
+
         });
 
-        // FIXME use browser.PropertyValueWidget
         caconfig.PropertyEdit = browser.PropertyDialog.extend({
 
             initialize: function (options) {
@@ -111,7 +117,7 @@
                 this.setProperty(new Map(Object.entries(options)));
                 this.$title.html(oldtitle);
                 this.$el.find('.description').text(options.description);
-                this.$content.find('[data-toggle="tooltip"]').tooltip();
+                this.$el.find('[data-toggle="tooltip"]').tooltip();
             }
         });
 

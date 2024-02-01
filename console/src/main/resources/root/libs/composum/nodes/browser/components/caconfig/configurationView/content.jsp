@@ -15,7 +15,7 @@
     <c:set var="config" value="${model.thisSingletonConfiguration}"/>
     <cpn:text tagName="h4" value="${config.metadata.name}"/>
     <cpn:text tagName="p" value="${config.metadata.description}"/>
-    <p>Please click on the line in the table to edit the value. The description of the item is shown on mouse hover.</p>
+    <p>Please click on the line in the table to edit the value.</p>
     <table class="table table-striped table-hover">
         <thead>
         <tr>
