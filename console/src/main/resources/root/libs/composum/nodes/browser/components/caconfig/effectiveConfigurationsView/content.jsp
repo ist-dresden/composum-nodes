@@ -75,7 +75,7 @@
                             </td>
                             <td>
                                 <c:if test="${not empty propInfo.propertyMetadata.description}">
-                                        <span class="fa fa-info-circle" data-toggle="tooltip"
+                                        <span class="fa fa-info-circle infosymbol" data-toggle="tooltip"
                                               title="${propInfo.propertyMetadata.description}">
                                         </span>
                                 </c:if>
@@ -168,7 +168,7 @@
                                         </td>
                                         <td>
                                             <c:if test="${not empty propInfo.propertyMetadata.description}">
-                                                    <span class="fa fa-info-circle" data-toggle="tooltip"
+                                                    <span class="fa fa-info-circle infosymbol" data-toggle="tooltip"
                                                           title="${propInfo.propertyMetadata.description}">
                                                     </span>
                                             </c:if>

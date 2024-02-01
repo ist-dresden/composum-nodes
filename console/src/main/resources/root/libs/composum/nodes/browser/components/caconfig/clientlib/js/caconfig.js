@@ -85,7 +85,8 @@
                     name: propertyName,
                     type: $target.data('typename'),
                     value: $target.data('value'),
-                    multi: $target.data('ismulti') == 'true'
+                    multi: $target.data('ismulti') == 'true',
+                    description: $target.data('description')
                 };
                 core.openLoadedDialog(core.getComposumPath('composum/nodes/browser/components/caconfig/property.dialog.html') +
                     core.encodePath(path) + "?propertyName=" + propertyName,
@@ -109,6 +110,8 @@
                 var oldtitle = this.$title.html(); // will be overwritten
                 this.setProperty(new Map(Object.entries(options)));
                 this.$title.html(oldtitle);
+                this.$el.find('.description').text(options.description);
+                this.$content.find('[data-toggle="tooltip"]').tooltip();
             }
         });
 

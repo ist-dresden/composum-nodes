@@ -22,6 +22,7 @@
           <div class="modal-body">
             <div class="messages">
               <div class="alert"></div>
+              <p class="description"></p>
             </div>
 
             <div class="form-group path">

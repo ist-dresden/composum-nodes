@@ -22,24 +22,32 @@
             <th>Property</th>
             <th>Label</th>
             <th></th>
+            <th></th>
             <th class="valuecolumn">Value</th>
         </tr>
         </thead>
         <tbody>
         <c:forEach var="propInfo" items="${config.propertyInfos}">
-            <tr title="${propInfo.metadata.propertyMetadata.description}" class="caconfig-property-editor"
+            <tr title="${propInfo.valueInfo.propertyMetadata.description}" class="caconfig-property-editor"
                 data-ismulti="${propInfo.multiValue}" data-typename="${propInfo.typeName}"
                 data-path="${model.path}" data-propertyname="${propInfo.name}"
-                data-value="${propInfo.renderedValue}">
+                data-value="${propInfo.renderedValue}" data-description="${propInfo.valueInfo.propertyMetadata.description}">
                 <th scope="row">${propInfo.name}</th>
                 <td>
-                        ${propInfo.metadata.propertyMetadata.label}
+                        ${propInfo.valueInfo.propertyMetadata.label}
                 </td>
                 <td>
                     <%-- <cpn:text value="${propInfo.propertyMetadata.description}"/> --%>
-                    <c:if test="${not empty propInfo.metadata.propertyMetadata.description}">
-                        <span class="fa fa-info-circle"
-                              title="${propInfo.metadata.propertyMetadata.description}">
+                    <c:if test="${not empty propInfo.valueInfo.propertyMetadata.description}">
+                        <span class="fa fa-info-circle infosymbol" data-toggle="tooltip"
+                              title="${propInfo.valueInfo.propertyMetadata.description}">
+                        </span>
+                    </c:if>
+                </td>
+                <td>
+                    <c:if test="${not empty propInfo.valueInfo.propertyMetadata.properties}">
+                        <span class="fa fa-product-hunt infosymbol" data-toggle="tooltip"
+                              title="Properties: ${propInfo.valueInfo.propertyMetadata.properties}">
                         </span>
                     </c:if>
                 </td>

@@ -44,3 +44,7 @@
 .detail-view .caconfig .valuecolumn {
     width: 70%;
 }
+
+.detail-view .caconfig .infosymbol {
+    padding-top: 2px;
+}
