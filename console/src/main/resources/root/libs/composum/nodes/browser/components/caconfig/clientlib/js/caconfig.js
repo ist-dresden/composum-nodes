@@ -81,9 +81,11 @@
                 var path = $target.data('path');
                 var propertyName = $target.data('propertyname');
                 var config = {
-                    propertyName: propertyName,
-                    typeName: $target.data('typename'),
-                    isMulti: $target.data('ismulti')
+                    path: path,
+                    name: propertyName,
+                    type: $target.data('typename'),
+                    value: $target.data('value'),
+                    multi: $target.data('ismulti') == 'true'
                 };
                 core.openLoadedDialog(core.getComposumPath('composum/nodes/browser/components/caconfig/property.dialog.html') +
                     core.encodePath(path) + "?propertyName=" + propertyName, caconfig.PropertyEdit, config);
@@ -92,16 +94,20 @@
         });
 
         // FIXME use browser.PropertyValueWidget
-        caconfig.PropertyEdit = core.components.LoadedDialog.extend({
+        caconfig.PropertyEdit = browser.PropertyDialog.extend({
 
             initialize: function (options) {
-                core.components.LoadedDialog.prototype.initialize.call(this, options);
-                this.$el.find('input[name="name"]').val(options.propertyName);
-                this.$el.find('input[name="type"]').val(options.typeName);
-                this.$el.find('input[name="multi"]').prop('checked', options.isMulti === 'true');
-                this.$('button.apply').click(_.bind(function () {
-                    this.hide();
-                }, this));
+                browser.PropertyDialog.prototype.initialize.call(this, options);
+                this.$type = this.$el.find('input[name="type"]');
+                // this.$el.find('input[name="name"]').val(options.name);
+                // this.$el.find('input[name="type"]').val(options.type);
+                // this.$el.find('input[name="multi"]').prop('checked', options.multi);
+                // this.$('button.apply').click(_.bind(function () {
+                //     this.hide();
+                // }, this));
+                var oldtitle = this.$title.html(); // would be overwritten
+                this.setProperty(new Map(Object.entries(options)));
+                this.$title.html(oldtitle);
             }
         });
 

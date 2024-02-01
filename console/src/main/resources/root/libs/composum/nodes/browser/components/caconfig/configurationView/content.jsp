@@ -29,7 +29,8 @@
         <c:forEach var="propInfo" items="${config.propertyInfos}">
             <tr title="${propInfo.metadata.propertyMetadata.description}" class="caconfig-property-editor"
                 data-ismulti="${propInfo.multiValue}" data-typename="${propInfo.typeName}"
-                data-path="${model.path}" data-propertyname="${propInfo.name}">
+                data-path="${model.path}" data-propertyname="${propInfo.name}"
+                data-value="${propInfo.renderedValue}">
                 <th scope="row">${propInfo.name}</th>
                 <td>
                         ${propInfo.metadata.propertyMetadata.label}

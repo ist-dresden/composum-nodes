@@ -309,7 +309,7 @@ public class CAConfigModel extends ConsoleServletBean {
             this.name = name;
             this.metadata = getConfigurationManager().getConfigurationMetadata(name);
             this.valueInfo = valueInfo;
-            this.type = valueInfo != null ? valueInfo.getPropertyMetadata().getType() : null;
+            this.type = valueInfo != null && valueInfo.getPropertyMetadata() != null ? valueInfo.getPropertyMetadata().getType() : null;
         }
 
         public ValueInfo<?> getValueInfo() {
