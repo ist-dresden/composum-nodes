@@ -334,6 +334,12 @@ public class CAConfigModel extends ConsoleServletBean {
             );
         }
 
+        public String getJsonValue() {
+            ValueInfo valueInfo = this.getValueInfo();
+            Object value = CAConfigModel.this.getResource().getValueMap().get(valueInfo.getName());
+            return toJson(value);
+        }
+
         public String getRenderedValue() {
             ValueInfo valueInfo = this.getValueInfo();
             Object value = CAConfigModel.this.getResource().getValueMap().get(valueInfo.getName());
@@ -427,6 +433,10 @@ public class CAConfigModel extends ConsoleServletBean {
             }
             return map.toString();
         }
+        return toJson(value);
+    }
+
+    protected static String toJson(Object value) {
         Writer writer = new StringWriter();
         @NotNull JsonWriter jsonWriter = new JsonWriter(writer);
         try {

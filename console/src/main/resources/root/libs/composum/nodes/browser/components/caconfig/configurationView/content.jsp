@@ -31,7 +31,8 @@
             <tr title="${propInfo.valueInfo.propertyMetadata.description}" class="caconfig-property-editor"
                 data-ismulti="${propInfo.multiValue}" data-typename="${propInfo.typeName}"
                 data-path="${model.path}" data-propertyname="${propInfo.name}"
-                data-value="${propInfo.renderedValue}" data-description="${propInfo.valueInfo.propertyMetadata.description}">
+                data-value='${cpn:value(propInfo.jsonValue)}' data-description="${propInfo.valueInfo.propertyMetadata.description}"
+                data-default="${propInfo.valueInfo.default}">
                 <th scope="row">${propInfo.name}</th>
                 <td>
                         ${propInfo.valueInfo.propertyMetadata.label}

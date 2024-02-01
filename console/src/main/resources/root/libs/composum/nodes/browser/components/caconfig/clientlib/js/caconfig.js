@@ -86,7 +86,7 @@
                     name: propertyName,
                     type: $target.data('typename'),
                     value: $target.data('value'),
-                    multi: $target.data('ismulti') == 'true',
+                    multi: $target.data('ismulti'),
                     description: $target.data('description')
                 };
                 core.openLoadedDialog(core.getComposumPath('composum/nodes/browser/components/caconfig/property.dialog.html') +
