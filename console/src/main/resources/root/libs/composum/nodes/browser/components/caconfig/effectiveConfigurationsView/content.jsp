@@ -49,12 +49,12 @@
                             <a class="target-link"
                                href="/bin/browser.html${config.configurationData.resourcePath}"
                                data-path="${config.configurationData.resourcePath}">${config.configurationData.resourcePath}</a>
+                            , ${config.inherits ? 'inherits configurations' : 'does not inherit configurations'}
                         </c:when>
                         <c:otherwise>
                             (defaults)
                         </c:otherwise>
                     </c:choose>
-                    , ${config.inherits ? 'inherits configurations' : 'does not inherit configurations'}
                 </p>
                 <table class="table table-striped">
                     <thead>
@@ -113,10 +113,17 @@
             <div class="panel-body">
                 <p>${collection.metadata.description}</p>
                 <p>Collection location:
-                    <a class="target-link"
-                       href="/bin/browser.html${collection.collectionConfigData.resourcePath}"
-                       data-path="${collection.collectionConfigData.resourcePath}">${collection.collectionConfigData.resourcePath}</a>
-                    , ${collection.inherits ? 'inherits configurations' : 'does not inherit configurations'}
+                    <c:choose>
+                        <c:when test="${not empty collection.collectionConfigData.resourcePath}">
+                            <a class="target-link"
+                               href="/bin/browser.html${collection.collectionConfigData.resourcePath}"
+                               data-path="${collection.collectionConfigData.resourcePath}">${collection.collectionConfigData.resourcePath}</a>
+                            , ${collection.inherits ? 'inherits configurations' : 'does not inherit configurations'}
+                        </c:when>
+                        <c:otherwise>
+                            (defaults)
+                        </c:otherwise>
+                    </c:choose>
                 </p>
                 <c:forEach var="config"
                            items="${collection.configs}">

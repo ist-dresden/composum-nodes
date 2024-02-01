@@ -79,16 +79,14 @@
                 console.log('openPropertyEditDialog', arguments);
                 var $target = $(event.currentTarget);
                 var path = $target.data('path');
-                var propertyName = $target.data('propertyName');
+                var propertyName = $target.data('propertyname');
+                var config = {
+                    propertyName: propertyName,
+                    typeName: $target.data('typename'),
+                    isMulti: $target.data('ismulti')
+                };
                 core.openLoadedDialog(core.getComposumPath('composum/nodes/browser/components/caconfig/property.dialog.html') +
-                    core.encodePath(path) + "?propertyName=" + propertyName,
-                    caconfig.PropertyEdit, undefined, _.bind(function (dialog) {
-                        debugger;
-                        // init dialog
-                    }, this), _.bind(function (dialog) {
-                        debugger;
-                        // set values
-                    }, this));
+                    core.encodePath(path) + "?propertyName=" + propertyName, caconfig.PropertyEdit, config);
             },
 
         });
@@ -98,6 +96,9 @@
 
             initialize: function (options) {
                 core.components.LoadedDialog.prototype.initialize.call(this, options);
+                this.$el.find('input[name="name"]').val(options.propertyName);
+                this.$el.find('input[name="type"]').val(options.typeName);
+                this.$el.find('input[name="multi"]').prop('checked', options.isMulti === 'true');
                 this.$('button.apply').click(_.bind(function () {
                     this.hide();
                 }, this));

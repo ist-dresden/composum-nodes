@@ -290,6 +290,12 @@ public class CAConfigModel extends ConsoleServletBean {
             return valueInfos;
         }
 
+        public List<PropertyInfo> getPropertyInfos() {
+            return getValueInfos().stream()
+                    .map(valueInfo -> new PropertyInfo(valueInfo.getName(), valueInfo))
+                    .collect(Collectors.toList());
+        }
+
     }
 
     public class PropertyInfo {
@@ -328,6 +334,12 @@ public class CAConfigModel extends ConsoleServletBean {
             );
         }
 
+        public String getRenderedValue() {
+            ValueInfo valueInfo = this.getValueInfo();
+            Object value = CAConfigModel.this.getResource().getValueMap().get(valueInfo.getName());
+            return CAConfigModel.renderValueAsString(value);
+        }
+
         public String getTypeName() {
             if (type == null) {
                 return null;
@@ -339,26 +351,27 @@ public class CAConfigModel extends ConsoleServletBean {
             if (clazz == null) {
                 return null;
             }
-            if (Number.class.isAssignableFrom(clazz)) {
-                return "number";
-            } else if (Boolean.class.isAssignableFrom(clazz)) {
-                return "boolean";
-            } else if (String.class.isAssignableFrom(clazz)) {
-                return "string";
-            } else if (boolean.class.isAssignableFrom(clazz)) {
-                return "boolean";
-            } else if (int.class.isAssignableFrom(clazz)
+            if (Long.class.isAssignableFrom(clazz) || Integer.class.isAssignableFrom(clazz)
+                    || int.class.isAssignableFrom(clazz)
                     || long.class.isAssignableFrom(clazz)
-                    || double.class.isAssignableFrom(clazz)
-                    || float.class.isAssignableFrom(clazz)
                     || short.class.isAssignableFrom(clazz)
                     || byte.class.isAssignableFrom(clazz)) {
-                return "number";
+                return "Long";
+            } else if (Double.class.isAssignableFrom(clazz)
+                    || Float.class.isAssignableFrom(clazz)
+                    || double.class.isAssignableFrom(clazz)
+                    || float.class.isAssignableFrom(clazz)
+            ) {
+                return "Double";
+            } else if (Boolean.class.isAssignableFrom(clazz) || boolean.class.isAssignableFrom(clazz)) {
+                return "Boolean";
+            } else if (String.class.isAssignableFrom(clazz)) {
+                return "String";
             } else if (clazz.isArray()) {
                 return getBasicTypeName(clazz.getComponentType());
             } else if (Collection.class.isAssignableFrom(clazz)) {
                 // cannot determine that. :-( String works probably.
-                return "string";
+                return "String";
             } else {
                 return clazz.getName();
             }

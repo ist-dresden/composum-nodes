@@ -6,14 +6,6 @@
 <%@taglib prefix="cpn" uri="http://sling.composum.com/cpnl/1.0" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <sling:defineObjects/>
-<%!
-    String renderValue(Object rawModel, Object valueInfoObject) {
-        ValueInfo valueInfo = (ValueInfo) valueInfoObject;
-        CAConfigModel model = (CAConfigModel) rawModel;
-        Object value = model.getResource().getValueMap().get(valueInfo.getName());
-        return CAConfigModel.renderValueAsString(value);
-    }
-%>
 <%
     try {
 %>
@@ -34,24 +26,23 @@
         </tr>
         </thead>
         <tbody>
-        <c:forEach var="propInfo" items="${config.valueInfos}">
-            <tr title="${propInfo.propertyMetadata.description}" class="caconfig-property-editor"
-                data-path="${model.path}" data-propertyName="${propInfo.name}">
+        <c:forEach var="propInfo" items="${config.propertyInfos}">
+            <tr title="${propInfo.metadata.propertyMetadata.description}" class="caconfig-property-editor"
+                data-ismulti="${propInfo.multiValue}" data-typename="${propInfo.typeName}"
+                data-path="${model.path}" data-propertyname="${propInfo.name}">
                 <th scope="row">${propInfo.name}</th>
                 <td>
-                        ${propInfo.propertyMetadata.label}
+                        ${propInfo.metadata.propertyMetadata.label}
                 </td>
                 <td>
-                        <%-- <cpn:text value="${propInfo.propertyMetadata.description}"/> --%>
-                    <c:if test="${not empty propInfo.propertyMetadata.description}">
+                    <%-- <cpn:text value="${propInfo.propertyMetadata.description}"/> --%>
+                    <c:if test="${not empty propInfo.metadata.propertyMetadata.description}">
                         <span class="fa fa-info-circle"
-                              title="${propInfo.propertyMetadata.description}">
+                              title="${propInfo.metadata.propertyMetadata.description}">
                         </span>
                     </c:if>
                 </td>
-                <td class="${propInfo.default ? 'text-muted' : ''}">
-                    <%= renderValue(request.getAttribute("model"), pageContext.getAttribute("propInfo")) %>
-                </td>
+                <td class="${propInfo.valueInfo.default ? 'text-muted' : ''}">${propInfo.renderedValue}</td>
             </tr>
         </c:forEach>
         </tbody>
