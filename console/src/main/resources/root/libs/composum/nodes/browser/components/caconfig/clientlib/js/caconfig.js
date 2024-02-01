@@ -88,7 +88,14 @@
                     multi: $target.data('ismulti') == 'true'
                 };
                 core.openLoadedDialog(core.getComposumPath('composum/nodes/browser/components/caconfig/property.dialog.html') +
-                    core.encodePath(path) + "?propertyName=" + propertyName, caconfig.PropertyEdit, config);
+                    core.encodePath(path) + "?propertyName=" + propertyName,
+                    caconfig.PropertyEdit, config, function (dialog) {
+                        // init dialog
+                    }.bind(this), function (dialog) {
+                        // value was changed
+                        this.reload();
+                    }.bind(this)
+                );
             },
 
         });
@@ -99,13 +106,7 @@
             initialize: function (options) {
                 browser.PropertyDialog.prototype.initialize.call(this, options);
                 this.$type = this.$el.find('input[name="type"]');
-                // this.$el.find('input[name="name"]').val(options.name);
-                // this.$el.find('input[name="type"]').val(options.type);
-                // this.$el.find('input[name="multi"]').prop('checked', options.multi);
-                // this.$('button.apply').click(_.bind(function () {
-                //     this.hide();
-                // }, this));
-                var oldtitle = this.$title.html(); // would be overwritten
+                var oldtitle = this.$title.html(); // will be overwritten
                 this.setProperty(new Map(Object.entries(options)));
                 this.$title.html(oldtitle);
             }

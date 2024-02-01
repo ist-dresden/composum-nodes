@@ -407,7 +407,9 @@ public class CAConfigModel extends ConsoleServletBean {
     }
 
     public static String renderValueAsString(Object value) {
-        if (value instanceof ValueMap) {
+        if (value == null) {
+            return "";
+        } else if (value instanceof ValueMap) {
             // we don't want to render system properties, just stuff that belongs to the configuration.
             Map<String, Object> map = new HashMap<>();
             for (Map.Entry<String, Object> entry : ((ValueMap) value).entrySet()) {
