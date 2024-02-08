@@ -49,7 +49,7 @@
                 </td>
                 <td>
                     <c:if test="${propInfo.required}">
-                        <span class="fa fa-asterisk infosymbol" data-toggle="tooltip"
+                        <span class="fa fa-asterisk infosymbol ${propInfo.required && empty propInfo.renderedValue ? 'text-danger' : ''}" data-toggle="tooltip"
                               title="This is a required configuration property.">
                         </span>
                     </c:if>
