@@ -85,7 +85,7 @@
                     path: path,
                     name: propertyName,
                     type: $target.data('typename'),
-                    value: $target.data('value'),
+                    value: this.decodeValue($target[0].getAttribute('data-value')), // JQuery conversions have too many cases.
                     multi: $target.data('multi'),
                     description: $target.data('description'),
                     required: $target.data('required'),
@@ -108,6 +108,11 @@
                 return false;
             },
 
+            /** The value is an XSS.encodeForHTMLAttr escaped JSON. Decode that. */
+            decodeValue: function (value) {
+                return value && JSON.parse(value);
+            }
+
         });
 
         caconfig.PropertyEdit = browser.PropertyDialog.extend({
@@ -116,6 +121,9 @@
                 browser.PropertyDialog.prototype.initialize.call(this, options);
                 this.$type = this.$el.find('input[name="type"]');
                 var oldtitle = this.$title.html(); // will be overwritten
+                if (options.type === 'String' && options.value && options.value.includes('\n')) {
+                    options.subtype = 'plaintext';
+                }
                 this.setProperty(new Map(Object.entries(options)));
                 this.$title.html(oldtitle);
                 this.$el.find('.description').text(options.description);
@@ -123,8 +131,7 @@
                 this.$el.find('input[name="required"]').prop('checked', options.required ? 'checked' : '');
                 this.$el.find('input[name="multicheckbox"]').prop('checked', options.multi ? 'checked' : '');
                 this.$el.find('input[name="multi"]').val(options.multi);
-                var properties = options.properties;
-                this.displayProperties(properties);
+                this.displayProperties(options.properties, options.type);
             },
 
             /** Creates an appropriate display of properties. Examples for propertiesJson:
@@ -132,7 +139,7 @@
              * - { "dropdownOptions": "[{'value':'option1','description':'First+option'},{'value':'option2','description':'Second+option'},{'value':'option3','description':'Third+option'}]", "widgetType": "dropdown" }
              * We employ some heuristics to display the properties in a human-readable way, and fall back to JSON if we can't parse it.
              * */
-            displayProperties: function (propertiesEncoded) {
+            displayProperties: function (propertiesEncoded, type) {
                 var $propertiesContainer = this.$el.find('.propertiesContainer').addClass('hidden');
                 if (propertiesEncoded) {
                     var properties = JSON.parse(decodeURIComponent(propertiesEncoded));
@@ -172,6 +179,14 @@
                                 }
                             } else {
                                 $value.text(value);
+                            }
+
+                            if ('pathbrowserRootPath' === key && 'Path' === type && !this.valueWidget.getValue()) {
+                                this.valueWidget.setValue(value);
+                            }
+                            if ('widgetType' === key && 'textarea' === value && 'String' === type) {
+                                this.subtype.setValue('plaintext');
+                                this.subtypeChanged({}, 'plaintext');
                             }
                         }
                     }
