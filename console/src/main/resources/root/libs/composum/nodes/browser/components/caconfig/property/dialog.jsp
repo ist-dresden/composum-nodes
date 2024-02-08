@@ -23,7 +23,12 @@
                         <div class="messages">
                             <div class="alert"></div>
                             <p class="description"></p>
-                            <p class="properties"></p>
+                            <p>
+                                <div class="propertiesContainer hidden">
+                                    <label class="control-label">Additional properties:</label>
+                                    <div class="propertiesContent"></div>
+                                </div>
+                            </p>
                         </div>
 
                         <div class="form-group path">
@@ -71,7 +76,8 @@
                             <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
                                 <div class="form-group multi">
                                     <label class="control-label">Multi</label>
-                                    <input name="multicheckbox" class="multi-select-box form-control widget checkbox-widget"
+                                    <input name="multicheckbox"
+                                           class="multi-select-box form-control widget checkbox-widget"
                                            type="checkbox" onclick="return false;" disabled>
                                     <input name="multi" type="hidden">
                                 </div>

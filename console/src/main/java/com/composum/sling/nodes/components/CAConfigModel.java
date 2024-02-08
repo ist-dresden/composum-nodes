@@ -4,7 +4,9 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -362,6 +364,13 @@ public class CAConfigModel extends ConsoleServletBean {
                 props.remove("required");
             }
             return props;
+        }
+
+        /** URL encoded value of {@link #getProperties()} to easier put that into an attribute. */
+        public String getPropertiesJsonEncoded() throws UnsupportedEncodingException {
+            Properties props = getProperties();
+            String propertiesJson = props != null ? toJson(getProperties()) : null;
+            return propertiesJson != null ? URLEncoder.encode(propertiesJson, "UTF-8") : null;
         }
 
         public String getTypeName() {
