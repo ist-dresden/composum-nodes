@@ -86,8 +86,10 @@
                     name: propertyName,
                     type: $target.data('typename'),
                     value: $target.data('value'),
-                    multi: $target.data('ismulti'),
-                    description: $target.data('description')
+                    multi: $target.data('multi'),
+                    description: $target.data('description'),
+                    required: $target.data('required'),
+                    properties: $target.data('properties')
                 };
                 core.openLoadedDialog(core.getComposumPath('composum/nodes/browser/components/caconfig/property.dialog.html') +
                     core.encodePath(path) + "?propertyName=" + propertyName,
@@ -118,6 +120,9 @@
                 this.$title.html(oldtitle);
                 this.$el.find('.description').text(options.description);
                 this.$el.find('[data-toggle="tooltip"]').tooltip();
+                this.$el.find('input[name="required"]').prop('checked', options.required ? 'checked' : '');
+                this.$el.find('input[name="multicheckbox"]').prop('checked', options.multi ? 'checked' : '');
+                this.$el.find('input[name="multi"]').val(options.multi);
             }
         });
 

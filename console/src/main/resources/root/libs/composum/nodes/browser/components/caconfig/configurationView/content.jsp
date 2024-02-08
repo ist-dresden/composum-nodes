@@ -23,16 +23,17 @@
             <th>Label</th>
             <th></th>
             <th></th>
+            <th></th>
             <th class="valuecolumn">Value</th>
         </tr>
         </thead>
         <tbody>
         <c:forEach var="propInfo" items="${config.propertyInfos}">
             <tr title="${propInfo.valueInfo.propertyMetadata.description}" class="caconfig-property-editor"
-                data-ismulti="${propInfo.multiValue}" data-typename="${propInfo.typeName}"
+                data-multi="${propInfo.multiValue}" data-typename="${propInfo.typeName}"
                 data-path="${model.path}" data-propertyname="${propInfo.name}"
                 data-value='${cpn:value(propInfo.jsonValue)}' data-description="${propInfo.valueInfo.propertyMetadata.description}"
-                data-default="${propInfo.valueInfo.default}">
+                data-default="${propInfo.valueInfo.default}" data-required="${propInfo.required}" data-properties="${propInfo.properties}">
                 <th scope="row">${propInfo.name}</th>
                 <td>
                         ${propInfo.valueInfo.propertyMetadata.label}
@@ -46,9 +47,16 @@
                     </c:if>
                 </td>
                 <td>
-                    <c:if test="${not empty propInfo.valueInfo.propertyMetadata.properties}">
+                    <c:if test="${propInfo.required}">
+                        <span class="fa fa-asterisk infosymbol" data-toggle="tooltip"
+                              title="This is a required configuration property.">
+                        </span>
+                    </c:if>
+                </td>
+                <td>
+                    <c:if test="${not empty propInfo.properties}">
                         <span class="fa fa-product-hunt infosymbol" data-toggle="tooltip"
-                              title="Properties: ${propInfo.valueInfo.propertyMetadata.properties}">
+                              title="Properties: ${propInfo.properties}">
                         </span>
                     </c:if>
                 </td>

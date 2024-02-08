@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ import org.apache.sling.caconfig.management.ConfigurationData;
 import org.apache.sling.caconfig.management.ConfigurationManager;
 import org.apache.sling.caconfig.management.ValueInfo;
 import org.apache.sling.caconfig.spi.metadata.ConfigurationMetadata;
+import org.apache.sling.caconfig.spi.metadata.PropertyMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -344,6 +346,22 @@ public class CAConfigModel extends ConsoleServletBean {
             ValueInfo valueInfo = this.getValueInfo();
             Object value = CAConfigModel.this.getResource().getValueMap().get(valueInfo.getName());
             return CAConfigModel.renderValueAsString(value);
+        }
+
+        public boolean isRequired() {
+            PropertyMetadata<?> propMetadata = valueInfo.getPropertyMetadata();
+            return propMetadata != null && propMetadata.getProperties() != null
+                    && "true".equals(propMetadata.getProperties().get("required"));
+        }
+
+        /** All properties except "required", which is handled in {@link #isRequired()}. */
+        public Properties getProperties() {
+            Properties props = new Properties();
+            if (valueInfo.getPropertyMetadata() != null && valueInfo.getPropertyMetadata().getProperties() != null) {
+                props.putAll(valueInfo.getPropertyMetadata().getProperties());
+                props.remove("required");
+            }
+            return props;
         }
 
         public String getTypeName() {
