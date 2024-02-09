@@ -11,6 +11,8 @@
                     <span class="templates fa fa-clipboard input-group-addon btn btn-default"
                           title="Query Templates"></span>
                     <span class="history fa fa-history input-group-addon btn btn-default" title="Query History"></span>
+                    <span class="aigenerate fa fa-magic input-group-addon btn btn-default"
+                          title="Generate query using AI"></span>
                     <input type="text" class="form-control" placeholder="Search">
                     <span class="exec glyphicon-triangle-right glyphicon input-group-addon btn btn-default"
                           title="Execute query..."></span>

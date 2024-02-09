@@ -18,6 +18,7 @@
                 this.$form = this.$('.query-actions .query-input-form');
                 this.$templates = this.$('.query-actions .templates');
                 this.$history = this.$('.query-actions .history');
+                this.$aigenerate = this.$('.query-actions .aigenerate');
                 this.$queryInput = this.$('.query-actions .query-input-form input');
                 this.$execButton = this.$('.query-actions .exec');
                 this.$filterButton = this.$('.query-actions .filter');
@@ -26,6 +27,7 @@
                 this.$form.on('submit', _.bind(this.executeQuery, this));
                 this.$templates.on('click.query', _.bind(this.showTemplates, this));
                 this.$history.on('click.query', _.bind(this.showHistory, this));
+                this.$aigenerate.on('click.query', _.bind(this.showAigenerate, this));
                 this.$execButton.on('click.query', _.bind(this.executeQuery, this));
                 this.$filterButton.on('click.query', _.bind(this.toggleFilter, this));
                 this.$filterButton.addClass(core.console.getProfile().get('query', 'filtered', true) ? 'on' : 'off');
@@ -248,6 +250,19 @@
                 return false;
             },
 
+            showAigenerate: function (event) {
+                event.preventDefault();
+                if (this.popover === 'aigenerate') {
+                    this.$povHook.popover('toggle');
+                } else {
+                    core.getHtml(core.getComposumPath('composum/nodes/browser/query/aigenerate.html'),
+                        _.bind(function (data) {
+                            this.showPopover('aigenerate', this.$aigenerate.attr('title'), data);
+                        }, this));
+                }
+                return false;
+            },
+
             showTemplates: function (event) {
                 event.preventDefault();
                 if (this.popover === 'templates') {
@@ -312,15 +327,18 @@
 
             onPopoverShown: function () {
                 if (this.popover === 'templates') {
-                    this.$templates.addClass('active')
+                    this.$templates.addClass('active');
+                } else if (this.popover === 'aigenerate') {
+                    this.$aigenerate.addClass('active');
                 } else {
-                    this.$history.addClass('active')
+                    this.$history.addClass('active');
                 }
             },
 
             onPopoverHidden: function () {
                 this.$templates.removeClass('active');
                 this.$history.removeClass('active');
+                this.$aigenerate.removeClass('active');
             }
         });
 
