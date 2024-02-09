@@ -16,7 +16,8 @@
                     composum/nodes/browser/css/properties.css,
                     category:composum.nodes.console.browser.references,
                     category:composum.nodes.console.browser.merged,
-                    composum/nodes/browser/components/favorites/clientlib
+                    composum/nodes/browser/components/favorites/clientlib,
+                    composum/nodes/browser/components/caconfig/clientlib
                 ]"/>
     <js jcr:primaryType="sling:OrderedFolder"
             depends="[
@@ -39,6 +40,7 @@
                     composum/nodes/browser/js/version.js,
                     category:composum.nodes.console.browser.references,
                     category:composum.nodes.console.browser.merged,
+                    composum/nodes/browser/components/caconfig/clientlib,
                     composum/nodes/browser/js/nodeview.js
                 ]"/>
 </jcr:root>

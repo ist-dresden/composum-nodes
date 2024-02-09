@@ -901,6 +901,9 @@
         }, {
             selector: '> .versions',
             tabType: browser.VersionsTab
+        }, {
+            selector: '> .caconfig',
+            tabType: browser.caconfig && browser.caconfig.CaconfigTab
         }, function ($detailContent) {
             // the generic implementation...
             var $content = $detailContent.find('> div');
