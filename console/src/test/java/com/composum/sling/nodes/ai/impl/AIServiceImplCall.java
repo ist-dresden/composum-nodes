@@ -30,7 +30,9 @@ public class AIServiceImplCall {
     }
 
     public static void testPrompt() throws Exception {
-        System.out.println(aiService.prompt(null, "Hi!"));
-        System.out.println(aiService.prompt("Reverse the users message.", "Hi!"));
+        System.out.println(aiService.prompt(null, "Hi!", null));
+        System.out.println(aiService.prompt("Reverse the users message.", "Hi!", null));
+        System.out.println(aiService.prompt(null, "Make a haiku in JSON format about Composum.", AIServiceImpl.ResponseFormat.JSON));
+        System.out.println(aiService.prompt("Always respond in JSON", "Make a haiku about Composum.", AIServiceImpl.ResponseFormat.JSON));
     }
 }

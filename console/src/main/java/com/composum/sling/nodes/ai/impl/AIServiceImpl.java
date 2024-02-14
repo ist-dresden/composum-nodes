@@ -1,12 +1,17 @@
 package com.composum.sling.nodes.ai.impl;
 
+import static com.composum.sling.nodes.ai.impl.AIServiceImpl.SERVICE_NAME;
 import static java.util.Arrays.asList;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -21,12 +26,12 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -38,7 +43,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 
 @Component(
-        name = "Composum Nodes AI Service",
+        name = SERVICE_NAME,
         property = {
                 Constants.SERVICE_DESCRIPTION + "=AI services based on ChatGPT"
         },
@@ -46,9 +51,12 @@ import com.google.gson.Gson;
 @Designate(ocd = AIServiceImpl.Configuration.class)
 public class AIServiceImpl implements AIService {
 
+    public static final String SERVICE_NAME = "Composum Nodes AI Service";
+
     private static final Logger LOG = LoggerFactory.getLogger(AIServiceImpl.class);
 
-    public static final String DEFAULT_MODEL = "gpt-3.5-turbo";
+    /** The default model - probably a GPT-4 is needed for complicated stuff like JCR queries. */
+    public static final String DEFAULT_MODEL = "gpt-4-turbo-preview";
     protected static final String CHAT_COMPLETION_URL = "https://api.openai.com/v1/chat/completions";
 
     private Configuration config;
@@ -57,61 +65,29 @@ public class AIServiceImpl implements AIService {
     private Gson gson = new Gson();
     private CloseableHttpClient httpClient;
 
-
-    protected void activate(Configuration configuration) {
-        this.config = configuration;
-        this.openAiApiKey = StringUtils.defaultIfBlank(config.openAiApiKey(), System.getenv("OPENAI_API_KEY"));
-        this.openAiApiKey = StringUtils.defaultIfBlank(this.openAiApiKey, System.getProperty("openai.api.key"));
-        if (config.openAiApiKeyFile() != null && !config.openAiApiKeyFile().isEmpty()) {
-            try {
-                this.openAiApiKey = StringUtils.defaultIfBlank(this.openAiApiKey,
-                        FileUtils.readFileToString(new File(config.openAiApiKeyFile()), Charsets.UTF_8));
-            } catch (IOException e) {
-                LOG.error("Could not read OpenAI key from {}", config.openAiApiKeyFile(), e);
-            }
-        }
-        openAiApiKey = StringUtils.trimToNull(openAiApiKey);
-        rateLimiter = null;
-        if (isAvailable()) {
-            rateLimiter = new RateLimiter(null, config.requestsPerMinuteLimit(), 1, java.util.concurrent.TimeUnit.MINUTES);
-            rateLimiter = new RateLimiter(rateLimiter, config.requestsPerHourLimit(), 1, java.util.concurrent.TimeUnit.HOURS);
-            rateLimiter = new RateLimiter(rateLimiter, config.requestsPerDayLimit(), 1, java.util.concurrent.TimeUnit.DAYS);
-            httpClient = HttpClientBuilder.create().build();
-        }
-    }
-
-    @Deactivate
-    protected void deactivate() {
-        if (httpClient != null) {
-            try {
-                httpClient.close();
-            } catch (IOException e) {
-                LOG.error("Could not close httpClient", e);
-            }
-        }
-        this.config = null;
-    }
-
     @Override
     public boolean isAvailable() {
-        return config != null && !config.disabled() && StringUtils.isNoneBlank(config.defaultModel(), openAiApiKey);
+        return config != null && !config.disabled() && StringUtils.isNotBlank(openAiApiKey);
     }
 
-    @NotNull
+    @Nonnull
     @Override
-    public String prompt(@Nullable String systemmsg, @NotNull String usermsg) throws AIServiceException {
+    public String prompt(@Nullable String systemmsg, @Nonnull String usermsg, @Nullable ResponseFormat responseFormat) throws AIServiceException {
         if (!isAvailable()) {
-            throw new AIServiceException("AI Service not available");
+            throw new AIServiceNotAvailableException();
         }
         Map<String, Object> systemMessage = systemmsg != null ?
-            ImmutableMap.of("role", "system", "content", systemmsg) : null;
+                ImmutableMap.of("role", "system", "content", systemmsg) : null;
 
         Map<String, String> userMessage = ImmutableMap.of("role", "user", "content", usermsg);
 
         Map<String, Object> request = new HashMap<>();
-        request.put("model", config.defaultModel());
+        request.put("model", StringUtils.defaultString(config.defaultModel(), DEFAULT_MODEL));
         request.put("messages", systemMessage != null ? asList(systemMessage, userMessage) : asList(userMessage));
         request.put("temperature", 0);
+        if (responseFormat == ResponseFormat.JSON) {
+            request.put("response_format", ImmutableMap.of("type", "json_object"));
+        }
 
         String requestJson = gson.toJson(request);
 
@@ -124,23 +100,31 @@ public class AIServiceImpl implements AIService {
         entityBuilder.setText(requestJson);
         postRequest.setEntity(entityBuilder.build());
         postRequest.setHeader("Authorization", "Bearer " + openAiApiKey);
+        String id = "#" + System.nanoTime();
+        LOG.debug("Request {} to OpenAI: {}", id, requestJson);
         try (CloseableHttpResponse response = httpClient.execute(postRequest)) {
-            return retrieveMessage(response);
+            return retrieveMessage(id, response);
         } catch (IOException e) {
             LOG.error("" + e, e);
             throw new AIServiceException("Exception accessing the AI: " + e, e);
         }
     }
 
-    @NotNull
-    private String retrieveMessage(CloseableHttpResponse response) throws AIServiceException, IOException {
+    @Nonnull
+    private String retrieveMessage(String id, CloseableHttpResponse response) throws AIServiceException, IOException {
         int statusCode = response.getStatusLine().getStatusCode();
         HttpEntity responseEntity = response.getEntity();
         if (statusCode != 200) {
             String errorbody = responseEntity != null ? responseEntity.toString() : "";
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            responseEntity.writeTo(bytes);
+            if (bytes.size() > 0) {
+                errorbody = errorbody + "\n" + new String(bytes.toByteArray(), Charsets.UTF_8);
+            }
             throw new AIServiceException("Error from OpenAI: " + statusCode + " " + errorbody);
         }
         String responseJson = EntityUtils.toString(responseEntity);
+        LOG.debug("Response {} from OpenAI: {}", id, responseJson);
         Map<String, Object> responseMap = gson.fromJson(responseJson, Map.class);
 
         List<Map<String, Object>> choices = ListUtils.emptyIfNull((List<Map<String, Object>>) responseMap.get("choices"));
@@ -161,6 +145,45 @@ public class AIServiceImpl implements AIService {
         return text;
     }
 
+    @Deactivate
+    protected void deactivate() {
+        if (httpClient != null) {
+            try {
+                httpClient.close();
+            } catch (IOException e) {
+                LOG.error("Could not close httpClient", e);
+            }
+        }
+        this.config = null;
+    }
+
+    @Activate
+    @Modified
+    protected void activate(Configuration configuration) {
+        this.config = configuration;
+        this.openAiApiKey = StringUtils.defaultIfBlank(config.openAiApiKey(), System.getenv("OPENAI_API_KEY"));
+        this.openAiApiKey = StringUtils.defaultIfBlank(this.openAiApiKey, System.getProperty("openai.api.key"));
+        if (config.openAiApiKeyFile() != null && !config.openAiApiKeyFile().isEmpty()) {
+            try {
+                this.openAiApiKey = StringUtils.defaultIfBlank(this.openAiApiKey,
+                        FileUtils.readFileToString(new File(config.openAiApiKeyFile()), Charsets.UTF_8));
+            } catch (IOException e) {
+                LOG.error("Could not read OpenAI key from {}", config.openAiApiKeyFile(), e);
+            }
+        }
+        openAiApiKey = StringUtils.trimToNull(openAiApiKey);
+        rateLimiter = null;
+        if (isAvailable()) {
+            int perMinuteLimit = config.requestsPerMinuteLimit() > 0 ? config.requestsPerMinuteLimit() : 20;
+            rateLimiter = new RateLimiter(null, perMinuteLimit, 1, java.util.concurrent.TimeUnit.MINUTES);
+            int requestsPerHourLimit = config.requestsPerHourLimit() > 0 ? config.requestsPerHourLimit() : 60;
+            rateLimiter = new RateLimiter(rateLimiter, requestsPerHourLimit, 1, java.util.concurrent.TimeUnit.HOURS);
+            int requestsPerDayLimit = config.requestsPerDayLimit() > 0 ? config.requestsPerDayLimit() : 120;
+            rateLimiter = new RateLimiter(rateLimiter, requestsPerDayLimit, 1, java.util.concurrent.TimeUnit.DAYS);
+            httpClient = HttpClientBuilder.create().build();
+        }
+    }
+
     @ObjectClassDefinition(name = "Composum Nodes AI Service Configuration", description = "AI services based on ChatGPT")
     public @interface Configuration {
 
@@ -177,13 +200,13 @@ public class AIServiceImpl implements AIService {
         @AttributeDefinition(name = "Default model to use for the chat completion. The default is " + DEFAULT_MODEL + ". Please consider the varying prices https://openai.com/pricing .", defaultValue = DEFAULT_MODEL)
         String defaultModel() default DEFAULT_MODEL;
 
-        @AttributeDefinition(name = "Requests per minute", description = "The number of requests per minute - after half of that we do slow down. The default is 100.", defaultValue = "20")
+        @AttributeDefinition(name = "Requests per minute", description = "The number of requests per minute - after half of that we do slow down. >0, the default is 100.", defaultValue = "20")
         int requestsPerMinuteLimit() default 20;
 
-        @AttributeDefinition(name = "Requests per hour", description = "The number of requests per hour - after half of that we do slow down. The default is 1000.", defaultValue = "60")
+        @AttributeDefinition(name = "Requests per hour", description = "The number of requests per hour - after half of that we do slow down. >0, the default is 1000.", defaultValue = "60")
         int requestsPerHourLimit() default 60;
 
-        @AttributeDefinition(name = "Requests per day", description = "The number of requests per day - after half of that we do slow down. The default is 12000.", defaultValue = "120")
+        @AttributeDefinition(name = "Requests per day", description = "The number of requests per day - after half of that we do slow down. >0, the default is 12000.", defaultValue = "120")
         int requestsPerDayLimit() default 120;
 
     }

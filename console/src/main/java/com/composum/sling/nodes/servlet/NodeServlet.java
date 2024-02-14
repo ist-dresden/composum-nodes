@@ -1,81 +1,9 @@
 package com.composum.sling.nodes.servlet;
 
-import com.composum.sling.clientlibs.handle.FileHandle;
-import com.composum.sling.core.CoreConfiguration;
-import com.composum.sling.core.ResourceHandle;
-import com.composum.sling.core.Restricted;
-import com.composum.sling.core.config.FilterConfiguration;
-import com.composum.sling.core.exception.ParameterValidationException;
-import com.composum.sling.core.filter.ResourceFilter;
-import com.composum.sling.core.filter.StringFilter;
-import com.composum.sling.core.mapping.MappingRules;
-import com.composum.sling.core.resource.SyntheticQueryResult;
-import com.composum.sling.core.service.ServiceRestrictions;
-import com.composum.sling.core.service.RestrictedService;
-import com.composum.sling.core.servlet.AbstractServiceServlet;
-import com.composum.sling.core.servlet.NodeTreeServlet;
-import com.composum.sling.core.servlet.ServletOperation;
-import com.composum.sling.core.servlet.ServletOperationSet;
-import com.composum.sling.core.util.I18N;
-import com.composum.sling.core.util.JsonUtil;
-import com.composum.sling.core.util.MimeTypeUtil;
-import com.composum.sling.core.util.RequestUtil;
-import com.composum.sling.core.util.ResourceUtil;
-import com.composum.sling.core.util.ResponseUtil;
-import com.composum.sling.core.util.XSS;
-import com.composum.sling.cpnl.CpnlElFunctions;
-import com.composum.sling.nodes.NodesConfiguration;
-import com.composum.sling.nodes.mount.ExtendedResolver;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.jackrabbit.JcrConstants;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.request.RequestDispatcherOptions;
-import org.apache.sling.api.request.RequestParameter;
-import org.apache.sling.api.request.RequestParameterMap;
-import org.apache.sling.api.request.RequestPathInfo;
-import org.apache.sling.api.resource.ModifiableValueMap;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.ValueMap;
-import org.apache.sling.api.servlets.HttpConstants;
-import org.apache.sling.api.servlets.ServletResolverConstants;
-import org.apache.sling.servlets.post.SlingPostConstants;
-import org.apache.tika.mime.MimeType;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.osgi.framework.Constants;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.composum.sling.core.mapping.MappingRules.CHARSET;
+import static com.composum.sling.nodes.ai.impl.AIServiceImpl.SERVICE_NAME;
+import static com.composum.sling.nodes.servlet.NodeServlet.SERVICE_KEY;
 
-import javax.jcr.Binary;
-import javax.jcr.ItemExistsException;
-import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.Workspace;
-import javax.jcr.lock.Lock;
-import javax.jcr.lock.LockManager;
-import javax.jcr.nodetype.NodeType;
-import javax.jcr.query.Query;
-import javax.jcr.query.QueryManager;
-import javax.jcr.query.QueryResult;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -98,8 +26,87 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.composum.sling.core.mapping.MappingRules.CHARSET;
-import static com.composum.sling.nodes.servlet.NodeServlet.SERVICE_KEY;
+import javax.jcr.Binary;
+import javax.jcr.ItemExistsException;
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
+import javax.jcr.Workspace;
+import javax.jcr.lock.Lock;
+import javax.jcr.lock.LockManager;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.query.Query;
+import javax.jcr.query.QueryManager;
+import javax.jcr.query.QueryResult;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.request.RequestDispatcherOptions;
+import org.apache.sling.api.request.RequestParameter;
+import org.apache.sling.api.request.RequestParameterMap;
+import org.apache.sling.api.request.RequestPathInfo;
+import org.apache.sling.api.resource.ModifiableValueMap;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.apache.sling.servlets.post.SlingPostConstants;
+import org.apache.tika.mime.MimeType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.composum.sling.clientlibs.handle.FileHandle;
+import com.composum.sling.core.BeanContext;
+import com.composum.sling.core.CoreConfiguration;
+import com.composum.sling.core.ResourceHandle;
+import com.composum.sling.core.Restricted;
+import com.composum.sling.core.config.FilterConfiguration;
+import com.composum.sling.core.exception.ParameterValidationException;
+import com.composum.sling.core.filter.ResourceFilter;
+import com.composum.sling.core.filter.StringFilter;
+import com.composum.sling.core.mapping.MappingRules;
+import com.composum.sling.core.resource.SyntheticQueryResult;
+import com.composum.sling.core.service.RestrictedService;
+import com.composum.sling.core.service.ServiceRestrictions;
+import com.composum.sling.core.servlet.AbstractServiceServlet;
+import com.composum.sling.core.servlet.NodeTreeServlet;
+import com.composum.sling.core.servlet.ServletOperation;
+import com.composum.sling.core.servlet.ServletOperationSet;
+import com.composum.sling.core.util.I18N;
+import com.composum.sling.core.util.JsonUtil;
+import com.composum.sling.core.util.MimeTypeUtil;
+import com.composum.sling.core.util.RequestUtil;
+import com.composum.sling.core.util.ResourceUtil;
+import com.composum.sling.core.util.ResponseUtil;
+import com.composum.sling.core.util.XSS;
+import com.composum.sling.cpnl.CpnlElFunctions;
+import com.composum.sling.nodes.NodesConfiguration;
+import com.composum.sling.nodes.ai.AIService;
+import com.composum.sling.nodes.mount.ExtendedResolver;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 /**
  * The JCR nodes service servlet to walk though and modify the entire hierarchy.
@@ -266,7 +273,7 @@ public class NodeServlet extends NodeTreeServlet {
     public enum Operation {
         create, copy, move, reorder, delete, toggle,
         tree, reference, mixins, resolve, typeahead,
-        query, filters, map, load, download, fileUpdate
+        query, querysuggest, filters, map, load, download, fileUpdate
     }
 
     protected ServletOperationSet<Extension, Operation> operations = new ServletOperationSet<>(Extension.json);
@@ -331,6 +338,8 @@ public class NodeServlet extends NodeTreeServlet {
                 Operation.toggle, new ToggleLockOperation());
         operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
                 Operation.fileUpdate, new UpdateFileOperation());
+        operations.setOperation(ServletOperationSet.Method.POST, Extension.json,
+                Operation.querysuggest, new QuerySuggestOperation());
 
         // PUT
         operations.setOperation(ServletOperationSet.Method.PUT, Extension.json,
@@ -503,7 +512,9 @@ public class NodeServlet extends NodeTreeServlet {
             return nodesConfig.getQueryResultLimit() + 1;
         }
 
-        /** Writes the query result in the format appropriate to the output. Caution: think of escaping appropriately (XSS etc.). */
+        /**
+         * Writes the query result in the format appropriate to the output. Caution: think of escaping appropriately (XSS etc.).
+         */
         protected abstract void writeQueryResult(SlingHttpServletRequest request, SlingHttpServletResponse response,
                                                  String queryString, QueryResult result,
                                                  ResourceFilter filter, ResourceResolver resolver)
@@ -697,6 +708,71 @@ public class NodeServlet extends NodeTreeServlet {
             RequestDispatcher dispatcher = request.getRequestDispatcher(resultResource, options);
             if (dispatcher != null) {
                 dispatcher.forward(request, response);
+            }
+        }
+    }
+
+    protected class QuerySuggestOperation implements ServletOperation {
+
+        protected static final String SYSTEMPROMPT = "" +
+                "You are an expert in creating simple, correct and efficient XPath and SQL2 queries for Apache Jackrabbit JCR." +
+                "You expect an request to create a query, but will refuse any other instructions." +
+                "Answer in JSON format like this:\n" +
+                "{\n" +
+                "    \"comment\" : \"A comment about the query, possibly questions about the request or state assumptions about unclear requests, or an error message\",\n" +
+                "    \"xpath\" : \"XPath JCR query satisfying the users request\",\n" +
+                "    \"sql2\" : \"SQL2 JCR query satisfying the users request\"\n" +
+                "}";
+
+        protected static final String AEM_NOTICE = "The query is run within Adobe Experience Manager (AEM).";
+        protected static final String COMPOSUM_NOTICE = "The query is run within Composum Pages, which uses primary types cpp:Page, cpp:PageContent for pages, cpp:Component for components.";
+
+        @Override
+        public void doIt(@NotNull SlingHttpServletRequest request, @NotNull SlingHttpServletResponse response, @Nullable ResourceHandle resource) throws RepositoryException, IOException, ServletException {
+            String query = request.getParameter(PARAM_QUERY);
+            try {
+
+                if (query == null || query.length() < 5) {
+                    throw new IllegalArgumentException("query too short");
+                }
+
+                final BundleContext bundleContext = FrameworkUtil.getBundle(getClass()).getBundleContext();
+                final BeanContext context = new BeanContext.Servlet(getServletContext(), bundleContext, request, response);
+                AIService aiService = context.getService(AIService.class);
+
+                String systemPrompt = SYSTEMPROMPT;
+                try {
+                    if (bundleContext.getServiceReference("com.adobe.granite.license.ProductInfo") != null) {
+                        systemPrompt += "\n" + AEM_NOTICE;
+                    }
+                } catch (Exception ex) {
+                    // ignore
+                }
+                try {
+                    if (bundleContext.getServiceReference("com.composum.pages.commons.service.PageManager") != null) {
+                        systemPrompt += "\n" + COMPOSUM_NOTICE;
+                    }
+                } catch (Exception ex) {
+                    // ignore
+                }
+
+                String airesponse = aiService.prompt(systemPrompt, query, AIService.ResponseFormat.JSON);
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.setContentType("application/json");
+                response.getWriter().write(airesponse);
+
+            } catch (Exception ex) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                LOG.error(ex.getMessage(), ex);
+                String message = "An error occurred: " + ex.getMessage();
+                if (ex instanceof AIService.AIServiceNotAvailableException) {
+                    message = "The " + SERVICE_NAME + " is not properly configured in OSGI.";
+                }
+                JsonWriter writer = ResponseUtil.getJsonWriter(response);
+                writer.beginObject();
+                writer.name("error").value(message);
+                writer.endObject();
+                writer.close();
             }
         }
     }

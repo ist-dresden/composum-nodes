@@ -314,6 +314,7 @@
                     this.hidePopover();
                     return false;
                 }, this));
+                $popover.find('#aigenerateQuerySubmit').click(_.bind(this.aigenerateQuery, this));
             },
 
             hidePopover: function () {
@@ -339,6 +340,45 @@
                 this.$templates.removeClass('active');
                 this.$history.removeClass('active');
                 this.$aigenerate.removeClass('active');
+            },
+
+            aigenerateQuery: function (event) {
+                event.preventDefault();
+                var id = this.$povHook.attr('aria-describedby');
+                var $popover = $('#' + id);
+                var query = $popover.find('#aigenerateQuery').val();
+                core.ajaxPost('/bin/cpm/nodes/node.querysuggest.json', {
+                    //data
+                    _charset_: 'UTF-8',
+                    query: query
+                }, {
+                    //config
+                    dataType: 'json'
+                }, _.bind(function (content) {
+                    if (!content.comment && !content.xpath && !content.sql2) {
+                        var message = content.error || JSON.stringify(content);
+                        core.alert('danger', 'Error', 'Error when generating AI query', message);
+                        return;
+                    }
+                    if (content.comment) {
+                        $popover.find('#aigenerateComment').removeClass('hidden').text(content.comment);
+                    } else {
+                        $popover.find('#aigenerateComment').addClass('hidden');
+                    }
+                    if (content.xpath) {
+                        $popover.find('#aigenerateXpath').removeClass('hidden').text(content.xpath);
+                    } else {
+                        $popover.find('#aigenerateXpath').addClass('hidden');
+                    }
+                    if (content.sql2) {
+                        $popover.find('#aigenerateSql2').removeClass('hidden').text(content.sql2);
+                    } else {
+                        $popover.find('#aigenerateSql2').addClass('hidden');
+                    }
+                }, this), _.bind(function (result) {
+                    core.alert('danger', 'Error', 'Error when generating AI query', result);
+                }, this));
+                return false;
             }
         });
 
