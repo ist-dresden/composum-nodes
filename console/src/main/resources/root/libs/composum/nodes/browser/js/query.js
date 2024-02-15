@@ -252,6 +252,7 @@
 
             showAigenerate: function (event) {
                 event.preventDefault();
+                this.manageAiGenerateContent();
                 if (this.popover === 'aigenerate') {
                     this.$povHook.popover('toggle');
                 } else {
