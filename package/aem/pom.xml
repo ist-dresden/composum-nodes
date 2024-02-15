@@ -354,7 +354,7 @@
 
     <profiles>
         <profile>
-            <id>autoInstallPackage</id>
+            <id>autoInstallSinglePackage</id>
             <build>
                 <plugins>
                     <plugin>
