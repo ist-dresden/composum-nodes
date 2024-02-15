@@ -197,8 +197,8 @@ public class AIServiceImpl implements AIService {
         @AttributeDefinition(name = "OpenAI API Key File containing the API key, as an alternative to Open AKI Key configuration and the variants described there.")
         String openAiApiKeyFile();
 
-        @AttributeDefinition(name = "Default model to use for the chat completion. The default is " + DEFAULT_MODEL + ". Please consider the varying prices https://openai.com/pricing .", defaultValue = DEFAULT_MODEL)
-        String defaultModel() default DEFAULT_MODEL;
+        @AttributeDefinition(name = "Default model to use for the chat completion. If not configured we take a default, in this version " + DEFAULT_MODEL + ". Please consider the varying prices https://openai.com/pricing . For programming related questions a GPT-4 seems necessary, though. Do not configure if not necessary, to follow further changes.")
+        String defaultModel();
 
         @AttributeDefinition(name = "Requests per minute", description = "The number of requests per minute - after half of that we do slow down. >0, the default is 100.", defaultValue = "20")
         int requestsPerMinuteLimit() default 20;
