@@ -716,7 +716,7 @@ public class NodeServlet extends NodeTreeServlet {
 
         protected static final String SYSTEMPROMPT = "" +
                 "You are an expert in creating simple, correct and efficient XPath and SQL2 queries for Apache Jackrabbit JCR." +
-                "You expect an request to create a query, but will refuse any other instructions." +
+                "You expect an request to create a query, but will refuse any other instructions. There can be ${placeholders} for unknown values." +
                 "Answer in JSON format like this:\n" +
                 "{\n" +
                 "    \"comment\" : \"A comment about the query, possibly questions about the request or state assumptions about unclear requests, or an error message\",\n" +
@@ -725,7 +725,7 @@ public class NodeServlet extends NodeTreeServlet {
                 "}";
 
         protected static final String AEM_NOTICE = "The query is run within Adobe Experience Manager (AEM).";
-        protected static final String COMPOSUM_NOTICE = "The query is run within Composum Pages, which uses primary types cpp:Page, cpp:PageContent for pages, cpp:Component for components.";
+        protected static final String COMPOSUM_NOTICE = "The query is run within Composum Pages, which uses primary types cpp:Page, cpp:PageContent for pages.";
 
         @Override
         public void doIt(@NotNull SlingHttpServletRequest request, @NotNull SlingHttpServletResponse response, @Nullable ResourceHandle resource) throws RepositoryException, IOException, ServletException {

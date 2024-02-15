@@ -1144,3 +1144,19 @@ div.versions .table-toolbar button.remove.fa-tags::after {
 #browser-view .node-view-content .versions .bootstrap-table .fixed-table-toolbar .search input {
     max-width: 140px;
 }
+
+/* aigenerate view */
+#browser-view .aigenerate-popup {
+
+    .aigenerateButtonGroup {
+        position: relative;
+    }
+
+    .loading-curtain {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+}
