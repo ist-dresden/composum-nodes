@@ -22,6 +22,8 @@ Registration of JS entry point in nodeview.js browser.detailViewTabTypes .
 The toolbar is loaded initially (toolbar.jsp), the actual content content is loaded on showing the tab into a
 div.detail-content to reduce the load.
 
+It's advisable to consider loading the actual data of the view via JSON. That might save some nightmares with encoding.
+
 ## Loaded dialogs
 
 Example: references.jsp openOptions

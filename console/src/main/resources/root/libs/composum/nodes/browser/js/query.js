@@ -18,6 +18,7 @@
                 this.$form = this.$('.query-actions .query-input-form');
                 this.$templates = this.$('.query-actions .templates');
                 this.$history = this.$('.query-actions .history');
+                this.$aigenerate = this.$('.query-actions .aigenerate');
                 this.$queryInput = this.$('.query-actions .query-input-form input');
                 this.$execButton = this.$('.query-actions .exec');
                 this.$filterButton = this.$('.query-actions .filter');
@@ -26,6 +27,7 @@
                 this.$form.on('submit', _.bind(this.executeQuery, this));
                 this.$templates.on('click.query', _.bind(this.showTemplates, this));
                 this.$history.on('click.query', _.bind(this.showHistory, this));
+                this.$aigenerate.on('click.query', _.bind(this.showAigenerate, this));
                 this.$execButton.on('click.query', _.bind(this.executeQuery, this));
                 this.$filterButton.on('click.query', _.bind(this.toggleFilter, this));
                 this.$filterButton.addClass(core.console.getProfile().get('query', 'filtered', true) ? 'on' : 'off');
@@ -248,6 +250,19 @@
                 return false;
             },
 
+            showAigenerate: function (event) {
+                event.preventDefault();
+                if (this.popover === 'aigenerate') {
+                    this.$povHook.popover('toggle');
+                } else {
+                    core.getHtml(core.getComposumPath('composum/nodes/browser/query/aigenerate.html'),
+                        _.bind(function (data) {
+                            this.showPopover('aigenerate', this.$aigenerate.attr('title'), data);
+                        }, this));
+                }
+                return false;
+            },
+
             showTemplates: function (event) {
                 event.preventDefault();
                 if (this.popover === 'templates') {
@@ -262,6 +277,7 @@
             },
 
             showPopover: function (key, title, content) {
+                this.manageAiGenerateContent();
                 this.$povHook.popover('destroy');
                 this.$povHook.off()
                     .on('inserted.bs.popover', _.bind(this.initPopover, this))
@@ -299,6 +315,9 @@
                     this.hidePopover();
                     return false;
                 }, this));
+                this.$aigeneratebutton = $popover.find('#aigenerateQuerySubmit');
+                this.$aigeneratebutton.on('click', _.bind(this.aigenerateQuery, this));
+                this.manageAiGenerateContent();
             },
 
             hidePopover: function () {
@@ -312,15 +331,81 @@
 
             onPopoverShown: function () {
                 if (this.popover === 'templates') {
-                    this.$templates.addClass('active')
+                    this.$templates.addClass('active');
+                } else if (this.popover === 'aigenerate') {
+                    this.$aigenerate.addClass('active');
                 } else {
-                    this.$history.addClass('active')
+                    this.$history.addClass('active');
                 }
             },
 
             onPopoverHidden: function () {
                 this.$templates.removeClass('active');
                 this.$history.removeClass('active');
+                this.$aigenerate.removeClass('active');
+            },
+
+            aigenerateQuery: function (event) {
+                event.preventDefault();
+                var id = this.$povHook.attr('aria-describedby');
+                var $popover = $('#' + id);
+                var query = $popover.find('#aigenerateQuery').val();
+                this.$aigeneratebutton.prop("disabled", true);
+                core.ajaxPost('/bin/cpm/nodes/node.querysuggest.json', {
+                    //data
+                    _charset_: 'UTF-8',
+                    query: query
+                }, {
+                    //config
+                    dataType: 'json'
+                }, _.bind(function (content) {
+                    if (!content.comment && !content.xpath && !content.sql2) {
+                        var message = content.error || JSON.stringify(content);
+                        core.alert('danger', 'Error', 'Error when generating AI query', message);
+                        return;
+                    }
+                    if (content.comment) {
+                        $popover.find('#aigenerateComment').removeClass('hidden').text(content.comment);
+                    } else {
+                        $popover.find('#aigenerateComment').addClass('hidden');
+                    }
+                    if (content.xpath) {
+                        $popover.find('#aigenerateXpath').removeClass('hidden').text(content.xpath);
+                    } else {
+                        $popover.find('#aigenerateXpath').addClass('hidden');
+                    }
+                    if (content.sql2) {
+                        $popover.find('#aigenerateSql2').removeClass('hidden').text(content.sql2);
+                    } else {
+                        $popover.find('#aigenerateSql2').addClass('hidden');
+                    }
+                }, this), _.bind(function (result) {
+                    core.alert('danger', 'Error', 'Error when generating AI query', result);
+                }, this), _.bind(function () {
+                    this.$aigeneratebutton.prop("disabled", false);
+                }, this));
+                return false;
+            },
+
+            manageAiGenerateContent: function () {
+                var $aigenerate = $('.aigenerate-popover');
+                if (!$aigenerate.length) {
+                    return;
+                }
+                var $query = $aigenerate.find('#aigenerateQuery');
+                if ($query.val()) {
+                    this.aigenerateSavedState = {
+                        query: $query.val(),
+                        comment: $aigenerate.find('#aigenerateComment').text(),
+                        xpath: $aigenerate.find('#aigenerateXpath').text(),
+                        sql2: $aigenerate.find('#aigenerateSql2').text()
+                    };
+                } else if (this.aigenerateSavedState) {
+                    $aigenerate.find('#aigenerateQuery').val(this.aigenerateSavedState.query);
+                    $aigenerate.find('#aigenerateComment').text(this.aigenerateSavedState.comment);
+                    $aigenerate.find('#aigenerateXpath').text(this.aigenerateSavedState.xpath);
+                    $aigenerate.find('#aigenerateSql2').text(this.aigenerateSavedState.sql2);
+                }
             }
         });
 
