@@ -18,8 +18,9 @@
                scope="request">
     <%--@elvariable id="model" type="com.composum.sling.nodes.components.CAConfigModel"--%>
 
-    <p>To edit the configuration go to the mentioned configuration locations.
-        To create a new configuration you can go to the following nodes:
+    <p>
+        To edit the configuration go to the mentioned configuration locations.
+        For creating new configurations - the following nodes are currently connected via sling:configRef:
     </p>
     <ul>
         <c:forEach var="configPath" items="${model.referencedConfigPaths}">

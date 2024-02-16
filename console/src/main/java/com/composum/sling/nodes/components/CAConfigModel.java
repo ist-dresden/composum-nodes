@@ -83,7 +83,9 @@ public class CAConfigModel extends ConsoleServletBean {
                 } else if (getResource().getParent().getName().equals("sling:configs")) {
                     String configName = getResource().getName();
                     ConfigurationMetadata metadata = getConfigurationManager().getConfigurationMetadata(configName);
-                    if (metadata.isCollection()) {
+                    if (metadata == null) {
+                        return null;
+                    } else if (metadata.isCollection()) {
                         return "collectionView";
                     } else {
                         return "configurationView";
@@ -190,6 +192,10 @@ public class CAConfigModel extends ConsoleServletBean {
         while (resource != null) {
             ValueMap properties = resource.getValueMap();
             String configRef = properties.get("sling:configRef", String.class);
+            if (configRef != null) {
+                paths.add(configRef + "/sling:configs");
+            }
+            configRef = properties.get("jcr:content/sling:configRef", String.class);
             if (configRef != null) {
                 paths.add(configRef + "/sling:configs");
             }
