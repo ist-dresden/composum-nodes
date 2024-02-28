@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.composum.sling.nodes.ai.AIService;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 
 @Component(
@@ -76,17 +76,25 @@ public class AIServiceImpl implements AIService {
         if (!isAvailable()) {
             throw new AIServiceNotAvailableException();
         }
-        Map<String, Object> systemMessage = systemmsg != null ?
-                ImmutableMap.of("role", "system", "content", systemmsg) : null;
-
-        Map<String, String> userMessage = ImmutableMap.of("role", "user", "content", usermsg);
+        Map<String, String> userMessage = new LinkedHashMap<>();
+        userMessage.put("role", "user");
+        userMessage.put("content", usermsg);
 
         Map<String, Object> request = new HashMap<>();
         request.put("model", StringUtils.defaultString(config.defaultModel(), DEFAULT_MODEL));
-        request.put("messages", systemMessage != null ? asList(systemMessage, userMessage) : asList(userMessage));
+        if (systemmsg != null) {
+            Map<String, Object> systemMessage = new LinkedHashMap<>();
+            systemMessage.put("role", "system");
+            systemMessage.put("content", systemmsg);
+            request.put("messages", asList(systemMessage, userMessage));
+        } else {
+            request.put("messages", asList(userMessage));
+        }
         request.put("temperature", 0);
         if (responseFormat == ResponseFormat.JSON) {
-            request.put("response_format", ImmutableMap.of("type", "json_object"));
+            Map<String, String> responseFormatMap = new LinkedHashMap<>();
+            responseFormatMap.put("type", "json_object");
+            request.put("response_format", responseFormatMap);
         }
 
         String requestJson = gson.toJson(request);
