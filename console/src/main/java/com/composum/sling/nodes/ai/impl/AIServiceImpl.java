@@ -64,6 +64,7 @@ public class AIServiceImpl implements AIService {
     private RateLimiter rateLimiter;
     private Gson gson = new Gson();
     private CloseableHttpClient httpClient;
+    private String organizationId;
 
     @Override
     public boolean isAvailable() {
@@ -81,7 +82,7 @@ public class AIServiceImpl implements AIService {
         userMessage.put("content", usermsg);
 
         Map<String, Object> request = new HashMap<>();
-        request.put("model", StringUtils.defaultString(config.defaultModel(), DEFAULT_MODEL));
+        request.put("model", StringUtils.defaultIfBlank(config.defaultModel(), DEFAULT_MODEL));
         if (systemmsg != null) {
             Map<String, Object> systemMessage = new LinkedHashMap<>();
             systemMessage.put("role", "system");
@@ -108,6 +109,9 @@ public class AIServiceImpl implements AIService {
         entityBuilder.setText(requestJson);
         postRequest.setEntity(entityBuilder.build());
         postRequest.setHeader("Authorization", "Bearer " + openAiApiKey);
+        if (organizationId != null) {
+            postRequest.setHeader("OpenAI-Organization", organizationId);
+        }
         String id = "#" + System.nanoTime();
         LOG.debug("Request {} to OpenAI: {}", id, requestJson);
         try (CloseableHttpResponse response = httpClient.execute(postRequest)) {
@@ -180,6 +184,7 @@ public class AIServiceImpl implements AIService {
             }
         }
         openAiApiKey = StringUtils.trimToNull(openAiApiKey);
+        organizationId = StringUtils.trimToNull(config.organizationId());
         rateLimiter = null;
         if (isAvailable()) {
             int perMinuteLimit = config.requestsPerMinuteLimit() > 0 ? config.requestsPerMinuteLimit() : 20;
@@ -204,6 +209,9 @@ public class AIServiceImpl implements AIService {
         // alternatively, a key file
         @AttributeDefinition(name = "OpenAI API Key File containing the API key, as an alternative to Open AKI Key configuration and the variants described there.")
         String openAiApiKeyFile();
+
+        @AttributeDefinition(name = "Organization ID", description = "The organization ID from OpenAI, if you have one.")
+        String organizationId();
 
         @AttributeDefinition(name = "Default model to use for the chat completion. If not configured we take a default, in this version " + DEFAULT_MODEL + ". Please consider the varying prices https://openai.com/pricing . For programming related questions a GPT-4 seems necessary, though. Do not configure if not necessary, to follow further changes.")
         String defaultModel();
