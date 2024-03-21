@@ -23,11 +23,18 @@
         For creating new configurations - the following nodes are currently connected via sling:configRef:
     </p>
     <ul>
-        <c:forEach var="configPath" items="${model.referencedConfigPaths}">
+        <c:forEach var="contextResource" items="${model.contextPaths}">
             <li>
                 <a class="target-link"
-                   data-path="${configPath}">${configPath}</a>
+                   data-path="${contextResource.configRef}">${contextResource.configRef}</a>
+                referenced by
+                <a class="target-link"
+                   data-path="${contextResource.resource.path}">${contextResource.resource.path}</a>
+                (ranking ${contextResource.serviceRanking})
             </li>
+        </c:forEach>
+        <c:forEach var="configPath" items="${model.globalConfigPaths}">
+            <li>Global config: <a class="target-link" data-path="${configPath}">${configPath}</a></li>
         </c:forEach>
     </ul>
     <c:forEach var="config"

@@ -12,12 +12,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestPathInfo;
@@ -27,6 +29,8 @@ import org.apache.sling.caconfig.management.ConfigurationCollectionData;
 import org.apache.sling.caconfig.management.ConfigurationData;
 import org.apache.sling.caconfig.management.ConfigurationManager;
 import org.apache.sling.caconfig.management.ValueInfo;
+import org.apache.sling.caconfig.management.multiplexer.ContextPathStrategyMultiplexer;
+import org.apache.sling.caconfig.resource.spi.ContextResource;
 import org.apache.sling.caconfig.spi.metadata.ConfigurationMetadata;
 import org.apache.sling.caconfig.spi.metadata.PropertyMetadata;
 import org.jetbrains.annotations.NotNull;
@@ -183,24 +187,8 @@ public class CAConfigModel extends ConsoleServletBean {
         return result;
     }
 
-    /**
-     * List of all paths that are referenced from a sling:configRef of the resource or one of it's parents.
-     */
-    public List<String> getReferencedConfigPaths() {
+    public List<String> getGlobalConfigPaths() {
         List<String> paths = new ArrayList<>();
-        Resource resource = getResource();
-        while (resource != null) {
-            ValueMap properties = resource.getValueMap();
-            String configRef = properties.get("sling:configRef", String.class);
-            if (configRef != null) {
-                paths.add(configRef + "/sling:configs");
-            }
-            configRef = properties.get("jcr:content/sling:configRef", String.class);
-            if (configRef != null) {
-                paths.add(configRef + "/sling:configs");
-            }
-            resource = resource.getParent();
-        }
         for (String possibleDefault : new String[]{"/conf/global/sling:configs", "/apps/conf/sling:configs", "/libs/conf/sling:configs"}) {
             // add the resource to the list if it exists
             Resource defaultResource = getResolver().getResource(possibleDefault);
@@ -209,6 +197,12 @@ public class CAConfigModel extends ConsoleServletBean {
             }
         }
         return paths;
+    }
+
+    public List<ContextResource> getContextPaths() {
+        ContextPathStrategyMultiplexer contextPathStrategyMultiplexer = context.getService(ContextPathStrategyMultiplexer.class);
+        List<ContextResource> contextResources = IteratorUtils.toList(contextPathStrategyMultiplexer.findContextResources(getResource()));
+        return contextResources;
     }
 
     public class CollectionConfigInfo {
@@ -254,7 +248,8 @@ public class CAConfigModel extends ConsoleServletBean {
         protected final String name;
         protected final ConfigurationMetadata metadata;
 
-        public SingletonConfigInfo(String name, ConfigurationData configurationData) {
+        public
+        SingletonConfigInfo(String name, ConfigurationData configurationData) {
             this.name = name;
             this.metadata = getConfigurationManager().getConfigurationMetadata(name);
             this.configurationData = configurationData;
