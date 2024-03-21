@@ -26,10 +26,10 @@
         <c:forEach var="contextResource" items="${model.contextPaths}">
             <li>
                 <a class="target-link"
-                   data-path="${contextResource.configRef}">${contextResource.configRef}</a>
+                   data-path="${contextResource.configRef}/sling:configs">${contextResource.configRef}/sling:configs</a>
                 referenced by
                 <a class="target-link"
-                   data-path="${contextResource.resource.path}">${contextResource.resource.path}</a>
+                   data-path="${contextResource.resource.path}/sling:configs">${contextResource.resource.path}/sling:configs</a>
                 (ranking ${contextResource.serviceRanking})
             </li>
         </c:forEach>
@@ -37,6 +37,8 @@
             <li>Global config: <a class="target-link" data-path="${configPath}">${configPath}</a></li>
         </c:forEach>
     </ul>
+
+
     <c:forEach var="config"
                items="${model.singletonConfigurations}">
         <c:if test="${not empty config.configurationData.resourcePath}">
@@ -70,6 +72,7 @@
                             <th>Label</th>
                             <th></th>
                             <th></th>
+                            <th></th>
                             <th class="valuecolumn">Value</th>
                         </tr>
                         </thead>
@@ -85,6 +88,12 @@
                                         <span class="fa fa-info-circle infosymbol" data-toggle="tooltip"
                                               title="${propInfo.propertyMetadata.description}">
                                         </span>
+                                    </c:if>
+                                </td>
+                                <td>
+                                    <c:if test="${propInfo.overridden}">
+                                        <span class="fa fa-arrow-circle-o-down infosymbol"
+                                           title="Overridden by an configuration override provider"></span>
                                     </c:if>
                                 </td>
                                 <td>
@@ -162,6 +171,7 @@
                                         <th>Label</th>
                                         <th></th>
                                         <th></th>
+                                        <th></th>
                                         <th class="valuecolumn">Value</th>
                                     </tr>
                                     </thead>
@@ -179,6 +189,12 @@
                                                     <span class="fa fa-info-circle infosymbol" data-toggle="tooltip"
                                                           title="${propInfo.propertyMetadata.description}">
                                                     </span>
+                                                </c:if>
+                                            </td>
+                                            <td>
+                                                <c:if test="${propInfo.overridden}">
+                                                    <span class="fa fa-arrow-circle-o-down infosymbol"
+                                                       title="Overridden by an configuration override provider"></span>
                                                 </c:if>
                                             </td>
                                             <td>

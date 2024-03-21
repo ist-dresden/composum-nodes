@@ -12,12 +12,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
+
+import javax.inject.Inject;
 
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -50,7 +51,11 @@ public class CAConfigModel extends ConsoleServletBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(CAConfigModel.class);
 
+    @Inject
     protected ConfigurationManager configurationManager;
+
+    @Inject
+    protected ContextPathStrategyMultiplexer contextPathStrategyMultiplexer;
 
     public CAConfigModel(BeanContext context, Resource resource) {
         super(context, resource);
@@ -64,17 +69,16 @@ public class CAConfigModel extends ConsoleServletBean {
         super();
     }
 
-    @Override
-    @NotNull
-    public ResourceHandle getResource() {
-        Resource resource = null;
+
+    public void initialize(BeanContext context, Resource resource) {
+        Resource suffixResource = null;
         final SlingHttpServletRequest request = context.getRequest();
         final RequestPathInfo pathInfo = request.getRequestPathInfo();
         final String suffix = pathInfo.getSuffix();
         if (StringUtils.isNotBlank(suffix)) {
-            resource = request.getResourceResolver().getResource(suffix);
+            suffixResource = request.getResourceResolver().getResource(suffix);
         }
-        return resource != null ? ResourceHandle.use(resource) : super.getResource();
+        super.initialize(context, suffixResource != null ? suffixResource : resource);
     }
 
     public String getViewType() {
@@ -86,7 +90,7 @@ public class CAConfigModel extends ConsoleServletBean {
                     return "listConfigurationsView";
                 } else if (getResource().getParent().getName().equals("sling:configs")) {
                     String configName = getResource().getName();
-                    ConfigurationMetadata metadata = getConfigurationManager().getConfigurationMetadata(configName);
+                    ConfigurationMetadata metadata = configurationManager.getConfigurationMetadata(configName);
                     if (metadata == null) {
                         return null;
                     } else if (metadata.isCollection()) {
@@ -96,7 +100,7 @@ public class CAConfigModel extends ConsoleServletBean {
                     }
                 } else if (getResource().getParent().getParent().getName().equals("sling:configs")) {
                     String configName = getResource().getParent().getName();
-                    ConfigurationMetadata metadata = getConfigurationManager().getConfigurationMetadata(configName);
+                    ConfigurationMetadata metadata = configurationManager.getConfigurationMetadata(configName);
                     if (metadata.isCollection()) {
                         return "configurationView";
                     }
@@ -108,40 +112,50 @@ public class CAConfigModel extends ConsoleServletBean {
         return null;
     }
 
-    protected ConfigurationManager getConfigurationManager() {
-        if (configurationManager == null) {
-            configurationManager = context.getService(ConfigurationManager.class);
+    public List<String> getGlobalConfigPaths() {
+        List<String> paths = new ArrayList<>();
+        for (String possibleDefault : new String[]{"/conf/global/sling:configs", "/apps/conf/sling:configs", "/libs/conf/sling:configs"}) {
+            // add the resource to the list if it exists
+            Resource defaultResource = getResolver().getResource(possibleDefault);
+            if (defaultResource != null) {
+                paths.add(possibleDefault);
+            }
         }
-        return configurationManager;
+        return paths;
+    }
+
+    public List<ContextResource> getContextPaths() {
+        List<ContextResource> contextResources = IteratorUtils.toList(contextPathStrategyMultiplexer.findContextResources(getResource()));
+        return contextResources;
     }
 
     /**
      * Returns all configuration metadata.
      */
     public List<ConfigurationMetadata> getAllMetaData() {
-        SortedSet<String> names = getConfigurationManager().getConfigurationNames();
+        SortedSet<String> names = configurationManager.getConfigurationNames();
         return names.stream()
-                .map(name -> getConfigurationManager().getConfigurationMetadata(name))
+                .map(name -> configurationManager.getConfigurationMetadata(name))
                 .collect(Collectors.toList());
     }
 
     public List<SingletonConfigInfo> getSingletonConfigurations() {
-        SortedSet<String> names = getConfigurationManager().getConfigurationNames();
+        SortedSet<String> names = configurationManager.getConfigurationNames();
         List<SingletonConfigInfo> result = names.stream()
                 .filter(name ->
-                        requireNonNull(getConfigurationManager().getConfigurationMetadata(name)).isSingleton())
+                        requireNonNull(configurationManager.getConfigurationMetadata(name)).isSingleton())
                 .map(name ->
-                        new SingletonConfigInfo(name, getConfigurationManager().getConfiguration(resource, name)))
+                        new SingletonConfigInfo(name, configurationManager.getConfiguration(resource, name)))
                 .collect(Collectors.toList());
         return result;
     }
 
     public List<CollectionConfigInfo> getCollectionConfigurations() {
-        SortedSet<String> names = getConfigurationManager().getConfigurationNames();
+        SortedSet<String> names = configurationManager.getConfigurationNames();
         List<CollectionConfigInfo> result = names.stream()
                 .filter(name ->
-                        requireNonNull(getConfigurationManager().getConfigurationMetadata(name)).isCollection())
-                .map(name -> new CollectionConfigInfo(getConfigurationManager().getConfigurationCollection(resource, name)))
+                        requireNonNull(configurationManager.getConfigurationMetadata(name)).isCollection())
+                .map(name -> new CollectionConfigInfo(configurationManager.getConfigurationCollection(resource, name)))
                 .collect(Collectors.toList());
         return result;
     }
@@ -167,7 +181,8 @@ public class CAConfigModel extends ConsoleServletBean {
             configResource = configResource.getParent();
         }
         String configName = configResource != null ? configResource.getName() : null;
-        ConfigurationData configurationData = configName != null ? getConfigurationManager().getConfiguration(getResource(), configName) : null;
+        ConfigurationData configurationData;
+        configurationData = configName != null ? configurationManager.getConfiguration(getResource(), configName) : null;
         if (configurationData != null) {
             return new SingletonConfigInfo(configName, configurationData);
         }
@@ -187,24 +202,6 @@ public class CAConfigModel extends ConsoleServletBean {
         return result;
     }
 
-    public List<String> getGlobalConfigPaths() {
-        List<String> paths = new ArrayList<>();
-        for (String possibleDefault : new String[]{"/conf/global/sling:configs", "/apps/conf/sling:configs", "/libs/conf/sling:configs"}) {
-            // add the resource to the list if it exists
-            Resource defaultResource = getResolver().getResource(possibleDefault);
-            if (defaultResource != null) {
-                paths.add(possibleDefault);
-            }
-        }
-        return paths;
-    }
-
-    public List<ContextResource> getContextPaths() {
-        ContextPathStrategyMultiplexer contextPathStrategyMultiplexer = context.getService(ContextPathStrategyMultiplexer.class);
-        List<ContextResource> contextResources = IteratorUtils.toList(contextPathStrategyMultiplexer.findContextResources(getResource()));
-        return contextResources;
-    }
-
     public class CollectionConfigInfo {
 
         protected final ConfigurationCollectionData collectionConfigData;
@@ -212,7 +209,7 @@ public class CAConfigModel extends ConsoleServletBean {
 
         public CollectionConfigInfo(ConfigurationCollectionData configurationCollection) {
             this.collectionConfigData = configurationCollection;
-            this.metadata = getConfigurationManager().getConfigurationMetadata(collectionConfigData.getConfigName());
+            this.metadata = configurationManager.getConfigurationMetadata(collectionConfigData.getConfigName());
         }
 
         /**
@@ -248,10 +245,9 @@ public class CAConfigModel extends ConsoleServletBean {
         protected final String name;
         protected final ConfigurationMetadata metadata;
 
-        public
-        SingletonConfigInfo(String name, ConfigurationData configurationData) {
+        public SingletonConfigInfo(String name, ConfigurationData configurationData) {
             this.name = name;
-            this.metadata = getConfigurationManager().getConfigurationMetadata(name);
+            this.metadata = configurationManager.getConfigurationMetadata(name);
             this.configurationData = configurationData;
         }
 
@@ -312,7 +308,7 @@ public class CAConfigModel extends ConsoleServletBean {
 
         public PropertyInfo(String name, ValueInfo<?> valueInfo) {
             this.name = name;
-            this.metadata = getConfigurationManager().getConfigurationMetadata(name);
+            this.metadata = configurationManager.getConfigurationMetadata(name);
             this.valueInfo = valueInfo;
             this.type = valueInfo != null && valueInfo.getPropertyMetadata() != null ? valueInfo.getPropertyMetadata().getType() : null;
         }
@@ -357,7 +353,9 @@ public class CAConfigModel extends ConsoleServletBean {
                     && "true".equals(propMetadata.getProperties().get("required"));
         }
 
-        /** All properties except "required", which is handled in {@link #isRequired()}. */
+        /**
+         * All properties except "required", which is handled in {@link #isRequired()}.
+         */
         public Properties getProperties() {
             Properties props = new Properties();
             if (valueInfo.getPropertyMetadata() != null && valueInfo.getPropertyMetadata().getProperties() != null) {
@@ -367,7 +365,9 @@ public class CAConfigModel extends ConsoleServletBean {
             return props;
         }
 
-        /** URL encoded value of {@link #getProperties()} to easier put that into an attribute. */
+        /**
+         * URL encoded value of {@link #getProperties()} to easier put that into an attribute.
+         */
         public String getPropertiesJsonEncoded() throws UnsupportedEncodingException {
             Properties props = getProperties();
             String propertiesJson = props != null ? toJson(getProperties()) : null;
