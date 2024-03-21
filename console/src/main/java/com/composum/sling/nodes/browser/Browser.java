@@ -771,6 +771,10 @@ public class Browser extends ConsoleServletBean {
         }
     }
 
+    public boolean isCaConfigRelevant() {
+        return resource.getPath().startsWith("/content") || resource.getPath().contains("sling:configs");
+    }
+
     public static final Pattern SETUP_SCRIPT_PATTERN =
             Pattern.compile(".*[\"']?acl[\"']?\\s*:\\s*[\\[{].*", Pattern.MULTILINE | Pattern.DOTALL);
 

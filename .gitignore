@@ -16,8 +16,6 @@ Servers
 build
 # Maven
 target
-# Groovy
-.groovy
 # some source repos
 .svn
 # File Vault

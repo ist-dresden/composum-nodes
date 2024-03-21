@@ -33,6 +33,7 @@
                     this.ace.navigateFileStart();
                 }, this));
                 this.$el.resize(_.bind(this.resize, this));
+                this.$el.on('splitpaneresize', _.bind(this.resize, this));
 
                 this.$('.editor-toolbar .start-editing').click(_.bind(this.openEditDialog, this));
 

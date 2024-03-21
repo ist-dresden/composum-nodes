@@ -65,6 +65,15 @@
                 this.$path.val(path);
             },
 
+            initType: function (type) {
+                this.$type.val(type);
+                this.typeChanged();
+            },
+
+            initName: function (name) {
+                this.$name.val(name);
+            },
+
             createNode: function (event) {
                 event.preventDefault();
                 var parentPath = this.$path.val();

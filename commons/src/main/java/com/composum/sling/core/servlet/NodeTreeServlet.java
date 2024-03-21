@@ -401,7 +401,7 @@ public abstract class NodeTreeServlet extends AbstractServiceServlet {
         params.path = XSS.filter(request.getParameter(PARAM_PATH));
         params.before = XSS.filter(request.getParameter(PARAM_BEFORE));
         params.index = XSS.filter(request.getParameter(PARAM_INDEX));
-        params.type = XSS.filter(request.getParameter(PARAM_TYPE));
+        params.type = StringUtils.trim(XSS.filter(request.getParameter(PARAM_TYPE)));
         params.title = XSS.filter(request.getParameter(PARAM_TITLE));
         params.mimeType = XSS.filter(request.getParameter(PARAM_MIME_TYPE));
         params.resourceType = XSS.filter(request.getParameter(PARAM_RESOURCE_TYPE));

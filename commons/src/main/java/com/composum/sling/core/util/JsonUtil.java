@@ -858,18 +858,12 @@ public class JsonUtil {
                     return target.getPath();
                 }
             }
+            boolean checkAsRelativePath = false;
             if (StringUtils.isNotBlank(name)) {
                 switch (name) {
                     case PROP_RESOURCE_TYPE:
                     case PROP_RESOURCE_SUPER_TYPE:
-                        if (!value.startsWith("/")) {
-                            for (String root : resolver.getSearchPath()) {
-                                target = resolver.getResource(root + value);
-                                if (target != null) {
-                                    return target.getPath();
-                                }
-                            }
-                        }
+                        checkAsRelativePath = true;
                         break;
                     case PROP_UUID:
                         break;
@@ -888,7 +882,17 @@ public class JsonUtil {
                             } catch (Exception ignore) {
                             }
                         }
+                        // heuristics whether it could be a path: it should contain at least a slash but no whitespace
+                        checkAsRelativePath = value.contains("/") && !value.matches(".*\\s+.*");
                         break;
+                }
+            }
+            if (checkAsRelativePath) {
+                for (String root : resolver.getSearchPath()) {
+                    target = resolver.getResource(root + value);
+                    if (target != null) {
+                        return target.getPath();
+                    }
                 }
             }
         }

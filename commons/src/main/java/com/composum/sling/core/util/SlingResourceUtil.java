@@ -5,14 +5,15 @@ import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import groovyjarjarantlr4.v4.runtime.misc.NotNull;
 
 /**
  * A set of utility functions related to the handling of Sling Resources, without going down to JCR specifics.
@@ -173,7 +174,7 @@ public class SlingResourceUtil {
      * @param leafFilter if this returns true, this assumes the resource is a leaf and does not return it's descendants.
      * @return a stream running through the resource and it's the descendants, not null
      */
-    @NotNull
+    @Nonnull
     public static Stream<Resource> descendantsStream(@Nullable Resource resource,
                                                      @Nullable Function<Resource, Boolean> leafFilter) {
         if (resource == null) {
