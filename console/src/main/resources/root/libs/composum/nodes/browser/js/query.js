@@ -352,6 +352,7 @@
                 var $popover = $('#' + id);
                 var query = $popover.find('#aigenerateQuery').val();
                 this.$aigeneratebutton.prop("disabled", true);
+                this.setAiQueryField($popover, '#aigenerateComment', 'Query generation in progress...');
                 core.ajaxPost('/bin/cpm/nodes/node.querysuggest.json', {
                     //data
                     _charset_: 'UTF-8',
@@ -360,32 +361,37 @@
                     //config
                     dataType: 'json'
                 }, _.bind(function (content) {
-                    if (!content.comment && !content.xpath && !content.sql2) {
+                    if (!content.comment && !content.xpath1 && !content.sql1) {
                         var message = content.error || JSON.stringify(content);
                         core.alert('danger', 'Error', 'Error when generating AI query', message);
                         return;
                     }
-                    if (content.comment) {
-                        $popover.find('#aigenerateComment').removeClass('hidden').text(content.comment);
-                    } else {
-                        $popover.find('#aigenerateComment').addClass('hidden');
-                    }
-                    if (content.xpath) {
-                        $popover.find('#aigenerateXpath').removeClass('hidden').text(content.xpath);
-                    } else {
-                        $popover.find('#aigenerateXpath').addClass('hidden');
-                    }
-                    if (content.sql2) {
-                        $popover.find('#aigenerateSql2').removeClass('hidden').text(content.sql2);
-                    } else {
-                        $popover.find('#aigenerateSql2').addClass('hidden');
-                    }
+                    this.setAiQueryField($popover, '#aigenerateComment', content.comment);
+                    this.setAiQueryField($popover, '#aigenerateXpath1', content.xpath1);
+                    this.setAiQueryField($popover, '#aigenerateXpath2', content.xpath2);
+                    this.setAiQueryField($popover, '#aigenerateXpath3', content.xpath3);
+                    this.setAiQueryField($popover, '#aigenerateSql1', content.sql1);
+                    this.setAiQueryField($popover, '#aigenerateSql2', content.sql2);
+                    this.setAiQueryField($popover, '#aigenerateSql3', content.sql3);
+                    this.manageAiGenerateContent();
                 }, this), _.bind(function (result) {
                     core.alert('danger', 'Error', 'Error when generating AI query', result);
                 }, this), _.bind(function () {
                     this.$aigeneratebutton.prop("disabled", false);
                 }, this));
                 return false;
+            },
+
+            setAiQueryField: function ($popover, field, value) {
+                var $field = $popover.find(field);
+                var $tr = $field.closest('tr');
+                if (value && value !== "N/A") {
+                    $field.text(value);
+                    $tr.removeClass('hidden');
+                } else {
+                    $field.text('');
+                    $tr.addClass('hidden');
+                }
             },
 
             manageAiGenerateContent: function () {
@@ -398,14 +404,22 @@
                     this.aigenerateSavedState = {
                         query: $query.val(),
                         comment: $aigenerate.find('#aigenerateComment').text(),
-                        xpath: $aigenerate.find('#aigenerateXpath').text(),
-                        sql2: $aigenerate.find('#aigenerateSql2').text()
+                        xpath1: $aigenerate.find('#aigenerateXpath1').text(),
+                        xpath2: $aigenerate.find('#aigenerateXpath2').text(),
+                        xpath3: $aigenerate.find('#aigenerateXpath3').text(),
+                        sql1: $aigenerate.find('#aigenerateSql1').text(),
+                        sql2: $aigenerate.find('#aigenerateSql2').text(),
+                        sql3: $aigenerate.find('#aigenerateSql3').text()
                     };
                 } else if (this.aigenerateSavedState) {
                     $aigenerate.find('#aigenerateQuery').val(this.aigenerateSavedState.query);
-                    $aigenerate.find('#aigenerateComment').text(this.aigenerateSavedState.comment);
-                    $aigenerate.find('#aigenerateXpath').text(this.aigenerateSavedState.xpath);
-                    $aigenerate.find('#aigenerateSql2').text(this.aigenerateSavedState.sql2);
+                    this.setAiQueryField($aigenerate, '#aigenerateComment', this.aigenerateSavedState.comment);
+                    this.setAiQueryField($aigenerate, '#aigenerateXpath1', this.aigenerateSavedState.xpath1);
+                    this.setAiQueryField($aigenerate, '#aigenerateXpath2', this.aigenerateSavedState.xpath2);
+                    this.setAiQueryField($aigenerate, '#aigenerateXpath3', this.aigenerateSavedState.xpath3);
+                    this.setAiQueryField($aigenerate, '#aigenerateSql1', this.aigenerateSavedState.sql1);
+                    this.setAiQueryField($aigenerate, '#aigenerateSql2', this.aigenerateSavedState.sql2);
+                    this.setAiQueryField($aigenerate, '#aigenerateSql3', this.aigenerateSavedState.sql3);
                 }
             }
         });

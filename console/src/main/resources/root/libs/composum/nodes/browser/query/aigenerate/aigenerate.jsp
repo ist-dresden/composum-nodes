@@ -20,17 +20,33 @@
     </form>
 
     <table class="table template-links">
-        <tr>
+        <tr class="hidden">
             <td></td>
             <td width="100%" id="aigenerateComment" data-type="comment"></td>
         </tr>
-        <tr>
+        <tr class="hidden">
             <td>XPath</td>
-            <td width="100%"><a href="#" id="aigenerateXpath" data-type="xpath"></a></td>
+            <td width="100%"><a href="#" id="aigenerateXpath1" data-type="xpath"></a></td>
         </tr>
-        <tr>
+        <tr class="hidden">
+            <td>XPath</td>
+            <td width="100%"><a href="#" id="aigenerateXpath2" data-type="xpath"></a></td>
+        </tr>
+        <tr class="hidden">
+            <td>XPath</td>
+            <td width="100%"><a href="#" id="aigenerateXpath3" data-type="xpath"></a></td>
+        </tr>
+        <tr class="hidden">
             <td>SQL2</td>
-            <td width="100%"><a href="#" id="aigenerateSql2" data-type="sql2"></a></td>
+            <td width="100%"><a href="#" id="aigenerateSql1" data-type="sql1"></a></td>
+        </tr>
+        <tr class="hidden">
+            <td>SQL2</td>
+            <td width="100%"><a href="#" id="aigenerateSql2" data-type="sql1"></a></td>
+        </tr>
+        <tr class="hidden">
+            <td>SQL2</td>
+            <td width="100%"><a href="#" id="aigenerateSql3" data-type="sql1"></a></td>
         </tr>
     </table>
 </div>
