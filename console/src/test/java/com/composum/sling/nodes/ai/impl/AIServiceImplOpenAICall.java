@@ -6,7 +6,11 @@ import java.io.IOException;
 
 import org.mockito.Mockito;
 
-public class AIServiceImplCall {
+/**
+ * Calls OpenAI chat completion service to verify the implementation works.
+ * Not a test since that needs network and OpenAI key.
+ */
+public class AIServiceImplOpenAICall {
 
     private static AIServiceImpl aiService = new AIServiceImpl();
 
