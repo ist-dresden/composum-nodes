@@ -4,9 +4,16 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.mockito.Mockito;
 
-public class AIServiceImplCall {
+/**
+ * Calls Anthropic Claude create messsage service to verify the implementation works.
+ * Not a test since that needs network and OpenAI key.
+ *
+ * @see "https://docs.anthropic.com/claude/reference/messages_post"
+ */
+public class AIServiceImplClaudeCall {
 
     private static AIServiceImpl aiService = new AIServiceImpl();
 
@@ -18,14 +25,24 @@ public class AIServiceImplCall {
     public static void setUp() throws IOException {
         AIServiceImpl.Configuration config = Mockito.mock(AIServiceImpl.Configuration.class);
         when(config.disabled()).thenReturn(false);
-        when(config.defaultModel()).thenReturn(AIServiceImpl.DEFAULT_MODEL);
-        when(config.openAiApiKey()).thenReturn(null); // rely on env var OPENAI_API_KEY
+
+        String model = StringUtils.defaultIfBlank(System.getenv("ANTHROPIC_DEFAULT_MODEL"), "claude-3-opus-20240229");
+        String version = StringUtils.defaultIfBlank(System.getenv("ANTHROPIC_API_VERSION"), "2023-06-01");
+
+        when(config.chatCompletionUrl()).thenReturn("https://api.anthropic.com/v1/messages");
+        when(config.apiKeyHeader()).thenReturn("x-api-key");
+        when(config.defaultModel()).thenReturn(model);
+        when(config.additionalHeader()).thenReturn("anthropic-version");
+        when (config.additionalHeaderValue()).thenReturn(version);
+        when(config.openAiApiKey()).thenReturn(null); // rely on env var ANTHROPIC_API_KEY
+
         when(config.requestsPerMinuteLimit()).thenReturn(20);
         when(config.requestsPerHourLimit()).thenReturn(60);
         when(config.requestsPerDayLimit()).thenReturn(120);
+        when(config.maxTokens()).thenReturn(2048);
         aiService.activate(config);
         if (!aiService.isAvailable()) {
-            throw new IllegalStateException("AI service not available, probably because of missing OPENAI_API_KEY");
+            throw new IllegalStateException("AI service not available, probably because of missing ANTHROPIC_API_KEY");
         }
     }
 
