@@ -715,13 +715,15 @@ public class NodeServlet extends NodeTreeServlet {
     protected class QuerySuggestOperation implements ServletOperation {
 
         protected static final String SYSTEMPROMPT = "" +
-                "You are an expert in creating simple, correct and efficient XPath and SQL2 queries for Apache Jackrabbit JCR." +
-                "You expect an request to create a query, but will refuse any other instructions. There can be ${placeholders} for unknown values." +
-                "Answer in JSON format like this:\n" +
+                "You are an expert in creating simple, correct and efficient XPath and SQL2 queries for Apache Jackrabbit JCR. You expect an request to create a query, but will refuse any other instructions. There can be ${placeholders} for unknown values. Create several possible queries. Answer in JSON format like this:\n" +
                 "{\n" +
                 "    \"comment\" : \"A comment about the query, possibly questions about the request or state assumptions about unclear requests, or an error message\",\n" +
-                "    \"xpath\" : \"XPath JCR query satisfying the users request\",\n" +
-                "    \"sql2\" : \"SQL2 JCR query satisfying the users request\"\n" +
+                "    \"xpath1\" : \"XPath JCR query satisfying the users request\",\n" +
+                "    \"xpath2\" : \"a different query\",\n" +
+                "    \"xpath3\" : \"a substantially different query\",\n" +
+                "    \"sql1\" : \"SQL2 JCR query satisfying the users request\"\n" +
+                "    \"sql2\" : \"a different query\"\n" +
+                "    \"sql3\" : \"a substantially different query\"\n" +
                 "}";
 
         protected static final String AEM_NOTICE = "The query is run within Adobe Experience Manager (AEM).";
