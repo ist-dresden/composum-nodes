@@ -1,5 +1,5 @@
 -classpath
-'/home/runner/.m2/repository/org/osgi/org.osgi.core/6.0.0/org.osgi.core-6.0.0.jar:/home/runner/.m2/repository/org/osgi/osgi.cmpn/6.0.0/osgi.cmpn-6.0.0.jar:/home/runner/.m2/repository/javax/jcr/jcr/2.0/jcr-2.0.jar:/home/runner/.m2/repository/org/apache/jackrabbit/vault/org.apache.jackrabbit.vault/3.2.4/org.apache.jackrabbit.vault-3.2.4.jar:/home/runner/.m2/repository/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar:/home/runner/.m2/repository/org/apache/sling/org.apache.sling.api/2.18.4/org.apache.sling.api-2.18.4.jar:/home/runner/.m2/repository/org/apache/commons/commons-collections4/4.1/commons-collections4-4.1.jar:/home/runner/.m2/repository/org/apache/commons/commons-lang3/3.6/commons-lang3-3.6.jar:/home/runner/.m2/repository/commons-io/commons-io/2.6/commons-io-2.6.jar:/home/runner/.m2/repository/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar'
+'/home/runner/.m2/repository/org/osgi/org.osgi.core/6.0.0/org.osgi.core-6.0.0.jar:/home/runner/.m2/repository/org/osgi/osgi.cmpn/6.0.0/osgi.cmpn-6.0.0.jar:/home/runner/.m2/repository/javax/jcr/jcr/2.0/jcr-2.0.jar:/home/runner/.m2/repository/org/apache/jackrabbit/vault/org.apache.jackrabbit.vault/3.2.4/org.apache.jackrabbit.vault-3.2.4.jar:/home/runner/.m2/repository/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar:/home/runner/.m2/repository/org/apache/sling/org.apache.sling.api/2.18.4/org.apache.sling.api-2.18.4.jar:/home/runner/.m2/repository/org/apache/commons/commons-collections4/4.1/commons-collections4-4.1.jar:/home/runner/.m2/repository/org/apache/commons/commons-lang3/3.6/commons-lang3-3.6.jar:/home/runner/.m2/repository/commons-io/commons-io/2.6/commons-io-2.6.jar:/home/runner/.m2/repository/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar:/home/runner/.m2/repository/junit/junit/4.13.2/junit-4.13.2.jar:/home/runner/.m2/repository/org/hamcrest/hamcrest-core/2.2/hamcrest-core-2.2.jar:/home/runner/.m2/repository/org/hamcrest/hamcrest/2.2/hamcrest-2.2.jar'
 -encoding
 'UTF-8'
 -protected
@@ -10,7 +10,7 @@
 '/home/runner/work/composum-nodes/composum-nodes/xtracts/debugutil/src/main/java:/home/runner/work/composum-nodes/composum-nodes/xtracts/debugutil/target/generated-sources/annotations'
 -author
 -bottom
-'Copyright &#169; 2023. All rights reserved.'
+'Copyright &#169; 2024. All rights reserved.'
 -charset
 'UTF-8'
 -d
@@ -18,11 +18,11 @@
 -docencoding
 'UTF-8'
 -doctitle
-'Composum Nodes Debug Util Bundle 4.2.3 API'
+'Composum Nodes Debug Util Bundle 4.3.2 API'
 -linkoffline
 'https://docs.oracle.com/javase/8/docs/api' '/home/runner/work/composum-nodes/composum-nodes/xtracts/debugutil/target/javadoc-bundle-options'
 -notimestamp
 -use
 -version
 -windowtitle
-'Composum Nodes Debug Util Bundle 4.2.3 API'
+'Composum Nodes Debug Util Bundle 4.3.2 API'

@@ -49,6 +49,8 @@ com.composum.sling.core.usermanagement.view
 com.composum.sling.core.util
 com.composum.sling.cpnl
 com.composum.sling.nodes
+com.composum.sling.nodes.ai
+com.composum.sling.nodes.ai.impl
 com.composum.sling.nodes.browser
 com.composum.sling.nodes.browser.impl
 com.composum.sling.nodes.components
