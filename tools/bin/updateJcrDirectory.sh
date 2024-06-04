@@ -51,7 +51,9 @@ while [ $(basename "$rootdir") != "jcr_root" -a $(basename "$rootdir") != "root"
 done
 rootdir=$(dirname $rootdir)
 
-jcrpath="${path#jcr_root/}"
+jcrpath="${path#src/main/content/jcr_root/}"
+jcrpath="${jcrpath#src/main/resources/root/}"
+jcrpath="${jcrpath#jcr_root/}"
 jcrpath="${jcrpath#root/}"
 url="$CPM_PROTOCOL://$CPM_HOST:$CPM_PORT/bin/cpm/nodes/sourceupload.zip/${jcrpath}"
 

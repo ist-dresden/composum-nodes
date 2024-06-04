@@ -46,6 +46,8 @@ if [ -z "$CPM_ADMINPASSWD" ]; then
 fi
 
 jcrpath="$1"
+jcrpath="${jcrpath#src/main/content/jcr_root/}"
+jcrpath="${jcrpath#src/main/resources/root/}"
 jcrpath="${jcrpath#jcr_root/}"
 jcrpath="${jcrpath#root/}"
 url="${CPM_PROTOCOL}://${CPM_HOST}:${CPM_PORT}/bin/cpm/nodes/source.zip/${jcrpath}"
