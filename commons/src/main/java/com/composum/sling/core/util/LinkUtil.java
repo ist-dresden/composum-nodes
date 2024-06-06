@@ -273,6 +273,9 @@ public class LinkUtil {
                     redirect = contentResource.getProperty(PROP_TARGET);
                     if (StringUtils.isBlank(redirect)) {
                         redirect = contentResource.getProperty(PROP_REDIRECT);
+                        if ("true".equals(redirect) || "false".equals(redirect)) {
+                            redirect = null; // sometimes that's used as boolean property - no idea how to handle that.
+                        }
                     }
                 }
             }
