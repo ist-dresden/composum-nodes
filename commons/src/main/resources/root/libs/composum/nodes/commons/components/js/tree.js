@@ -395,7 +395,7 @@
                         'load_open': true,
                         'multiple': false,
                         'themes': {
-                            'name': 'proton'
+                            'name': 'default'
                         },
                         'force_text': true
                     },
