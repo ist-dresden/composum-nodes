@@ -343,6 +343,7 @@ public class SourceModel extends ConsoleSlingBean {
         addNameNamespace(keys, resource.getName());
         boolean subnodeInFullCoverage = inFullCoverage || isFullCoverageNode();
         for (Resource subnode : getSubnodeList()) {
+            addNameNamespace(keys, subnode.getName());
             SourceModel subnodeModel = new SourceModel(config, context, subnode);
             if (subnodeModel.getRenderingType(subnodeModel.getResource(), subnodeInFullCoverage) == RenderingType.EMBEDDED) {
                 subnodeModel.determineNamespaces(keys, subnodeInFullCoverage);
