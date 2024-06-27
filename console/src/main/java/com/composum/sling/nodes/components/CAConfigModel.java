@@ -126,6 +126,12 @@ public class CAConfigModel extends ConsoleServletBean {
 
     public List<ContextResource> getContextPaths() {
         List<ContextResource> contextResources = IteratorUtils.toList(contextPathStrategyMultiplexer.findContextResources(getResource()));
+        contextResources = contextResources.stream()
+                .filter(contextResource ->
+                        getResolver().getResource(contextResource.getConfigRef()) != null)
+                .filter(contextResource ->
+                        getResolver().getResource(contextResource.getConfigRef() + "/sling:configs") != null)
+                .collect(Collectors.toList());
         return contextResources;
     }
 
