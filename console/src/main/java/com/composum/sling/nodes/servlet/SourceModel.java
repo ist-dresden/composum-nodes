@@ -171,6 +171,9 @@ public class SourceModel extends ConsoleSlingBean {
     protected transient Boolean[] hasOrderableChildren;
     protected transient Comparator<Property> propertyComparator;
 
+    /** Some things look like namespaces but aren't actual namespaces. This saves them. */
+    protected transient List<String> nonExistingNamespaces = new ArrayList<>();
+
     public SourceModel(NodesConfiguration config, BeanContext context, Resource resource) {
         this.config = config;
         initialize(context, resource);
@@ -213,7 +216,7 @@ public class SourceModel extends ConsoleSlingBean {
     }
 
     /**
-     * @param path a resource path in the resource repository tree; maybe a mounted resource path
+     * @param aPath a resource path in the resource repository tree; maybe a mounted resource path
      * @return 'true' if the path is equal to the export root path
      */
     public boolean isRootPath(@NotNull final String aPath) {
@@ -343,6 +346,7 @@ public class SourceModel extends ConsoleSlingBean {
         addNameNamespace(keys, resource.getName());
         boolean subnodeInFullCoverage = inFullCoverage || isFullCoverageNode();
         for (Resource subnode : getSubnodeList()) {
+            addNameNamespace(keys, subnode.getName());
             SourceModel subnodeModel = new SourceModel(config, context, subnode);
             if (subnodeModel.getRenderingType(subnodeModel.getResource(), subnodeInFullCoverage) == RenderingType.EMBEDDED) {
                 subnodeModel.determineNamespaces(keys, subnodeInFullCoverage);
@@ -906,13 +910,23 @@ public class SourceModel extends ConsoleSlingBean {
                     }
                 } catch (NamespaceException nsex) {
                     LOG.debug(nsex.toString());
+                    nonExistingNamespaces.add(ns);
                 }
             }
         }
     }
 
     public String escapeXmlName(String propertyName) {
-        return ISO9075.encode(propertyName);
+        String encoded = ISO9075.encode(propertyName);
+        // If the attribute has a colon which does not start a namespace, we still need to encode that.
+        if (encoded.contains(":")) {
+            int pos = encoded.indexOf(':');
+            String prefix = encoded.substring(0, pos);
+            if (nonExistingNamespaces.contains(prefix)) {
+                encoded = encoded.replaceAll(":", "_x003A_");
+            }
+        }
+        return encoded;
     }
 
     /**

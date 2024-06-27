@@ -20,7 +20,7 @@
 
     <p>
         To edit the configuration go to the mentioned configuration locations.
-        For creating new configurations - the following nodes are currently connected via sling:configRef:
+        For creating new configurations - the following nodes are currently connected:
     </p>
     <ul>
         <c:forEach var="contextResource" items="${model.contextPaths}">
@@ -29,7 +29,7 @@
                    data-path="${contextResource.configRef}/sling:configs">${contextResource.configRef}/sling:configs</a>
                 referenced by
                 <a class="target-link"
-                   data-path="${contextResource.resource.path}/sling:configs">${contextResource.resource.path}/sling:configs</a>
+                   data-path="${contextResource.resource.path}">${contextResource.resource.path}</a>
                 (ranking ${contextResource.serviceRanking})
             </li>
         </c:forEach>
@@ -119,7 +119,7 @@
 
     <c:forEach var="collection"
                items="${model.collectionConfigurations}">
-        <c:if test="${not empty collection.collectionConfigData.resourcePath}">
+        <c:if test="${not empty collection.collectionConfigData.resourcePath and not empty collection.collectionConfigData.items}">
             <%--@elvariable id="collection" type="com.composum.sling.nodes.components.CAConfigModel.CollectionConfigInfo"--%>
             <div class="panel panel-default">
                 <div class="panel-heading">
