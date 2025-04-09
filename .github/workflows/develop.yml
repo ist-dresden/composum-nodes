@@ -58,16 +58,16 @@ jobs:
       # When parent-2:1.7 is active, -P ensureSnapshots will do a sanity check of the version number
       run: $MVNCMD -P ensureSnapshots,test -B verify
 
-    - name: Sanitycheck version before deploying
-      run: |
-        echo "Version: "
-        $MVNCMD help:evaluate -Dexpression=project.version -q -DforceStdout
-        $MVNCMD help:evaluate -Dexpression=project.version -q -DforceStdout | egrep -- '-SNAPSHOT$' > /dev/null || exit 1
-        # unfortunately, this would require a snapshot parent if just called from the command line, so we cannot use it: :-(
-        # mvn org.apache.maven.plugins:maven-enforcer-plugin:3.0.0:enforce -Drules=requireSnapshotVersion
-
-    - name: Deploy with Maven
-      run: $MVNCMD -P develop deploy
-      env:
-        NEXUS_BUILD_USER: ${{ secrets.NEXUS_BUILD_USER }}
-        NEXUS_BUILD_PASSWD: ${{ secrets.NEXUS_BUILD_PASSWD }}
+#    - name: Sanitycheck version before deploying
+#      run: |
+#        echo "Version: "
+#        $MVNCMD help:evaluate -Dexpression=project.version -q -DforceStdout
+#        $MVNCMD help:evaluate -Dexpression=project.version -q -DforceStdout | egrep -- '-SNAPSHOT$' > /dev/null || exit 1
+#        # unfortunately, this would require a snapshot parent if just called from the command line, so we cannot use it: :-(
+#        # mvn org.apache.maven.plugins:maven-enforcer-plugin:3.0.0:enforce -Drules=requireSnapshotVersion
+#
+#    - name: Deploy with Maven
+#      run: $MVNCMD -P develop deploy
+#      env:
+#        NEXUS_BUILD_USER: ${{ secrets.NEXUS_BUILD_USER }}
+#        NEXUS_BUILD_PASSWD: ${{ secrets.NEXUS_BUILD_PASSWD }}
