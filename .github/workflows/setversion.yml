@@ -18,7 +18,7 @@ jobs:
 
     env:
       SUBDIR: ${{ github.event.inputs.subdir }}
-      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings-public.xml -P allmodules
+      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings.xml -P allmodules
 
     steps:
     - uses: actions/checkout@v3
