@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.composum.meta.ist</groupId>
         <artifactId>parent-2-public</artifactId>
         <version>1.8.2</version>
-        <relativePath/>
+        <relativePath />
     </parent>
 
     <groupId>com.composum.nodes</groupId>
     <artifactId>composum-nodes</artifactId>
-    <version>4.3.5-SNAPSHOT</version>
+    <version>4.3.5</version>
     <packaging>pom</packaging>
 
     <name>Composum Nodes</name>
@@ -32,7 +31,7 @@
         <connection>scm:git:https://github.com/ist-dresden/composum.git</connection>
         <developerConnection>scm:git:https://github.com/ist-dresden/composum.git</developerConnection>
         <url>https://github.com/ist-dresden/composum.git</url>
-        <tag>composum-nodes-3.4.3</tag>
+        <tag>composum-nodes-4.3.5</tag>
     </scm>
 
     <distributionManagement>
@@ -85,7 +84,7 @@
                         <configuration>
                             <deploymentMethod>WebConsole</deploymentMethod>
                             <slingUrl>${sling.scheme}://${sling.host}:${sling.port}${sling.context}/system/console/install</slingUrl>
-                            <slingUrlSuffix/>
+                            <slingUrlSuffix />
                         </configuration>
                     </plugin>
                 </plugins>
@@ -146,7 +145,7 @@
                         <execution>
                             <id>add-minified-resource</id>
                             <phase>generate-resources</phase>
-                            <goals/>
+                            <goals />
                             <configuration>
                                 <resources>
                                     <resource>
