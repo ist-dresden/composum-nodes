@@ -33,7 +33,7 @@ import static org.apache.sling.api.servlets.HttpConstants.METHOD_POST;
 /**
  * Service restrictions support for POST requests to restrict Sling POST Servlet requests.
  * For example: ^/content(/.*)?$=pages/content/edit restricts POST to /content paths to servlets with
- * @Restricted(key = "pages/content/edit")
+ * <code>@Restricted(key = "pages/content/edit")</code>
  */
 @Component(
         service = {Filter.class},

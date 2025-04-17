@@ -188,7 +188,7 @@ public class SourceModelTest {
         String zipContents = getZipContentOverview(out, true, true);
         System.out.println(zipContents);
         assertThat(zipContents, is(".content.xml : 292 | 504953282\n" +
-                "assetsfolder/.content.xml : 200 | 2815730915\n" +
+                "assetsfolder/.content.xml : 249 | 213389511\n" +
                 "assetsfolder/_nt_resourcewithoutfile : 83358 | 2844564088\n" +
                 "assetsfolder/_nt_resourcewithoutfile.dir/.content.xml : 221 | 1068843391\n" +
                 "assetsfolder/plain.jpg : 76910 | 2714537933\n" +

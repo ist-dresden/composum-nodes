@@ -21,7 +21,7 @@ jobs:
 
     env:
       SUBDIR: ${{ github.event.inputs.subdir }}
-      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings-istrepo.xml -P nexus-staging
+      MVNCMD: mvn -B -ntp -s ${{ github.workspace }}/.github/settings.xml -P nexus-staging
 
     steps:
     - uses: actions/checkout@v3
