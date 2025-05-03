@@ -41,7 +41,7 @@
       },
       "libs": {
         "embed": [
-          "jslibs/loglevel/1.6.1/loglevel.js",
+          "jslibs/loglevel/1.8.1/loglevel.js",
           "jslibs/js-base64/2.5.2/base64.js",
           "jslibs/underscore/(1.*:1.9.1)/underscore.js",
           "jslibs/moment/(2.*:2.24.0)/moment-with-locales.js",
@@ -71,7 +71,7 @@
       "embed": [
         "jslibs/jquery/([2-3].*:3.6.0)/jquery.js",
         "jslibs/js-base64/2.5.2/base64.js",
-        "jslibs/loglevel/1.6.1/loglevel.js",
+        "jslibs/loglevel/1.8.1/loglevel.js",
         "jslibs/underscore/(1.*:1.9.1)/underscore.js",
         "jslibs/backbone/(1.*:1.4.0)/backbone.js",
         "composum/nodes/commons/components/js/core.js",
@@ -119,7 +119,7 @@
         "jslibs/bootstrap-slider/(9.*|10.*:10.6.1)/css/bootstrap-slider.css",
         "jslibs/bootstrap-colorpicker/([2-3].*:3.1.2)/css/bootstrap-colorpicker.css",
         "jslibs/bootstrap-fileinput/([4-5].*:4.3.6)/css/fileinput.css",
-        "jslibs/jstree/3.3.8/themes/proton/style.css",
+        "jslibs/jstree/3.3.15/themes/default/style.css",
         "jslibs/trumbowyg/(2.*:2.3.0)/ui/trumbowyg.css"
       ],
       "embed": [
@@ -132,7 +132,7 @@
       "depends": [
         "jslibs/jquery/([2-3].*:3.6.0)/jquery.js",
         "jslibs/js-base64/2.5.2/base64.js",
-        "jslibs/loglevel/(1.*:1.6.1)/loglevel.js",
+        "jslibs/loglevel/(1.*:1.8.1)/loglevel.js",
         "jslibs/underscore/(1.*:1.9.1)/underscore.js",
         "jslibs/moment/(2.*:2.24.0)/moment-with-locales.js",
         "jslibs/backbone/(1.*:1.4.0)/backbone.js",
@@ -142,7 +142,7 @@
         "jslibs/bootstrap-slider/(9.*|10.*:10.6.1)/bootstrap-slider.js",
         "jslibs/bootstrap-colorpicker/([2-3].*:3.1.2)/js/bootstrap-colorpicker.js",
         "jslibs/bootstrap-fileinput/([4-5].*:4.3.6)/js/fileinput.js",
-        "jslibs/jstree/3.3.8/jstree.js",
+        "jslibs/jstree/3.3.15/jstree.js",
         "jslibs/ace/1.4.4/ace.js",
         "jslibs/trumbowyg/(2.*:2.3.0)/trumbowyg.js"
       ],
