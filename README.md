@@ -8,6 +8,13 @@ Composum Nodes is a part of Composum, but can be used standalone on any Sling or
 
 ## [Composum Nodes](https://www.composum.com/home/nodes.html)
 
+> **⚠️ Deprecation Notice:** Composum Nodes is no longer actively maintained. Its successor,
+> **[Composum Tools](https://github.com/ist-dresden/composum-tools)**, is a from-scratch,
+> dependency-minimal rewrite of the JCR browser and Package Manager. Not every Nodes feature has
+> been migrated yet (user management, the ACL editor, and the Groovy console are not there yet),
+> but active development happens on Composum Tools now. We recommend it for new installations, and
+> for existing ones once your required features are covered.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) - [releases](https://github.com/ist-dresden/composum/releases)
 
 A Sling based Resource/JCR development tool, usable on both Sling and AEM. 
